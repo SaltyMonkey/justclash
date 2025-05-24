@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "streetsidesoftware.code-spell-checker",
+        "timonwong.shellcheck",
+        "gruntfuggly.todo-tree",
+        "ms-vscode-remote.remote-containers"
+    ]
+}
