@@ -1,0 +1,42 @@
+ services:
+  stable-builder:
+    image: openwrt/sdk:x86-64-24.10.1
+    container_name: stable-builder
+    volumes:
+      - ./justclash:/builder/package/feeds/utilites/justclash
+      - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
+      - ./output/stable:/output
+    working_dir: /builder
+    command: >
+      /bin/sh -c "
+      ./scripts/feeds update -a &&
+      ./scripts/feeds install luci-base &&
+      make defconfig &&
+      make package/justclash/compile V=s -j2 &&
+      make package/luci-app-justclash/compile V=s -j2 &&
+      mkdir -p /output &&
+      ls -l bin/packages/x86_64/base/ &&
+      cp bin/packages/x86_64/utilites/justclash_*.ipk /output/ &&
+      cp bin/packages/x86_64/luci/luci-app-justclash_*.ipk /output/
+      "
+
+  snapshot-builder:
+    image: openwrt/sdk:x86-64-snapshot
+    container_name: snapshot-builder
+    volumes:
+      - ./justclash:/builder/package/feeds/utilites/justclash
+      - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
+      - ./output/snapshot:/output
+    working_dir: /builder
+    command: >
+      /bin/sh -c "
+      ./scripts/feeds update -a &&
+      ./scripts/feeds install luci-base&&
+      make defconfig &&
+      make package/justclash/compile V=s -j2 &&
+      make package/luci-app-justclash/compile V=s -j2 &&
+      mkdir -p /output &&
+      ls -l bin/packages/x86_64/base/ &&
+      cp bin/packages/x86_64/utilites/justclash_*.apk /output/ &&
+      cp bin/packages/x86_64/luci/luci-app-justclash_*.apk /output/
+      "
