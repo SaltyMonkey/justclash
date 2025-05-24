@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Mihomo core wrapper and manager
-  DEPENDS:=+nftables +curl ++kmod-nft-tproxy
+  DEPENDS:=+nftables +curl +kmod-nft-tproxy
   CONFLICTS:=https-dns-proxy
   PKGARCH:=all
 endef
