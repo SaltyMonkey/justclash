@@ -41,13 +41,11 @@ else
   echo "✅ SDK already downloaded: $SDK_FILENAME"
 fi
 
-# --- Extract SDK ---
-if ls -d openwrt-sdk-"${OPENWRT_VERSION}"* 1>/dev/null 2>&1; then
-  echo "✅ SDK already extracted"
-else
-  echo "📦 Extracting SDK..."
-  tar -xf "$SDK_FILENAME" || error_exit "Failed to extract SDK"
-fi
+echo "📦 Extracting SDK..."
+tar -xf "$SDK_FILENAME" || error_exit "Failed to extract SDK"
+
+echo "📦 Cleaning SDK..."
+rm -r "${SDK_FILENAME}"
 
 # --- Enter SDK directory ---
 SDK_FOLDER=$(find . -maxdepth 1 -type d -name "openwrt-sdk-${OPENWRT_VERSION}-*")
