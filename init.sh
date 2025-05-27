@@ -122,11 +122,21 @@ diagnostic_tools() {
 
     echo "  "
     print_bold_green "Checking toolchain..."
-    echo " - apk command:  $( [ "$ii_opkg" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
-    echo " - opkg command:  $( [ "$ii_opkg" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
-    echo " - nft command:  $( [ "$ii_nft" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
-    echo " - curl: $( [ "$ii_curl" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
-    echo " - logread: $( [ "$ii_logread" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
+
+   printf " - apk command:  "
+    [ "$ii_apk" -eq 0 ] && print_green "OK" || print_red "FAIL"
+
+    printf " - opkg command:  "
+    [ "$ii_opkg" -eq 0 ] && print_green "OK" || print_red "FAIL"
+
+    printf " - nft command:  "
+    [ "$ii_nft" -eq 0 ] && print_green "OK" || print_red "FAIL"
+
+    printf " - curl: "
+    [ "$ii_curl" -eq 0 ] && print_green "OK" || print_red "FAIL"
+
+    printf " - logread: "
+    [ "$ii_logread" -eq 0 ] && print_green "OK" || print_red "FAIL"
 
     if [ "$ii_apk" -ne 0 ] && [ "$FLAG_DISABLE_APK_CHECK" -eq 0 ]; then
         print_red "It appears you're using an OpenWRT SNAPSHOT version with the new package manager."
@@ -147,12 +157,24 @@ diagnostic_net() {
     echo "Checking with ${URL_CHECK_PING}..."
     check_icmp "${URL_CHECK_PING}" 4
     ping_res=$?
-    echo " - Result: $( [ "$ping_res" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
+
+
+    if [ "$ping_res" -eq 0 ]; then
+       print_green "OK"
+    else
+       print_red "FAIL"
+    fi
 
     echo "Checking with ${URL_CHECK_PING_BACKUP}..."
     check_icmp "${URL_CHECK_PING_BACKUP}" 4
     ping_res_backup=$?
-    echo " - Result: $( [ "$ping_res_backup" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
+
+    printf " - Result: "
+    if [ "$ping_res_backup" -eq 0 ]; then
+        print_green "OK"
+    else
+        print_red "FAIL"
+    fi
 
     echo "  "
     print_bold_green  "Checking domain resolution ..."
@@ -160,7 +182,11 @@ diagnostic_net() {
     echo "Testing ${URL_GITHUB} using the default nameserver..."
     check_dns "${URL_GITHUB}"
     dns_default_res=$?
-    echo " - Result: $( [ "$dns_default_res" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
+    if [ "$dns_default_res" -eq 0 ]; then
+        print_green "OK"
+    else
+        print_red "FAIL"
+    fi
 
     if [ "$dns_default_res" -ne 0 ]; then
         print_red "DNS resolution failed using the default nameserver."
@@ -225,7 +251,7 @@ diagnostic_conflicts_interactive() {
         while true; do
                 read -r -p '' inp
                 case $inp in
-                    yes|y|Y|yes)
+                    yes|y|Y)
                         opkg remove --force-depends luci-app-https-dns-proxy https-dns-proxy luci-i18n-https-dns-proxy*
                         break
                         ;;
@@ -247,7 +273,7 @@ diagnostic_conflicts_interactive() {
         while true; do
                 read -r -p '' inpp
                 case $inpp in
-                yes|y|Y|yes)
+                yes|y|Y)
                     opkg remove --force-depends luci-app-podkop podkop luci-i18n-podkop*
                     break
                     ;;
@@ -261,9 +287,12 @@ diagnostic_conflicts_interactive() {
 }
 
 get_latest_version() {
-    local latest_ver latest_tag param_skip_version_txt latest_url
-    param_skip_version_txt="$1"
-    latest_tag=$(curl -s "$CORE_LATEST_RELEASE_URL") | grep '"tag_name":' | cut -d '"' -f 4
+    local latest_ver latest_tag latest_url
+    #param_skip_version_txt="$1"
+
+    #TODO: rewrite it without subshell
+    # shellcheck disable=SC2036
+    latest_tag=$(curl -s "$CORE_LATEST_RELEASE_URL" | grep '"tag_name":' | cut -d '"' -f 4 )
     latest_ver=$(curl -sL "${CORE_RELEASE_URL_PARTIAL}/${latest_tag}/version.txt" | tr -d '\r\n')
 
     echo "${latest_tag}"
@@ -289,7 +318,6 @@ core_download() {
         base_url="${CORE_RELEASE_URL_PARTIAL}/${version}/${file_name}"
     fi
 
-    print_bold_green "${base_url}"
     curl -sL -o "$TMP_DOWNLOAD_PATH/mihomo.gz" "$base_url" || {
         print_red "Failed to download file."
     }
