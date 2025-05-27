@@ -123,20 +123,40 @@ diagnostic_tools() {
     echo "  "
     print_bold_green "Checking toolchain..."
 
-   printf " - apk command:  "
-    [ "$ii_apk" -eq 0 ] && print_green "OK" || print_red "FAIL"
+    printf " - apk command:  "
+    if [ "$ii_apk" -eq 0 ]; then
+        print_green "OK"
+    else
+        print_red "FAIL"
+    fi
 
     printf " - opkg command:  "
-    [ "$ii_opkg" -eq 0 ] && print_green "OK" || print_red "FAIL"
+    if [ "$ii_opkg" -eq 0 ]; then
+        print_green "OK"
+    else
+        print_red "FAIL"
+    fi
 
     printf " - nft command:  "
-    [ "$ii_nft" -eq 0 ] && print_green "OK" || print_red "FAIL"
+    if [ "$ii_nft" -eq 0 ]; then
+        print_green "OK"
+    else
+        print_red "FAIL"
+    fi
 
     printf " - curl: "
-    [ "$ii_curl" -eq 0 ] && print_green "OK" || print_red "FAIL"
+    if [ "$ii_curl" -eq 0 ]; then
+        print_green "OK"
+    else
+        print_red "FAIL"
+    fi
 
     printf " - logread: "
-    [ "$ii_logread" -eq 0 ] && print_green "OK" || print_red "FAIL"
+    if [ "$ii_logread" -eq 0 ]; then
+        print_green "OK"
+    else
+        print_red "FAIL"
+    fi
 
     if [ "$ii_apk" -ne 0 ] && [ "$FLAG_DISABLE_APK_CHECK" -eq 0 ]; then
         print_red "It appears you're using an OpenWRT SNAPSHOT version with the new package manager."
