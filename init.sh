@@ -405,3 +405,15 @@ init() {
 }
 
 init
+
+for arg in "$@"; do
+    # shellcheck disable=SC2249
+    case "$arg" in
+        --disable_diagnostic)
+            FLAG_DISABLE_DIAGNOSTIC=1
+            ;;
+        --install-without-mihomo-core)
+            FLAG_INSTALL_WITHOUT_MIHOMO_CORE=1
+            ;;
+    esac
+done
