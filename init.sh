@@ -370,7 +370,13 @@ install() {
     # justclash_download
 }
 
+# TODO: Finish uninstall
 uninstall() {
+    print_red "Not implemented yet"
+}
+
+# TODO: Finish install
+justclash_install() {
     print_red "Not implemented yet"
 }
 
