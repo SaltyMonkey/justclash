@@ -135,7 +135,7 @@ diagnostic_tools() {
     fi
 
     if [ "$ii_opkg" -ne 0 ] || [ "$ii_nft" -ne 0 ] || [ "$ii_curl" -ne 0 ] || [ "$ii_logread" -ne 0 ]; then
-        print_red "One or more required basic tools (nft, curl, logread) are not available."
+        print_red "One or more required basic tools (nft, curl, logread, opkg) are not available."
         print_red "This may indicate unsupported, incorrect, or custom firmware."
         print_red "Please verify your firmware and/or install the necessary packages."
         exit 1
@@ -261,9 +261,8 @@ diagnostic_conflicts_interactive() {
 }
 
 get_latest_version() {
-    local latest_ver latest_tag param_skip_version_txt
+    local latest_ver latest_tag param_skip_version_txt latest_url
     param_skip_version_txt="$1"
-
     latest_tag=$(curl -s "$CORE_LATEST_RELEASE_URL") | grep '"tag_name":' | cut -d '"' -f 4
     latest_ver=$(curl -sL "${CORE_RELEASE_URL_PARTIAL}/${latest_tag}/version.txt" | tr -d '\r\n')
 
@@ -316,6 +315,15 @@ core_info() {
     fi
 }
 
+opkg_is_installed() {
+    local pkg
+    if opkg list-installed ${pkg} >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+fi
+}
+
 core_update() {
     local cur_ver latest_ver tmp latest_tag
 
@@ -350,8 +358,9 @@ core_update() {
     fi
 }
 
-justclash_install() {
-    print_red "Not implemented yet"
+justclash_download() {
+    print_red "NOT IMPLEMENTED YET"
+    exit 1;
 }
 
 install() {
@@ -370,12 +379,36 @@ install() {
     if [ "$FLAG_INSTALL_WITHOUT_MIHOMO_CORE" -ne 1 ]; then
         core_update
     fi
-    # justclash_download
+    justclash_download
 }
 
 # TODO: Finish uninstall
 uninstall() {
-    print_red "Not implemented yet"
+    local jc_is_installed lajc_is_installed
+    echo "  "
+    print_bold_green "Uninstalling everything..."
+
+    opkg_is_installed justclash
+    jc_is_installed="$?"
+    if [ "$jc_is_installed" -eq 0 ]; then
+        echo " - JustClash package was found. Removing..."
+        opkg remove justclash
+    fi
+    opkg_is_installed luci-app-justclash
+    lajc_is_installed="$?"
+    if [ "$lajc_is_installed" -eq 0 ]; then
+        echo " - LuCI JustClash package was found. Removing..."
+        opkg remove luci-app-justclash
+    fi
+
+    if [ "$jc_is_installed" -ne 0 ] && [ "$lajc_is_installed" -ne 0 ]; then
+        echo " - JustClash was not found. Was it already installed before?"
+        echo " - Cleaning up known JustClash folders and files"
+        rm -rf /usr/bin/justclash
+        rm -rf /usr/bin/mihomo/
+        rm -rf /tmp/justclash/
+        rm -rf /etc/init.d/justclash
+    fi
 }
 
 # TODO: Finish install
@@ -386,8 +419,8 @@ justclash_install() {
 init() {
     banner
     print_bold_yellow "JustClash Setup Menu"
-    print_bold_yellow "1 - Install JustClash script"
-    print_bold_yellow "2 - Uninstall JustClash script"
+    print_bold_yellow "1 - Install JustClash package"
+    print_bold_yellow "2 - Uninstall JustClash package"
     print_bold_yellow "3 - Update/Download latest Mihomo Clash core"
     print_bold_yellow "4 - Exit"
     while true; do
