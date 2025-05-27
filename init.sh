@@ -97,6 +97,7 @@ banner() {
    local model openwrt
     model=$(info_device)
     openwrt=$(info_openwrt)
+    print_bold_yellow "---------------------"
     print_bold_yellow "JustClash Init Script"
     print_bold_yellow "---------------------"
     print_bold_yellow "OpenWRT:      ${openwrt}"
@@ -187,6 +188,7 @@ diagnostic_mem() {
     fi
 }
 
+# TODO: Fix error handling with unsupported platform
 detect_arch() {
     local arch_raw
     arch_raw=$(uname -m)
@@ -206,6 +208,7 @@ detect_arch() {
         s390x) echo "s390x" ;;
         *)
             print_red "Unknown architecture: $arch_raw"
+            return 1
             ;;
     esac
 }
