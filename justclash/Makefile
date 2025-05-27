@@ -66,7 +66,7 @@ define Package/$(PKG_NAME)/postrm
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f "/usr/bin/mihomo" ] && rm -rf "/usr/bin/mihomo"
 	[ -f "/tmp/justclash" ] && rm -rf "/tmp/justclash"
-
+	rm -rf /etc/init.d/justclash
 fi
 exit 0
 endef

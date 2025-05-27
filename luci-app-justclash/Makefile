@@ -18,7 +18,7 @@ LUCI_LANGUAGES:=en ru
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	rm -f /tmp/luci-index*
+	rm -rf /tmp/luci-index*
 	rm -rf /tmp/luci-modulecache/
 	/etc/init.d/rpcd reload
 	[ -f "/sbin/luci-reload" ] && /sbin/luci-reload
