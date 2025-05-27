@@ -2,10 +2,10 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-JUSTCLASH_LATEST_RELEASE_URL="https://github.com/SaltyMonkeyjustclash-owrt/releases/latest"
+JUSTCLASH_LATEST_RELEASE_URL="https://api.github.com/repos/saltymonkey/justclash-owrt/releases/latest"
 JUSTCLASH_RELEASE_URL_PARTIAL="https://github.com/SaltyMonkey/justclash-owrt/releases/download"
 
-CORE_LATEST_RELEASE_URL="https://github.com/metacubex/mihomo/releases/latest"
+CORE_LATEST_RELEASE_URL="https://api.github.com/repos/metacubex/mihomo/releases/latest"
 CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download"
 
 URL_GITHUB="github.com"
@@ -22,6 +22,7 @@ TMP_DOWNLOAD_PATH="/tmp/justclash/downloads"
 #Flags
 FLAG_INSTALL_WITHOUT_MIHOMO_CORE=0
 FLAG_DISABLE_DIAGNOSTIC=0
+FLAG_DISABLE_APK_CHECK=0
 
 rm -rf "$TMP_DOWNLOAD_PATH"
 mkdir -p "$TMP_DOWNLOAD_PATH"
@@ -127,7 +128,7 @@ diagnostic_tools() {
     echo " - curl: $( [ "$ii_curl" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
     echo " - logread: $( [ "$ii_logread" -eq 0 ] && print_green "OK" || print_red "FAIL" )"
 
-    if [ "$ii_apk" -ne 0 ]; then
+    if [ "$ii_apk" -ne 0 ] && [ "$FLAG_DISABLE_APK_CHECK" -eq 0 ]; then
         print_red "It appears you're using an OpenWRT SNAPSHOT version with the new package manager."
         print_red "Please install a stable firmware version — JustClash has not been tested with snapshots using the new manager."
         exit 1
@@ -260,10 +261,11 @@ diagnostic_conflicts_interactive() {
 }
 
 get_latest_version() {
-    local latest_url latest_ver latest_tag
-    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$CORE_LATEST_RELEASE_URL")
-    latest_tag=$(echo "$latest_url" | awk -F'/tag/' '{print $2}')
-    latest_ver=$(curl -sL -# "${CORE_RELEASE_URL_PARTIAL}/${latest_tag}/version.txt" | tr -d '\r\n')
+    local latest_ver latest_tag param_skip_version_txt
+    param_skip_version_txt="$1"
+
+    latest_tag=$(curl -s "$CORE_LATEST_RELEASE_URL") | grep '"tag_name":' | cut -d '"' -f 4
+    latest_ver=$(curl -sL "${CORE_RELEASE_URL_PARTIAL}/${latest_tag}/version.txt" | tr -d '\r\n')
 
     echo "${latest_tag}"
     echo "${latest_ver}"
@@ -289,7 +291,7 @@ core_download() {
     fi
 
     print_bold_green "${base_url}"
-    curl -sL -# -o "$TMP_DOWNLOAD_PATH/mihomo.gz" "$base_url" || {
+    curl -sL -o "$TMP_DOWNLOAD_PATH/mihomo.gz" "$base_url" || {
         print_red "Failed to download file."
     }
 
@@ -326,7 +328,8 @@ core_update() {
     latest_ver=$(echo "$tmp" | sed -n 2p)
 
     if [ -z "$latest_tag" ] || [ -z "$latest_ver" ]; then
-        print_red "Error happened when tried to receive latest version data"
+        print_red "Error happened when trying to receive latest version data."
+        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
         exit 1
     fi
 
@@ -423,6 +426,9 @@ for arg in "$@"; do
             ;;
         --install-without-mihomo-core)
             FLAG_INSTALL_WITHOUT_MIHOMO_CORE=1
+            ;;
+        --disable-apk-check)
+            FLAG_DISABLE_APK_CHECK=1
             ;;
     esac
 done
