@@ -1,0 +1,1179 @@
+#!/bin/ash
+# Ash isn't supported properly in spellcheck static analyzer
+# Using debian based version (kind of similar)
+# shellcheck shell=dash
+[ -r /lib/functions.sh ] && . /lib/functions.sh
+[ -r /lib/config/uci.sh ] && . /lib/config/uci.sh
+
+PROCD_MODE=0
+PIDFILE="/var/run/justclash.pid"
+
+[ "$JUSTCLASH_ENV" = "procd" ] && PROCD_MODE=1 || PROCD_MODE=0
+
+config_load justclash
+
+CORE_LATEST_RELEASE_URL="https://api.github.com/repos/metacubex/mihomo/releases/latest"
+CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download"
+
+# Path to Mihomo core
+CORE_BIN_NAME="mihomo"
+CORE_PATH="/usr/bin/mihomo/${CORE_BIN_NAME}"
+CORE_COMPLETE_YAML="/usr/bin/mihomo/config.yaml" #special mode for copypasted ready to use yaml file
+CORE_WORKDIR_PATH="/tmp/justclash/"
+
+NFT_TABLE_NAME="justclash_tproxy"
+NO_DATA_STRING="N/A"
+
+CORE_YAML_TEMPLATE="/usr/bin/mihomo/config.template.yaml"
+OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
+TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
+
+# List of NTP server IP addresses:
+# 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
+# 195.208.185.17  — ntp2.stratum2.ru (Russian NTP server)
+# 193.232.128.6   — ntp3.stratum2.ru (Russian NTP server)
+# 216.239.35.0    — time.google.com (Google NTP)
+# 162.159.200.1   — time.cloudflare.com (Cloudflare NTP)
+NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0 162.159.200.1"
+ALLOWED_INTERFACES='{ lan*, br-lan, eth1 }'
+CONFLICTED_PACKAGES="podkop iptables-mod-extra https-dns-proxy"
+CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
+CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
+
+# === LOG HELPERS ===
+ANSI_RESET="\033[0m"
+ANSI_TIMESTAMP="\033[0;36m"
+
+is_installed() {
+    local pkg=$1
+    if command -v apk >/dev/null 2>&1; then
+        apk list --installed "${pkg}" | grep -q "^${pkg}$"
+    else
+        opkg list-installed | awk '{print $1}'
+    fi
+}
+
+bool_to_yesno() {
+    case "$1" in
+        1) echo "Yes" ;;
+        0) echo "No" ;;
+        *) echo "$1" ;;
+    esac
+}
+
+panic() {
+    local message="$1"
+    syslog 0 "$message"
+    clog 0 "$message"
+    stop
+    exit 1
+}
+
+get_log_level_name() {
+    case "$1" in
+        0) echo "ERROR" ;;
+        1) echo "WARNING" ;;
+        2) echo "INFO" ;;
+        3) echo "DEBUG" ;;
+        *) echo "UNKNOWN" ;;
+    esac
+}
+
+get_log_color() {
+    case "$1" in
+        0) echo "\033[0;31m" ;;  # Red
+        1) echo "\033[0;33m" ;;  # Yellow
+        2) echo "\033[0;32m" ;;  # Green
+        3) echo "\033[0;34m" ;;  # Blue
+        *) echo "\033[0;35m" ;;  # Magenta (fallback)
+    esac
+}
+
+syslog() {
+    local level="$1"
+    local message="$2"
+    local timestamp=""
+    local level_str=""
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    level_str=$(get_log_level_name "$level")
+
+    logger -t "justclash" "$timestamp [$level_str] $message"
+}
+
+clog() {
+    local level="$1"
+    local message="$2"
+    local timestamp=""
+    local level_str=""
+    local color_str=""
+
+    [ $PROCD_MODE -eq 1 ] && return
+
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    level_str=$(get_log_level_name "$level")
+    color_str=$(get_log_color "$level")
+
+    printf "%s[%s]%s %s[%s]%s %s\n" "$ANSI_TIMESTAMP" "$timestamp" "$ANSI_RESET" "$color_str" "$level_str" "$ANSI_RESET" "$message"
+}
+
+log() {
+    local level="$1"
+    local message="$2"
+    local emoji="${3:-}"
+
+    if [ $PROCD_MODE -eq 1 ]; then
+        syslog "$level" "$message"
+        return
+    fi
+
+    syslog "$level" "$message"
+
+    if [ -n "$emoji" ]; then
+        clog "$level" "${emoji} ${message}"
+    else
+        clog "$level" "$message"
+    fi
+}
+
+# === FS HELPERS ===
+is_package_installed() {
+    local found_pkgs=""
+    for pkg in "$@"; do
+        if opkg list-installed | grep -qw "$pkg"; then
+            found_pkgs="${found_pkgs:+$found_pkgs }$pkg"
+        fi
+    done
+    if [ -n "$found_pkgs" ]; then
+        echo "$found_pkgs"
+        return 0
+    else
+        return 1
+    fi
+}
+
+is_pattern_in_file() {
+    local file="$1"
+    shift
+    if [ ! -r "$file" ]; then
+        return 1
+    fi
+    local found_patterns=""
+    for pattern in "$@"; do
+        if grep -qE "$pattern" "$file"; then
+            found_patterns="${found_patterns:+$found_patterns }$pattern"
+        fi
+    done
+    if [ -n "$found_patterns" ]; then
+        echo "$found_patterns"
+        return 0
+    else
+        return 1
+    fi
+}
+
+is_process_running() {
+    local pattern="$1"
+    ps | grep -F "$pattern" | grep -v "[g]rep" > /dev/null 2>&1
+}
+
+# === NTP HELPERS ===
+ntp_force_sync() {
+    local forcefully_update_ntp_at_load
+    config_get_bool forcefully_update_ntp_at_load main forcefully_update_ntp_at_load
+    if [ "$forcefully_update_ntp_at_load" = "1" ]; then
+        NTP_ARGS=""
+        for ip in $NTP_IPS; do
+            NTP_ARGS="$NTP_ARGS -p $ip"
+        done
+        # shellcheck disable=SC2086
+        /usr/sbin/ntpd -q $NTP_ARGS
+    fi
+}
+
+# === MAIN FUNCTIONS ===
+start() {
+    local autostart
+    config_get_bool autostart main autostart
+
+    log 2 "Initializing Justclash service..." "⏳"
+
+    if [ "$PROCD_MODE" -eq 1 ] && ! autostart; then
+        log 2 "Autostart is disabled..." "⏳"
+        exit 0
+    fi
+
+    log 2 "Checking for conflicts" "🐞"
+    check_for_conflicts
+
+    log 2 "Synchronizing system time" "🕒"
+    ntp_force_sync
+
+    #sleep 1
+
+    log 2 "Preparing Mihomo working directory" "📦"
+    core_prepare_workdir
+
+    log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
+    nft_table_add
+
+    log 2 "Modifying dnsmasq configuration" "🔑"
+    dnsmasq_inject
+
+    # Demonizing
+    log 2 "Starting Mihomo core" "🚀"
+    start_core
+}
+
+start_with_config() {
+    log 2 "Initializing Justclash service... [With config.yaml]" "⏳"
+
+    log 2 "Checking for conflicts" "🐞"
+    check_for_conflicts
+
+    log 2 "Synchronizing system time" "🕒"
+    # make sure time in openwrt for TLS work
+    ntp_force_sync
+
+    sleep 1
+
+    log 2 "Preparing Mihomo working directory" "📦"
+    core_prepare_workdir
+
+    log 2 "YAML config job" "📄"
+    core_complete_config
+
+    log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
+    nft_table_add
+
+    log 2 "Modifying dnsmasq configuration" "🔑"
+    dnsmasq_inject
+
+    # Demonizing
+    log 2 "Starting Mihomo core" "🚀"
+    start_core
+}
+
+stop() {
+    log 2 "Closing Justclash service..." "⏳"
+    log 2 "Removing TPROXY routing and NFTables table" "🔑"
+    nft_table_remove
+    log 2 "Restoring default dnsmasq configuration" "🔑"
+    dnsmasq_clean
+    log 2 "Stopping core process" "🚀"
+    stop_core
+}
+
+restart() {
+    log 2 "Performing complete restart of service" "🔄"
+    stop
+    sleep 1
+    start
+}
+
+restart_with_config() {
+    log 2 "Performing complete restart of service. [With config.yaml]" "🔄"
+    stop
+    sleep 1
+    start_with_config
+}
+
+info_autostart() {
+ if [ -x /etc/rc.d/S99justclash ]; then
+       echo "Yes"
+    else
+       echo "No"
+    fi
+}
+
+info_device() {
+   cat /tmp/sysinfo/model || echo "${NO_DATA_STRING}"
+}
+
+#FIXME: Fix incorrect operand ||
+info_openwrt() {
+   grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "${NO_DATA_STRING}"
+}
+
+info_mihomo() {
+    if [ ! -x "$CORE_PATH" ]; then
+        echo "${NO_DATA_STRING}"
+    else
+       "$CORE_PATH" -v 2>/dev/null | awk '{ print $3 }'
+    fi
+}
+
+info_package() {
+    local version
+    version=$(opkg list-installed justclash | awk '{print $3}')
+    echo "$version" || echo "${NO_DATA_STRING}"
+}
+
+info_luci() {
+    local version
+    version=$(opkg list-installed luci-app-justclash | awk '{print $3}')
+    echo "$version" || echo "${NO_DATA_STRING}"
+}
+
+info_conns_console_api() {
+    local external_controller_port
+    config_get external_controller_port proxy external_controller_port
+    local url="http://127.0.0.1:$external_controller_port/connections"
+
+    # local AUTH=""
+    # [ -n "$API_SECRET" ] && AUTH="-H Authorization: Bearer $API_SECRET"
+
+    local response
+    # response=$(curl -s $AUTH "$URL")
+    response=$(curl -s "$url")
+
+    if is_process_running "${CORE_BIN_NAME}"; then
+    echo "$response" | grep -q '"connections":null' && {
+        echo "No connections"
+        return 1
+    }
+    fi
+
+    echo "$response" |
+    tr -d '\n' | sed 's/},{/}\n{/g' |
+    grep -o '{[^}]*}' |
+    while read -r conn; do
+        src=$(echo "$conn" | grep -o '"sourceIP":"[^"]*"' | cut -d'"' -f4)
+        dst=$(echo "$conn" | grep -o '"destinationIP":"[^"]*"' | cut -d'"' -f4)
+        port=$(echo "$conn" | grep -o '"destinationPort":[0-9]*' | cut -d':' -f2)
+        host=$(echo "$conn" | grep -o '"host":"[^"]*"' | cut -d'"' -f4)
+        chain=$(echo "$conn" | grep -o '"chain":\[[^]]*\]' | sed 's/.*\[\(.*\)\]/\1/' | tr -d '"' | tr ',' '→')
+        up=$(echo "$conn" | grep -o '"upload":[0-9.]*' | cut -d':' -f2)
+        down=$(echo "$conn" | grep -o '"download":[0-9.]*' | cut -d':' -f2)
+
+        printf "%-15s %-15s %-5s %-25s %-20s %8s KB %8s KB\n" \
+            "$src" "$dst" "$port" "$host" "$chain" "$up" "$down"
+    done
+
+    return 0
+}
+
+show_conns_console() {
+    local pid
+    pid=$(ps | grep "$CORE_BIN_NAME" | grep -v "[g]rep" | awk '{print $1}')
+    if [ -z "$pid" ]; then
+        clog 1 "Process '$CORE_BIN_NAME' not found"
+        return 1
+    fi
+
+    clog 2 "PID of process '$CORE_BIN_NAME': $pid"
+
+    if command -v ss >/dev/null; then
+        clog 2 "Using ss:"
+        ss -tunp | grep "$pid"
+    elif command -v netstat >/dev/null; then
+        clog 2 "Using netstat:"
+        netstat -tunp | grep "$pid"
+    elif command -v lsof >/dev/null; then
+        clog 2 "Using lsof:"
+        lsof -i -n -P | grep "$CORE_BIN_NAME"
+    else
+        clog 1 "Neither ss, netstat, nor lsof found"
+    fi
+}
+
+systemlogs() {
+    local lines=${1:-20}
+    if ! command -v logread >/dev/null 2>&1; then
+        clog 0 "logread command not found"
+        return 1
+    fi
+    clog 2 "Last $lines logs from justclash:"
+    logread -t justclash | tail -n "$lines"
+    return 0
+}
+
+report() {
+    local autostart device openwrt mihomo pkg luci timestamp
+    local forcefully_update_ntp_at_load update_dns_server update_nft_tables
+    local log_level tproxy_port mixed_port unified_delay
+    local routing_mark tcp_concurrent external_controller_port
+    local keep_alive_idle keep_alive_interval
+    local dns_listen_port use_hosts use_system_hosts fake_ip_range
+
+    autostart=$(info_autostart)
+    device=$(info_device)
+    openwrt=$(info_openwrt)
+    mihomo=$(info_mihomo)
+    pkg=$(info_package)
+    luci=$(info_luci)
+    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+
+    config_load justclash
+    config_get autostart settings autostart
+    config_get forcefully_update_ntp_at_load settings forcefully_update_ntp_at_load
+    config_get update_dns_server settings update_dns_server
+    config_get update_nft_tables settings update_nft_tables
+
+    config_get log_level proxy log_level
+    config_get tproxy_port proxy tproxy_port
+    config_get mixed_port proxy mixed_port
+    config_get unified_delay proxy unified_delay
+    config_get routing_mark proxy routing_mark
+    config_get tcp_concurrent proxy tcp_concurrent
+    config_get external_controller_port proxy external_controller_port
+    config_get keep_alive_idle proxy keep_alive_idle
+    config_get keep_alive_interval proxy keep_alive_interval
+    config_get dns_listen_port proxy dns_listen_port
+    config_get use_hosts proxy use_hosts
+    config_get use_system_hosts proxy use_system_hosts
+    config_get fake_ip_range proxy fake_ip_range
+
+    local border="┌──────────────────────────────┬──────────────────────────────┐"
+    local separator="├──────────────────────────────┼──────────────────────────────┤"
+    local bottom="└──────────────────────────────┴──────────────────────────────┘"
+
+    echo "🖥 System information"
+    echo "$border"
+    printf "│ %-28s │ %-28s │\n" "Field" "Value"
+    echo "$separator"
+    printf "│ %-28s │ %-28s │\n" "Autostart Enabled" "$(bool_to_yesno "$autostart")"
+    printf "│ %-28s │ %-28s │\n" "Device Model" "$device"
+    printf "│ %-28s │ %-28s │\n" "OpenWrt Version" "$openwrt"
+    printf "│ %-28s │ %-28s │\n" "Mihomo Core Version" "$mihomo"
+    printf "│ %-28s │ %-28s │\n" "JustClash Version" "$pkg"
+    printf "│ %-28s │ %-28s │\n" "LuCI UI Version" "$luci"
+    echo "$separator"
+    printf "│ %-28s │ %-28s │\n" "Report Time" "$timestamp"
+    echo "$bottom"
+
+    echo
+    echo "🔧 JustClash Settings"
+    echo "$border"
+    printf "│ %-28s │ %-28s │\n" "Start on Boot" "$(bool_to_yesno "$autostart")"
+    printf "│ %-28s │ %-28s │\n" "Force NTP Sync at Start" "$(bool_to_yesno "$forcefully_update_ntp_at_load")"
+    printf "│ %-28s │ %-28s │\n" "Update DNS on Start" "$(bool_to_yesno "$update_dns_server")"
+    printf "│ %-28s │ %-28s │\n" "Update NFT Tables" "$(bool_to_yesno "$update_nft_tables")"
+    echo "$bottom"
+
+    echo
+    echo "🛰 Proxy Settings"
+    echo "$border"
+    printf "│ %-28s │ %-28s │\n" "Log Level" "$log_level"
+    printf "│ %-28s │ %-28s │\n" "TPROXY Port" "$tproxy_port"
+    printf "│ %-28s │ %-28s │\n" "Mixed Port" "$mixed_port"
+    printf "│ %-28s │ %-28s │\n" "Enable Unified Delay" "$(bool_to_yesno "$unified_delay")"
+    printf "│ %-28s │ %-28s │\n" "Routing Mark" "$routing_mark"
+    printf "│ %-28s │ %-28s │\n" "TCP Concurrent" "$(bool_to_yesno "$tcp_concurrent")"
+    printf "│ %-28s │ %-28s │\n" "Ext. Controller Port" "$external_controller_port"
+    printf "│ %-28s │ %-28s │\n" "Keepalive Idle Time" "$keep_alive_idle"
+    printf "│ %-28s │ %-28s │\n" "Keepalive Interval" "$keep_alive_interval"
+    printf "│ %-28s │ %-28s │\n" "DNS Listen Port" "$dns_listen_port"
+    printf "│ %-28s │ %-28s │\n" "Use Custom Hosts" "$(bool_to_yesno "$use_hosts")"
+    printf "│ %-28s │ %-28s │\n" "Use System Hosts" "$(bool_to_yesno "$use_system_hosts")"
+    printf "│ %-28s │ %-28s │\n" "Fake-IP Range" "$fake_ip_range"
+    echo "$bottom"
+}
+
+# === DIAG FUNCTIONS ===
+diag_nft() {
+    clog 2 "Checking for 'nft' command..."
+    if ! command -v nft >/dev/null 2>&1; then
+        clog 0 "The 'nft' command is not available. Please install nftables to continue."
+        return 1
+    fi
+
+    clog 2 "Verifying existence of NFTables table '${NFT_TABLE_NAME}'..."
+    if ! nft list table inet "$NFT_TABLE_NAME" >/dev/null 2>&1; then
+        clog 0 "Table '${NFT_TABLE_NAME}' not found. Please create the required NFTables table."
+        return 1
+    fi
+
+    clog 2 "Displaying current NFTables configuration:"
+    nft list table inet "$NFT_TABLE_NAME"
+
+    clog 2 "NFTables check completed successfully."
+
+    return 0
+}
+
+diag_dns() {
+    log 2 "Running DNS configuration diagnostics..." "🩺"
+
+    local dns_listen_port
+    config_get dns_listen_port proxy dns_listen_port
+
+    log 2 "Testing DNS resolution..."
+    if ! nslookup openwrt.org 127.0.0.1:$dns_listen_port >/dev/null 2>&1; then
+        log 1 "IPv4 DNS query failed" "❌"
+    else
+        log 2 "IPv4 DNS query successful" "✅"
+    fi
+
+    #log 2 "Testing DNS resolution (IPv6)..."
+    #if ! nslookup openwrt.org [::1]:$dns_listen_port >/dev/null 2>&1; then
+    #    log 1 "IPv6 DNS query failed" "❌"
+    #else
+    #    log 2 "IPv6 DNS query successful" "✅"
+    #fi
+}
+# === INTERNAL FUNCTIONS ===
+
+# WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
+start_core() {
+    log 2 "Ensuring Mihomo core was previously stopped gracefully..."
+    stop_core
+
+    log 2 "Starting Mihomo core..."
+    # Запускаем процесс в фоне с сохранением PID
+    (
+        echo $$ > "${PIDFILE}"
+        exec "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | logger -t justclash
+    ) &
+}
+
+# WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
+stop_core() {
+    log 2 "Stopping Mihomo core..."
+    local pid
+    if [ -f ${PIDFILE} ]; then
+        pid=$(cat ${PIDFILE})
+        log 2 "Stopping core process (PID $pid)"
+
+        kill -TERM "$pid" 2>/dev/null
+
+        local count=0
+        while kill -0 "$pid" 2>/dev/null && [ $count -lt 10 ]; do
+            sleep 1
+            count=$((count+1))
+        done
+
+        if kill -0 "$pid" 2>/dev/null; then
+            log 1 "Force killing process $pid"
+            kill -9 "$pid"
+        fi
+
+        rm -f ${PIDFILE}
+        log 2 "Core process stopped" "✅"
+    else
+        log 1 "PID file not found, using fallback stop method"
+        pkill -f "$(basename "$CORE_PATH")"
+    fi
+}
+
+nft_table_add() {
+    local tproxy_port
+    local routing_mark
+    local hex_mark
+    local fake_ip_range
+    config_get tproxy_port proxy tproxy_port
+    config_get routing_mark proxy routing_mark
+    config_get fake_ip_range proxy fake_ip_range "198.18.0.0/16"  # Значение по умолчанию для Clash
+
+    # Конвертация метки
+    hex_mark=$(printf '0x%x' "$routing_mark")
+
+    # Проверка параметров
+    [ -z "$tproxy_port" ] &&  panic "tproxy_port not set"
+    [ -z "$routing_mark" ] && panic "routing_mark not set"
+    [ -z "$fake_ip_range" ] && panic "routing_mark not set"
+    [ -z "$hex_mark" ] && panic "routing_mark(hex) not set"
+
+    # Очистка таблицы
+    nft delete table inet "$NFT_TABLE_NAME" 2>/dev/null || true
+    nft add table inet "$NFT_TABLE_NAME"
+
+    # Создаем наборы для IP-адресов
+    nft add set inet "$NFT_TABLE_NAME" reserved_ips { type ipv4_addr\; flags interval\; elements = { \
+        0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, \
+        169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, \
+        224.0.0.0/4, 240.0.0.0/4 } \; }
+
+  # 2. Набор для FAKE IP
+    nft add set inet "$NFT_TABLE_NAME" fake_ips { type ipv4_addr\; flags interval\; elements = { $fake_ip_range } \; }
+
+    # Цепочки
+    nft add chain inet "$NFT_TABLE_NAME" mangle '{ type filter hook prerouting priority -150; policy accept; }'
+    nft add chain inet "$NFT_TABLE_NAME" tproxy '{ type filter hook prerouting priority -100; policy accept; }'
+    nft add chain inet "$NFT_TABLE_NAME" output '{ type route hook output priority -150; policy accept; }'
+
+    # ---- MANGLE CHAIN ----
+    nft add rule inet "$NFT_TABLE_NAME" mangle iifname "$ALLOWED_INTERFACES" ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$hex_mark"
+    nft add rule inet "$NFT_TABLE_NAME" mangle ct status dnat return
+    nft add rule inet "$NFT_TABLE_NAME" mangle meta mark "$hex_mark" return
+    nft add rule inet "$NFT_TABLE_NAME" mangle iifname != "$ALLOWED_INTERFACES" return
+    nft add rule inet "$NFT_TABLE_NAME" mangle ip daddr @reserved_ips return
+    nft add rule inet "$NFT_TABLE_NAME" mangle meta l4proto { tcp, udp } meta mark set "$hex_mark"
+
+    # ---- TPROXY CHAIN ----
+    nft add rule inet "$NFT_TABLE_NAME" tproxy meta mark "$hex_mark" tproxy ip to :"$tproxy_port"
+
+    # ---- OUTPUT CHAIN ----
+    nft add rule inet "$NFT_TABLE_NAME" output meta mark "$hex_mark" return
+    nft add rule inet "$NFT_TABLE_NAME" output ct status dnat return
+    nft add rule inet "$NFT_TABLE_NAME" output ip daddr @reserved_ips return
+    nft add rule inet "$NFT_TABLE_NAME" output ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$hex_mark"
+    nft add rule inet "$NFT_TABLE_NAME" output meta l4proto { tcp, udp } meta mark set "$hex_mark"
+
+    # Маршрутизация
+    ip rule del fwmark "$hex_mark" table 100 2>/dev/null || true
+    ip rule add fwmark "$hex_mark" table 100
+    ip route replace local 0.0.0.0/0 dev lo table 100
+
+    log 3 "TPROXY: port=$tproxy_port, fwmark=$hex_mark, table=100"
+}
+
+nft_table_remove() {
+    ip rule del fwmark 0x1 table 100 2>/dev/null || true
+    nft flush table inet "$NFT_TABLE_NAME" 2>/dev/null || true
+    nft delete table inet "$NFT_TABLE_NAME" 2>/dev/null || true
+    ip route flush table 100 2>/dev/null || true
+
+    log 2 "TPROXY Clash rules and routing were removed."
+}
+
+# Thx Podkop, feels so annoyed already by shell scripting
+save_dnsmasq_config() {
+    local key="$1"
+    local backup_key="$2"
+    value=$(uci get "$key" 2>/dev/null)
+
+    if [ -z "$value" ]; then
+        uci set "$backup_key"="unset"
+    else
+        uci set "$backup_key"="$value"
+    fi
+}
+
+dnsmasq_inject() {
+    local dns_listen_port update_dns_server_at_load
+    config_get dns_listen_port proxy dns_listen_port
+    config_get_bool update_dns_server_at_load main update_dns_server_at_load
+
+    if [ "$update_dns_server_at_load" -ne 0 ]; then
+
+        uci -q delete dhcp.@dnsmasq[0].justclash_server
+        for server in $(uci get dhcp.@dnsmasq[0].server 2>/dev/null); do
+            if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
+                log 1 "Dnsmasq save config error: server=127.0.0.1 is already configured. Skip editing DHCP"
+                return 1
+            else
+                uci add_list dhcp.@dnsmasq[0].justclash_server="$server"
+            fi
+        done
+
+        save_dnsmasq_config "dhcp.@dnsmasq[0].noresolv" "dhcp.@dnsmasq[0].justclash_noresolv"
+        save_dnsmasq_config "dhcp.@dnsmasq[0].cachesize" "dhcp.@dnsmasq[0].justclash_cachesize"
+
+        uci add_list dhcp.@dnsmasq[0].server="127.0.0.1#$dns_listen_port"
+        uci set dhcp.@dnsmasq[0].cachesize="0"
+        uci set dhcp.@dnsmasq[0].noresolv="1"
+
+        uci commit dhcp
+        log 2 "DNS settings have been changed"
+        /etc/init.d/dnsmasq restart > /dev/null 2>&1
+	    log 2 "dnsmasq restarted"
+    else
+        log 2 "DNS settings not changed — skipped due to configuration"
+    fi
+
+}
+
+dnsmasq_clean() {
+    local dns_listen_port
+    config_get dns_listen_port proxy dns_listen_port
+    local update_dns_server
+    config_get_bool update_dns_server main update_dns_server
+
+    local bak_cachesize
+    local bak_noresolv
+    local server
+
+    if [ "$update_dns_server" = "1" ]; then
+        bak_cachesize=$(uci get dhcp.@dnsmasq[0].justclash_cachesize 2>/dev/null)
+        if [ -z "$bak_cachesize" ]; then
+            log "dnsmasq revert: cachesize is unset"
+        else
+            uci set dhcp.@dnsmasq[0].cachesize="$bak_cachesize"
+        fi
+
+        bak_noresolv=$(uci get dhcp.@dnsmasq[0].justclash_noresolv 2>/dev/null)
+        if [ "$bak_noresolv" = "unset" ]; then
+            log "dnsmasq revert: noresolv is unset"
+            uci -q delete dhcp.@dnsmasq[0].noresolv
+        else
+            uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
+        fi
+
+        server=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
+        if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
+            uci -q delete dhcp.@dnsmasq[0].server 2>/dev/null
+            for server in $(uci get dhcp.@dnsmasq[0].justclash_server 2>/dev/null); do
+                uci add_list dhcp.@dnsmasq[0].server="$server"
+            done
+            uci delete dhcp.@dnsmasq[0].justclash_server 2>/dev/null
+        fi
+
+        uci commit dhcp
+        log 2 "DNS settings have been restored"
+        /etc/init.d/dnsmasq restart > /dev/null 2>&1
+        log 2 "dnsmasq restarted"
+    else
+        log 2 "DNS settings not changed — skipped due to configuration"
+    fi
+ }
+
+check_for_conflicts() {
+    local installed_pkgs found_patterns pkg pattern
+
+    # For $CONFLICTED_PACKAGES only. We don't need "" to make shell split string
+    # shellcheck disable=SC2086
+    installed_pkgs=$(is_package_installed $CONFLICTED_PACKAGES)
+    if [ -n "$installed_pkgs" ]; then
+        for pkg in $installed_pkgs; do
+            log 1 "Conflicting package detected: $pkg"
+        done
+        panic "Conflicting packages detected, aborting."
+    fi
+
+    # For $CONFLICTED_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string
+    # shellcheck disable=SC2086
+    found_patterns=$(is_pattern_in_file "$CONFLICTED_PATTERNS_FILEPATH" $CONFLICTED_PATTERNS_DHCP_CONFIG)
+    if [ -n "$found_patterns" ]; then
+        for pattern in $found_patterns; do
+            log 1 "Detected https-dns-proxy pattern '$pattern' in /etc/config/dhcp. Please review and edit the configuration file."
+        done
+        panic "Conflicting DHCP patterns detected, aborting."
+    fi
+}
+
+core_complete_config() {
+    if [ -f "${CORE_COMPLETE_YAML}" ]; then
+         cp "$CORE_COMPLETE_YAML" "$OUTPUT_YAML_CONFIG_PATH"
+    else
+        panic "Main config file ${CORE_COMPLETE_YAML} is missing."
+    fi
+}
+
+# core_generate_config() {
+#    local placeholder_list replaced_text is_list_flag config_key config_value
+#
+#    cp "$CORE_YAML_TEMPLATE" "$TMP_YAML_CONFIG_PATH"
+#
+#    placeholder_list=$(grep -oE '_[a-zA-Z0-9_]+_' "$CORE_YAML_TEMPLATE" | sort -u)
+#
+#    for placeholder in $placeholder_list; do
+#        config_key=$(echo "$placeholder" | sed 's/^_//' | sed 's/_$//')
+#
+#        replaced_text=""
+#        is_list_flag=false
+#
+#        append_item() {
+#            is_list_flag=true
+#            replaced_text="$replaced_text  - $1\n"
+#        }
+#
+#        config_list_foreach proxy "$config_key" append_item
+#
+#        if $is_list_flag; then
+#            replaced_text=$(printf "%b" "$replaced_text" | sed '$ d')
+#            sed -i "s|$placeholder|$replaced_text|g" "$TMP_YAML_CONFIG_PATH"
+#        else
+#           config_value=""
+#            config_get config_value proxy "$config_key"
+#            sed -i "s|$placeholder|$config_value|g" "$TMP_YAML_CONFIG_PATH"
+#        fi
+#    done
+#
+#    mv "$TMP_YAML_CONFIG_PATH" "$OUTPUT_YAML_CONFIG_PATH"
+#}
+
+core_prepare_workdir() {
+    if [ -d "$CORE_WORKDIR_PATH" ]; then
+        [ -f "$OUTPUT_YAML_CONFIG_PATH" ] && rm -f "$OUTPUT_YAML_CONFIG_PATH"
+        [ -f "$TMP_YAML_CONFIG_PATH" ] && rm -f "$TMP_YAML_CONFIG_PATH"
+    else
+        log 1 "Generating workdir ${CORE_WORKDIR_PATH}"
+        mkdir -p "$CORE_WORKDIR_PATH"
+    fi
+}
+
+# TODO: Remove unused archs
+detect_arch() {
+    local arch_raw
+    arch_raw=$(uname -m)
+
+    case "$arch_raw" in
+        x86_64) echo "amd64";;
+        aarch64) echo "arm64" ;;
+        armv5*) echo "armv5" ;;
+        armv6*) echo "armv6" ;;
+        armv7*) echo "armv7" ;;  # Расширено для всех armv7
+        mips*) echo "mips" ;;    # Объединено для всех MIPS
+        riscv64) echo "riscv64" ;;
+        i[3-6]86) echo "i386" ;; # Добавлена поддержка x86 32-bit
+        *)
+            log 2 "Unknown or unsupported architecture: $arch_raw" "❌" >&2
+            return 1
+            ;;
+    esac
+}
+
+get_latest_version() {
+    local latest_url latest_ver
+    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$CORE_LATEST_RELEASE_URL")
+    latest_ver=$(curl -sL "$latest_url/version.txt" | tr -d '\r\n')
+    echo "$latest_ver"
+}
+
+core_download() {
+    local arch version latest_url tmp_dir file_name base_url param_tag param_version
+    param_tag="$2"
+    param_version="$1"
+
+    log 2 "Downloading Mihomo binary..." "📥"
+
+    arch=$(detect_arch) || return 1
+
+    log 2 "Detected architecture: $arch" "✅"
+
+    mkdir -p "${CORE_WORKDIR_PATH}"
+
+    if [ -n "$param_version" ]; then
+        file_name="mihomo-linux-${arch}-${param_version}.gz"
+        base_url="${CORE_RELEASE_URL_PARTIAL}/${param_version}/${file_name}"
+    else
+        tmp=$(get_latest_version)
+        version=$(echo "$tmp" | sed -n 2p)
+        log 2 "Version detected: $version" "📦"
+        file_name="mihomo-linux-${arch}-${version}.gz"
+        base_url="${CORE_RELEASE_URL_PARTIAL}/${version}/${file_name}"
+    fi
+
+    log 2 "Downloading mihomo binary" "⬇️"
+    curl -sL -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
+        panic "Failed to download file." "❌" >&2
+    }
+
+    log 2 "Extracting to $CORE_PATH" "⬇️"
+    gunzip -c "${CORE_WORKDIR_PATH}/mihomo.gz" > "$CORE_PATH" || {
+        panic "Failed to extract file." "❌" >&2
+    }
+
+    chmod +x "$CORE_PATH"
+
+    log 2 "Cleaning up temporary files" "🧹"
+    rm -f "${CORE_WORKDIR_PATH}/mihomo.gz"
+
+    log 2 "Mihomo installed at $CORE_PATH" "🚀"
+}
+
+core_update() {
+    local cur_ver latest_ver tmp latest_tag
+
+    log 2 "Checking for Mihomo updates..." "🔄"
+
+    cur_ver=$(info_mihomo)
+    tmp=$(get_latest_version)
+    latest_tag=$(echo "$tmp" | sed -n 1p)
+    latest_ver=$(echo "$tmp" | sed -n 2p)
+
+    if [ -z "$latest_tag" ] || [ -z "$latest_ver" ]; then
+        print_red "Error happened when trying to receive latest version data."
+        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+        panic
+    fi
+
+    if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
+        log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
+        core_download "${latest_ver}" "${latest_tag}" || return 1
+        send_telegram "Mihomo core binary was missing. Installed ${latest_ver}"
+        return 0
+    fi
+
+    log 2 "Current Mihomo version: $cur_ver"
+    log 2 "Latest Mihomo version: $latest_ver"
+
+    if [ "$cur_ver" != "$latest_ver" ]; then
+        log 2 "Updating Mihomo to version $latest_ver" "⬆️"
+        core_download "${latest_ver}" "${latest_tag}" || return 1
+        send_telegram "Mihomo core binary was updated. Version: ${cur_ver} -> ${latest_ver}"
+
+    else
+        log 2 "Mihomo is already up-to-date." "✅"
+    fi
+}
+
+core_remove() {
+    if [ ! -x "$CORE_PATH" ]; then
+        log 1 "Mihomo is not installed." "⚠️"
+        return 1
+    else
+        rm -f "$CORE_PATH"
+        log 2 "Mihomo is removed." "✅"
+        return 0
+    fi
+}
+
+send_telegram() {
+    local message="$1"
+    local token chat_id
+
+    config_get token settings telegram_bot_token
+    config_get chat_id settings telegram_chat_id
+
+    if [ -z "$token" ] || [ -z "$chat_id" ]; then
+        echo "Telegram: bot token or chat ID is not configured" "⚠️"
+        return 1
+    fi
+
+    response=$(curl -s -w "\n%{http_code}" -X POST "https://api.telegram.org/bot${token}/sendMessage" \
+        -d chat_id="${chat_id}" \
+        -d text="$message" \
+        -d parse_mode="HTML" \
+        -d disable_notification=true)
+
+    local curl_exit=$?
+    http_code=$(echo "$response" | tail -n1)
+
+    if [ "$curl_exit" -ne 0 ]; then
+        log 1 "Telegram: network error, curl exited with code $curl_exit" "❌"
+        return 1
+    fi
+
+    if [ "$http_code" != "200" ]; then
+        log 1 "Telegram: failed to send message (HTTP $http_code)" "❌"
+        return 1
+    fi
+
+    return 0
+}
+
+core_update_cron_check() {
+    if grep -q "/usr/bin/justclash core_update" /etc/crontabs/root; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+core_update_cron_add() {
+    local mihomo_cron_update_string
+    if core_update_cron_check > /dev/null; then
+        log 1 "Core autoupdate cron job already exists." "ℹ️"
+        return 0
+    fi
+
+    config_get mihomo_cron_update_string settings mihomo_cron_update_string
+    echo "${mihomo_cron_update_string} /usr/bin/justclash core_update" >> /etc/crontabs/root
+    if /etc/init.d/cron enabled; then
+        /etc/init.d/cron restart
+        log 2 "Cron job added and service restarted" "✅"
+    else
+        log 2 "Cron job added (service not enabled)" "ℹ️"
+    fi
+    log 2 "Core autoupdate cron job added." "✅"
+}
+
+core_update_cron_remove() {
+    if core_update_cron_check > /dev/null; then
+        sed -i '\|/usr/bin/justclash core_update|d' /etc/crontabs/root
+        if /etc/init.d/cron enabled; then
+            /etc/init.d/cron restart
+            log 2 "Cron job added and service restarted" "✅"
+        else
+            log 2 "Cron job added (service not enabled)" "ℹ️"
+        fi
+        log 2 "Core autoupdate cron job removed." "🗑️"
+    else
+        log 2 "Core autoupdate cron job not found." "ℹ️"
+    fi
+}
+
+# -----
+core_autorestart_cron_check() {
+    if grep -q "/usr/bin/justclash reload" /etc/crontabs/root; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+core_autorestart_cron_add() {
+    local mihomo_cron_autorestart_string
+    if core_autorestart_cron_check > /dev/null; then
+        log 1 "Core autoupdate cron job already exists." "ℹ️"
+        return 0
+    fi
+
+    config_get mihomo_cron_autorestart_string settings mihomo_cron_autorestart_string
+    echo "${mihomo_cron_autorestart_string} /usr/bin/justclash reload" >> /etc/crontabs/root
+    if /etc/init.d/cron enabled; then
+        /etc/init.d/cron restart
+        log 2 "Cron job added and service restarted" "✅"
+    else
+        log 2 "Cron job added (service not enabled)" "ℹ️"
+    fi
+    log 2 "Core autoupdate cron job added." "✅"
+}
+
+core_autorestart_cron_remove() {
+    if core_autorestart_cron_check > /dev/null; then
+        sed -i '\|/usr/bin/justclash reload|d' /etc/crontabs/root
+        if /etc/init.d/cron enabled; then
+            /etc/init.d/cron restart
+            log 2 "Cron job added and service restarted" "✅"
+        else
+            log 2 "Cron job added (service not enabled)" "ℹ️"
+        fi
+        log 2 "Core autoupdate cron job removed." "🗑️"
+    else
+        log 2 "Core autoupdate cron job not found." "ℹ️"
+    fi
+}
+
+#---
+
+help() {
+    cat << EOF
+Usage: justclash <command> [args]
+
+Service Management:
+  start                   Start the JustClash service.
+  start_with_config       Start JustClash with complete config.yaml.
+  stop                    Stop the JustClash service.
+  reload|reload           Restart the service.
+  reload_with_config      Restart the service with complete config.yaml.
+
+Mihomo management Commands:
+  core_download                   Download and install the latest Mihomo binary for your device architecture
+  core_update                     Check current version and update Mihomo if a newer version is available
+  core_remove                     Remove the currently installed Mihomo binary
+
+  core_update_cron_check          Check if a scheduled Mihomo core auto-update task exists
+  core_update_cron_add            Add a scheduled task to periodically check and update Mihomo core
+  core_update_cron_remove         Remove the scheduled Mihomo core auto-update task
+
+  core_autorestart_cron_check     Check if a scheduled Mihomo auto-restart task exists
+  core_autorestart_cron_add       Add a scheduled task to automatically restart Mihomo periodically
+  core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task
+
+Information Commands:
+  report                  Show report about configuration.
+  info_autostart          Show if JustClash autostart is enabled.
+  info_device             Show device model.
+  info_openwrt            Show OpenWrt version.
+  info_core               Show Mihomo core version.
+  info_package            Show JustClash package version.
+  info_luci               Show JustClash LuCI app version.
+  info_conns_console_api  Show Mihomo connections via ext. controller API.
+  info_conns_console      Show Mihomo connections.
+
+Diagnostics:
+  diag_nft                Run nftables diagnostic.
+  diag_fake_ip
+  diag_github
+
+Logs:
+  logs [N]                Show last N lines of system logs (default all).
+
+Help:
+  help, ?, command        Show this help message.
+
+Examples:
+  justclash start
+  justclash report
+  justclash logs 50
+
+EOF
+}
+
+case "$1" in
+    start|run)
+        start
+        ;;
+    start_with_config)
+        start_with_config
+        ;;
+    stop)
+        stop
+        ;;
+    reload|restart)
+        restart
+        ;;
+    reload_with_config)
+        restart_with_config
+        ;;
+    report|check)
+        report
+        ;;
+    core_update)
+        core_update
+        ;;
+    core_download)
+        core_download
+        ;;
+    core_remove)
+        core_remove
+        ;;
+    core_update_cron_check)
+        core_update_cron_check
+        ;;
+    core_update_cron_add)
+        core_update_cron_add
+        ;;
+    core_update_cron_remove)
+        core_update_cron_remove
+        ;;
+    core_autorestart_cron_check)
+        core_autorestart_cron_check
+        ;;
+    core_autorestart_cron_add)
+        core_autorestart_cron_add
+        ;;
+    core_autorestart_cron_remove)
+        core_autorestart_cron_remove
+        ;;
+    logs|systemlogs)
+        case "$2" in
+            *[!0-9]* | '')
+                systemlogs
+                ;;
+            *)
+                systemlogs "$2"
+                ;;
+        esac
+        ;;
+    info_autostart)
+        info_autostart
+        ;;
+    info_device)
+        info_device
+        ;;
+    info_openwrt)
+        info_openwrt
+        ;;
+    info_core)
+        info_mihomo
+        ;;
+    info_package)
+        info_package
+        ;;
+    info_luci)
+        info_luci
+        ;;
+    info_conns_console_api)
+        info_conns_console_api
+        ;;
+    info_conns_console)
+        info_conns_console
+        ;;
+    diag_nft)
+        diag_nft
+        ;;
+    diag_dns|diag_fake_ip)
+        diag_dns
+        ;;
+    help|?|command)
+        help
+        ;;
+    *)
+        clog 2 "Unknown command: $1"
+        clog 2 "Type 'justclash help' for a list of available commands."
+        exit 1
+        ;;
+esac
