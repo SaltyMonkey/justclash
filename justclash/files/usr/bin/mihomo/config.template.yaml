@@ -1,0 +1,73 @@
+mode: rule
+ipv6: false
+log-level: _log_level_
+allow-lan: true
+tproxy-port: _tproxy_port_
+mixed-port: _mixed_port_
+unified-delay: _unified_delay_
+tcp-concurrent: _tcp_concurrent_
+external-controller: 127.0.0.1:_external_controller_port_
+routing-mark: _routing_mark_
+global-client-fingerprint: _global_client_fingerprint_
+
+keep-alive-idle: _keep_alive_idle_
+keep-alive-interval: _keep_alive_interval_
+
+profile:
+  store-selected: _profile_store_selected_
+  store-fake-ip: _profile_store_fake_ip_
+  tracing: false
+
+ntp:
+  enable: true
+  write-to-system: _core_ntp_write_system_
+  server: _core_ntp_server_
+  port: _core_ntp_port_
+  interval: _core_ntp_interval_
+
+dns:
+  enable: true
+  listen: 0.0.0.0:_dns_listen_port_
+  ipv6: false
+  use-hosts: _use_hosts_
+  use-system-hosts: _use_system_hosts_
+  enhanced-mode: fake-ip
+  fake-ip-range:
+    _fake_ip_range_
+  default-nameserver:
+    _default_nameserver_
+  nameserver:
+    _nameserver_
+  proxy-server-nameserver:
+    _proxy_server_nameserver_
+  direct-nameserver:
+    _direct_nameserver_
+  respect-rules: true
+  fake-ip-filter-mode: blacklist
+  fake-ip-filter:
+    _ignore_fake_ip_domains_
+
+sniffer:
+  enable: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  skip-domain:
+    _ignore_to_sniff_domains_
+
+proxies:
+  _proxies_
+
+proxy-groups:
+  _proxy_groups_
+
+rule-providers:
+  _rule_providers_
+
+rules:
+  _rules_
