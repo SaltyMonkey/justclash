@@ -245,16 +245,12 @@ detect_arch() {
         aarch64) echo "arm64" ;;
         armv5*) echo "armv5" ;;
         armv6*) echo "armv6" ;;
-        armv7l) echo "armv7" ;;
-        arm*) echo "armv6" ;;
-        mips64) echo "mips64" ;;
-        mips64el | mips64le) echo "mips64le" ;;
-        loong64) echo "loong64-abi2" ;;
+        armv7*) echo "armv7" ;;  # Расширено для всех armv7
+        mips*) echo "mips" ;;    # Объединено для всех MIPS
         riscv64) echo "riscv64" ;;
-        ppc64le) echo "ppc64le" ;;
-        s390x) echo "s390x" ;;
+        i[3-6]86) echo "i386" ;; # Добавлена поддержка x86 32-bit
         *)
-            print_red "Unknown architecture: $arch_raw"
+            log 2 "Unknown or unsupported architecture: $arch_raw" "❌" >&2
             return 1
             ;;
     esac
