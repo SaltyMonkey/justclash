@@ -12,11 +12,12 @@ PKG_LICENSE:=GPL-2.0-or-later
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE:=Mihomo core wrapper and manager
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=JustClash
   DEPENDS:=+nftables +kmod-nf-conntrack +curl +kmod-nft-tproxy
   CONFLICTS:=podkop iptables-mod-extra https-dns-proxy
+  TITLE:=Clash routing app
   PKGARCH:=all
 endef
 
@@ -53,9 +54,7 @@ define Package/$(PKG_NAME)/prerm
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	INITD_PATH="/etc/init.d/justclash"
-	${INITD_PATH} disable
-	${INITD_PATH} stop
+	/usr/bin/justclash stop
 fi
 exit 0
 endef
