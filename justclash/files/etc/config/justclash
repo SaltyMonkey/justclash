@@ -4,10 +4,8 @@ config main "settings"
 	option update_dns_server_at_load "1"
  	option update_nft_tables_at_start "1"
 	option justclash_autoupdate "check"
-	option justclash_autoupdate_list "no check checkandupdate"
 
 	option mihomo_autoupdate "check"
-	option mihomo_autoupdate_list "no check checkandupdate"
 	option mihomo_autorestart "0"
 
 	option justclash_cron_update_telegram_notify "0"
