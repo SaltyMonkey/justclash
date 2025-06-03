@@ -121,7 +121,7 @@ config proxy "proxy"
 	list ignore_to_sniff_domains "+.minobr.ru"
 	list ignore_to_sniff_domains "+.rosstat.gov.ru"
 
-config proxy
+config proxies
     option name "proxyname"
     option proxy_link "vless://"
     option proxy_link "direct://<interface-name>"
