@@ -570,7 +570,7 @@ nft_table_add() {
     # Проверка параметров
     [ -z "$tproxy_port" ] &&  panic "tproxy_port not set"
     [ -z "$routing_mark" ] && panic "routing_mark not set"
-    [ -z "$fake_ip_range" ] && panic "routing_mark not set"
+    [ -z "$fake_ip_range" ] && panic "fake ip range not set"
     [ -z "$hex_mark" ] && panic "routing_mark(hex) not set"
 
     # Очистка таблицы
