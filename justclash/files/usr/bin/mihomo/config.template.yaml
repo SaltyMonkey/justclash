@@ -1,14 +1,17 @@
 mode: rule
 ipv6: false
 log-level: _log_level_
-allow-lan: true
 tproxy-port: _tproxy_port_
 mixed-port: _mixed_port_
+allow-lan: _allow_lan_
 unified-delay: _unified_delay_
 tcp-concurrent: _tcp_concurrent_
 external-controller: 127.0.0.1:_external_controller_port_
 routing-mark: _routing_mark_
 global-client-fingerprint: _global_client_fingerprint_
+
+find-process-mode: off
+geodata-mode: false
 
 keep-alive-idle: _keep_alive_idle_
 keep-alive-interval: _keep_alive_interval_
@@ -19,7 +22,7 @@ profile:
   tracing: false
 
 ntp:
-  enable: true
+  enable: _core_ntp_enabled_
   write-to-system: _core_ntp_write_system_
   server: _core_ntp_server_
   port: _core_ntp_port_
@@ -42,6 +45,7 @@ dns:
     _proxy_server_nameserver_
   direct-nameserver:
     _direct_nameserver_
+  prefer-h3: true
   respect-rules: true
   fake-ip-filter-mode: blacklist
   fake-ip-filter:
