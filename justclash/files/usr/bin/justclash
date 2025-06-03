@@ -40,10 +40,6 @@ CONFLICTED_PACKAGES="podkop iptables-mod-extra https-dns-proxy"
 CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 
-# === LOG HELPERS ===
-ANSI_RESET="\033[0m"
-ANSI_TIMESTAMP="\033[0;36m"
-
 is_installed() {
     local pkg=$1
     if command -v apk >/dev/null 2>&1; then
@@ -79,25 +75,23 @@ get_log_level_name() {
     esac
 }
 
-get_log_color() {
+get_log_level_syslog() {
     case "$1" in
-        0) echo "\033[0;31m" ;;  # Red
-        1) echo "\033[0;33m" ;;  # Yellow
-        2) echo "\033[0;32m" ;;  # Green
-        3) echo "\033[0;34m" ;;  # Blue
-        *) echo "\033[0;35m" ;;  # Magenta (fallback)
+        0) echo "user.err" ;;
+        1) echo "user.warning" ;;
+        2) echo "user.info" ;;
+        3) echo "user.debug" ;;  # Убрал лишний пробел
+        *) echo "user.debug" ;;
     esac
 }
 
 syslog() {
     local level="$1"
     local message="$2"
-    local timestamp=""
-    local level_str=""
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    level_str=$(get_log_level_name "$level")
+    local level_syslog=""
+    level_syslog=$(get_log_level_syslog "$level")
 
-    logger -t "justclash" "$timestamp [$level_str] $message"
+    logger -p "$level_syslog" -t "justclash" "$message"
 }
 
 clog() {
@@ -105,15 +99,13 @@ clog() {
     local message="$2"
     local timestamp=""
     local level_str=""
-    local color_str=""
 
     [ $PROCD_MODE -eq 1 ] && return
 
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     level_str=$(get_log_level_name "$level")
-    color_str=$(get_log_color "$level")
 
-    printf "%s[%s]%s %s[%s]%s %s\n" "$ANSI_TIMESTAMP" "$timestamp" "$ANSI_RESET" "$color_str" "$level_str" "$ANSI_RESET" "$message"
+    printf "[%s] [%s] %s\n" "$timestamp" "$level_str" "$message"
 }
 
 log() {
@@ -121,12 +113,9 @@ log() {
     local message="$2"
     local emoji="${3:-}"
 
-    if [ $PROCD_MODE -eq 1 ]; then
-        syslog "$level" "$message"
-        return
-    fi
-
     syslog "$level" "$message"
+
+    [ $PROCD_MODE -eq 1 ] && return
 
     if [ -n "$emoji" ]; then
         clog "$level" "${emoji} ${message}"
