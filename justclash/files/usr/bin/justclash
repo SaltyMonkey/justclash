@@ -738,38 +738,63 @@ core_complete_config() {
     fi
 }
 
-# core_generate_config() {
-#    local placeholder_list replaced_text is_list_flag config_key config_value
-#
-#    cp "$CORE_YAML_TEMPLATE" "$TMP_YAML_CONFIG_PATH"
-#
-#    placeholder_list=$(grep -oE '_[a-zA-Z0-9_]+_' "$CORE_YAML_TEMPLATE" | sort -u)
-#
-#    for placeholder in $placeholder_list; do
-#        config_key=$(echo "$placeholder" | sed 's/^_//' | sed 's/_$//')
-#
-#        replaced_text=""
-#        is_list_flag=false
-#
-#        append_item() {
-#            is_list_flag=true
-#            replaced_text="$replaced_text  - $1\n"
-#        }
-#
-#        config_list_foreach proxy "$config_key" append_item
-#
-#        if $is_list_flag; then
-#            replaced_text=$(printf "%b" "$replaced_text" | sed '$ d')
-#            sed -i "s|$placeholder|$replaced_text|g" "$TMP_YAML_CONFIG_PATH"
-#        else
-#           config_value=""
-#            config_get config_value proxy "$config_key"
-#            sed -i "s|$placeholder|$config_value|g" "$TMP_YAML_CONFIG_PATH"
-#        fi
-#    done
-#
-#    mv "$TMP_YAML_CONFIG_PATH" "$OUTPUT_YAML_CONFIG_PATH"
-#}
+core_generate_config() {
+    cp "$CORE_YAML_TEMPLATE" "$TMP_YAML_CONFIG_PATH"
+
+    # find all placeholders
+    local placeholder_list
+    placeholder_list=$(grep -oE '_[a-zA-Z0-9_]+_' "$CORE_YAML_TEMPLATE" | sort -u)
+
+    for placeholder in $placeholder_list; do
+        # get placeholder keys
+        local config_key="${placeholder#_}"
+        config_key="${config_key%_}"
+
+        # check
+        local is_list=0
+        local items=""
+
+        # handler for list
+        _process_item() {
+            is_list=1
+            items="${items}${items:+$'\n'}  - $1"
+        }
+
+        # is list -> config_list_foreach
+        config_list_foreach proxy "$config_key" _process_item
+
+        if [ "$is_list" -eq 1 ]; then
+            #yaml magic with sed
+            awk -v placeholder="$placeholder" -v new_content="$items" '
+                BEGIN { replaced = 0 }
+                $0 ~ placeholder {
+                    if (!replaced) {
+                        print new_content
+                        replaced = 1
+                        next
+                    }
+                }
+                { print }
+            ' "$TMP_YAML_CONFIG_PATH" > "${TMP_YAML_CONFIG_PATH}.tmp" && \
+            mv "${TMP_YAML_CONFIG_PATH}.tmp" "$TMP_YAML_CONFIG_PATH"
+        else
+            # simple value
+            local config_value
+            config_get config_value proxy "$config_key"
+
+            # sed magic
+            local safe_value=$(printf '%s\n' "$config_value" |
+                sed -e 's/[\/&]/\\&/g' -e 's/$/\\/' | tr -d '\n')
+            safe_value="${safe_value%\\}"
+
+            # Change placeholder
+            sed -i "s|$placeholder|$safe_value|g" "$TMP_YAML_CONFIG_PATH"
+        fi
+    done
+
+    # finalizing
+    mv "$TMP_YAML_CONFIG_PATH" "$OUTPUT_YAML_CONFIG_PATH"
+}
 
 core_prepare_workdir() {
     if [ -d "$CORE_WORKDIR_PATH" ]; then
