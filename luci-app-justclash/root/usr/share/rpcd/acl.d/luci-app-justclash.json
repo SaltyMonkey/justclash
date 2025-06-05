@@ -1,0 +1,23 @@
+{
+    "luci-app-justclash": {
+        "description": "Grant UCI and RPC access to LuCI app justclash",
+        "read": {
+            "file": {
+                "/etc/init.d/justclash": [
+                    "exec"
+                ],
+                "/usr/bin/justclash": [
+                    "exec"
+                ]
+            },
+            "uci": [
+                "justclash"
+            ]
+        },
+        "write": {
+            "uci": [
+                "justclash"
+            ]
+        }
+    }
+}
