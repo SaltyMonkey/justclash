@@ -2,8 +2,9 @@
 
 # directive for init.d from openwrt -> unused in code
 # shellcheck disable=SC2034
-START=99
 USE_PROCD=1
+START=99
+STOP=01
 PIDFILE="/var/run/justclash.pid"
 PROG="/usr/bin/justclash"
 
