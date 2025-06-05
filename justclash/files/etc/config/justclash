@@ -1,5 +1,4 @@
 config main "settings"
-	option autostart "0"
 	option forcefully_update_ntp_at_load "1"
 	option update_dns_server_at_load "1"
 	option update_nft_tables_at_start "1"
@@ -124,8 +123,6 @@ config proxies
     option proxy_link "vless://"
     option proxy_link "direct://<interface-name>"
 
-    option custom_proxy_object ""
-
     option handle_utp_when_possible "0"
     list additional_domain_route ""
     list additional_domain_route ""
@@ -155,8 +152,6 @@ config proxy_group
     list proxy_link "mieru://"
     list proxy_link "ssh://"
     list proxy_link "awg://"
-
-    option custom_proxy_object ""
 
     list use_with_list ""
     list use_with_list ""

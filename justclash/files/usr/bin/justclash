@@ -180,15 +180,7 @@ ntp_force_sync() {
 
 # === MAIN FUNCTIONS ===
 start() {
-    local autostart
-    config_get_bool autostart main autostart
-
     log 2 "Initializing Justclash service..." "⏳"
-
-    if [ "$PROCD_MODE" -eq 1 ] && ! autostart; then
-        log 2 "Autostart is disabled..." "⏳"
-        exit 0
-    fi
 
     log 2 "Checking for conflicts" "🐞"
     check_for_conflicts
@@ -200,6 +192,9 @@ start() {
 
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
+
+    log 2 "Generating configuration..." "📄"
+    core_generate_yaml
 
     log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
     nft_table_add
@@ -227,8 +222,8 @@ start_with_config() {
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
 
-    log 2 "YAML config job" "📄"
-    core_complete_config
+    log 2 "Generating configuration..." "📄"
+    core_generate_yaml
 
     log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
     nft_table_add
@@ -263,14 +258,6 @@ restart_with_config() {
     stop
     sleep 1
     start_with_config
-}
-
-info_autostart() {
- if [ -x /etc/rc.d/S99justclash ]; then
-       echo "Yes"
-    else
-       echo "No"
-    fi
 }
 
 info_device() {
@@ -376,14 +363,13 @@ systemlogs() {
 }
 
 report() {
-    local autostart device openwrt mihomo pkg luci timestamp
+    local device openwrt mihomo pkg luci timestamp
     local forcefully_update_ntp_at_load update_dns_server update_nft_tables
     local log_level tproxy_port unified_delay
     local routing_mark tcp_concurrent external_controller_port
     local keep_alive_idle keep_alive_interval
     local dns_listen_port use_hosts use_system_hosts fake_ip_range
 
-    autostart=$(info_autostart)
     device=$(info_device)
     openwrt=$(info_openwrt)
     mihomo=$(info_mihomo)
@@ -392,7 +378,6 @@ report() {
     timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
     config_load justclash
-    config_get autostart settings autostart
     config_get forcefully_update_ntp_at_load settings forcefully_update_ntp_at_load
     config_get update_dns_server settings update_dns_server
     config_get update_nft_tables settings update_nft_tables
@@ -418,7 +403,6 @@ report() {
     echo "$border"
     printf "│ %-28s │ %-28s │\n" "Field" "Value"
     echo "$separator"
-    printf "│ %-28s │ %-28s │\n" "Autostart Enabled" "$(bool_to_yesno "$autostart")"
     printf "│ %-28s │ %-28s │\n" "Device Model" "$device"
     printf "│ %-28s │ %-28s │\n" "OpenWrt Version" "$openwrt"
     printf "│ %-28s │ %-28s │\n" "Mihomo Core Version" "$mihomo"
@@ -431,7 +415,6 @@ report() {
     echo
     echo "🔧 JustClash Settings"
     echo "$border"
-    printf "│ %-28s │ %-28s │\n" "Start on Boot" "$(bool_to_yesno "$autostart")"
     printf "│ %-28s │ %-28s │\n" "Force NTP Sync at Start" "$(bool_to_yesno "$forcefully_update_ntp_at_load")"
     printf "│ %-28s │ %-28s │\n" "Update DNS on Start" "$(bool_to_yesno "$update_dns_server")"
     printf "│ %-28s │ %-28s │\n" "Update NFT Tables" "$(bool_to_yesno "$update_nft_tables")"
@@ -744,16 +727,20 @@ generate_yaml_array() {
     result=""
 
     _append_line() {
+        # shellcheck disable=SC2317
         local val="$1"
+        # shellcheck disable=SC2317
         result="${result}${prefix}${val}\n"
     }
 
     _collect_section() {
+        # shellcheck disable=SC2317
         config_list_foreach "$1" "$list_name" _append_line
     }
 
     config_foreach _collect_section "$section_type"
 
+    # shellcheck disable=SC3036
     echo -e "$result"
 }
 
@@ -762,7 +749,7 @@ core_generate_yaml() {
     local log_level tproxy_port unified_delay routing_mark
     local tcp_concurrent external_controller_port global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
-    local core_ntp_enabled core_ntp_server core_ntp_port  core_ntp_write_system
+    local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port  core_ntp_write_system
     local dns_listen_port use_hosts use_system_hosts fake_ip_range
 
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver ignore_fake_ip_domains ignore_to_sniff_domains
@@ -797,7 +784,7 @@ core_generate_yaml() {
     ignore_fake_ip_domains=$(generate_yaml_array proxy ignore_fake_ip_domains)
     ignore_to_sniff_domains=$(generate_yaml_array proxy ignore_to_sniff_domains)
 
-    cat <<EOF > /tmp/output.yaml
+    cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
 ipv6: false
 log-level: $log_level
@@ -1136,7 +1123,6 @@ Mihomo management Commands:
 
 Information Commands:
   report                  Show report about configuration.
-  info_autostart          Show if JustClash autostart is enabled.
   info_device             Show device model.
   info_openwrt            Show OpenWrt version.
   info_core               Show Mihomo core version.
@@ -1219,9 +1205,6 @@ case "$1" in
                 systemlogs "$2"
                 ;;
         esac
-        ;;
-    info_autostart)
-        info_autostart
         ;;
     info_device)
         info_device
