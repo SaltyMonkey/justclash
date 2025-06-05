@@ -2,7 +2,9 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version (kind of similar)
 # shellcheck shell=dash
+# shellcheck disable=SC1091
 [ -r /lib/functions.sh ] && . /lib/functions.sh
+# shellcheck disable=SC1091
 [ -r /lib/config/uci.sh ] && . /lib/config/uci.sh
 
 PROCD_MODE=0
@@ -42,7 +44,7 @@ CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 is_installed() {
     local pkg=$1
     if command -v apk >/dev/null 2>&1; then
-        apk list --installed "${pkg}" | grep -q "^${pkg}$"
+        apk list --installed "$pkg" | grep -q "^${pkg}$"
     else
         opkg list-installed | awk '{print $1}'
     fi
@@ -79,7 +81,7 @@ get_log_level_syslog() {
         0) echo "user.err" ;;
         1) echo "user.warning" ;;
         2) echo "user.info" ;;
-        3) echo "user.debug" ;;  # Убрал лишний пробел
+        3) echo "user.debug" ;;
         *) echo "user.debug" ;;
     esac
 }
@@ -117,7 +119,7 @@ log() {
     [ $PROCD_MODE -eq 1 ] && return
 
     if [ -n "$emoji" ]; then
-        clog "$level" "${emoji} ${message}"
+        clog "$level" "$emoji ${message}"
     else
         clog "$level" "$message"
     fi
@@ -261,17 +263,17 @@ restart_with_config() {
 }
 
 info_device() {
-   cat /tmp/sysinfo/model || echo "${NO_DATA_STRING}"
+   cat /tmp/sysinfo/model || echo "$NO_DATA_STRING"
 }
 
 #FIXME: Fix incorrect operand ||
 info_openwrt() {
-   grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "${NO_DATA_STRING}"
+   grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "$NO_DATA_STRING"
 }
 
 info_mihomo() {
     if [ ! -x "$CORE_PATH" ]; then
-        echo "${NO_DATA_STRING}"
+        echo "$NO_DATA_STRING"
     else
        "$CORE_PATH" -v 2>/dev/null | awk '{ print $3 }'
     fi
@@ -280,13 +282,13 @@ info_mihomo() {
 info_package() {
     local version
     version=$(opkg list-installed justclash | awk '{print $3}')
-    echo "$version" || echo "${NO_DATA_STRING}"
+    echo "$version" || echo "$NO_DATA_STRING"
 }
 
 info_luci() {
     local version
     version=$(opkg list-installed luci-app-justclash | awk '{print $3}')
-    echo "$version" || echo "${NO_DATA_STRING}"
+    echo "$version" || echo "$NO_DATA_STRING"
 }
 
 info_conns_console_api() {
@@ -301,7 +303,7 @@ info_conns_console_api() {
     # response=$(curl -s $AUTH "$URL")
     response=$(curl -s "$url")
 
-    if is_process_running "${CORE_BIN_NAME}"; then
+    if is_process_running "$CORE_BIN_NAME"; then
     echo "$response" | grep -q '"connections":null' && {
         echo "No connections"
         return 1
@@ -446,9 +448,9 @@ diag_nft() {
         return 1
     fi
 
-    clog 2 "Verifying existence of NFTables table '${NFT_TABLE_NAME}'..."
+    clog 2 "Verifying existence of NFTables table '$NFT_TABLE_NAME'..."
     if ! nft list table inet "$NFT_TABLE_NAME" >/dev/null 2>&1; then
-        clog 0 "Table '${NFT_TABLE_NAME}' not found. Please create the required NFTables table."
+        clog 0 "Table '$NFT_TABLE_NAME' not found. Please create the required NFTables table."
         return 1
     fi
 
@@ -467,7 +469,7 @@ diag_dns() {
     config_get dns_listen_port proxy dns_listen_port
 
     log 2 "Testing DNS resolution..."
-    if ! nslookup openwrt.org 127.0.0.1:$dns_listen_port >/dev/null 2>&1; then
+    if ! nslookup openwrt.org 127.0.0.1:"$dns_listen_port" >/dev/null 2>&1; then
         log 1 "IPv4 DNS query failed" "❌"
     else
         log 2 "IPv4 DNS query successful" "✅"
@@ -490,7 +492,7 @@ start_core() {
     log 2 "Starting Mihomo core..."
     # Запускаем процесс в фоне с сохранением PID
     (
-        echo $$ > "${PIDFILE}"
+        echo $$ > "$PIDFILE"
         exec "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | logger -t justclash
     ) &
 }
@@ -499,8 +501,8 @@ start_core() {
 stop_core() {
     log 2 "Stopping Mihomo core..."
     local pid
-    if [ -f ${PIDFILE} ]; then
-        pid=$(cat ${PIDFILE})
+    if [ -f "$PIDFILE" ]; then
+        pid=$(cat "$PIDFILE")
         log 2 "Stopping core process (PID $pid)"
 
         kill -TERM "$pid" 2>/dev/null
@@ -516,7 +518,7 @@ stop_core() {
             kill -9 "$pid"
         fi
 
-        rm -f ${PIDFILE}
+        rm -f "$PIDFILE"
         log 2 "Core process stopped" "✅"
     else
         log 1 "PID file not found, using fallback stop method"
@@ -711,10 +713,10 @@ check_for_conflicts() {
 }
 
 core_complete_config() {
-    if [ -f "${CORE_COMPLETE_YAML}" ]; then
+    if [ -f "$CORE_COMPLETE_YAML" ]; then
          cp "$CORE_COMPLETE_YAML" "$OUTPUT_YAML_CONFIG_PATH"
     else
-        panic "Main config file ${CORE_COMPLETE_YAML} is missing."
+        panic "Main config file $CORE_COMPLETE_YAML is missing."
     fi
 }
 
@@ -856,7 +858,7 @@ core_prepare_workdir() {
         [ -f "$OUTPUT_YAML_CONFIG_PATH" ] && rm -f "$OUTPUT_YAML_CONFIG_PATH"
         [ -f "$TMP_YAML_CONFIG_PATH" ] && rm -f "$TMP_YAML_CONFIG_PATH"
     else
-        log 1 "Generating workdir ${CORE_WORKDIR_PATH}"
+        log 1 "Generating workdir $CORE_WORKDIR_PATH"
         mkdir -p "$CORE_WORKDIR_PATH"
     fi
 }
@@ -900,7 +902,7 @@ core_download() {
 
     log 2 "Detected architecture: $arch" "✅"
 
-    mkdir -p "${CORE_WORKDIR_PATH}"
+    mkdir -p "$CORE_WORKDIR_PATH"
 
     if [ -n "$param_version" ]; then
         file_name="mihomo-linux-${arch}-${param_version}.gz"
@@ -949,7 +951,7 @@ core_update() {
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
-        core_download "${latest_ver}" "${latest_tag}" || return 1
+        core_download "$latest_ver" "$latest_tag" || return 1
         send_telegram "Mihomo core binary was missing. Installed ${latest_ver}"
         return 0
     fi
@@ -959,8 +961,8 @@ core_update() {
 
     if [ "$cur_ver" != "$latest_ver" ]; then
         log 2 "Updating Mihomo to version $latest_ver" "⬆️"
-        core_download "${latest_ver}" "${latest_tag}" || return 1
-        send_telegram "Mihomo core binary was updated. Version: ${cur_ver} -> ${latest_ver}"
+        core_download "$latest_ver" "$latest_tag" || return 1
+        send_telegram "Mihomo core binary was updated. Version: $cur_ver -> $latest_ver"
 
     else
         log 2 "Mihomo is already up-to-date." "✅"
@@ -991,7 +993,7 @@ send_telegram() {
     fi
 
     response=$(curl -s -w "\n%{http_code}" -X POST "https://api.telegram.org/bot${token}/sendMessage" \
-        -d chat_id="${chat_id}" \
+        -d chat_id="$chat_id" \
         -d text="$message" \
         -d parse_mode="HTML" \
         -d disable_notification=true)
@@ -1028,7 +1030,7 @@ core_update_cron_add() {
     fi
 
     config_get mihomo_cron_update_string settings mihomo_cron_update_string
-    echo "${mihomo_cron_update_string} /usr/bin/justclash core_update" >> /etc/crontabs/root
+    echo "$mihomo_cron_update_string /usr/bin/justclash core_update" >> /etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
         log 2 "Cron job added and service restarted" "✅"
@@ -1070,7 +1072,7 @@ core_autorestart_cron_add() {
     fi
 
     config_get mihomo_cron_autorestart_string settings mihomo_cron_autorestart_string
-    echo "${mihomo_cron_autorestart_string} /usr/bin/justclash reload" >> /etc/crontabs/root
+    echo "$mihomo_cron_autorestart_string /usr/bin/justclash reload" >> /etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
         log 2 "Cron job added and service restarted" "✅"
