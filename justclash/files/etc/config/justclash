@@ -129,10 +129,10 @@ config proxies
     list additional_domain_route ""
     list additional_domain_route ""
 
-    list use_with_list ""
-    list use_with_list ""
-    list use_with_list ""
-    list use_with_list ""
+    list enabled_list ""
+    list enabled_list ""
+    list enabled_list ""
+    list enabled_list ""
 
     list additional_destip_route ""
     list additional_destip_route ""
@@ -153,10 +153,10 @@ config proxy_group
     list proxy_link "ssh://"
     list proxy_link "awg://"
 
-    list use_with_list ""
-    list use_with_list ""
-    list use_with_list ""
-    list use_with_list ""
+    list enabled_list ""
+    list enabled_list ""
+    list enabled_list ""
+    list enabled_list ""
 
     list additional_domain_route ""
     list additional_domain_route ""
