@@ -1,9 +1,9 @@
-'use strict';
-'require fs';
-'require form';
-'require uci';
-'require ui';
-'require view';
+"use strict";
+"require fs";
+"require form";
+"require uci";
+"require ui";
+"require view";
 
 
 return view.extend({
@@ -12,7 +12,7 @@ return view.extend({
         return Promise.all([
             uci.load("justclash"),
         ]).catch(e => {
-            ui.addNotification(null, E('p', _('Unable to read the contents') + ': %s '.format(e.message)));
+            ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
         });
     },
     render: function () {
@@ -20,89 +20,85 @@ return view.extend({
 
         m = new form.Map("justclash");
 
-        s = m.section(form.NamedSection, 'settings');
+        s = m.section(form.NamedSection, "settings");
         s.anonymous = true;
         s.addremove = false;
 
-        tabname = 'serviceautomation_tab';
-        s.tab(tabname, "Service automation");
+        tabname = "serviceautomation_tab";
+        s.tab(tabname, "Daemon automation");
 
-        o = s.taboption(tabname, form.Flag, 'autostart', "Autostart");
-        o.description = _('autostart_description');
+        o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Forcefully run ntpd at load:"));
+        o.description = _("When enabled daemon will run ntpd from system to try sync time in system to ensure tls will work.");
         o.rmempty = false;
         o.default = 1;
 
-        o = s.taboption(tabname, form.Flag, 'forcefully_update_ntp_at_load', _('forcefully_update_ntp_at_load'));
-        o.description = _('forcefully_update_ntp_at_load_description');
+        o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Inject DNS server at load:"));
+        o.description = _("When enabled daemon will inject dns server in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = 1;
 
-        o = s.taboption(tabname, form.Flag, 'update_dns_server_at_load', _('update_dns_server_at_load'));
-        o.description = _('update_dns_server_at_load_description');
+        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_start", _("Setup NFT tables at load"));
+        o.description = _("When enabled daemon will make NFT tables to redirect traffic to tproxy port.");
         o.rmempty = false;
         o.default = 1;
 
-        o = s.taboption(tabname, form.Flag, 'update_nft_tables_at_start', _('update_nft_tables_at_start'));
-        o.description = _('update_nft_tables_at_start_description');
-        o.rmempty = false;
-        o.default = 1;
-
-        o = s.taboption(tabname, form.ListValue, 'justclash_autoupdate', _('justclash_autoupdate'));
-        o.value('no', _('str_no'));
-        o.value('check', _('str_yes'));
-        o.value('checkandupdate', _('str_check_and_update'));
-        o.description = _("justclash_autoupdate_description");
+        o = s.taboption(tabname, form.ListValue, "justclash_autoupdate", _("Daemon autoupdate:"));
+        o.value("no", _("No update"));
+        o.value("check", _("Only check"));
+        o.value("checkandupdate", _("Check and update"));
+        o.description = _("Mode for daemon autoupdate cron job");
         o.default = "no";
 
-        o = s.taboption(tabname, form.Flag, 'justclash_cron_update_telegram_notify', _('justclash_cron_update_telegram_notify'));
-        o.description = _("justclash_cron_update_telegram_notify_description");
+        o = s.taboption(tabname, form.Flag, "justclash_cron_update_telegram_notify", _("Telegram notify for daemon update:"));
+        o.description = _("When enabled daemon will send telegram notification with update status every update check.");
         o.default = 0;
 
-        o = s.taboption(tabname, form.Value, 'justclash_cron_update_string', _('justclash_cron_update_string'));
-        o.placeholder = '0 3 * * 0';
-        o.description = _("justclash_cron_update_string_description");
-        o.default = '0 3 * * 0'
+        o = s.taboption(tabname, form.Value, "justclash_cron_update_string", _("Daemon autoupdate cron:"));
+        o.placeholder = "0 3 * * 0";
+        o.description = _("Special cron string for daemon autoupdate job.");
+        o.default = "0 3 * * 0"
 
-        tabname = 'coreautomation_tab';
+        tabname = "coreautomation_tab";
         s.tab(tabname, "Core automation");
 
-        o = s.taboption(tabname, form.Flag, 'mihomo_autorestart', 'mihomo_autorestart');
+        o = s.taboption(tabname, form.Flag, "mihomo_autorestart", "Mihomo autorestart:");
+        o.description = _("When enabled daemon will configure autorestart mihomo by cron string.");
         o.rmempty = false;
         o.default = 1;
 
-        o = s.taboption(tabname, form.ListValue, 'mihomo_autoupdate', 'mihomo_autorestart');
-        o.value('no', _('str_no'));
-        o.value('check', _('str_yes'));
-        o.value('checkandupdate', _('str_check_and_update'));
-        o.description = _("mihomo_autoupdate_description");
+        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", "Mihomo autoupdate:");
+        o.value("no", _("No update"));
+        o.value("check", _("Only check"));
+        o.value("checkandupdate", _("Check and update"));
+        o.description = _("Mode for mihomo autoupdate job.");
         o.default = "no";
 
-        o = s.taboption(tabname, form.Flag, 'mihomo_cron_autorestart_telegram_notify', _('mihomo_cron_autorestart_telegram_notify'));
-        o.description = _("mihomo_cron_autorestart_telegram_notify_description");
+        o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for mihomo autorestart:"));
+        o.description = _("When enabled daemon will send telegram notification for mihomo autorestart cron job.");
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, 'mihomo_cron_update_telegram_notify', _('mihomo_cron_update_telegram_notify'));
-        o.description = _("mihomo_cron_update_telegram_notify_description");
+        o = s.taboption(tabname, form.Flag, "mihomo_cron_update_telegram_notify", _("Telegram notify for mihomo autoupdate:"));
+        o.description = _("When enabled daemon will send telegram notification for mihomo autoupdate cron job.");
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Value, 'mihomo_cron_autorestart_string', _('mihomo_cron_autorestart_string'));
-        o.placeholder = '0 3 * * 0';
-        o.description = _("mihomo_cron_autorestart_string_description");
+        o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
+        o.placeholder = "0 3 * * 0";
+        o.description = _("Special cron string for mihomo autorestart job.");
 
-        o = s.taboption(tabname, form.Value, 'mihomo_cron_update_string', _('mihomo_cron_update_string'));
-        o.placeholder = '0 3 * * 0';
-        o.description = _("mihomo_cron_update_string_description");
+        o = s.taboption(tabname, form.Value, "mihomo_cron_update_string", _("Mihomo autoupdate cron:"));
+        o.placeholder = "0 3 * * 0";
+        o.description = _("Special cron string for mihomo autoupdate job.");
 
-        tabname = 'telegramcredentials_tab';
+        tabname = "telegramcredentials_tab";
         s.tab(tabname, "Credentials");
 
-        o = s.taboption(tabname, form.Value, 'telegram_chat_id', _('telegram_chat_id'));
-        o.placeholder = '123456789';
-        o.description = _("telegram_chat_id_description");
+        o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
+        o.placeholder = "123456789";
+        o.description = _("Telegram chat id where to send notification");
 
-        o = s.taboption(tabname, form.Value, 'telegram_bot_token', _('telegram_bot_token'));
-        o.placeholder = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
-        o.description = _("telegram_bot_token_description");
+        o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
+        o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
+        o.description = _("Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!");
         o.password = true;
 
         let map_promise = m.render();
