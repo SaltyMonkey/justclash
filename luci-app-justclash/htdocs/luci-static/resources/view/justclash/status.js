@@ -111,10 +111,10 @@ return view.extend({
                     buttons.forEach(btn => btn.disabled = true);
 
                     fs.exec("/etc/init.d/justclash", [action]).then(result => {
-                        ui.addNotification(null, E('p', _('Command successfully called') + ': %s '.format(result.stdout)));
+                        //ui.addNotification(null, E('p', _('Command successfully called') + ': %s '.format(result.stdout)));
                         this.updateServiceStatus();
                     }).catch(e => {
-                        ui.addNotification(null, E('p', _('Unable to read the contents') + ': %s '.format(e.message)));
+                        //ui.addNotification(null, E('p', _('Unable to read the contents') + ': %s '.format(e.message)));
                     }).finally(() => {
                         buttons.forEach(btn => btn.disabled = false);
                     });
