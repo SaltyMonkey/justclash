@@ -26,7 +26,7 @@ return view.extend({
         });
     },
     boolToWord(boolValue) {
-        return boolValue ? _("Running") : _("Not running");
+        return boolValue ? _("Yes") : _("No");
     },
     async load() {
         const [
@@ -63,37 +63,29 @@ return view.extend({
         console.warn(results);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            E("div", { class: "cbi-section-title" }, _("Justclash status page")),
-            E("div", { class: "cbi-section-descr" }, _("Current service status and information"))
+            E("div", { class: "cbi-section-title" }, _("Service status")),
+            E("div", { class: "cbi-section-descr" }, _("basic actions and information about service state"))
         ]);
 
         const tableContainer = E("table", { class: "table cbi-rowstyle-1" }, [
             E("tr", { class: "tr" }, [
-                E("td", { class: "td left" }, _("Package")),
+                E("td", { class: "td left" }, _("Daemon package version:")),
                 E("td", { class: "td left" }, results.infoPackage.stdout.replace("\\n", "").trim())
             ]),
             E("tr", { class: "tr cbi-rowstyle-2" }, [
-                E("td", { class: "td left" }, _("LuCI")),
+                E("td", { class: "td left" }, _("Luci package version:")),
                 E("td", { class: "td left" }, results.infoLuciPackage.stdout.replace("\\n", "").trim())
             ]),
             E("tr", { class: "tr cbi-rowstyle-1" }, [
-                E("td", { class: "td left" }, _("Core")),
-                E("td", { class: "td left" }, results.infoCore.stdout.replace("\\n", "").trim())
-            ]),
-             E("tr", { class: "tr cbi-rowstyle-2" }, [
-                E("td", { class: "td left" }, _("Core")),
-                E("td", { class: "td left" }, results.infoCore.stdout.replace("\\n", "").trim())
-            ]),
-             E("tr", { class: "tr cbi-rowstyle-1" }, [
-                E("td", { class: "td left" }, _("Core")),
+                E("td", { class: "td left" }, _("Mihomo core version:")),
                 E("td", { class: "td left" }, results.infoCore.stdout.replace("\\n", "").trim())
             ]),
             E("tr", { class: "tr cbi-rowstyle-2" }, [
-                E("td", { class: "td left" }, _("serviceStatus")),
+                E("td", { class: "td left" }, _("Daemon is running:")),
                 E("td", { class: "td left", id: "isrunning" }, this.boolToWord(results.infoIsRunning))
             ]),
             E("tr", { class: "tr cbi-rowstyle-1" }, [
-                E("td", { class: "td left" }, _("daemonStatus")),
+                E("td", { class: "td left" }, _("Daemon is autobooting:")),
                 E("td", { class: "td left", id: "isautostarting" }, this.boolToWord(results.infoIsAutostarting))
             ])
         ]);
@@ -111,10 +103,10 @@ return view.extend({
                     buttons.forEach(btn => btn.disabled = true);
 
                     fs.exec("/etc/init.d/justclash", [action]).then(result => {
-                        //ui.addNotification(null, E('p', _('Command successfully called') + ': %s '.format(result.stdout)));
+                        //ui.addNotification(null, E("p", _("Command successfully called") + ": %s ".format(result.stdout)));
                         this.updateServiceStatus();
                     }).catch(e => {
-                        //ui.addNotification(null, E('p', _('Unable to read the contents') + ': %s '.format(e.message)));
+                        //ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
                     }).finally(() => {
                         buttons.forEach(btn => btn.disabled = false);
                     });
@@ -145,11 +137,11 @@ return view.extend({
             this.isJustClashAutostartEnabled().catch(() => _("No data"))
         ]);
 
-        this.startButtonId = document.getElementById('buttonstart');
-        this.restartButtonId = document.getElementById('buttonrestart');
-        this.stopButtonId = document.getElementById('buttonstop');
-        this.serviceStatusId = document.getElementById('isrunning');
-        this.daemonStatusId = document.getElementById('isautostarting');
+        this.startButtonId = document.getElementById("buttonstart");
+        this.restartButtonId = document.getElementById("buttonrestart");
+        this.stopButtonId = document.getElementById("buttonstop");
+        this.serviceStatusId = document.getElementById("isrunning");
+        this.daemonStatusId = document.getElementById("isautostarting");
 
         if (this.daemonStatusId) this.daemonStatusId.textContent = this.boolToWord(infoIsAutostarting);
         if (this.serviceStatusId) this.serviceStatusId.textContent = this.boolToWord(infoIsRunning);
@@ -184,7 +176,6 @@ return view.extend({
         `);
     },
 
-    // Очищаем интервал при уничтожении view
     destroy() {
         if (this.pollInterval) {
             clearInterval(this.pollInterval);
