@@ -490,7 +490,6 @@ start_core() {
     stop_core
 
     log 2 "Starting Mihomo core..."
-    # Запускаем процесс в фоне с сохранением PID
     (
         echo $$ > "$PIDFILE"
         exec "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | logger -t justclash
@@ -508,7 +507,7 @@ stop_core() {
         kill -TERM "$pid" 2>/dev/null
 
         local count=0
-        while kill -0 "$pid" 2>/dev/null && [ $count -lt 10 ]; do
+        while kill -0 "$pid" 2>/dev/null && [ $count -lt 4 ]; do
             sleep 1
             count=$((count+1))
         done
@@ -533,31 +532,29 @@ nft_table_add() {
     local fake_ip_range
     config_get tproxy_port proxy tproxy_port
     config_get routing_mark proxy routing_mark
-    config_get fake_ip_range proxy fake_ip_range "198.18.0.0/16"  # Значение по умолчанию для Clash
+    config_get fake_ip_range proxy fake_ip_range "198.18.0.0/16"
 
-    # Конвертация метки
     hex_mark=$(printf '0x%x' "$routing_mark")
 
-    # Проверка параметров
     [ -z "$tproxy_port" ] &&  panic "tproxy_port not set"
     [ -z "$routing_mark" ] && panic "routing_mark not set"
     [ -z "$fake_ip_range" ] && panic "fake ip range not set"
     [ -z "$hex_mark" ] && panic "routing_mark(hex) not set"
 
-    # Очистка таблицы
+    # Table ckleanup
     nft delete table inet "$NFT_TABLE_NAME" 2>/dev/null || true
     nft add table inet "$NFT_TABLE_NAME"
 
-    # Создаем наборы для IP-адресов
+    # IP routes
     nft add set inet "$NFT_TABLE_NAME" reserved_ips { type ipv4_addr\; flags interval\; elements = { \
         0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, \
         169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, \
         224.0.0.0/4, 240.0.0.0/4 } \; }
 
-  # 2. Набор для FAKE IP
+    # Set for FAKE IP
     nft add set inet "$NFT_TABLE_NAME" fake_ips { type ipv4_addr\; flags interval\; elements = { $fake_ip_range } \; }
 
-    # Цепочки
+    # Chains
     nft add chain inet "$NFT_TABLE_NAME" mangle '{ type filter hook prerouting priority -150; policy accept; }'
     nft add chain inet "$NFT_TABLE_NAME" tproxy '{ type filter hook prerouting priority -100; policy accept; }'
     nft add chain inet "$NFT_TABLE_NAME" output '{ type route hook output priority -150; policy accept; }'
@@ -580,7 +577,7 @@ nft_table_add() {
     nft add rule inet "$NFT_TABLE_NAME" output ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$hex_mark"
     nft add rule inet "$NFT_TABLE_NAME" output meta l4proto { tcp, udp } meta mark set "$hex_mark"
 
-    # Маршрутизация
+    # Routing
     ip rule del fwmark "$hex_mark" table 100 2>/dev/null || true
     ip rule add fwmark "$hex_mark" table 100
     ip route replace local 0.0.0.0/0 dev lo table 100
@@ -873,10 +870,10 @@ detect_arch() {
         aarch64) echo "arm64" ;;
         armv5*) echo "armv5" ;;
         armv6*) echo "armv6" ;;
-        armv7*) echo "armv7" ;;  # Расширено для всех armv7
-        mips*) echo "mips" ;;    # Объединено для всех MIPS
+        armv7*) echo "armv7" ;;
+        mips*) echo "mips" ;;
         riscv64) echo "riscv64" ;;
-        i[3-6]86) echo "i386" ;; # Добавлена поддержка x86 32-bit
+        i[3-6]86) echo "i386" ;;
         *)
             log 2 "Unknown or unsupported architecture: $arch_raw" "❌" >&2
             return 1
