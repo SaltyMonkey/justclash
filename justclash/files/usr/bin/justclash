@@ -28,6 +28,7 @@ NO_DATA_STRING="N/A"
 
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
+PARTIAL_YAML_CONFIG_PATH="/usr/bin/mihomo/partial.config.yaml"
 
 # List of NTP server IP addresses:
 # 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
@@ -482,7 +483,6 @@ diag_dns() {
     #    log 2 "IPv6 DNS query successful" "✅"
     #fi
 }
-# === INTERNAL FUNCTIONS ===
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
@@ -783,7 +783,7 @@ core_generate_yaml() {
     ignore_fake_ip_domains=$(generate_yaml_array proxy ignore_fake_ip_domains)
     ignore_to_sniff_domains=$(generate_yaml_array proxy ignore_to_sniff_domains)
 
-    cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
+    cat <<EOF > "$TMP_YAML_CONFIG_PATH"
 mode: rule
 ipv6: false
 log-level: $log_level
@@ -846,8 +846,12 @@ sniffer:
       ports: [443, 8443]
   skip-domain:
 $ignore_to_sniff_domains
-
 EOF
+
+    if [ -f "$PARTIAL_YAML_CONFIG_PATH" ]; then
+        cat "$PARTIAL_YAML_CONFIG_PATH" >> "$TMP_YAML_CONFIG_PATH"
+    fi
+
 }
 
 core_prepare_workdir() {
