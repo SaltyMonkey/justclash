@@ -127,8 +127,8 @@ return view.extend({
         actionContainer.appendChild(createButton("restart", "cbi-button-positive", _("Restart")));
         actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop")));
 
-        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-neutral", _("Enable")));
-        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable")));
+        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-neutral", _("Enable autostart")));
+        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable auostart")));
 
         this.startPolling();
 

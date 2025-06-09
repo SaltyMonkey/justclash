@@ -34,13 +34,13 @@ return view.extend({
 
                 const sid = "new_" + Math.random().toString(36).substr(2, 8);
                 console.log(s.cfgsections)
-                s.cfgsections.push(sid);
+                /*s.cfgsections.push(sid);
                 s.data[sid] = {
                     name: parts[0],
                     value: parts[1],
                     policy: parts[2]
                 };
-
+*/
                 m.renderMoreOptions();
             }
         }, _("Add link"));
@@ -50,83 +50,114 @@ return view.extend({
         }, [input, button]);
 
 
-        s = m.section(form.TypedSection, "proxies", _(), _());
+        s = m.section(form.TypedSection, "proxies", _("Proxies"), _());
         s.anonymous = true;
         s.addremove = false;
-        s.handleSave = function (section_id) {
+        s.handleAdd = function() { return null; }
+        /*s.handleSave = function (section_id) {
             const val = this.formvalue(section_id, "name");
             uci.set("justclash", section_id, "name", val);
             uci.set("justclash", section_id, "internal_id", val + "_meta");
-        };
+        };*/
 
         o = s.option(form.DynamicList, "name", _("name:"));
         o.description = _("name_description");
+        o.rmempty = false;
+
         o = s.option(form.ListValue, "enabled_list", _("enabled_list:"));
         o.multiple = true;
+        o.rmempty = false;
         common.availableRuleSets.forEach(item => {
             o.value(item.name, _(`${item.name}`));
         });
         o = s.option(form.DynamicList, "additional_domain_route", _("additional_domain_route:"));
         o.description = _("additional_domain_route_description");
+        o.rmempty = false;
+
         o = s.option(form.DynamicList, "additional_destip_route", _("additional_destip_route:"));
         o.description = _("additional_destip_route_description");
+        o.rmempty = false;
+
         o = s.option(form.DynamicList, "additional_srcip_route", _("additional_srcip_route:"));
         o.description = _("additional_srcip_route_description");
+        o.rmempty = false;
 
-        s2 = m.section(form.TypedSection, "proxy_group", _(), _());
+        s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups"), _());
         s2.anonymous = true;
         s2.addremove = true;
-        s2.handleSave = function (section_id) {
+        /*s2.handleSave = function (section_id) {
             const val = this.formvalue(section_id, "name");
             uci.set("justclash", section_id, "name", val);
             uci.set("justclash", section_id, "internal_id", val + "_meta");
-        };
+        };*/
 
         o = s2.option(form.DynamicList, "name", _("name:"));
         o.description = _("name_description");
+        o.rmempty = false;
+
         o = s2.option(form.ListValue, "group_type", _("group_type:"));
         common.defaultProxyGroupsTypes.forEach(item => {
             o.value(item, _(`${item}`));
         });
+        o.rmempty = false;
 
         o = s2.option(form.ListValue, "strategy", _("strategy:"));
         common.defaultProxyGroupsBalanceModeStrategies.forEach(item => {
             o.value(item, _(`${item}`));
         });
+        o.rmempty = false;
         o.depends("group_type", "load-balancer")
 
         o = s2.option(form.Value, "proxies_list", _("proxies_list:"));
         o.placeholder = "proxy-name1, proxy-name2";
+        o.rmempty = false;
 
         o = s2.option(form.Value, "check_url", _("checkUrl:"));
         o.placeholder = "https://www.gstatic.com/generate_204";
         o.default = common.defaultProxyGroupCheckUrl;
+        o.rmempty = false;
 
         o = s2.option(form.Value, "interval", _("interval:"));
         o.default = common.defaultProxyGroupInterval;
+        o.rmempty = false;
 
         o = s2.option(form.ListValue, "enabled_list", _("enabled_list:"));
         o.multiple = true;
         common.availableRuleSets.forEach(item => {
             o.value(item.name, _(`${item.name}`));
         });
+        o.rmempty = false;
+
         o = s2.option(form.DynamicList, "additional_domain_route", _("additional_domain_route:"));
         o.description = _("additional_domain_route_description");
+        o.rmempty = false;
+
         o = s2.option(form.DynamicList, "additional_destip_route", _("additional_destip_route:"));
         o.description = _("additional_destip_route_description");
+        o.rmempty = false;
+
         o = s2.option(form.DynamicList, "additional_srcip_route", _("additional_srcip_route:"));
         o.description = _("additional_srcip_route_description");
+        o.rmempty = false;
 
-        s3 = m.section(form.NamedSection, "block_rules", _(), _());
+        s3 = m.section(form.NamedSection, "block_rules", _("Blocks"), _());
+        s3.addremove = false;
         o = s3.option(form.ListValue, "enabled_blocklist ", _("enabled_blocklist :"));
         o.multiple = true;
+
+
         common.availableBlockRulesets.forEach(item => {
             o.value(item.name, _(`${item.name}`));
         });
+        o.rmempty = false;
+
         o = s3.option(form.DynamicList, "additional_domain_blockroute", _("additional_domain_blockroute:"));
         o.description = _("additional_domain_blockroute_description");
+        o.rmempty = false;
+
         o = s3.option(form.DynamicList, "additional_destip_blockroute", _("additional_destip_blockroute:"));
         o.description = _("additional_destip_blockroute_description");
+        o.rmempty = false;
 
         return m.render().then(formEl => {
             return E("div", {}, [

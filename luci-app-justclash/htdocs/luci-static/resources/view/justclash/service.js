@@ -35,7 +35,7 @@ return view.extend({
         o.rmempty = false;
         o.default = 1;
 
-        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_start", _("Setup NFT tables at load"));
+        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_start", _("Setup NFT tables at load:"));
         o.description = _("When enabled daemon will make NFT tables to redirect traffic to tproxy port.");
         o.rmempty = false;
         o.default = 1;
@@ -99,7 +99,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
         o.placeholder = "123456789";
         o.rmempty = false;
-        o.description = _("Telegram chat id where to send notification");
+        o.description = _("Telegram chat id where to send notification.");
 
         o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
         o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
