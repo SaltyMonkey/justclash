@@ -2,6 +2,7 @@
 "require ui";
 "require view";
 "require fs";
+"require view.justclash.common as common";
 
 return view.extend({
     pollInterval: null,
@@ -14,14 +15,16 @@ return view.extend({
     startButtonId: null,
     restartButtonId: null,
     stopButtonId: null,
+    enableButtonId: null,
+    disableButtonId: null,
     pollServiceStatusTimeout: 10000,
     isJustClashAutostartEnabled: async function () {
-        return fs.exec("/etc/init.d/justclash", ["enabled"]).then(function (res) {
+        return fs.exec(common.initdPath, ["enabled"]).then(function (res) {
             return res.code === 0;
         });
     },
     isJustClashRunning: async function () {
-        return fs.exec("/etc/init.d/justclash", ["running"]).then(function (res) {
+        return fs.exec(common.initdPath, ["running"]).then(function (res) {
             return res.code === 0;
         });
     },
@@ -36,11 +39,11 @@ return view.extend({
             cronCore,
             cronCoreAutorestart
         ] = await Promise.all([
-            fs.exec("/usr/bin/justclash", ["info_package"]).catch(() => _("No data")),
-            fs.exec("/usr/bin/justclash", ["info_luci"]).catch(() => _("No data")),
-            fs.exec("/usr/bin/justclash", ["info_core"]).catch(() => _("No data")),
-            fs.exec("/usr/bin/justclash", ["core_update_cron_check"]).catch(() => _("No data")),
-            fs.exec("/usr/bin/justclash", ["core_autorestart_cron_check"]).catch(() => _("No data")),
+            fs.exec(common.binPath, ["info_package"]).catch(() => _("No data")),
+            fs.exec(common.binPath, ["info_luci"]).catch(() => _("No data")),
+            fs.exec(common.binPath, ["info_core"]).catch(() => _("No data")),
+            fs.exec(common.binPath, ["core_update_cron_check"]).catch(() => _("No data")),
+            fs.exec(common.binPath, ["core_autorestart_cron_check"]).catch(() => _("No data")),
         ]);
         const [
             infoIsRunning,
@@ -93,6 +96,7 @@ return view.extend({
         statusContainer.appendChild(tableContainer);
 
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" });
+        const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" });
 
         const createButton = (action, cssClass, label) => {
             return E("button", {
@@ -100,15 +104,18 @@ return view.extend({
                 id: `button${action}`,
                 click: ui.createHandlerFn(this, () => {
                     const buttons = actionContainer.querySelectorAll("button");
+                    const buttonsSecondary = actionContainerSecondary.querySelectorAll("button");
                     buttons.forEach(btn => btn.disabled = true);
-
-                    fs.exec("/etc/init.d/justclash", [action]).then(result => {
-                        //ui.addNotification(null, E("p", _("Command successfully called") + ": %s ".format(result.stdout)));
+                    buttonsSecondary.forEach(btn => btn.disabled = true);
+                    fs.exec(common.initdPath, [action]).then(result => {
+                        ui.showModal(_("Executing command..."), [ E("p", _("Please wait.")), ]);
                         this.updateServiceStatus();
                     }).catch(e => {
-                        //ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
+                        ui.addNotification(_("Error"), e.message, "danger");
                     }).finally(() => {
+                        ui.hideModal();
                         buttons.forEach(btn => btn.disabled = false);
+                        buttonsSecondary.forEach(btn => btn.disabled = false);
                     });
                 })
             }, [
@@ -120,13 +127,17 @@ return view.extend({
         actionContainer.appendChild(createButton("restart", "cbi-button-positive", _("Restart")));
         actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop")));
 
+        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-neutral", _("Enable")));
+        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable")));
+
         this.startPolling();
 
         return E("div", { class: "cbi-map" }, [
             this.addCSS(),
             E("div", { class: "cbi-section" }, [
                 statusContainer,
-                actionContainer
+                actionContainer,
+                actionContainerSecondary
             ])
         ]);
     },
@@ -140,13 +151,21 @@ return view.extend({
         this.startButtonId = document.getElementById("buttonstart");
         this.restartButtonId = document.getElementById("buttonrestart");
         this.stopButtonId = document.getElementById("buttonstop");
+
+        this.enableButtonId = document.getElementById("buttonenable");
+        this.disableButtonId = document.getElementById("buttondisable");
+
         this.serviceStatusId = document.getElementById("isrunning");
         this.daemonStatusId = document.getElementById("isautostarting");
 
         if (this.daemonStatusId) this.daemonStatusId.textContent = this.boolToWord(infoIsAutostarting);
         if (this.serviceStatusId) this.serviceStatusId.textContent = this.boolToWord(infoIsRunning);
+
         if (infoIsRunning && this.startButtonId) this.startButtonId.disabled = true;
         if (!infoIsRunning && this.stopButtonId) this.stopButtonId.disabled = true;
+
+        if (infoIsAutostarting && this.enableButtonId) this.enableButtonId.disabled = true;
+        if (!infoIsAutostarting && this.disableButtonId) this.disableButtonId.disabled = true;
 
     },
 
