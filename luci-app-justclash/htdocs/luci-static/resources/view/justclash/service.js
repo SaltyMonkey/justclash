@@ -4,13 +4,13 @@
 "require uci";
 "require ui";
 "require view";
-
+"require view.justclash.common as common";
 
 return view.extend({
 
     load: function () {
         return Promise.all([
-            uci.load("justclash"),
+            uci.load(common.binName),
         ]).catch(e => {
             ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
         });
@@ -18,11 +18,9 @@ return view.extend({
     render: function () {
         let m, s, o, tabname;
 
-        m = new form.Map("justclash");
+        m = new form.Map(common.binName);
 
         s = m.section(form.NamedSection, "settings");
-        s.anonymous = true;
-        s.addremove = false;
 
         tabname = "serviceautomation_tab";
         s.tab(tabname, "Daemon automation");
@@ -43,20 +41,23 @@ return view.extend({
         o.default = 1;
 
         o = s.taboption(tabname, form.ListValue, "justclash_autoupdate", _("Daemon autoupdate:"));
-        o.value("no", _("No update"));
-        o.value("check", _("Only check"));
-        o.value("checkandupdate", _("Check and update"));
+        common.defaultUpdateOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
         o.description = _("Mode for daemon autoupdate cron job");
+        o.rmempty = false;
         o.default = "no";
 
         o = s.taboption(tabname, form.Flag, "justclash_cron_update_telegram_notify", _("Telegram notify for daemon update:"));
         o.description = _("When enabled daemon will send telegram notification with update status every update check.");
+        o.rmempty = false;
         o.default = 0;
 
         o = s.taboption(tabname, form.Value, "justclash_cron_update_string", _("Daemon autoupdate cron:"));
         o.placeholder = "0 3 * * 0";
         o.description = _("Special cron string for daemon autoupdate job.");
         o.default = "0 3 * * 0"
+        o.rmempty = false;
 
         tabname = "coreautomation_tab";
         s.tab(tabname, "Core automation");
@@ -67,10 +68,11 @@ return view.extend({
         o.default = 1;
 
         o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", "Mihomo autoupdate:");
-        o.value("no", _("No update"));
-        o.value("check", _("Only check"));
-        o.value("checkandupdate", _("Check and update"));
+        common.defaultUpdateOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
         o.description = _("Mode for mihomo autoupdate job.");
+        o.rmempty = false;
         o.default = "no";
 
         o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for mihomo autorestart:"));
@@ -83,10 +85,12 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
         o.placeholder = "0 3 * * 0";
+        o.rmempty = false;
         o.description = _("Special cron string for mihomo autorestart job.");
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_update_string", _("Mihomo autoupdate cron:"));
         o.placeholder = "0 3 * * 0";
+        o.rmempty = false;
         o.description = _("Special cron string for mihomo autoupdate job.");
 
         tabname = "telegramcredentials_tab";
@@ -94,14 +98,19 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
         o.placeholder = "123456789";
+        o.rmempty = false;
         o.description = _("Telegram chat id where to send notification");
 
         o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
         o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
         o.description = _("Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!");
+        o.rmempty = false;
         o.password = true;
 
         let map_promise = m.render();
         return map_promise;
+    },
+    destroy() {
+
     }
 });
