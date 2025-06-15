@@ -66,9 +66,11 @@ return view.extend({
         console.warn(results);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
+        /*
             E("div", { class: "cbi-section-title" }, _("Service status")),
             E("div", { class: "cbi-section-descr" }, _("basic actions and information about service state"))
-        ]);
+        */
+       ]);
 
         const tableContainer = E("table", { class: "table cbi-rowstyle-1" }, [
             E("tr", { class: "tr" }, [
