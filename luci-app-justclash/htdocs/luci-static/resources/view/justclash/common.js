@@ -4,46 +4,17 @@ return baseclass.extend({
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
-    defaultLoggingLevels: ["info"],
+    genNameProxyPrefix: "proxy_",
+    genNameProxyGroupPrefix: "proxygroup_",
+    defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
     defaultProxyGroupInterval: 300,
     defaultProxyGroupsTypes: ["fallback", "load-balancer"],
     defaultProxyGroupsBalanceModeStrategies: ["consistent-hashing", "round-robin"],
-    defaultFingerprints: ["chrome", "firefox", "safari"],
+    defaultFingerprints: ["chrome", "firefox", "safari", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
-    availableRuleSets: [
-    {
-        name:"1",
-        link: ""
-    },
-    {
-        name:"2",
-        link: ""
-    },
-    {
-        name:"3",
-        link: ""
-    },
-    {
-        name:"4",
-        link: ""
-    }
-    ],
-    availableBlockRulesets: [
-    {
-        name: "OISD NSFW small",
-        link: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/ads/oisd-nsfw-small.rms"
-    },
-    {
-        name: "OISD ADS small",
-        link: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/ads/oisd-small.rms"
-    },
-    {
-        name: "Hagezi ADS Pro mini",
-        link: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/ads/hagezi-pro-mini-ads.rms"
-    }],
     generateRandomName: function (prefix) {
-        return `${prefix}-${Math.random().toString(16).substr(2, 8)}`;
+        return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },
     parseSSLink: function (link) {
         if (!link.startsWith("ss://")) throw new Error("Not a ss link");
@@ -107,7 +78,7 @@ return baseclass.extend({
             const params = Object.fromEntries(new URLSearchParams(queryString));
 
             const config = {
-                name: decodeURIComponent(fragment),
+                name: decodeURIComponent(fragment) || "noname",
                 type: "vless",
                 server,
                 port: parseInt(port, 10),
@@ -171,6 +142,50 @@ return baseclass.extend({
 
            return config;
        },*/
+    parseSocks5Link: function (socks5String) {
+        if (!socks5String || typeof socks5String !== 'string' || !socks5String.startsWith("socks5://")) {
+            throw new Error('Invalid SOCKS5 string provided');
+        }
+
+        const trimmed = socks5String.trim();
+        let url = trimmed;
+
+        try {
+            const parsed = new URL(url);
+
+            // Validate hostname
+            if (!parsed.hostname) {
+                throw new Error('Missing hostname in SOCKS5 URL');
+            }
+
+            // Validate port
+            const port = parseInt(parsed.port) || 1080;
+            if (port < 1 || port > 65535) {
+                throw new Error('Invalid port number: ' + port);
+            }
+
+            const result = {
+                type: 'socks5',
+                name: `socks5_${parsed.hostname}_${port}`,
+                server: parsed.hostname,
+                port: port
+            };
+
+            // Add authentication if provided
+            if (parsed.username) {
+                result.username = decodeURIComponent(parsed.username);
+            }
+
+            if (parsed.password) {
+                result.password = decodeURIComponent(parsed.password);
+            }
+
+            return result;
+
+        } catch (error) {
+            throw new Error('Failed to parse SOCKS5 string: ' + error.message);
+        }
+    },
     parseSSHLink: function (link) {
         if (!link.startsWith("ssh://")) throw "Invalid ssh:// link";
 
@@ -266,9 +281,24 @@ return baseclass.extend({
 
         return nodes;
     },
+    parseProxyLink: function (proxyLink) {
+
+    },
     objToYaml: function (obj, indent = 0) {
         const pad = "  ".repeat(indent);
         let yaml = "";
+
+        if (Array.isArray(obj)) {
+            obj.forEach(item => {
+                if (typeof item === "object" && item !== null) {
+                    yaml += `${pad}-\n`;
+                    yaml += this.objToYaml(item, indent + 1);
+                } else {
+                    yaml += `${pad}- ${item}\n`;
+                }
+            });
+            return yaml;
+        }
 
         for (const key in obj) {
             const val = obj[key];
@@ -276,14 +306,14 @@ return baseclass.extend({
 
             if (typeof val === "object" && !Array.isArray(val)) {
                 yaml += `${pad}${key}:\n`;
-                yaml += objToYaml(val, indent + 1);
+                yaml += this.objToYaml(val, indent + 1);
             } else if (Array.isArray(val)) {
                 yaml += `${pad}${key}:\n`;
                 val.forEach(item => {
                     if (typeof item === "object") {
-                        yaml += `${pad}-\n` + objToYaml(item, indent + 2);
+                        yaml += `${pad}  -\n` + this.objToYaml(item, indent + 3);
                     } else {
-                        yaml += `${pad}- ${item}\n`;
+                        yaml += `${pad}  - ${item}\n`;
                     }
                 });
             } else if (typeof val === "string") {
@@ -298,5 +328,93 @@ return baseclass.extend({
         }
 
         return yaml;
+    },
+    splitAndTrimString: function (value, delimiter = ',') {
+
+        return value.split(delimiter)
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+    },
+    valueToArray: function (value) {
+        // Already an array
+        if (Array.isArray(value)) {
+            return value;
+        }
+
+        // String value
+        if (typeof value === 'string') {
+            return value.length > 0 ? [value] : [];
+        }
+
+        // Number or other primitive types
+        if (value !== null && value !== undefined) {
+            return [value];
+        }
+
+        // Null or undefined
+        return [];
+    },
+    isValidHttpUrl: function (value) {
+        try {
+            const url = new URL(value);
+            return ["http:", "https:"].includes(url.protocol);
+        } catch (e) {
+            return false;
+        }
+    },
+    isValidDomainProto: function (value) {
+        const val = value.trim();
+        if (val.startsWith("system://") ||
+            val.startsWith("https://") ||
+            val.startsWith("tls://") ||
+            val.startsWith("udp://")) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+    isValidIpv4: function (value) {
+        const val = value.trim();
+        const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        return ipv4Regex.test(val);
+    },
+    isValidCronString: function (value) {
+        const val = value.trim();
+        const cronRegex = /^(\*|([0-5]?\d)) (\*|([01]?\d|2[0-3])) (\*|([012]?\d|3[01])) (\*|([0]?\d|1[0-2])) (\*|[0-6])$/;
+
+        return cronRegex.test(val);
+    },
+    isValidTelegramBotToken: function (value) {
+        const val = value.trim();
+        // Проверяем формат токена
+        const pattern = /^\d{6,}:[A-Za-z0-9_-]+$/;
+        return pattern.test(val)
+    },
+    compareArraysWithReturnedResult: function (arr1, arr2) {
+        return arr1.filter(value => arr2.includes(value));
+    },
+    isValidSimpleName: function (value) {
+        const val = value.trim();
+        const pattern = /^[a-z0-9_]+$/;
+        return pattern.test(val);
+    },
+    isValidProxyLink: function (value) {
+        const val = value.trim();
+        const allowedPrefixes = [
+                "vless://",
+                "ss://",
+                "socks5://",
+                "ssh://",
+                "mieru://"
+            ];
+
+            for (const prefix of allowedPrefixes) {
+                if (val.startsWith(prefix)) {
+                    return true; // OK
+                }
+            }
+
+            return false;
     }
+
 });
