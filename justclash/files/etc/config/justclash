@@ -119,74 +119,27 @@ config proxy "proxy"
 	list ignore_to_sniff_domains "+.rosstat.gov.ru"
 
 config block_rules "block_rules"
-    option yamlBlockRules ""
-
-    option enabled_blocklist ""
-    option disable_quick "0"
-    option disable_doh "0"
-    option disable_ntp "0"
-
+    list enabled_blocklist ""
+    option disable_quic "0"
     list additional_domain_blockroute ""
-    list additional_domain_blockroute ""
-    list additional_domain_blockroute ""
-    list additional_domain_blockroute ""
-
-    list additional_destip_blockroute ""
-    list additional_destip_blockroute ""
-    list additional_destip_blockroute ""
     list additional_destip_blockroute ""
 
 config proxies
     option name "proxyname"
     option proxy_link "vless://"
-
-    option yamlProxy ""
-    option yamlRules ""
-
-    option enabled_list ""
-
+    list enabled_list ""
     list additional_domain_route ""
-    list additional_domain_route ""
-    list additional_domain_route ""
-    list additional_domain_route ""
-
     list additional_destip_route ""
-    list additional_destip_route ""
-    list additional_destip_route ""
-    list additional_destip_route ""
-
-    list additional_srcip_route ""
-    list additional_srcip_route ""
-    list additional_srcip_route ""
-    list additional_srcip_route ""
 
 config proxy_group
     option name ""
     option group_type ""
-
     option check_url "https://www.gstatic.com/generate_204"
     option interval "300"
-    option strategy consistent-hashing # или round-robin
-
+    option strategy "consistent-hashing"
+    list enabled_list ""
     option proxies_list ""
-
-    option yamlProxies ""
-    option yamlProxyGroup ""
-    option yamlRules ""
-
-    option enabled_list ""
-
     list additional_domain_route ""
-    list additional_domain_route ""
-    list additional_domain_route ""
-    list additional_domain_route ""
-
-    list additional_destip_route ""
-    list additional_destip_route ""
-    list additional_destip_route ""
     list additional_destip_route ""
 
-    list additional_srcip_route ""
-    list additional_srcip_route ""
-    list additional_srcip_route ""
-    list additional_srcip_route ""
+config compiled "compiled"
