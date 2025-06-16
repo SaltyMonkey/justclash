@@ -31,6 +31,9 @@ return view.extend({
     boolToWord(boolValue) {
         return boolValue ? _("Yes") : _("No");
     },
+    boolToColor(boolValue) {
+        return boolValue ? "green" : "red";
+    },
     async load() {
         const [
             infoPackage,
@@ -49,8 +52,8 @@ return view.extend({
             infoIsRunning,
             infoIsAutostarting
         ] = await Promise.all([
-            this.isJustClashRunning().catch((e) => {console.log(e); return _("No data")}),
-            this.isJustClashAutostartEnabled().catch((e) => { console.log(e); return _("No data")})
+            this.isJustClashRunning().catch((e) => { console.log(e); return _("No data"); }),
+            this.isJustClashAutostartEnabled().catch((e) => { console.log(e); return _("No data"); })
         ]);
         return {
             infoPackage,
@@ -66,11 +69,8 @@ return view.extend({
         console.warn(results);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-        /*
-            E("div", { class: "cbi-section-title" }, _("Service status")),
-            E("div", { class: "cbi-section-descr" }, _("basic actions and information about service state"))
-        */
-       ]);
+                E("h3", { class: "cbi-section-title" }, _("Service status")),
+        ]);
 
         const tableContainer = E("table", { class: "table cbi-rowstyle-1" }, [
             E("tr", { class: "tr" }, [
@@ -87,11 +87,11 @@ return view.extend({
             ]),
             E("tr", { class: "tr cbi-rowstyle-2" }, [
                 E("td", { class: "td left" }, _("Daemon is running:")),
-                E("td", { class: "td left", id: "isrunning" }, this.boolToWord(results.infoIsRunning))
+                E("td", { class: "td left", id: "isrunning", style: `color: ${this.boolToColor(results.infoIsRunning)}` }, this.boolToWord(results.infoIsRunning))
             ]),
             E("tr", { class: "tr cbi-rowstyle-1" }, [
-                E("td", { class: "td left" }, _("Daemon is autobooting:")),
-                E("td", { class: "td left", id: "isautostarting" }, this.boolToWord(results.infoIsAutostarting))
+                E("td", { class: "td left" }, _("Daemon's autoboot:")),
+                E("td", { class: "td left", id: "isautostarting", style: `color: ${this.boolToColor(results.infoIsAutostarting)}` }, this.boolToWord(results.infoIsAutostarting))
             ])
         ]);
 
@@ -100,17 +100,18 @@ return view.extend({
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" });
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" });
 
-        const createButton = (action, cssClass, label) => {
+        const createButton = (action, cssClass, label, isDisabled) => {
             return E("button", {
                 class: `cbi-button ${cssClass}`,
                 id: `button${action}`,
+                disabled: isDisabled,
                 click: ui.createHandlerFn(this, () => {
                     const buttons = actionContainer.querySelectorAll("button");
                     const buttonsSecondary = actionContainerSecondary.querySelectorAll("button");
                     buttons.forEach(btn => btn.disabled = true);
                     buttonsSecondary.forEach(btn => btn.disabled = true);
                     fs.exec(common.initdPath, [action]).then(result => {
-                        ui.showModal(_("Executing command..."), [ E("p", _("Please wait.")), ]);
+                        ui.showModal(_("Executing command..."), [E("p", _("Please wait.")),]);
                         this.updateServiceStatus();
                     }).catch(e => {
                         ui.addNotification(_("Error"), e.message, "danger");
@@ -125,12 +126,12 @@ return view.extend({
             ]);
         };
 
-        actionContainer.appendChild(createButton("start", "cbi-button-neutral", _("Start")));
-        actionContainer.appendChild(createButton("restart", "cbi-button-positive", _("Restart")));
-        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop")));
+        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), results.infoIsRunning));
+        actionContainer.appendChild(createButton("restart", "cbi-button-action", _("Restart")));
+        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), !results.infoIsRunning));
 
-        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-neutral", _("Enable autostart")));
-        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable auostart")));
+        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), !results.infoIsAutostarting));
 
         this.startPolling();
 
@@ -143,7 +144,24 @@ return view.extend({
             ])
         ]);
     },
+    updateUI(isRunning, isAutostarting) {
+        if (this.daemonStatusId) {
+            this.daemonStatusId.textContent = this.boolToWord(isAutostarting);
+            this.daemonStatusId.style.color = this.boolToColor(isAutostarting);
+        }
+        if (this.serviceStatusId) {
+            this.serviceStatusId.textContent = this.boolToWord(isRunning);
+            this.serviceStatusId.style.color = this.boolToColor(isRunning);
 
+        }
+    },
+    updateButtons(isRunning, isAutostarting) {
+        if (isRunning && this.startButtonId) this.startButtonId.disabled = true;
+        if (!isRunning && this.stopButtonId) this.stopButtonId.disabled = true;
+
+        if (isAutostarting && this.enableButtonId) this.enableButtonId.disabled = true;
+        if (!isAutostarting && this.disableButtonId) this.disableButtonId.disabled = true;
+    },
     async updateServiceStatus() {
         const [infoIsRunning, infoIsAutostarting] = await Promise.all([
             this.isJustClashRunning().catch(() => _("No data")),
@@ -160,15 +178,8 @@ return view.extend({
         this.serviceStatusId = document.getElementById("isrunning");
         this.daemonStatusId = document.getElementById("isautostarting");
 
-        if (this.daemonStatusId) this.daemonStatusId.textContent = this.boolToWord(infoIsAutostarting);
-        if (this.serviceStatusId) this.serviceStatusId.textContent = this.boolToWord(infoIsRunning);
-
-        if (infoIsRunning && this.startButtonId) this.startButtonId.disabled = true;
-        if (!infoIsRunning && this.stopButtonId) this.stopButtonId.disabled = true;
-
-        if (infoIsAutostarting && this.enableButtonId) this.enableButtonId.disabled = true;
-        if (!infoIsAutostarting && this.disableButtonId) this.disableButtonId.disabled = true;
-
+        this.updateUI(infoIsRunning, infoIsAutostarting);
+        this.updateButtons(infoIsRunning, infoIsAutostarting);
     },
 
     startPolling() {
