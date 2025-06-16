@@ -85,16 +85,6 @@ return baseclass.extend({
     ],
     availableRuleSets: [
         {
-            name: "ChatGPT",
-            yamlName: "chatgpt",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/chatgpt.rms"
-        },
-        {
             name: "Just Domains",
             yamlName: "justdomains",
             type: "http",
@@ -135,6 +125,26 @@ return baseclass.extend({
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/bypass/no-russia-hosts.rms"
         },
         {
+            name: "Linux domains",
+            yamlName: "nix",
+            type: "http",
+            interval: 86500,
+            format: "mrs",
+            behavior: "domain",
+            proxy: "DIRECT",
+            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/nix.rms"
+        },
+        {
+            name: "ChatGPT",
+            yamlName: "chatgpt",
+            type: "http",
+            interval: 86500,
+            format: "mrs",
+            behavior: "domain",
+            proxy: "DIRECT",
+            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/chatgpt.rms"
+        },
+        {
             name: "Copilot",
             yamlName: "copilot",
             type: "http",
@@ -143,16 +153,6 @@ return baseclass.extend({
             behavior: "domain",
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/copilot.rms"
-        },
-        {
-            name: "Discord",
-            yamlName: "discord",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/discord.rms"
         },
         {
             name: "Grok",
@@ -164,6 +164,17 @@ return baseclass.extend({
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/grok.com.rms"
         },
+        {
+            name: "Discord",
+            yamlName: "discord",
+            type: "http",
+            interval: 86500,
+            format: "mrs",
+            behavior: "domain",
+            proxy: "DIRECT",
+            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/discord.rms"
+        },
+
         {
             name: "HDRezka",
             yamlName: "hdrezka",
@@ -253,26 +264,6 @@ return baseclass.extend({
             behavior: "domain",
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/netflix.rms"
-        },
-        {
-            name: "Linux domains",
-            yamlName: "nix",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/nix.rms"
-        },
-        {
-            name: "NNMClub",
-            yamlName: "nnmclub",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/nnmclub.rms"
         },
         {
             name: "NNMClub",
