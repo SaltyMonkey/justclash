@@ -128,29 +128,23 @@ return baseclass.extend({
             throw new Error("Parse error");
         }
     },
-    /*   parseDirectLink: function (link) {
-           if (!link.startsWith("direct://")) throw new Error("Not a interface link");
+    parseProxyLink: function (link) {
+        if(link && typeof link === 'string')
+            if(link.startsWith("vless://")) return this.parseVlessLink(link);
+            else if (link.startsWith("ss://")) return this.parseSSLink(link);
+            else if (link.startsWith("socks5://")) return this.parseSocks5Link(link);
+            else if (link.startsWith("ssh://")) return this.parseSSHLink(link);
+            else if (link.startsWith("mierus://")) return this.parseMierusLink(link);
 
-           const [_, rest] = url.split("direct://");
-           if(!rest || rest && rest.length === 0) throw "Incorrect direct link"
+        throw Error("Link is not supported");
+    },
 
-           const config = {
-               name: `${rest}-direct`,
-               type: "direct",
-               "interface-name": `${rest}`
-           };
-
-           return config;
-       },*/
-    parseSocks5Link: function (socks5String) {
-        if (!socks5String || typeof socks5String !== 'string' || !socks5String.startsWith("socks5://")) {
-            throw new Error('Invalid SOCKS5 string provided');
+    parseSocks5Link: function (url) {
+        if (!url.startsWith("socks5://")) {
+            throw new Error('Invalid socks5:// link');
         }
 
-        const trimmed = socks5String.trim();
-        let url = trimmed;
-
-        try {
+       try {
             const parsed = new URL(url);
 
             // Validate hostname
@@ -187,7 +181,7 @@ return baseclass.extend({
         }
     },
     parseSSHLink: function (link) {
-        if (!link.startsWith("ssh://")) throw "Invalid ssh:// link";
+        if (!link.startsWith("ssh://")) throw new Error("Invalid ssh:// link");
 
         const url = new URL(link.replace("ssh://", "http://"));
 
@@ -280,9 +274,6 @@ return baseclass.extend({
         }
 
         return nodes;
-    },
-    parseProxyLink: function (proxyLink) {
-
     },
     objToYaml: function (obj, indent = 0) {
         const pad = "  ".repeat(indent);
