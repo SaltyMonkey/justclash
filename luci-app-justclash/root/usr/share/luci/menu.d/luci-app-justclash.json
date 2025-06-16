@@ -32,7 +32,7 @@
         }
     },
     "admin/services/justclash/service": {
-        "title": "Basic settings",
+        "title": "Start and automation",
         "order": 20,
         "action": {
             "type": "view",
@@ -64,7 +64,7 @@
         }
     },
     "admin/services/justclash/routes": {
-        "title": "Routing",
+        "title": "Proxy routing",
         "order": 40,
         "action": {
             "type": "view",
