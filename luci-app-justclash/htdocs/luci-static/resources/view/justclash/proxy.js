@@ -24,7 +24,7 @@ return view.extend({
         s = m.section(form.NamedSection, "proxy");
 
         tabname = "coresettings_tab";
-        s.tab(tabname, "Core settings");
+        s.tab(tabname, _("Core settings"));
 
         o = s.taboption(tabname, form.ListValue, "log_level", _("Logging level:"));
         common.defaultLoggingLevels.forEach(item => {
@@ -51,12 +51,12 @@ return view.extend({
         o.default = "9";
 
         o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("TCP concurrent:"));
-        o.description = _("tcp_concurrent_description");
+        o.description = _("Enabling concurrent TCP connection attempts for each request.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Value, "external_controller_port", _("External controller port:"));
-        o.description = _("API server port.");
+        o.description = _("API server port for external controller.");
         o.datatype = "uinteger";
         o.rmempty = false;
 
@@ -64,113 +64,116 @@ return view.extend({
         common.defaultFingerprints.forEach(item => {
             o.value(item, _(`${item}`));
         });
-
-        o.description = _("Client fingerprint for protols which supports it.");
+        o.description = _("Client fingerprint for protocols which supports it.");
         o.default = common.defaultFingerprints[0];
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "keep_alive_idle", _("Keep alive idle:"));
-        o.description = _("keep_alive_idle_description");
+        o.description = _("How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive.");
         o.datatype = "uinteger";
         o.rmempty = false;
         o.default = "15";
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Keep alive interval:"));
-        o.description = _("keep_alive_interval_description");
+        o.description = _("How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive-idle.");
         o.datatype = "uinteger";
         o.rmempty = false;
         o.default = "15";
 
-        o = s.taboption(tabname, form.Flag, "profile_store_selected", _("profile_store_selected"));
-        o.description = _("profile_store_selected_description");
+        o = s.taboption(tabname, form.Flag, "profile_store_selected", _("Cache profile data:"));
+        o.description = _("Cache profile data if possible.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "profile_store_fake_ip", _("profile_store_fake_ip"));
-        o.description = _("profile_store_fake_ip_description");
+        o = s.taboption(tabname, form.Flag, "profile_store_fake_ip", _("Cache Fake IP:"));
+        o.description = _("Cache fake ip data when possible.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.DynamicList, "ignore_to_sniff_domains", _("Skip analyse for domains:"));
-        o.description = _("ignore_to_sniff_domains_description");
+        o = s.taboption(tabname, form.DynamicList, "ignore_to_sniff_domains", _("Excluded from sniffer domains:"));
+        o.description = _("Domains excluded from detailed analyze when possible. Sometimes can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
 
         tabname = "ntpsettings_tab";
-        s.tab(tabname, "NTP settings");
+        s.tab(tabname, _("NTP settings"));
 
         o = s.taboption(tabname, form.Flag, "core_ntp_enabled", _("Enable NTP client:"));
-        o.description = _("core_ntp_enabled_description");
+        o.description = _("Enable inbuild in proxy NTP client.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Value, "core_ntp_server", _("Endpoint NTP server:"));
-        o.description = _("core_ntp_server_description");
+        o.description = _("External NTP server for time syncing.");
         o.datatype = "ipaddr";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "core_ntp_port", _("NTP port:"));
-        o.description = _("core_ntp_port_description");
+        //o.description = _("NTP port.");
         o.datatype = "port";
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Value, "core_ntp_interval", _("Check interval"));
-        o.description = _("core_ntp_interval_description");
+        o = s.taboption(tabname, form.Value, "core_ntp_interval", _("NTP check interval:"));
+        o.description = _("Interval to check time (in seconds).");
         o.datatype = "uinteger";
         o.rmempty = false;
         o.default = "600";
 
         o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
-        o.description = _("core_ntp_write_system_description");
+        o.description = _("Try to correct system time from NTP server.");
         o.default = "0";
         o.rmempty = false;
 
         tabname = "dnssettings_tab";
-        s.tab(tabname, "DNS settings");
+        s.tab(tabname, _("DNS settings"));
 
         o = s.taboption(tabname, form.Value, "dns_listen_port", _("DNS listen port:"));
-        o.description = _("dns_listen_port_description");
+        o.description = _("Proxy DNS server listen port.");
         o.datatype = "port";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
-        o.description = _("use_system_hosts_description");
+        o.description = _("Load dns entries from system if possible.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
-        o.description = _("fake_ip_range_description");
+        o.description = _("CIDR for fake ip entries.");
         o.default = "198.18.0.1/16";
         o.rmempty = false;
         o.datatype = "cidr4";
 
         o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
-        o.description = _("default_nameserver_description");
+        o.description = _("Default nameservers which being used at start. Recommended to use UDP ones.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if ((!common.isValidIpv4(value)) || (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quick://, https://, tls://, udp://, IPv4 or 'system'.");
+            if (!value || (value && value.length === 0)) return true;
+            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
 
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "direct_nameserver", _("Direct nameservers:"));
-        o.description = _("direct_nameserver_description");
+        o.description = _("Direct namesers which being used for DIRECT rules.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if ((!common.isValidIpv4(value)) || (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quick://, https://, tls://, udp://, IPv4 or 'system'.");
+            if (!value || (value && value.length === 0)) return true;
+            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
 
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "proxy_server_nameserver", _("Proxy nameservers:"));
-        o.description = _("proxy_server_nameserver_description");
+        o.description = _("Proxy nameservers which being used for proxy rules.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if ((!common.isValidIpv4(value)) || (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quick://, https://, tls://, udp://, IPv4 or 'system'.");
+            if (!value || (value && value.length === 0)) return true;
+
+            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
 
             return true;
         };
@@ -179,13 +182,14 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if ((!common.isValidIpv4(value)) || (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quick://, https://, tls://, udp://, IPv4 or 'system'.");
+            if (!value || (value && value.length === 0)) return true;
+            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
 
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "ignore_fake_ip_domains", _("Skip fake IP for domains:"));
-        o.description = _("ignore_fake_ip_domains_description");
+        o.description = _("Exclude selected domains from Fake IP cache. Can help sometimes with bugs in apps.");
         o.rmempty = false;
         o.editable = true;
 
