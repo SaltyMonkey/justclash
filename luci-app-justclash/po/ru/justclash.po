@@ -1,0 +1,399 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "No"
+msgstr "Нет"
+
+msgid "No data"
+msgstr "Нет данных"
+
+msgid "Service status"
+msgstr "Статус сервиса"
+
+msgid "Daemon package version:"
+msgstr "Версия пакета сервиса:"
+
+msgid "Luci package version:"
+msgstr "Версия пакета Luci:"
+
+msgid "Mihomo core version:"
+msgstr "Версия ядра Mihomo:"
+
+msgid "Daemon is running:"
+msgstr "Сервис запущен:"
+
+msgid "Daemon's autoboot:"
+msgstr "Автозапуск сервиса:"
+
+msgid "Executing command..."
+msgstr "Выполняется команда..."
+
+msgid "Please wait."
+msgstr "Пожалуйста, подождите."
+
+msgid "Start"
+msgstr "Запустить"
+
+msgid "Restart"
+msgstr "Перезапустить"
+
+msgid "Stop"
+msgstr "Остановить"
+
+msgid "Enable autostart"
+msgstr "Включить автозапуск"
+
+msgid "Disable autostart"
+msgstr "Отключить автозапуск"
+
+msgid "Daemon automation"
+msgstr "Автоматизация сервиса"
+
+msgid "Forcefully run ntpd at load:"
+msgstr "Принудительно запускать ntpd при загрузке:"
+
+msgid "When enabled daemon will run ntpd from system to try sync time in system to ensure tls will work."
+msgstr "Если включено, сервис будет запускать ntpd из системы для синхронизации времени и обеспечения работы TLS."
+
+msgid "Inject DNS server at load:"
+msgstr "Добавлять DNS-сервер при загрузке:"
+
+msgid "When enabled daemon will inject dns server in dnsmasq configuration at start."
+msgstr "Если включено, сервис будет добавлять DNS-сервер в конфигурацию dnsmasq при запуске."
+
+msgid "Setup NFT tables at load:"
+msgstr "Настраивать NFT-таблицы при загрузке:"
+
+msgid "When enabled daemon will create NFT tables to redirect traffic to tproxy port."
+msgstr "Если включено, сервис будет создавать NFT-таблицы для перенаправления трафика на tproxy-порт."
+
+msgid "Daemon autoupdate:"
+msgstr "Автообновление сервиса:"
+
+msgid "Mode for daemon autoupdate cron job."
+msgstr "Режим для задания автообновления сервиса через cron."
+
+msgid "Telegram notify for daemon update:"
+msgstr "Уведомления в Telegram о обновлении сервиса:"
+
+msgid "When enabled daemon will send telegram notification with update status every update check."
+msgstr "Если включено, сервис будет отправлять уведомления в Telegram о статусе обновления при каждой проверке."
+
+msgid "Daemon autoupdate cron:"
+msgstr "Cron для автообновления сервиса:"
+
+msgid "Special cron string for daemon autoupdate job."
+msgstr "Специальная строка cron для задания автообновления сервиса."
+
+msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
+msgstr "Неверный формат cron. Ожидается: 'минута час день месяц день_недели' (например, '0 3 * * 0')"
+
+msgid "Mihomo autorestart:"
+msgstr "Автоперезапуск Mihomo:"
+
+msgid "Core automation"
+msgstr "Автоматизация ядра"
+
+msgid "When enabled daemon will configure autorestart mihomo by cron string."
+msgstr "Если включено, сервис будет настраивать автоперезапуск Mihomo по cron-строке."
+
+msgid "Mihomo autoupdate:"
+msgstr "Автообновление Mihomo:"
+
+msgid "Mode for mihomo autoupdate job."
+msgstr "Режим для задания автообновления Mihomo."
+
+msgid "Telegram notify for mihomo autorestart:"
+msgstr "Уведомления в Telegram о автоперезапуске Mihomo:"
+
+msgid "When enabled daemon will send telegram notification for mihomo autorestart cron job."
+msgstr "Если включено, сервис будет отправлять уведомления в Telegram о задании автоперезапуска Mihomo по cron."
+
+msgid "Telegram notify for mihomo autoupdate:"
+msgstr "Уведомления в Telegram о автообновлении Mihomo:"
+
+msgid "When enabled daemon will send telegram notification for mihomo autoupdate cron job."
+msgstr "Если включено, сервис будет отправлять уведомления в Telegram о задании автообновления Mihomo по cron."
+
+msgid "Mihomo autorestart cron:"
+msgstr "Cron для автоперезапуска Mihomo:"
+
+msgid "Special cron string for mihomo autorestart job."
+msgstr "Специальная строка cron для задания автоперезапуска Mihomo."
+
+msgid "Mihomo autoupdate cron:"
+msgstr "Cron для автообновления Mihomo:"
+
+msgid "Special cron string for mihomo autoupdate job."
+msgstr "Специальная строка cron для задания автообновления Mihomo."
+
+msgid "Credentials"
+msgstr "Данные для авторизации"
+
+msgid "Telegram chat ID:"
+msgstr "ID чата Telegram:"
+
+msgid "Telegram chat id where to send notification."
+msgstr "ID чата Telegram, куда отправляются уведомления."
+
+msgid "Telegram bot token:"
+msgstr "Токен бота Telegram:"
+
+msgid "Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!"
+msgstr "Токен управления ботом Telegram. ВНИМАНИЕ! НИКОГДА НЕ ДЕЛИТЕСЬ ЭТИМ ТОКЕНОМ!"
+
+
+msgid "Core settings"
+msgstr "Настройки прокси"
+
+msgid "Logging level:"
+msgstr "Уровень логирования:"
+
+msgid "Set up logging level in mihomo core."
+msgstr "Установить уровень логирования в ядре mihomo."
+
+msgid "Tproxy port:"
+msgstr "TProxy-порт:"
+
+msgid "Mihomo TProxy port for incoming traffic from user networks."
+msgstr "Порт TProxy для входящего трафика от пользовательских сетей."
+
+msgid "Unified delay:"
+msgstr "Общая задержка:"
+
+msgid "Unified delay for RTT checks."
+msgstr "Общая задержка для проверок RTT."
+
+msgid "Routing mark:"
+msgstr "Метка маршрутизации:"
+
+msgid "Special mark for internal routing tables."
+msgstr "Особая метка для внутренних таблиц маршрутизации."
+
+msgid "TCP concurrent:"
+msgstr "Параллельные TCP-соединения:"
+
+msgid "Enabling concurrent TCP connection attempts for each request."
+msgstr "Включение одновременных попыток TCP-соединений для каждого запроса."
+
+msgid "External controller port:"
+msgstr "Порт внешнего контроллера:"
+
+msgid "API server port for external controller."
+msgstr "Порт API-сервера для внешнего контроллера."
+
+msgid "Global client fingerprint:"
+msgstr "Глобальный отпечаток клиента:"
+
+msgid "Client fingerprint for protocols which supports it."
+msgstr "Отпечаток клиента для поддерживаемых протоколов."
+
+msgid "Keep alive idle:"
+msgstr "Время простоя до keepalive:"
+
+msgid "How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive."
+msgstr "Время (в секундах), в течение которого соединение может быть неактивным, прежде чем система начнёт отправлять keepalive-проверки, чтобы убедиться, что другая сторона по-прежнему отвечает."
+
+msgid "Keep alive interval:"
+msgstr "Интервал keepalive:"
+
+msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive-idle."
+msgstr "Частота (в секундах), с которой отправляются keepalive-проверки после того, как соединение было неактивным в течение времени, заданного параметром keep-alive-idle."
+
+msgid "Cache profile data:"
+msgstr "Кэшировать данные профиля:"
+
+msgid "Cache profile data if possible."
+msgstr "Кэшировать данные профиля, если это возможно."
+
+msgid "Cache Fake IP:"
+msgstr "Кэшировать Fake IP:"
+
+msgid "Cache fake ip data when possible."
+msgstr "Кэшировать данные Fake IP, если это возможно."
+
+msgid "Excluded from sniffer domains:"
+msgstr "Домены, исключённые из анализа снифером:"
+
+msgid "Domains excluded from detailed analyze when possible. Sometimes can help with errors in apps."
+msgstr "Домены, исключённые из детального анализа, если это возможно. Иногда помогает избежать ошибок в приложениях."
+
+msgid "NTP settings"
+msgstr "Настройки NTP"
+
+msgid "Enable NTP client:"
+msgstr "Включить клиент NTP:"
+
+msgid "Enable inbuild in proxy NTP client."
+msgstr "Включить встроенный в прокси клиент NTP."
+
+msgid "Endpoint NTP server:"
+msgstr "NTP-сервер:"
+
+msgid "External NTP server for time syncing."
+msgstr "Внешний NTP-сервер для синхронизации времени."
+
+msgid "NTP port:"
+msgstr "Порт NTP:"
+
+msgid "NTP check interval:"
+msgstr "Интервал проверки NTP:"
+
+msgid "Interval to check time (in seconds)."
+msgstr "Интервал проверки времени (в секундах)."
+
+msgid "Write to system:"
+msgstr "Записывать в систему:"
+
+msgid "Try to correct system time from NTP server."
+msgstr "Попробовать скорректировать системное время с NTP-сервера."
+
+msgid "DNS settings"
+msgstr "Настройки DNS"
+
+msgid "DNS listen port:"
+msgstr "Порт прослушивания DNS:"
+
+msgid "Proxy DNS server listen port."
+msgstr "Порт прослушивания DNS-сервера прокси."
+
+msgid "Use system hosts:"
+msgstr "Использовать системные hosts:"
+
+msgid "Load dns entries from system if possible."
+msgstr "Загружать DNS-записи из системы, если это возможно."
+
+msgid "Fake IP range:"
+msgstr "CIDR для Fake IP:"
+
+msgid "Default nameservers:"
+msgstr "DNS-серверы по умолчанию:"
+
+msgid "Default nameservers which being used at start. Recommended to use UDP ones."
+msgstr "DNS-серверы по умолчанию, используемые при запуске. Рекомендуется использовать UDP."
+
+msgid "Direct nameservers:"
+msgstr "Прямые DNS-серверы:"
+
+msgid "Direct nameservers which being used for DIRECT rules."
+msgstr "Прямые DNS-серверы, используемые для правил DIRECT."
+
+msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'."
+msgstr "Неверный формат DNS-сервера. Допустимо: quic://, https://, tls://, udp://, IPv4 или 'system'."
+
+msgid "Proxy nameservers:"
+msgstr "DNS-серверы для прокси:"
+
+msgid "Proxy nameservers which being used for proxy rules."
+msgstr "DNS-серверы, используемые для правил прокси."
+
+msgid "Nameservers:"
+msgstr "DNS-серверы:"
+
+msgid "nameserver_description"
+msgstr "Описание DNS-серверов"
+
+msgid "Skip fake IP for domains:"
+msgstr "Пропускать Fake IP для доменов:"
+
+msgid "Exclude selected domains from Fake IP cache. Can help sometimes with bugs in apps."
+msgstr "Исключить выбранные домены из кэша Fake IP. Иногда помогает избежать ошибок в приложениях."
+
+msgid "Routing mark:"
+msgstr "Метка маршрутизации:"
+
+msgid "Cannot parse proxy URI:"
+msgstr "Не удалось разобрать proxy URI:"
+
+msgid "Proxies"
+msgstr "Прокси"
+
+msgid "Proxies defined as outbounds"
+msgstr "Прокси, определённые как исходящие"
+
+msgid "Name:"
+msgstr "Имя:"
+
+msgid "Proxy name."
+msgstr "Имя прокси."
+
+msgid "Name must contain only lowercase letters, digits, and underscores"
+msgstr "Имя должно содержать только строчные буквы, цифры и подчёркивания"
+
+msgid "Proxy URI:"
+msgstr "URI прокси:"
+
+msgid "URI link with proxy data."
+msgstr "Ссылка URI с данными прокси."
+
+msgid "Invalid link."
+msgstr "Некорректная ссылка."
+
+msgid "Use for rules:"
+msgstr "Использовать для правил:"
+
+msgid "Manual DOMAIN-SUFFIX rules:"
+msgstr "Ручные правила DOMAIN-SUFFIX:"
+
+msgid "One element is one DOMAIN-SUFFIX rule with mihomo syntax."
+msgstr "Каждый элемент — одно правило DOMAIN-SUFFIX в синтаксисе mihomo."
+
+msgid "Manual IP-CIDR rules:"
+msgstr "Ручные правила IP-CIDR:"
+
+msgid "One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now."
+msgstr "Каждый элемент — одно правило IP-CIDR в синтаксисе mihomo. Пока поддерживается только IPv4."
+
+msgid "Proxy groups:"
+msgstr "Группы прокси:"
+
+msgid "Proxy groups for defined proxies"
+msgstr "Группы прокси для определённых прокси"
+
+msgid "Proxy group name."
+msgstr "Имя группы прокси."
+
+msgid "Group type:"
+msgstr "Тип группы:"
+
+msgid "Group strategy:"
+msgstr "Стратегия группы:"
+
+msgid "Proxies:"
+msgstr "Прокси:"
+
+msgid "Check URL:"
+msgstr "URL для проверки:"
+
+msgid "Only http:// or https:// URLs are allowed."
+msgstr "Разрешены только URL с http:// или https://."
+
+msgid "Check interval:"
+msgstr "Интервал проверки:"
+
+msgid "REJECT rules"
+msgstr "Правила REJECT"
+
+msgid "Additional rules for REJECT rules. Will be handled first."
+msgstr "Дополнительные правила для REJECT. Будут обработаны первыми."
+
+msgid "Disable QUIC:"
+msgstr "Отключить QUIC:"
+
+msgid "Use blocklists:"
+msgstr "Использовать блокировщики:"
+
+msgid "Manual DOMAIN-SUFFIX block rules:"
+msgstr "Ручные правила блокировки DOMAIN-SUFFIX:"
+
+msgid "One element is one DOMAIN-SUFFIX rule with mihomo syntax."
+msgstr "Каждый элемент — одно правило DOMAIN-SUFFIX в синтаксисе mihomo."
+
+msgid "Manual IP-CIDR block rules:"
+msgstr "Ручные правила блокировки IP-CIDR:"
+
+msgid "One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now."
+msgstr "Каждый элемент — одно правило IP-CIDR в синтаксисе mihomo. Пока поддерживается только IPv4."
