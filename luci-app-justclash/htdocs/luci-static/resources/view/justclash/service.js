@@ -35,7 +35,7 @@ return view.extend({
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "update_nft_tables_at_start", _("Setup NFT tables at load:"));
-        o.description = _("When enabled daemon will make NFT tables to redirect traffic to tproxy port.");
+        o.description = _("When enabled daemon will create NFT tables to redirect traffic to tproxy port.");
         o.rmempty = false;
         o.default = "1";
 
@@ -43,7 +43,7 @@ return view.extend({
         common.defaultUpdateOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Mode for daemon autoupdate cron job");
+        o.description = _("Mode for daemon autoupdate cron job.");
         o.rmempty = false;
         o.default = common.defaultUpdateOptions[0];
 
@@ -62,14 +62,14 @@ return view.extend({
         };
 
         tabname = "coreautomation_tab";
-        s.tab(tabname, "Core automation");
+        s.tab(tabname, _("Core automation"));
 
-        o = s.taboption(tabname, form.Flag, "mihomo_autorestart", "Mihomo autorestart:");
+        o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
         o.description = _("When enabled daemon will configure autorestart mihomo by cron string.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", "Mihomo autoupdate:");
+        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Mihomo autoupdate:"));
         common.defaultUpdateOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
@@ -105,7 +105,7 @@ return view.extend({
         };
 
         tabname = "telegramcredentials_tab";
-        s.tab(tabname, "Credentials");
+        s.tab(tabname, _("Credentials"));
 
         o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
         o.datatype = "uinteger";
