@@ -52,32 +52,32 @@ msgstr "Отключить автозапуск"
 msgid "Daemon automation"
 msgstr "Автоматизация сервиса"
 
-msgid "Forcefully run ntpd at load:"
-msgstr "Принудительно запускать ntpd при загрузке:"
+msgid "Start ntpd at load:"
+msgstr "Запускать NTPD при запуске:"
 
-msgid "When enabled daemon will run ntpd from system to try sync time in system to ensure tls will work."
-msgstr "Если включено, сервис будет запускать ntpd из системы для синхронизации времени и обеспечения работы TLS."
+msgid "If enabled, the service starts ntpd to sync system time and ensure TLS works correctly."
+msgstr "При включении сервис синхронизирует время через ntpd для работы TLS."
 
-msgid "Inject DNS server at load:"
-msgstr "Добавлять DNS-сервер при загрузке:"
+msgid "Inject DNS server at startup:"
+msgstr "Внедрить DNS-сервер при загрузке:"
 
 msgid "When enabled daemon will inject dns server in dnsmasq configuration at start."
 msgstr "Если включено, сервис будет добавлять DNS-сервер в конфигурацию dnsmasq при запуске."
 
-msgid "Setup NFT tables at load:"
+msgid "Setup NFT tables at startup:"
 msgstr "Настраивать NFT-таблицы при загрузке:"
 
-msgid "When enabled daemon will create NFT tables to redirect traffic to tproxy port."
-msgstr "Если включено, сервис будет создавать NFT-таблицы для перенаправления трафика на tproxy-порт."
+msgid "When enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
+msgstr "Если включено, сервис применяет NFT-таблицы для перенаправления трафика на tproxy-порт."
 
 msgid "Daemon autoupdate:"
 msgstr "Автообновление сервиса:"
 
-msgid "Mode for daemon autoupdate cron job."
-msgstr "Режим для задания автообновления сервиса через cron."
+msgid "Cron job mode for service autoupdate:"
+msgstr "Режим для задания автообновления сервиса (cron):"
 
 msgid "Telegram notify for daemon update:"
-msgstr "Уведомления в Telegram о обновлении сервиса:"
+msgstr "Уведомления в Telegram об обновлении сервиса:"
 
 msgid "When enabled daemon will send telegram notification with update status every update check."
 msgstr "Если включено, сервис будет отправлять уведомления в Telegram о статусе обновления при каждой проверке."
@@ -308,53 +308,56 @@ msgstr "Метка маршрутизации:"
 msgid "Cannot parse proxy URI:"
 msgstr "Не удалось разобрать proxy URI:"
 
-msgid "Proxies"
-msgstr "Прокси"
+msgid "Proxies list:"
+msgstr "Список прокси:"
 
-msgid "Proxies defined as outbounds"
-msgstr "Прокси, определённые как исходящие"
+msgid "Proxies defined as outbound connections."
+msgstr "Прокси, используемые для исходящих соединений."
 
 msgid "Name:"
 msgstr "Имя:"
 
-msgid "Proxy name."
-msgstr "Имя прокси."
+msgid "Virtual proxy name."
+msgstr "Виртуальное название прокси."
 
 msgid "Name must contain only lowercase letters, digits, and underscores"
 msgstr "Имя должно содержать только строчные буквы, цифры и подчёркивания"
 
-msgid "Proxy URI:"
-msgstr "URI прокси:"
+msgid "URI:"
+msgstr "URI:"
 
-msgid "URI link with proxy data."
-msgstr "Ссылка URI с данными прокси."
+msgid "URI link with connection parameters."
+msgstr "URI-ссылка, содержащая параметры подключения."
 
 msgid "Invalid link."
 msgstr "Некорректная ссылка."
 
-msgid "Use for rules:"
-msgstr "Использовать для правил:"
+msgid "Use with rules:"
+msgstr "Использовать с правилами:"
 
-msgid "Manual DOMAIN-SUFFIX rules:"
-msgstr "Ручные правила DOMAIN-SUFFIX:"
+msgid "DOMAIN-SUFFIX:"
+msgstr "DOMAIN-SUFFIX:"
 
-msgid "One element is one DOMAIN-SUFFIX rule with mihomo syntax."
-msgstr "Каждый элемент — одно правило DOMAIN-SUFFIX в синтаксисе mihomo."
+msgid "Predefined RULE-SET lists, select ones which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
+msgstr "Выберите из предустановленных списков RULE-SET те, которые хотите направлять через прокси. Оставьте поле пустым если будете использовать proxy-groups."
 
-msgid "Manual IP-CIDR rules:"
-msgstr "Ручные правила IP-CIDR:"
+msgid "IP-CIDR:"
+msgstr "IP-CIDR:"
 
-msgid "One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now."
-msgstr "Каждый элемент — одно правило IP-CIDR в синтаксисе mihomo. Пока поддерживается только IPv4."
+msgid "Each element is one DOMAIN-SUFFIX rule to route through proxy with mihomo syntax."
+msgstr "Каждый элемент — одно правило DOMAIN-SUFFIX для маршрутизации через прокси (синтаксис mihomo rules)."
+
+msgid "Each element is one IP-CIDR rule to route through proxy with mihomo syntax. IPV4 only right now."
+msgstr "Каждый элемент — одно правило IP-CIDR для маршрутизации через прокси (синтаксис mihomo rules). Пока поддерживается только IPv4."
 
 msgid "Proxy groups:"
-msgstr "Группы прокси:"
+msgstr "Список прокси групп:"
 
-msgid "Proxy groups for defined proxies"
-msgstr "Группы прокси для определённых прокси"
+msgid "Group proxies for special routing (fallback, load-balancing)."
+msgstr "Группы прокси для особой маршрутизации (резервирования, балансировки нагрузки)."
 
 msgid "Proxy group name."
-msgstr "Имя группы прокси."
+msgstr "Виртуальное имя группы прокси."
 
 msgid "Group type:"
 msgstr "Тип группы:"
@@ -368,32 +371,73 @@ msgstr "Прокси:"
 msgid "Check URL:"
 msgstr "URL для проверки:"
 
+msgid "URL for node availability check (required for group functionality)."
+msgstr "URL для проверки доступности удаленных узлов (необходимо для функционирования групп)."
+
 msgid "Only http:// or https:// URLs are allowed."
 msgstr "Разрешены только URL с http:// или https://."
 
 msgid "Check interval:"
 msgstr "Интервал проверки:"
 
-msgid "REJECT rules"
-msgstr "Правила REJECT"
+msgid "DIRECT rules:"
+msgstr "DIRECT правила:"
+msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
+msgstr ""
 
-msgid "Additional rules for REJECT rules. Will be handled first."
-msgstr "Дополнительные правила для REJECT. Будут обработаны первыми."
+msgid "DOMAIN-SUFFIX pass:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
+msgstr ""
+
+msgid "DOMAIN-KEYWORD pass:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
+msgstr ""
+
+msgid "DOMAIN-REGEX pass:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-REGEX rule to pass (mihomo syntax)."
+msgstr ""
+
+msgid "SRC-IP-CIDR pass:"
+msgstr ""
+
+msgid "Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgstr ""
+
+msgid "IP-CIDR pass:"
+msgstr ""
+
+msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgstr ""
+
+msgid "REJECT rules:"
+msgstr "Правила REJECT:"
+
+msgid "Additional rules for REJECT rules. Will be handled before proxies and proxy groups."
+msgstr "Дополнительные правила для REJECT. Имеют приоритет перед правилами проки и прокси групп."
+
+msgid "Predefined RULE-SET lists with ADS/badware, select ones which you want to block with proxy. Leave empty if you don't want block anything."
+msgstr "Выберите из предустановленных списков блокировки RULE-SET (ADS/Badware) те, которые хотите направлять заблокировать через прокси."
 
 msgid "Disable QUIC:"
 msgstr "Отключить QUIC:"
 
-msgid "Use blocklists:"
-msgstr "Использовать блокировщики:"
+msgid "REJECT RULE_SET:"
+msgstr "REJECT RULE-SET:"
 
-msgid "Manual DOMAIN-SUFFIX block rules:"
-msgstr "Ручные правила блокировки DOMAIN-SUFFIX:"
+msgid "DOMAIN-SUFFIX block:"
+msgstr "Блокировка DOMAIN-SUFFIX:"
 
-msgid "One element is one DOMAIN-SUFFIX rule with mihomo syntax."
-msgstr "Каждый элемент — одно правило DOMAIN-SUFFIX в синтаксисе mihomo."
+msgid "Each element is one DOMAIN-SUFFIX rule to block with proxy (mihomo syntax)."
+msgstr "Каждый элемент — одно правило блокировки DOMAIN-SUFFIX в синтаксисе mihomo."
 
-msgid "Manual IP-CIDR block rules:"
-msgstr "Ручные правила блокировки IP-CIDR:"
+msgid "IP-CIDR block:"
+msgstr "Блокировка IP-CIDR:"
 
-msgid "One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now."
-msgstr "Каждый элемент — одно правило IP-CIDR в синтаксисе mihomo. Пока поддерживается только IPv4."
+msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgstr "Каждый элемент — одно правило блокировки IP-CIDR в синтаксисе mihomo. Поддерживается только IPv4."

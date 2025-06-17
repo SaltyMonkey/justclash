@@ -1,0 +1,444 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "No data"
+msgstr ""
+
+msgid "Service status"
+msgstr ""
+
+msgid "Daemon package version:"
+msgstr ""
+
+msgid "Luci package version:"
+msgstr ""
+
+msgid "Mihomo core version:"
+msgstr ""
+
+msgid "Daemon is running:"
+msgstr ""
+
+msgid "Daemon's autoboot:"
+msgstr ""
+
+msgid "Executing command..."
+msgstr ""
+
+msgid "Please wait."
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "Restart"
+msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "Enable autostart"
+msgstr ""
+
+msgid "Disable autostart"
+msgstr ""
+
+msgid "Daemon automation"
+msgstr ""
+
+msgid "Start ntpd at load:"
+msgstr ""
+
+msgid "If enabled, the service starts ntpd to sync system time and ensure TLS works correctly."
+msgstr ""
+
+msgid "Inject DNS server at startup:"
+msgstr ""
+
+msgid "When enabled daemon will inject dns server in dnsmasq configuration at start."
+msgstr ""
+
+msgid "Setup NFT tables at startup:"
+msgstr ""
+
+msgid "When enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
+msgstr ""
+
+msgid "Daemon autoupdate:"
+msgstr ""
+
+msgid "Cron job mode for service autoupdate:"
+msgstr ""
+
+msgid "Telegram notify for daemon update:"
+msgstr ""
+
+msgid "When enabled daemon will send telegram notification with update status every update check."
+msgstr ""
+
+msgid "Daemon autoupdate cron:"
+msgstr ""
+
+msgid "Special cron string for daemon autoupdate job."
+msgstr ""
+
+msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
+msgstr ""
+
+msgid "Mihomo autorestart:"
+msgstr ""
+
+msgid "Core automation"
+msgstr ""
+
+msgid "When enabled daemon will configure autorestart mihomo by cron string."
+msgstr ""
+
+msgid "Mihomo autoupdate:"
+msgstr ""
+
+msgid "Mode for mihomo autoupdate job."
+msgstr ""
+
+msgid "Telegram notify for mihomo autorestart:"
+msgstr ""
+
+msgid "When enabled daemon will send telegram notification for mihomo autorestart cron job."
+msgstr ""
+
+msgid "Telegram notify for mihomo autoupdate:"
+msgstr ""
+
+msgid "When enabled daemon will send telegram notification for mihomo autoupdate cron job."
+msgstr ""
+
+msgid "Mihomo autorestart cron:"
+msgstr ""
+
+msgid "Special cron string for mihomo autorestart job."
+msgstr ""
+
+msgid "Mihomo autoupdate cron:"
+msgstr ""
+
+msgid "Special cron string for mihomo autoupdate job."
+msgstr ""
+
+msgid "Credentials"
+msgstr ""
+
+msgid "Telegram chat ID:"
+msgstr ""
+
+msgid "Telegram chat id where to send notification."
+msgstr ""
+
+msgid "Telegram bot token:"
+msgstr ""
+
+msgid "Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!"
+msgstr ""
+
+
+msgid "Core settings"
+msgstr ""
+
+msgid "Logging level:"
+msgstr ""
+
+msgid "Set up logging level in mihomo core."
+msgstr ""
+
+msgid "Tproxy port:"
+msgstr ""
+
+msgid "Mihomo TProxy port for incoming traffic from user networks."
+msgstr ""
+
+msgid "Unified delay:"
+msgstr ""
+
+msgid "Unified delay for RTT checks."
+msgstr ""
+
+msgid "Routing mark:"
+msgstr ""
+
+msgid "Special mark for internal routing tables."
+msgstr ""
+
+msgid "TCP concurrent:"
+msgstr ""
+
+msgid "Enabling concurrent TCP connection attempts for each request."
+msgstr ""
+
+msgid "External controller port:"
+msgstr ""
+
+msgid "API server port for external controller."
+msgstr ""
+
+msgid "Global client fingerprint:"
+msgstr ""
+
+msgid "Client fingerprint for protocols which supports it."
+msgstr ""
+
+msgid "Keep alive idle:"
+msgstr ""
+
+msgid "How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive."
+msgstr ""
+
+msgid "Keep alive interval:"
+msgstr ""
+
+msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive-idle."
+msgstr "
+
+msgid "Cache profile data:"
+msgstr ""
+
+msgid "Cache profile data if possible."
+msgstr ""
+
+msgid "Cache Fake IP:"
+msgstr ""
+
+msgid "Cache fake ip data when possible."
+msgstr ""
+
+msgid "Excluded from sniffer domains:"
+msgstr ""
+
+msgid "Domains excluded from detailed analyze when possible. Sometimes can help with errors in apps."
+msgstr ""
+
+msgid "NTP settings"
+msgstr ""
+
+msgid "Enable NTP client:"
+msgstr ""
+
+msgid "Enable inbuild in proxy NTP client."
+msgstr ""
+
+msgid "Endpoint NTP server:"
+msgstr ""
+
+msgid "External NTP server for time syncing."
+msgstr ""
+
+msgid "NTP port:"
+msgstr ""
+
+msgid "NTP check interval:"
+msgstr ""
+
+msgid "Interval to check time (in seconds)."
+msgstr ""
+
+msgid "Write to system:"
+msgstr ""
+
+msgid "Try to correct system time from NTP server."
+msgstr ""
+
+msgid "DNS settings"
+msgstr ""
+
+msgid "DNS listen port:"
+msgstr ""
+
+msgid "Proxy DNS server listen port."
+msgstr ""
+
+msgid "Use system hosts:"
+msgstr ""
+
+msgid "Load dns entries from system if possible."
+msgstr ""
+
+msgid "Fake IP range:"
+msgstr ""
+
+msgid "Default nameservers:"
+msgstr ""
+
+msgid "Default nameservers which being used at start. Recommended to use UDP ones."
+msgstr ""
+
+msgid "Direct nameservers:"
+msgstr ""
+
+msgid "Direct nameservers which being used for DIRECT rules."
+msgstr ""
+
+msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'."
+msgstr ""
+
+msgid "Proxy nameservers:"
+msgstr ""
+
+msgid "Proxy nameservers which being used for proxy rules."
+msgstr ""
+
+msgid "Nameservers:"
+msgstr ""
+
+msgid "nameserver_description"
+msgstr ""
+
+msgid "Skip fake IP for domains:"
+msgstr ""
+
+msgid "Exclude selected domains from Fake IP cache. Can help sometimes with bugs in apps."
+msgstr ""
+
+msgid "Routing mark:"
+msgstr ""
+
+msgid "Cannot parse proxy URI:"
+msgstr ""
+
+msgid "Proxies list:"
+msgstr ""
+
+msgid "Proxies defined as outbound connections."
+msgstr ""
+
+msgid "Name:"
+msgstr ""
+
+msgid "Virtual proxy name."
+msgstr ""
+
+msgid "Name must contain only lowercase letters, digits, and underscores"
+msgstr ""
+
+msgid "URI:"
+msgstr ""
+
+msgid "URI link with connection parameters."
+msgstr ""
+
+msgid "Invalid link."
+msgstr ""
+
+msgid "Use with rules:"
+msgstr ""
+
+msgid "DOMAIN-SUFFIX:"
+msgstr ""
+
+msgid "Predefined RULE-SET lists, select ones which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
+msgstr ""
+
+msgid "IP-CIDR:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-SUFFIX rule to route through proxy with mihomo syntax."
+msgstr ""
+
+msgid "Each element is one IP-CIDR rule to route through proxy with mihomo syntax. IPV4 only right now."
+msgstr ""
+
+msgid "Proxy groups:"
+msgstr ""
+
+msgid "Group proxies for special routing (fallback, load-balancing)."
+msgstr ""
+
+msgid "Proxy group name."
+msgstr ""
+
+msgid "Group type:"
+msgstr ""
+
+msgid "Group strategy:"
+msgstr ""
+
+msgid "Proxies:"
+msgstr ""
+
+msgid "Check URL:"
+msgstr ""
+
+msgid "URL for node availability check (required for group functionality)."
+msgstr ""
+
+msgid "Only http:// or https:// URLs are allowed."
+msgstr ""
+
+msgid "Check interval:"
+msgstr ""
+
+msgid "DIRECT rules:"
+msgstr ""
+
+msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
+msgstr ""
+
+msgid "DOMAIN-SUFFIX pass:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
+msgstr ""
+
+msgid "DOMAIN-KEYWORD pass:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
+msgstr ""
+
+msgid "DOMAIN-REGEX pass:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-REGEX rule to pass (mihomo syntax)."
+msgstr ""
+
+msgid "SRC-IP-CIDR pass:"
+msgstr ""
+
+msgid "Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgstr ""
+
+msgid "IP-CIDR pass:"
+msgstr ""
+
+msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgstr ""
+
+msgid "REJECT rules:"
+msgstr ""
+
+msgid "Additional rules for REJECT rules. Will be handled before proxies and proxy groups."
+msgstr ""
+
+msgid "Predefined RULE-SET lists with ADS/badware, select ones which you want to block with proxy. Leave empty if you don't want block anything."
+msgstr ""
+
+msgid "Disable QUIC:"
+msgstr ""
+
+msgid "REJECT RULE_SET:"
+msgstr ""
+
+msgid "DOMAIN-SUFFIX block:"
+msgstr ""
+
+msgid "Each element is one DOMAIN-SUFFIX rule to block with proxy (mihomo syntax)."
+msgstr ""
+
+msgid "IP-CIDR block:"
+msgstr ""
+
+msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgstr ""
