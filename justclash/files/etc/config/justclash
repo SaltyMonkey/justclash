@@ -85,6 +85,13 @@ config block_rules "block_rules"
     list additional_domain_blockroute ""
     list additional_destip_blockroute ""
 
+config direct_rules "direct_rules"
+    list additional_domain_direct ""
+    list additional_domain_keyword_direct ""
+    list additional_domain_regex_direct ""
+    list additional_srcip_direct ""
+    list additional_destip_direct ""
+
 config proxies
     option name "proxyname"
     option proxy_link "vless://"
