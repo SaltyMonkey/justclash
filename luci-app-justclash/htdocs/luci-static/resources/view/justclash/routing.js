@@ -9,7 +9,7 @@
 
 return view.extend({
     load: function () {
-        return Promise.all([
+        return Promise.resolve([
             uci.load(common.binName),
         ]).catch(e => {
             ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
