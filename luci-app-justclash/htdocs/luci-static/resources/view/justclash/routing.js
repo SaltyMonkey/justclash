@@ -116,7 +116,7 @@ return view.extend({
                 url: section.check_url,
                 interval: section.interval,
                 timeout: 5000,
-                proxies: proxyList,
+                use: proxyList,
                 lazy: false
             });
             const selectedRuleSetsNames = common.valueToArray(s.enabled_list);
