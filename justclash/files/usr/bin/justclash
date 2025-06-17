@@ -2,33 +2,37 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version (kind of similar)
 # shellcheck shell=dash
+
 # shellcheck disable=SC1091
 [ -r /lib/functions.sh ] && . /lib/functions.sh
 # shellcheck disable=SC1091
 [ -r /lib/config/uci.sh ] && . /lib/config/uci.sh
 
+# Variable for standalone or procd start
 PROCD_MODE=0
+# service pidfile path
 PIDFILE="/var/run/justclash.pid"
 
+# setup procd variable: $JUSTCLASH_ENV passed from init.d start
 [ "$JUSTCLASH_ENV" = "procd" ] && PROCD_MODE=1 || PROCD_MODE=0
 
 config_load justclash
 
 CORE_LATEST_RELEASE_URL="https://api.github.com/repos/metacubex/mihomo/releases/latest"
 CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download"
-
-# Path to Mihomo core
-CORE_BIN_NAME="mihomo"
-CORE_PATH="/usr/bin/mihomo/${CORE_BIN_NAME}"
-CORE_COMPLETE_YAML="/usr/bin/mihomo/config.yaml" #special mode for copypasted ready to use yaml file
-CORE_WORKDIR_PATH="/tmp/justclash/"
-
-NFT_TABLE_NAME="justclash_tproxy"
 NO_DATA_STRING="N/A"
 
+
+CORE_BIN_NAME="mihomo"
+# Path to Mihomo core
+CORE_PATH="/usr/bin/mihomo/${CORE_BIN_NAME}"
+# workdir path (in RAM)
+CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
 PARTIAL_YAML_CONFIG_PATH="/usr/bin/mihomo/partial.config.yaml"
+
+NFT_TABLE_NAME="justclash_tproxy"
 
 # List of NTP server IP addresses:
 # 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
@@ -37,21 +41,20 @@ PARTIAL_YAML_CONFIG_PATH="/usr/bin/mihomo/partial.config.yaml"
 # 216.239.35.0    — time.google.com (Google NTP)
 # 162.159.200.1   — time.cloudflare.com (Cloudflare NTP)
 NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0 162.159.200.1"
-ALLOWED_INTERFACES='{ lan*, br-lan, eth1 }'
+# String for nft tables
+# Allow traffic on:
+# LAN interfaces (lan*)
+# bridge interface (br-lan)
+ALLOWED_INTERFACES='{ lan*, br-lan }'
+# List of conflicting packages:
+# podkop (custom proxy)
+# iptables-mod-extra (additional iptables modules)
+# and https-dns-proxy (DNS over HTTPS proxy)
 CONFLICTED_PACKAGES="podkop iptables-mod-extra https-dns-proxy"
 CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 
-is_installed() {
-    local pkg=$1
-    if command -v apk >/dev/null 2>&1; then
-        apk list --installed "$pkg" | grep -q "^${pkg}$"
-    else
-        opkg list-installed | awk '{print $1}'
-    fi
-}
-
-bool_to_yesno() {
+ucibool_to_yesno() {
     case "$1" in
         1) echo "Yes" ;;
         0) echo "No" ;;
@@ -126,7 +129,6 @@ log() {
     fi
 }
 
-# === FS HELPERS ===
 is_package_installed() {
     local found_pkgs=""
     for pkg in "$@"; do
@@ -162,12 +164,6 @@ is_pattern_in_file() {
     fi
 }
 
-is_process_running() {
-    local pattern="$1"
-    ps | grep -F "$pattern" | grep -v "[g]rep" > /dev/null 2>&1
-}
-
-# === NTP HELPERS ===
 ntp_force_sync() {
     local forcefully_update_ntp_at_load
     config_get_bool forcefully_update_ntp_at_load main forcefully_update_ntp_at_load
@@ -179,9 +175,10 @@ ntp_force_sync() {
         # shellcheck disable=SC2086
         /usr/sbin/ntpd -q $NTP_ARGS
     fi
+
+    sleep 2
 }
 
-# === MAIN FUNCTIONS ===
 start() {
     log 2 "Initializing Justclash service..." "⏳"
 
@@ -190,37 +187,6 @@ start() {
 
     log 2 "Synchronizing system time" "🕒"
     ntp_force_sync
-
-    #sleep 1
-
-    log 2 "Preparing Mihomo working directory" "📦"
-    core_prepare_workdir
-
-    log 2 "Generating configuration..." "📄"
-    core_generate_yaml
-
-    log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
-    nft_table_add
-
-    log 2 "Modifying dnsmasq configuration" "🔑"
-    dnsmasq_inject
-
-    # Demonizing
-    log 2 "Starting Mihomo core" "🚀"
-    start_core
-}
-
-start_with_config() {
-    log 2 "Initializing Justclash service... [With config.yaml]" "⏳"
-
-    log 2 "Checking for conflicts" "🐞"
-    check_for_conflicts
-
-    log 2 "Synchronizing system time" "🕒"
-    # make sure time in openwrt for TLS work
-    ntp_force_sync
-
-    sleep 1
 
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
@@ -256,18 +222,10 @@ restart() {
     start
 }
 
-restart_with_config() {
-    log 2 "Performing complete restart of service. [With config.yaml]" "🔄"
-    stop
-    sleep 1
-    start_with_config
-}
-
 info_device() {
    cat /tmp/sysinfo/model || echo "$NO_DATA_STRING"
 }
 
-#FIXME: Fix incorrect operand ||
 info_openwrt() {
    grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "$NO_DATA_STRING"
 }
@@ -296,15 +254,14 @@ info_conns_console_api() {
     local external_controller_port
     config_get external_controller_port proxy external_controller_port
     local url="http://127.0.0.1:$external_controller_port/connections"
-
+    local response
     # local AUTH=""
     # [ -n "$API_SECRET" ] && AUTH="-H Authorization: Bearer $API_SECRET"
 
-    local response
     # response=$(curl -s $AUTH "$URL")
     response=$(curl -s "$url")
 
-    if is_process_running "$CORE_BIN_NAME"; then
+    if [ -f "$PIDFILE" ]; "$CORE_BIN_NAME"; then
     echo "$response" | grep -q '"connections":null' && {
         echo "No connections"
         return 1
@@ -332,9 +289,13 @@ info_conns_console_api() {
 
 show_conns_console() {
     local pid
-    pid=$(ps | grep "$CORE_BIN_NAME" | grep -v "[g]rep" | awk '{print $1}')
+
+    if [ -f "$PIDFILE" ]; then
+        pid=$(cat "$PIDFILE")
+    fi
+
     if [ -z "$pid" ]; then
-        clog 1 "Process '$CORE_BIN_NAME' not found"
+        clog 1 "Process '$CORE_BIN_NAME' is not running"
         return 1
     fi
 
@@ -355,7 +316,7 @@ show_conns_console() {
 }
 
 systemlogs() {
-    local lines=${1:-20}
+    local lines=${1:-40}
     if ! command -v logread >/dev/null 2>&1; then
         clog 0 "logread command not found"
         return 1
@@ -418,9 +379,9 @@ report() {
     echo
     echo "🔧 JustClash Settings"
     echo "$border"
-    printf "│ %-28s │ %-28s │\n" "Force NTP Sync at Start" "$(bool_to_yesno "$forcefully_update_ntp_at_load")"
-    printf "│ %-28s │ %-28s │\n" "Update DNS on Start" "$(bool_to_yesno "$update_dns_server")"
-    printf "│ %-28s │ %-28s │\n" "Update NFT Tables" "$(bool_to_yesno "$update_nft_tables")"
+    printf "│ %-28s │ %-28s │\n" "Force NTP Sync at Start" "$(ucibool_to_yesno "$forcefully_update_ntp_at_load")"
+    printf "│ %-28s │ %-28s │\n" "Update DNS on Start" "$(ucibool_to_yesno "$update_dns_server")"
+    printf "│ %-28s │ %-28s │\n" "Update NFT Tables" "$(ucibool_to_yesno "$update_nft_tables")"
     echo "$bottom"
 
     echo
@@ -428,20 +389,19 @@ report() {
     echo "$border"
     printf "│ %-28s │ %-28s │\n" "Log Level" "$log_level"
     printf "│ %-28s │ %-28s │\n" "TPROXY Port" "$tproxy_port"
-    printf "│ %-28s │ %-28s │\n" "Enable Unified Delay" "$(bool_to_yesno "$unified_delay")"
+    printf "│ %-28s │ %-28s │\n" "Enable Unified Delay" "$(ucibool_to_yesno "$unified_delay")"
     printf "│ %-28s │ %-28s │\n" "Routing Mark" "$routing_mark"
-    printf "│ %-28s │ %-28s │\n" "TCP Concurrent" "$(bool_to_yesno "$tcp_concurrent")"
+    printf "│ %-28s │ %-28s │\n" "TCP Concurrent" "$(ucibool_to_yesno "$tcp_concurrent")"
     printf "│ %-28s │ %-28s │\n" "Ext. Controller Port" "$external_controller_port"
     printf "│ %-28s │ %-28s │\n" "Keepalive Idle Time" "$keep_alive_idle"
     printf "│ %-28s │ %-28s │\n" "Keepalive Interval" "$keep_alive_interval"
     printf "│ %-28s │ %-28s │\n" "DNS Listen Port" "$dns_listen_port"
-    printf "│ %-28s │ %-28s │\n" "Use Custom Hosts" "$(bool_to_yesno "$use_hosts")"
-    printf "│ %-28s │ %-28s │\n" "Use System Hosts" "$(bool_to_yesno "$use_system_hosts")"
+    printf "│ %-28s │ %-28s │\n" "Use Custom Hosts" "$(ucibool_to_yesno "$use_hosts")"
+    printf "│ %-28s │ %-28s │\n" "Use System Hosts" "$(ucibool_to_yesno "$use_system_hosts")"
     printf "│ %-28s │ %-28s │\n" "Fake-IP Range" "$fake_ip_range"
     echo "$bottom"
 }
 
-# === DIAG FUNCTIONS ===
 diag_nft() {
     clog 2 "Checking for 'nft' command..."
     if ! command -v nft >/dev/null 2>&1; then
@@ -709,14 +669,6 @@ check_for_conflicts() {
     fi
 }
 
-core_complete_config() {
-    if [ -f "$CORE_COMPLETE_YAML" ]; then
-         cp "$CORE_COMPLETE_YAML" "$OUTPUT_YAML_CONFIG_PATH"
-    else
-        panic "Main config file $CORE_COMPLETE_YAML is missing."
-    fi
-}
-
 # TODO: Finish dynamic prefix
 generate_yaml_array() {
     local section_type="$1"
@@ -864,7 +816,7 @@ core_prepare_workdir() {
     fi
 }
 
-# TODO: Remove unused archs
+# TODO: Remove impossible archs
 detect_arch() {
     local arch_raw
     arch_raw=$(uname -m)
@@ -953,7 +905,7 @@ core_update() {
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
         core_download "$latest_ver" "$latest_tag" || return 1
-        send_telegram "Mihomo core binary was missing. Installed ${latest_ver}"
+        send_telegram "Mihomo core binary was missing. Installed $latest_ver"
         return 0
     fi
 
@@ -1105,11 +1057,9 @@ help() {
 Usage: justclash <command> [args]
 
 Service Management:
-  start                   Start the JustClash service.
-  start_with_config       Start JustClash with complete config.yaml.
+  start|run               Start the JustClash service.
   stop                    Stop the JustClash service.
-  reload|reload           Restart the service.
-  reload_with_config      Restart the service with complete config.yaml.
+  reload|restart          Restart the service.
 
 Mihomo management Commands:
   core_download                   Download and install the latest Mihomo binary for your device architecture
@@ -1125,7 +1075,7 @@ Mihomo management Commands:
   core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task
 
 Information Commands:
-  report                  Show report about configuration.
+  report|check            Show report about configuration.
   info_device             Show device model.
   info_openwrt            Show OpenWrt version.
   info_core               Show Mihomo core version.
@@ -1136,19 +1086,14 @@ Information Commands:
 
 Diagnostics:
   diag_nft                Run nftables diagnostic.
-  diag_fake_ip
-  diag_github
+  diag_fake_ip            Run Fake IP diagnostic.
+  diag_github             Run GitHub access diagnostic.
 
 Logs:
-  logs [N]                Show last N lines of system logs (default all).
+  logs|systemlogs [N]     Show last N lines of system logs (default 40).
 
 Help:
-  help, ?, command        Show this help message.
-
-Examples:
-  justclash start
-  justclash report
-  justclash logs 50
+  help|?|command          Show this help message.
 
 EOF
 }
@@ -1157,17 +1102,11 @@ case "$1" in
     start|run)
         start
         ;;
-    start_with_config)
-        start_with_config
-        ;;
     stop)
         stop
         ;;
     reload|restart)
         restart
-        ;;
-    reload_with_config)
-        restart_with_config
         ;;
     report|check)
         report
