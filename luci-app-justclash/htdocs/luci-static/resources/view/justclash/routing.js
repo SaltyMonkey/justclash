@@ -15,6 +15,136 @@ return view.extend({
             ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
         });
     },
+    parseDirectRulesSection: function (section) {
+        const rules = [];
+        const directDomains = common.valueToArray(section.additional_domain_direct);
+        const directDomainsKeyword = common.valueToArray(section.additional_domain_keyword_direct);
+        const directDomainsRegex = common.valueToArray(section.additional_domain_regex_direct);
+        const directDomainsSrcIp = common.valueToArray(section.additional_srcip_direct);
+        const directDomainsDestIp = common.valueToArray(section.additional_destip_direct);
+
+        directDomains.forEach(item => { rules.push(`DOMAIN-SUFFIX,${item.trim()},DIRECT`); });
+        directDomainsKeyword.forEach(item => { rules.push(`DOMAIN-KEYWORD,${item.trim()},DIRECT`); });
+        directDomainsRegex.forEach(item => { rules.push(`DOMAIN-REGEX,${item.trim()},DIRECT`); });
+        directDomainsSrcIp.forEach(item => { rules.push(`SRC-IP-CIDR,${item.trim()},DIRECT`); });
+        directDomainsDestIp.forEach(item => { rules.push(`IP-CIDR,${item.trim()},DIRECT`); });
+
+        return { rules };
+    },
+    parseBlockRulesSection: function (section) {
+        const rules = [];
+        const selectedRuleSets = [];
+        const selectedBlockRuleSetsNames = common.valueToArray(section.enabled_blocklist);
+        const domainBlockRoutes = common.valueToArray(section.additional_domain_blockroute);
+        const destipBlockRoutes = common.valueToArray(section.additional_destip_blockroute);
+        const disableQuick = s.disable_quic;
+        selectedBlockRuleSetsNames.forEach(ruleset => {
+            const rs = rulesets.availableBlockRulesets.find(x => ruleset === x.yamlName);
+            if (rs) {
+                let copy = Object.assign({}, rs);
+                const yamlName = copy.yamlName;
+                delete copy.name;
+                delete copy.yamlName;
+                selectedRuleSets[yamlName] = copy;
+            }
+            else {
+                console.warn("parseBlockRulesSection", "selectedBlockRuleSetsNames missed", ruleset);
+            }
+        });
+
+        Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},REJECT`); });
+        domainBlockRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},REJECT`); });
+        destipBlockRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},REJECT`); });
+
+        return { rules, selectedRuleSets };
+    },
+    parseProxiesSection: function (section, sectionName) {
+        const rules = [];
+        const selectedRuleSets = [];
+        const proxies = [];
+        let proxyObject = null;
+
+        const link = section.proxy_link?.trim();
+        if (link) {
+            try {
+                proxyObject = common.parseProxyLink(link);
+                proxyObject.name = sectionName;
+                proxies.push(proxyObject);
+            } catch (e) {
+                console.error(_("Cannot parse proxy URI:"), e);
+            }
+        }
+        if (proxyObject) {
+            const selectedRuleSetsNames = common.valueToArray(section.enabled_list);
+            const domainRoutes = common.valueToArray(section.additional_domain_route);
+            const destipRoutes = common.valueToArray(section.additional_destip_route);
+            selectedRuleSetsNames.forEach(ruleset => {
+                const rs = rulesets.availableRuleSets.find(x => ruleset === x.yamlName);
+                if (rs) {
+                    let copy = Object.assign({}, rs);
+                    const yamlName = copy.yamlName;
+                    delete copy.name;
+                    delete copy.yamlName;
+                    selectedRuleSets[yamlName] = copy;
+                } else {
+                    console.warn("parseProxiesSection", "selectedBlockRuleSetsNames missed", ruleset);
+                }
+            });
+            Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},${sectionName}`); });
+            domainRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},${sectionName}`); });
+            destipRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},${sectionName}`); });
+        } else {
+            console.warn("parseProxiesSection", "proxyObject is missing", link);
+        }
+
+        return { proxies, rules, selectedRuleSets };
+    },
+    parseProxyGroupsSection: function (section, sectionName) {
+        const proxyGroups = [];
+        const rules = [];
+        const selectedRuleSets = [];
+
+        let proxyList = null;
+        if (section.proxies_list)
+            proxyList = common.splitAndTrimString(s.proxies_list, ",");
+
+        if (proxyList && proxyList.length > 1) {
+            proxyGroups.push({
+                sectionName,
+                type: section.group_type,
+                strategy: section.strategy,
+                url: section.check_url,
+                interval: section.interval,
+                timeout: 5000,
+                proxies: proxyList,
+                lazy: false
+            });
+            const selectedRuleSetsNames = common.valueToArray(s.enabled_list);
+            const domainRoutes = common.valueToArray(s.additional_domain_route);
+            const destipRoutes = common.valueToArray(s.additional_destip_route);
+            selectedRuleSetsNames.forEach(ruleset => {
+                const rs = rulesets.availableRuleSets.find(x => ruleset === x.yamlName);
+                if (rs) {
+                    let copy = Object.assign({}, rs);
+                    const yamlName = copy.yamlName;
+                    delete copy.name;
+                    delete copy.yamlName;
+                    selectedRuleSets[yamlName] = copy;
+                } else {
+                    console.warn("parseProxyGroupsSection", "selectedBlockRuleSetsNames is missing", ruleset);
+                }
+            });
+            Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},${sectionName}`); });
+            domainRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},${sectionName}`); });
+            destipRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},${sectionName}`); });
+
+
+        } else {
+            console.warn("parseProxyGroupsSection", "proxyList is missing or wrong", proxyList);
+        }
+
+        return { proxyGroups, rules, selectedRuleSets };
+    },
     handleSaveApply: function (ev) {
         return this.handleSave(ev).then(() => {
             return uci.load(common.binName).then(() => {
@@ -23,118 +153,36 @@ return view.extend({
                 let virtualRuleSets = {};
                 let virtualProxies = [];
                 let virtualProxyGroups = [];
-                let virtualRules = "";
-                let virtualBlockRules = "";
-                let addedProxyNames = [];
+                let virtualRules = [];
+
+                let virtualDirectRules = [];
+                let virtualBlockRules = [];
 
                 for (const s of allSections) {
                     const type = s[".type"];
                     const name = s.name.trim();
                     switch (type) {
                         case "proxies":
-                            const link = s.proxy_link.trim();;
-
-                            let obj = null;
-                            if (link) {
-                                try {
-                                    obj = common.parseProxyLink(link);
-                                    obj.name = name;
-                                    virtualProxies.push(obj);
-                                    addedProxyNames.push(name);
-                                } catch (e) {
-                                    console.error(_("Cannot parse proxy URI:"), e);
-                                }
-                            }
-                            if (obj) {
-                                const selectedRuleSetsNames = common.valueToArray(s.enabled_list);
-                                const domainRoutes = common.valueToArray(s.additional_domain_route);
-                                const destipRoutes = common.valueToArray(s.additional_destip_route);
-                                selectedRuleSetsNames.forEach(ruleset => {
-                                    const rs = rulesets.availableRuleSets.find(x => ruleset === x.yamlName);
-                                    if (rs) {
-                                        let copy = Object.assign({}, rs);
-                                        const yamlName = copy.yamlName;
-                                        delete copy.name;
-                                        delete copy.yamlName;
-                                        virtualRuleSets[yamlName] = copy;
-
-                                        virtualRules += ` - RULE-SET,${yamlName},${name}\n`;
-                                    }
-                                });
-                                domainRoutes.forEach(domain => {
-                                    virtualRules += ` - DOMAIN-SUFFIX,${domain},${name}\n`;
-                                });
-                                destipRoutes.forEach(cidr => {
-                                    virtualRules += ` - IP-CIDR,${cidr},${name}\n`;
-                                });
-                            }
+                            const proxiesRet = this.parseProxiesSection(s, name);
+                            virtualProxies.push(...proxiesRet.proxies);
+                            virtualRules.push(...proxiesRet.rules);
+                            virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
                             break;
-
                         case "proxy_group":
-                            let proxyList = null;
-                            if (s.proxies_list) proxyList = common.splitAndTrimString(s.proxies_list, ",");
-                            if (proxyList && proxyList.length > 1) {
-                                virtualProxyGroups.push({
-                                    name,
-                                    type: s.group_type,
-                                    strategy: s.strategy,
-                                    url: s.check_url,
-                                    interval: s.interval,
-                                    timeout: 5000,
-                                    proxies: proxyList,
-                                    lazy: false
-                                });
-                                const selectedRuleSetsNames = common.valueToArray(s.enabled_list);
-                                const domainRoutes = common.valueToArray(s.additional_domain_route);
-                                const destipRoutes = common.valueToArray(s.additional_destip_route);
-                                selectedRuleSetsNames.forEach(ruleset => {
-                                    const rs = rulesets.availableRuleSets.find(x => ruleset === x.yamlName);
-                                    if (rs) {
-                                        let copy = Object.assign({}, rs);
-                                        const yamlName = copy.yamlName;
-                                        delete copy.name;
-                                        delete copy.yamlName;
-                                        virtualRuleSets[yamlName] = copy;
-
-                                        virtualRules += ` - RULE-SET,${yamlName},${name}\n`;
-                                    }
-                                });
-                                domainRoutes.forEach(domain => {
-                                    virtualRules += ` - DOMAIN-SUFFIX,${domain},${name}\n`;
-                                });
-
-                                destipRoutes.forEach(cidr => {
-                                    virtualRules += ` - IP-CIDR,${cidr},${name}\n`;
-                                });
-                            }
+                            const proxyGroupRet = this.parseProxiesSection(s, name);
+                            virtualProxyGroups.push(...proxyGroupRet.proxyGroups);
+                            virtualRules.push(...proxyGroupRet.rules);
+                            virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
                             break;
                         case "block_rules":
-                            const selectedBlockRuleSetsNames = common.valueToArray(s.enabled_blocklist);
-                            const domainBlockRoutes = common.valueToArray(s.additional_domain_blockroute);
-                            const destipBlockRoutes = common.valueToArray(s.additional_destip_blockroute);
-                            const disableQuick = s.disable_quic;
-                            selectedBlockRuleSetsNames.forEach(ruleset => {
-                                const rs = rulesets.availableBlockRulesets.find(x => ruleset === x.yamlName);
-                                if (rs) {
-                                    let copy = Object.assign({}, rs);
-                                    const yamlName = copy.yamlName;
-                                    delete copy.name;
-                                    delete copy.yamlName;
-                                    virtualRuleSets[yamlName] = copy;
-
-                                    virtualBlockRules += ` - RULE-SET,${yamlName},REJECT\n`;
-                                }
-                            });
-                            domainBlockRoutes.forEach(domain => {
-                                virtualBlockRules += ` - DOMAIN-SUFFIX,${domain},REJECT\n`;
-                            });
-
-                            destipBlockRoutes.forEach(cidr => {
-                                virtualBlockRules += ` - IP-CIDR,${cidr},REJECT\n`;
-                            });
+                            const blockRulesRet = this.parseBlockRulesSection(s);
+                            virtualBlockRules.push(...blockRulesRet.rules);
+                            virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
                             break;
-                        default:
-                            // Handle unknown types if needed
+                        case "direct_rules":
+                            const directRulesRet = this.parseDirectRulesSection(s);
+                            virtualDirectRules.push(...directRulesRet.rules);
+                            //virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
                             break;
                     }
                 }
@@ -144,8 +192,9 @@ return view.extend({
                 console.log(common.objToYaml(virtualProxies, 1));
                 console.log(common.objToYaml(virtualProxyGroups, 1));
                 console.log(common.objToYaml(virtualRuleSets, 1));
+                const compiledRules = common.objToYaml([...virtualDirectRules, ...virtualBlockRules, ...virtualRules]);
 
-                uci.set(common.binName, "compiled", "rules", `${virtualBlockRules}${virtualRules}`);
+                uci.set(common.binName, "compiled", "rules", compiledRules);
                 uci.set(common.binName, "compiled", "proxies", common.objToYaml(virtualProxies, 1));
                 uci.set(common.binName, "compiled", "proxy_groups", common.objToYaml(virtualProxyGroups, 1));
                 uci.set(common.binName, "compiled", "rule_providers", common.objToYaml(virtualRuleSets, 1));

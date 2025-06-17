@@ -129,7 +129,7 @@ return baseclass.extend({
         }
     },
     parseProxyLink: function (link) {
-        if(link && typeof link === 'string')
+        if(link && typeof link === "string")
             if(link.startsWith("vless://")) return this.parseVlessLink(link);
             else if (link.startsWith("ss://")) return this.parseSSLink(link);
             else if (link.startsWith("socks5://")) return this.parseSocks5Link(link);
@@ -141,7 +141,7 @@ return baseclass.extend({
 
     parseSocks5Link: function (url) {
         if (!url.startsWith("socks5://")) {
-            throw new Error('Invalid socks5:// link');
+            throw new Error("Invalid socks5:// link");
         }
 
        try {
@@ -149,17 +149,17 @@ return baseclass.extend({
 
             // Validate hostname
             if (!parsed.hostname) {
-                throw new Error('Missing hostname in SOCKS5 URL');
+                throw new Error("Missing hostname in SOCKS5 URL");
             }
 
             // Validate port
             const port = parseInt(parsed.port) || 1080;
             if (port < 1 || port > 65535) {
-                throw new Error('Invalid port number: ' + port);
+                throw new Error("Invalid port number: " + port);
             }
 
             const result = {
-                type: 'socks5',
+                type: "socks5",
                 name: `socks5_${parsed.hostname}_${port}`,
                 server: parsed.hostname,
                 port: port
@@ -177,7 +177,7 @@ return baseclass.extend({
             return result;
 
         } catch (error) {
-            throw new Error('Failed to parse SOCKS5 string: ' + error.message);
+            throw new Error("Failed to parse SOCKS5 string: " + error.message);
         }
     },
     parseSSHLink: function (link) {
@@ -320,7 +320,7 @@ return baseclass.extend({
 
         return yaml;
     },
-    splitAndTrimString: function (value, delimiter = ',') {
+    splitAndTrimString: function (value, delimiter = ",") {
 
         return value.split(delimiter)
             .map(item => item.trim())
@@ -333,7 +333,7 @@ return baseclass.extend({
         }
 
         // String value
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
             return value.length > 0 ? [value] : [];
         }
 

@@ -90,7 +90,7 @@ return view.extend({
                 E("td", { class: "td left", id: "isrunning", style: `color: ${this.boolToColor(results.infoIsRunning)}` }, this.boolToWord(results.infoIsRunning))
             ]),
             E("tr", { class: "tr cbi-rowstyle-1" }, [
-                E("td", { class: "td left" }, _("Daemon's autoboot:")),
+                E("td", { class: "td left" }, _("Daemon's autostart:")),
                 E("td", { class: "td left", id: "isautostarting", style: `color: ${this.boolToColor(results.infoIsAutostarting)}` }, this.boolToWord(results.infoIsAutostarting))
             ])
         ]);
@@ -126,12 +126,12 @@ return view.extend({
             ]);
         };
 
-        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), results.infoIsRunning));
+        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), !results.infoIsRunning));
         actionContainer.appendChild(createButton("restart", "cbi-button-action", _("Restart")));
-        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), !results.infoIsRunning));
+        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), results.infoIsRunning));
 
-        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), results.infoIsAutostarting));
-        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), !results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), !results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), results.infoIsAutostarting));
 
         this.startPolling();
 

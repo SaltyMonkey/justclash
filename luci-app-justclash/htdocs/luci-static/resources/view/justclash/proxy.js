@@ -196,11 +196,6 @@ return view.extend({
         let map_promise = m.render();
         return map_promise;
     },
-    addCSS() {
-        return E("style", {}, `
-
-        `);
-    },
     destroy() {
 
     }

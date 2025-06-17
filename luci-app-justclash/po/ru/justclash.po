@@ -25,7 +25,7 @@ msgstr "Версия ядра Mihomo:"
 msgid "Daemon is running:"
 msgstr "Сервис запущен:"
 
-msgid "Daemon's autoboot:"
+msgid "Daemon's autostart:"
 msgstr "Автозапуск сервиса:"
 
 msgid "Executing command..."

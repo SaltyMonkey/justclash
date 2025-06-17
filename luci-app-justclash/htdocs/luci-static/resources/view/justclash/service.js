@@ -24,18 +24,18 @@ return view.extend({
         tabname = "serviceautomation_tab";
         s.tab(tabname, "Daemon automation");
 
-        o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Forcefully run ntpd at load:"));
-        o.description = _("When enabled daemon will run ntpd from system to try sync time in system to ensure tls will work.");
+        o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Start ntpd at load:"));
+        o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Inject DNS server at load:"));
+        o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Inject DNS server at startup:"));
         o.description = _("When enabled daemon will inject dns server in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_start", _("Setup NFT tables at load:"));
-        o.description = _("When enabled daemon will create NFT tables to redirect traffic to tproxy port.");
+        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_start", _("Setup NFT tables at startup:"));
+        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
         o.default = "1";
 
@@ -43,7 +43,7 @@ return view.extend({
         common.defaultUpdateOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Mode for daemon autoupdate cron job.");
+        o.description = _("Cron job mode for service autoupdate:");
         o.rmempty = false;
         o.default = common.defaultUpdateOptions[0];
 
