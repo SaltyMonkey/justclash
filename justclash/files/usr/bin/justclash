@@ -789,7 +789,6 @@ $nameserver
 $proxy_server_nameserver
   direct-nameserver:
 $direct_nameserver
-  prefer-h3: true
   respect-rules: true
   fake-ip-filter-mode: blacklist
   fake-ip-filter:
@@ -807,6 +806,7 @@ sniffer:
       ports: [443, 8443]
   skip-domain:
 $ignore_to_sniff_domains
+
 EOF
 
     local rules proxies proxy_groups rule_providers
@@ -898,12 +898,12 @@ core_download() {
 
     log 2 "Downloading mihomo binary" "⬇️"
     curl -sL -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
-        panic "Failed to download file." "❌" >&2
+        panic "Failed to download file." "❌"
     }
 
     log 2 "Extracting to $CORE_PATH" "⬇️"
     gunzip -c "${CORE_WORKDIR_PATH}/mihomo.gz" > "$CORE_PATH" || {
-        panic "Failed to extract file." "❌" >&2
+        panic "Failed to extract file." "❌"
     }
 
     chmod +x "$CORE_PATH"
@@ -925,9 +925,9 @@ core_update() {
     latest_ver=$(echo "$tmp" | sed -n 2p)
 
     if [ -z "$latest_tag" ] || [ -z "$latest_ver" ]; then
-        print_red "Error happened when trying to receive latest version data."
-        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
-        panic
+        log 3 "Error happened when trying to receive latest version data."
+        log 3 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+        panic "Failed to download core"
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
@@ -1005,6 +1005,12 @@ core_update_cron_check() {
 
 core_update_cron_add() {
     local mihomo_cron_update_string
+
+    if [ -z "$mihomo_cron_update_string" ]; then
+        log 1 "Cron schedule string is empty! Cron job not added." "❌"
+        return 1
+    fi
+
     if core_update_cron_check > /dev/null; then
         log 1 "Core autoupdate cron job already exists." "ℹ️"
         return 0
@@ -1047,6 +1053,12 @@ core_autorestart_cron_check() {
 
 core_autorestart_cron_add() {
     local mihomo_cron_autorestart_string
+
+     if [ -z "$mihomo_cron_autorestart_string" ]; then
+        log 1 "Cron schedule string is empty! Cron job not added." "❌"
+        return 1
+    fi
+
     if core_autorestart_cron_check > /dev/null; then
         log 1 "Core autoupdate cron job already exists." "ℹ️"
         return 0
@@ -1078,7 +1090,23 @@ core_autorestart_cron_remove() {
     fi
 }
 
-#---
+check_dns() {
+    local domain="${1}"
+    local resolver="$2"
+    local ip
+
+    if [ -n "$resolver" ]; then
+        ip=$(nslookup "$domain" "$resolver" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
+    else
+        ip=$(nslookup "$domain" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
+    fi
+
+    if [ -n "$ip" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
 
 help() {
     cat << EOF

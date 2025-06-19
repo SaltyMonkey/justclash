@@ -76,6 +76,7 @@ return view.extend({
         }
         if (proxyObject) {
             const selectedRuleSetsNames = common.valueToArray(section.enabled_list);
+            const srcipRoutes = common.valueToArray(section.additional_srcip_route);
             const domainRoutes = common.valueToArray(section.additional_domain_route);
             const destipRoutes = common.valueToArray(section.additional_destip_route);
             selectedRuleSetsNames.forEach(ruleset => {
@@ -91,6 +92,7 @@ return view.extend({
                 }
             });
             Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},${sectionName}`); });
+            srcipRoutes.forEach(domain => { rules.push(`SRC-IP-CIDR,${domain},${sectionName}`); });
             domainRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},${sectionName}`); });
             destipRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},${sectionName}`); });
         } else {
@@ -120,6 +122,7 @@ return view.extend({
                 lazy: false
             });
             const selectedRuleSetsNames = common.valueToArray(s.enabled_list);
+            const srcipRoutes = common.valueToArray(section.additional_srcip_route);
             const domainRoutes = common.valueToArray(s.additional_domain_route);
             const destipRoutes = common.valueToArray(s.additional_destip_route);
             selectedRuleSetsNames.forEach(ruleset => {
@@ -135,6 +138,7 @@ return view.extend({
                 }
             });
             Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},${sectionName}`); });
+            srcipRoutes.forEach(domain => { rules.push(`SRC-IP-CIDR,${domain},${sectionName}`); });
             domainRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},${sectionName}`); });
             destipRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},${sectionName}`); });
 
@@ -251,6 +255,12 @@ return view.extend({
         o.optional = true;
         o.datatype = "cidr4";
 
+        o = s3.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
+        o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
+        o.optional = true;
+        o.editable = true;
+        o.datatype = "cidr4";
+
         s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load-balancing)."));
         s2.anonymous = true;
         s2.addremove = true;
@@ -305,13 +315,19 @@ return view.extend({
         });
         o.description = _("Predefined RULE-SET lists, select ones which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
 
-        o = s2.option(form.DynamicList, "additional_domain_route", _("Manual DOMAIN-SUFFIX rules:"));
+        o = s2.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
         o.description = _("One element is one DOMAIN-SUFFIX rule with mihomo syntax.");
         o.optional = true;
         o.editable = true;
 
-        o = s2.option(form.DynamicList, "additional_destip_route", _("Manual IP-CIDR rules:"));
+        o = s2.option(form.DynamicList, "additional_destip_route", _("IP-CIDR:"));
         o.description = _("One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now.");
+        o.optional = true;
+        o.editable = true;
+        o.datatype = "cidr4";
+
+        o = s3.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
+        o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
