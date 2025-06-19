@@ -46,8 +46,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
 endef
 
-define Package/podkop/conffiles
-/etc/config/podkop
+define Package/justclash/conffiles
+/etc/config/justclash
 endef
 
 define Package/$(PKG_NAME)/prerm

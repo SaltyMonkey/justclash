@@ -30,7 +30,7 @@ CORE_PATH="/usr/bin/mihomo/${CORE_BIN_NAME}"
 CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
-PARTIAL_YAML_CONFIG_PATH="/usr/bin/mihomo/partial.config.yaml"
+#PARTIAL_YAML_CONFIG_PATH="/usr/bin/mihomo/partial.config.yaml"
 
 NFT_TABLE_NAME="justclash_tproxy"
 
@@ -39,8 +39,7 @@ NFT_TABLE_NAME="justclash_tproxy"
 # 195.208.185.17  — ntp2.stratum2.ru (Russian NTP server)
 # 193.232.128.6   — ntp3.stratum2.ru (Russian NTP server)
 # 216.239.35.0    — time.google.com (Google NTP)
-# 162.159.200.1   — time.cloudflare.com (Cloudflare NTP)
-NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0 162.159.200.1"
+NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
 # String for nft tables
 # Allow traffic on:
 # LAN interfaces (lan*)
@@ -925,8 +924,8 @@ core_update() {
     latest_ver=$(echo "$tmp" | sed -n 2p)
 
     if [ -z "$latest_tag" ] || [ -z "$latest_ver" ]; then
-        log 3 "Error happened when trying to receive latest version data."
-        log 3 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+        log 1 "Error happened when trying to receive latest version data."
+        log 1 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
         panic "Failed to download core"
     fi
 
