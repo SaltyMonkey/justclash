@@ -1,7 +1,10 @@
 "require baseclass";
 
 return baseclass.extend({
-    availableBlockRulesets: [
+    alphabeticalSort: function (rulesetArray) {
+        return rulesetArray;
+    },
+    availableBlockRulesets: this.alphabeticalSort([
         {
             name: "OISD NSFW small",
             yamlName: "oisd-nsfw-small",
@@ -82,7 +85,7 @@ return baseclass.extend({
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/badware/hagezi-sw-huawei.rms"
         }
-    ],
+    ]),
     availableRuleSets: [
         {
             name: "Just Domains",
