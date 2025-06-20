@@ -130,11 +130,20 @@ log() {
 
 is_package_installed() {
     local found_pkgs=""
+    local pkgcommand=""
+
+    if command -v apk >/dev/null 2>&1; then
+        pkgcommand="apk info"
+    else
+        pkgcommand="opkg list-installed"
+    fi
+
     for pkg in "$@"; do
-        if opkg list-installed | grep -qw "$pkg"; then
+        if $pkgcommand | grep -qw "$pkg"; then
             found_pkgs="${found_pkgs:+$found_pkgs }$pkg"
         fi
     done
+
     if [ -n "$found_pkgs" ]; then
         echo "$found_pkgs"
         return 0
@@ -239,13 +248,25 @@ info_mihomo() {
 
 info_package() {
     local version
-    version=$(opkg list-installed justclash | awk '{print $3}')
+
+    if command -v apk >/dev/null 2>&1; then
+        version=$(apk info justclash 2>/dev/null | grep -oP 'justclash-\K.*')
+    else
+        version=$(opkg list-installed justclash 2>/dev/null | awk '{print $3}')
+    fi
+
     echo "$version" || echo "$NO_DATA_STRING"
 }
 
 info_luci() {
     local version
-    version=$(opkg list-installed luci-app-justclash | awk '{print $3}')
+
+    if command -v apk >/dev/null 2>&1; then
+        version=$(apk info luci-app-justclash 2>/dev/null | grep -oP 'justclash-\K.*')
+    else
+        version=$(opkg list-installed luci-app-justclash 2>/dev/null | awk '{print $3}')
+    fi
+
     echo "$version" || echo "$NO_DATA_STRING"
 }
 
