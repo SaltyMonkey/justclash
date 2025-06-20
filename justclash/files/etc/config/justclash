@@ -47,7 +47,7 @@ config proxy "proxy"
 	list default_nameserver "77.88.8.8"
 
 	list direct_nameserver "https://common.dot.dns.yandex.net"
-	list direct_nameserver "system"
+	list direct_nameserver "system://"
 
 	list proxy_server_nameserver "https://dns.quad9.net/dns-query"
 	list proxy_server_nameserver "https://dns.google/dns-query"

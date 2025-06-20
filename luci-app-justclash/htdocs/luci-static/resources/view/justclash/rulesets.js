@@ -2,7 +2,7 @@
 
 return baseclass.extend({
     alphabeticalSort: function (rulesetArray) {
-        return rulesetArray;
+        return rulesetArray.sort((a, b) => a.name.localeCompare(b.name));
     },
     availableBlockRulesets: this.alphabeticalSort([
         {
@@ -35,7 +35,7 @@ return baseclass.extend({
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/ads/oisd-small.rms"
         },
-         {
+        {
             name: "OISD ADS big",
             yamlName: "oisd-ads-big",
             type: "http",
@@ -127,246 +127,299 @@ return baseclass.extend({
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/bypass/no-russia-hosts.rms"
         },
-        {
-            name: "Linux domains",
-            yamlName: "nix",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/nix.rms"
-        },
-        {
-            name: "ChatGPT",
-            yamlName: "chatgpt",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/chatgpt.rms"
-        },
-        {
-            name: "Copilot",
-            yamlName: "copilot",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/copilot.rms"
-        },
-        {
-            name: "Grok",
-            yamlName: "grok",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/grok.com.rms"
-        },
-        {
-            name: "Discord",
-            yamlName: "discord",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/discord.rms"
-        },
+        ...this.alphabeticalSort(
+            [
+                {
+                    name: "Amazon",
+                    yamlName: "amazon",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/amazon.rms"
+                },
+                {
+                    name: "Atlassian",
+                    yamlName: "atlassian",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/atlassian.rms"
+                },
+                {
+                    name: "Linux domains",
+                    yamlName: "nix",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/nix.rms"
+                },
+                {
+                    name: "ChatGPT",
+                    yamlName: "chatgpt",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/chatgpt.rms"
+                },
+                {
+                    name: "Copilot",
+                    yamlName: "copilot",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/copilot.rms"
+                },
+                {
+                    name: "Grok",
+                    yamlName: "grok",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/grok.com.rms"
+                },
+                {
+                    name: "Discord",
+                    yamlName: "discord",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/discord.rms"
+                },
 
-        {
-            name: "HDRezka",
-            yamlName: "hdrezka",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/hdrezka.rms"
-        },
-        {
-            name: "Hetzner",
-            yamlName: "hetzner",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/hetzner.rms"
-        },
-        {
-            name: "Instagram",
-            yamlName: "instagram",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/instagram.rms"
-        },
-        {
-            name: "Kinozal",
-            yamlName: "kinozal",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/kinozal.rms"
-        },
-        {
-            name: "LinkedIn",
-            yamlName: "linkedin",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/linkedin.rms"
-        },
-        {
-            name: "LostFilm",
-            yamlName: "lostfilm",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/lostfilm.rms"
-        },
-        {
-            name: "Medium",
-            yamlName: "medium",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/medium.rms"
-        },
-        {
-            name: "Meta",
-            yamlName: "meta",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/meta.rms"
-        },
-        {
-            name: "Netflix",
-            yamlName: "netflix",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/netflix.rms"
-        },
-        {
-            name: "NNMClub",
-            yamlName: "nnmclub",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/nnmclub.rms"
-        },
-        {
-            name: "OVH",
-            yamlName: "ovh",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/ovh.rms"
-        },
-        {
-            name: "RuTracker",
-            yamlName: "rutracker",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/rutracker.rms"
-        },
-        {
-            name: "Spotify",
-            yamlName: "spotify",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/spotify.rms"
-        },
-        {
-            name: "Telegram",
-            yamlName: "telegram",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/telegram.rms"
-        },
-        {
-            name: "x-com",
-            yamlName: "xcom",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/x-com.rms"
-        },
-        {
-            name: "Youtube",
-            yamlName: "youtube",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "domain",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/youtube.rms"
-        },
-        {
-            name: "Cloudflare CIDR",
-            yamlName: "cloudflare-cidr",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "cidr",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/cloudflare.rms"
-        },
-        {
-            name: "Discord CIDR",
-            yamlName: "discord-cidr",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "cidr",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/discord.rms"
-        },
-        {
-            name: "Telegram CIDR",
-            yamlName: "telegram-cidr",
-            type: "http",
-            interval: 86500,
-            format: "mrs",
-            behavior: "cidr",
-            proxy: "DIRECT",
-            url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/telegram.rms"
-        }
+                {
+                    name: "HDRezka",
+                    yamlName: "hdrezka",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/hdrezka.rms"
+                },
+                {
+                    name: "Hetzner",
+                    yamlName: "hetzner",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/hetzner.rms"
+                },
+                {
+                    name: "Instagram",
+                    yamlName: "instagram",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/instagram.rms"
+                },
+                {
+                    name: "Kinozal",
+                    yamlName: "kinozal",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/kinozal.rms"
+                },
+                {
+                    name: "LinkedIn",
+                    yamlName: "linkedin",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/linkedin.rms"
+                },
+                {
+                    name: "LostFilm",
+                    yamlName: "lostfilm",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/lostfilm.rms"
+                },
+                {
+                    name: "Medium",
+                    yamlName: "medium",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/medium.rms"
+                },
+                {
+                    name: "Meta",
+                    yamlName: "meta",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/meta.rms"
+                },
+                {
+                    name: "Netflix",
+                    yamlName: "netflix",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/netflix.rms"
+                },
+                {
+                    name: "NNMClub",
+                    yamlName: "nnmclub",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/nnmclub.rms"
+                },
+                {
+                    name: "OVH",
+                    yamlName: "ovh",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/ovh.rms"
+                },
+                {
+                    name: "RuTracker",
+                    yamlName: "rutracker",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/rutracker.rms"
+                },
+                {
+                    name: "Spotify",
+                    yamlName: "spotify",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/spotify.rms"
+                },
+                {
+                    name: "Telegram",
+                    yamlName: "telegram",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/telegram.rms"
+                },
+                {
+                    name: "x-com",
+                    yamlName: "xcom",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/x-com.rms"
+                },
+                {
+                    name: "Youtube",
+                    yamlName: "youtube",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/youtube.rms"
+                },
+                {
+                    name: "Deepl",
+                    yamlName: "deepl",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/deepl.rms"
+                },
+                {
+                    name: "Cloudflare",
+                    yamlName: "cloudflare",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "domain",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/services/cloudflare.rms"
+                },
+                {
+                    name: "Cloudfront CIDR",
+                    yamlName: "cloudfront-cidr",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "cidr",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/cloudfront.rms"
+                },
+                {
+                    name: "Cloudflare CIDR",
+                    yamlName: "cloudflare-cidr",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "cidr",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/cloudflare.rms"
+                },
+                {
+                    name: "Discord CIDR",
+                    yamlName: "discord-cidr",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "cidr",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/discord.rms"
+                },
+                {
+                    name: "Telegram CIDR",
+                    yamlName: "telegram-cidr",
+                    type: "http",
+                    interval: 86500,
+                    format: "mrs",
+                    behavior: "cidr",
+                    proxy: "DIRECT",
+                    url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/telegram.rms"
+                }
+            ])
     ]
 });
