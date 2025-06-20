@@ -17,12 +17,12 @@ define Package/$(PKG_NAME)
   TITLE:=JustClash
   DEPENDS:=+nftables +kmod-nf-conntrack +curl +kmod-nft-tproxy
   CONFLICTS:=mihomo podkop iptables-mod-extra https-dns-proxy
-  TITLE:=Clash routing app
+  TITLE:=Clash Routing App
   PKGARCH:=all
 endef
 
 define Package/$(PKG_NAME)/description
-  Transparent proxy based on mihomo for OpenWRT
+  Transparent proxy solution for OpenWrt based on mihomo.
 endef
 
 define Build/Prepare
