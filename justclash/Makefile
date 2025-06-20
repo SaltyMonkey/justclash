@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   TITLE:=JustClash
   DEPENDS:=+nftables +kmod-nf-conntrack +curl +kmod-nft-tproxy
-  CONFLICTS:=podkop iptables-mod-extra https-dns-proxy
+  CONFLICTS:=mihomo podkop iptables-mod-extra https-dns-proxy
   TITLE:=Clash routing app
   PKGARCH:=all
 endef
