@@ -37,7 +37,7 @@ return view.extend({
         const selectedBlockRuleSetsNames = common.valueToArray(section.enabled_blocklist);
         const domainBlockRoutes = common.valueToArray(section.additional_domain_blockroute);
         const destipBlockRoutes = common.valueToArray(section.additional_destip_blockroute);
-        const disableQuick = s.disable_quic;
+        //const disableQuick = s.disable_quic;
         selectedBlockRuleSetsNames.forEach(ruleset => {
             const rs = rulesets.availableBlockRulesets.find(x => ruleset === x.yamlName);
             if (rs) {
@@ -149,6 +149,11 @@ return view.extend({
 
         return { proxyGroups, rules, selectedRuleSets };
     },
+    parseFinalRulesSection: function (section, sectionName) {
+        let dest = section.final_destination;
+        if (dest && dest.length === 0) dest = "DIRECT";
+        return { rules: [`MATCH,${dest}`] };
+    },
     handleSaveApply: function (ev) {
         return this.handleSave(ev).then(() => {
             return uci.load(common.binName).then(() => {
@@ -161,7 +166,7 @@ return view.extend({
 
                 let virtualDirectRules = [];
                 let virtualBlockRules = [];
-
+                let virtualFinalRules = [];
                 for (const s of allSections) {
                     const type = s[".type"];
                     const name = s.name.trim();
@@ -170,23 +175,27 @@ return view.extend({
                             const proxiesRet = this.parseProxiesSection(s, name);
                             virtualProxies.push(...proxiesRet.proxies);
                             virtualRules.push(...proxiesRet.rules);
-                            virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
+                            virtualRuleSets = { ...virtualRuleSets, ...blockRulesRet.selectedRuleSets };;
                             break;
                         case "proxy_group":
                             const proxyGroupRet = this.parseProxiesSection(s, name);
                             virtualProxyGroups.push(...proxyGroupRet.proxyGroups);
                             virtualRules.push(...proxyGroupRet.rules);
-                            virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
+                            virtualRuleSets = { ...virtualRuleSets, ...blockRulesRet.selectedRuleSets };;
                             break;
                         case "block_rules":
                             const blockRulesRet = this.parseBlockRulesSection(s);
                             virtualBlockRules.push(...blockRulesRet.rules);
-                            virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
+                            virtualRuleSets = { ...virtualRuleSets, ...blockRulesRet.selectedRuleSets };;
                             break;
                         case "direct_rules":
                             const directRulesRet = this.parseDirectRulesSection(s);
                             virtualDirectRules.push(...directRulesRet.rules);
                             //virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
+                            break;
+                        case "final_rules":
+                            const finalRulesRet = this.parseFinalRulesSection(s);
+                            virtualFinalRules.push(...finalRulesRet.rules);
                             break;
                     }
                 }
@@ -196,7 +205,7 @@ return view.extend({
                 console.log(common.objToYaml(virtualProxies, 1));
                 console.log(common.objToYaml(virtualProxyGroups, 1));
                 console.log(common.objToYaml(virtualRuleSets, 1));
-                const compiledRules = common.objToYaml([...virtualDirectRules, ...virtualBlockRules, ...virtualRules]);
+                const compiledRules = common.objToYaml([...virtualDirectRules, ...virtualBlockRules, ...virtualRules, ...virtualFinalRules]);
 
                 uci.set(common.binName, "compiled", "rules", compiledRules);
                 uci.set(common.binName, "compiled", "proxies", common.objToYaml(virtualProxies, 1));
@@ -351,7 +360,7 @@ return view.extend({
         o.editable = true;
 
         o = s3.option(form.DynamicList, "additional_srcip_direct", _("SRC-IP-CIDR pass:"));
-        o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is one SRC-IP-CIDR rule to pass with proxy (mihomo syntax). IPV4 only right now.");
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
@@ -385,6 +394,12 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
+
+        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("FINAL rule:"), _("Additional sewttings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
+        s5.addremove = false;
+
+        o = s5.option(form.Value, "final_destination", _("Destination:"));
+        o.default = "DIRECT";
 
         return m.render().then(formEl => {
             return E("div", {}, [

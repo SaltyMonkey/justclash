@@ -65,7 +65,7 @@ config proxy "proxy"
 	list ignore_fake_ip_domains "+.3gppnetwork.org"
 	list ignore_fake_ip_domains "+.miwifi.com"
 	list ignore_fake_ip_domains "+.mi.com"
-    list ignore_fake_ip_domains "+.github.com"
+	list ignore_fake_ip_domains "+.github.com"
 
 	list ignore_to_sniff_domains "*.lan"
 	list ignore_to_sniff_domains "*.local"
@@ -89,6 +89,9 @@ config direct_rules "direct_rules"
 	list additional_domain_regex_direct ""
 	list additional_srcip_direct ""
 	list additional_destip_direct ""
+
+config final_rules "final_rules"
+	option final_destination "DIRECT"
 
 config proxies
 	option name "proxyname"

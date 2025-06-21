@@ -416,6 +416,9 @@ msgstr ""
 msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
 msgstr ""
 
+msgid "Each element is one SRC-IP-CIDR rule to pass with proxy (mihomo syntax). IPV4 only right now."
+msgstr ""
+
 msgid "REJECT rules:"
 msgstr ""
 
@@ -441,4 +444,13 @@ msgid "IP-CIDR block:"
 msgstr ""
 
 msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgstr ""
+
+msgid "FINAL rule:"
+msgstr ""
+
+msgid "Additional sewttings for the final rules applied after all others. Use it to override or enforce specific behaviors."
+msgstr ""
+
+msgid "Destination:"
 msgstr ""

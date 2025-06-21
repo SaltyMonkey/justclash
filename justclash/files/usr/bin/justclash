@@ -367,27 +367,6 @@ diag_nft() {
     return 0
 }
 
-diag_dns() {
-    log 2 "Running DNS configuration diagnostics..." "🩺"
-
-    local dns_listen_port
-    config_get dns_listen_port proxy dns_listen_port
-
-    log 2 "Testing DNS resolution..."
-    if ! nslookup openwrt.org 127.0.0.1:"$dns_listen_port" >/dev/null 2>&1; then
-        log 1 "IPv4 DNS query failed" "❌"
-    else
-        log 2 "IPv4 DNS query successful" "✅"
-    fi
-
-    #log 2 "Testing DNS resolution (IPv6)..."
-    #if ! nslookup openwrt.org [::1]:$dns_listen_port >/dev/null 2>&1; then
-    #    log 1 "IPv6 DNS query failed" "❌"
-    #else
-    #    log 2 "IPv6 DNS query successful" "✅"
-    #fi
-}
-
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
     log 2 "Ensuring Mihomo core was previously stopped gracefully..."
@@ -680,7 +659,7 @@ core_generate_yaml() {
     config_get_bool use_hosts proxy use_hosts
     use_hosts=$(ucibool_to_yaml_bool "$use_hosts")
     config_get_bool use_system_hosts proxy use_system_hosts
-    use_system_hosts=$(ucibool_to_yaml_bool "$use_hosts")
+    use_system_hosts=$(ucibool_to_yaml_bool "$use_system_hosts")
     config_get fake_ip_range proxy fake_ip_range
     default_nameserver=$(generate_yaml_array proxy default_nameserver)
     direct_nameserver=$(generate_yaml_array proxy direct_nameserver)
@@ -1037,21 +1016,24 @@ core_autorestart_cron_remove() {
     fi
 }
 
-check_dns() {
-    local domain="${1}"
-    local resolver="$2"
-    local ip
+diag_fake_ip_resolver() {
+    local dns_listen_port
+    config_get dns_listen_port proxy dns_listen_port
 
-    if [ -n "$resolver" ]; then
-        ip=$(nslookup "$domain" "$resolver" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
+    clog 2 "Testing Fake IP DNS resolution..."
+    if ! nslookup google.com 127.0.0.1:"$dns_listen_port" >/dev/null 2>&1; then
+        clog 3 "FakeIP IPv4 DNS query failed" "❌"
     else
-        ip=$(nslookup "$domain" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
+        clog 2 "FakeIP IPv4 DNS query successful" "✅"
     fi
+}
 
-    if [ -n "$ip" ]; then
-        return 0
+diag_default_resolver() {
+    clog 2 "Testing DNS resolution..."
+    if ! nslookup google.com >/dev/null 2>&1; then
+        clog 3 "IPv4 DNS query failed" "❌"
     else
-        return 1
+        clog 2 "IPv4 DNS query successful" "✅"
     fi
 }
 
@@ -1088,8 +1070,8 @@ Information Commands:
 
 Diagnostics:
   diag_nft                Run nftables diagnostic.
-  diag_fake_ip            Run Fake IP diagnostic.
-  diag_github             Run GitHub access diagnostic.
+  diag_fake_ip_resolver   Run Fake IP DNS diagnostic.
+  diag_default_resolver   Run Default DNS diagnostic.
 
 Logs:
   logs|systemlogs [N]     Show last N lines of system logs (default 40).
