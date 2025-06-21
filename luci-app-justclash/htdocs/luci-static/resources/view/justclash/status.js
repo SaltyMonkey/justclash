@@ -69,7 +69,7 @@ return view.extend({
         console.warn(results);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-                E("h3", { class: "cbi-section-title" }, _("Service status")),
+            E("h3", { class: "cbi-section-title" }, _("Service status")),
         ]);
 
         const tableContainer = E("table", { class: "table cbi-rowstyle-1" }, [
@@ -104,7 +104,6 @@ return view.extend({
             return E("button", {
                 class: `cbi-button ${cssClass}`,
                 id: `button${action}`,
-                disabled: isDisabled,
                 click: ui.createHandlerFn(this, () => {
                     const buttons = actionContainer.querySelectorAll("button");
                     const buttonsSecondary = actionContainerSecondary.querySelectorAll("button");
@@ -126,12 +125,12 @@ return view.extend({
             ]);
         };
 
-        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), !results.infoIsRunning));
+        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), results.infoIsRunning));
         actionContainer.appendChild(createButton("restart", "cbi-button-action", _("Restart")));
-        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), results.infoIsRunning));
+        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), !results.infoIsRunning));
 
-        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), !results.infoIsAutostarting));
-        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), !results.infoIsAutostarting));
 
         this.startPolling();
 
@@ -156,11 +155,19 @@ return view.extend({
         }
     },
     updateButtons(isRunning, isAutostarting) {
-        if (isRunning && this.startButtonId) this.startButtonId.disabled = true;
-        if (!isRunning && this.stopButtonId) this.stopButtonId.disabled = true;
+        if (this.startButtonId) {
+            this.startButtonId.disabled = isRunning;
+        }
+        if (this.stopButtonId) {
+            this.stopButtonId.disabled = !isRunning;
+        }
 
-        if (isAutostarting && this.enableButtonId) this.enableButtonId.disabled = true;
-        if (!isAutostarting && this.disableButtonId) this.disableButtonId.disabled = true;
+        if (this.enableButtonId) {
+            this.enableButtonId.disabled = isAutostarting;
+        }
+        if (this.disableButtonId) {
+            this.disableButtonId.disabled = !isAutostarting;
+        }
     },
     async updateServiceStatus() {
         const [infoIsRunning, infoIsAutostarting] = await Promise.all([

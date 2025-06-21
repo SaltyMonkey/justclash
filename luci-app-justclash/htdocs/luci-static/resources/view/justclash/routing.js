@@ -255,7 +255,7 @@ return view.extend({
         o.optional = true;
         o.datatype = "cidr4";
 
-        o = s3.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
+        o = s.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
         o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
         o.optional = true;
         o.editable = true;
@@ -326,13 +326,13 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
-        o = s3.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
+        o = s2.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
         o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
-        s3 = m.section(form.NamedSection, "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
+        s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
         s3.addremove = false;
 
         o = s3.option(form.DynamicList, "additional_domain_direct", _("DOMAIN-SUFFIX pass:"));
@@ -362,7 +362,7 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
-        s4 = m.section(form.NamedSection, "block_rules", _("REJECT rules:"), _("Additional settings for REJECT rules. Will be handled before proxies and proxy groups."));
+        s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional settings for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
 
         o = s4.option(form.Flag, "disable_quic", _("Disable QUIC:"));
@@ -388,7 +388,7 @@ return view.extend({
 
         return m.render().then(formEl => {
             return E("div", {}, [
-                this.addCSS(),
+                //this.addCSS(),
                 formEl
             ]);
         });
