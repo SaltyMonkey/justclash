@@ -281,7 +281,7 @@ info_conns_console_api() {
     # response=$(curl -s $AUTH "$URL")
     response=$(curl -s "$url")
 
-    if [ -f "$PIDFILE" ]; "$CORE_BIN_NAME"; then
+    if [ -f "$PIDFILE" ]; then
     echo "$response" | grep -q '"connections":null' && {
         echo "No connections"
         return 1
@@ -307,7 +307,7 @@ info_conns_console_api() {
     return 0
 }
 
-show_conns_console() {
+info_conns_console() {
     local pid
 
     if [ -f "$PIDFILE" ]; then
@@ -867,6 +867,7 @@ core_update() {
     log 2 "Latest Mihomo version: $latest_ver"
 
     if [ "$cur_ver" != "$latest_ver" ]; then
+        core_remove
         log 2 "Updating Mihomo to version $latest_ver" "⬆️"
         core_download "$latest_ver" "$latest_tag" || return 1
         send_telegram "Mihomo core binary was updated. Version: $cur_ver -> $latest_ver"
@@ -921,7 +922,14 @@ send_telegram() {
     return 0
 }
 
+cron_make_if_missing() {
+    if [ ! -f "/etc/crontabs/root" ]; then
+        touch "/etc/crontabs/root"
+    fi
+}
+
 core_update_cron_check() {
+    cron_make_if_missing
     if grep -q "/usr/bin/justclash core_update" /etc/crontabs/root; then
         return 0
     else
@@ -930,6 +938,7 @@ core_update_cron_check() {
 }
 
 core_update_cron_add() {
+    cron_make_if_missing
     local mihomo_cron_update_string
 
     if [ -z "$mihomo_cron_update_string" ]; then
@@ -954,6 +963,7 @@ core_update_cron_add() {
 }
 
 core_update_cron_remove() {
+    cron_make_if_missing
     if core_update_cron_check > /dev/null; then
         sed -i '\|/usr/bin/justclash core_update|d' /etc/crontabs/root
         if /etc/init.d/cron enabled; then
@@ -970,6 +980,7 @@ core_update_cron_remove() {
 
 # -----
 core_autorestart_cron_check() {
+    cron_make_if_missing
     if grep -q "/usr/bin/justclash reload" /etc/crontabs/root; then
         return 0
     else
@@ -978,6 +989,7 @@ core_autorestart_cron_check() {
 }
 
 core_autorestart_cron_add() {
+    cron_make_if_missing
     local mihomo_cron_autorestart_string
 
      if [ -z "$mihomo_cron_autorestart_string" ]; then
@@ -1002,6 +1014,7 @@ core_autorestart_cron_add() {
 }
 
 core_autorestart_cron_remove() {
+    cron_make_if_missing
     if core_autorestart_cron_check > /dev/null; then
         sed -i '\|/usr/bin/justclash reload|d' /etc/crontabs/root
         if /etc/init.d/cron enabled; then
@@ -1153,8 +1166,11 @@ case "$1" in
     diag_nft)
         diag_nft
         ;;
-    diag_dns|diag_fake_ip)
-        diag_dns
+    diag_fake_ip_resolver|diag_fake_ip)
+        diag_fake_ip_resolver
+        ;;
+    diag_default_resolver|diag_dns)
+        diag_default_resolver
         ;;
     help|?|command)
         help
