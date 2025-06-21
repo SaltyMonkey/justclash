@@ -59,6 +59,14 @@ fi
 exit 0
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/justclash stop
+fi
+exit 0
+endef
+
 define Package/$(PKG_NAME)/postrm
 #!/bin/sh
 # check if we are on real system
