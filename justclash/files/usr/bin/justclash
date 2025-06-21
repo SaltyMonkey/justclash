@@ -425,7 +425,7 @@ stop_core() {
         log 2 "Core process stopped" "✅"
     else
         log 1 "PID file not found, using fallback stop method"
-        pkill -f "$(basename "$CORE_PATH")"
+        killall "$(basename "$CORE_PATH")"
     fi
 }
 
