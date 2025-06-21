@@ -174,7 +174,7 @@ is_pattern_in_file() {
 
 ntp_force_sync() {
     local forcefully_update_ntp_at_load
-    config_get_bool forcefully_update_ntp_at_load main forcefully_update_ntp_at_load
+    config_get_bool forcefully_update_ntp_at_load settings forcefully_update_ntp_at_load
     if [ "$forcefully_update_ntp_at_load" = "1" ]; then
         NTP_ARGS=""
         for ip in $NTP_IPS; do
@@ -346,82 +346,6 @@ systemlogs() {
     return 0
 }
 
-report() {
-    local device openwrt mihomo pkg luci timestamp
-    local forcefully_update_ntp_at_load update_dns_server update_nft_tables
-    local log_level tproxy_port unified_delay
-    local routing_mark tcp_concurrent external_controller_port
-    local keep_alive_idle keep_alive_interval
-    local dns_listen_port use_hosts use_system_hosts fake_ip_range
-
-    device=$(info_device)
-    openwrt=$(info_openwrt)
-    mihomo=$(info_mihomo)
-    pkg=$(info_package)
-    luci=$(info_luci)
-    timestamp=$(date "+%Y-%m-%d %H:%M:%S")
-
-    config_load justclash
-    config_get forcefully_update_ntp_at_load settings forcefully_update_ntp_at_load
-    config_get update_dns_server settings update_dns_server
-    config_get update_nft_tables settings update_nft_tables
-
-    config_get log_level proxy log_level
-    config_get tproxy_port proxy tproxy_port
-    config_get unified_delay proxy unified_delay
-    config_get routing_mark proxy routing_mark
-    config_get tcp_concurrent proxy tcp_concurrent
-    config_get external_controller_port proxy external_controller_port
-    config_get keep_alive_idle proxy keep_alive_idle
-    config_get keep_alive_interval proxy keep_alive_interval
-    config_get dns_listen_port proxy dns_listen_port
-    config_get use_hosts proxy use_hosts
-    config_get use_system_hosts proxy use_system_hosts
-    config_get fake_ip_range proxy fake_ip_range
-
-    local border="┌──────────────────────────────┬──────────────────────────────┐"
-    local separator="├──────────────────────────────┼──────────────────────────────┤"
-    local bottom="└──────────────────────────────┴──────────────────────────────┘"
-
-    echo "🖥 System information"
-    echo "$border"
-    printf "│ %-28s │ %-28s │\n" "Field" "Value"
-    echo "$separator"
-    printf "│ %-28s │ %-28s │\n" "Device Model" "$device"
-    printf "│ %-28s │ %-28s │\n" "OpenWrt Version" "$openwrt"
-    printf "│ %-28s │ %-28s │\n" "Mihomo Core Version" "$mihomo"
-    printf "│ %-28s │ %-28s │\n" "JustClash Version" "$pkg"
-    printf "│ %-28s │ %-28s │\n" "LuCI UI Version" "$luci"
-    echo "$separator"
-    printf "│ %-28s │ %-28s │\n" "Report Time" "$timestamp"
-    echo "$bottom"
-
-    echo
-    echo "🔧 JustClash Settings"
-    echo "$border"
-    printf "│ %-28s │ %-28s │\n" "Force NTP Sync at Start" "$(ucibool_to_yesno "$forcefully_update_ntp_at_load")"
-    printf "│ %-28s │ %-28s │\n" "Update DNS on Start" "$(ucibool_to_yesno "$update_dns_server")"
-    printf "│ %-28s │ %-28s │\n" "Update NFT Tables" "$(ucibool_to_yesno "$update_nft_tables")"
-    echo "$bottom"
-
-    echo
-    echo "🛰 Proxy Settings"
-    echo "$border"
-    printf "│ %-28s │ %-28s │\n" "Log Level" "$log_level"
-    printf "│ %-28s │ %-28s │\n" "TPROXY Port" "$tproxy_port"
-    printf "│ %-28s │ %-28s │\n" "Enable Unified Delay" "$(ucibool_to_yesno "$unified_delay")"
-    printf "│ %-28s │ %-28s │\n" "Routing Mark" "$routing_mark"
-    printf "│ %-28s │ %-28s │\n" "TCP Concurrent" "$(ucibool_to_yesno "$tcp_concurrent")"
-    printf "│ %-28s │ %-28s │\n" "Ext. Controller Port" "$external_controller_port"
-    printf "│ %-28s │ %-28s │\n" "Keepalive Idle Time" "$keep_alive_idle"
-    printf "│ %-28s │ %-28s │\n" "Keepalive Interval" "$keep_alive_interval"
-    printf "│ %-28s │ %-28s │\n" "DNS Listen Port" "$dns_listen_port"
-    printf "│ %-28s │ %-28s │\n" "Use Custom Hosts" "$(ucibool_to_yesno "$use_hosts")"
-    printf "│ %-28s │ %-28s │\n" "Use System Hosts" "$(ucibool_to_yesno "$use_system_hosts")"
-    printf "│ %-28s │ %-28s │\n" "Fake-IP Range" "$fake_ip_range"
-    echo "$bottom"
-}
-
 diag_nft() {
     clog 2 "Checking for 'nft' command..."
     if ! command -v nft >/dev/null 2>&1; then
@@ -590,7 +514,7 @@ save_dnsmasq_config() {
 dnsmasq_inject() {
     local dns_listen_port update_dns_server_at_load
     config_get dns_listen_port proxy dns_listen_port
-    config_get_bool update_dns_server_at_load main update_dns_server_at_load
+    config_get_bool update_dns_server_at_load settings update_dns_server_at_load
 
     if [ "$update_dns_server_at_load" -ne 0 ]; then
 
@@ -625,7 +549,7 @@ dnsmasq_clean() {
     local dns_listen_port
     config_get dns_listen_port proxy dns_listen_port
     local update_dns_server
-    config_get_bool update_dns_server main update_dns_server
+    config_get_bool update_dns_server settings update_dns_server_at_load
 
     local bak_cachesize
     local bak_noresolv
@@ -1153,7 +1077,6 @@ Mihomo management Commands:
   core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task
 
 Information Commands:
-  report|check            Show report about configuration.
   info_device             Show device model.
   info_openwrt            Show OpenWrt version.
   info_core               Show Mihomo core version.
@@ -1185,9 +1108,6 @@ case "$1" in
         ;;
     reload|restart)
         restart
-        ;;
-    report|check)
-        report
         ;;
     core_update)
         core_update

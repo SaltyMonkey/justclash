@@ -34,7 +34,7 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_start", _("Setup NFT tables at startup:"));
+        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_load", _("Setup NFT tables at startup:"));
         o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
         o.default = "1";

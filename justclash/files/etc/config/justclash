@@ -1,7 +1,7 @@
 config main "settings"
 	option forcefully_update_ntp_at_load "1"
 	option update_dns_server_at_load "1"
-	option update_nft_tables_at_start "1"
+	option update_nft_tables_at_load "1"
 	option justclash_autoupdate "check"
 
 	option mihomo_autoupdate "check"
