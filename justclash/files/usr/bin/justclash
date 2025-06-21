@@ -1050,6 +1050,22 @@ diag_default_resolver() {
     fi
 }
 
+config_show() {
+    uci show justclash
+}
+
+config_reset() {
+    if [ ! -f "/etc/config/default.justclash" ]; then
+        log 2 "Default config file is missing. Can't use restore functionality"
+    fi
+
+    log 2 "Restoring justclash settings..."
+
+    rm /etc/config/justclash.bak
+    mv /etc/config/justclash /etc/config/justclash.bak
+    cp /etc/config/default.justclash /etc/config/justclash
+}
+
 help() {
     cat << EOF
 Usage: justclash <command> [args]
@@ -1058,6 +1074,8 @@ Service Management:
   start|run               Start the JustClash service.
   stop                    Stop the JustClash service.
   reload|restart          Restart the service.
+  config_show             Show configuration in console
+  config_reset            Reset configuration
 
 Mihomo management Commands:
   core_download                   Download and install the latest Mihomo binary for your device architecture
@@ -1104,6 +1122,12 @@ case "$1" in
         ;;
     reload|restart)
         restart
+        ;;
+    config_show)
+        config_show
+        ;;
+    config_reset)
+        config_reset
         ;;
     core_update)
         core_update
