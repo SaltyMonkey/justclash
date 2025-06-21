@@ -69,7 +69,7 @@ return view.extend({
         console.warn(results);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Service status")),
+            E("h3", { class: "cbi-section-title" }, _("Service status:")),
         ]);
 
         const tableContainer = E("table", { class: "table cbi-rowstyle-1" }, [

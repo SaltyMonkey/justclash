@@ -377,6 +377,7 @@ return baseclass.extend({
     },
     isValidTelegramBotToken: function (value) {
         const val = value.trim();
+        if (val.length === 0) return true;
         // Проверяем формат токена
         const pattern = /^\d{6,}:[A-Za-z0-9_-]+$/;
         return pattern.test(val)

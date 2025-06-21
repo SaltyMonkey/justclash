@@ -10,8 +10,8 @@ msgstr "Нет"
 msgid "No data"
 msgstr "Нет данных"
 
-msgid "Service status"
-msgstr "Статус сервиса"
+msgid "Service status:"
+msgstr "Статус сервиса:"
 
 msgid "Daemon package version:"
 msgstr "Версия пакета сервиса:"

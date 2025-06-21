@@ -10,7 +10,7 @@ msgstr ""
 msgid "No data"
 msgstr ""
 
-msgid "Service status"
+msgid "Service status:"
 msgstr ""
 
 msgid "Daemon package version:"

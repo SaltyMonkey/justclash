@@ -151,7 +151,7 @@ return view.extend({
     },
     parseFinalRulesSection: function (section, sectionName) {
         let dest = section.final_destination;
-        if (dest && dest.length === 0) dest = "DIRECT";
+        if (!dest || (dest && dest.length === 0)) dest = "DIRECT";
         return { rules: [`MATCH,${dest}`] };
     },
     handleSaveApply: function (ev) {
@@ -169,19 +169,19 @@ return view.extend({
                 let virtualFinalRules = [];
                 for (const s of allSections) {
                     const type = s[".type"];
-                    const name = s.name.trim();
+                    const name = s.name ? s.name.trim() : "";
                     switch (type) {
                         case "proxies":
                             const proxiesRet = this.parseProxiesSection(s, name);
                             virtualProxies.push(...proxiesRet.proxies);
                             virtualRules.push(...proxiesRet.rules);
-                            virtualRuleSets = { ...virtualRuleSets, ...blockRulesRet.selectedRuleSets };;
+                            virtualRuleSets = { ...virtualRuleSets, ...proxiesRet.selectedRuleSets };;
                             break;
                         case "proxy_group":
                             const proxyGroupRet = this.parseProxiesSection(s, name);
                             virtualProxyGroups.push(...proxyGroupRet.proxyGroups);
                             virtualRules.push(...proxyGroupRet.rules);
-                            virtualRuleSets = { ...virtualRuleSets, ...blockRulesRet.selectedRuleSets };;
+                            virtualRuleSets = { ...virtualRuleSets, ...proxyGroupRet.selectedRuleSets };;
                             break;
                         case "block_rules":
                             const blockRulesRet = this.parseBlockRulesSection(s);
@@ -221,7 +221,7 @@ return view.extend({
         });
     },
     render() {
-        let m, s, s2, s3, s4, o;
+        let m, s, s2, s3, s4, s5, o;
 
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
@@ -395,11 +395,12 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
-        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("FINAL rule:"), _("Additional sewttings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
+        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("FINAL rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
         s5.addremove = false;
 
         o = s5.option(form.Value, "final_destination", _("Destination:"));
         o.default = "DIRECT";
+        o.rmempty = false;
 
         return m.render().then(formEl => {
             return E("div", {}, [
