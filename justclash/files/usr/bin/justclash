@@ -30,7 +30,7 @@ CORE_PATH="/usr/bin/mihomo/${CORE_BIN_NAME}"
 CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
-#PARTIAL_YAML_CONFIG_PATH="/usr/bin/mihomo/partial.config.yaml"
+OVERRIDE_YAML_CONFIG_PATH="/usr/bin/mihomo/override.config.yaml"
 
 NFT_TABLE_NAME="justclash_tproxy"
 
@@ -633,6 +633,19 @@ core_generate_yaml() {
 
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver ignore_fake_ip_domains ignore_to_sniff_domains
 
+    # Support for manual config files
+    # If detected - no settings from config file will be applied
+    # DANGEROUS!
+    if [ -f OVERRIDE_YAML_CONFIG_PATH ]; then
+        log 1 "A dangerous state detected: override configuration file found at \"$OVERRIDE_YAML_CONFIG_PATH\". \
+        This file will be used as the active configuration, but correct operation is not guaranteed. \
+        This may lead to unexpected behavior, service instability, or security vulnerabilities. \
+        Please verify the contents of the override configuration file and ensure it is intended for use before proceeding. \
+        If this was not expected, investigate the origin of the override file and consider restoring the default configuration."
+        cp "$OVERRIDE_YAML_CONFIG_PATH" "$TMP_YAML_CONFIG_PATH"
+        return 0
+    fi
+
     config_get log_level proxy log_level
     config_get tproxy_port proxy tproxy_port
     config_get_bool unified_delay proxy unified_delay
@@ -755,9 +768,7 @@ rules:
 $rules
 EOF
 
-#    if [ -f "$PARTIAL_YAML_CONFIG_PATH" ]; then
-#        cat "$PARTIAL_YAML_CONFIG_PATH" >> "$TMP_YAML_CONFIG_PATH"
-#    fi
+    return 0;
 }
 
 core_prepare_workdir() {
