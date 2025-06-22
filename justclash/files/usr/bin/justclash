@@ -19,7 +19,9 @@ PIDFILE="/var/run/justclash.pid"
 config_load justclash
 
 CORE_LATEST_RELEASE_URL="https://api.github.com/repos/metacubex/mihomo/releases/latest"
+CORE_LATEST_ALPHA_RELEASE_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha"
 CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download"
+CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
 NO_DATA_STRING="N/A"
 
 
@@ -772,11 +774,12 @@ EOF
 }
 
 core_prepare_workdir() {
+    log 1 "Preparing workdir $CORE_WORKDIR_PATH"
+
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         [ -f "$OUTPUT_YAML_CONFIG_PATH" ] && rm -f "$OUTPUT_YAML_CONFIG_PATH"
         [ -f "$TMP_YAML_CONFIG_PATH" ] && rm -f "$TMP_YAML_CONFIG_PATH"
     else
-        log 1 "Generating workdir $CORE_WORKDIR_PATH"
         mkdir -p "$CORE_WORKDIR_PATH"
     fi
 }
@@ -793,7 +796,7 @@ detect_arch() {
         armv6*) echo "armv6" ;;
         armv7*) echo "armv7" ;;
         mips*) echo "mips" ;;
-        riscv64) echo "riscv64" ;;
+        #riscv64) echo "riscv64" ;;
         i[3-6]86) echo "i386" ;;
         *)
             log 2 "Unknown or unsupported architecture: $arch_raw" "❌" >&2
@@ -803,35 +806,24 @@ detect_arch() {
 }
 
 get_latest_version() {
+    local check_url="$1"
     local latest_url latest_ver
-    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$CORE_LATEST_RELEASE_URL")
+    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$check_url")
     latest_ver=$(curl -sL "$latest_url/version.txt" | tr -d '\r\n')
     echo "$latest_ver"
 }
 
 core_download() {
-    local arch version latest_url tmp_dir file_name base_url param_tag param_version
-    param_tag="$2"
-    param_version="$1"
+    local arch version file_name base_url param_version download_url
+    param_version="$2"
+    download_url="$1"
 
     log 2 "Downloading Mihomo binary..." "📥"
 
-    arch=$(detect_arch) || return 1
-
-    log 2 "Detected architecture: $arch" "✅"
-
     mkdir -p "$CORE_WORKDIR_PATH"
 
-    if [ -n "$param_version" ]; then
-        file_name="mihomo-linux-${arch}-${param_version}.gz"
-        base_url="${CORE_RELEASE_URL_PARTIAL}/${param_version}/${file_name}"
-    else
-        tmp=$(get_latest_version)
-        version=$(echo "$tmp" | sed -n 2p)
-        log 2 "Version detected: $version" "📦"
-        file_name="mihomo-linux-${arch}-${version}.gz"
-        base_url="${CORE_RELEASE_URL_PARTIAL}/${version}/${file_name}"
-    fi
+    file_name="mihomo-linux-${arch}-${param_version}.gz"
+    base_url="${download_url}/${file_name}"
 
     log 2 "Downloading mihomo binary" "⬇️"
     curl -sL -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
@@ -852,24 +844,37 @@ core_download() {
 }
 
 core_update() {
-    local cur_ver latest_ver tmp latest_tag
+    local cur_ver latest_ver tmp mihomo_update_channel
+    local check_url download_url
+    config_get mihomo_update_channel settings mihomo_update_channel
 
     log 2 "Checking for Mihomo updates..." "🔄"
 
-    cur_ver=$(info_mihomo)
-    tmp=$(get_latest_version)
-    latest_tag=$(echo "$tmp" | sed -n 1p)
-    latest_ver=$(echo "$tmp" | sed -n 2p)
+    if [ "$mihomo_update_channel" = "alpha" ]; then
+        check_url=$CORE_LATEST_ALPHA_RELEASE_URL
+    else
+        check_url=$CORE_LATEST_RELEASE_URL
+    fi
 
-    if [ -z "$latest_tag" ] || [ -z "$latest_ver" ]; then
-        log 1 "Error happened when trying to receive latest version data."
-        log 1 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
-        panic "Failed to download core"
+    cur_ver=$(info_mihomo)
+    tmp=$(get_latest_version "$check_url")
+    latest_ver=$(echo "$tmp" | sed -n 1p)
+
+    if [ "$mihomo_update_channel" = "alpha" ]; then
+        download_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
+    else
+        download_url=$CORE_RELEASE_URL_PARTIAL/$latest_ver
+    fi
+
+    if [ -z "$latest_ver" ]; then
+       log 1 "Error happened when trying to receive latest version data."
+       log 1 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+       panic "Failed to download core"
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
-        core_download "$latest_ver" "$latest_tag" || return 1
+        core_download "$download_url" "$latest_ver" || return 1
         send_telegram "Mihomo core binary was missing. Installed $latest_ver"
         return 0
     fi
@@ -878,9 +883,10 @@ core_update() {
     log 2 "Latest Mihomo version: $latest_ver"
 
     if [ "$cur_ver" != "$latest_ver" ]; then
+        log 2 "Removing current mihomo binary..." "⚠️"
         core_remove
         log 2 "Updating Mihomo to version $latest_ver" "⬆️"
-        core_download "$latest_ver" "$latest_tag" || return 1
+        core_download "$download_url" "$latest_ver" || return 1
         send_telegram "Mihomo core binary was updated. Version: $cur_ver -> $latest_ver"
 
     else
@@ -1089,7 +1095,6 @@ Service Management:
   config_reset            Reset configuration
 
 Mihomo management Commands:
-  core_download                   Download and install the latest Mihomo binary for your device architecture
   core_update                     Check current version and update Mihomo if a newer version is available
   core_remove                     Remove the currently installed Mihomo binary
 
@@ -1142,9 +1147,6 @@ case "$1" in
         ;;
     core_update)
         core_update
-        ;;
-    core_download)
-        core_download
         ;;
     core_remove)
         core_remove

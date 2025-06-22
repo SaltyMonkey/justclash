@@ -2,10 +2,10 @@ config main "settings"
 	option forcefully_update_ntp_at_load "1"
 	option update_dns_server_at_load "1"
 	option update_nft_tables_at_load "1"
-	option justclash_autoupdate "check"
+	option justclash_autoupdate "no"
 
 	option mihomo_update_channel "alpha"
-	option mihomo_autoupdate "check"
+	option mihomo_autoupdate "no"
 	option mihomo_autorestart "0"
 
 	option justclash_cron_update_telegram_notify "0"
@@ -79,37 +79,15 @@ config proxy "proxy"
 	list ignore_to_sniff_domains "+.mi.com"
 
 config block_rules "block_rules"
-	list enabled_blocklist ""
 	option disable_quic "0"
-	list additional_domain_blockroute ""
-	list additional_destip_blockroute ""
 
 config direct_rules "direct_rules"
-	list additional_domain_direct ""
-	list additional_domain_keyword_direct ""
-	list additional_domain_regex_direct ""
-	list additional_srcip_direct ""
-	list additional_destip_direct ""
 
 config final_rules "final_rules"
 	option final_destination "DIRECT"
 
 config proxies
-	option name "proxyname"
-	option proxy_link "vless://"
-	list enabled_list ""
-	list additional_domain_route ""
-	list additional_destip_route ""
 
 config proxy_group
-	option name ""
-	option group_type ""
-	option check_url "https://www.gstatic.com/generate_204"
-	option interval "300"
-	option strategy "consistent-hashing"
-	list enabled_list ""
-	option proxies_list ""
-	list additional_domain_route ""
-	list additional_destip_route ""
 
 config compiled "compiled"
