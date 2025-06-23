@@ -415,6 +415,10 @@ return view.extend({
                 border:0;
                 border-bottom:1px solid #595959;
             }
+            .cbi-section-create {
+                width: 100% !important;
+                padding: 10px 0 0 0 !important;
+            }
         `);
     },
     destroy() {
