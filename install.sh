@@ -14,7 +14,7 @@ URL_CHECK_PING_BACKUP="8.8.8.8"
 MIN_SPACE=34768
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
-CORE_PATH="/usr/bin/$CORE_BIN_NAME"
+CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
 
 TMP_DOWNLOAD_PATH="/tmp/justclash/downloads"
 
