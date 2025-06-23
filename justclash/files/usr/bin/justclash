@@ -27,12 +27,12 @@ NO_DATA_STRING="N/A"
 
 CORE_BIN_NAME="mihomo"
 # Path to Mihomo core
-CORE_PATH="/usr/bin/mihomo/${CORE_BIN_NAME}"
+CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
 # workdir path (in RAM)
 CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
-OVERRIDE_YAML_CONFIG_PATH="/usr/bin/mihomo/override.config.yaml"
+OVERRIDE_YAML_CONFIG_PATH="/var/override.${CORE_BIN_NAME}.yaml"
 
 NFT_TABLE_NAME="justclash_tproxy"
 
