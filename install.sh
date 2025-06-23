@@ -2,32 +2,30 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-JUSTCLASH_LATEST_RELEASE_URL="https://api.github.com/repos/saltymonkey/justclash-owrt/releases/latest"
-JUSTCLASH_RELEASE_URL_PARTIAL="https://github.com/SaltyMonkey/justclash-owrt/releases/download"
-
 CORE_LATEST_RELEASE_URL="https://api.github.com/repos/metacubex/mihomo/releases/latest"
+CORE_LATEST_ALPHA_RELEASE_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha"
 CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download"
+CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
 
 URL_GITHUB="github.com"
 
 URL_CHECK_PING="77.88.8.8"
 URL_CHECK_PING_BACKUP="8.8.8.8"
-MIN_SPACE=32768
+MIN_SPACE=34768
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
-CORE_PATH="/usr/bin/mihomo/"
+CORE_PATH="/usr/bin/$CORE_BIN_NAME"
 
 TMP_DOWNLOAD_PATH="/tmp/justclash/downloads"
 
 #Flags
 FLAG_INSTALL_WITHOUT_MIHOMO_CORE=0
 FLAG_DISABLE_DIAGNOSTIC=0
-FLAG_DISABLE_APK_CHECK=0
 
 rm -rf "$TMP_DOWNLOAD_PATH"
 mkdir -p "$TMP_DOWNLOAD_PATH"
 
-is_installed() {
+is_bin_installed() {
     command -v "$1" >/dev/null 2>&1
 }
 
@@ -77,7 +75,7 @@ check_dns() {
 check_icmp() {
     local target="${1}"
     local count="${2}"
-    local timeout=3
+    local timeout=2
 
     if ping -c "$count" -W "$timeout" "$target" >/dev/null 2>&1; then
         return 0
@@ -107,17 +105,15 @@ banner() {
 }
 
 diagnostic_tools() {
-    local ii_nft ii_logread ii_curl ii_opkg ii_apk
+    local ii_nft ii_logread ii_opkg ii_apk
 
-    is_installed nft
+    is_bin_installed nft
     ii_nft=$?
-    is_installed logread
+    is_bin_installed logread
     ii_logread=$?
-    is_installed curl
-    ii_curl=$?
-    is_installed opkg
+    is_bin_installed opkg
     ii_opkg=$?
-    is_installed apk
+    is_bin_installed apk
     ii_apk=$?
 
     echo "  "
@@ -144,13 +140,6 @@ diagnostic_tools() {
         print_red "FAIL"
     fi
 
-    printf " - curl: "
-    if [ "$ii_curl" -eq 0 ]; then
-        print_green "OK"
-    else
-        print_red "FAIL"
-    fi
-
     printf " - logread: "
     if [ "$ii_logread" -eq 0 ]; then
         print_green "OK"
@@ -158,19 +147,20 @@ diagnostic_tools() {
         print_red "FAIL"
     fi
 
-    if [ "$ii_apk" -ne 0 ] && [ "$FLAG_DISABLE_APK_CHECK" -eq 0 ]; then
-        print_red "It appears you're using an OpenWRT SNAPSHOT version with the new package manager."
-        print_red "Please install a stable firmware version — JustClash has not been tested with snapshots using the new manager."
-        exit 1
-    fi
-
-    if [ "$ii_opkg" -ne 0 ] || [ "$ii_nft" -ne 0 ] || [ "$ii_curl" -ne 0 ] || [ "$ii_logread" -ne 0 ]; then
-        print_red "One or more required basic tools (nft, curl, logread, opkg) are not available."
-        print_red "This may indicate unsupported, incorrect, or custom firmware."
+    if [ "$ii_nft" -ne 0 ] || [ "$ii_logread" -ne 0 ]; then
+        print_red "One or more required basic tools (nft, logread) are not available."
+        print_red "This may indicate unsupported, incorrect, or custom OpenWRT firmware."
         print_red "Please verify your firmware and/or install the necessary packages."
         exit 1
     fi
+
+    if [ "$ii_apk" -eq 1 ] && [ "$ii_opkg" -eq 1 ]; then
+        print_red "All package managers are missing."
+        print_red "This may indicate unsupported, incorrect, or broken OpenWRT firmware."
+        print_red "Please verify your firmware and/or install the necessary packages."
+    fi
 }
+
 diagnostic_net() {
     echo "  "
     print_bold_green "Checking network connectivity via ICMP..."
@@ -235,27 +225,6 @@ diagnostic_mem() {
     fi
 }
 
-# TODO: Fix error handling with unsupported platform
-detect_arch() {
-    local arch_raw
-    arch_raw=$(uname -m)
-
-    case "$arch_raw" in
-        x86_64) echo "amd64";;
-        aarch64) echo "arm64" ;;
-        armv5*) echo "armv5" ;;
-        armv6*) echo "armv6" ;;
-        armv7*) echo "armv7" ;;  # Расширено для всех armv7
-        mips*) echo "mips" ;;    # Объединено для всех MIPS
-        riscv64) echo "riscv64" ;;
-        i[3-6]86) echo "i386" ;; # Добавлена поддержка x86 32-bit
-        *)
-            log 2 "Unknown or unsupported architecture: $arch_raw" "❌" >&2
-            return 1
-            ;;
-    esac
-}
-
 diagnostic_conflicts_interactive() {
     echo "  "
     print_bold_green "Checking conflicted packages..."
@@ -302,104 +271,165 @@ diagnostic_conflicts_interactive() {
     fi
 }
 
+core_info() {
+    if [ ! -x "$CORE_PATH" ]; then
+        echo "${NO_DATA_STRING}"
+    else
+       "${CORE_PATH}" -v 2>/dev/null | head -n1 | awk '{ print $3 }'
+    fi
+}
+
+detect_arch() {
+    local arch_raw
+    arch_raw=$(uname -m)
+
+    case "$arch_raw" in
+        x86_64) echo "amd64";;
+        aarch64) echo "arm64" ;;
+        armv5*) echo "armv5" ;;
+        armv6*) echo "armv6" ;;
+        armv7*) echo "armv7" ;;
+        mips*) echo "mips" ;;
+        #riscv64) echo "riscv64" ;;
+        i[3-6]86) echo "i386" ;;
+        *)
+            print_red "Unknown or unsupported architecture: $arch_raw"
+            exit 1
+            ;;
+    esac
+}
+
 get_latest_version() {
-    local latest_ver latest_tag latest_url
-    #param_skip_version_txt="$1"
-
-    #TODO: rewrite it without subshell
-    # shellcheck disable=SC2036
-    latest_tag=$(curl -s "$CORE_LATEST_RELEASE_URL" | grep '"tag_name":' | cut -d '"' -f 4 )
-    latest_ver=$(curl -sL "${CORE_RELEASE_URL_PARTIAL}/${latest_tag}/version.txt" | tr -d '\r\n')
-
-    echo "${latest_tag}"
-    echo "${latest_ver}"
+    local check_url="$1"
+    local latest_url latest_ver
+    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$check_url")
+    latest_ver=$(curl -sL "$latest_url/version.txt" | tr -d '\r\n')
+    echo "$latest_ver"
 }
 
 core_download() {
-    local arch version file_name base_url param_tag param_version
-    param_tag="$2"
-    param_version="$1"
+    local arch file_name base_url param_version download_url
+    param_version="$2"
+    download_url="$1"
 
-    arch=$(detect_arch) || return 1
+    print_bold_green "Downloading Mihomo binary..."
 
-    echo "- Downloading to ${TMP_DOWNLOAD_PATH}/mihomo.gz"
+    mkdir -p "$TMP_DOWNLOAD_PATH"
 
-    if [ -n "$param_version" ]; then
-        file_name="mihomo-linux-${arch}-${param_version}.gz"
-        base_url="${CORE_RELEASE_URL_PARTIAL}/${param_version}/${file_name}"
-    else
-        tmp=$(get_latest_version)
-        version=$(echo "$tmp" | sed -n 2p)
-        file_name="mihomo-linux-${arch}-${version}.gz"
-        base_url="${CORE_RELEASE_URL_PARTIAL}/${version}/${file_name}"
-    fi
+    file_name="mihomo-linux-${arch}-${param_version}.gz"
+    base_url="${download_url}/${file_name}"
 
-    curl -sL -o "$TMP_DOWNLOAD_PATH/mihomo.gz" "$base_url" || {
-        print_red "Failed to download file."
+    echo "Downloading mihomo binary"
+    curl -sL -o "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
+        echo "Failed to download file."
+        exit 1
     }
 
-    echo " - Extracting to ${CORE_PATH}/${CORE_BIN_NAME}"
-    gunzip -c "$TMP_DOWNLOAD_PATH/mihomo.gz" > "${CORE_PATH}/${CORE_BIN_NAME}" || {
-        print_red "Failed to extract file."
+    echo "Extracting to $CORE_PATH"
+    gunzip -c "${TMP_DOWNLOAD_PATH}/mihomo.gz" > "$CORE_PATH" || {
+        echo "Failed to extract file."
+        exit 1
     }
 
-    chmod +x "${CORE_PATH}/${CORE_BIN_NAME}"
+    chmod +x "$CORE_PATH"
 
-    echo " - Cleaning up temporary files"
-    rm -f "$TMP_DOWNLOAD_PATH/mihomo.gz"
+    echo "Cleaning up temporary files"
+    rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"
 
-    print_green "--> Mihomo installed to ${CORE_PATH}/${CORE_BIN_NAME}"
-}
-
-core_info() {
-    if [ ! -x "$CORE_PATH/${CORE_BIN_NAME}" ]; then
-        echo "${NO_DATA_STRING}"
-    else
-       "${CORE_PATH}/${CORE_BIN_NAME}" -v 2>/dev/null | head -n1 | awk '{ print $3 }'
-    fi
-}
-
-opkg_is_installed() {
-    local pkg
-    if opkg list-installed ${pkg} >/dev/null 2>&1; then
-        return 0
-    else
-        return 1
-fi
+    print_green "Mihomo installed at $CORE_PATH"
 }
 
 core_update() {
-    local cur_ver latest_ver tmp latest_tag
+    local cur_ver latest_ver tmp mihomo_update_channel
+    mihomo_update_channel="$1"
+    local check_url download_url
 
-    echo "  "
-    print_bold_green "Checking mihomo proxy..."
+    print_bold_green "Checking for Mihomo updates..."
 
-    cur_ver=$(core_info)
-    tmp=$(get_latest_version)
-    latest_tag=$(echo "$tmp" | sed -n 1p)
-    latest_ver=$(echo "$tmp" | sed -n 2p)
+    if [ "$mihomo_update_channel" = "alpha" ]; then
+        check_url=$CORE_LATEST_ALPHA_RELEASE_URL
+    else
+        check_url=$CORE_LATEST_RELEASE_URL
+    fi
 
-    if [ -z "$latest_tag" ] || [ -z "$latest_ver" ]; then
-        print_red "Error happened when trying to receive latest version data."
-        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
-        exit 1
+    cur_ver=$(info_mihomo)
+    tmp=$(get_latest_version "$check_url")
+    latest_ver=$(echo "$tmp" | sed -n 1p)
+
+    if [ "$mihomo_update_channel" = "alpha" ]; then
+        download_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
+    else
+        download_url=$CORE_RELEASE_URL_PARTIAL/$latest_ver
+    fi
+
+    if [ -z "$latest_ver" ]; then
+       print_red "Error happened when trying to receive latest version data."
+       print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+       print_red "Failed to download core"
+       exit 1
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
-        echo " - Mihomo is not installed. Installing version $latest_ver."
-        core_download "${latest_ver}" "${latest_tag}" || return 1
+        echo "Mihomo is not installed. Installing version $latest_ver."
+        core_download "$download_url" "$latest_ver" || return 1
         return 0
     fi
 
-    echo " - Current Mihomo version: $cur_ver"
-    echo " - Latest Mihomo version: $latest_ver"
+    echo "Current Mihomo version: $cur_ver"
+    echo "Latest Mihomo version: $latest_ver"
 
     if [ "$cur_ver" != "$latest_ver" ]; then
-        echo " - Updating Mihomo to version $latest_ver"
-        core_download "${latest_ver}" "${latest_tag}" || return 1
+        echo "Removing current mihomo binary..."
+        core_remove
+        echo "Updating Mihomo to version $latest_ver"
+        core_download "$download_url" "$latest_ver" || return 1
     else
-        print_bold_green "Mihomo is already up-to-date."
+        print_green "Mihomo is already up-to-date."
     fi
+}
+
+core_remove() {
+    if [ ! -x "$CORE_PATH" ]; then
+        print_green "Mihomo is not installed."
+        return 1
+    else
+        rm -f "$CORE_PATH"
+        print_green "Mihomo is removed."
+        return 0
+    fi
+}
+
+
+pkg_is_installed() {
+    local pkg
+    local pkgcommand=""
+    pkg="$1"
+
+    if command -v apk >/dev/null 2>&1; then
+        pkgcommand="apk info"
+    else
+        pkgcommand="opkg list-installed"
+    fi
+
+    if $pkgcommand | grep -qw "$pkg"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+pkg_remove() {
+    local pkg
+    local pkgcommand=""
+    pkg="$1"
+
+    if command -v apk >/dev/null 2>&1; then
+        pkgcommand="apk remove "
+    else
+        pkgcommand="opkg remove --force-depends "
+    fi
+
+    $pkgcommand "$pkg"
 }
 
 justclash_download() {
@@ -410,7 +440,6 @@ justclash_download() {
 install() {
 
     mkdir -p "${TMP_DOWNLOAD_PATH}"
-    mkdir -p "${CORE_PATH}"
 
     diagnostic_tools
 
@@ -421,8 +450,9 @@ install() {
     fi
 
     if [ "$FLAG_INSTALL_WITHOUT_MIHOMO_CORE" -ne 1 ]; then
-        core_update
+        core_update "alpha"
     fi
+
     justclash_download
 }
 
@@ -432,24 +462,24 @@ uninstall() {
     echo "  "
     print_bold_green "Uninstalling everything..."
 
-    opkg_is_installed justclash
+    pkg_is_installed justclash
     jc_is_installed="$?"
     if [ "$jc_is_installed" -eq 0 ]; then
         echo " - JustClash package was found. Removing..."
-        opkg remove justclash
+        pkg_remove justclash
     fi
-    opkg_is_installed luci-app-justclash
+    pkg_is_installed luci-app-justclash
     lajc_is_installed="$?"
     if [ "$lajc_is_installed" -eq 0 ]; then
         echo " - LuCI JustClash package was found. Removing..."
-        opkg remove luci-app-justclash
+        pkg_remove luci-app-justclash
     fi
 
     if [ "$jc_is_installed" -ne 0 ] && [ "$lajc_is_installed" -ne 0 ]; then
         echo " - JustClash was not found. Was it already installed before?"
         echo " - Cleaning up known JustClash folders and files"
         rm -rf /usr/bin/justclash
-        rm -rf /usr/bin/mihomo/
+        rm -rf /usr/bin/mihomo
         rm -rf /tmp/justclash/
         rm -rf /etc/init.d/justclash
     fi
@@ -460,13 +490,14 @@ justclash_install() {
     print_red "Not implemented yet"
 }
 
-init() {
+run() {
     banner
     print_bold_yellow "JustClash Setup Menu"
     print_bold_yellow "1 - Install JustClash package"
     print_bold_yellow "2 - Uninstall JustClash package"
-    print_bold_yellow "3 - Update/Download latest Mihomo Clash core"
-    print_bold_yellow "4 - Exit"
+    print_bold_yellow "3 - Update/Download latest proxy core"
+    print_bold_yellow "4 - Run network diagnostic"
+    print_bold_yellow "5 - Exit"
     while true; do
        read -p -r "Enter your choice [1-4]: " choice
        case "$choice" in
@@ -480,9 +511,9 @@ init() {
                 ;;
             3)
                 echo "Updating Mihomo Clash core..."
-                core_update
+                core_update "alpha"
                 ;;
-            4)
+            5)
                 echo "Exiting..."
                 exit 0
                 ;;
@@ -493,7 +524,7 @@ init() {
     done
 }
 
-init
+run
 
 for arg in "$@"; do
     # shellcheck disable=SC2249
@@ -503,9 +534,6 @@ for arg in "$@"; do
             ;;
         --install-without-mihomo-core)
             FLAG_INSTALL_WITHOUT_MIHOMO_CORE=1
-            ;;
-        --disable-apk-check)
-            FLAG_DISABLE_APK_CHECK=1
             ;;
     esac
 done
