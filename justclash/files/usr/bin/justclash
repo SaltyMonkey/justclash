@@ -33,6 +33,7 @@ CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
 OVERRIDE_YAML_CONFIG_PATH="/var/override.${CORE_BIN_NAME}.yaml"
+DEFAULT_CONFIG_PATH="/var/default.justclash.config"
 
 NFT_TABLE_NAME="justclash_tproxy"
 
@@ -1080,7 +1081,9 @@ config_reset() {
 
     rm /etc/config/justclash.bak
     mv /etc/config/justclash /etc/config/justclash.bak
-    cp /etc/config/default.justclash /etc/config/justclash
+    cp "$DEFAULT_CONFIG_PATH" /etc/config/justclash
+
+    log 2 "Default settings will be applied at next justclash restart..."
 }
 
 help() {

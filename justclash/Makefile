@@ -42,6 +42,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/justclash $(1)/etc/config/justclash
 
+	$(INSTALL_DIR) $(1)/var
+	$(INSTALL_CONF) ./files/var/default.justclash.config $(1)/var/default.justclash.config
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
 endef
