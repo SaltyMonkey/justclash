@@ -404,13 +404,17 @@ return view.extend({
 
         return m.render().then(formEl => {
             return E("div", {}, [
-                //this.addCSS(),
+                this.addCSS(),
                 formEl
             ]);
         });
     },
     addCSS() {
         return E("style", {}, `
+            .cbi-section {
+                border:0;
+                border-bottom:1px solid #595959;
+            }
         `);
     },
     destroy() {
