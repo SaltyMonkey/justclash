@@ -39,28 +39,6 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.ListValue, "justclash_autoupdate", _("Daemon autoupdate:"));
-        common.defaultUpdateOptions.forEach(item => {
-            o.value(item, _(`${item}`));
-        });
-        o.description = _("Cron job mode for service autoupdate:");
-        o.rmempty = false;
-        o.default = common.defaultUpdateOptions[0];
-
-        o = s.taboption(tabname, form.Flag, "justclash_cron_update_telegram_notify", _("Telegram notify for daemon update:"));
-        o.description = _("When enabled daemon will send telegram notification with update status every update check.");
-        o.rmempty = false;
-        o.default = "0";
-
-        o = s.taboption(tabname, form.Value, "justclash_cron_update_string", _("Daemon autoupdate cron:"));
-        o.placeholder = "0 3 * * 0";
-        o.description = _("Special cron string for daemon autoupdate job.");
-        o.default = "0 3 * * 0";
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
-            return (common.isValidCronString(value)) ? true : _("Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')");
-        };
-
         tabname = "coreautomation_tab";
         s.tab(tabname, _("Core automation"));
 
