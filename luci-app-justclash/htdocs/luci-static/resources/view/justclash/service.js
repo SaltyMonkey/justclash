@@ -69,6 +69,14 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
+        o = s.taboption(tabname, form.ListValue, "mihomo_update_channel", _("Mihomo autoupdate channel:"));
+        common.defaultProxyUpdateChannelOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
+        o.description = _("Release channel for mihomo updates.");
+        o.rmempty = false;
+        o.default = common.defaultProxyUpdateChannelOptions[0];
+
         o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Mihomo autoupdate:"));
         common.defaultUpdateOptions.forEach(item => {
             o.value(item, _(`${item}`));

@@ -13,6 +13,7 @@ return baseclass.extend({
     defaultProxyGroupsBalanceModeStrategies: ["consistent-hashing", "round-robin"],
     defaultFingerprints: ["chrome", "firefox", "safari", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
+    defaultProxyUpdateChannelOptions: ["alpha", "stable"],
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },
