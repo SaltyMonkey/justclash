@@ -412,12 +412,12 @@ return view.extend({
     addCSS() {
         return E("style", {}, `
             .cbi-section {
-                border:0;
-                border-bottom:1px solid #595959;
+                border: 0 !important;
+                border-bottom: 1px solid #595959 !important;
             }
             .cbi-section-create {
                 width: 100% !important;
-                padding: 10px 0 0 0 !important;
+                padding: 10px 0 10px 0 !important;
             }
         `);
     },
