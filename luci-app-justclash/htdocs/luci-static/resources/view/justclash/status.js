@@ -210,8 +210,9 @@ return view.extend({
         return E("style", {}, `
             .cbi-button { margin-right: 0.5em; }
             .jc-actions {
-            text-align: left !important;
-            border-top: 0px !important; }
+                text-align: left !important;
+                border-top: 0px !important;
+            }
         `);
     },
 
