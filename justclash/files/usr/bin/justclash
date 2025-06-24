@@ -273,43 +273,6 @@ info_luci() {
     echo "$version" || echo "$NO_DATA_STRING"
 }
 
-info_conns_console_api() {
-    local external_controller_port
-    config_get external_controller_port proxy external_controller_port
-    local url="http://127.0.0.1:$external_controller_port/connections"
-    local response
-    # local AUTH=""
-    # [ -n "$API_SECRET" ] && AUTH="-H Authorization: Bearer $API_SECRET"
-
-    # response=$(curl -s $AUTH "$URL")
-    response=$(curl -s "$url")
-
-    if [ -f "$PIDFILE" ]; then
-    echo "$response" | grep -q '"connections":null' && {
-        echo "No connections"
-        return 1
-    }
-    fi
-
-    echo "$response" |
-    tr -d '\n' | sed 's/},{/}\n{/g' |
-    grep -o '{[^}]*}' |
-    while read -r conn; do
-        src=$(echo "$conn" | grep -o '"sourceIP":"[^"]*"' | cut -d'"' -f4)
-        dst=$(echo "$conn" | grep -o '"destinationIP":"[^"]*"' | cut -d'"' -f4)
-        port=$(echo "$conn" | grep -o '"destinationPort":[0-9]*' | cut -d':' -f2)
-        host=$(echo "$conn" | grep -o '"host":"[^"]*"' | cut -d'"' -f4)
-        chain=$(echo "$conn" | grep -o '"chain":\[[^]]*\]' | sed 's/.*\[\(.*\)\]/\1/' | tr -d '"' | tr ',' '→')
-        up=$(echo "$conn" | grep -o '"upload":[0-9.]*' | cut -d':' -f2)
-        down=$(echo "$conn" | grep -o '"download":[0-9.]*' | cut -d':' -f2)
-
-        printf "%-15s %-15s %-5s %-25s %-20s %8s KB %8s KB\n" \
-            "$src" "$dst" "$port" "$host" "$chain" "$up" "$down"
-    done
-
-    return 0
-}
-
 info_conns_console() {
     local pid
 
@@ -1114,7 +1077,6 @@ Information Commands:
   info_core               Show Mihomo core version.
   info_package            Show JustClash package version.
   info_luci               Show JustClash LuCI app version.
-  info_conns_console_api  Show Mihomo connections via ext. controller API.
   info_conns_console      Show Mihomo connections.
 
 Diagnostics:
