@@ -4,6 +4,7 @@ return baseclass.extend({
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
+    binInfoPath: "/usr/bin/justclash_info",
     genNameProxyPrefix: "proxy_",
     logsCount: 350,
     genNameProxyGroupPrefix: "proxygroup_",

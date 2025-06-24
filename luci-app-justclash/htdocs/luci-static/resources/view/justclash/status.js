@@ -36,15 +36,19 @@ return view.extend({
     },
     async load() {
         const [
+            infoDevice,
+            infoOpenWrt,
             infoPackage,
             infoLuciPackage,
             infoCore,
             cronCore,
             cronCoreAutorestart
         ] = await Promise.all([
-            fs.exec(common.binPath, ["info_package"]).catch(() => _("No data")),
-            fs.exec(common.binPath, ["info_luci"]).catch(() => _("No data")),
-            fs.exec(common.binPath, ["info_core"]).catch(() => _("No data")),
+            fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
+            fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
+            fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("No data")),
+            fs.exec(common.binInfoPath, ["info_luci"]).catch(() => _("No data")),
+            fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("No data")),
             fs.exec(common.binPath, ["core_update_cron_check"]).catch(() => _("No data")),
             fs.exec(common.binPath, ["core_autorestart_cron_check"]).catch(() => _("No data")),
         ]);
@@ -56,6 +60,8 @@ return view.extend({
             this.isJustClashAutostartEnabled().catch((e) => { console.log(e); return _("No data"); })
         ]);
         return {
+            infoDevice,
+            infoOpenWrt,
             infoPackage,
             infoLuciPackage,
             infoCore,
@@ -73,6 +79,14 @@ return view.extend({
         ]);
 
         const tableContainer = E("table", { class: "table cbi-rowstyle-1" }, [
+            E("tr", { class: "tr" }, [
+                E("td", { class: "td left" }, _("Device model:")),
+                E("td", { class: "td left" }, results.infoDevice.stdout.replace("\\n", "").trim())
+            ]),
+            E("tr", { class: "tr cbi-rowstyle-2" }, [
+                E("td", { class: "td left" }, _("System version:")),
+                E("td", { class: "td left" }, results.infoOpenWrt.stdout.replace("\\n", "").trim())
+            ]),
             E("tr", { class: "tr" }, [
                 E("td", { class: "td left" }, _("Daemon package version:")),
                 E("td", { class: "td left" }, results.infoPackage.stdout.replace("\\n", "").trim())
