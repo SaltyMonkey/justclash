@@ -38,6 +38,7 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/justclash $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/usr/bin/justclash_info $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/justclash $(1)/etc/config/justclash

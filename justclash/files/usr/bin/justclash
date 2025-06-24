@@ -3,6 +3,12 @@
 # Using debian based version (kind of similar)
 # shellcheck shell=dash
 
+# --------------------------------------------
+# Main justclash service part
+# Directly using uci config calls every load
+# Avoid adding simple commands for perfomance
+# --------------------------------------------
+
 # shellcheck disable=SC1091
 [ -r /lib/functions.sh ] && . /lib/functions.sh
 # shellcheck disable=SC1091
@@ -234,81 +240,32 @@ restart() {
 }
 
 info_device() {
-   cat /tmp/sysinfo/model || echo "$NO_DATA_STRING"
+    ./justclash_info info_device
 }
 
 info_openwrt() {
-   grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "$NO_DATA_STRING"
+    ./justclash_info info_openwrt
 }
 
 info_mihomo() {
-    if [ ! -x "$CORE_PATH" ]; then
-        echo "$NO_DATA_STRING"
-    else
-       "$CORE_PATH" -v 2>/dev/null | awk '{ print $3 }'
-    fi
+    ./justclash_info info_mihomo
 }
 
 info_package() {
-    local version
-
-    if command -v apk >/dev/null 2>&1; then
-        version=$(apk info justclash 2>/dev/null | grep -oP 'justclash-\K.*')
-    else
-        version=$(opkg list-installed justclash 2>/dev/null | awk '{print $3}')
-    fi
-
-    echo "$version" || echo "$NO_DATA_STRING"
+    ./justclash_info info_package
 }
 
 info_luci() {
-    local version
-
-    if command -v apk >/dev/null 2>&1; then
-        version=$(apk info luci-app-justclash 2>/dev/null | grep -oP 'justclash-\K.*')
-    else
-        version=$(opkg list-installed luci-app-justclash 2>/dev/null | awk '{print $3}')
-    fi
-
-    echo "$version" || echo "$NO_DATA_STRING"
+    ./justclash_info info_luci
 }
 
 info_conns_console() {
-    local pid
-
-    if [ -f "$PIDFILE" ]; then
-        pid=$(cat "$PIDFILE")
-    fi
-
-    if [ -z "$pid" ]; then
-        clog 1 "Process '$CORE_BIN_NAME' is not running"
-        return 1
-    fi
-
-    clog 2 "PID of process '$CORE_BIN_NAME': $pid"
-
-    if command -v ss >/dev/null; then
-        clog 2 "Using ss:"
-        ss -tunp | grep "$pid"
-    elif command -v netstat >/dev/null; then
-        clog 2 "Using netstat:"
-        netstat -tunp | grep "$pid"
-    elif command -v lsof >/dev/null; then
-        clog 2 "Using lsof:"
-        lsof -i -n -P | grep "$CORE_BIN_NAME"
-    else
-        clog 1 "Neither ss, netstat, nor lsof found"
-    fi
+    ./justclash_info info_conns_console
 }
 
 systemlogs() {
     local lines=${1:-40}
-    if ! command -v logread >/dev/null 2>&1; then
-        clog 0 "logread command not found"
-        return 1
-    fi
-    logread -e "justclash" | tail -n "$lines"
-    return 0
+    ./justclash_info systemlogs "$lines"
 }
 
 diag_nft() {
@@ -1149,7 +1106,7 @@ case "$1" in
     info_openwrt)
         info_openwrt
         ;;
-    info_core)
+    info_core|info_mihomo)
         info_mihomo
         ;;
     info_package)
@@ -1157,9 +1114,6 @@ case "$1" in
         ;;
     info_luci)
         info_luci
-        ;;
-    info_conns_console_api)
-        info_conns_console_api
         ;;
     info_conns_console)
         info_conns_console
