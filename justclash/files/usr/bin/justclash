@@ -344,8 +344,7 @@ systemlogs() {
         clog 0 "logread command not found"
         return 1
     fi
-    clog 2 "Last $lines logs from justclash:"
-    logread -t justclash | tail -n "$lines"
+    logread -e "justclash" | tail -n "$lines"
     return 0
 }
 
