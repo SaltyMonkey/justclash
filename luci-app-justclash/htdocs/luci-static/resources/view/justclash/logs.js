@@ -5,82 +5,87 @@
 "require view.justclash.common as common";
 
 return view.extend({
-    load: function() {
-
-    },
-    render: function() {
+    render: function () {
         const logBox = E("textarea", {
             readonly: "readonly",
+            class: "jc-logs",
             id: "logBox",
             rows: "200",
             wrap: "off",
-            style: "width: 100%; font-family: monospace; white-space: pre; overflow: auto;"
-        }, [ logs ]);
+        }, []);
         logBox.value = _("No data");
 
-        const buttonBar = E("div", { style: "margin-bottom: 1em;" }, [ ]);
-
-        const createButton = (action, cssClass, label) => {
-            return E("button", {
-                class: `cbi-button ${cssClass}`,
-                id: `button${action}`,
-                click: ui.createHandlerFn(this, () => {
-                    const buttons = buttonBar.querySelectorAll("button");
-                    buttons.forEach(btn => btn.disabled = true);
-                    fs.exec(common.initdPath, [action]).then(result => {
-
-                    }).catch(e => {
-                        ui.addNotification(_("Error"), e.message, "danger");
-                    }).finally(() => {
-                        buttons.forEach(btn => btn.disabled = false);
-                    });
-                })
-            }, [
-                label
-            ]);
-        };
         const refreshBtn = E("button", {
             class: "cbi-button cbi-button-action",
             click: () => {
                 refreshBtn.disabled = true;
-                refreshBtn.innerText = "Обновляется...";
-                fs.exec("/bin/logread", [])
+                fs.exec(common.binPath, ["systemlogs", common.logsCount])
                     .then(res => {
-                        logBox.value = res.stdout || "Нет логов";
-                        refreshBtn.innerText = "Обновить";
+                        logBox.value = res.stdout || _("No logs");
                     })
-                    .catch(err => {
-                        logBox.value = "Ошибка: " + err.message;
-                        refreshBtn.innerText = "Обновить";
+                    .catch(e => {
+                        ui.addNotification(_("Error"), e.message, "danger");
                     })
                     .finally(() => {
                         refreshBtn.disabled = false;
                     });
             }
-        }, ["Обновить"]);
+        }, [
+            _("Update")
+        ]);
 
-        // Кнопка прокрутки к концу
         const tailBtn = E("button", {
-            class: "cbi-button cbi-button-neutral",
+            class: "cbi-button cbi-button-neutral jc-ml",
             click: () => {
                 logBox.scrollTop = logBox.scrollHeight;
             },
-            style: "margin-left: 0.5em"
-        }, ["To end"]);
+        }, [
+            _("To end")
+        ]);
 
-         const copyBtn = E("button", {
-            class: "cbi-button cbi-button-neutral",
+        /*const copyBtn = E("button", {
+            class: "cbi-button cbi-button-neutral jc-ml",
             click: () => {
-                logBox.scrollTop = logBox.scrollHeight;
+                copyBtn.disabled = true;
+                navigator.clipboard.writeText(logBox.value)
+                    .catch(e => {
+                        ui.addNotification(_("Error"), e.message, "danger");
+                    })
+                    .finally(() => {
+                        copyBtn.disabled = false;
+                    });;
             },
-            style: "margin-left: 0.5em"
-        }, ["Copy"]);
+        }, [
+            _("Copy")
+        ]);*/
 
+        const buttonBar = E("div", {
+            style: "margin-bottom: 1em;"
+        }, [
+            refreshBtn,
+            tailBtn,
+            //copyBtn
+        ]);
 
         return E("div", { class: "cbi-section" }, [
-            E("h2", {}, _("Logs view")),
+            this.addCSS(),
+            E("h3", {}, _("Logs view")),
             buttonBar,
             logBox
         ]);
-    }
+    },
+    addCSS() {
+        return E("style", {}, `
+            .jc-ml {
+                margin-left: 0.5em !important;
+            }
+            .jc-logs {
+                width: 100%;
+                font-family: monospace;
+                white-space: pre;
+                overflow: auto;"
+            }
+        `);
+    },
+
 });

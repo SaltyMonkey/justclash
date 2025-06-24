@@ -5,6 +5,7 @@ return baseclass.extend({
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
     genNameProxyPrefix: "proxy_",
+    logsCount: 350,
     genNameProxyGroupPrefix: "proxygroup_",
     defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
