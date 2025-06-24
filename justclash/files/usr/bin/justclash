@@ -690,7 +690,7 @@ log-level: $log_level
 tproxy-port: $tproxy_port
 unified-delay: $unified_delay
 tcp-concurrent: $tcp_concurrent
-external-controller: 127.0.0.1:$external_controller_port
+external-controller: 0.0.0.0:$external_controller_port
 routing-mark: $routing_mark
 global-client-fingerprint: $global_client_fingerprint
 global-ua: Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0
