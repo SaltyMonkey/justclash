@@ -110,3 +110,4 @@ config proxy_group
 	list additional_destip_route ""
 
 config compiled "compiled"
+    option rules " - MATCH,DIRECT"
