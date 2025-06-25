@@ -32,7 +32,7 @@
         }
     },
     "admin/services/justclash/service": {
-        "title": "Start and automation",
+        "title": "Basic settings",
         "order": 20,
         "action": {
             "type": "view",
@@ -80,7 +80,7 @@
         }
     },
     "admin/services/justclash/logs": {
-        "title": "Logs",
+        "title": "Service logs",
         "order": 50,
         "action": {
             "type": "view",

@@ -8,6 +8,12 @@
                 ],
                 "/usr/bin/justclash": [
                     "exec"
+                ],
+                "/usr/bin/justclash_info": [
+                    "exec"
+                ],
+                "/var/default.justclash.config": [
+                    "read"
                 ]
             },
             "uci": [
@@ -15,6 +21,11 @@
             ]
         },
         "write": {
+            "file": {
+                "/var/default.justclash.config": [
+                    "write"
+                ]
+            },
             "uci": [
                 "justclash"
             ]
