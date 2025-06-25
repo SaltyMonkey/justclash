@@ -213,8 +213,8 @@ ntp_force_sync() {
 start() {
 
     if [ -f "$PIDFILE" ]; then
-        log 1 "Another process instance is already running. Can't run another instance."
-        return 1
+        log 2 "Detected PID file for service... Stopping instance" "⏳"
+        stop_core
     fi
 
     log 2 "Initializing Justclash service..." "⏳"
