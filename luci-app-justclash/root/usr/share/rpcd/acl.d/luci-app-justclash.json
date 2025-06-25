@@ -14,7 +14,8 @@
                 ],
                 "/var/default.justclash.config": [
                     "read"
-                ]
+                ],
+                "/etc/crontabs/root": [ "read" ]
             },
             "uci": [
                 "justclash"
@@ -23,6 +24,9 @@
         "write": {
             "file": {
                 "/var/default.justclash.config": [
+                    "write"
+                ],
+                "/etc/crontabs/root": [
                     "write"
                 ]
             },
