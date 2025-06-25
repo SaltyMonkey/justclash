@@ -162,8 +162,12 @@ is_package_installed() {
 }
 
 is_pattern_in_file() {
+    if [ -z "$1" ]; then
+        return 1
+    fi
+
     local file="$1"
-    shift
+
     if [ ! -r "$file" ]; then
         return 1
     fi
@@ -184,6 +188,16 @@ is_pattern_in_file() {
 ntp_force_sync() {
     local forcefully_update_ntp_at_load
     config_get_bool forcefully_update_ntp_at_load settings forcefully_update_ntp_at_load
+    if [ -z "$NTP_IPS" ]; then
+        log 1 "No NTP servers configured" "⚠️"
+        return 1
+    fi
+
+    if ! command -v /usr/sbin/ntpd >/dev/null; then
+        log 1 "ntpd not found, time synchronization skipped" "⚠️"
+        return 1
+    fi
+
     if [ "$forcefully_update_ntp_at_load" -eq 1 ]; then
         NTP_ARGS=""
         for ip in $NTP_IPS; do
@@ -193,10 +207,16 @@ ntp_force_sync() {
         /usr/sbin/ntpd -q $NTP_ARGS
     fi
 
-    sleep 2
+    sleep 0.5
 }
 
 start() {
+
+    if [ -f "$PIDFILE" ]; then
+        log 1 "Another process instance is already running. Can't run another instance."
+        return 1
+    fi
+
     log 2 "Initializing Justclash service..." "⏳"
 
     log 2 "Checking for conflicts" "🐞"
@@ -208,7 +228,7 @@ start() {
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
 
-    log 2 "Generating configuration..." "📄"
+    log 2 "Generating yaml configuration..." "📄"
     core_generate_yaml
 
     log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
@@ -233,39 +253,53 @@ stop() {
 }
 
 restart() {
-    log 2 "Performing complete restart of service" "🔄"
+    log 2 "Performing complete restart" "🔄"
     stop
     sleep 1
     start
 }
 
 info_device() {
-    ./justclash_info info_device
+    local res
+    res=$(./justclash_info info_device)
+    echo "$res"
 }
 
 info_openwrt() {
-    ./justclash_info info_openwrt
+    local res
+    res=$(./justclash_info info_openwrt)
+    echo "$res"
 }
 
 info_mihomo() {
-    ./justclash_info info_mihomo
+    local res
+    res=$(./justclash_info info_mihomo)
+    echo "$res"
 }
 
 info_package() {
-    ./justclash_info info_package
+    local res
+    res=$(./justclash_info info_package)
+    echo "$res"
 }
 
 info_luci() {
-    ./justclash_info info_luci
+    local res
+    res=$(./justclash_info info_luci)
+    echo "$res"
 }
 
 info_conns_console() {
-    ./justclash_info info_conns_console
+    local res
+    res=$(./justclash_info info_conns_console)
+    echo "$res"
 }
 
 systemlogs() {
+    local res
     local lines=${1:-40}
-    ./justclash_info systemlogs "$lines"
+    res=$(./justclash_info systemlogs "$lines")
+    echo "$res"
 }
 
 diag_nft() {
@@ -291,10 +325,13 @@ diag_nft() {
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
-    log 2 "Ensuring Mihomo core was previously stopped gracefully..."
-    stop_core
+    # TODO: Remove in future
+    if [ -f "$PIDFILE" ]; then
+        log 2 "Another process instance is already running. Can't run another instance."
+        return 1
+    fi
 
-    log 2 "Starting Mihomo core..."
+    log 2 "Daemonizing Mihomo core..."
     (
         echo $$ > "$PIDFILE"
         exec "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | logger -t justclash
@@ -303,7 +340,6 @@ start_core() {
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 stop_core() {
-    log 2 "Stopping Mihomo core..."
     local pid
     if [ -f "$PIDFILE" ]; then
         pid=$(cat "$PIDFILE")
@@ -326,7 +362,9 @@ stop_core() {
         log 2 "Core process stopped" "✅"
     else
         log 1 "PID file not found, using fallback stop method"
-        killall "$(basename "$CORE_PATH")"
+        if ! killall "$(basename "$CORE_PATH")" >/dev/null 2>&1; then
+            log 2 "Process not found: $(basename "$CORE_PATH")" "⚠️"
+        fi
     fi
 }
 
@@ -341,10 +379,9 @@ nft_table_add() {
 
     hex_mark=$(printf '0x%x' "$routing_mark")
 
-    [ -z "$tproxy_port" ] && panic "tproxy_port not set"
-    [ -z "$routing_mark" ] && panic "routing_mark not set"
-    [ -z "$fake_ip_range" ] && panic "fake ip range not set"
-    [ -z "$hex_mark" ] && panic "routing_mark(hex) not set"
+    if [ -z "$tproxy_port" ] || [ -z "$routing_mark" ] || [ -z "$fake_ip_range" ] || [ -z "$hex_mark" ]; then
+        panic "One or more required variables for NFT tables are not set in configuration"
+    fi
 
     # Table cleanup
     nft delete table inet "$NFT_TABLE_NAME" 2>/dev/null || true
@@ -506,7 +543,7 @@ check_for_conflicts() {
 
     # For $CONFLICTED_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string
     # shellcheck disable=SC2086
-    found_patterns=$(is_pattern_in_file "$CONFLICTED_PATTERNS_FILEPATH" $CONFLICTED_PATTERNS_DHCP_CONFIG)
+    found_patterns=$(is_pattern_in_file "$CONFLICTED_PATTERNS_FILEPATH" "$CONFLICTED_PATTERNS_DHCP_CONFIG")
     if [ -n "$found_patterns" ]; then
         for pattern in $found_patterns; do
             log 1 "Detected https-dns-proxy pattern '$pattern' in /etc/config/dhcp. Please review and edit the configuration file."
@@ -676,7 +713,7 @@ EOF
     config_get proxy_groups compiled proxy_groups
     config_get rule_providers compiled rule_providers
 
-    cat <<EOF > "$TMP_YAML_CONFIG_PATH"
+    cat <<EOF >> "$TMP_YAML_CONFIG_PATH"
 proxies:
 $proxies
 
@@ -716,20 +753,27 @@ detect_arch() {
         armv6*) echo "armv6" ;;
         armv7*) echo "armv7" ;;
         mips*) echo "mips" ;;
-        #riscv64) echo "riscv64" ;;
         i[3-6]86) echo "i386" ;;
-        *)
-            log 2 "Unknown or unsupported architecture: $arch_raw" "❌" >&2
-            return 1
-            ;;
+        *) echo "amd64" ;;
     esac
 }
 
 get_latest_version() {
+    if [ -z "$1" ]; then
+        log 1 "Usage: get_latest_version <check_url>"
+        return 1
+    fi
+
     local check_url="$1"
     local latest_url latest_ver
-    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$check_url")
-    latest_ver=$(curl -sL "$latest_url/version.txt" | tr -d '\r\n')
+    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$check_url") || {
+        log 3 "Failed to get effective URL"
+        return 1
+    }
+    latest_ver=$(curl -sL "$latest_url/version.txt" | tr -d '\r\n') || {
+        log 3 "Failed to get version"
+        return 1
+    }
     echo "$latest_ver"
 }
 
@@ -738,29 +782,54 @@ core_download() {
     param_version="$2"
     download_url="$1"
 
-    log 2 "Downloading Mihomo binary..." "📥"
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        log 1 "Usage: core_download <download_url> <version>"
+        return 1
+    fi
 
+    arch=$(detect_arch)
     mkdir -p "$CORE_WORKDIR_PATH"
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
     base_url="${download_url}/${file_name}"
 
-    log 2 "Downloading mihomo binary" "⬇️"
+    log 2 "Downloading mihomo binary" "📥"
     curl -sL -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
-        panic "Failed to download file." "❌"
+        log 3 "Failed to download file." "❌"
+        return 1
     }
 
     log 2 "Extracting to $CORE_PATH" "⬇️"
     gunzip -c "${CORE_WORKDIR_PATH}/mihomo.gz" > "$CORE_PATH" || {
-        panic "Failed to extract file." "❌"
+        log 3 "Failed to extract file." "❌"
+        return 1
     }
 
-    chmod +x "$CORE_PATH"
+    log 2 "Mihomo installed at $CORE_PATH" "🚀"
+
+    if ! chmod +x "$CORE_PATH"; then
+        log 0 "Failed to set executable permissions: $CORE_PATH"
+    fi
 
     log 2 "Cleaning up temporary files" "🧹"
-    rm -f "${CORE_WORKDIR_PATH}/mihomo.gz"
+    if ! rm -f "${CORE_WORKDIR_PATH}/mihomo.gz"; then
+        log 1 "Failed to clean up temporary file: ${CORE_WORKDIR_PATH}/mihomo.gz"
+    fi
+}
 
-    log 2 "Mihomo installed at $CORE_PATH" "🚀"
+core_remove() {
+    if [ ! -x "$CORE_PATH" ]; then
+        log 1 "Mihomo is not installed." "⚠️"
+        return 1
+    else
+        if rm -f "$CORE_PATH"; then
+            log 2 "Mihomo is removed." "✅"
+            return 0
+        else
+            log 3 "Failed to remove Mihomo binary: $CORE_PATH" "❌"
+            return 1
+        fi
+    fi
 }
 
 core_update() {
@@ -778,6 +847,11 @@ core_update() {
 
     cur_ver=$(info_mihomo)
     tmp=$(get_latest_version "$check_url")
+    if [ $? -eq 1 ]; then
+        log 3 "Update process can't be finished."
+        return 1
+    fi
+
     latest_ver=$(echo "$tmp" | sed -n 1p)
 
     if [ "$mihomo_update_channel" = "alpha" ]; then
@@ -787,14 +861,20 @@ core_update() {
     fi
 
     if [ -z "$latest_ver" ]; then
-       log 1 "Error happened when trying to receive latest version data."
-       log 1 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
-       panic "Failed to download core"
+       log 3 "Error happened when trying to receive latest version data."
+       log 3 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+       log 3 "Failed to download core"
+       return 1
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
-        core_download "$download_url" "$latest_ver" || return 1
+        core_download "$download_url" "$latest_ver"
+        if [ $? -eq 1 ]; then
+            log 3 "Update process can't be finished."
+            send_telegram "Mihomo core binary was missing. Install try for version $latest_ver failed."
+            return 1
+        fi
         send_telegram "Mihomo core binary was missing. Installed $latest_ver"
         return 0
     fi
@@ -805,27 +885,35 @@ core_update() {
     if [ "$cur_ver" != "$latest_ver" ]; then
         log 2 "Removing current mihomo binary..." "⚠️"
         core_remove
+        if [ $? -eq 1 ]; then
+            log 3 "Update process can't be finished."
+            return 1
+        fi
         log 2 "Updating Mihomo to version $latest_ver" "⬆️"
-        core_download "$download_url" "$latest_ver" || return 1
+        core_download "$download_url" "$latest_ver"
+        if [ $? -eq 1 ]; then
+            log 3 "Update process can't be finished."
+            send_telegram "Mihomo core binary was updated. Install try for version: $cur_ver -> $latest_ver failed."
+            return 1
+        fi
         send_telegram "Mihomo core binary was updated. Version: $cur_ver -> $latest_ver"
 
     else
+        send_telegram "Mihomo core binary is already up-to-date."
         log 2 "Mihomo is already up-to-date." "✅"
     fi
+
+    return 0
 }
 
-core_remove() {
-    if [ ! -x "$CORE_PATH" ]; then
-        log 1 "Mihomo is not installed." "⚠️"
-        return 1
-    else
-        rm -f "$CORE_PATH"
-        log 2 "Mihomo is removed." "✅"
-        return 0
-    fi
-}
+
 
 send_telegram() {
+    if [ -z "$1" ]; then
+        log 1 "Usage: send_telegram <message>"
+        return 1
+    fi
+
     local message="$1"
     local token chat_id
 
@@ -833,7 +921,7 @@ send_telegram() {
     config_get chat_id settings telegram_chat_id
 
     if [ -z "$token" ] || [ -z "$chat_id" ]; then
-        echo "Telegram: bot token or chat ID is not configured" "⚠️"
+        log 1 "Telegram: bot token or chat ID is not configured" "⚠️"
         return 1
     fi
 
@@ -993,16 +1081,25 @@ config_show() {
 
 config_reset() {
     if [ ! -f "/etc/config/default.justclash" ]; then
-        log 2 "Default config file is missing. Can't use restore functionality"
+        сlog 2 "Default config file is missing. Can't use restore functionality"
+        return 1;
     fi
 
-    log 2 "Restoring justclash settings..."
+    сlog 2 "Restoring justclash settings..."
 
-    rm /etc/config/justclash.bak
-    mv /etc/config/justclash /etc/config/justclash.bak
-    cp "$DEFAULT_CONFIG_PATH" /etc/config/justclash
+    rm -f /etc/config/justclash.bak
 
-    log 2 "Default settings will be applied at next justclash restart..."
+    if ! mv /etc/config/justclash /etc/config/justclash.bak; then
+        сlog 1 "Failed to backup config file"
+        return 1
+    fi
+
+    if ! cp "$DEFAULT_CONFIG_PATH" /etc/config/justclash; then
+        сlog 1 "Failed to restore default config"
+        return 1
+    fi
+
+    сlog 2 "Default settings will be applied at next justclash restart..."
 }
 
 help() {
