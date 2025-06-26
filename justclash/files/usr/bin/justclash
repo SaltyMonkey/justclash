@@ -19,14 +19,14 @@ PROCD_MODE=0
 # service pidfile path
 PIDFILE="/var/run/justclash.pid"
 
+
 # setup procd variable: $JUSTCLASH_ENV passed from init.d start
 [ "$JUSTCLASH_ENV" = "procd" ] && PROCD_MODE=1 || PROCD_MODE=0
 
 config_load justclash
 
-CORE_LATEST_RELEASE_URL="https://api.github.com/repos/metacubex/mihomo/releases/latest"
-CORE_LATEST_ALPHA_RELEASE_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha"
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download"
+CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/latest"
+CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
 CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
 NO_DATA_STRING="N/A"
 
@@ -34,10 +34,12 @@ NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 # Path to Mihomo core
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
+CORE_PATH_INFOBIN="/usr/bin/justclash_info"
 # workdir path (in RAM)
 CORE_WORKDIR_PATH="/tmp/justclash/"
+# fifo pipe for background process redirection to justclash syslogs
+FIFOPATH="/tmp/justclash/justclash.fifo"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
-TMP_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.build.yaml"
 OVERRIDE_YAML_CONFIG_PATH="/var/override.${CORE_BIN_NAME}.yaml"
 DEFAULT_CONFIG_PATH="/var/default.justclash.config"
 
@@ -81,10 +83,10 @@ panic() {
 get_log_level_name() {
     case "$1" in
         0) echo "ERROR" ;;
-        1) echo "WARNING" ;;
+        1) echo "WARN" ;;
         2) echo "INFO" ;;
         3) echo "DEBUG" ;;
-        *) echo "UNKNOWN" ;;
+        *) echo "UNKN" ;;
     esac
 }
 
@@ -207,17 +209,21 @@ ntp_force_sync() {
         /usr/sbin/ntpd -q $NTP_ARGS
     fi
 
-    sleep 0.5
+    sleep 2
 }
 
 start() {
+    log 2 "Initializing Justclash service..." "⏳"
 
     if [ -f "$PIDFILE" ]; then
-        log 2 "Detected PID file for service... Stopping instance" "⏳"
+        log 1 "Detected PID file for service... Stopping instance" "⚠️"
         stop_core
     fi
 
-    log 2 "Initializing Justclash service..." "⏳"
+    if [ ! -f "$CORE_PATH" ]; then
+        log 1 "Mihomo core is not installed." "⚠️"
+        return 1
+    fi
 
     log 2 "Checking for conflicts" "🐞"
     check_for_conflicts
@@ -259,88 +265,25 @@ restart() {
     start
 }
 
-info_device() {
-    local res
-    res=$(./justclash_info info_device)
-    echo "$res"
-}
-
-info_openwrt() {
-    local res
-    res=$(./justclash_info info_openwrt)
-    echo "$res"
-}
-
-info_mihomo() {
-    local res
-    res=$(./justclash_info info_mihomo)
-    echo "$res"
-}
-
-info_package() {
-    local res
-    res=$(./justclash_info info_package)
-    echo "$res"
-}
-
-info_luci() {
-    local res
-    res=$(./justclash_info info_luci)
-    echo "$res"
-}
-
-info_conns_console() {
-    local res
-    res=$(./justclash_info info_conns_console)
-    echo "$res"
-}
-
-systemlogs() {
-    local res
-    local lines=${1:-40}
-    res=$(./justclash_info systemlogs "$lines")
-    echo "$res"
-}
-
-diag_nft() {
-    clog 2 "Checking for 'nft' command..."
-    if ! command -v nft >/dev/null 2>&1; then
-        clog 0 "The 'nft' command is not available. Please install nftables to continue."
-        return 1
-    fi
-
-    clog 2 "Verifying existence of NFTables table '$NFT_TABLE_NAME'..."
-    if ! nft list table inet "$NFT_TABLE_NAME" >/dev/null 2>&1; then
-        clog 0 "Table '$NFT_TABLE_NAME' not found. Please create the required NFTables table."
-        return 1
-    fi
-
-    clog 2 "Displaying current NFTables configuration:"
-    nft list table inet "$NFT_TABLE_NAME"
-
-    clog 2 "NFTables check completed successfully."
-
-    return 0
-}
-
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
-    # TODO: Remove in future
-    if [ -f "$PIDFILE" ]; then
-        log 2 "Another process instance is already running. Can't run another instance."
-        return 1
-    fi
+    log 2 "Start Mihomo core in background..."
+    mkfifo /tmp/justclash.fifo
+    "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | \
+    sed 's/time="[^"]*"/mihomo/' > "$FIFOPATH" &
+    echo $! > "$PIDFILE"
+    logger -t justclash < "$FIFOPATH" &
 
-    log 2 "Daemonizing Mihomo core..."
-    (
-        echo $$ > "$PIDFILE"
-        exec "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | logger -t justclash
-    ) &
+    if [ $PROCD_MODE -eq 0 ]; then
+        log 1 "You are started justclash manually" "⚠️"
+        log 1 "PID for running mihomo: $PIDFILE" "⚠️"
+    fi
 }
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 stop_core() {
     local pid
+
     if [ -f "$PIDFILE" ]; then
         pid=$(cat "$PIDFILE")
         log 2 "Stopping core process (PID $pid)"
@@ -366,6 +309,74 @@ stop_core() {
             log 2 "Process not found: $(basename "$CORE_PATH")" "⚠️"
         fi
     fi
+
+    if [ -f "$FIFOPATH" ]; then
+        rm -f "$FIFOPATH" 2>/dev/null
+    fi
+}
+
+info_device() {
+    local res
+    res=$($CORE_PATH_INFOBIN info_device)
+    echo "$res"
+}
+
+info_openwrt() {
+    local res
+    res=$($CORE_PATH_INFOBIN info_openwrt)
+    echo "$res"
+}
+
+info_mihomo() {
+    local res
+    res=$($CORE_PATH_INFOBIN info_core)
+    echo "$res"
+}
+
+info_package() {
+    local res
+    res=$($CORE_PATH_INFOBIN info_package)
+    echo "$res"
+}
+
+info_luci() {
+    local res
+    res=$($CORE_PATH_INFOBIN info_luci)
+    echo "$res"
+}
+
+info_conns_console() {
+    local res
+    res=$($CORE_PATH_INFOBIN info_conns_console)
+    echo "$res"
+}
+
+systemlogs() {
+    local res
+    local lines=${1:-40}
+    res=$($CORE_PATH_INFOBIN systemlogs "$lines")
+    echo "$res"
+}
+
+diag_nft() {
+    clog 2 "Checking for 'nft' command..."
+    if ! command -v nft >/dev/null 2>&1; then
+        clog 0 "The 'nft' command is not available. Please install nftables to continue."
+        return 1
+    fi
+
+    clog 2 "Verifying existence of NFTables table '$NFT_TABLE_NAME'..."
+    if ! nft list table inet "$NFT_TABLE_NAME" >/dev/null 2>&1; then
+        clog 0 "Table '$NFT_TABLE_NAME' not found. Please create the required NFTables table."
+        return 1
+    fi
+
+    clog 2 "Displaying current NFTables configuration:"
+    nft list table inet "$NFT_TABLE_NAME"
+
+    clog 2 "NFTables check completed successfully."
+
+    return 0
 }
 
 nft_table_add() {
@@ -424,9 +435,8 @@ nft_table_add() {
     ip rule add fwmark "$hex_mark" table 100
     ip route replace local 0.0.0.0/0 dev lo table 100
 
-    log 3 "TPROXY: port=$tproxy_port, fwmark=$hex_mark, table=100"
+    log 1 "TPROXY: port=$tproxy_port, fwmark=$hex_mark, table=100"
 }
-
 
 nft_table_remove() {
     ip rule del fwmark 0x1 table 100 2>/dev/null || true
@@ -477,7 +487,7 @@ dnsmasq_inject() {
         uci commit dhcp
         log 2 "DNS settings have been changed"
         /etc/init.d/dnsmasq restart > /dev/null 2>&1
-	    log 2 "dnsmasq restarted"
+        log 2 "dnsmasq restarted"
     else
         log 2 "DNS settings not changed — skipped due to configuration"
     fi
@@ -497,14 +507,14 @@ dnsmasq_clean() {
     if [ "$update_dns_server" -eq 1 ]; then
         bak_cachesize=$(uci get dhcp.@dnsmasq[0].justclash_cachesize 2>/dev/null)
         if [ -z "$bak_cachesize" ]; then
-            log "dnsmasq revert: cachesize is unset"
+            log 1 "dnsmasq revert: cachesize is unset"
         else
             uci set dhcp.@dnsmasq[0].cachesize="$bak_cachesize"
         fi
 
         bak_noresolv=$(uci get dhcp.@dnsmasq[0].justclash_noresolv 2>/dev/null)
         if [ "$bak_noresolv" = "unset" ]; then
-            log "dnsmasq revert: noresolv is unset"
+            log 1 "dnsmasq revert: noresolv is unset"
             uci -q delete dhcp.@dnsmasq[0].noresolv
         else
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
@@ -601,7 +611,7 @@ core_generate_yaml() {
         This may lead to unexpected behavior, service instability, or security vulnerabilities. \
         Please verify the contents of the override configuration file and ensure it is intended for use before proceeding. \
         If this was not expected, investigate the origin of the override file and consider restoring the default configuration."
-        cp "$OVERRIDE_YAML_CONFIG_PATH" "$TMP_YAML_CONFIG_PATH"
+        cp "$OVERRIDE_YAML_CONFIG_PATH" "$OUTPUT_YAML_CONFIG_PATH"
         return 0
     fi
 
@@ -640,7 +650,7 @@ core_generate_yaml() {
     ignore_fake_ip_domains=$(generate_yaml_array proxy ignore_fake_ip_domains)
     ignore_to_sniff_domains=$(generate_yaml_array proxy ignore_to_sniff_domains)
 
-    cat <<EOF > "$TMP_YAML_CONFIG_PATH"
+    cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
 ipv6: false
 log-level: $log_level
@@ -713,7 +723,7 @@ EOF
     config_get proxy_groups compiled proxy_groups
     config_get rule_providers compiled rule_providers
 
-    cat <<EOF >> "$TMP_YAML_CONFIG_PATH"
+    cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 proxies:
 $proxies
 
@@ -735,7 +745,7 @@ core_prepare_workdir() {
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         [ -f "$OUTPUT_YAML_CONFIG_PATH" ] && rm -f "$OUTPUT_YAML_CONFIG_PATH"
-        [ -f "$TMP_YAML_CONFIG_PATH" ] && rm -f "$TMP_YAML_CONFIG_PATH"
+        [ -f "$FIFOPATH" ] && rm -f "$FIFOPATH"
     else
         mkdir -p "$CORE_WORKDIR_PATH"
     fi
@@ -766,12 +776,12 @@ get_latest_version() {
 
     local check_url="$1"
     local latest_url latest_ver
-    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$check_url") || {
-        log 3 "Failed to get effective URL"
+    latest_url=$(curl --progress-bar -L -o /dev/null -w '%{url_effective}' "$check_url") || {
+        log 0 "Failed to get effective URL for download"
         return 1
     }
-    latest_ver=$(curl -sL "$latest_url/version.txt" | tr -d '\r\n') || {
-        log 3 "Failed to get version"
+    latest_ver=$(curl --progress-bar -L "$latest_url/version.txt" | tr -d '\r\n') || {
+        log 0 "Failed to get latest version"
         return 1
     }
     echo "$latest_ver"
@@ -794,14 +804,14 @@ core_download() {
     base_url="${download_url}/${file_name}"
 
     log 2 "Downloading mihomo binary" "📥"
-    curl -sL -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
-        log 3 "Failed to download file." "❌"
+    curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
+        log 0 "Failed to download file." "❌"
         return 1
     }
 
     log 2 "Extracting to $CORE_PATH" "⬇️"
     gunzip -c "${CORE_WORKDIR_PATH}/mihomo.gz" > "$CORE_PATH" || {
-        log 3 "Failed to extract file." "❌"
+        log 0 "Failed to extract file." "❌"
         return 1
     }
 
@@ -826,7 +836,7 @@ core_remove() {
             log 2 "Mihomo is removed." "✅"
             return 0
         else
-            log 3 "Failed to remove Mihomo binary: $CORE_PATH" "❌"
+            log 0 "Failed to remove Mihomo binary: $CORE_PATH" "❌"
             return 1
         fi
     fi
@@ -840,30 +850,36 @@ core_update() {
     log 2 "Checking for Mihomo updates..." "🔄"
 
     if [ "$mihomo_update_channel" = "alpha" ]; then
-        check_url=$CORE_LATEST_ALPHA_RELEASE_URL
+        check_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
     else
-        check_url=$CORE_LATEST_RELEASE_URL
+        check_url=$CORE_RELEASE_URL_PARTIAL
     fi
 
     cur_ver=$(info_mihomo)
-    tmp=$(get_latest_version "$check_url")
-    if [ $? -eq 1 ]; then
-        log 3 "Update process can't be finished."
+    if [ -z "$cur_ver" ]; then
+        log 0 "Update process can't be finished."
         return 1
     fi
 
+    tmp=$(get_latest_version "$check_url")
+    if [ $? -eq 1 ]; then
+        log 0 "Update process can't be finished."
+        return 1
+    fi
+
+    #TODO: Fix incorrect output handle (github isnt returning empty body)
     latest_ver=$(echo "$tmp" | sed -n 1p)
 
     if [ "$mihomo_update_channel" = "alpha" ]; then
         download_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
     else
-        download_url=$CORE_RELEASE_URL_PARTIAL/$latest_ver
+        download_url=$CORE_RELEASE_URL_PARTIAL_NO_TAG/$latest_ver
     fi
 
     if [ -z "$latest_ver" ]; then
-       log 3 "Error happened when trying to receive latest version data."
-       log 3 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
-       log 3 "Failed to download core"
+       log 0 "Error happened when trying to receive latest version data."
+       log 0 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+       log 0 "Failed to download core"
        return 1
     fi
 
@@ -871,7 +887,7 @@ core_update() {
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log 3 "Update process can't be finished."
+            log 0 "Update process can't be finished."
             send_telegram "Mihomo core binary was missing. Install try for version $latest_ver failed."
             return 1
         fi
@@ -886,13 +902,13 @@ core_update() {
         log 2 "Removing current mihomo binary..." "⚠️"
         core_remove
         if [ $? -eq 1 ]; then
-            log 3 "Update process can't be finished."
+            log 0 "Update process can't be finished."
             return 1
         fi
         log 2 "Updating Mihomo to version $latest_ver" "⬆️"
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log 3 "Update process can't be finished."
+            log 0 "Update process can't be finished."
             send_telegram "Mihomo core binary was updated. Install try for version: $cur_ver -> $latest_ver failed."
             return 1
         fi
@@ -1060,7 +1076,7 @@ diag_fake_ip_resolver() {
 
     clog 2 "Testing Fake IP DNS resolution..."
     if ! nslookup google.com 127.0.0.1:"$dns_listen_port" >/dev/null 2>&1; then
-        clog 3 "FakeIP IPv4 DNS query failed" "❌"
+        clog 0 "FakeIP IPv4 DNS query failed" "❌"
     else
         clog 2 "FakeIP IPv4 DNS query successful" "✅"
     fi
@@ -1069,7 +1085,7 @@ diag_fake_ip_resolver() {
 diag_default_resolver() {
     clog 2 "Testing DNS resolution..."
     if ! nslookup google.com >/dev/null 2>&1; then
-        clog 3 "IPv4 DNS query failed" "❌"
+        clog 0 "IPv4 DNS query failed" "❌"
     else
         clog 2 "IPv4 DNS query successful" "✅"
     fi

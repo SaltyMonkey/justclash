@@ -1,11 +1,12 @@
 #!/bin/sh /etc/rc.common
 
-# directive for init.d from openwrt -> unused in code
+# directive for procd from openwrt -> unused in code
 # shellcheck disable=SC2034
 USE_PROCD=1
 START=99
 STOP=01
 PIDFILE="/var/run/justclash.pid"
+FIFOPATH="/tmp/justclash/justclash.fifo"
 PROG="/usr/bin/justclash"
 
 start_service() {
@@ -14,14 +15,15 @@ start_service() {
     procd_set_param env JUSTCLASH_ENV=procd
     procd_set_param stdout 1
     procd_set_param stderr 1
-    procd_set_param norespawn
+    procd_set_param respawn 60 0 3
     procd_set_param pidfile $PIDFILE
     procd_close_instance
 }
 
 stop_service() {
     $PROG stop
-    rm -f $PIDFILE 2>/dev/null
+    rm -f "$PIDFILE" 2>/dev/null
+    rm -f "$FIFOPATH" 2>/dev/null
 }
 
 reload_service() {
