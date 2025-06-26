@@ -22,7 +22,7 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
-  Transparent proxy solution for OpenWrt based on mihomo.
+  Transparent proxy solution for OpenWrt based on mihomo clash core.
 endef
 
 define Build/Prepare
