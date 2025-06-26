@@ -45,7 +45,7 @@ return view.extend({
             cronCoreAutorestart
         ] = await Promise.all([
             fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
+            fs.exec(common.binInfoPath, ["info_openwrt"]).catch(() => _("No data")),
             fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("No data")),
             fs.exec(common.binInfoPath, ["info_luci"]).catch(() => _("No data")),
             fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("No data")),
