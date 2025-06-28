@@ -35,6 +35,7 @@ CORE_BIN_NAME="mihomo"
 # Path to Mihomo core
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
 CORE_PATH_INFOBIN="/usr/bin/justclash_info"
+INITD_PATH="/etc/init.d/justclash"
 # workdir path (in RAM)
 CORE_WORKDIR_PATH="/tmp/justclash/"
 # fifo pipe for background process redirection to justclash syslogs
@@ -56,7 +57,7 @@ NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
 # Allow traffic on:
 # LAN interfaces (lan*)
 # bridge interface (br-lan)
-ALLOWED_INTERFACES='{ lan*, br-lan }'
+#ALLOWED_INTERFACES='{ lan*, br-lan }'
 # List of conflicting packages:
 # podkop (custom proxy)
 # iptables-mod-extra (additional iptables modules)
@@ -889,9 +890,10 @@ core_remove() {
 }
 
 core_update() {
-    local cur_ver latest_ver tmp mihomo_update_channel
+    local cur_ver latest_ver tmp mihomo_update_channel mihomo_cron_update_telegram_notify
     local check_url download_url
     config_get mihomo_update_channel settings mihomo_update_channel
+    config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
 
     log 2 "Checking for Mihomo updates..." "🔄"
 
@@ -934,10 +936,14 @@ core_update() {
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             log 0 "Update process can't be finished."
-            send_telegram "Mihomo core binary was missing. Install try for version $latest_ver failed."
+            if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
+                send_telegram "Mihomo core binary was missing. Install try for version $latest_ver failed."
+            fi
             return 1
         fi
-        send_telegram "Mihomo core binary was missing. Installed $latest_ver"
+        if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
+            send_telegram "Mihomo core binary was missing. Installed $latest_ver"
+        fi
         return 0
     fi
 
@@ -955,13 +961,18 @@ core_update() {
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             log 0 "Update process can't be finished."
-            send_telegram "Mihomo core binary was updated. Install try for version: $cur_ver -> $latest_ver failed."
+            if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
+                send_telegram "Mihomo core binary was updated. Install try for version: $cur_ver -> $latest_ver failed."
+            fi
             return 1
         fi
-        send_telegram "Mihomo core binary was updated. Version: $cur_ver -> $latest_ver"
-
+        if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
+            send_telegram "Mihomo core binary was updated. Version: $cur_ver -> $latest_ver"
+        fi
     else
-        send_telegram "Mihomo core binary is already up-to-date."
+        if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
+            send_telegram "Mihomo core binary is already up-to-date."
+        fi
         log 2 "Mihomo is already up-to-date." "✅"
     fi
 
@@ -1068,7 +1079,7 @@ core_update_cron_remove() {
 # -----
 core_autorestart_cron_check() {
     cron_make_if_missing
-    if grep -q "/usr/bin/justclash reload" /etc/crontabs/root; then
+    if grep -q "${INITD_PATH} reload" /etc/crontabs/root; then
         return 0
     else
         return 1
@@ -1090,7 +1101,7 @@ core_autorestart_cron_add() {
     fi
 
     config_get mihomo_cron_autorestart_string settings mihomo_cron_autorestart_string
-    echo "$mihomo_cron_autorestart_string /usr/bin/justclash reload" >> /etc/crontabs/root
+    echo "$mihomo_cron_autorestart_string ${INITD_PATH} reload" >> /etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
         log 2 "Cron job added and service restarted" "✅"
@@ -1103,7 +1114,7 @@ core_autorestart_cron_add() {
 core_autorestart_cron_remove() {
     cron_make_if_missing
     if core_autorestart_cron_check > /dev/null; then
-        sed -i '\|/usr/bin/justclash reload|d' /etc/crontabs/root
+        sed -i "/${INITD_PATH} reload/d" /etc/crontabs/root
         if /etc/init.d/cron enabled; then
             /etc/init.d/cron restart
             log 2 "Cron job added and service restarted" "✅"
