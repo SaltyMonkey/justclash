@@ -168,6 +168,7 @@ is_package_installed() {
 
 is_pattern_in_file() {
     if [ -z "$1" ]; then
+        log 1 "Usage: is_pattern_in_file <string>"
         return 1
     fi
 
@@ -280,7 +281,7 @@ start_core() {
 
     if [ "$PROCD_MODE" -eq 0 ]; then
         log 1 "You are started justclash manually" "⚠️"
-        log 1 "PID for running mihomo: $PIDFILE" "⚠️"
+        log 1 "PID for running mihomo: $(cat "$PIDFILE")" "⚠️"
     fi
 }
 

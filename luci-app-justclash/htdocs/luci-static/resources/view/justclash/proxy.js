@@ -139,7 +139,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
         o.description = _("CIDR for fake ip entries.");
-        o.default = "198.18.0.1/16";
+        o.default = "198.18.0.1/22";
         o.rmempty = false;
         o.datatype = "cidr4";
 
