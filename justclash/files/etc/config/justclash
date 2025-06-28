@@ -22,7 +22,7 @@ config proxy "proxy"
 	option unified_delay "1"
 	option routing_mark "255"
 	option tcp_concurrent "1"
-	option external_controller_port "7895"
+	option external_controller_port "9090"
 
 	option global_client_fingerprint "chrome"
 	option keep_alive_idle "15"
