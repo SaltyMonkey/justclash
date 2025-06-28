@@ -46,6 +46,7 @@ DEFAULT_CONFIG_PATH="/var/default.justclash.config"
 
 NFT_TABLE_NAME="justclash_tproxy"
 NFT_FWMARK_FINAL=1
+NFT_FWMARK_PROXY=255
 
 # List of NTP server IP addresses:
 # 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
@@ -391,9 +392,11 @@ cleanup_fwmark() {
 }
 
 nft_table_add() {
-    local tproxy_port
+    local tproxy_port proxy_fwmark_hex
     config_get tproxy_port proxy tproxy_port
     [ -z "$tproxy_port" ] && panic "tproxy_port not set"
+
+    proxy_fwmark_hex=$(printf "0x%02X" "$NFT_FWMARK_PROXY")
 
     nft delete table ip "$NFT_TABLE_NAME" 2>/dev/null || true
 
@@ -421,7 +424,7 @@ nft_table_add() {
         240.0.0.0/4
     "
 
-    nft add rule ip "$NFT_TABLE_NAME" prerouting mark 0xff return
+    nft add rule ip "$NFT_TABLE_NAME" prerouting mark "$proxy_fwmark_hex" return
 
     nft add rule ip "$NFT_TABLE_NAME" prerouting ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
     nft add rule ip "$NFT_TABLE_NAME" prerouting ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
@@ -440,7 +443,7 @@ nft_table_add() {
     nft add rule ip "$NFT_TABLE_NAME" prerouting meta mark "$NFT_FWMARK_FINAL" ip protocol tcp tproxy to 127.0.0.1:"$tproxy_port"
     nft add rule ip "$NFT_TABLE_NAME" prerouting meta mark "$NFT_FWMARK_FINAL" ip protocol udp tproxy to 127.0.0.1:"$tproxy_port"
 
-    nft add rule ip "$NFT_TABLE_NAME" output mark 0xff return
+    nft add rule ip "$NFT_TABLE_NAME" output mark "$proxy_fwmark_hex" return
     nft add rule ip "$NFT_TABLE_NAME" output meta skuid 0 return
 
     nft add rule ip "$NFT_TABLE_NAME" output ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
@@ -668,7 +671,6 @@ core_generate_yaml() {
     config_get tproxy_port proxy tproxy_port
     config_get_bool unified_delay proxy unified_delay
     unified_delay=$(ucibool_to_yaml_bool "$unified_delay")
-    config_get routing_mark proxy routing_mark
     config_get_bool tcp_concurrent proxy tcp_concurrent
     tcp_concurrent=$(ucibool_to_yaml_bool "$tcp_concurrent")
     config_get external_controller_port proxy external_controller_port
@@ -707,7 +709,7 @@ tproxy-port: $tproxy_port
 unified-delay: $unified_delay
 tcp-concurrent: $tcp_concurrent
 external-controller: 0.0.0.0:$external_controller_port
-routing-mark: $routing_mark
+routing-mark: $NFT_FWMARK_PROXY
 global-client-fingerprint: $global_client_fingerprint
 global-ua: Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0
 find-process-mode: off

@@ -167,9 +167,6 @@ msgstr "Общая задержка:"
 msgid "Unified delay for RTT checks."
 msgstr "Общая задержка для проверок RTT."
 
-msgid "Routing mark:"
-msgstr "Метка маршрутизации:"
-
 msgid "Special mark for internal routing tables."
 msgstr "Особая метка для внутренних таблиц маршрутизации."
 

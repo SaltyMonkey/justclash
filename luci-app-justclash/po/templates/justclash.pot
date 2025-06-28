@@ -167,9 +167,6 @@ msgstr ""
 msgid "Unified delay for RTT checks."
 msgstr ""
 
-msgid "Routing mark:"
-msgstr ""
-
 msgid "Special mark for internal routing tables."
 msgstr ""
 

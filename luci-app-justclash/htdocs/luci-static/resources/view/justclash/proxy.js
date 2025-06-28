@@ -44,12 +44,6 @@ return view.extend({
         o.default = "1";
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Value, "routing_mark", _("Routing mark:"));
-        o.description = _("Special mark for internal routing tables.");
-        o.datatype = "uinteger";
-        o.rmempty = false;
-        o.default = "9";
-
         o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("TCP concurrent:"));
         o.description = _("Enabling concurrent TCP connection attempts for each request.");
         o.rmempty = false;
