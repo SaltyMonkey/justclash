@@ -1,4 +1,4 @@
-FROM saltymonkey/owrt-sdk-stable-cached:latest
+FROM saltymonkey/owrt-sdk-snapshot-cached:latest
 
 WORKDIR /builder
 
