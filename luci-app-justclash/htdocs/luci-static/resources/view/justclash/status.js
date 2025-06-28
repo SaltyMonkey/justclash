@@ -118,6 +118,7 @@ return view.extend({
             return E("button", {
                 class: `cbi-button ${cssClass}`,
                 id: `button${action}`,
+                disabled: isDisabled,
                 click: ui.createHandlerFn(this, () => {
                     const buttons = actionContainer.querySelectorAll("button");
                     const buttonsSecondary = actionContainerSecondary.querySelectorAll("button");
@@ -139,12 +140,12 @@ return view.extend({
             ]);
         };
 
-        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), results.infoIsRunning));
+        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), !results.infoIsRunning));
         actionContainer.appendChild(createButton("restart", "cbi-button-action", _("Restart")));
-        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), !results.infoIsRunning));
+        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), results.infoIsRunning));
 
-        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), results.infoIsAutostarting));
-        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), !results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), !results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), results.infoIsAutostarting));
 
         this.startPolling();
 

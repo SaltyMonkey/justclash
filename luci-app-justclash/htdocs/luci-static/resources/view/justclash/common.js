@@ -33,22 +33,26 @@ return baseclass.extend({
 
         let method = "", password = "";
         try {
-
             const decoded = atob(leftPartStr);
-            if (decoded.includes(":")) {
-                [method, password] = decoded.split(":");
-            } else {
-
-                [method, password] = leftPartStr.split(":");
-            }
+            [method, password] = decoded.split(":");
         } catch {
-
             [method, password] = leftPartStr.split(":");
         }
 
         if (!method || !password) throw new Error("Invalid method/password");
 
         let server = "", port = "";
+        let paramsStr = "", name = "ss_node";
+
+        // Разделяем параметры и name
+        if (rightPartStr.includes("#")) {
+            [rightPartStr, name] = rightPartStr.split("#");
+            name = decodeURIComponent(name);
+        }
+        if (rightPartStr.includes("?")) {
+            [rightPartStr, paramsStr] = rightPartStr.split("?");
+            // paramsStr можно разобрать через URLSearchParams
+        }
 
         if (rightPartStr.includes(":")) {
             [server, port] = rightPartStr.split(":");
@@ -58,13 +62,14 @@ return baseclass.extend({
         }
 
         return {
-            name: "ss_node",
+            name,
             type: "ss",
             server,
             port: Number(port),
             cipher: method,
             password,
             udp: true
+            // plugin: ... (если нужно)
         };
     },
     parseVlessLink: function (url) {
@@ -131,14 +136,137 @@ return baseclass.extend({
             throw new Error("Parse error");
         }
     },
+    parseVmessLink: function (url) {
+        if (!url.startsWith("vmess://")) throw new Error("Not a vmess link");
+
+        const payload = url.slice(8);
+
+        // 1. Пробуем как Base64-кодированный JSON (стандарт)
+        try {
+            // Если это vless-style (uuid@host:port), явно не декодируем
+            if (/^[0-9a-fA-F\-]+@.+?:\d+/.test(payload)) throw new Error("Not base64");
+
+            // Декодируем Base64
+            const json = atob(payload);
+            const vmess = JSON.parse(json);
+
+            return buildVmessConfigFromJson(vmess);
+        } catch (e) {
+            // 2. Если не base64, пробуем vless-style ссылку (uuid@host:port?...)
+            try {
+                // mainPart?query#fragment
+                const [mainPart, fragment = "vmess-node"] = payload.split("#");
+                const [credentialsAndHost, queryString = ""] = mainPart.split("?");
+                const [uuid, hostPart] = credentialsAndHost.split("@");
+                const [server, port = "443"] = hostPart.split(":");
+                const params = Object.fromEntries(new URLSearchParams(queryString));
+
+                const config = {
+                    name: decodeURIComponent(fragment) || "vmess-node",
+                    type: "vmess",
+                    server,
+                    port: parseInt(port, 10),
+                    uuid,
+                    alterId: params.alterId ? parseInt(params.alterId, 10) : 0,
+                    cipher: params.cipher || "auto",
+                    udp: true,
+                    network: params.type || "tcp",
+                };
+
+                // TLS и дополнительные параметры
+                if (params.security === "tls" || params.tls === "tls" || params.security === "xtls") {
+                    config.tls = true;
+                    config.servername = params.sni || params.host || server;
+                    if (params.fp) config["client-fingerprint"] = params.fp;
+                    if (params.alpn) config.alpn = params.alpn.split(",");
+                }
+
+                // Дополнительные опции
+                if (params["packet-encoding"]) config["packet-encoding"] = params["packet-encoding"];
+                if (params["global-padding"]) config["global-padding"] = params["global-padding"] === "true";
+                if (params["authenticated-length"]) config["authenticated-length"] = params["authenticated-length"] === "true";
+
+                // WebSocket
+                if (config.network === "ws") {
+                    const ws = {};
+                    ws.path = params.path ? decodeURIComponent(params.path) : "/";
+                    if (params.host) ws.headers = { Host: params.host };
+                    config["ws-opts"] = ws;
+                }
+                // HTTP/2
+                else if (config.network === "http") {
+                    const http = {};
+                    http.path = [params.path ? decodeURIComponent(params.path) : "/"];
+                    if (params.host) http.headers = { Host: [params.host] };
+                    config["http-opts"] = http;
+                }
+                // gRPC
+                else if (config.network === "grpc") {
+                    const grpc = {};
+                    if (params.serviceName) grpc["service-name"] = params.serviceName;
+                    config["grpc-opts"] = grpc;
+                }
+
+                return config;
+            } catch (err2) {
+                throw new Error("Invalid vmess link: neither base64-JSON nor vless-style");
+            }
+        }
+    },
+    buildVmessConfigFromJson: function (vmess) {
+        const config = {
+            name: vmess.ps || "vmess-node",
+            type: "vmess",
+            server: vmess.add,
+            port: parseInt(vmess.port, 10),
+            uuid: vmess.id,
+            alterId: vmess.aid !== undefined ? parseInt(vmess.aid, 10) : 0,
+            cipher: vmess.scy || "auto",
+            udp: true,
+            network: vmess.net || "tcp",
+        };
+
+        // TLS и дополнительные параметры
+        if (vmess.tls === "tls" || vmess.tls === "xtls") {
+            config.tls = true;
+            config.servername = vmess.sni || vmess.host || vmess.add;
+            if (vmess.alpn) config.alpn = vmess.alpn.split(",");
+            if (vmess.fp) config["client-fingerprint"] = vmess.fp;
+        }
+
+        if (vmess["packet-encoding"]) config["packet-encoding"] = vmess["packet-encoding"];
+        if (vmess["global-padding"]) config["global-padding"] = vmess["global-padding"] === true;
+        if (vmess["authenticated-length"]) config["authenticated-length"] = vmess["authenticated-length"] === true;
+
+        // WebSocket
+        if (config.network === "ws") {
+            const ws = { path: vmess.path || "/" };
+            if (vmess.host) ws.headers = { Host: vmess.host };
+            config["ws-opts"] = ws;
+        }
+        // HTTP/2
+        else if (config.network === "http") {
+            const http = { path: [vmess.path || "/"], method: "GET" };
+            if (vmess.host) http.headers = { Host: [vmess.host] };
+            config["http-opts"] = http;
+        }
+        // gRPC
+        else if (config.network === "grpc") {
+            const grpc = { "service-name": vmess.path || "" };
+            config["grpc-opts"] = grpc;
+        }
+
+        return config;
+    },
     parseProxyLink: function (link) {
-        if(link && typeof link === "string")
-            if(link.startsWith("vless://")) return this.parseVlessLink(link);
+        if (link && typeof link === "string") {
+            if (link.startsWith("vless://")) return this.parseVlessLink(link);
+            else if (link.startsWith("vmess://")) return this.parseVlessLink(link);
             else if (link.startsWith("ss://")) return this.parseSSLink(link);
             else if (link.startsWith("socks5://")) return this.parseSocks5Link(link);
             else if (link.startsWith("ssh://")) return this.parseSSHLink(link);
             else if (link.startsWith("mierus://")) return this.parseMierusLink(link);
-
+        }
         throw Error("Link is not supported");
     },
 
@@ -147,7 +275,7 @@ return baseclass.extend({
             throw new Error("Invalid socks5:// link");
         }
 
-       try {
+        try {
             const parsed = new URL(url);
 
             // Validate hostname
@@ -181,6 +309,83 @@ return baseclass.extend({
 
         } catch (error) {
             throw new Error("Failed to parse SOCKS5 string: " + error.message);
+        }
+    },
+    parseTrojanLink: function (url) {
+        if (!url.startsWith("trojan://")) {
+            throw new Error("Not a trojan link");
+        }
+
+        try {
+            const parsed = new URL(url);
+            const server = parsed.hostname;
+            const port = parseInt(parsed.port) || 443;
+            const password = decodeURIComponent(parsed.username);
+            const params = new URLSearchParams(parsed.search);
+            const name = decodeURIComponent(parsed.hash.slice(1)) || "trojan-node";
+
+            // Парсим параметры (общие и специфичные для trojan)
+            const sni = params.get('sni') || params.get('peer') || server;
+            const skipCertVerify = params.get('allowInsecure') === '1' || params.get('insecure') === '1';
+            const network = params.get('type') || 'tcp';
+            const fingerprint = params.get('fp') || params.get('client-fingerprint');
+            const alpn = params.get('alpn');
+            const wsPath = params.get('path');
+            const wsHost = params.get('host');
+            const grpcServiceName = params.get('serviceName');
+
+            // Формируем объект конфигурации
+            const config = {
+                name,
+                type: "trojan",
+                server,
+                port,
+                password,
+                sni,
+                'skip-cert-verify': skipCertVerify,
+                udp: true,
+            };
+
+            // Добавляем транспортные опции
+            if (network === 'ws') {
+                config.network = 'ws';
+                config['ws-opts'] = {
+                    path: wsPath ? decodeURIComponent(wsPath) : '/',
+                };
+                if (wsHost) {
+                    config['ws-opts'].headers = { Host: decodeURIComponent(wsHost) };
+                }
+            } else if (network === 'grpc') {
+                config.network = 'grpc';
+                config['grpc-opts'] = {
+                    'grpc-service-name': grpcServiceName || '',
+                };
+            } else {
+                config.network = 'tcp';
+            }
+
+            // Добавляем дополнительные параметры
+            if (fingerprint) config['client-fingerprint'] = fingerprint;
+            if (alpn) config.alpn = alpn.split(',');
+
+            // Парсим ss-opts, если есть (для trojan-go)
+            const ssEnabled = params.get('ss');
+            if (ssEnabled) {
+                const ssMethod = params.get('ss-method');
+                const ssPassword = params.get('ss-password');
+                if (ssMethod && ssPassword) {
+                    config['ss-opts'] = {
+                        enabled: true,
+                        method: ssMethod,
+                        password: ssPassword,
+                    };
+                }
+            }
+
+            return config;
+
+        } catch (err) {
+            throw new Error("Failed to parse trojan link: " + err.message);
         }
     },
     parseSSHLink: function (link) {
@@ -383,7 +588,7 @@ return baseclass.extend({
         if (val.length === 0) return true;
         // Проверяем формат токена
         const pattern = /^\d{6,}:[A-Za-z0-9_-]+$/;
-        return pattern.test(val)
+        return pattern.test(val);
     },
     compareArraysWithReturnedResult: function (arr1, arr2) {
         return arr1.filter(value => arr2.includes(value));
@@ -396,20 +601,22 @@ return baseclass.extend({
     isValidProxyLink: function (value) {
         const val = value.trim();
         const allowedPrefixes = [
-                "vless://",
-                "ss://",
-                "socks5://",
-                "ssh://",
-                "mieru://"
-            ];
+            "vless://",
+            "vmess://",
+            "trojan://",
+            "ss://",
+            "socks5://",
+            "ssh://",
+            "mieru://"
+        ];
 
-            for (const prefix of allowedPrefixes) {
-                if (val.startsWith(prefix)) {
-                    return true; // OK
-                }
+        for (const prefix of allowedPrefixes) {
+            if (val.startsWith(prefix)) {
+                return true; // OK
             }
+        }
 
-            return false;
+        return false;
     }
 
 });
