@@ -274,15 +274,19 @@ restart() {
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
-    log 2 "Start Mihomo core in background..." "🐱"
-    mkfifo "$FIFOPATH"
-    "$CORE_PATH" -d "$CORE_WORKDIR_PATH" > "$FIFOPATH" &
-    echo $! > "$PIDFILE"
-    sed 's/time="[^"]*"/mihomo/' < "$FIFOPATH" | logger -t justclash &
-
+    clear_fifo
     if [ "$PROCD_MODE" -eq 0 ]; then
-        log 1 "You are started justclash manually" "⚠️"
-        log 1 "PID for running mihomo: $(cat "$PIDFILE")" "⚠️"
+        log 1 "Running mihomo in foreground (manual mode)" "⚠️"
+        "$CORE_PATH" -d "$CORE_WORKDIR_PATH" &
+        echo $! > "$PIDFILE"
+        wait $!
+        rm -f "$PIDFILE" # Удаляем PID-файл после завершения
+    else
+        log 2 "Running mihomo in background (procd mode)" "🐱"
+        mkfifo "$FIFOPATH"
+        "$CORE_PATH" -d "$CORE_WORKDIR_PATH" > "$FIFOPATH" &
+        echo $! > "$PIDFILE"
+        sed 's/time="[^"]*"/mihomo/' < "$FIFOPATH" | logger -t justclash &
     fi
 }
 
@@ -316,6 +320,10 @@ stop_core() {
         fi
     fi
 
+   clear_fifo
+}
+
+clear_fifo() {
     if [ -f "$FIFOPATH" ]; then
         rm -f "$FIFOPATH" 2>/dev/null
     fi
