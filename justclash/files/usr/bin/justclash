@@ -44,6 +44,7 @@ OVERRIDE_YAML_CONFIG_PATH="/var/override.${CORE_BIN_NAME}.yaml"
 DEFAULT_CONFIG_PATH="/var/default.justclash.config"
 
 NFT_TABLE_NAME="justclash_tproxy"
+NFT_FWMARK_FINAL=1
 
 # List of NTP server IP addresses:
 # 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
@@ -228,6 +229,8 @@ start() {
 
     log 2 "Checking for conflicts" "🐞"
     check_for_conflicts
+
+    log 2 "Checking for non critical conflicts" "🐞"
     check_for_conflicts_warn
 
     log 2 "Synchronizing system time" "🕒"
@@ -366,81 +369,106 @@ diag_nft() {
     fi
 
     clog 2 "Verifying existence of NFTables table '$NFT_TABLE_NAME'..."
-    if ! nft list table inet "$NFT_TABLE_NAME" >/dev/null 2>&1; then
+    if ! nft list table ip "$NFT_TABLE_NAME" >/dev/null 2>&1; then
         clog 0 "Table '$NFT_TABLE_NAME' not found. Please create the required NFTables table."
         return 1
     fi
 
     clog 2 "Displaying current NFTables configuration:"
-    nft list table inet "$NFT_TABLE_NAME"
+    nft list table ip "$NFT_TABLE_NAME"
 
     clog 2 "NFTables check completed successfully."
 
     return 0
 }
 
-nft_table_add() {
-    local tproxy_port
-    local fake_ip_range
-
-    config_get tproxy_port proxy tproxy_port 7893
-    config_get fake_ip_range proxy fake_ip_range "198.18.0.0/16"
-
-    if [ -z "$tproxy_port" ] || [ -z "$fake_ip_range" ]; then
-        panic "One or more required variables for NFT tables are not set in configuration"
-    fi
-
-    nft delete table ip justclash_tproxy 2>/dev/null || true
-
-    # Создание таблицы и цепочек
-    nft add table ip justclash_tproxy
-    nft add chain ip justclash_tproxy prerouting '{ type filter hook prerouting priority mangle; policy accept; }'
-    nft add chain ip justclash_tproxy output '{ type route hook output priority mangle; policy accept; }'
-    nft add set ip justclash_tproxy fake_ips '{ type ipv4_addr; flags interval; }'
-    nft add element ip justclash_tproxy fake_ips "{ $fake_ip_range }"
-
-    # --- PREROUTING chain ---
-    # Исключения
-    nft add rule ip justclash_tproxy prerouting ip saddr 127.0.0.0/8 return
-    nft add rule ip justclash_tproxy prerouting ip daddr 127.0.0.0/8 return
-    for addr in 0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16 224.0.0.0/4 240.0.0.0/4; do
-        nft add rule ip justclash_tproxy prerouting ip daddr "$addr" return
+cleanup_fwmark() {
+    while ip rule show | grep -q "fwmark 0x1 lookup 100"; do
+        ip rule del fwmark 1 table 100 2>/dev/null || true
     done
-    for intf in wan ppp tun tap wg lxc veth vnet docker dummy; do
-        nft add rule ip justclash_tproxy prerouting iifname "${intf}*" return
-    done
-
-    # Маркировка трафика на fake-ip (TCP и UDP)
-    nft add rule ip justclash_tproxy prerouting ip daddr @fake_ips ip protocol tcp meta mark set 1
-    nft add rule ip justclash_tproxy prerouting ip daddr @fake_ips ip protocol udp meta mark set 1
-
-    # TPROXY для маркированного трафика
-    nft add rule ip justclash_tproxy prerouting meta mark 1 ip protocol tcp tproxy to 127.0.0.1:"$tproxy_port"
-    nft add rule ip justclash_tproxy prerouting meta mark 1 ip protocol udp tproxy to 127.0.0.1:"$tproxy_port"
-
-    # --- OUTPUT chain ---
-    # Исключения
-    nft add rule ip justclash_tproxy output meta skuid 0 return
-    nft add rule ip justclash_tproxy output ip saddr 127.0.0.0/8 return
-    nft add rule ip justclash_tproxy output ip daddr 127.0.0.0/8 return
-    for addr in 0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16 224.0.0.0/4 240.0.0.0/4; do
-        nft add rule ip justclash_tproxy output ip daddr "$addr" return
-    done
-    for intf in wan ppp tun tap wg lxc veth vnet docker dummy; do
-        nft add rule ip justclash_tproxy output iifname "${intf}*" return
-    done
-
-    # --- Маршрутизация ---
-    ip rule del fwmark 1 table 100 2>/dev/null || true
-    ip rule add fwmark 1 table 100
-    ip route add local 0.0.0.0/0 dev lo table 100
-
-    log 1 "TPROXY: port=$tproxy_port, fwmark=1, table=100"
 }
 
+nft_table_add() {
+    local tproxy_port
+    config_get tproxy_port proxy tproxy_port
+    [ -z "$tproxy_port" ] && panic "tproxy_port not set"
+
+    nft delete table ip "$NFT_TABLE_NAME" 2>/dev/null || true
+
+    # Создаём таблицу, цепочки и наборы
+    nft add table ip "$NFT_TABLE_NAME"
+    nft add chain ip "$NFT_TABLE_NAME" prerouting '{ type filter hook prerouting priority mangle; policy accept; }'
+    nft add chain ip "$NFT_TABLE_NAME" output '{ type route hook output priority mangle; policy accept; }'
+    nft add set ip "$NFT_TABLE_NAME" fake_ips '{ type ipv4_addr; flags interval; }'
+    nft add element ip "$NFT_TABLE_NAME" fake_ips { 198.18.0.0/22 }
+
+    local exclude_addrs="
+        0.0.0.0/8
+        10.0.0.0/8
+        100.64.0.0/10
+        127.0.0.0/8
+        169.254.0.0/16
+        172.16.0.0/12
+        192.0.0.0/24
+        192.0.2.0/24
+        192.88.99.0/24
+        192.168.0.0/16
+        198.51.100.0/24
+        203.0.113.0/24
+        224.0.0.0/4
+        240.0.0.0/4
+    "
+
+    nft add rule ip "$NFT_TABLE_NAME" prerouting mark 0xff return
+
+    nft add rule ip "$NFT_TABLE_NAME" prerouting ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+
+    for intf in wan ppp tun tap wg lxc veth vnet docker dummy; do
+        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "${intf}*" return
+    done
+
+    for addr in $exclude_addrs; do
+        nft add rule ip "$NFT_TABLE_NAME" prerouting ip daddr "$addr" return
+    done
+
+    nft add rule ip "$NFT_TABLE_NAME" prerouting ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+
+    nft add rule ip "$NFT_TABLE_NAME" prerouting meta mark "$NFT_FWMARK_FINAL" ip protocol tcp tproxy to 127.0.0.1:"$tproxy_port"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting meta mark "$NFT_FWMARK_FINAL" ip protocol udp tproxy to 127.0.0.1:"$tproxy_port"
+
+    nft add rule ip "$NFT_TABLE_NAME" output mark 0xff return
+    nft add rule ip "$NFT_TABLE_NAME" output meta skuid 0 return
+
+    nft add rule ip "$NFT_TABLE_NAME" output ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" output ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+
+    for intf in wan ppp tun tap wg lxc veth vnet docker dummy; do
+        nft add rule ip "$NFT_TABLE_NAME" output iifname "${intf}*" return
+    done
+
+    for addr in $exclude_addrs; do
+        nft add rule ip "$NFT_TABLE_NAME" output ip daddr "$addr" return
+    done
+
+    nft add rule ip "$NFT_TABLE_NAME" output meta mark 0 ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" output meta mark 0 ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+
+    cleanup_fwmark
+    if ! ip rule list | grep -q "fwmark 0x1 lookup 100"; then
+        ip rule add fwmark "$NFT_FWMARK_FINAL" table 100
+    fi
+
+    if ! ip route show table 100 | grep -q "local 0.0.0.0/0 dev lo"; then
+        ip route add local 0.0.0.0/0 dev lo table 100
+    fi
+
+    log 1 "TPROXY: port=$tproxy_port, fwmark=1 table=100"
+}
 
 nft_table_remove() {
-    ip rule del fwmark 1 table 100 2>/dev/null || true
+    cleanup_fwmark
     nft flush table ip "$NFT_TABLE_NAME" 2>/dev/null || true
     nft delete table ip "$NFT_TABLE_NAME" 2>/dev/null || true
     ip route flush table 100 2>/dev/null || true
@@ -570,7 +598,7 @@ check_for_conflicts() {
 check_for_conflicts_warn() {
     local external_nameservers
     external_nameservers=$(
-        awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" && $2 != "::1" { print; found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
+        awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" { print; found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
     )
     local resolvconf_res=$?
 
@@ -680,7 +708,6 @@ external-controller: 0.0.0.0:$external_controller_port
 routing-mark: $routing_mark
 global-client-fingerprint: $global_client_fingerprint
 global-ua: Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0
-
 find-process-mode: off
 geodata-mode: false
 
