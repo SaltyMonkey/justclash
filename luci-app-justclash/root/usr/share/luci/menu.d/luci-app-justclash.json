@@ -32,7 +32,7 @@
         }
     },
     "admin/services/justclash/service": {
-        "title": "Basic settings",
+        "title": "Service settings",
         "order": 20,
         "action": {
             "type": "view",
@@ -85,6 +85,22 @@
         "action": {
             "type": "view",
             "path": "justclash/logs"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
+        "admin/services/justclash/connections": {
+        "title": "Proxy connections",
+        "order": 50,
+        "action": {
+            "type": "view",
+            "path": "justclash/connections"
         },
         "depends": {
             "acl": [

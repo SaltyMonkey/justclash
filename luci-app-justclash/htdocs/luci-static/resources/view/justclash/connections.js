@@ -1,165 +1,221 @@
-'use strict';
-'require view';
+"use strict";
+"require view";
+"require ui";
 
 return view.extend({
-    render: function () {
-        const style = E('style', {}, [
-            ` .flex - table {
-                display: flex;
-                flex- direction: column;
-        width: 100 %;
-        font - family: monospace;
-        font - size: 12px;
-        border: 1px solid #ccc;
-        border - radius: 3px;
-        overflow: hidden;
-    }
-        .flex - header, .flex - row {
-            display: flex;
-            padding: 2px 0;
-            border- bottom: 1px solid #e0e0e0;
-line - height: 1.2;
-            }
-            .flex - header {
-    font - weight: bold;
-    background: #f5f5f5;
-    color: #333;
-}
-            .flex - header > div,
-            .flex - row > div {
-    flex: 1;
-    padding: 0 4px;
-    white - space: nowrap;
-    overflow: hidden;
-    text - overflow: ellipsis;
-}
-            .flex - row: last - child {
-    border - bottom: none;
-}
-        `]);
+    ws: null,
+    reconnectTimeout: null,
+    noConnectionsMsg: null,
+    handleSave: null,
+    handleSaveApply: null,
+    handleReset: null,
 
-        const container = E('div', { class: 'cbi-section' });
-        const table = E('div', { class: 'flex-table' });
-        const header = E('div', { class: 'flex-header' }, [
-            E('div', {}, _('IP')),
-            E('div', {}, _('Порт')),
-            E('div', {}, _('Протокол')),
-            E('div', {}, _('Статус'))
+    getWSURL: function () {
+        const host = window.location.hostname;
+        const port = 9090;
+        return `ws://${host}:${port}/connections`;
+    },
+
+    render: function () {
+        const container = E("div", { class: "cbi-section" });
+        const table = E("div", { class: "flex-table" });
+
+        // Удалены заголовки Time, Upload, Download
+        const header = E("div", { class: "flex-header" }, [
+            E("div", {}, _("Proto")),
+            E("div", {}, _("Connection")),
+            E("div", {}, _("Host/Sniff")),
+            E("div", {}, _("Chains")),
+            E("div", {}, _("Rule"))
         ]);
+
         table.appendChild(header);
-        container.appendChild(style);
-        container.appendChild(E('h2', {}, _('Соединения (с буфером и throttle)')));
+        container.appendChild(E("h2", {}, _("Active Connections")));
         container.appendChild(table);
 
-        // --- Хранилище строк DOM ---
         const rowMap = new Map();
 
-        // --- Буфер данных и флаг изменений ---
-        const dataBuffer = new Map();
-        let changed = false;
-
-        function getKey(entry) {
-            return `${ entry.ip }:${ entry.port }`;
+        function getKey(conn) {
+            return conn.id;
         }
 
-        // Обновление или создание строки в DOM
-        function updateRow(entry) {
-            const key = getKey(entry);
+        function formatConnection(conn) {
+            const src = conn.metadata.sourceIP + ":" + conn.metadata.sourcePort;
+            const dest = conn.metadata.destinationIP
+                ? conn.metadata.destinationIP + ":" + conn.metadata.destinationPort
+                : (conn.metadata.remoteDestination || "");
+            return src + (dest ? " → " + dest : "");
+        }
+
+        function updateRow(conn) {
+            const key = getKey(conn);
             let row = rowMap.get(key);
 
+            const connStr = formatConnection(conn);
+            const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
+            const chainsStr = conn.chains.join(", ");
+            const ruleStr = conn.rule;
+
             if (!row) {
-                row = E('div', { class: 'flex-row', 'data-key': key }, [
-                    E('div', {}, entry.ip),
-                    E('div', {}, entry.port),
-                    E('div', {}, entry.proto),
-                    E('div', {}, entry.status)
+                row = E("div", { class: "flex-row", "data-key": key }, [
+                    E("div", {}, conn.metadata.network),
+                    E("div", {}, connStr),
+                    E("div", {}, hostStr),
+                    E("div", {}, chainsStr),
+                    E("div", {}, ruleStr)
                 ]);
                 table.appendChild(row);
                 rowMap.set(key, row);
             } else {
                 const cells = row.childNodes;
-                if (cells[2].textContent !== entry.proto) cells[2].textContent = entry.proto;
-                if (cells[3].textContent !== entry.status) cells[3].textContent = entry.status;
-            }
-        }
-
-        // Функция рендера из буфера
-        function renderBufferedData() {
-            if (!changed) return;
-
-            changed = false;
-
-            const seenKeys = new Set();
-
-            for (const [key, entry] of dataBuffer.entries()) {
-                seenKeys.add(key);
-                updateRow(entry);
-            }
-
-            // Удаляем устаревшие строки
-            for (const key of rowMap.keys()) {
-                if (!seenKeys.has(key)) {
-                    table.removeChild(rowMap.get(key));
-                    rowMap.delete(key);
+                const newValues = [
+                    conn.metadata.network,
+                    connStr,
+                    hostStr,
+                    chainsStr,
+                    ruleStr
+                ];
+                for (let i = 0; i < newValues.length; i++) {
+                    if (cells[i].textContent !== newValues[i]) {
+                        cells[i].textContent = newValues[i];
+                    }
                 }
             }
         }
 
-        // WebSocket
-        let ws = null;
-        let reconnectTimeout = null;
-        const retryDelay = 5000;
+        const connectWS = () => {
+            const wsUrl = this.getWSURL();
+            this.ws = new WebSocket(wsUrl);
 
-        function connectWS() {
-            ws = new WebSocket('ws://192.168.1.1:8080');
-
-            ws.onopen = () => {
-                console.log('[WS] Подключено');
+            this.ws.onopen = () => {
+                console.log("[WS] Connected");
             };
 
-            ws.onmessage = (event) => {
+            this.ws.onmessage = (event) => {
                 try {
-                    const conns = JSON.parse(event.data);
+                    const data = JSON.parse(event.data);
+                    const conns = Array.isArray(data.connections) ? data.connections : [];
+                    const seenKeys = new Set();
+
                     for (const conn of conns) {
-
-
                         const key = getKey(conn);
-                        const old = dataBuffer.get(key);
-                        // Проверяем есть ли изменения
-                        if (!old || JSON.stringify(old) !== JSON.stringify(conn)) {
-                            dataBuffer.set(key, conn);
-                            changed = true;
+                        seenKeys.add(key);
+                        updateRow(conn);
+                    }
+
+                    for (const key of rowMap.keys()) {
+                        if (!seenKeys.has(key)) {
+                            table.removeChild(rowMap.get(key));
+                            rowMap.delete(key);
                         }
                     }
+
+                    if (rowMap.size === 0) {
+                        if (!this.noConnectionsMsg) {
+                            this.noConnectionsMsg = E("div", { class: "flex-row" }, [
+                                E("div", { style: "text-align: center; flex: 1;" }, _("No active connections"))
+                            ]);
+                            table.appendChild(this.noConnectionsMsg);
+                        }
+                        setTimeout(() => {
+                            if (rowMap.size === 0 && table.contains(this.noConnectionsMsg)) {
+                                table.removeChild(this.noConnectionsMsg);
+                                this.noConnectionsMsg = null;
+                            }
+                        }, 2000);
+                    } else if (this.noConnectionsMsg) {
+                        table.removeChild(this.noConnectionsMsg);
+                        this.noConnectionsMsg = null;
+                    }
                 } catch (e) {
-                    console.warn('Ошибка разбора WS данных:', e);
+                    console.warn("WS data parsing error:", e);
+                    ui.addNotification(null, E("p", _("Unable to read the contents") + ": " + (e.message || e)), "error");
                 }
             };
 
-            ws.onerror = (err) => {
-                console.warn('[WS] Ошибка:', err);
+            this.ws.onerror = (err) => {
+                console.warn("[WS] Error:", err);
+                ui.addNotification(null, E("p", _("API connection error")), "error");
             };
 
-            ws.onclose = () => {
-                console.warn('[WS] Отключено. Переподключение через 5 секунд...');
-                scheduleReconnect();
-            };
-        }
-
-        function scheduleReconnect() {
-            if (!reconnectTimeout) {
-                reconnectTimeout = setTimeout(() => {
-                    reconnectTimeout = null;
+            this.ws.onclose = () => {
+                console.warn("[WS] Disconnected. Reconnecting in 5 seconds...");
+                if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
+                this.reconnectTimeout = setTimeout(() => {
                     connectWS();
-                }, retryDelay);
-            }
-        }
+                }, 5000);
+            };
+        };
 
         connectWS();
-
-        // Запускаем периодический рендер раз в 200 мс
-        setInterval(renderBufferedData, 200);
-
+        container.appendChild(this.addCSS());
         return container;
+    },
+    addCSS: function () {
+        return E("style", {}, `
+        .flex-table {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            font-family: monospace;
+            font-size: 12px;
+            overflow: hidden;
+        }
+        .flex-header {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .flex-header, .flex-row {
+            display: flex;
+            padding: 3px 0;
+            line-height: 1.1;
+        }
+        .flex-header {
+            font-weight: bold;
+        }
+        .flex-header > div,
+        .flex-row > div {
+            flex: 1;
+            padding: 0 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+        .flex-row:nth-child(even) {
+            background: var(--background-color-medium);
+        }
+        .flex-header > div:nth-child(1),
+        .flex-row > div:nth-child(1) { /* Proto */
+            flex: 0 0 60px;
+            max-width: 70px;
+        }
+        .flex-header > div:nth-child(4),
+        .flex-row > div:nth-child(4) { /* Chains */
+            flex: 0 0 80px;
+            max-width: 100px;
+        }
+        .flex-header > div:nth-child(5),
+        .flex-row > div:nth-child(5) { /* Rule */
+            flex: 0 0 80px;
+            max-width: 120px;
+        }
+        .flex-row:last-child {
+            border-bottom: none;
+        }
+    `);
+    },
+    destroy: function () {
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
+        if (this.noConnectionsMsg && this.noConnectionsMsg.parentNode) {
+            this.noConnectionsMsg.parentNode.removeChild(this.noConnectionsMsg);
+            this.noConnectionsMsg = null;
+        }
     }
 });
