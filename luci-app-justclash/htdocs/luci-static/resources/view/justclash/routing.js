@@ -8,13 +8,6 @@
 "require rpc";
 
 return view.extend({
-    load: function () {
-        return Promise.resolve([
-            uci.load(common.binName),
-        ]).catch(e => {
-            ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
-        });
-    },
     parseDirectRulesSection: function (section) {
         const rules = [];
         const directDomains = common.valueToArray(section.additional_domain_direct);

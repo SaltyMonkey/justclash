@@ -19,14 +19,12 @@ return view.extend({
     disableButtonId: null,
     pollServiceStatusTimeout: 10000,
     isJustClashAutostartEnabled: async function () {
-        return fs.exec(common.initdPath, ["enabled"]).then(function (res) {
-            return res.code === 0;
-        });
+        const res = await fs.exec(common.initdPath, ["enabled"]);
+        return res.code === 0;
     },
     isJustClashRunning: async function () {
-        return fs.exec(common.initdPath, ["running"]).then(function (res) {
-            return res.code === 0;
-        });
+        const res = await fs.exec(common.initdPath, ["running"]);
+        return res.code === 0;
     },
     boolToWord(boolValue) {
         return boolValue ? _("Yes") : _("No");
@@ -43,22 +41,24 @@ return view.extend({
             infoCore,
             cronCore,
             cronCoreAutorestart
-        ] = await Promise.all([
-            fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_openwrt"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_luci"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("No data")),
-            fs.exec(common.binPath, ["core_update_cron_check"]).catch(() => _("No data")),
-            fs.exec(common.binPath, ["core_autorestart_cron_check"]).catch(() => _("No data")),
-        ]);
+        ] = await Promise.all(
+            [
+                fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
+                fs.exec(common.binInfoPath, ["info_openwrt"]).catch(() => _("No data")),
+                fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("No data")),
+                fs.exec(common.binInfoPath, ["info_luci"]).catch(() => _("No data")),
+                fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("No data")),
+                fs.exec(common.binPath, ["core_update_cron_check"]).catch(() => _("No data")),
+                fs.exec(common.binPath, ["core_autorestart_cron_check"]).catch(() => _("No data")),
+            ]);
         const [
             infoIsRunning,
             infoIsAutostarting
-        ] = await Promise.all([
-            this.isJustClashRunning().catch((e) => { console.log(e); return _("No data"); }),
-            this.isJustClashAutostartEnabled().catch((e) => { console.log(e); return _("No data"); })
-        ]);
+        ] = await Promise.all(
+            [
+                this.isJustClashRunning().catch((e) => { console.log(e); return _("No data"); }),
+                this.isJustClashAutostartEnabled().catch((e) => { console.log(e); return _("No data"); })
+            ]);
         return {
             infoDevice,
             infoOpenWrt,
@@ -71,7 +71,7 @@ return view.extend({
             cronCoreAutorestart
         };
     },
-    render(results) {
+    async render(results) {
         console.warn(results);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
@@ -88,7 +88,7 @@ return view.extend({
                 E("td", { class: "td left" }, results.infoOpenWrt.stdout.replace("\\n", "").trim())
             ]),
             E("tr", { class: "tr" }, [
-                E("td", { class: "td left" }, _("Daemon package version:")),
+                E("td", { class: "td left" }, _("Service package version:")),
                 E("td", { class: "td left" }, results.infoPackage.stdout.replace("\\n", "").trim())
             ]),
             E("tr", { class: "tr cbi-rowstyle-2" }, [
@@ -100,11 +100,11 @@ return view.extend({
                 E("td", { class: "td left" }, results.infoCore.stdout.replace("\\n", "").trim())
             ]),
             E("tr", { class: "tr cbi-rowstyle-2" }, [
-                E("td", { class: "td left" }, _("Daemon is running:")),
+                E("td", { class: "td left" }, _("Service is running:")),
                 E("td", { class: "td left", id: "isrunning", style: `color: ${this.boolToColor(results.infoIsRunning)}` }, this.boolToWord(results.infoIsRunning))
             ]),
             E("tr", { class: "tr cbi-rowstyle-1" }, [
-                E("td", { class: "td left" }, _("Daemon's autostart:")),
+                E("td", { class: "td left" }, _("Service's autostart:")),
                 E("td", { class: "td left", id: "isautostarting", style: `color: ${this.boolToColor(results.infoIsAutostarting)}` }, this.boolToWord(results.infoIsAutostarting))
             ])
         ]);
@@ -119,21 +119,23 @@ return view.extend({
                 class: `cbi-button ${cssClass}`,
                 id: `button${action}`,
                 disabled: isDisabled,
-                click: ui.createHandlerFn(this, () => {
+                click: ui.createHandlerFn(this, async function () {
                     const buttons = actionContainer.querySelectorAll("button");
                     const buttonsSecondary = actionContainerSecondary.querySelectorAll("button");
                     buttons.forEach(btn => btn.disabled = true);
                     buttonsSecondary.forEach(btn => btn.disabled = true);
-                    fs.exec(common.initdPath, [action]).then(result => {
-                        ui.showModal(_("Executing command..."), [E("p", _("Please wait.")),]);
-                        this.updateServiceStatus();
-                    }).catch(e => {
+                    ui.showModal(_("Executing command..."), [E("p", _("Please wait."))]);
+
+                    try {
+                        await fs.exec(common.initdPath, [action]);
+                        await this.updateServiceStatus(); // если updateServiceStatus тоже async
+                    } catch (e) {
                         ui.addNotification(_("Error"), e.message, "danger");
-                    }).finally(() => {
+                    } finally {
                         ui.hideModal();
                         buttons.forEach(btn => btn.disabled = false);
                         buttonsSecondary.forEach(btn => btn.disabled = false);
-                    });
+                    }
                 })
             }, [
                 label

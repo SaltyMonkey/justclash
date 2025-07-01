@@ -5,6 +5,10 @@
 "require view.justclash.common as common";
 
 return view.extend({
+    handleSave: null,
+    handleSaveApply: null,
+    handleReset: null,
+
     render: function () {
         const logBox = E("textarea", {
             readonly: "readonly",

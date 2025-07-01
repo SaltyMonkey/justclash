@@ -1,7 +1,5 @@
 "use strict";
-"require fs";
 "require form";
-"require uci";
 "require ui";
 "require view";
 "require view.justclash.common as common";
@@ -9,13 +7,6 @@
 
 return view.extend({
 
-    load: function () {
-        return Promise.resolve([
-            uci.load(common.binName),
-        ]).catch(e => {
-            ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
-        });
-    },
     render: function () {
         let m, s, o, tabname;
 

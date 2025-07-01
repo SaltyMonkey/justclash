@@ -1,20 +1,11 @@
 "use strict";
-"require fs";
 "require form";
-"require uci";
 "require ui";
 "require view";
 "require view.justclash.common as common";
 
 return view.extend({
 
-    load: function () {
-        return Promise.resolve([
-            uci.load(common.binName),
-        ]).catch(e => {
-            ui.addNotification(null, E("p", _("Unable to read the contents") + ": %s ".format(e.message)));
-        });
-    },
     render: function () {
         let m, s, o, tabname;
 
@@ -22,7 +13,7 @@ return view.extend({
         s = m.section(form.NamedSection, "settings");
 
         tabname = "serviceautomation_tab";
-        s.tab(tabname, "Daemon automation");
+        s.tab(tabname, "Service automation");
 
         o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Start ntpd at load:"));
         o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
@@ -30,7 +21,7 @@ return view.extend({
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Inject DNS server at startup:"));
-        o.description = _("When enabled daemon will inject dns server in dnsmasq configuration at start.");
+        o.description = _("When enabled service will inject dns server in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = "1";
 
@@ -43,7 +34,7 @@ return view.extend({
         s.tab(tabname, _("Core automation"));
 
         o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
-        o.description = _("When enabled daemon will configure autorestart mihomo by cron string.");
+        o.description = _("When enabled service will configure autorestart mihomo by cron string.");
         o.rmempty = false;
         o.default = "1";
 
@@ -64,12 +55,12 @@ return view.extend({
         o.default = common.defaultUpdateOptions[0];
 
         o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for mihomo autorestart:"));
-        o.description = _("When enabled daemon will send telegram notification for mihomo autorestart cron job.");
+        o.description = _("When enabled service will send telegram notification for mihomo autorestart cron job.");
         o.rmempty = false;
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "mihomo_cron_update_telegram_notify", _("Telegram notify for mihomo autoupdate:"));
-        o.description = _("When enabled daemon will send telegram notification for mihomo autoupdate cron job.");
+        o.description = _("When enabled service will send telegram notification for mihomo autoupdate cron job.");
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
@@ -96,13 +87,13 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
         o.datatype = "uinteger";
         o.placeholder = "123456789";
-        o.rmempty = false;
+        o.rmempty = true;
         o.description = _("Telegram chat id where to send notification.");
 
         o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
         o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
         o.description = _("Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!");
-        o.rmempty = false;
+        o.rmempty = true;
         o.password = true;
         o.validate = function (section_id, value) {
             return (common.isValidTelegramBotToken(value)) ? true : _("Invalid Telegram Bot Token");
