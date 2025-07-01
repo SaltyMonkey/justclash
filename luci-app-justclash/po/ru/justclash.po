@@ -13,7 +13,7 @@ msgstr "Нет данных"
 msgid "Service status:"
 msgstr "Статус сервиса:"
 
-msgid "Daemon package version:"
+msgid "Service package version:"
 msgstr "Версия пакета сервиса:"
 
 msgid "Luci package version:"
@@ -22,10 +22,10 @@ msgstr "Версия пакета Luci:"
 msgid "Mihomo core version:"
 msgstr "Версия ядра Mihomo:"
 
-msgid "Daemon is running:"
+msgid "Service is running:"
 msgstr "Сервис запущен:"
 
-msgid "Daemon's autostart:"
+msgid "Service's autostart:"
 msgstr "Автозапуск сервиса:"
 
 msgid "Executing command..."
@@ -49,7 +49,7 @@ msgstr "Включить автозапуск"
 msgid "Disable autostart"
 msgstr "Отключить автозапуск"
 
-msgid "Daemon automation"
+msgid "Service automation"
 msgstr "Автоматизация сервиса"
 
 msgid "Start ntpd at load:"
@@ -61,7 +61,7 @@ msgstr "При включении сервис синхронизирует вр
 msgid "Inject DNS server at startup:"
 msgstr "Внедрить DNS-сервер при загрузке:"
 
-msgid "When enabled daemon will inject dns server in dnsmasq configuration at start."
+msgid "When enabled service will inject dns server in dnsmasq configuration at start."
 msgstr "Если включено, сервис будет добавлять DNS-сервер в конфигурацию dnsmasq при запуске."
 
 msgid "Setup NFT tables at startup:"
@@ -70,22 +70,22 @@ msgstr "Настраивать NFT-таблицы при загрузке:"
 msgid "When enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
 msgstr "Если включено, сервис применяет NFT-таблицы для перенаправления трафика на tproxy-порт."
 
-msgid "Daemon autoupdate:"
+msgid "Service autoupdate:"
 msgstr "Автообновление сервиса:"
 
 msgid "Cron job mode for service autoupdate:"
 msgstr "Режим для задания автообновления сервиса (cron):"
 
-msgid "Telegram notify for daemon update:"
+msgid "Telegram notify for service update:"
 msgstr "Уведомления в Telegram об обновлении сервиса:"
 
-msgid "When enabled daemon will send telegram notification with update status every update check."
+msgid "When enabled service will send telegram notification with update status every update check."
 msgstr "Если включено, сервис будет отправлять уведомления в Telegram о статусе обновления при каждой проверке."
 
-msgid "Daemon autoupdate cron:"
+msgid "Service autoupdate cron:"
 msgstr "Cron для автообновления сервиса:"
 
-msgid "Special cron string for daemon autoupdate job."
+msgid "Special cron string for service autoupdate job."
 msgstr "Специальная строка cron для задания автообновления сервиса."
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
@@ -97,7 +97,7 @@ msgstr "Автоперезапуск Mihomo:"
 msgid "Core automation"
 msgstr "Автоматизация ядра"
 
-msgid "When enabled daemon will configure autorestart mihomo by cron string."
+msgid "When enabled service will configure autorestart mihomo by cron string."
 msgstr "Если включено, сервис будет настраивать автоперезапуск Mihomo по cron-строке."
 
 msgid "Mihomo autoupdate:"
@@ -109,13 +109,13 @@ msgstr "Режим для задания автообновления Mihomo."
 msgid "Telegram notify for mihomo autorestart:"
 msgstr "Уведомления в Telegram о автоперезапуске Mihomo:"
 
-msgid "When enabled daemon will send telegram notification for mihomo autorestart cron job."
+msgid "When enabled service will send telegram notification for mihomo autorestart cron job."
 msgstr "Если включено, сервис будет отправлять уведомления в Telegram о задании автоперезапуска Mihomo по cron."
 
 msgid "Telegram notify for mihomo autoupdate:"
 msgstr "Уведомления в Telegram о автообновлении Mihomo:"
 
-msgid "When enabled daemon will send telegram notification for mihomo autoupdate cron job."
+msgid "When enabled service will send telegram notification for mihomo autoupdate cron job."
 msgstr "Если включено, сервис будет отправлять уведомления в Telegram о задании автообновления Mihomo по cron."
 
 msgid "Mihomo autorestart cron:"

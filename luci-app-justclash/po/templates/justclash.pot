@@ -13,7 +13,7 @@ msgstr ""
 msgid "Service status:"
 msgstr ""
 
-msgid "Daemon package version:"
+msgid "Service package version:"
 msgstr ""
 
 msgid "Luci package version:"
@@ -22,10 +22,10 @@ msgstr ""
 msgid "Mihomo core version:"
 msgstr ""
 
-msgid "Daemon is running:"
+msgid "Service is running:"
 msgstr ""
 
-msgid "Daemon's autostart:"
+msgid "Service's autostart:"
 msgstr ""
 
 msgid "Executing command..."
@@ -49,7 +49,7 @@ msgstr ""
 msgid "Disable autostart"
 msgstr ""
 
-msgid "Daemon automation"
+msgid "Service automation"
 msgstr ""
 
 msgid "Start ntpd at load:"
@@ -61,7 +61,7 @@ msgstr ""
 msgid "Inject DNS server at startup:"
 msgstr ""
 
-msgid "When enabled daemon will inject dns server in dnsmasq configuration at start."
+msgid "When enabled service will inject dns server in dnsmasq configuration at start."
 msgstr ""
 
 msgid "Setup NFT tables at startup:"
@@ -70,22 +70,22 @@ msgstr ""
 msgid "When enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
 msgstr ""
 
-msgid "Daemon autoupdate:"
+msgid "Service autoupdate:"
 msgstr ""
 
 msgid "Cron job mode for service autoupdate:"
 msgstr ""
 
-msgid "Telegram notify for daemon update:"
+msgid "Telegram notify for service update:"
 msgstr ""
 
-msgid "When enabled daemon will send telegram notification with update status every update check."
+msgid "When enabled service will send telegram notification with update status every update check."
 msgstr ""
 
-msgid "Daemon autoupdate cron:"
+msgid "Service autoupdate cron:"
 msgstr ""
 
-msgid "Special cron string for daemon autoupdate job."
+msgid "Special cron string for service autoupdate job."
 msgstr ""
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
@@ -97,7 +97,7 @@ msgstr ""
 msgid "Core automation"
 msgstr ""
 
-msgid "When enabled daemon will configure autorestart mihomo by cron string."
+msgid "When enabled service will configure autorestart mihomo by cron string."
 msgstr ""
 
 msgid "Mihomo autoupdate:"
@@ -109,13 +109,13 @@ msgstr ""
 msgid "Telegram notify for mihomo autorestart:"
 msgstr ""
 
-msgid "When enabled daemon will send telegram notification for mihomo autorestart cron job."
+msgid "When enabled service will send telegram notification for mihomo autorestart cron job."
 msgstr ""
 
 msgid "Telegram notify for mihomo autoupdate:"
 msgstr ""
 
-msgid "When enabled daemon will send telegram notification for mihomo autoupdate cron job."
+msgid "When enabled service will send telegram notification for mihomo autoupdate cron job."
 msgstr ""
 
 msgid "Mihomo autorestart cron:"
