@@ -327,7 +327,7 @@ stop_core() {
         if [ -n "$pids" ]; then
             # DO NOT APPLY "" - STRING MUST BE SPLITTED AUTOMATICALLY
             # shellcheck disable=SC2086
-            kill $pids
+            kill $pids 2>/dev/null
         fi
         log 2 "Core process stopped" "🐱"
     else
