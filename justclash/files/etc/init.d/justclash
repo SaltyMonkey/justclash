@@ -20,17 +20,17 @@ start_service() {
 }
 
 stop_service() {
-    $PROG stop
+    $PROG stop 2>&1
     sleep 1
 }
 
 reload_service() {
-    $PROG reload
+    $PROG reload 2>&1
     return $?
 }
 
 restart() {
-    $PROG reload
+    $PROG reload 2>&1
 }
 
 service_triggers() {
