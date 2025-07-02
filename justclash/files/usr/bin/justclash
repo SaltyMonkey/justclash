@@ -325,11 +325,13 @@ stop_core() {
     if pgrep -f "$(basename "$0")" >/dev/null; then
         pids=$(pgrep -f "$(basename "$CORE_PATH")")
         if [ -n "$pids" ]; then
-            kill "$pids" 2>/dev/null
+            # DO NOT APPLY "" - STRING MUST BE SPLITTED AUTOMATICALLY
+            # shellcheck disable=SC2086
+            kill $pids
         fi
         log 2 "Core process stopped" "🐱"
     else
-       log 2 "Process not found: $(basename "$CORE_PATH")" "⚠️"
+       log 2 "JustClash isn't running" "🐱"
     fi
 }
 
