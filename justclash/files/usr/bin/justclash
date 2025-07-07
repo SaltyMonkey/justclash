@@ -36,9 +36,12 @@ INITD_PATH="/etc/init.d/justclash"
 # workdir path (in RAM)
 CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
-OVERRIDE_YAML_CONFIG_PATH="/var/override.${CORE_BIN_NAME}.yaml"
 DEFAULT_CONFIG_PATH="/var/default.justclash.config"
 CORE_RESTART_MAX_RETRIES=3
+
+DIAG_RESOLVE_URL_YANDEX="ya.ru"
+DIAG_IP_CHECK_PING_YANDEX="77.88.8.8"
+DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
 
 NFT_TABLE_NAME="justclash_tproxy"
 NFT_FWMARK_FINAL=1
@@ -58,10 +61,11 @@ NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
 # List of conflicting packages:
 # podkop (custom proxy)
 # and https-dns-proxy (DNS over HTTPS proxy)
-CONFLICTED_PACKAGES="podkop https-dns-proxy"
+CONFLICTED_PACKAGES="sing-box mihomo clash luci-app-ssclash podkop https-dns-proxy"
 CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
+ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 
 ucibool_to_yesno() {
     case "$1" in
@@ -278,7 +282,7 @@ start() {
     nft_table_add
 
     log 2 "Modifying dnsmasq configuration" "🔑"
-    dnsmasq_inject
+    dnsmasq_add
 
     log 2 "Starting Mihomo core" "🐱"
     start_core
@@ -288,8 +292,10 @@ stop() {
     log 2 "Closing Justclash service..." "⏳"
     log 2 "Removing TPROXY routing and NFTables table" "🔑"
     nft_table_remove
+
     log 2 "Restoring default dnsmasq configuration" "🔑"
-    dnsmasq_clean
+    dnsmasq_remove
+
     log 2 "Stopping core process" "🐱"
     stop_core
 }
@@ -352,27 +358,6 @@ stop_core() {
     else
        log 2 "JustClash isn't running" "🐱"
     fi
-}
-
-diag_nft() {
-    clog 2 "Checking for 'nft' command..."
-    if ! command -v nft >/dev/null 2>&1; then
-        clog 0 "The 'nft' command is not available. Please install nftables to continue."
-        return 1
-    fi
-
-    clog 2 "Verifying existence of NFTables table '$NFT_TABLE_NAME'..."
-    if ! nft list table ip "$NFT_TABLE_NAME" >/dev/null 2>&1; then
-        clog 0 "Table '$NFT_TABLE_NAME' not found. Please create the required NFTables table."
-        return 1
-    fi
-
-    clog 2 "Displaying current NFTables configuration:"
-    nft list table ip "$NFT_TABLE_NAME"
-
-    clog 2 "NFTables check completed successfully."
-
-    return 0
 }
 
 cleanup_fwmark() {
@@ -589,7 +574,7 @@ save_dnsmasq_config() {
     fi
 }
 
-dnsmasq_inject() {
+dnsmasq_add() {
     local dns_listen_port update_dns_server_at_load
     config_get dns_listen_port proxy dns_listen_port
     config_get_bool update_dns_server_at_load settings update_dns_server_at_load
@@ -623,7 +608,7 @@ dnsmasq_inject() {
 
 }
 
-dnsmasq_clean() {
+dnsmasq_remove() {
     local dns_listen_port
     config_get dns_listen_port proxy dns_listen_port
     local update_dns_server_at_load
@@ -707,6 +692,11 @@ check_for_conflicts_warn() {
         log 1 "Found: $external_nameservers" "⚠️"
         log 1 "This may bypass local DNS rules and cause unexpected query results." "⚠️"
         log 1 "If you intend to use a local DNS service, these entries should be removed." "⚠️"
+    fi
+
+    if [ -f "$ZAPRETINITD_FILEPATH" ]; then
+        log 1 "Warning: Zapret service detected by path $ZAPRETINITD_FILEPATH:" "⚠️"
+        log 1 "This service can cause unexpected results if configured incorrectly." "⚠️"
     fi
 }
 
@@ -796,15 +786,15 @@ core_generate_yaml() {
     # Support for manual config files
     # If detected - no settings from config file will be applied
     # DANGEROUS!
-    if [ -f OVERRIDE_YAML_CONFIG_PATH ]; then
-        log 1 "A dangerous state detected: override configuration file found at \"$OVERRIDE_YAML_CONFIG_PATH\". \
-        This file will be used as the active configuration, but correct operation is not guaranteed. \
-        This may lead to unexpected behavior, service instability, or security vulnerabilities. \
-        Please verify the contents of the override configuration file and ensure it is intended for use before proceeding. \
-        If this was not expected, investigate the origin of the override file and consider restoring the default configuration."
-        cp "$OVERRIDE_YAML_CONFIG_PATH" "$OUTPUT_YAML_CONFIG_PATH"
-        return 0
-    fi
+    #if [ -f OVERRIDE_YAML_CONFIG_PATH ]; then
+    #    log 1 "A dangerous state detected: override configuration file found at \"$OVERRIDE_YAML_CONFIG_PATH\". \
+    #    This file will be used as the active configuration, but correct operation is not guaranteed. \
+    #    This may lead to unexpected behavior, service instability, or security vulnerabilities. \
+    #    Please verify the contents of the override configuration file and ensure it is intended for use before proceeding. \
+    #    If this was not expected, investigate the origin of the override file and consider restoring the default configuration."
+    #    cp "$OVERRIDE_YAML_CONFIG_PATH" "$OUTPUT_YAML_CONFIG_PATH"
+    #    return 0
+    #fi
 
     config_get log_level proxy log_level
     config_get tproxy_port proxy tproxy_port
@@ -1268,52 +1258,212 @@ core_autorestart_cron_remove() {
     fi
 }
 
-diag_fake_ip_resolver() {
+diag_nft() {
+    clog 2 "Checking for 'nft' command..."
+    if ! command -v nft >/dev/null 2>&1; then
+        clog 0 "The 'nft' command is not available. Please install nftables to continue."
+        return 1
+    fi
+
+    clog 2 "Verifying existence of NFTables table '$NFT_TABLE_NAME'..."
+    if ! nft list table ip "$NFT_TABLE_NAME" >/dev/null 2>&1; then
+        clog 0 "Table '$NFT_TABLE_NAME' not found. Please create the required NFTables table."
+        return 1
+    fi
+
+    clog 2 "Displaying current NFTables configuration:"
+    nft list table ip "$NFT_TABLE_NAME"
+
+    clog 2 "NFTables check completed successfully."
+
+    return 0
+}
+
+diag_route() {
+    clog 2 "Verifying existence of route rule..."
+    if ! ip rule list | grep -q "fwmark 0x1 lookup 100"; then
+        clog 0 "Route rule 'ip rule add fwmark ""$NFT_FWMARK_FINAL"" table 100' is missing!"
+    fi
+    ip rule list
+
+    if ! ip route show table 100 | grep -q "local 0.0.0.0/0 dev lo"; then
+         clog 0 "Route table 100 is incorrect!"
+    fi
+    ip route show table 100
+}
+
+diag_proxy_resolver() {
+    if [ -z "$1" ]; then
+        log 1 "Usage: diag_proxy_resolver <domain>"
+        return 1
+    fi
+    local target="$1"
     local dns_listen_port
     config_get dns_listen_port proxy dns_listen_port
 
     clog 2 "Testing Fake IP DNS resolution..."
-    if ! nslookup google.com 127.0.0.1:"$dns_listen_port" >/dev/null 2>&1; then
-        clog 0 "FakeIP IPv4 DNS query failed" "❌"
+
+    local ip_output
+    ip_output=$(nslookup "$target" 127.0.0.1:"$dns_listen_port" 2>/dev/null)
+    local exit_code=$?
+
+    local ips
+    ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
+
+    if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
+        clog 0 "Local DNS query failed"
+        return 1
     else
-        clog 2 "FakeIP IPv4 DNS query successful" "✅"
+        echo "$ips"
+        clog 2 "Local DNS query successful"
+        return 0
     fi
 }
 
-diag_default_resolver() {
-    clog 2 "Testing DNS resolution..."
-    if ! nslookup google.com >/dev/null 2>&1; then
-        clog 0 "IPv4 DNS query failed" "❌"
-    else
-        clog 2 "IPv4 DNS query successful" "✅"
+diag_external_resolver() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        log 1 "Usage: diag_external_resolver <domain> <dnsresolver>"
+        return 1
     fi
+    local target="$1"
+    local resolver="$2"
+    local ip_output exit_code
+
+    clog 2 "Testing DNS resolution..."
+
+    ip_output=$(nslookup "$target" "$resolver" 2>/dev/null)
+    exit_code=$?
+
+    ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
+
+    if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
+        clog 0 "External DNS query failed"
+        return 1
+    else
+        clog 2 "$ips"
+        clog 2 "External DNS query successful"
+        return 0
+    fi
+}
+
+diag_icmp() {
+    if [ -z "$target" ] || [ -z "$count" ]; then
+        clog 1 "Usage: diag_icmp <target> <count>"
+        return 1
+    fi
+    local target="${1}"
+    local count="${2}"
+    local timeout=2
+    local ping_output
+
+    ping_output=$(ping -c "$count" -W "$timeout" "$target" 2>&1)
+    local exit_code=$?
+
+    if [ "$exit_code" -eq 0 ]; then
+        clog 2 "Ping to ${target} is successful"
+        clog 2 "$ping_output"
+    else
+        clog 0 "Ping to ${target} is failed"
+        clog 0 "$ping_output"
+    fi
+}
+
+diag_report() {
+    local running autoload pkg_manager
+    service justclash status
+    running=$?
+    service justclash enabled
+    autoload=$?
+    if command -v apk >/dev/null 2>&1; then
+        pkg_manager="APK"
+    else
+        pkg_manager="OPKG"
+    fi
+
+cat <<EOF
+----------------------------
+JustClash diagnostic report:
+----------------------------
+
+-> Basic:
+Device:  $(info_device)
+OpenWRT: $(info_openwrt)
+Service: $(info_package)
+LuCi:    $(info_luci)
+Mihomo:  $(info_mihomo)
+Pkg:     $pkg_manager
+
+-> Status:
+Active:  $running
+Load:  $autoload
+
+-> NFT Tables:
+$(diag_nft)
+
+-> Routes:
+$(diag_route)
+
+-> ICMP $DIAG_IP_CHECK_PING_YANDEX :
+$(diag_icmp "$DIAG_IP_CHECK_PING_YANDEX" 2)
+
+-> ICMP $DIAG_IP_CHECK_PING_GOOGLE :
+$(diag_icmp "$DIAG_IP_CHECK_PING_GOOGLE" 2)
+
+-> DNS resolve $DIAG_RESOLVE_URL_YANDEX with proxy:
+$(diag_proxy_resolver "$DIAG_IP_CHECK_PING_YANDEX")
+
+-> DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_YANDEX:
+$(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_YANDEX")
+
+-> DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_GOOGLE:
+$(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_GOOGLE")
+
+-> DHCP config:
+$(uci show dhcp)
+
+-> /etc/resolv.conf:
+$(cat /etc/resolv.conf)
+
+-> Service config:
+$(uci show justclash.settings)
+
+-> Service proxy config:
+$(uci show justclash.proxy)
+
+EOF
+
 }
 
 config_show() {
-    uci show justclash
+    uci export justclash
 }
 
 config_reset() {
     if [ ! -f "$DEFAULT_CONFIG_PATH" ]; then
-        сlog 2 "Default config file is missing. Can't use restore functionality"
-        return 1;
+        clog 0 "Default config file is missing. Can't use restore functionality"
+        return 1
     fi
 
-    сlog 2 "Restoring justclash settings..."
+    clog 2 "Restoring justclash settings..."
 
     rm -f /etc/config/justclash.bak
 
-    if ! mv /etc/config/justclash /etc/config/justclash.bak; then
-        сlog 1 "Failed to backup config file"
-        return 1
+    if [ ! -f /etc/config/justclash ]; then
+        clog 0 "Current config file not found, nothing to backup"
+    else
+        if ! mv /etc/config/justclash /etc/config/justclash.bak; then
+            clog 0 "Failed to backup config file"
+            return 1
+        fi
     fi
 
     if ! cp "$DEFAULT_CONFIG_PATH" /etc/config/justclash; then
-        сlog 1 "Failed to restore default config"
+        clog 0 "Failed to restore default config"
         return 1
     fi
 
-    сlog 2 "Default settings will be applied at next restart..."
+    clog 2 "Default settings will be applied at next service restart..."
+    return 0
 }
 
 help() {
@@ -1349,8 +1499,10 @@ Information Commands:
 
 Diagnostics:
   diag_nft                Run nftables diagnostic.
-  diag_fake_ip_resolver   Run Fake IP DNS diagnostic.
-  diag_default_resolver   Run Default DNS diagnostic.
+  diag_route              Run route tables diagnostic.
+  diag_icmp               Run internet check with ICMP.
+  diag_proxy_resolver     Run Internal DNS diagnostic.
+  diag_external_resolver  Run Default DNS diagnostic.
 
 Logs:
   logs|systemlogs [N]     Show last N lines of system logs (default 40).
@@ -1432,11 +1584,20 @@ case "$1" in
     diag_nft)
         diag_nft
         ;;
-    diag_fake_ip_resolver|diag_fake_ip)
-        diag_fake_ip_resolver
+    diag_route)
+        diag_route
         ;;
-    diag_default_resolver|diag_dns)
-        diag_default_resolver
+    diag_report)
+        diag_report
+        ;;
+    diag_proxy_resolver)
+        diag_proxy_resolver "$2"
+        ;;
+    diag_external_resolver)
+        diag_external_resolver "$2" "$3"
+        ;;
+    diag_icmp)
+        diag_icmp "$2" "${3:-3}"
         ;;
     help|?|command)
         help
