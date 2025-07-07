@@ -7,7 +7,7 @@ START=99
 STOP=01
 PROGNAME="justclash"
 PROG="/usr/bin/${PROGNAME}"
-RELOAD_DELAY_MS=2000
+RELOAD_DELAY_MS=1000
 
 start_service() {
     procd_open_instance
