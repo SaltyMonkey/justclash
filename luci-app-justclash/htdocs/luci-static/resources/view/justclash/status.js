@@ -114,11 +114,10 @@ return view.extend({
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" });
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" });
 
-        const createButton = (action, cssClass, label, isDisabled) => {
+        const createButton = (action, cssClass, label) => {
             return E("button", {
                 class: `cbi-button ${cssClass}`,
                 id: `button${action}`,
-                disabled: isDisabled,
                 click: ui.createHandlerFn(this, async function () {
                     const buttons = actionContainer.querySelectorAll("button");
                     const buttonsSecondary = actionContainerSecondary.querySelectorAll("button");
@@ -142,12 +141,11 @@ return view.extend({
             ]);
         };
 
-        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start"), !results.infoIsRunning));
-        actionContainer.appendChild(createButton("restart", "cbi-button-action", _("Restart")));
-        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop"), results.infoIsRunning));
+        actionContainer.appendChild(createButton("start", "cbi-button-positive", _("Start")));
+        actionContainer.appendChild(createButton("stop", "cbi-button-negative", _("Stop")));
 
-        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart"), !results.infoIsAutostarting));
-        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart"), results.infoIsAutostarting));
+        actionContainerSecondary.appendChild(createButton("enable", "cbi-button-positive", _("Enable autostart")));
+        actionContainerSecondary.appendChild(createButton("disable", "cbi-button-negative", _("Disable autostart")));
 
         this.startPolling();
 
@@ -193,7 +191,6 @@ return view.extend({
         ]);
 
         this.startButtonId = document.getElementById("buttonstart");
-        this.restartButtonId = document.getElementById("buttonrestart");
         this.stopButtonId = document.getElementById("buttonstop");
 
         this.enableButtonId = document.getElementById("buttonenable");
