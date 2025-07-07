@@ -1,6 +1,7 @@
 "use strict";
 "require view";
 "require ui";
+"require view.justclash.common as common";
 
 return view.extend({
     ws: null,
@@ -9,7 +10,7 @@ return view.extend({
     handleSave: null,
     handleSaveApply: null,
     handleReset: null,
-
+    wsErrorNotification: null,
     getWSURL: function () {
         const host = window.location.hostname;
         const port = 9090;
@@ -17,10 +18,9 @@ return view.extend({
     },
 
     render: function () {
-        const container = E("div", { class: "cbi-section" });
+        const container = E("div", { class: "cbi-section fade-in" });
         const table = E("div", { class: "flex-table" });
 
-        // Удалены заголовки Time, Upload, Download
         const header = E("div", { class: "flex-header" }, [
             E("div", {}, _("Proto")),
             E("div", {}, _("Connection")),
@@ -30,7 +30,7 @@ return view.extend({
         ]);
 
         table.appendChild(header);
-        container.appendChild(E("h2", {}, _("Active Connections")));
+        container.appendChild(E("h3", { class: "cbi-section-title" }, _("Active Connections")));
         container.appendChild(table);
 
         const rowMap = new Map();
@@ -39,45 +39,101 @@ return view.extend({
             return conn.id;
         }
 
+        function isMobile() {
+            return window.matchMedia("(max-width: 600px)").matches;
+        }
+
         function formatConnection(conn) {
-            const src = conn.metadata.sourceIP + ":" + conn.metadata.sourcePort;
-            const dest = conn.metadata.destinationIP
-                ? conn.metadata.destinationIP + ":" + conn.metadata.destinationPort
-                : (conn.metadata.remoteDestination || "");
-            return src + (dest ? " → " + dest : "");
+            return {
+                src: conn.metadata.sourceIP + ":" + conn.metadata.sourcePort,
+                dest: conn.metadata.destinationIP
+                    ? conn.metadata.destinationIP + ":" + conn.metadata.destinationPort
+                    : (conn.metadata.remoteDestination || "")
+            };
+        }
+
+        function createRow(conn) {
+            const key = getKey(conn);
+            const connObj = formatConnection(conn);
+            const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
+            const chainsStr = conn.chains.join(", ");
+            const ruleStr = conn.rule;
+
+            const row = E("div", { class: "flex-row", "data-key": key });
+
+            // Proto
+            row.appendChild(E("div", { "data-label": _("Proto") }, conn.metadata.network));
+
+            if (isMobile()) {
+                // Source
+                row.appendChild(E("div", { "data-label": _("Source") }, connObj.src));
+                // Destination
+                row.appendChild(E("div", { "data-label": _("Destination") }, connObj.dest));
+                // Host/Sniff
+                row.appendChild(E("div", { "data-label": _("Host/Sniff") }, hostStr));
+                // Chains
+                row.appendChild(E("div", { "data-label": _("Chains") }, chainsStr));
+                // Rule
+                row.appendChild(E("div", { "data-label": _("Rule") }, ruleStr));
+            } else {
+                // Desktop: Connection (source → dest)
+                row.appendChild(E("div", { "data-label": _("Connection") }, connObj.src + (connObj.dest ? " → " + connObj.dest : "")));
+                // Host/Sniff
+                row.appendChild(E("div", { "data-label": _("Host/Sniff") }, hostStr));
+                // Chains
+                row.appendChild(E("div", { "data-label": _("Chains") }, chainsStr));
+                // Rule
+                row.appendChild(E("div", { "data-label": _("Rule") }, ruleStr));
+            }
+            return row;
         }
 
         function updateRow(conn) {
             const key = getKey(conn);
             let row = rowMap.get(key);
 
-            const connStr = formatConnection(conn);
-            const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
-            const chainsStr = conn.chains.join(", ");
-            const ruleStr = conn.rule;
+            const expectedCells = isMobile() ? 6 : 5;
+            let recreate = false;
+
+            if (row) {
+                if (row.childNodes.length !== expectedCells) {
+                    table.removeChild(row);
+                    rowMap.delete(key);
+                    row = null;
+                }
+            }
 
             if (!row) {
-                row = E("div", { class: "flex-row", "data-key": key }, [
-                    E("div", {}, conn.metadata.network),
-                    E("div", {}, connStr),
-                    E("div", {}, hostStr),
-                    E("div", {}, chainsStr),
-                    E("div", {}, ruleStr)
-                ]);
+                row = createRow(conn);
                 table.appendChild(row);
                 rowMap.set(key, row);
             } else {
+                // Обновляем содержимое ячеек
+                const connObj = formatConnection(conn);
+                const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
+                const chainsStr = conn.chains.join(", ");
+                const ruleStr = conn.rule;
+
+                const values = isMobile()
+                    ? [
+                        conn.metadata.network,
+                        connObj.src,
+                        connObj.dest,
+                        hostStr,
+                        chainsStr,
+                        ruleStr
+                    ]
+                    : [
+                        conn.metadata.network,
+                        connObj.src + (connObj.dest ? " → " + connObj.dest : ""),
+                        hostStr,
+                        chainsStr,
+                        ruleStr
+                    ];
                 const cells = row.childNodes;
-                const newValues = [
-                    conn.metadata.network,
-                    connStr,
-                    hostStr,
-                    chainsStr,
-                    ruleStr
-                ];
-                for (let i = 0; i < newValues.length; i++) {
-                    if (cells[i].textContent !== newValues[i]) {
-                        cells[i].textContent = newValues[i];
+                for (let i = 0; i < values.length; i++) {
+                    if (cells[i] && cells[i].textContent !== values[i]) {
+                        cells[i].textContent = values[i];
                     }
                 }
             }
@@ -90,7 +146,10 @@ return view.extend({
             this.ws.onopen = () => {
                 console.log("[WS] Connected");
             };
-
+            if (this.wsErrorNotification) {
+                ui.removeNotification(this.wsErrorNotification);
+                this.wsErrorNotification = null;
+            }
             this.ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
@@ -103,6 +162,7 @@ return view.extend({
                         updateRow(conn);
                     }
 
+                    // Удаляем строки, которых больше нет в данных
                     for (const key of rowMap.keys()) {
                         if (!seenKeys.has(key)) {
                             table.removeChild(rowMap.get(key));
@@ -110,6 +170,7 @@ return view.extend({
                         }
                     }
 
+                    // Сообщение "Нет активных соединений"
                     if (rowMap.size === 0) {
                         if (!this.noConnectionsMsg) {
                             this.noConnectionsMsg = E("div", { class: "flex-row" }, [
@@ -135,15 +196,21 @@ return view.extend({
 
             this.ws.onerror = (err) => {
                 console.warn("[WS] Error:", err);
-                ui.addNotification(null, E("p", _("API connection error")), "error");
+                if (!this.wsErrorNotification) {
+                    this.wsErrorNotification = ui.addNotification(
+                        _("Connection error"),
+                        E("p", _("Can't connect to proxy API")),
+                        "error"
+                    );
+                }
             };
 
             this.ws.onclose = () => {
-                console.warn("[WS] Disconnected. Reconnecting in 5 seconds...");
+                console.warn("[WS] Disconnected. Reconnecting in 10 seconds...");
                 if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
                 this.reconnectTimeout = setTimeout(() => {
                     connectWS();
-                }, 5000);
+                }, common.defaultTimeoutForWSReconnect);
             };
         };
 
@@ -151,6 +218,7 @@ return view.extend({
         container.appendChild(this.addCSS());
         return container;
     },
+
     addCSS: function () {
         return E("style", {}, `
         .flex-table {
@@ -202,9 +270,42 @@ return view.extend({
         .flex-row:last-child {
             border-bottom: none;
         }
-    `);
+
+        /* --- Mobile CSS --- */
+        @media (max-width: 600px) {
+            .flex-header { display: none; }
+            .flex-row {
+                display: block;
+                border: 1px solid #e0e0e0;
+                border-radius: 6px;
+                margin-bottom: 10px;
+                padding: 8px;
+                background: var(--background-color-medium, #f9f9f9);
+            }
+            .flex-row > div {
+                display: flex;
+                padding: 2px 0;
+                white-space: normal;
+                overflow: visible;
+                text-overflow: initial;
+                min-width: 0;
+            }
+            .flex-row > div::before {
+                content: attr(data-label) ": ";
+                font-weight: bold;
+                color: #666;
+                min-width: 90px;
+                display: inline-block;
+            }
+        }
+        `);
     },
+
     destroy: function () {
+        if (this.wsErrorNotification) {
+            ui.removeNotification(this.wsErrorNotification);
+            this.wsErrorNotification = null;
+        }
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
