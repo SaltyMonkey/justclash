@@ -80,7 +80,7 @@
         }
     },
     "admin/services/justclash/logs": {
-        "title": "Service logs",
+        "title": "Logs",
         "order": 50,
         "action": {
             "type": "view",
@@ -96,7 +96,7 @@
         }
     },
         "admin/services/justclash/connections": {
-        "title": "Proxy connections",
+        "title": "Connections",
         "order": 50,
         "action": {
             "type": "view",
