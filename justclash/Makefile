@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   TITLE:=JustClash
-  DEPENDS:=+nftables +kmod-nf-conntrack +curl +kmod-nft-tproxy
+  DEPENDS:=+nftables +curl +kmod-nft-tproxy
   CONFLICTS:=mihomo podkop https-dns-proxy
   TITLE:=Clash Routing App
   PKGARCH:=all
