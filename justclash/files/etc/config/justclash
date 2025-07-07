@@ -2,6 +2,10 @@ config main "settings"
     option forcefully_update_ntp_at_load "1"
     option update_dns_server_at_load "1"
     option update_nft_tables_at_load "1"
+    option block_quic_with_nft "0"
+    option block_dot_with_nft "0"
+    option block_dot_quic_with_nft "0"
+    option input_interfaces_to_tproxy_redirect "br-lan"
     option autorestart_at_interface_change "0"
     option autorestart_controlled_interfaces "wan"
 
@@ -79,7 +83,6 @@ config proxy "proxy"
 
 config block_rules "block_rules"
     list enabled_blocklist ""
-    option disable_quic "0"
     list additional_domain_blockroute ""
     list additional_destip_blockroute ""
 
