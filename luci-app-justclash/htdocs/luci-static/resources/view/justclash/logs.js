@@ -47,22 +47,6 @@ return view.extend({
             _("To end")
         ]);
 
-        /*const copyBtn = E("button", {
-            class: "cbi-button cbi-button-neutral jc-ml",
-            click: () => {
-                copyBtn.disabled = true;
-                navigator.clipboard.writeText(logBox.value)
-                    .catch(e => {
-                        ui.addNotification(_("Error"), e.message, "danger");
-                    })
-                    .finally(() => {
-                        copyBtn.disabled = false;
-                    });;
-            },
-        }, [
-            _("Copy")
-        ]);*/
-
         const buttonBar = E("div", {
             style: "margin-bottom: 1em;"
         }, [
@@ -71,9 +55,9 @@ return view.extend({
             //copyBtn
         ]);
 
-        return E("div", { class: "cbi-section" }, [
+        return E("div", { class: "cbi-section fade-in" }, [
             this.addCSS(),
-            E("h3", {}, _("Logs view")),
+            E("h3", { class: "cbi-section-title" }, _("Logs view")),
             buttonBar,
             logBox
         ]);

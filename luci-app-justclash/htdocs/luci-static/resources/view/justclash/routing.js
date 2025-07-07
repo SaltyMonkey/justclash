@@ -16,11 +16,18 @@ return view.extend({
         const directDomainsSrcIp = common.valueToArray(section.additional_srcip_direct);
         const directDomainsDestIp = common.valueToArray(section.additional_destip_direct);
 
-        directDomains.forEach(item => { rules.push(`DOMAIN-SUFFIX,${item.trim()},DIRECT`); });
-        directDomainsKeyword.forEach(item => { rules.push(`DOMAIN-KEYWORD,${item.trim()},DIRECT`); });
-        directDomainsRegex.forEach(item => { rules.push(`DOMAIN-REGEX,${item.trim()},DIRECT`); });
-        directDomainsSrcIp.forEach(item => { rules.push(`SRC-IP-CIDR,${item.trim()},DIRECT`); });
-        directDomainsDestIp.forEach(item => { rules.push(`IP-CIDR,${item.trim()},DIRECT`); });
+        [
+            [directDomains, "DOMAIN-SUFFIX"],
+            [directDomainsKeyword, "DOMAIN-KEYWORD"],
+            [directDomainsRegex, "DOMAIN-REGEX"],
+            [directDomainsSrcIp, "SRC-IP-CIDR"],
+            [directDomainsDestIp, "IP-CIDR"]
+        ].forEach(([arr, type]) => {
+            arr.forEach(item => {
+                const val = item.trim();
+                if (val) rules.push(`${type},${val},DIRECT`);
+            });
+        });
 
         return { rules };
     },
@@ -45,9 +52,17 @@ return view.extend({
             }
         });
 
-        Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},REJECT`); });
-        domainBlockRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},REJECT`); });
-        destipBlockRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},REJECT`); });
+        [
+            [Object.keys(selectedRuleSets), "RULE-SET"],
+            [domainBlockRoutes, "DOMAIN-SUFFIX"],
+            [destipBlockRoutes, "IP-CIDR"]
+        ].forEach(([arr, type]) => {
+            arr.forEach(val => {
+                const trimmed = val.trim();
+                if (trimmed) rules.push(`${type},${trimmed},REJECT`);
+            });
+        });
+
 
         return { rules, selectedRuleSets };
     },
@@ -84,10 +99,17 @@ return view.extend({
                     console.warn("parseProxiesSection", "selectedBlockRuleSetsNames missed", ruleset);
                 }
             });
-            Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},${sectionName}`); });
-            srcipRoutes.forEach(domain => { rules.push(`SRC-IP-CIDR,${domain},${sectionName}`); });
-            domainRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},${sectionName}`); });
-            destipRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},${sectionName}`); });
+            [
+                [Object.keys(selectedRuleSets), "RULE-SET"],
+                [srcipRoutes, "SRC-IP-CIDR"],
+                [domainRoutes, "DOMAIN-SUFFIX"],
+                [destipRoutes, "IP-CIDR"]
+            ].forEach(([arr, type]) => {
+                arr.forEach(val => {
+                    const trimmed = val.trim();
+                    if (trimmed) rules.push(`${type},${trimmed},${sectionName}`);
+                });
+            });
         } else {
             console.warn("parseProxiesSection", "proxyObject is missing", link);
         }
@@ -130,12 +152,17 @@ return view.extend({
                     console.warn("parseProxyGroupsSection", "selectedBlockRuleSetsNames is missing", ruleset);
                 }
             });
-            Object.keys(selectedRuleSets).forEach(rs => { rules.push(`RULE-SET,${rs.yamlName},${sectionName}`); });
-            srcipRoutes.forEach(domain => { rules.push(`SRC-IP-CIDR,${domain},${sectionName}`); });
-            domainRoutes.forEach(domain => { rules.push(`DOMAIN-SUFFIX,${domain},${sectionName}`); });
-            destipRoutes.forEach(cidr => { rules.push(`IP-CIDR,${cidr},${sectionName}`); });
-
-
+            [
+                [Object.keys(selectedRuleSets), "RULE-SET"],
+                [srcipRoutes, "SRC-IP-CIDR"],
+                [domainRoutes, "DOMAIN-SUFFIX"],
+                [destipRoutes, "IP-CIDR"]
+            ].forEach(([arr, type]) => {
+                arr.forEach(val => {
+                    const trimmed = val.trim();
+                    if (trimmed) rules.push(`${type},${trimmed},${sectionName}`);
+                });
+            });
         } else {
             console.warn("parseProxyGroupsSection", "proxyList is missing or wrong", proxyList);
         }
@@ -143,7 +170,7 @@ return view.extend({
         return { proxyGroups, rules, selectedRuleSets };
     },
     parseFinalRulesSection: function (section, sectionName) {
-        let dest = section.final_destination;
+        let dest = section.final_destination.trim();
         if (!dest || (dest && dest.length === 0)) dest = "DIRECT";
         return { rules: [`MATCH,${dest}`] };
     },
@@ -251,6 +278,9 @@ return view.extend({
         o = s.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
         o.description = _("Each element is one DOMAIN-SUFFIX rule to route through proxy with mihomo syntax.");
         o.optional = true;
+        o.validate = function (section_id, value) {
+            return (common.isValidDomainSuffix(value));
+        };
 
         o = s.option(form.DynamicList, "additional_destip_route", _("IP-CIDR:"));
         o.description = _("Each element is one IP-CIDR rule to route through proxy with mihomo syntax. IPV4 only right now.");
@@ -296,6 +326,25 @@ return view.extend({
 
         o = s2.option(form.Value, "proxies_list", _("Proxies:"));
         o.placeholder = "proxy-name1, proxy-name2";
+        o.validate = function (section_id, value) {
+            if (!value) return _("Field must not be empty");
+
+            // Разбиваем по запятой, убираем пробелы вокруг каждого элемента
+            let arr = value.split(",").map(s => s.trim()).filter(s => s.length > 0);
+
+            // Если после фильтрации нет ни одного значения — ошибка
+            if (arr.length === 0) return _("Field must not be empty");
+
+            // Проверяем каждое имя
+            for (let name of arr) {
+                if (!common.isValidSimpleName(name)) {
+                    return _("Name must contain only lowercase letters, digits, and underscores");
+                }
+            }
+
+            // Всё прошло — валидно
+            return true;
+        };
 
         o = s2.option(form.Value, "check_url", _("Check URL:"));
         o.placeholder = common.defaultProxyGroupCheckUrl;
@@ -321,6 +370,9 @@ return view.extend({
         o.description = _("One element is one DOMAIN-SUFFIX rule with mihomo syntax.");
         o.optional = true;
         o.editable = true;
+        o.validate = function (section_id, value) {
+            return (common.isValidDomainSuffix(value));
+        };
 
         o = s2.option(form.DynamicList, "additional_destip_route", _("IP-CIDR:"));
         o.description = _("One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now.");
@@ -341,16 +393,25 @@ return view.extend({
         o.description = _("Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax).");
         o.optional = true;
         o.editable = true;
+        o.validate = function (section_id, value) {
+            return (common.isValidDomainSuffix(value));
+        };
 
         o = s3.option(form.DynamicList, "domain_keyword_direct", _("DOMAIN-KEYWORD pass:"));
         o.description = _("Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax).");
         o.optional = true;
         o.editable = true;
+        o.validate = function (section_id, value) {
+            return (common.isValidDomainKeyword(value));
+        };
 
         o = s3.option(form.DynamicList, "additional_domain_regexp_direct", _("DOMAIN-REGEX pass:"));
         o.description = _("Each element is one DOMAIN-REGEX rule to pass (mihomo syntax).");
         o.optional = true;
         o.editable = true;
+        o.validate = function (section_id, value) {
+            return (common.isValidDomainRegexp(value));
+        };
 
         o = s3.option(form.DynamicList, "additional_srcip_direct", _("SRC-IP-CIDR pass:"));
         o.description = _("Each element is one SRC-IP-CIDR rule to pass with proxy (mihomo syntax). IPV4 only right now.");
@@ -367,10 +428,6 @@ return view.extend({
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional settings for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
 
-        o = s4.option(form.Flag, "disable_quic", _("Disable QUIC:"));
-        //o.description = _("disable_quic_description.");
-        o.default = "0";
-
         o = s4.option(form.MultiValue, "enabled_blocklist ", _("REJECT RULE_SET:"));
         rulesets.availableBlockRulesets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
@@ -381,6 +438,9 @@ return view.extend({
         o.description = _("Each element is one DOMAIN-SUFFIX rule to block with proxy (mihomo syntax).");
         o.optional = true;
         o.editable = true;
+        o.validate = function (section_id, value) {
+            return (common.isValidDomainSuffix(value));
+        };
 
         o = s4.option(form.DynamicList, "additional_destip_blockroute", _("IP-CIDR block:"));
         o.description = _("Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
@@ -394,6 +454,12 @@ return view.extend({
         o = s5.option(form.Value, "final_destination", _("Destination:"));
         o.default = "DIRECT";
         o.rmempty = false;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim().length === 0) {
+                return _("This field cannot be empty");
+            }
+            return true;
+        };
 
         return m.render().then(formEl => {
             return E("div", {}, [

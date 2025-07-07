@@ -15,7 +15,7 @@ return view.extend({
         s = m.section(form.NamedSection, "proxy");
 
         tabname = "coresettings_tab";
-        s.tab(tabname, _("Core settings"));
+        s.tab(tabname, _("Basic settings"));
 
         o = s.taboption(tabname, form.ListValue, "log_level", _("Logging level:"));
         common.defaultLoggingLevels.forEach(item => {
@@ -79,35 +79,6 @@ return view.extend({
         o.description = _("Domains excluded from detailed analyze when possible. Sometimes can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
-
-        tabname = "ntpsettings_tab";
-        s.tab(tabname, _("NTP settings"));
-
-        o = s.taboption(tabname, form.Flag, "core_ntp_enabled", _("Enable NTP client:"));
-        o.description = _("Enable inbuild in proxy NTP client.");
-        o.rmempty = false;
-        o.default = "1";
-
-        o = s.taboption(tabname, form.Value, "core_ntp_server", _("Endpoint NTP server:"));
-        o.description = _("External NTP server for time syncing.");
-        o.datatype = "ipaddr";
-        o.rmempty = false;
-
-        o = s.taboption(tabname, form.Value, "core_ntp_port", _("NTP port:"));
-        //o.description = _("NTP port.");
-        o.datatype = "port";
-        o.rmempty = false;
-
-        o = s.taboption(tabname, form.Value, "core_ntp_interval", _("NTP check interval:"));
-        o.description = _("Interval to check time (in seconds).");
-        o.datatype = "uinteger";
-        o.rmempty = false;
-        o.default = "600";
-
-        o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
-        o.description = _("Try to correct system time from NTP server.");
-        o.default = "0";
-        o.rmempty = false;
 
         tabname = "dnssettings_tab";
         s.tab(tabname, _("DNS settings"));
@@ -177,6 +148,35 @@ return view.extend({
         o.description = _("Exclude selected domains from Fake IP cache. Can help sometimes with bugs in apps.");
         o.rmempty = false;
         o.editable = true;
+
+        tabname = "ntpsettings_tab";
+        s.tab(tabname, _("NTP settings"));
+
+        o = s.taboption(tabname, form.Flag, "core_ntp_enabled", _("Enable NTP client:"));
+        o.description = _("Enable inbuild in proxy NTP client.");
+        o.rmempty = false;
+        o.default = "1";
+
+        o = s.taboption(tabname, form.Value, "core_ntp_server", _("Endpoint NTP server:"));
+        o.description = _("External NTP server for time syncing.");
+        o.datatype = "ipaddr";
+        o.rmempty = false;
+
+        o = s.taboption(tabname, form.Value, "core_ntp_port", _("NTP port:"));
+        //o.description = _("NTP port.");
+        o.datatype = "port";
+        o.rmempty = false;
+
+        o = s.taboption(tabname, form.Value, "core_ntp_interval", _("NTP check interval:"));
+        o.description = _("Interval to check time (in seconds).");
+        o.datatype = "uinteger";
+        o.rmempty = false;
+        o.default = "600";
+
+        o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
+        o.description = _("Try to correct system time from NTP server.");
+        o.default = "0";
+        o.rmempty = false;
 
         let map_promise = m.render();
         return map_promise;

@@ -6,7 +6,7 @@ return baseclass.extend({
     binPath: "/usr/bin/justclash",
     binInfoPath: "/usr/bin/justclash_info",
     genNameProxyPrefix: "proxy_",
-    logsCount: 350,
+    logsCount: 650,
     genNameProxyGroupPrefix: "proxygroup_",
     defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
@@ -16,6 +16,7 @@ return baseclass.extend({
     defaultFingerprints: ["chrome", "firefox", "safari", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
     defaultProxyUpdateChannelOptions: ["alpha", "stable"],
+    defaultTimeoutForWSReconnect: 10000,
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },
@@ -563,8 +564,7 @@ return baseclass.extend({
     },
     isValidDomainProto: function (value) {
         const val = value.trim();
-        if (val.startsWith("system://") ||
-            val.startsWith("https://") ||
+        if (val.startsWith("https://") ||
             val.startsWith("tls://") ||
             val.startsWith("udp://")) {
             return true;
@@ -617,6 +617,71 @@ return baseclass.extend({
         }
 
         return false;
+    },
+    isValidDomainSuffix: function (value) {
+        if (!value || value.trim().length === 0)
+            return true;
+
+        value = value.trim();
+
+        if (/\s/.test(value))
+            return _("Domain must not contain spaces");
+
+        if (!value.includes('.'))
+            return _("Domain must contain at least one dot");
+
+        if (/^[.-]/.test(value) || /[.-]$/.test(value))
+            return _("Suffix must not start or end with a dot or hyphen");
+
+        if (/\.\.|--/.test(value))
+            return _("Double dots or double hyphens are not allowed");
+
+        if (value.split('.').some(part => part.length === 0))
+            return _("There must be no empty segments between dots");
+
+        if (value.split('.').some(part => part.length > 63))
+            return _("Each domain segment must not exceed 63 characters");
+        if (value.length > 253)
+            return _("Suffix length must not exceed 253 characters");
+
+        return true;
+    },
+    isValidDomainKeyword: function (value) {
+        if (!value || value.trim().length === 0)
+            return true;
+
+        value = value.trim();
+
+        if (/\s/.test(value))
+            return _("Keyword must not contain spaces");
+
+        if (/,/.test(value))
+            return _("Only one keyword per field is allowed");
+
+        if (value.length < 2)
+            return _("Keyword should be at least 2 characters long");
+
+        return true;
+    },
+    isValidDomainRegexp: function (value) {
+        // Allow empty value
+        if (!value || value.trim().length === 0)
+            return true;
+
+        value = value.trim();
+
+        // No spaces at start/end
+        if (/^\s|\s$/.test(value))
+            return _("Regexp must not start or end with a space");
+
+        // Try to compile regexp
+        try {
+            new RegExp(value);
+        } catch (e) {
+            return _("Invalid regular expression: ") + (e.message || e);
+        }
+
+        return true;
     }
 
 });
