@@ -49,44 +49,26 @@ msgstr "Включить автозапуск"
 msgid "Disable autostart"
 msgstr "Отключить автозапуск"
 
-msgid "Service automation"
-msgstr "Автоматизация сервиса"
+msgid "Service start"
+msgstr "Сервис"
 
-msgid "Start ntpd at load:"
-msgstr "Запускать NTPD при запуске:"
+msgid "Start ntpd:"
+msgstr "Запускать NTPD:"
 
 msgid "If enabled, the service starts ntpd to sync system time and ensure TLS works correctly."
 msgstr "При включении сервис синхронизирует время через ntpd для работы TLS."
 
-msgid "Inject DNS server at startup:"
+msgid "Edit DNS server at startup:"
 msgstr "Внедрить DNS-сервер при загрузке:"
 
-msgid "When enabled service will inject dns server in dnsmasq configuration at start."
+msgid "If enabled, service will edit dns server in dnsmasq configuration at start."
 msgstr "Если включено, сервис будет добавлять DNS-сервер в конфигурацию dnsmasq при запуске."
 
-msgid "Setup NFT tables at startup:"
+msgid "Edit NFT tables at startup:"
 msgstr "Настраивать NFT-таблицы при загрузке:"
 
-msgid "When enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
+msgid "If enabled, service creates NFT tables to redirect traffic to the TPROXY port."
 msgstr "Если включено, сервис применяет NFT-таблицы для перенаправления трафика на tproxy-порт."
-
-msgid "Service autoupdate:"
-msgstr "Автообновление сервиса:"
-
-msgid "Cron job mode for service autoupdate:"
-msgstr "Режим для задания автообновления сервиса (cron):"
-
-msgid "Telegram notify for service update:"
-msgstr "Уведомления в Telegram об обновлении сервиса:"
-
-msgid "When enabled service will send telegram notification with update status every update check."
-msgstr "Если включено, сервис будет отправлять уведомления в Telegram о статусе обновления при каждой проверке."
-
-msgid "Service autoupdate cron:"
-msgstr "Cron для автообновления сервиса:"
-
-msgid "Special cron string for service autoupdate job."
-msgstr "Специальная строка cron для задания автообновления сервиса."
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
 msgstr "Неверный формат cron. Ожидается: 'минута час день месяц день_недели' (например, '0 3 * * 0')"

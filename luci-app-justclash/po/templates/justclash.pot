@@ -49,43 +49,25 @@ msgstr ""
 msgid "Disable autostart"
 msgstr ""
 
-msgid "Service automation"
+msgid "Service start"
 msgstr ""
 
-msgid "Start ntpd at load:"
+msgid "Start ntpd:"
 msgstr ""
 
 msgid "If enabled, the service starts ntpd to sync system time and ensure TLS works correctly."
 msgstr ""
 
-msgid "Inject DNS server at startup:"
+msgid "Edit DNS server at startup:"
 msgstr ""
 
-msgid "When enabled service will inject dns server in dnsmasq configuration at start."
+msgid "If enabled, service will edit dns server in dnsmasq configuration at start."
 msgstr ""
 
-msgid "Setup NFT tables at startup:"
+msgid "Edit NFT tables at startup:"
 msgstr ""
 
-msgid "When enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
-msgstr ""
-
-msgid "Service autoupdate:"
-msgstr ""
-
-msgid "Cron job mode for service autoupdate:"
-msgstr ""
-
-msgid "Telegram notify for service update:"
-msgstr ""
-
-msgid "When enabled service will send telegram notification with update status every update check."
-msgstr ""
-
-msgid "Service autoupdate cron:"
-msgstr ""
-
-msgid "Special cron string for service autoupdate job."
+msgid "If enabled, service creates NFT tables to redirect traffic to the TPROXY port."
 msgstr ""
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"

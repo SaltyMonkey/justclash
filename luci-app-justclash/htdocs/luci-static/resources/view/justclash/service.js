@@ -3,6 +3,7 @@
 "require ui";
 "require view";
 "require view.justclash.common as common";
+"require tools.widgets as widgets";
 
 return view.extend({
 
@@ -13,25 +14,80 @@ return view.extend({
         s = m.section(form.NamedSection, "settings");
 
         tabname = "serviceautomation_tab";
-        s.tab(tabname, "Service automation");
+        s.tab(tabname, "Basic settings");
 
-        o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Start ntpd at load:"));
+        o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Start ntpd:"));
         o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Inject DNS server at startup:"));
-        o.description = _("When enabled service will inject dns server in dnsmasq configuration at start.");
+        o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Edit DNS server at startup:"));
+        o.description = _("If enabled, service will edit dns server in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_load", _("Setup NFT tables at startup:"));
-        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_load", _("Edit NFT tables at startup:"));
+        o.description = _("If enabled, service creates NFT tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
         o.default = "1";
+
+        o = s.taboption(tabname, form.Flag, "block_quic_with_nft", _("Block QUIC from clients:"));
+        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o.depends("update_nft_tables_at_load", "1");
+        o.rmempty = false;
+        o.default = "0";
+
+        o = s.taboption(tabname, form.Flag, "block_dot_with_nft", _("Block DoT from clients:"));
+        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o.depends("update_nft_tables_at_load", "1");
+        o.rmempty = false;
+        o.default = "0";
+
+        o = s.taboption(tabname, form.Flag, "block_dot_quic_with_nft", _("Block DoQ from clients:"));
+        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o.depends("update_nft_tables_at_load", "1");
+        o.rmempty = false;
+        o.default = "0";
+
+        // copypasted from Podkop devs
+        o = s.taboption(tabname, widgets.DeviceSelect, "input_interface_to_tproxy_redirect", _("Source Network Interface"), _("Select the network interface from which the traffic will originate"));
+        o.default = "br-lan";
+        o.depends("update_nft_tables_at_load", "1");
+        o.noaliases = true;
+        o.nobridges = false;
+        o.noinactive = false;
+        o.multiple = true;
+        o.filter = function (section_id, value) {
+            if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
+                return false;
+            }
+
+            var device = this.devices.filter(function (dev) {
+                return dev.getName() === value;
+            })[0];
+
+            if (device) {
+                var type = device.getType();
+                return type !== "wifi" && type !== "wireless" && !type.includes("wlan");
+            }
+
+            return true;
+        };
+
+        o = s.taboption(tabname, form.Flag, "autorestart_at_interface_change", _("Enable automatic restart for bad interface:"));
+        o.description = _("When enabled, service will be restarted when selected interfaces will be reconnected.");
+        o.rmempty = false;
+        o.default = "0";
+
+        o = s.taboption(tabname, widgets.NetworkSelect, 'autorestart_controlled_interfaces', _('Interface for monitoring'), _('Select the WAN interfaces to be monitored for automatic service restart.'));
+        o.depends("autorestart_at_interface_change", "1");
+        o.multiple = true;
+        o.filter = function (section_id, value) {
+            return ["lan", "loopback"].indexOf(value) === -1 && !value.startsWith('@');
+        };
 
         tabname = "coreautomation_tab";
-        s.tab(tabname, _("Core automation"));
+        s.tab(tabname, _("Automation"));
 
         o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
         o.description = _("When enabled service will configure autorestart mihomo by cron string.");
@@ -97,7 +153,8 @@ return view.extend({
         o.password = true;
         o.validate = function (section_id, value) {
             return (common.isValidTelegramBotToken(value)) ? true : _("Invalid Telegram Bot Token");
-        }
+        };
+
         let map_promise = m.render();
         return map_promise;
     },
