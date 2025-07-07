@@ -5,7 +5,7 @@
 
 # --------------------------------------------
 # External justclash service part
-# Use it to avoid additionaal uci config calls
+# Use it to avoid additional uci config calls
 # --------------------------------------------
 
 NO_DATA_STRING="N/A"

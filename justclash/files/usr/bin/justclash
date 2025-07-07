@@ -191,12 +191,12 @@ ntp_force_sync() {
     local forcefully_update_ntp_at_load
     config_get_bool forcefully_update_ntp_at_load settings forcefully_update_ntp_at_load
     if [ -z "$NTP_IPS" ]; then
-        log 1 "No NTP servers configured" "⚠️"
+        log 0 "No NTP servers configured" "⚠️"
         return 1
     fi
 
     if ! command -v /usr/sbin/ntpd >/dev/null; then
-        log 1 "ntpd not found, time synchronization skipped" "⚠️"
+        log 0 "ntpd not found, time synchronization skipped" "⚠️"
         return 1
     fi
 
@@ -229,11 +229,27 @@ compat_fixes() {
     fi
 }
 
+core_validate_yaml() {
+    local test_output app_exit_code grep_test_exit_code grep_error_exit_code
+    test_output="$("$CORE_PATH" -t -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
+    app_exit_code=$?
+    echo "$test_output" | grep -qi "test failed"
+    grep_test_exit_code=$?
+    echo "$test_output" | grep -qi "error"
+    grep_error_exit_code=$?
+    if [ "$grep_test_exit_code" -eq 0 ] || [ "$app_exit_code" -ne 0 ] || [ "$grep_error_exit_code" -eq 0 ]; then
+        log 0 "Yaml configuration incorrect!" "❌"
+        log 0 "$test_output" "❌"
+        panic "Mihomo config validation is failed." "❌"
+    fi
+    return 0
+}
+
 start() {
     log 2 "Initializing Justclash service..." "⏳"
 
     if [ ! -f "$CORE_PATH" ]; then
-        log 1 "Mihomo core is not installed." "⚠️"
+        log 0 "Mihomo core is not installed." "❌"
         return 1
     fi
 
@@ -252,8 +268,11 @@ start() {
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
 
-    log 2 "Generating yaml configuration..." "📄"
+    log 2 "Generating yaml configuration..." "📦"
     core_generate_yaml
+
+    log 2 "Validating yaml configuration..." "📦"
+    core_validate_yaml
 
     log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
     nft_table_add
@@ -293,17 +312,17 @@ start_core() {
         while [ "$attempt" -lt "$CORE_RESTART_MAX_RETRIES" ]; do
             "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t justclash
             exit_code=$?
-            log 1 "Restart: mihomo exited with code $exit_code" "💀"
+            log 1 "Restart: mihomo exited with code $exit_code" "❌"
 
             if [ "$exit_code" -eq 0 ]; then
                 break
             fi
 
             attempt=$((attempt + 1))
-            log 1 "Restart:  mihomo crashed, attempt $attempt of $CORE_RESTART_MAX_RETRIES" "💀"
+            log 0 "Restart:  mihomo crashed, attempt $attempt of $CORE_RESTART_MAX_RETRIES" "❌"
 
             if [ "$attempt" -ge "$CORE_RESTART_MAX_RETRIES" ]; then
-                log 1 "Restart:  Failed to restart mihomo after $CORE_RESTART_MAX_RETRIES attempts, exiting" "💀"
+                log 0 "Restart:  Failed to restart mihomo after $CORE_RESTART_MAX_RETRIES attempts, exiting" "❌"
                 exit "$exit_code"
             fi
 
@@ -312,9 +331,9 @@ start_core() {
     else
         "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
         exit_code=$?
-        log 1 "Manual start: mihomo exited with code $exit_code" "💀"
+        log 1 "Manual start: mihomo exited with code $exit_code" "❌"
         if [ "$exit_code" -ne 0 ]; then
-            log 1 "Manual start: mihomo crashed, exiting" "💀"
+            log 0 "Manual start: mihomo crashed, exiting" "❌"
             exit "$exit_code"
         fi
     fi
@@ -449,9 +468,20 @@ nft_table_add_old() {
 }
 
 nft_table_add() {
-    local tproxy_port proxy_fwmark_hex fake_ip_range
+    local update_nft_tables_at_load
+    local tproxy_port proxy_fwmark_hex fake_ip_range input_interfaces_to_tproxy_redirect
+    local block_quic_with_nft block_dot_with_nft dot_quic_with_nft
+    config_get update_nft_tables_at_load settings update_nft_tables_at_load
     config_get tproxy_port proxy tproxy_port
     config_get fake_ip_range proxy fake_ip_range
+    config_get input_interfaces_to_tproxy_redirect settings input_interfaces_to_tproxy_redirect "br-lan"
+    config_get block_quic_with_nft settings block_quic_with_nft
+    config_get block_dot_with_nft settings block_dot_with_nft
+    config_get dot_quic_with_nft settings dot_quic_with_nft
+
+    if [ "$update_nft_tables_at_load" = "0" ]; then
+        return 0
+    fi
 
     [ -z "$tproxy_port" ] && panic "tproxy_port not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range not set"
@@ -465,47 +495,65 @@ nft_table_add() {
     # Создаём таблицу, цепочку и набор адресов
     nft add table ip "$NFT_TABLE_NAME"
     nft add chain ip "$NFT_TABLE_NAME" prerouting '{ type filter hook prerouting priority mangle; policy accept; }'
+    #nft add chain ip "$NFT_TABLE_NAME" output '{ type route hook output priority mangle; policy accept; }'
+
     nft add set ip "$NFT_TABLE_NAME" fake_ips '{ type ipv4_addr; flags interval; }'
     nft add element ip "$NFT_TABLE_NAME" fake_ips { "$fake_ip_range" }
 
-    local exclude_addrs="
-        0.0.0.0/8
-        10.0.0.0/8
-        100.64.0.0/10
-        127.0.0.0/8
-        169.254.0.0/16
-        172.16.0.0/12
-        192.0.0.0/24
-        192.0.2.0/24
-        192.88.99.0/24
-        192.168.0.0/16
-        198.51.100.0/24
-        203.0.113.0/24
-        224.0.0.0/4
-        240.0.0.0/4
-    "
+    nft add set ip "$NFT_TABLE_NAME" private_ips '{ type ipv4_addr; flags interval; }'
+    nft add element ip "$NFT_TABLE_NAME" private_ips { \
+        0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, \
+        169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
+        192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
+        224.0.0.0/4, 240.0.0.0/4 }
 
-    # Исключения по адресам для трафика с br-lan
-    for addr in $exclude_addrs; do
-        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" ip daddr "$addr" return
-    done
+    #nft add set ip "$NFT_TABLE_NAME" private_ips_output '{ type ipv4_addr; flags interval; }'
+    #nft add element ip "$NFT_TABLE_NAME" private_ips_output { \
+    #    0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, \
+    #    169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
+    #    192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
+    #    224.0.0.0/4, 240.0.0.0/4 }
+
+    nft add set ip "$NFT_TABLE_NAME" inbound_interfaces '{ type ifname; }'
+    # shellcheck disable=SC2046
+    # shellcheck disable=SC2086
+    nft add element ip "$NFT_TABLE_NAME" inbound_interfaces { $(echo $input_interfaces_to_tproxy_redirect | sed 's/ /", "/g; s/^/"/; s/$/"/') }
+
+    if [ "$block_quic_with_nft" = "1" ]; then
+        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp udp dport 443 drop
+    fi
+    if [ "$block_dot_with_nft" = "1" ]; then
+        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol tcp tcp dport 853 drop
+    fi
+    if [ "$dot_quic_with_nft" = "1" ]; then
+        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp udp dport 853 drop
+    fi
+
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
 
     # Исключение по fwmark для br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" mark "$proxy_fwmark_hex" return
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
 
     # Маркируем fake IP для br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
 
     # Маркируем остальной трафик с br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
 
     # TPROXY только для трафика с br-lan и нужной меткой
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" meta mark "$NFT_FWMARK_FINAL" ip protocol tcp tproxy to 127.0.0.1:"$tproxy_port"
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname "br-lan" meta mark "$NFT_FWMARK_FINAL" ip protocol udp tproxy to 127.0.0.1:"$tproxy_port"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NFT_FWMARK_FINAL" ip protocol tcp tproxy to 127.0.0.1:"$tproxy_port"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NFT_FWMARK_FINAL" ip protocol udp tproxy to 127.0.0.1:"$tproxy_port"
 
-    # output-цепочка не создаётся и не используется!
+    # --- output ---
+    #nft add rule ip "$NFT_TABLE_NAME" output mark "$proxy_fwmark_hex" return
+    #nft add rule ip "$NFT_TABLE_NAME" output oifname "lo" return
+    #nft add rule ip "$NFT_TABLE_NAME" output ip daddr @private_ips_output return
+    #nft add rule ip "$NFT_TABLE_NAME" output ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    #nft add rule ip "$NFT_TABLE_NAME" output ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+    #nft add rule ip "$NFT_TABLE_NAME" output ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
+    #nft add rule ip "$NFT_TABLE_NAME" output ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
 
     cleanup_fwmark
     if ! ip rule list | grep -q "fwmark 0x1 lookup 100"; then
@@ -882,7 +930,7 @@ EOF
 }
 
 core_prepare_workdir() {
-    log 1 "Preparing workdir $CORE_WORKDIR_PATH" "📁"
+    log 2 "Preparing workdir $CORE_WORKDIR_PATH" "📁"
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         [ -f "$OUTPUT_YAML_CONFIG_PATH" ] && rm -f "$OUTPUT_YAML_CONFIG_PATH"
@@ -917,11 +965,11 @@ get_latest_version() {
     local check_url="$1"
     local latest_url latest_ver
     latest_url=$(curl --progress-bar -L -o /dev/null -w '%{url_effective}' "$check_url") || {
-        log 0 "Failed to get effective URL for download"
+        log 0 "Failed to get effective URL for download" "❌"
         return 1
     }
     latest_ver=$(curl --progress-bar -L "$latest_url/version.txt" | tr -d '\r\n') || {
-        log 0 "Failed to get latest version"
+        log 0 "Failed to get latest version" "❌"
         return 1
     }
     echo "$latest_ver"
@@ -958,18 +1006,18 @@ core_download() {
     log 2 "Mihomo installed at $CORE_PATH" "🚀"
 
     if ! chmod +x "$CORE_PATH"; then
-        log 0 "Failed to set executable permissions: $CORE_PATH"
+        log 0 "Failed to set executable permissions: $CORE_PATH" "❌"
     fi
 
     log 2 "Cleaning up temporary files" "🧹"
     if ! rm -f "${CORE_WORKDIR_PATH}/mihomo.gz"; then
-        log 1 "Failed to clean up temporary file: ${CORE_WORKDIR_PATH}/mihomo.gz"
+        log 0 "Failed to clean up temporary file: ${CORE_WORKDIR_PATH}/mihomo.gz" "❌"
     fi
 }
 
 core_remove() {
     if [ ! -x "$CORE_PATH" ]; then
-        log 1 "Mihomo is not installed." "⚠️"
+        log 0 "Mihomo is not installed." "❌"
         return 1
     else
         if rm -f "$CORE_PATH"; then
@@ -998,13 +1046,13 @@ core_update() {
 
     cur_ver=$(info_mihomo)
     if [ -z "$cur_ver" ]; then
-        log 0 "Update process can't be finished."
+        log 0 "Update process can't be finished." "❌"
         return 1
     fi
 
     tmp=$(get_latest_version "$check_url")
     if [ $? -eq 1 ]; then
-        log 0 "Update process can't be finished."
+        log 0 "Update process can't be finished." "❌"
         return 1
     fi
 
@@ -1028,7 +1076,7 @@ core_update() {
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log 0 "Update process can't be finished."
+            log 0 "Update process can't be finished." "❌"
             if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
                 send_telegram "Mihomo core binary was missing. Install try for version $latest_ver failed."
             fi
@@ -1047,13 +1095,13 @@ core_update() {
         log 2 "Removing current mihomo binary..." "⚠️"
         core_remove
         if [ $? -eq 1 ]; then
-            log 0 "Update process can't be finished."
+            log 0 "Update process can't be finished." "❌"
             return 1
         fi
         log 2 "Updating Mihomo to version $latest_ver" "⬆️"
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log 0 "Update process can't be finished."
+            log 0 "Update process can't be finished." "❌"
             if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
                 send_telegram "Mihomo core binary was updated. Install try for version: $cur_ver -> $latest_ver failed."
             fi
@@ -1101,12 +1149,12 @@ send_telegram() {
     http_code=$(echo "$response" | tail -n1)
 
     if [ "$curl_exit" -ne 0 ]; then
-        log 1 "Telegram: network error, curl exited with code $curl_exit" "❌"
+        log 0 "Telegram: network error, curl exited with code $curl_exit" "❌"
         return 1
     fi
 
     if [ "$http_code" != "200" ]; then
-        log 1 "Telegram: failed to send message (HTTP $http_code)" "❌"
+        log 0 "Telegram: failed to send message (HTTP $http_code)" "❌"
         return 1
     fi
 
@@ -1133,7 +1181,7 @@ core_update_cron_add() {
     local mihomo_cron_update_string
 
     if [ -z "$mihomo_cron_update_string" ]; then
-        log 1 "Cron schedule string is empty! Cron job not added." "❌"
+        log 0 "Cron schedule string is empty! Cron job not added." "❌"
         return 1
     fi
 
@@ -1184,7 +1232,7 @@ core_autorestart_cron_add() {
     local mihomo_cron_autorestart_string
 
      if [ -z "$mihomo_cron_autorestart_string" ]; then
-        log 1 "Cron schedule string is empty! Cron job not added." "❌"
+        log 0 "Cron schedule string is empty! Cron job not added." "❌"
         return 1
     fi
 
