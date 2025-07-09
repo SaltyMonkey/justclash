@@ -39,9 +39,9 @@ jobs:
         run: |
           mkdir -p ./output
           rm -f ./output/*.ipk
-          docker cp stable:/builder/bin/packages/x86_64/utilites/justclash_*.ipk /output/
-          docker cp stable:/builder/bin/packages/x86_64/luci/luci-app-justclash_*.ipk /output/
-          docker cp stable:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk /output/
+          docker cp stable:/builder/bin/packages/x86_64/utilites/justclash_*.ipk ./output/
+          docker cp stable:/builder/bin/packages/x86_64/luci/luci-app-justclash_*.ipk ./output/
+          docker cp stable:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk ./output/
 
       - name: Renaming packages
         run: |
