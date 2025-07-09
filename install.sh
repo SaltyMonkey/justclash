@@ -640,7 +640,7 @@ install_service() {
     justclash_install
 }
 
-unintall_service() {
+uninstall_service() {
     justclash_uninstall
     core_remove
 }
@@ -662,7 +662,8 @@ run() {
     print_bold_yellow "4 - Run diagnostic"
     print_bold_yellow "5 - Exit"
     while true; do
-       read -p -r "Enter your choice [1-5]: " choice
+        printf "Enter your choice [1-5]: "
+        read -r choice
        case "$choice" in
             1)
                 echo "Installing JustClash..."
@@ -670,7 +671,7 @@ run() {
                 ;;
             2)
                 echo "Uninstalling JustClash..."
-                unintall_service
+                uninstall_service
                 ;;
             3)
                 echo "Updating Mihomo Clash core..."
@@ -685,7 +686,7 @@ run() {
                 exit 0
                 ;;
             *)
-                echo "Invalid option. Please enter a number between 1 and 4."
+                echo "Invalid option. Please enter a number between 1 and 5."
                 ;;
         esac
     done
