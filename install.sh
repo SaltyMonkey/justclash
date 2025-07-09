@@ -2,7 +2,7 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/latest"
+CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest"
 CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
 CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash-owrt/releases/latest"
@@ -287,7 +287,7 @@ diagnostic_conflicts_interactive() {
     echo "  "
     print_bold_green "Checking conflicted packages..."
 
-    printf " - https-dns-proxy"
+    printf " - https-dns-proxy "
     if pkg_is_installed https-dns-proxy; then
         print_red "DETECTED!"
         print_red "Detected conflict with package: https-dns-proxy."
@@ -312,7 +312,7 @@ diagnostic_conflicts_interactive() {
         print_green "NOT FOUND"
     fi
 
-    printf " - podkop"
+    printf " - podkop "
     if pkg_is_installed podkop; then
         print_red "DETECTED!"
         print_red "Conflict detected with package: podkop."
@@ -339,7 +339,7 @@ diagnostic_conflicts_interactive() {
         print_green "NOT FOUND"
     fi
 
-    printf " - luci-app-ssclash"
+    printf " - luci-app-ssclash "
     if pkg_is_installed luci-app-ssclash; then
         print_red "DETECTED!"
         print_red "Conflict detected with package: luci-app-ssclash ."
@@ -364,7 +364,7 @@ diagnostic_conflicts_interactive() {
         print_green "NOT FOUND"
     fi
 
-    printf " - mihomo"
+    printf " - mihomo "
     if pkg_is_installed mihomo; then
         print_red "DETECTED!"
         print_red "Conflict detected with package: mihomo."
@@ -389,7 +389,7 @@ diagnostic_conflicts_interactive() {
         print_green "NOT FOUND"
     fi
 
-    printf " - sing-box"
+    printf " - sing-box "
     if pkg_is_installed sing-box; then
         print_red "DETECTED!"
         print_red "Conflict detected with package: sing-box."
@@ -440,7 +440,6 @@ detect_arch() {
 get_latest_version() {
     local check_url="$1"
     local latest_url latest_ver
-    latest_url=$(wget -q --server-response --spider "$check_url" 2>&1 | awk '/^  Location: / {print $2}')
     latest_ver=$(wget -qO- "$latest_url/version.txt" | tr -d '\r\n')
     echo "$latest_ver"
 }

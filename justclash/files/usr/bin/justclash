@@ -22,7 +22,7 @@ PROCD_MODE=0
 
 config_load justclash
 
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/latest"
+CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest"
 CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
 CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
 NO_DATA_STRING="N/A"
