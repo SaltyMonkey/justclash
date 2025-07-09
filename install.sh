@@ -56,6 +56,7 @@ check_dns() {
     fi
 
     if [ -n "$ip" ]; then
+        echo "${ip}"
         return 0
     else
         return 1
@@ -207,6 +208,7 @@ diagnostic_tools() {
         print_red "All package managers are missing."
         print_red "This may indicate unsupported, incorrect, or broken OpenWRT firmware."
         print_red "Please verify your firmware and/or install the necessary packages."
+        exit 1
     fi
 }
 
@@ -217,7 +219,7 @@ diagnostic_net() {
     check_icmp "${URL_CHECK_PING}" 4
     ping_res=$?
 
-
+    printf " - Result: "
     if [ "$ping_res" -eq 0 ]; then
        print_green "OK"
     else
@@ -241,6 +243,8 @@ diagnostic_net() {
     echo "Testing ${URL_GITHUB} using the default nameserver..."
     check_dns "${URL_GITHUB}"
     dns_default_res=$?
+
+    printf " - Result: "
     if [ "$dns_default_res" -eq 0 ]; then
         print_green "OK"
     else
@@ -268,9 +272,14 @@ diagnostic_mem() {
     print_bold_green "Checking memory requiments... "
     overlay_space=$(df /overlay | awk 'NR==2 {print $4}')
     if [ "$overlay_space" -lt "$MIN_SPACE" ]; then
+        printf " - Result: "
+        print_red "FAIL"
         print_red "Warning: Available disk space is below the required minimum of ${MIN_SPACE}."
         print_red "Installation cannot proceed due to insufficient space."
         exit 1
+    else
+        printf " - Result: "
+        print_green "OK"
     fi
 }
 
@@ -278,8 +287,9 @@ diagnostic_conflicts_interactive() {
     echo "  "
     print_bold_green "Checking conflicted packages..."
 
-    echo " - https-dns-proxy"
+    printf " - https-dns-proxy"
     if pkg_is_installed https-dns-proxy; then
+        print_red "DETECTED!"
         print_red "Detected conflict with package: https-dns-proxy."
         print_red "Do you want to remove it? yes/no"
 
@@ -298,10 +308,13 @@ diagnostic_conflicts_interactive() {
                     ;;
                 esac
         done
+    else
+        print_green "NOT FOUND"
     fi
 
-    echo " - podkop"
+    printf " - podkop"
     if pkg_is_installed podkop; then
+        print_red "DETECTED!"
         print_red "Conflict detected with package: podkop."
         print_red "JustClash and Podkop are both TPROXY software of the same type."
         print_red "You should use only one of them."
@@ -322,10 +335,13 @@ diagnostic_conflicts_interactive() {
                     ;;
                 esac
         done
+    else
+        print_green "NOT FOUND"
     fi
 
-    echo " - luci-app-ssclash"
+    printf " - luci-app-ssclash"
     if pkg_is_installed luci-app-ssclash; then
+        print_red "DETECTED!"
         print_red "Conflict detected with package: luci-app-ssclash ."
         print_red "JustClash and luci-app-ssclash are both TPROXY software of the same type."
         print_red "You should use only one of them."
@@ -344,9 +360,13 @@ diagnostic_conflicts_interactive() {
                     ;;
                 esac
         done
+    else
+        print_green "NOT FOUND"
     fi
-    echo " - mihomo"
+
+    printf " - mihomo"
     if pkg_is_installed mihomo; then
+        print_red "DETECTED!"
         print_red "Conflict detected with package: mihomo."
         print_red "JustClash already managing mihomo binary."
         print_red "You should use only one of them."
@@ -365,9 +385,13 @@ diagnostic_conflicts_interactive() {
                     ;;
                 esac
         done
+    else
+        print_green "NOT FOUND"
     fi
-    echo " - sing-box"
+
+    printf " - sing-box"
     if pkg_is_installed sing-box; then
+        print_red "DETECTED!"
         print_red "Conflict detected with package: sing-box."
         print_red "JustClash and sing-box are both TPROXY software of the same type."
         print_red "You should use only one of them."
@@ -386,7 +410,11 @@ diagnostic_conflicts_interactive() {
                     ;;
                 esac
         done
+    else
+        print_green "NOT FOUND"
     fi
+
+    echo " "
 }
 
 detect_arch() {
@@ -461,8 +489,6 @@ core_update() {
     local channel="$1"
     local cur_ver latest_ver tmp
     local check_url download_url
-    config_get mihomo_update_channel settings mihomo_update_channel
-    config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
 
     print_bold_green "Checking for Mihomo updates..."
 
@@ -497,7 +523,7 @@ core_update() {
        print_red "Error happened when trying to receive latest version data."
        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
        print_red "Failed to download core"
-       exit 1
+       return 1
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
@@ -505,7 +531,7 @@ core_update() {
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             print_red "Update process can't be finished."
-            exit 1
+            return 1
         fi
         return 0
     fi
@@ -518,13 +544,13 @@ core_update() {
         core_remove
         if [ $? -eq 1 ]; then
             print_red "Update process can't be finished."
-            exit 1
+            return 1
         fi
         echo " - Updating Mihomo to version $latest_ver"
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             print_red "Update process can't be finished."
-            exit 1
+            return 1
         fi
     else
         echo " - Mihomo is already up-to-date."
@@ -543,7 +569,7 @@ core_remove() {
             return 0
         else
             print_red "Failed to remove Mihomo binary: $CORE_PATH"
-            exit 1
+            return 1
         fi
     fi
 }
@@ -603,7 +629,7 @@ justclash_download() {
     urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
     if [ -z "$urls" ]; then
         print_red "No .ipk files found in the latest release."
-        exit 1
+        return 1
     fi
 
     echo " - Found the following .ipk files: ${urls}"
