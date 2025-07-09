@@ -1,0 +1,59 @@
+name: Build packages
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  build:
+    name: Build justclash
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Check version match
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          JUSTCLASH_VERSION=$(grep '^PKG_VERSION:=' justclash/Makefile | cut -d '=' -f 2)
+          LUCI_APP_JUSTCLASH_VERSION=$(grep '^PKG_VERSION:=' luci-app-justclash/Makefile | cut -d '=' -f 2)
+
+          echo "Justclash: $JUSTCLASH_VERSION"
+          echo "Luci-app-justclash: $LUCI_APP_JUSTCLASH_VERSION"
+          echo "Pushed tag: $TAG_VERSION"
+
+          if [ "$JUSTCLASH_VERSION" != "$TAG_VERSION" ] || [ "$LUCI_APP_JUSTCLASH_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: Version mismatch. Release build cancelled."
+            exit 1
+          fi
+
+      - name: Build and push stable
+        uses: docker/build-push-action@v6
+        with:
+          file: ./Dockerfile-stable
+          context: .
+          tags: justclash/build:stable
+      - name: Create Stable Docker container
+        run: docker create --name stable justclash/build:stable
+
+      - name: Copy files from stable Docker container
+        run: |
+          mkdir -p ./output
+          rm -f ./output/*.ipk
+          docker cp stable:/builder/bin/packages/x86_64/utilites/justclash_*.ipk /output/
+          docker cp stable:/builder/bin/packages/x86_64/luci/luci-app-justclash_*.ipk /output/
+          docker cp stable:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk /output/
+
+      - name: Renaming packages
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          mv ./output/justclash_*.ipk "./output/justclash_${VERSION}.ipk"
+          mv ./output/luci-app-justclash_*.ipk "./output/luci-app-justclash_${VERSION}.ipk"
+          mv ./output/luci-i18n-justclash-ru_*.ipk "./output/luci-i18n-justclash-ru_${VERSION}.ipk"
+
+      - name: Remove Docker stable container
+        run: docker rm stable
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./output/*.ipk
