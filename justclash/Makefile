@@ -17,7 +17,7 @@ define Package/$(PKG_NAME)
   TITLE:=JustClash
   DEPENDS:=+nftables +curl +kmod-nft-tproxy
   CONFLICTS:=mihomo podkop https-dns-proxy
-  TITLE:=Clash Routing App
+  TITLE:=Clash Routing service
   PKGARCH:=all
 endef
 
