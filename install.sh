@@ -2,32 +2,22 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-CORE_LATEST_RELEASE_URL="https://api.github.com/repos/metacubex/mihomo/releases/latest"
-CORE_LATEST_ALPHA_RELEASE_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha"
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download"
+CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/latest"
+CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
 CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
+JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash-owrt/releases/latest"
 
 URL_GITHUB="github.com"
-
 URL_CHECK_PING="77.88.8.8"
 URL_CHECK_PING_BACKUP="8.8.8.8"
 MIN_SPACE=34768
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
-
 TMP_DOWNLOAD_PATH="/tmp/justclash/downloads"
-
-#Flags
-FLAG_INSTALL_WITHOUT_MIHOMO_CORE=0
-FLAG_DISABLE_DIAGNOSTIC=0
 
 rm -rf "$TMP_DOWNLOAD_PATH"
 mkdir -p "$TMP_DOWNLOAD_PATH"
-
-is_bin_installed() {
-    command -v "$1" >/dev/null 2>&1
-}
 
 print_bold_yellow() {
     local text="$1"
@@ -92,16 +82,75 @@ info_device() {
     [ -f /tmp/sysinfo/model ] && cat /tmp/sysinfo/model || echo "${NO_DATA_STRING}"
 }
 
+info_mihomo() {
+    if [ ! -x "$CORE_PATH" ]; then
+        echo "$NO_DATA_STRING"
+    else
+       "$CORE_PATH" -v 2>/dev/null | awk '{ print $3 }'
+    fi
+}
+
+is_bin_installed() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 banner() {
-   local model openwrt
+    local model openwrt
     model=$(info_device)
     openwrt=$(info_openwrt)
-    print_bold_yellow "---------------------"
-    print_bold_yellow "JustClash Init Script"
-    print_bold_yellow "---------------------"
+    print_bold_yellow "-----------------------------"
+    print_bold_yellow "    JustClash Init Script"
+    print_bold_yellow "-----------------------------"
     print_bold_yellow "OpenWRT:      ${openwrt}"
     print_bold_yellow "Device model: ${model}"
+    print_bold_yellow "-----------------------------"
     echo "   "
+}
+
+pkg_is_installed() {
+    local pkg="$1"
+
+    if [ -z "$pkg" ]; then
+        echo "Usage: pkg_is_installed <package_name>"
+        return 1
+    fi
+
+    if is_bin_installed apk; then
+        apk info | grep -qw "$pkg"
+    else
+        opkg list-installed | grep -qw "$pkg"
+    fi
+}
+
+pkg_remove() {
+    local pkg="$1"
+
+    if [ -z "$pkg" ]; then
+        echo "Usage: pkg_remove <package_name>"
+        return 1
+    fi
+
+    if is_bin_installed apk; then
+        apk del "$pkg"
+    else
+        opkg remove --force-depends "$pkg"
+    fi
+}
+
+pkg_install() {
+    local pkg_file
+    pkg_file="$1"
+
+    if [ -z "$pkg_file" ]; then
+        echo "Usage: pkg_install <package_file.ipk/apk>"
+        return 1
+    fi
+
+    if is_bin_installed apk; then
+        apk add --allow-untrusted "$pkg_file"
+    else
+        opkg install --force-reinstall "$pkg_file"
+    fi
 }
 
 diagnostic_tools() {
@@ -228,8 +277,9 @@ diagnostic_mem() {
 diagnostic_conflicts_interactive() {
     echo "  "
     print_bold_green "Checking conflicted packages..."
+
     echo " - https-dns-proxy"
-    if opkg list-installed | grep -q https-dns-proxy; then
+    if pkg_is_installed https-dns-proxy; then
         print_red "Detected conflict with package: https-dns-proxy."
         print_red "Do you want to remove it? yes/no"
 
@@ -237,7 +287,9 @@ diagnostic_conflicts_interactive() {
                 read -r -p '' inp
                 case $inp in
                     yes|y|Y)
-                        opkg remove --force-depends luci-app-https-dns-proxy https-dns-proxy luci-i18n-https-dns-proxy*
+                        pkg_remove luci-app-https-dns-proxy
+                        pkg_remove https-dns-proxy
+                        pkg_remove luci-i18n-https-dns-proxy*
                         break
                         ;;
                     *)
@@ -249,17 +301,19 @@ diagnostic_conflicts_interactive() {
     fi
 
     echo " - podkop"
-    if opkg list-installed | grep -q podkop; then
+    if pkg_is_installed podkop; then
         print_red "Conflict detected with package: podkop."
         print_red "JustClash and Podkop are both TPROXY software of the same type."
-        print_red "You must use only one of them."
+        print_red "You should use only one of them."
         print_red "Do you want to remove Podkop? yes/no"
 
         while true; do
                 read -r -p '' inpp
                 case $inpp in
                 yes|y|Y)
-                    opkg remove --force-depends luci-app-podkop podkop luci-i18n-podkop*
+                    pkg_remove luci-app-podkop
+                    pkg_remove podkop
+                    pkg_remove luci-i18n-podkop*
                     break
                     ;;
                 *)
@@ -269,13 +323,69 @@ diagnostic_conflicts_interactive() {
                 esac
         done
     fi
-}
 
-core_info() {
-    if [ ! -x "$CORE_PATH" ]; then
-        echo "${NO_DATA_STRING}"
-    else
-       "${CORE_PATH}" -v 2>/dev/null | head -n1 | awk '{ print $3 }'
+    echo " - luci-app-ssclash"
+    if pkg_is_installed luci-app-ssclash; then
+        print_red "Conflict detected with package: luci-app-ssclash ."
+        print_red "JustClash and luci-app-ssclash are both TPROXY software of the same type."
+        print_red "You should use only one of them."
+        print_red "Do you want to remove luci-app-ssclash? yes/no"
+
+        while true; do
+                read -r -p '' inpp
+                case $inpp in
+                yes|y|Y)
+                    pkg_remove luci-app-ssclash
+                    break
+                    ;;
+                *)
+                    echo "Exit"
+                    exit 1
+                    ;;
+                esac
+        done
+    fi
+    echo " - mihomo"
+    if pkg_is_installed mihomo; then
+        print_red "Conflict detected with package: mihomo."
+        print_red "JustClash already managing mihomo binary."
+        print_red "You should use only one of them."
+        print_red "Do you want to remove mihomo? yes/no"
+
+        while true; do
+                read -r -p '' inpp
+                case $inpp in
+                yes|y|Y)
+                    pkg_remove mihomo
+                    break
+                    ;;
+                *)
+                    echo "Exit"
+                    exit 1
+                    ;;
+                esac
+        done
+    fi
+    echo " - sing-box"
+    if pkg_is_installed sing-box; then
+        print_red "Conflict detected with package: sing-box."
+        print_red "JustClash and sing-box are both TPROXY software of the same type."
+        print_red "You should use only one of them."
+        print_red "Do you want to remove sing-box? yes/no"
+
+        while true; do
+                read -r -p '' inpp
+                case $inpp in
+                yes|y|Y)
+                    pkg_remove sing-box
+                    break
+                    ;;
+                *)
+                    echo "Exit"
+                    exit 1
+                    ;;
+                esac
+        done
     fi
 }
 
@@ -302,64 +412,85 @@ detect_arch() {
 get_latest_version() {
     local check_url="$1"
     local latest_url latest_ver
-    latest_url=$(curl -sL -o /dev/null -w '%{url_effective}' "$check_url")
-    latest_ver=$(curl -sL "$latest_url/version.txt" | tr -d '\r\n')
+    latest_url=$(wget -q --server-response --spider "$check_url" 2>&1 | awk '/^  Location: / {print $2}')
+    latest_ver=$(wget -qO- "$latest_url/version.txt" | tr -d '\r\n')
     echo "$latest_ver"
 }
 
 core_download() {
-    local arch file_name base_url param_version download_url
+    local arch version file_name base_url param_version download_url
     param_version="$2"
     download_url="$1"
 
-    print_bold_green "Downloading Mihomo binary..."
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        print_red "Usage: core_download <download_url> <version>"
+        return 1
+    fi
 
+    arch=$(detect_arch)
     mkdir -p "$TMP_DOWNLOAD_PATH"
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
     base_url="${download_url}/${file_name}"
 
-    echo "Downloading mihomo binary"
-    curl -sL -o "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
-        echo "Failed to download file."
+    echo " - Downloading mihomo binary"
+    wget -q --show-progress -O "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
+        print_red "Failed to download file."
         exit 1
     }
 
-    echo "Extracting to $CORE_PATH"
+    echo " - Extracting to $CORE_PATH"
     gunzip -c "${TMP_DOWNLOAD_PATH}/mihomo.gz" > "$CORE_PATH" || {
-        echo "Failed to extract file."
+        print_red "Failed to extract file."
         exit 1
     }
 
-    chmod +x "$CORE_PATH"
+    echo " - Mihomo installed at $CORE_PATH"
 
-    echo "Cleaning up temporary files"
-    rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"
+    if ! chmod +x "$CORE_PATH"; then
+        print_red "Failed to set executable permissions: $CORE_PATH"
+    fi
 
-    print_green "Mihomo installed at $CORE_PATH"
+    echo " - Cleaning up temporary files" "🧹"
+    if ! rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"; then
+        print_red "Failed to clean up temporary file: ${TMP_DOWNLOAD_PATH}/mihomo.gz"
+    fi
 }
 
 core_update() {
-    local cur_ver latest_ver tmp mihomo_update_channel
-    mihomo_update_channel="$1"
+    local channel="$1"
+    local cur_ver latest_ver tmp
     local check_url download_url
+    config_get mihomo_update_channel settings mihomo_update_channel
+    config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
 
     print_bold_green "Checking for Mihomo updates..."
 
-    if [ "$mihomo_update_channel" = "alpha" ]; then
-        check_url=$CORE_LATEST_ALPHA_RELEASE_URL
+    if [ "$channel" = "alpha" ]; then
+        check_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
     else
-        check_url=$CORE_LATEST_RELEASE_URL
+        check_url=$CORE_RELEASE_URL_PARTIAL
     fi
 
     cur_ver=$(info_mihomo)
+    if [ -z "$cur_ver" ]; then
+        print_red "Update process can't be finished."
+        exit 1
+    fi
+
     tmp=$(get_latest_version "$check_url")
+    if [ $? -eq 1 ]; then
+        print_red "Update process can't be finished."
+        exit 1
+    fi
+
+    #TODO: Fix incorrect output handle (github isnt returning empty body)
     latest_ver=$(echo "$tmp" | sed -n 1p)
 
-    if [ "$mihomo_update_channel" = "alpha" ]; then
+    if [ "$channel" = "alpha" ]; then
         download_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
     else
-        download_url=$CORE_RELEASE_URL_PARTIAL/$latest_ver
+        download_url=$CORE_RELEASE_URL_PARTIAL_NO_TAG/$latest_ver
     fi
 
     if [ -z "$latest_ver" ]; then
@@ -370,97 +501,70 @@ core_update() {
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
-        echo "Mihomo is not installed. Installing version $latest_ver."
-        core_download "$download_url" "$latest_ver" || return 1
+        echo " - Mihomo is not installed. Installing version $latest_ver."
+        core_download "$download_url" "$latest_ver"
+        if [ $? -eq 1 ]; then
+            print_red "Update process can't be finished."
+            exit 1
+        fi
         return 0
     fi
 
-    echo "Current Mihomo version: $cur_ver"
-    echo "Latest Mihomo version: $latest_ver"
+    echo " - Current Mihomo version: $cur_ver"
+    echo " - Latest Mihomo version: $latest_ver"
 
     if [ "$cur_ver" != "$latest_ver" ]; then
-        echo "Removing current mihomo binary..."
+        echo " - Removing current mihomo binary..."
         core_remove
-        echo "Updating Mihomo to version $latest_ver"
-        core_download "$download_url" "$latest_ver" || return 1
+        if [ $? -eq 1 ]; then
+            print_red "Update process can't be finished."
+            exit 1
+        fi
+        echo " - Updating Mihomo to version $latest_ver"
+        core_download "$download_url" "$latest_ver"
+        if [ $? -eq 1 ]; then
+            print_red "Update process can't be finished."
+            exit 1
+        fi
     else
-        print_green "Mihomo is already up-to-date."
+        echo " - Mihomo is already up-to-date."
     fi
+
+    return 0
 }
 
 core_remove() {
     if [ ! -x "$CORE_PATH" ]; then
-        print_green "Mihomo is not installed."
+        print_red "Mihomo is already not installed."
         return 1
     else
-        rm -f "$CORE_PATH"
-        print_green "Mihomo is removed."
-        return 0
+        if rm -f "$CORE_PATH"; then
+            echo " - Mihomo is removed."
+            return 0
+        else
+            print_red "Failed to remove Mihomo binary: $CORE_PATH"
+            exit 1
+        fi
     fi
 }
 
+justclash_install() {
+    echo "  "
+    print_bold_green "Installing JustClash packages..."
+    for ipk_file in "$TMP_DOWNLOAD_PATH"/*.ipk; do
+        if [ -f "$ipk_file" ]; then
+            echo " - Installing $ipk_file"
+            pkg_install "$ipk_file" || print_red "Failed to install $ipk_file"
+        fi
+    done
 
-pkg_is_installed() {
-    local pkg
-    local pkgcommand=""
-    pkg="$1"
-
-    if command -v apk >/dev/null 2>&1; then
-        pkgcommand="apk info"
-    else
-        pkgcommand="opkg list-installed"
-    fi
-
-    if $pkgcommand | grep -qw "$pkg"; then
-        return 0
-    else
-        return 1
-    fi
+    echo " - All new .ipk packages installed."
 }
 
-pkg_remove() {
-    local pkg
-    local pkgcommand=""
-    pkg="$1"
-
-    if command -v apk >/dev/null 2>&1; then
-        pkgcommand="apk remove "
-    else
-        pkgcommand="opkg remove --force-depends "
-    fi
-
-    $pkgcommand "$pkg"
-}
-
-justclash_download() {
-    print_red "NOT IMPLEMENTED YET"
-    exit 1;
-}
-
-install() {
-
-    mkdir -p "${TMP_DOWNLOAD_PATH}"
-
-    diagnostic_tools
-
-    if [ "$FLAG_DISABLE_DIAGNOSTIC" -ne 1 ]; then
-        diagnostic_net
-        diagnostic_mem
-        diagnostic_conflicts_interactive
-    fi
-
-    if [ "$FLAG_INSTALL_WITHOUT_MIHOMO_CORE" -ne 1 ]; then
-        core_update "alpha"
-    fi
-
-    justclash_download
-}
-
-# TODO: Finish uninstall
-uninstall() {
+justclash_uninstall() {
     local jc_is_installed lajc_is_installed
     echo "  "
-    print_bold_green "Uninstalling everything..."
+    print_bold_green "Checking installed JustClash packages..."
 
     pkg_is_installed justclash
     jc_is_installed="$?"
@@ -468,6 +572,7 @@ uninstall() {
         echo " - JustClash package was found. Removing..."
         pkg_remove justclash
     fi
+
     pkg_is_installed luci-app-justclash
     lajc_is_installed="$?"
     if [ "$lajc_is_installed" -eq 0 ]; then
@@ -485,33 +590,95 @@ uninstall() {
     fi
 }
 
-# TODO: Finish install
-justclash_install() {
-    print_red "Not implemented yet"
+justclash_download() {
+    if [ -z "$JUSTCLASH_RELEASE_URL_API" ] || [ -z "$TMP_DOWNLOAD_PATH" ]; then
+        print_red "Usage: justclash_download_ipk requires JUSTCLASH_RELEASE_URL_API and TMP_DOWNLOAD_PATH to be set"
+        return 1
+    fi
+
+    print_bold_green "Downloading justClash packages..."
+
+    echo " - Fetching .ipk links from latest JustClash release" "🔍"
+    local urls
+    urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
+    if [ -z "$urls" ]; then
+        print_red "No .ipk files found in the latest release."
+        exit 1
+    fi
+
+    echo " - Found the following .ipk files: ${urls}"
+
+    local file
+    for file in $urls; do
+        echo " - Downloading $file"
+        wget --show-progress -P "$TMP_DOWNLOAD_PATH" "$file" || {
+            print_red "Failed to download $file"
+            continue
+        }
+    done
+
+    echo " - All .ipk files saved to $TMP_DOWNLOAD_PATH"
+
+    for ipk_file in "$TMP_DOWNLOAD_PATH"/*.ipk; do
+        if [ -f "$ipk_file" ]; then
+            echo " - Installing $ipk_file"
+            pkg_install "$ipk_file" || print_red "Failed to install $ipk_file"
+        fi
+    done
+
+    echo " - All new .ipk packages downloaded."
+}
+
+install_service() {
+    mkdir -p "${TMP_DOWNLOAD_PATH}"
+    diagnostic_tools
+    diagnostic_net
+    diagnostic_mem
+    diagnostic_conflicts_interactive
+    core_update "alpha"
+    justclash_download
+    justclash_install
+}
+
+unintall_service() {
+    justclash_uninstall
+    core_remove
+}
+
+diagnostic() {
+    diagnostic_tools
+    diagnostic_net
+    diagnostic_mem
+    diagnostic_conflicts_interactive
 }
 
 run() {
+    clear_screen
     banner
     print_bold_yellow "JustClash Setup Menu"
     print_bold_yellow "1 - Install JustClash package"
     print_bold_yellow "2 - Uninstall JustClash package"
     print_bold_yellow "3 - Update/Download latest proxy core"
-    print_bold_yellow "4 - Run network diagnostic"
+    print_bold_yellow "4 - Run diagnostic"
     print_bold_yellow "5 - Exit"
     while true; do
-       read -p -r "Enter your choice [1-4]: " choice
+       read -p -r "Enter your choice [1-5]: " choice
        case "$choice" in
             1)
                 echo "Installing JustClash..."
-                install
+                install_service
                 ;;
             2)
                 echo "Uninstalling JustClash..."
-                uninstall
+                unintall_service
                 ;;
             3)
                 echo "Updating Mihomo Clash core..."
                 core_update "alpha"
+                ;;
+            4)
+                echo "Starting diagnostic..."
+                diagnostic
                 ;;
             5)
                 echo "Exiting..."
@@ -525,15 +692,3 @@ run() {
 }
 
 run
-
-for arg in "$@"; do
-    # shellcheck disable=SC2249
-    case "$arg" in
-        --disable_diagnostic)
-            FLAG_DISABLE_DIAGNOSTIC=1
-            ;;
-        --install-without-mihomo-core)
-            FLAG_INSTALL_WITHOUT_MIHOMO_CORE=1
-            ;;
-    esac
-done
