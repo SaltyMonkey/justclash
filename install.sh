@@ -439,8 +439,8 @@ detect_arch() {
 
 get_latest_version() {
     local check_url="$1"
-    local latest_url latest_ver
-    latest_ver=$(wget -qO- "$latest_url/version.txt" | tr -d '\r\n')
+    local latest_ver
+    latest_ver=$(wget -qO- "$check_url/version.txt" | tr -d '\r\n')
     echo "$latest_ver"
 }
 
