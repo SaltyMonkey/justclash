@@ -461,7 +461,7 @@ core_download() {
     base_url="${download_url}/${file_name}"
 
     echo " - Downloading mihomo binary"
-    wget -q --show-progress -O "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
+    wget -O "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
         print_red "Failed to download file."
         exit 1
     }
@@ -636,7 +636,7 @@ justclash_download() {
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        wget --show-progress -P "$TMP_DOWNLOAD_PATH" "$file" || {
+        wget "$TMP_DOWNLOAD_PATH" -O "$file" || {
             print_red "Failed to download $file"
             continue
         }
