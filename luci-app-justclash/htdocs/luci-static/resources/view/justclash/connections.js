@@ -108,7 +108,6 @@ return view.extend({
                 table.appendChild(row);
                 rowMap.set(key, row);
             } else {
-                // Обновляем содержимое ячеек
                 const connObj = formatConnection(conn);
                 const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
                 const chainsStr = conn.chains.join(", ");
@@ -162,7 +161,6 @@ return view.extend({
                         updateRow(conn);
                     }
 
-                    // Удаляем строки, которых больше нет в данных
                     for (const key of rowMap.keys()) {
                         if (!seenKeys.has(key)) {
                             table.removeChild(rowMap.get(key));
@@ -170,7 +168,6 @@ return view.extend({
                         }
                     }
 
-                    // Сообщение "Нет активных соединений"
                     if (rowMap.size === 0) {
                         if (!this.noConnectionsMsg) {
                             this.noConnectionsMsg = E("div", { class: "flex-row" }, [

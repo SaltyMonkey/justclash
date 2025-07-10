@@ -37,7 +37,6 @@ return view.extend({
         const selectedBlockRuleSetsNames = common.valueToArray(section.enabled_blocklist);
         const domainBlockRoutes = common.valueToArray(section.additional_domain_blockroute);
         const destipBlockRoutes = common.valueToArray(section.additional_destip_blockroute);
-        //const disableQuick = s.disable_quic;
         selectedBlockRuleSetsNames.forEach(ruleset => {
             const rs = rulesets.availableBlockRulesets.find(x => ruleset === x.yamlName);
             if (rs) {
@@ -272,28 +271,28 @@ return view.extend({
         rulesets.availableRuleSets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
-        o.description = _("Predefined RULE-SET lists, select ones which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
+        o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
         o.optional = true;
 
         o = s.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
-        o.description = _("Each element is one DOMAIN-SUFFIX rule to route through proxy with mihomo syntax.");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax.");
         o.optional = true;
         o.validate = function (section_id, value) {
             return (common.isValidDomainSuffix(value));
         };
 
         o = s.option(form.DynamicList, "additional_destip_route", _("IP-CIDR:"));
-        o.description = _("Each element is one IP-CIDR rule to route through proxy with mihomo syntax. IPV4 only right now.");
+        o.description = _("Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now.");
         o.optional = true;
         o.datatype = "cidr4";
 
         o = s.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
-        o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is an SRC-IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now.");
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
-        s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load-balancing)."));
+        s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing)."));
         s2.anonymous = true;
         s2.addremove = true;
 
@@ -329,20 +328,16 @@ return view.extend({
         o.validate = function (section_id, value) {
             if (!value) return _("Field must not be empty");
 
-            // Разбиваем по запятой, убираем пробелы вокруг каждого элемента
             let arr = value.split(",").map(s => s.trim()).filter(s => s.length > 0);
 
-            // Если после фильтрации нет ни одного значения — ошибка
             if (arr.length === 0) return _("Field must not be empty");
 
-            // Проверяем каждое имя
             for (let name of arr) {
                 if (!common.isValidSimpleName(name)) {
                     return _("Name must contain only lowercase letters, digits, and underscores");
                 }
             }
 
-            // Всё прошло — валидно
             return true;
         };
 
@@ -390,7 +385,7 @@ return view.extend({
         s3.addremove = false;
 
         o = s3.option(form.DynamicList, "additional_domain_direct", _("DOMAIN-SUFFIX pass:"));
-        o.description = _("Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax).");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax).");
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -398,7 +393,7 @@ return view.extend({
         };
 
         o = s3.option(form.DynamicList, "domain_keyword_direct", _("DOMAIN-KEYWORD pass:"));
-        o.description = _("Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax).");
+        o.description = _("Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax).");
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -406,7 +401,7 @@ return view.extend({
         };
 
         o = s3.option(form.DynamicList, "additional_domain_regexp_direct", _("DOMAIN-REGEX pass:"));
-        o.description = _("Each element is one DOMAIN-REGEX rule to pass (mihomo syntax).");
+        o.description = _("Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax).");
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -414,13 +409,13 @@ return view.extend({
         };
 
         o = s3.option(form.DynamicList, "additional_srcip_direct", _("SRC-IP-CIDR pass:"));
-        o.description = _("Each element is one SRC-IP-CIDR rule to pass with proxy (mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.");
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
         o = s3.option(form.DynamicList, "additional_destip_direct", _("IP-CIDR pass:"));
-        o.description = _("Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.");
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
@@ -432,10 +427,10 @@ return view.extend({
         rulesets.availableBlockRulesets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
-        o.description = _("Predefined RULE-SET lists with ADS/badware, select ones which you want to block with proxy. Leave empty if you don't want block anything.");
+        o.description = _("Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything.");
 
         o = s4.option(form.DynamicList, "additional_domain_blockroute", _("DOMAIN-SUFFIX block:"));
-        o.description = _("Each element is one DOMAIN-SUFFIX rule to block with proxy (mihomo syntax).");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax).");
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -443,7 +438,7 @@ return view.extend({
         };
 
         o = s4.option(form.DynamicList, "additional_destip_blockroute", _("IP-CIDR block:"));
-        o.description = _("Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now.");
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";

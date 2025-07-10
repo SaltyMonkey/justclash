@@ -13,6 +13,12 @@ msgstr ""
 msgid "Service status:"
 msgstr ""
 
+msgid "System version:"
+msgstr ""
+
+msgid "Device model:"
+msgstr ""
+
 msgid "Service package version:"
 msgstr ""
 
@@ -61,13 +67,40 @@ msgstr ""
 msgid "Edit DNS server at startup:"
 msgstr ""
 
-msgid "If enabled, service will edit dns server in dnsmasq configuration at start."
+msgid "If enabled, the service will edit DNS server in dnsmasq configuration at start."
 msgstr ""
 
 msgid "Edit NFT tables at startup:"
 msgstr ""
 
-msgid "If enabled, service creates NFT tables to redirect traffic to the TPROXY port."
+msgid "Block QUIC from clients:"
+msgstr ""
+
+msgid "Block DoT from clients:"
+msgstr ""
+
+msgid "Block DoQ from clients:"
+msgstr ""
+
+msgid "Source Network Interface"
+msgstr ""
+
+msgid "Select the network interface from which the traffic will originate"
+msgstr ""
+
+msgid "Enable automatic restart for bad interface:"
+msgstr ""
+
+msgid "When enabled, service will be restarted when selected interfaces will be reconnected."
+msgstr ""
+
+msgid "Interface for monitoring"
+msgstr ""
+
+msgid "Select the WAN interfaces to be monitored for automatic service restart."
+msgstr ""
+
+msgid "If enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
 msgstr ""
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
@@ -76,40 +109,40 @@ msgstr ""
 msgid "Mihomo autorestart:"
 msgstr ""
 
-msgid "Core automation"
+msgid "Automation"
 msgstr ""
 
-msgid "When enabled service will configure autorestart mihomo by cron string."
+msgid "When enabled, the service will configure Mihomo autorestart by cron string."
 msgstr ""
 
 msgid "Mihomo autoupdate:"
 msgstr ""
 
-msgid "Mode for mihomo autoupdate job."
+msgid "Mode for Mihomo autoupdate job."
 msgstr ""
 
-msgid "Telegram notify for mihomo autorestart:"
+msgid "Telegram notify for Mihomo autorestart:"
 msgstr ""
 
-msgid "When enabled service will send telegram notification for mihomo autorestart cron job."
+msgid "When enabled, the service will send Telegram notification for Mihomo autorestart cron job."
 msgstr ""
 
-msgid "Telegram notify for mihomo autoupdate:"
+msgid "Telegram notify for Mihomo autoupdate:"
 msgstr ""
 
-msgid "When enabled service will send telegram notification for mihomo autoupdate cron job."
+msgid "When enabled, the service will send Telegram notification for Mihomo autoupdate cron job."
 msgstr ""
 
 msgid "Mihomo autorestart cron:"
 msgstr ""
 
-msgid "Special cron string for mihomo autorestart job."
+msgid "Special cron string for Mihomo autorestart job."
 msgstr ""
 
 msgid "Mihomo autoupdate cron:"
 msgstr ""
 
-msgid "Special cron string for mihomo autoupdate job."
+msgid "Special cron string for Mihomo autoupdate job."
 msgstr ""
 
 msgid "Credentials"
@@ -118,7 +151,7 @@ msgstr ""
 msgid "Telegram chat ID:"
 msgstr ""
 
-msgid "Telegram chat id where to send notification."
+msgid "Telegram chat ID where to send notification."
 msgstr ""
 
 msgid "Telegram bot token:"
@@ -127,14 +160,13 @@ msgstr ""
 msgid "Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!"
 msgstr ""
 
-
-msgid "Core settings"
+msgid "Basic settings"
 msgstr ""
 
 msgid "Logging level:"
 msgstr ""
 
-msgid "Set up logging level in mihomo core."
+msgid "Set up logging level in Mihomo core."
 msgstr ""
 
 msgid "Tproxy port:"
@@ -155,19 +187,19 @@ msgstr ""
 msgid "TCP concurrent:"
 msgstr ""
 
-msgid "Enabling concurrent TCP connection attempts for each request."
+msgid "Enable concurrent TCP connection attempts for each request."
 msgstr ""
 
 msgid "External controller port:"
 msgstr ""
 
-msgid "API server port for external controller."
+msgid "API server port for the external controller."
 msgstr ""
 
 msgid "Global client fingerprint:"
 msgstr ""
 
-msgid "Client fingerprint for protocols which supports it."
+msgid "Client fingerprint for protocols that support it."
 msgstr ""
 
 msgid "Keep alive idle:"
@@ -179,8 +211,8 @@ msgstr ""
 msgid "Keep alive interval:"
 msgstr ""
 
-msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive-idle."
-msgstr "
+msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle."
+msgstr ""
 
 msgid "Cache profile data:"
 msgstr ""
@@ -191,13 +223,13 @@ msgstr ""
 msgid "Cache Fake IP:"
 msgstr ""
 
-msgid "Cache fake ip data when possible."
+msgid "Cache fake IP data when possible."
 msgstr ""
 
 msgid "Excluded from sniffer domains:"
 msgstr ""
 
-msgid "Domains excluded from detailed analyze when possible. Sometimes can help with errors in apps."
+msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr ""
 
 msgid "NTP settings"
@@ -206,7 +238,7 @@ msgstr ""
 msgid "Enable NTP client:"
 msgstr ""
 
-msgid "Enable inbuild in proxy NTP client."
+msgid "Enable built-in NTP client in proxy."
 msgstr ""
 
 msgid "Endpoint NTP server:"
@@ -227,7 +259,7 @@ msgstr ""
 msgid "Write to system:"
 msgstr ""
 
-msgid "Try to correct system time from NTP server."
+msgid "Try to correct system time using the NTP server."
 msgstr ""
 
 msgid "DNS settings"
@@ -242,7 +274,7 @@ msgstr ""
 msgid "Use system hosts:"
 msgstr ""
 
-msgid "Load dns entries from system if possible."
+msgid "Load DNS entries from system if possible."
 msgstr ""
 
 msgid "Fake IP range:"
@@ -251,13 +283,13 @@ msgstr ""
 msgid "Default nameservers:"
 msgstr ""
 
-msgid "Default nameservers which being used at start. Recommended to use UDP ones."
+msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr ""
 
 msgid "Direct nameservers:"
 msgstr ""
 
-msgid "Direct nameservers which being used for DIRECT rules."
+msgid "Direct nameservers used for DIRECT rules."
 msgstr ""
 
 msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'."
@@ -266,19 +298,16 @@ msgstr ""
 msgid "Proxy nameservers:"
 msgstr ""
 
-msgid "Proxy nameservers which being used for proxy rules."
+msgid "Proxy nameservers used for proxy rules."
 msgstr ""
 
 msgid "Nameservers:"
 msgstr ""
 
-msgid "nameserver_description"
-msgstr ""
-
 msgid "Skip fake IP for domains:"
 msgstr ""
 
-msgid "Exclude selected domains from Fake IP cache. Can help sometimes with bugs in apps."
+msgid "Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps."
 msgstr ""
 
 msgid "Routing mark:"
@@ -317,22 +346,22 @@ msgstr ""
 msgid "DOMAIN-SUFFIX:"
 msgstr ""
 
-msgid "Predefined RULE-SET lists, select ones which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
+msgid "Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
 msgstr ""
 
 msgid "IP-CIDR:"
 msgstr ""
 
-msgid "Each element is one DOMAIN-SUFFIX rule to route through proxy with mihomo syntax."
+msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax."
 msgstr ""
 
-msgid "Each element is one IP-CIDR rule to route through proxy with mihomo syntax. IPV4 only right now."
+msgid "Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
 msgstr ""
 
 msgid "Proxy groups:"
 msgstr ""
 
-msgid "Group proxies for special routing (fallback, load-balancing)."
+msgid "Group proxies for special routing (fallback, load balancing)."
 msgstr ""
 
 msgid "Proxy group name."
@@ -368,34 +397,37 @@ msgstr ""
 msgid "DOMAIN-SUFFIX pass:"
 msgstr ""
 
-msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
+msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax)."
 msgstr ""
 
 msgid "DOMAIN-KEYWORD pass:"
 msgstr ""
 
-msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
+msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax)."
 msgstr ""
 
 msgid "DOMAIN-REGEX pass:"
 msgstr ""
 
-msgid "Each element is one DOMAIN-REGEX rule to pass (mihomo syntax)."
+msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax)."
 msgstr ""
 
 msgid "SRC-IP-CIDR pass:"
 msgstr ""
 
-msgid "Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
 msgstr ""
 
 msgid "IP-CIDR pass:"
 msgstr ""
 
-msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgid "Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
 msgstr ""
 
-msgid "Each element is one SRC-IP-CIDR rule to pass with proxy (mihomo syntax). IPV4 only right now."
+msgid "SRC-IP-CIDR block:"
+msgstr ""
+
+msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
 msgstr ""
 
 msgid "REJECT rules:"
@@ -404,7 +436,7 @@ msgstr ""
 msgid "Additional rules for REJECT rules. Will be handled before proxies and proxy groups."
 msgstr ""
 
-msgid "Predefined RULE-SET lists with ADS/badware, select ones which you want to block with proxy. Leave empty if you don't want block anything."
+msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
 msgstr ""
 
 msgid "Disable QUIC:"
@@ -416,20 +448,62 @@ msgstr ""
 msgid "DOMAIN-SUFFIX block:"
 msgstr ""
 
-msgid "Each element is one DOMAIN-SUFFIX rule to block with proxy (mihomo syntax)."
+msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax)."
 msgstr ""
 
 msgid "IP-CIDR block:"
 msgstr ""
 
-msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
+msgid "Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
 msgstr ""
 
 msgid "FINAL rule:"
 msgstr ""
 
-msgid "Additional sewttings for the final rules applied after all others. Use it to override or enforce specific behaviors."
+msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
+msgstr ""
+
+msgid "This field cannot be empty"
 msgstr ""
 
 msgid "Destination:"
+msgstr ""
+
+msgid "Proto"
+msgstr ""
+
+msgid "Connection"
+msgstr ""
+
+msgid "Host/Sniff"
+msgstr ""
+
+msgid "Chains"
+msgstr ""
+
+msgid "Destination"
+msgstr ""
+
+msgid "Rule"
+msgstr ""
+
+msgid "No active connections"
+msgstr ""
+
+msgid "Connection error"
+msgstr ""
+
+msgid "Can't connect to proxy API"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "No logs"
+msgstr ""
+
+msgid "To end"
+msgstr ""
+
+msgid "Logs view"
 msgstr ""

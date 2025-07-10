@@ -127,7 +127,7 @@ return view.extend({
 
                     try {
                         await fs.exec(common.initdPath, [action]);
-                        await this.updateServiceStatus(); // если updateServiceStatus тоже async
+                        await this.updateServiceStatus();
                     } catch (e) {
                         ui.addNotification(_("Error"), e.message, "danger");
                     } finally {

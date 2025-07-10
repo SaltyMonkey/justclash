@@ -45,14 +45,12 @@ return baseclass.extend({
         let server = "", port = "";
         let paramsStr = "", name = "ss_node";
 
-        // Разделяем параметры и name
         if (rightPartStr.includes("#")) {
             [rightPartStr, name] = rightPartStr.split("#");
             name = decodeURIComponent(name);
         }
         if (rightPartStr.includes("?")) {
             [rightPartStr, paramsStr] = rightPartStr.split("?");
-            // paramsStr можно разобрать через URLSearchParams
         }
 
         if (rightPartStr.includes(":")) {
@@ -70,7 +68,6 @@ return baseclass.extend({
             cipher: method,
             password,
             udp: true
-            // plugin: ... (если нужно)
         };
     },
     parseVlessLink: function (url) {
@@ -142,18 +139,15 @@ return baseclass.extend({
 
         const payload = url.slice(8);
 
-        // 1. Пробуем как Base64-кодированный JSON (стандарт)
+        //
         try {
-            // Если это vless-style (uuid@host:port), явно не декодируем
             if (/^[0-9a-fA-F\-]+@.+?:\d+/.test(payload)) throw new Error("Not base64");
 
-            // Декодируем Base64
             const json = atob(payload);
             const vmess = JSON.parse(json);
 
             return buildVmessConfigFromJson(vmess);
         } catch (e) {
-            // 2. Если не base64, пробуем vless-style ссылку (uuid@host:port?...)
             try {
                 // mainPart?query#fragment
                 const [mainPart, fragment = "vmess-node"] = payload.split("#");
@@ -174,7 +168,7 @@ return baseclass.extend({
                     network: params.type || "tcp",
                 };
 
-                // TLS и дополнительные параметры
+                // TLS and etc
                 if (params.security === "tls" || params.tls === "tls" || params.security === "xtls") {
                     config.tls = true;
                     config.servername = params.sni || params.host || server;
@@ -182,7 +176,7 @@ return baseclass.extend({
                     if (params.alpn) config.alpn = params.alpn.split(",");
                 }
 
-                // Дополнительные опции
+                // additional
                 if (params["packet-encoding"]) config["packet-encoding"] = params["packet-encoding"];
                 if (params["global-padding"]) config["global-padding"] = params["global-padding"] === "true";
                 if (params["authenticated-length"]) config["authenticated-length"] = params["authenticated-length"] === "true";
@@ -325,7 +319,6 @@ return baseclass.extend({
             const params = new URLSearchParams(parsed.search);
             const name = decodeURIComponent(parsed.hash.slice(1)) || "trojan-node";
 
-            // Парсим параметры (общие и специфичные для trojan)
             const sni = params.get('sni') || params.get('peer') || server;
             const skipCertVerify = params.get('allowInsecure') === '1' || params.get('insecure') === '1';
             const network = params.get('type') || 'tcp';
@@ -347,7 +340,6 @@ return baseclass.extend({
                 udp: true,
             };
 
-            // Добавляем транспортные опции
             if (network === 'ws') {
                 config.network = 'ws';
                 config['ws-opts'] = {
@@ -365,11 +357,9 @@ return baseclass.extend({
                 config.network = 'tcp';
             }
 
-            // Добавляем дополнительные параметры
             if (fingerprint) config['client-fingerprint'] = fingerprint;
             if (alpn) config.alpn = alpn.split(',');
 
-            // Парсим ss-opts, если есть (для trojan-go)
             const ssEnabled = params.get('ss');
             if (ssEnabled) {
                 const ssMethod = params.get('ss-method');
@@ -586,7 +576,6 @@ return baseclass.extend({
     isValidTelegramBotToken: function (value) {
         const val = value.trim();
         if (val.length === 0) return true;
-        // Проверяем формат токена
         const pattern = /^\d{6,}:[A-Za-z0-9_-]+$/;
         return pattern.test(val);
     },

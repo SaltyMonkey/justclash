@@ -90,7 +90,7 @@ return view.extend({
         s.tab(tabname, _("Automation"));
 
         o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
-        o.description = _("When enabled service will configure autorestart mihomo by cron string.");
+        o.description = _("When enabled service will configure autorestart Mihomo by cron string.");
         o.rmempty = false;
         o.default = "1";
 
@@ -98,7 +98,7 @@ return view.extend({
         common.defaultProxyUpdateChannelOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Release channel for mihomo updates.");
+        o.description = _("Release channel for Mihomo updates.");
         o.rmempty = false;
         o.default = common.defaultProxyUpdateChannelOptions[0];
 
@@ -106,24 +106,24 @@ return view.extend({
         common.defaultUpdateOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Mode for mihomo autoupdate job.");
+        o.description = _("Mode for Mihomo autoupdate job.");
         o.rmempty = false;
         o.default = common.defaultUpdateOptions[0];
 
-        o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for mihomo autorestart:"));
-        o.description = _("When enabled service will send telegram notification for mihomo autorestart cron job.");
+        o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for Mihomo autorestart:"));
+        o.description = _("When enabled service will send telegram notification for Mihomo autorestart cron job.");
         o.rmempty = false;
         o.default = "0";
 
-        o = s.taboption(tabname, form.Flag, "mihomo_cron_update_telegram_notify", _("Telegram notify for mihomo autoupdate:"));
-        o.description = _("When enabled service will send telegram notification for mihomo autoupdate cron job.");
+        o = s.taboption(tabname, form.Flag, "mihomo_cron_update_telegram_notify", _("Telegram notify for Mihomo autoupdate:"));
+        o.description = _("When enabled service will send telegram notification for Mihomo autoupdate cron job.");
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
         o.placeholder = "0 3 * * 0";
         o.default = "0 3 * * 0";
         o.rmempty = false;
-        o.description = _("Special cron string for mihomo autorestart job.");
+        o.description = _("Special cron string for Mihomo autorestart job.");
         o.validate = function (section_id, value) {
             return (common.isValidCronString(value)) ? true : _("Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')");
         };
@@ -132,7 +132,7 @@ return view.extend({
         o.placeholder = "0 3 * * 0";
         o.default = "0 3 * * 0";
         o.rmempty = false;
-        o.description = _("Special cron string for mihomo autoupdate job.");
+        o.description = _("Special cron string for Mihomo autoupdate job.");
         o.validate = function (section_id, value) {
             return (common.isValidCronString(value)) ? true : _("Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')");
         };
@@ -144,7 +144,7 @@ return view.extend({
         o.datatype = "uinteger";
         o.placeholder = "123456789";
         o.rmempty = true;
-        o.description = _("Telegram chat id where to send notification.");
+        o.description = _("Telegram chat ID where to send notification.");
 
         o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
         o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";

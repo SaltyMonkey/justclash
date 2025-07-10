@@ -13,11 +13,17 @@ msgstr "Нет данных"
 msgid "Service status:"
 msgstr "Статус сервиса:"
 
+msgid "System version:"
+msgstr "Система:"
+
+msgid "Device model:"
+msgstr "Устройство:"
+
 msgid "Service package version:"
-msgstr "Версия пакета сервиса:"
+msgstr "Версия сервиса:"
 
 msgid "Luci package version:"
-msgstr "Версия пакета Luci:"
+msgstr "Версия Luci:"
 
 msgid "Mihomo core version:"
 msgstr "Версия ядра Mihomo:"
@@ -29,7 +35,7 @@ msgid "Service's autostart:"
 msgstr "Автозапуск сервиса:"
 
 msgid "Executing command..."
-msgstr "Выполняется команда..."
+msgstr "Выполнение команды..."
 
 msgid "Please wait."
 msgstr "Пожалуйста, подождите."
@@ -50,164 +56,190 @@ msgid "Disable autostart"
 msgstr "Отключить автозапуск"
 
 msgid "Service start"
-msgstr "Сервис"
+msgstr "Запуск сервиса"
 
 msgid "Start ntpd:"
-msgstr "Запускать NTPD:"
+msgstr "Запуск ntpd:"
 
 msgid "If enabled, the service starts ntpd to sync system time and ensure TLS works correctly."
-msgstr "При включении сервис синхронизирует время через ntpd для работы TLS."
+msgstr "Если включено, сервис запускает ntpd для синхронизации времени и корректной работы TLS."
 
 msgid "Edit DNS server at startup:"
-msgstr "Внедрить DNS-сервер при загрузке:"
+msgstr "Изменять DNS-сервер при запуске:"
 
-msgid "If enabled, service will edit dns server in dnsmasq configuration at start."
-msgstr "Если включено, сервис будет добавлять DNS-сервер в конфигурацию dnsmasq при запуске."
+msgid "If enabled, the service will edit DNS server in dnsmasq configuration at start."
+msgstr "Если включено, сервис изменит DNS-сервер в конфигурации dnsmasq при запуске."
 
 msgid "Edit NFT tables at startup:"
-msgstr "Настраивать NFT-таблицы при загрузке:"
+msgstr "Редактировать NFT-таблицы при запуске:"
 
-msgid "If enabled, service creates NFT tables to redirect traffic to the TPROXY port."
-msgstr "Если включено, сервис применяет NFT-таблицы для перенаправления трафика на tproxy-порт."
+msgid "Block QUIC from clients:"
+msgstr "Блокировать QUIC от клиентов:"
+
+msgid "Block DoT from clients:"
+msgstr "Блокировать DoT от клиентов:"
+
+msgid "Block DoQ from clients:"
+msgstr "Блокировать DoQ от клиентов:"
+
+msgid "Source Network Interface"
+msgstr "Интерфейс захвата"
+
+msgid "Select the network interface from which the traffic will originate"
+msgstr "Выберите сетевой интерфейс, с которого трафик будет перенаправляться на TProxy"
+
+msgid "Enable automatic restart for bad interface:"
+msgstr "Включить автоматический перезапуск при ошибке интерфейса:"
+
+msgid "When enabled, service will be restarted when selected interfaces will be reconnected."
+msgstr "Если включено, сервис будет перезапущен при переподключении выбранных интерфейсов."
+
+msgid "Interface for monitoring"
+msgstr "Интерфейс для мониторинга"
+
+msgid "Select the WAN interfaces to be monitored for automatic service restart."
+msgstr "Выберите WAN-интерфейсы для мониторинга и автоматического перезапуска сервиса."
+
+msgid "If enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
+msgstr "Если включено, сервис создаст NFT-таблицы для перенаправления трафика на порт TPROXY."
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
 msgstr "Неверный формат cron. Ожидается: 'минута час день месяц день_недели' (например, '0 3 * * 0')"
 
 msgid "Mihomo autorestart:"
-msgstr "Автоперезапуск Mihomo:"
+msgstr "Автоматический перезапуск Mihomo:"
 
 msgid "Core automation"
 msgstr "Автоматизация ядра"
 
-msgid "When enabled service will configure autorestart mihomo by cron string."
-msgstr "Если включено, сервис будет настраивать автоперезапуск Mihomo по cron-строке."
+msgid "When enabled, the service will configure Mihomo autorestart by cron string."
+msgstr "Если включено, сервис настроит автоматический перезапуск Mihomo по строке cron."
 
 msgid "Mihomo autoupdate:"
-msgstr "Автообновление Mihomo:"
+msgstr "Автоматическое обновление Mihomo:"
 
-msgid "Mode for mihomo autoupdate job."
-msgstr "Режим для задания автообновления Mihomo."
+msgid "Mode for Mihomo autoupdate job."
+msgstr "Режим задания автoобновления Mihomo."
 
-msgid "Telegram notify for mihomo autorestart:"
-msgstr "Уведомления в Telegram о автоперезапуске Mihomo:"
+msgid "Telegram notify for Mihomo autorestart:"
+msgstr "Уведомление в Telegram о перезапуске Mihomo:"
 
-msgid "When enabled service will send telegram notification for mihomo autorestart cron job."
-msgstr "Если включено, сервис будет отправлять уведомления в Telegram о задании автоперезапуска Mihomo по cron."
+msgid "When enabled, the service will send Telegram notification for Mihomo autorestart cron job."
+msgstr "Если включено, сервис будет отправлять уведомления в Telegram о перезапуске Mihomo по cron."
 
-msgid "Telegram notify for mihomo autoupdate:"
-msgstr "Уведомления в Telegram о автообновлении Mihomo:"
+msgid "Telegram notify for Mihomo autoupdate:"
+msgstr "Уведомление в Telegram об обновлении Mihomo:"
 
-msgid "When enabled service will send telegram notification for mihomo autoupdate cron job."
-msgstr "Если включено, сервис будет отправлять уведомления в Telegram о задании автообновления Mihomo по cron."
+msgid "When enabled, the service will send Telegram notification for Mihomo autoupdate cron job."
+msgstr "Если включено, сервис будет отправлять уведомления в Telegram об обновлении Mihomo по cron."
 
 msgid "Mihomo autorestart cron:"
-msgstr "Cron для автоперезапуска Mihomo:"
+msgstr "Cron-строка для автоперезапуска Mihomo:"
 
-msgid "Special cron string for mihomo autorestart job."
-msgstr "Специальная строка cron для задания автоперезапуска Mihomo."
+msgid "Special cron string for Mihomo autorestart job."
+msgstr "Специальная cron-строка для задания автоперезапуска Mihomo."
 
 msgid "Mihomo autoupdate cron:"
-msgstr "Cron для автообновления Mihomo:"
+msgstr "Cron-строка для автообновления Mihomo:"
 
-msgid "Special cron string for mihomo autoupdate job."
-msgstr "Специальная строка cron для задания автообновления Mihomo."
+msgid "Special cron string for Mihomo autoupdate job."
+msgstr "Специальная cron-строка для задания автообновления Mihomo."
 
 msgid "Credentials"
-msgstr "Данные для авторизации"
+msgstr "Учётные данные"
 
 msgid "Telegram chat ID:"
 msgstr "ID чата Telegram:"
 
-msgid "Telegram chat id where to send notification."
-msgstr "ID чата Telegram, куда отправляются уведомления."
+msgid "Telegram chat ID where to send notification."
+msgstr "ID чата Telegram для отправки уведомлений."
 
 msgid "Telegram bot token:"
 msgstr "Токен бота Telegram:"
 
 msgid "Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!"
-msgstr "Токен управления ботом Telegram. ВНИМАНИЕ! НИКОГДА НЕ ДЕЛИТЕСЬ ЭТИМ ТОКЕНОМ!"
+msgstr "Токен управления ботом Telegram. ВНИМАНИЕ! НИКОГДА НЕ ПЕРЕДАВАЙТЕ ЕГО НИКОМУ!"
 
-
-msgid "Core settings"
-msgstr "Настройки прокси"
+msgid "Basic settings"
+msgstr "Базовые настройки"
 
 msgid "Logging level:"
 msgstr "Уровень логирования:"
 
-msgid "Set up logging level in mihomo core."
-msgstr "Установить уровень логирования в ядре mihomo."
+msgid "Set up logging level in Mihomo core."
+msgstr "Установите уровень логирования в ядре Mihomo."
 
 msgid "Tproxy port:"
-msgstr "TProxy-порт:"
+msgstr "Порт TProxy:"
 
 msgid "Mihomo TProxy port for incoming traffic from user networks."
-msgstr "Порт TProxy для входящего трафика от пользовательских сетей."
+msgstr "Порт Mihomo TProxy для входящего трафика из пользовательских сетей."
 
 msgid "Unified delay:"
-msgstr "Общая задержка:"
+msgstr "Унифицированная задержка:"
 
 msgid "Unified delay for RTT checks."
-msgstr "Общая задержка для проверок RTT."
+msgstr "Унифицированная задержка для проверки RTT."
 
 msgid "Special mark for internal routing tables."
-msgstr "Особая метка для внутренних таблиц маршрутизации."
+msgstr "Специальная метка для внутренних таблиц маршрутизации."
 
 msgid "TCP concurrent:"
-msgstr "Параллельные TCP-соединения:"
+msgstr "Параллельный TCP:"
 
-msgid "Enabling concurrent TCP connection attempts for each request."
-msgstr "Включение одновременных попыток TCP-соединений для каждого запроса."
+msgid "Enable concurrent TCP connection attempts for each request."
+msgstr "Включить параллельные попытки TCP-соединения для каждого запроса."
 
 msgid "External controller port:"
 msgstr "Порт внешнего контроллера:"
 
-msgid "API server port for external controller."
+msgid "API server port for the external controller."
 msgstr "Порт API-сервера для внешнего контроллера."
 
 msgid "Global client fingerprint:"
 msgstr "Глобальный отпечаток клиента:"
 
-msgid "Client fingerprint for protocols which supports it."
+msgid "Client fingerprint for protocols that support it."
 msgstr "Отпечаток клиента для поддерживаемых протоколов."
 
 msgid "Keep alive idle:"
-msgstr "Время простоя до keepalive:"
+msgstr "Ожидание keep-alive:"
 
 msgid "How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive."
-msgstr "Время (в секундах), в течение которого соединение может быть неактивным, прежде чем система начнёт отправлять keepalive-проверки, чтобы убедиться, что другая сторона по-прежнему отвечает."
+msgstr "Время, в течение которого соединение может оставаться неактивным до начала отправки keep-alive-запросов для проверки доступности второй стороны."
 
 msgid "Keep alive interval:"
-msgstr "Интервал keepalive:"
+msgstr "Интервал keep-alive:"
 
-msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive-idle."
-msgstr "Частота (в секундах), с которой отправляются keepalive-проверки после того, как соединение было неактивным в течение времени, заданного параметром keep-alive-idle."
+msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle."
+msgstr "Как часто отправляются TCP keepalive-запросы после периода простоя, указанного в ожидании keep-alive."
 
 msgid "Cache profile data:"
 msgstr "Кэшировать данные профиля:"
 
 msgid "Cache profile data if possible."
-msgstr "Кэшировать данные профиля, если это возможно."
+msgstr "Кэшировать данные профиля, если возможно."
 
 msgid "Cache Fake IP:"
 msgstr "Кэшировать Fake IP:"
 
-msgid "Cache fake ip data when possible."
-msgstr "Кэшировать данные Fake IP, если это возможно."
+msgid "Cache fake IP data when possible."
+msgstr "Кэшировать данные Fake IP, если возможно."
 
 msgid "Excluded from sniffer domains:"
-msgstr "Домены, исключённые из анализа снифером:"
+msgstr "Исключённые из анализа домены:"
 
-msgid "Domains excluded from detailed analyze when possible. Sometimes can help with errors in apps."
-msgstr "Домены, исключённые из детального анализа, если это возможно. Иногда помогает избежать ошибок в приложениях."
+msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
+msgstr "Домены, исключённые из детального анализа, если возможно. Иногда это помогает избежать ошибок в приложениях."
 
 msgid "NTP settings"
 msgstr "Настройки NTP"
 
 msgid "Enable NTP client:"
-msgstr "Включить клиент NTP:"
+msgstr "Включить NTP-клиент:"
 
-msgid "Enable inbuild in proxy NTP client."
-msgstr "Включить встроенный в прокси клиент NTP."
+msgid "Enable built-in NTP client in proxy."
+msgstr "Включить встроенный NTP-клиент в прокси."
 
 msgid "Endpoint NTP server:"
 msgstr "NTP-сервер:"
@@ -227,8 +259,8 @@ msgstr "Интервал проверки времени (в секундах)."
 msgid "Write to system:"
 msgstr "Записывать в систему:"
 
-msgid "Try to correct system time from NTP server."
-msgstr "Попробовать скорректировать системное время с NTP-сервера."
+msgid "Try to correct system time using the NTP server."
+msgstr "Пытаться корректировать системное время через NTP-сервер."
 
 msgid "DNS settings"
 msgstr "Настройки DNS"
@@ -242,62 +274,59 @@ msgstr "Порт прослушивания DNS-сервера прокси."
 msgid "Use system hosts:"
 msgstr "Использовать системные hosts:"
 
-msgid "Load dns entries from system if possible."
-msgstr "Загружать DNS-записи из системы, если это возможно."
+msgid "Load DNS entries from system if possible."
+msgstr "Загружать записи DNS из системы, если возможно."
 
 msgid "Fake IP range:"
-msgstr "CIDR для Fake IP:"
+msgstr "Диапазон Fake IP:"
 
 msgid "Default nameservers:"
 msgstr "DNS-серверы по умолчанию:"
 
-msgid "Default nameservers which being used at start. Recommended to use UDP ones."
+msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "DNS-серверы по умолчанию, используемые при запуске. Рекомендуется использовать UDP."
 
 msgid "Direct nameservers:"
 msgstr "Прямые DNS-серверы:"
 
-msgid "Direct nameservers which being used for DIRECT rules."
-msgstr "Прямые DNS-серверы, используемые для правил DIRECT."
+msgid "Direct nameservers used for DIRECT rules."
+msgstr "DNS-серверы, используемые для правил DIRECT."
 
 msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'."
-msgstr "Неверный формат DNS-сервера. Допустимо: quic://, https://, tls://, udp://, IPv4 или 'system'."
+msgstr "Недопустимый формат DNS-сервера. Разрешены: quic://, https://, tls://, udp://, IPv4 или 'system'."
 
 msgid "Proxy nameservers:"
-msgstr "DNS-серверы для прокси:"
+msgstr "DNS-серверы прокси:"
 
-msgid "Proxy nameservers which being used for proxy rules."
+msgid "Proxy nameservers used for proxy rules."
 msgstr "DNS-серверы, используемые для правил прокси."
 
 msgid "Nameservers:"
 msgstr "DNS-серверы:"
 
-msgid "nameserver_description"
-msgstr "Описание DNS-серверов"
-
 msgid "Skip fake IP for domains:"
-msgstr "Пропускать Fake IP для доменов:"
+msgstr "Исключить Fake IP для доменов:"
 
-msgid "Exclude selected domains from Fake IP cache. Can help sometimes with bugs in apps."
-msgstr "Исключить выбранные домены из кэша Fake IP. Иногда помогает избежать ошибок в приложениях."
+msgid "Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps."
+msgstr "Исключить выбранные домены из кэша Fake IP. Иногда это может помочь с ошибками в приложениях."
 
 msgid "Routing mark:"
-msgstr "Метка маршрутизации:"
+msgstr "Маркер маршрутизации:"
 
 msgid "Cannot parse proxy URI:"
-msgstr "Не удалось разобрать proxy URI:"
+msgstr "Не удалось разобрать URI прокси:"
 
 msgid "Proxies list:"
 msgstr "Список прокси:"
 
 msgid "Proxies defined as outbound connections."
-msgstr "Прокси, используемые для исходящих соединений."
+msgstr "Прокси, определённые как исходящие соединения."
 
 msgid "Name:"
 msgstr "Имя:"
 
 msgid "Virtual proxy name."
-msgstr "Виртуальное название прокси."
+msgstr "Виртуальное имя прокси."
 
 msgid "Name must contain only lowercase letters, digits, and underscores"
 msgstr "Имя должно содержать только строчные буквы, цифры и подчёркивания"
@@ -306,10 +335,10 @@ msgid "URI:"
 msgstr "URI:"
 
 msgid "URI link with connection parameters."
-msgstr "URI-ссылка, содержащая параметры подключения."
+msgstr "URI-ссылка с параметрами подключения."
 
 msgid "Invalid link."
-msgstr "Некорректная ссылка."
+msgstr "Недопустимая ссылка."
 
 msgid "Use with rules:"
 msgstr "Использовать с правилами:"
@@ -317,26 +346,26 @@ msgstr "Использовать с правилами:"
 msgid "DOMAIN-SUFFIX:"
 msgstr "DOMAIN-SUFFIX:"
 
-msgid "Predefined RULE-SET lists, select ones which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
-msgstr "Выберите из предустановленных списков RULE-SET те, которые хотите направлять через прокси. Оставьте поле пустым если будете использовать proxy-groups."
+msgid "Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
+msgstr "Предустановленные списки RULE-SET, выберите те, которые хотите направлять через прокси. Оставьте пустым, если будете использовать прокси с proxy-groups."
 
 msgid "IP-CIDR:"
 msgstr "IP-CIDR:"
 
-msgid "Each element is one DOMAIN-SUFFIX rule to route through proxy with mihomo syntax."
-msgstr "Каждый элемент — одно правило DOMAIN-SUFFIX для маршрутизации через прокси (синтаксис mihomo rules)."
+msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через прокси (синтаксис Mihomo)."
 
-msgid "Each element is one IP-CIDR rule to route through proxy with mihomo syntax. IPV4 only right now."
-msgstr "Каждый элемент — одно правило IP-CIDR для маршрутизации через прокси (синтаксис mihomo rules). Пока поддерживается только IPv4."
+msgid "Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для маршрутизации через прокси (синтаксис Mihomo). Сейчас только IPv4."
 
 msgid "Proxy groups:"
-msgstr "Список прокси групп:"
+msgstr "Группы прокси:"
 
-msgid "Group proxies for special routing (fallback, load-balancing)."
-msgstr "Группы прокси для особой маршрутизации (резервирования, балансировки нагрузки)."
+msgid "Group proxies for special routing (fallback, load balancing)."
+msgstr "Группируйте прокси для специальной маршрутизации (fallback, балансировка нагрузки)."
 
 msgid "Proxy group name."
-msgstr "Виртуальное имя группы прокси."
+msgstr "Имя группы прокси."
 
 msgid "Group type:"
 msgstr "Тип группы:"
@@ -351,72 +380,130 @@ msgid "Check URL:"
 msgstr "URL для проверки:"
 
 msgid "URL for node availability check (required for group functionality)."
-msgstr "URL для проверки доступности удаленных узлов (необходимо для функционирования групп)."
+msgstr "URL для проверки доступности узла (необходимо для работы групп)."
 
 msgid "Only http:// or https:// URLs are allowed."
-msgstr "Разрешены только URL с http:// или https://."
+msgstr "Разрешены только URL http:// или https://."
 
 msgid "Check interval:"
 msgstr "Интервал проверки:"
 
 msgid "DIRECT rules:"
-msgstr "DIRECT правила:"
+msgstr "Правила DIRECT:"
+
 msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
-msgstr ""
+msgstr "Дополнительные настройки для правил DIRECT. Обрабатываются до прокси, proxy groups и REJECT."
 
 msgid "DOMAIN-SUFFIX pass:"
-msgstr ""
+msgstr "DOMAIN-SUFFIX pass:"
 
-msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
-msgstr ""
+msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для DIRECT (синтаксис Mihomo)."
 
 msgid "DOMAIN-KEYWORD pass:"
-msgstr ""
+msgstr "DOMAIN-KEYWORD pass:"
 
-msgid "Each element is one DOMAIN-SUFFIX rule to pass (mihomo syntax)."
-msgstr ""
+msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax)."
+msgstr "Каждый элемент — правило DOMAIN-KEYWORD для DIRECT (синтаксис Mihomo)."
 
 msgid "DOMAIN-REGEX pass:"
-msgstr ""
+msgstr "DOMAIN-REGEX pass:"
 
-msgid "Each element is one DOMAIN-REGEX rule to pass (mihomo syntax)."
-msgstr ""
+msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax)."
+msgstr "Каждый элемент — правило DOMAIN-REGEX для DIRECT (синтаксис Mihomo)."
 
 msgid "SRC-IP-CIDR pass:"
-msgstr ""
+msgstr "SRC-IP-CIDR pass:"
 
-msgid "Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
-msgstr ""
+msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.
+msgstr "Каждый элемент — правило SRC-IP-CIDR для DIRECT (синтаксис Mihomo). Сейчас только IPv4."
 
 msgid "IP-CIDR pass:"
-msgstr ""
+msgstr "IP-CIDR pass:"
 
-msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
-msgstr ""
+msgid "Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для пропуска через прокси (синтаксис Mihomo). Сейчас только IPv4."
+
+msgid "SRC-IP-CIDR block:"
+msgstr "SRC-IP-CIDR block:"
+
+msgid "Each element is a SRC-IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для блокировки через прокси (синтаксис Mihomo). Сейчас только IPv4."
 
 msgid "REJECT rules:"
 msgstr "Правила REJECT:"
 
 msgid "Additional rules for REJECT rules. Will be handled before proxies and proxy groups."
-msgstr "Дополнительные правила для REJECT. Имеют приоритет перед правилами проки и прокси групп."
+msgstr "Дополнительные правила для REJECT. Обрабатываются до прокси и proxy groups."
 
-msgid "Predefined RULE-SET lists with ADS/badware, select ones which you want to block with proxy. Leave empty if you don't want block anything."
-msgstr "Выберите из предустановленных списков блокировки RULE-SET (ADS/Badware) те, которые хотите направлять заблокировать через прокси."
+msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
+msgstr "Предустановленные списки RULE-SET с рекламой/вредоносным ПО. Выберите те, которые хотите блокировать через прокси. Оставьте пустым, если не хотите ничего блокировать."
 
 msgid "Disable QUIC:"
 msgstr "Отключить QUIC:"
 
 msgid "REJECT RULE_SET:"
-msgstr "REJECT RULE-SET:"
+msgstr "REJECT RULE_SET:"
 
 msgid "DOMAIN-SUFFIX block:"
-msgstr "Блокировка DOMAIN-SUFFIX:"
+msgstr "DOMAIN-SUFFIX block:"
 
-msgid "Each element is one DOMAIN-SUFFIX rule to block with proxy (mihomo syntax)."
-msgstr "Каждый элемент — одно правило блокировки DOMAIN-SUFFIX в синтаксисе mihomo."
+msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для блокировки через прокси (синтаксис Mihomo)."
 
 msgid "IP-CIDR block:"
-msgstr "Блокировка IP-CIDR:"
+msgstr "IP-CIDR block:"
 
-msgid "Each element is one IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now."
-msgstr "Каждый элемент — одно правило блокировки IP-CIDR в синтаксисе mihomo. Поддерживается только IPv4."
+msgid "Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для блокировки через прокси (синтаксис Mihomo). Сейчас только IPv4."
+
+msgid "FINAL rule:"
+msgstr "FINAL rule:"
+
+msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
+msgstr "Дополнительные настройки для финальных правил, применяемых после всех остальных. Используйте для переопределения или принудительного применения определённых действий."
+
+msgid "This field cannot be empty"
+msgstr "Это поле не может быть пустым"
+
+msgid "Destination:"
+msgstr "Назначение:"
+
+msgid "Proto"
+msgstr "Протокол"
+
+msgid "Connection"
+msgstr "Соединение"
+
+msgid "Host/Sniff"
+msgstr "Хост/Снифф"
+
+msgid "Chains"
+msgstr "Цепочки"
+
+msgid "Destination"
+msgstr "Назначение"
+
+msgid "Rule"
+msgstr "Правило"
+
+msgid "No active connections"
+msgstr "Нет активных соединений"
+
+msgid "Connection error"
+msgstr "Ошибка соединения"
+
+msgid "Can't connect to proxy API"
+msgstr "Не удалось подключиться к API прокси"
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "No logs"
+msgstr "Нет логов"
+
+msgid "To end"
+msgstr "К концу"
+
+msgid "Logs view"
+msgstr "Просмотр логов"

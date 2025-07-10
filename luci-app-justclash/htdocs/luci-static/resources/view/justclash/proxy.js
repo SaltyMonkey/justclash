@@ -36,12 +36,12 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("TCP concurrent:"));
-        o.description = _("Enabling concurrent TCP connection attempts for each request.");
+        o.description = _("Enable concurrent TCP connection attempts for each request.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Value, "external_controller_port", _("External controller port:"));
-        o.description = _("API server port for external controller.");
+        o.description = _("API server port for the external controller.");
         o.datatype = "uinteger";
         o.rmempty = false;
 
@@ -49,7 +49,7 @@ return view.extend({
         common.defaultFingerprints.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Client fingerprint for protocols which supports it.");
+        o.description = _("Client fingerprint for protocols that support it.");
         o.default = common.defaultFingerprints[0];
         o.rmempty = false;
 
@@ -60,7 +60,7 @@ return view.extend({
         o.default = "15";
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Keep alive interval:"));
-        o.description = _("How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive-idle.");
+        o.description = _("How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle.");
         o.datatype = "uinteger";
         o.rmempty = false;
         o.default = "15";
@@ -71,12 +71,12 @@ return view.extend({
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "profile_store_fake_ip", _("Cache Fake IP:"));
-        o.description = _("Cache fake ip data when possible.");
+        o.description = _("Cache fake IP data when possible.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.DynamicList, "ignore_to_sniff_domains", _("Excluded from sniffer domains:"));
-        o.description = _("Domains excluded from detailed analyze when possible. Sometimes can help with errors in apps.");
+        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
 
@@ -89,18 +89,18 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
-        o.description = _("Load dns entries from system if possible.");
+        o.description = _("Load DNS entries from system if possible.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
-        o.description = _("CIDR for fake ip entries.");
+        o.description = _("CIDR for fake IP entries.");
         o.default = "198.18.0.1/22";
         o.rmempty = false;
         o.datatype = "cidr4";
 
         o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
-        o.description = _("Default nameservers which being used at start. Recommended to use UDP ones.");
+        o.description = _("Default nameservers used at startup. Recommended to use UDP ones.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -111,7 +111,7 @@ return view.extend({
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "direct_nameserver", _("Direct nameservers:"));
-        o.description = _("Direct namesers which being used for DIRECT rules.");
+        o.description = _("Direct nameservers used for DIRECT rules.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -122,7 +122,7 @@ return view.extend({
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "proxy_server_nameserver", _("Proxy nameservers:"));
-        o.description = _("Proxy nameservers which being used for proxy rules.");
+        o.description = _("Proxy nameservers used for proxy rules.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -145,7 +145,7 @@ return view.extend({
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "ignore_fake_ip_domains", _("Skip fake IP for domains:"));
-        o.description = _("Exclude selected domains from Fake IP cache. Can help sometimes with bugs in apps.");
+        o.description = _("Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps.");
         o.rmempty = false;
         o.editable = true;
 
@@ -153,7 +153,7 @@ return view.extend({
         s.tab(tabname, _("NTP settings"));
 
         o = s.taboption(tabname, form.Flag, "core_ntp_enabled", _("Enable NTP client:"));
-        o.description = _("Enable inbuild in proxy NTP client.");
+        o.description = _("Enable built-in NTP client in proxy.");
         o.rmempty = false;
         o.default = "1";
 
@@ -174,7 +174,7 @@ return view.extend({
         o.default = "600";
 
         o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
-        o.description = _("Try to correct system time from NTP server.");
+        o.description = _("Try to correct system time using the NTP server.");
         o.default = "0";
         o.rmempty = false;
 
