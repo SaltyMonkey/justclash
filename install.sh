@@ -589,7 +589,7 @@ justclash_install() {
 }
 
 justclash_uninstall() {
-    local jc_is_installed lajc_is_installed
+    local jc_is_installed lajc_is_installed laijc_is_installed
     echo "  "
     print_bold_green "Checking installed JustClash packages..."
 
@@ -605,6 +605,13 @@ justclash_uninstall() {
     if [ "$lajc_is_installed" -eq 0 ]; then
         echo " - LuCI JustClash package was found. Removing..."
         pkg_remove luci-app-justclash
+    fi
+
+    pkg_is_installed luci-i18n-justclash*
+    laijc_is_installed="$?"
+    if [ "$laijc_is_installed" -eq 0 ]; then
+        echo " - LuCI i18n JustClash package was found. Removing..."
+        pkg_remove luci-i18n-justclash*
     fi
 
     if [ "$jc_is_installed" -ne 0 ] && [ "$lajc_is_installed" -ne 0 ]; then
