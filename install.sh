@@ -102,7 +102,7 @@ banner() {
     print_bold_yellow "-----------------------------"
     print_bold_yellow "    JustClash Init Script"
     print_bold_yellow "-----------------------------"
-    print_bold_yellow "Firmware:      ${openwrt}"
+    print_bold_yellow "System:      ${openwrt}"
     print_bold_yellow "Device model: ${model}"
     print_bold_yellow "-----------------------------"
     echo "   "
