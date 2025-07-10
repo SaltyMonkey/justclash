@@ -102,7 +102,7 @@ banner() {
     print_bold_yellow "-----------------------------"
     print_bold_yellow "    JustClash Init Script"
     print_bold_yellow "-----------------------------"
-    print_bold_yellow "OpenWRT:      ${openwrt}"
+    print_bold_yellow "Firmware:      ${openwrt}"
     print_bold_yellow "Device model: ${model}"
     print_bold_yellow "-----------------------------"
     echo "   "
@@ -461,7 +461,7 @@ core_download() {
     base_url="${download_url}/${file_name}"
 
     echo " - Downloading mihomo binary"
-    wget -O "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
+    wget -qO "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
         print_red "Failed to download file."
         exit 1
     }
@@ -488,6 +488,8 @@ core_update() {
     local channel="$1"
     local cur_ver latest_ver tmp
     local check_url download_url
+
+    rm -rf "$TMP_DOWNLOAD_PATH"
 
     print_bold_green "Checking for Mihomo updates..."
 
@@ -636,7 +638,7 @@ justclash_download() {
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        wget "$TMP_DOWNLOAD_PATH" -O "$file" || {
+        wget "$TMP_DOWNLOAD_PATH" -qO "$file" || {
             print_red "Failed to download $file"
             continue
         }
