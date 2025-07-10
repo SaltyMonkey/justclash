@@ -46,14 +46,18 @@ jobs:
       - name: Renaming packages
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          mv ./output/justclash_*.ipk "./output/justclash_${VERSION}.ipk"
-          mv ./output/luci-app-justclash_*.ipk "./output/luci-app-justclash_${VERSION}.ipk"
           mv ./output/luci-i18n-justclash-ru_*.ipk "./output/luci-i18n-justclash-ru_${VERSION}.ipk"
 
       - name: Remove Docker stable container
         run: docker rm stable
 
+      - name: Extract changelog for current version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          awk '/## \['"$VERSION"'\]/ {flag=1} /^## \[/ {if(flag && !/## \['"$VERSION"'\]/) exit} flag' ./CHANGELOG.md > ./tmp.md
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: ./output/*.ipk
+        body_path: ./tmp.md
