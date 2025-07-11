@@ -414,6 +414,55 @@ diagnostic_conflicts_interactive() {
         print_green "NOT FOUND"
     fi
 
+    printf " - passwall "
+    if pkg_is_installed luci-app-passwall; then
+        print_red "DETECTED!"
+        print_red "Conflict detected with package: luci-app-passwall."
+        print_red "JustClash and luci-app-passwall are both proxy software of the same type."
+        print_red "You should use only one of them."
+        print_red "Do you want to remove luci-app-passwall? yes/no"
+
+        while true; do
+                read -r -p '' inpp
+                case $inpp in
+                yes|y|Y)
+                    pkg_remove luci-app-passwall
+                    break
+                    ;;
+                *)
+                    echo "Exit"
+                    exit 1
+                    ;;
+                esac
+        done
+    else
+        print_green "NOT FOUND"
+    fi
+
+    printf " - passwall2 "
+    if pkg_is_installed luci-app-passwall2; then
+        print_red "DETECTED!"
+        print_red "Conflict detected with package: luci-app-passwall2."
+        print_red "JustClash and luci-app-passwall are both proxy software of the same type."
+        print_red "You should use only one of them."
+        print_red "Do you want to remove luci-app-passwall2? yes/no"
+
+        while true; do
+                read -r -p '' inpp
+                case $inpp in
+                yes|y|Y)
+                    pkg_remove luci-app-passwall2
+                    break
+                    ;;
+                *)
+                    echo "Exit"
+                    exit 1
+                    ;;
+                esac
+        done
+    else
+        print_green "NOT FOUND"
+    fi
     echo " "
 }
 
