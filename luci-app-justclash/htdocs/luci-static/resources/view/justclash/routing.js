@@ -221,15 +221,12 @@ return view.extend({
 
                 console.log(virtualRules);
                 console.log(virtualBlockRules);
-                console.log(common.objToYaml(virtualProxies, 1));
-                console.log(common.objToYaml(virtualProxyGroups, 1));
-                console.log(common.objToYaml(virtualRuleSets, 1));
-                const compiledRules = common.objToYaml([...virtualDirectRules, ...virtualBlockRules, ...virtualRules, ...virtualFinalRules]);
+                const compiledRules = [...virtualDirectRules, ...virtualBlockRules, ...virtualRules, ...virtualFinalRules];
 
-                uci.set(common.binName, "compiled", "rules", compiledRules);
-                uci.set(common.binName, "compiled", "proxies", common.objToYaml(virtualProxies, 1));
-                uci.set(common.binName, "compiled", "proxy_groups", common.objToYaml(virtualProxyGroups, 1));
-                uci.set(common.binName, "compiled", "rule_providers", common.objToYaml(virtualRuleSets, 1));
+                uci.set(common.binName, "compiled", "rules", JSON.stringify(compiledRules, null, 2));
+                uci.set(common.binName, "compiled", "proxies", JSON.stringify(virtualProxies, null, 2));
+                uci.set(common.binName, "compiled", "proxy_groups", JSON.stringify(virtualProxyGroups, null, 2));
+                uci.set(common.binName, "compiled", "rule_providers", JSON.stringify(virtualRuleSets, null, 2));
 
                 console.log(uci.sections(common.binName));
                 uci.save(common.binName).then(() => {

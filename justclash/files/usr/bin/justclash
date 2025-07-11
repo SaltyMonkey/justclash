@@ -743,31 +743,34 @@ systemlogs() {
     echo "$res"
 }
 
-# TODO: Finish dynamic prefix
-generate_yaml_array() {
-    local section_type="$1"
+generate_json_array_from_named_section() {
+    local section_name="$1"
     local list_name="$2"
-    local prefix="${4:-    - }"
+    local result=""
+    local first=1
 
-    result=""
-
-    _append_line() {
-        # shellcheck disable=SC2317
+    # shellcheck disable=SC2317
+    _append_value() {
         local val="$1"
-        # shellcheck disable=SC2317
-        result="${result}${prefix}${val}\n"
+        val=$(printf '%s' "$val" | sed 's/"/\\"/g')
+        if [ "$first" -eq 1 ]; then
+            result="  \"$val\""
+            first=0
+        else
+            result="${result},\n  \"$val\""
+        fi
     }
 
-    _collect_section() {
-        # shellcheck disable=SC2317
-        config_list_foreach "$1" "$list_name" _append_line
-    }
+    config_list_foreach "$section_name" "$list_name" _append_value
 
-    config_foreach _collect_section "$section_type"
-
-    # shellcheck disable=SC3036
-    echo -e "$result"
+    if [ -z "$result" ]; then
+        echo "[]"
+    else
+        # shellcheck disable=SC3036
+        echo -e "[\n${result}\n]"
+    fi
 }
+
 
 ucibool_to_yaml_bool () {
     local input="$1"
@@ -823,12 +826,12 @@ core_generate_yaml() {
     config_get_bool use_system_hosts proxy use_system_hosts
     use_system_hosts=$(ucibool_to_yaml_bool "$use_system_hosts")
     config_get fake_ip_range proxy fake_ip_range
-    default_nameserver=$(generate_yaml_array proxy default_nameserver)
-    direct_nameserver=$(generate_yaml_array proxy direct_nameserver)
-    proxy_server_nameserver=$(generate_yaml_array proxy proxy_server_nameserver)
-    nameserver=$(generate_yaml_array proxy nameserver)
-    ignore_fake_ip_domains=$(generate_yaml_array proxy ignore_fake_ip_domains)
-    ignore_to_sniff_domains=$(generate_yaml_array proxy ignore_to_sniff_domains)
+    default_nameserver=$(generate_json_array_from_named_section proxy default_nameserver)
+    direct_nameserver=$(generate_json_array_from_named_section proxy direct_nameserver)
+    proxy_server_nameserver=$(generate_json_array_from_named_section proxy proxy_server_nameserver)
+    nameserver=$(generate_json_array_from_named_section proxy nameserver)
+    ignore_fake_ip_domains=$(generate_json_array_from_named_section proxy ignore_fake_ip_domains)
+    ignore_to_sniff_domains=$(generate_json_array_from_named_section proxy ignore_to_sniff_domains)
 
     cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule

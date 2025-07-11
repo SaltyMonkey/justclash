@@ -474,51 +474,6 @@ return baseclass.extend({
 
         return nodes;
     },
-    objToYaml: function (obj, indent = 0) {
-        const pad = "  ".repeat(indent);
-        let yaml = "";
-
-        if (Array.isArray(obj)) {
-            obj.forEach(item => {
-                if (typeof item === "object" && item !== null) {
-                    yaml += `${pad}-\n`;
-                    yaml += this.objToYaml(item, indent + 1);
-                } else {
-                    yaml += `${pad}- ${item}\n`;
-                }
-            });
-            return yaml;
-        }
-
-        for (const key in obj) {
-            const val = obj[key];
-            if (val === null || val === undefined) continue;
-
-            if (typeof val === "object" && !Array.isArray(val)) {
-                yaml += `${pad}${key}:\n`;
-                yaml += this.objToYaml(val, indent + 1);
-            } else if (Array.isArray(val)) {
-                yaml += `${pad}${key}:\n`;
-                val.forEach(item => {
-                    if (typeof item === "object") {
-                        yaml += `${pad}  -\n` + this.objToYaml(item, indent + 3);
-                    } else {
-                        yaml += `${pad}  - ${item}\n`;
-                    }
-                });
-            } else if (typeof val === "string") {
-                if (/[:#\-\?\[\]\{\},&\*!\|>'"%@`]/.test(val) || val.includes("\n")) {
-                    yaml += `${pad}${key}: "${val.replace(/"/g, '\\"')}"\n`;
-                } else {
-                    yaml += `${pad}${key}: ${val}\n`;
-                }
-            } else {
-                yaml += `${pad}${key}: ${val}\n`;
-            }
-        }
-
-        return yaml;
-    },
     splitAndTrimString: function (value, delimiter = ",") {
 
         return value.split(delimiter)
