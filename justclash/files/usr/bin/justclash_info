@@ -53,25 +53,31 @@ info_luci() {
 }
 
 info_conns_console() {
-    local pid
+    local pids
 
-    if [ -f "$PIDFILE" ]; then
-        pid=$(cat "$PIDFILE")
+    # Найти PID(ы) по CORE_PATH или CORE_BIN_NAME
+    pids=$(pgrep -f "$CORE_PATH")
+    if [ -z "$pids" ]; then
+        pids=$(pgrep "$CORE_BIN_NAME")
     fi
 
-    if [ -z "$pid" ]; then
+    if [ -z "$pids" ]; then
         clog 1 "Process '$CORE_BIN_NAME' is not running"
         return 1
     fi
 
-    clog 2 "PID of process '$CORE_BIN_NAME': $pid"
+    clog 2 "PIDs of process '$CORE_BIN_NAME': $pids"
 
     if command -v ss >/dev/null; then
         clog 2 "Using ss:"
-        ss -tunp | grep "$pid"
+        for pid in $pids; do
+            ss -tunp | grep "$pid"
+        done
     elif command -v netstat >/dev/null; then
         clog 2 "Using netstat:"
-        netstat -tunp | grep "$pid"
+        for pid in $pids; do
+            netstat -tunp | grep "$pid"
+        done
     elif command -v lsof >/dev/null; then
         clog 2 "Using lsof:"
         lsof -i -n -P | grep "$CORE_BIN_NAME"

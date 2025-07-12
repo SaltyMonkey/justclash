@@ -553,7 +553,7 @@ nft_table_add() {
         ip route add local 0.0.0.0/0 dev lo table 100
     fi
 
-    log 1 "TPROXY: port=$tproxy_port, fwmark=1 table=100"
+    log 1 "TPROXY: port=$tproxy_port, fwmark=$NFT_FWMARK_FINAL fwmark_proxy=$NFT_FWMARK_PROXY table=100"
 }
 
 nft_table_remove() {
