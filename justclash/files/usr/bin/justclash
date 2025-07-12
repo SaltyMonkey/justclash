@@ -770,6 +770,13 @@ generate_json_array_from_named_section() {
     fi
 }
 
+ucibool_to_yaml_bool () {
+    case "$1" in
+        1|yes|on|true) echo "true" ;;
+        *) echo "false" ;;
+    esac
+}
+
 core_generate_yaml() {
     local log_level tproxy_port unified_delay
     local tcp_concurrent external_controller_port global_client_fingerprint
