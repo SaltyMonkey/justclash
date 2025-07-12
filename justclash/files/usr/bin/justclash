@@ -1303,11 +1303,11 @@ diag_proxy_resolver() {
     ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
 
     if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
-        clog 0 "Local DNS query failed"
+        clog 0 "Fake IP DNS query failed"
         return 1
     else
         echo "$ips"
-        clog 2 "Local DNS query successful"
+        clog 2 "Fake IP DNS query successful"
         return 0
     fi
 }
@@ -1407,6 +1407,9 @@ $(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_YANDEX"
 
 -> DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_GOOGLE:
 $(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_GOOGLE")
+
+-> Zapret:
+$(if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "Zapret detected."; else echo "No zapret installed."; fi)
 
 -> DHCP config:
 $(uci show dhcp)
