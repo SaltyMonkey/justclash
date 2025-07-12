@@ -21,7 +21,7 @@ return view.extend({
         common.defaultLoggingLevels.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Set up logging level in mihomo core.");
+        o.description = _("Set up logging level in Mihomo core.");
         o.default = common.defaultLoggingLevels[0];
         o.rmempty = false;
 

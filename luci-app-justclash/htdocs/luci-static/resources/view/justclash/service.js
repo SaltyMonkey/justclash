@@ -22,7 +22,7 @@ return view.extend({
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Edit DNS server at startup:"));
-        o.description = _("If enabled, service will edit dns server in dnsmasq configuration at start.");
+        o.description = _("If enabled, the service will edit DNS server in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = "1";
 
@@ -111,12 +111,12 @@ return view.extend({
         o.default = common.defaultUpdateOptions[0];
 
         o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for Mihomo autorestart:"));
-        o.description = _("When enabled service will send telegram notification for Mihomo autorestart cron job.");
+        o.description = _("When enabled, the service will send Telegram notification for Mihomo autorestart cron job");
         o.rmempty = false;
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "mihomo_cron_update_telegram_notify", _("Telegram notify for Mihomo autoupdate:"));
-        o.description = _("When enabled service will send telegram notification for Mihomo autoupdate cron job.");
+        o.description = _("When enabled, the service will send Telegram notification for Mihomo autoupdate cron job.");
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
