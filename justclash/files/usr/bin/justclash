@@ -1339,12 +1339,12 @@ diag_external_resolver() {
 }
 
 diag_icmp() {
+    local target="${1}"
+    local count="${2}"
     if [ -z "$target" ] || [ -z "$count" ]; then
         clog 1 "Usage: diag_icmp <target> <count>"
         return 1
     fi
-    local target="${1}"
-    local count="${2}"
     local timeout=2
     local ping_output
 
@@ -1362,10 +1362,8 @@ diag_icmp() {
 
 diag_report() {
     local running autoload pkg_manager
-    service justclash status
-    running=$?
-    service justclash enabled
-    autoload=$?
+    running=$(service justclash status)
+    autoload=$(service justclash enabled)
     if command -v apk >/dev/null 2>&1; then
         pkg_manager="APK"
     else
