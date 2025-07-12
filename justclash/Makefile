@@ -12,17 +12,16 @@ PKG_LICENSE:=GPL-2.0-or-later
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
-  SECTION:=net
-  CATEGORY:=Network
-  TITLE:=JustClash
-  DEPENDS:=+nftables +curl +kmod-nft-tproxy
-  CONFLICTS:=mihomo sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2
-  TITLE:=Clash Routing service
-  PKGARCH:=all
+	SECTION:=net
+	CATEGORY:=Utilities
+	TITLE:=JustClash
+	DEPENDS:=+nftables +curl +kmod-nft-tproxy
+	CONFLICTS:=mihomo sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2
+	PKGARCH:=all
 endef
 
 define Package/$(PKG_NAME)/description
-  Transparent proxy solution for OpenWrt based on mihomo clash core.
+	Transparent proxy solution for OpenWrt based on mihomo clash core.
 endef
 
 define Build/Prepare

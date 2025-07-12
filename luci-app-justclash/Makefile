@@ -15,6 +15,10 @@ PKG_LICENSE:=GPL-2.0-or-later
 
 LUCI_LANGUAGES:=en ru
 
+define Package/$(PKG_NAME)/description
+	LuCI web interface for the JustClash proxy service.
+endef
+
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
@@ -28,5 +32,3 @@ exit 0
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
-
-# call BuildPackage - OpenWrt buildroot signature
