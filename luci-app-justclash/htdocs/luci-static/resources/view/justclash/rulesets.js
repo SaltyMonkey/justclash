@@ -381,7 +381,7 @@ return baseclass.extend({
             type: "http",
             interval: 86500,
             format: "mrs",
-            behavior: "cidr",
+            behavior: "ipcidr",
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/cloudfront.rms"
         },
@@ -391,7 +391,7 @@ return baseclass.extend({
             type: "http",
             interval: 86500,
             format: "mrs",
-            behavior: "cidr",
+            behavior: "ipcidr",
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/cloudflare.rms"
         },
@@ -401,7 +401,7 @@ return baseclass.extend({
             type: "http",
             interval: 86500,
             format: "mrs",
-            behavior: "cidr",
+            behavior: "ipcidr",
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/discord.rms"
         },
@@ -411,7 +411,7 @@ return baseclass.extend({
             type: "http",
             interval: 86500,
             format: "mrs",
-            behavior: "cidr",
+            behavior: "ipcidr",
             proxy: "DIRECT",
             url: "https://github.com/SaltyMonkey/mrs-parsed-data/raw/refs/heads/main/subnets/ipv4/telegram.rms"
         }
