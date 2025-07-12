@@ -754,10 +754,10 @@ generate_json_array_from_named_section() {
         local val="$1"
         val=$(printf '%s' "$val" | sed 's/"/\\"/g')
         if [ "$first" -eq 1 ]; then
-            result="  \"$val\""
+            result="\"$val\""
             first=0
         else
-            result="${result},\n  \"$val\""
+            result="${result}, \"$val\""
         fi
     }
 
@@ -766,15 +766,8 @@ generate_json_array_from_named_section() {
     if [ -z "$result" ]; then
         echo "[]"
     else
-        # shellcheck disable=SC3036
-        echo -e "[\n${result}\n]"
+        echo "[$result]"
     fi
-}
-
-
-ucibool_to_yaml_bool () {
-    local input="$1"
-    [ "$input" -eq 1 ] && echo "true" || echo "false"
 }
 
 core_generate_yaml() {
@@ -870,18 +863,13 @@ dns:
   use-system-hosts: $use_system_hosts
   enhanced-mode: fake-ip
   fake-ip-range: $fake_ip_range
-  default-nameserver:
-$default_nameserver
-  nameserver:
-$nameserver
-  proxy-server-nameserver:
-$proxy_server_nameserver
-  direct-nameserver:
-$direct_nameserver
+  default-nameserver: $default_nameserver
+  nameserver: $nameserver
+  proxy-server-nameserver: $proxy_server_nameserver
+  direct-nameserver: $direct_nameserver
   respect-rules: true
   fake-ip-filter-mode: blacklist
-  fake-ip-filter:
-$ignore_fake_ip_domains
+  fake-ip-filter: $ignore_fake_ip_domains
 
 sniffer:
   enable: true
@@ -894,8 +882,7 @@ sniffer:
       ports: [443, 8443]
     QUIC:
       ports: [443, 8443]
-  skip-domain:
-$ignore_to_sniff_domains
+  skip-domain: $ignore_to_sniff_domains
 
 EOF
 
@@ -906,17 +893,11 @@ EOF
     config_get rule_providers compiled rule_providers
 
     cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-proxies:
-$proxies
+proxies: $proxies
+proxy-groups: $proxy_groups
+rule-providers: $rule_providers
+rules: $rules
 
-proxy-groups:
-$proxy_groups
-
-rule-providers:
-$rule_providers
-
-rules:
-$rules
 EOF
 
     return 0;
@@ -1113,8 +1094,6 @@ core_update() {
     return 0
 }
 
-
-
 send_telegram() {
     if [ -z "$1" ]; then
         log 1 "Usage: send_telegram <message>"
@@ -1210,7 +1189,6 @@ core_update_cron_remove() {
     fi
 }
 
-# -----
 core_autorestart_cron_check() {
     cron_make_if_missing
     if grep -q "${INITD_PATH} reload" /etc/crontabs/root; then

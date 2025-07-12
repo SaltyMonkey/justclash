@@ -223,9 +223,9 @@ return view.extend({
                 console.log(virtualBlockRules);
                 const compiledRules = [...virtualDirectRules, ...virtualBlockRules, ...virtualRules, ...virtualFinalRules];
 
-                uci.set(common.binName, "compiled", "rules", JSON.stringify(compiledRules, null, 2));
-                uci.set(common.binName, "compiled", "proxies", JSON.stringify(virtualProxies, null, 2));
-                uci.set(common.binName, "compiled", "proxy_groups", JSON.stringify(virtualProxyGroups, null, 2));
+                uci.set(common.binName, "compiled", "rules", JSON.stringify(compiledRules));
+                uci.set(common.binName, "compiled", "proxies", JSON.stringify(virtualProxies));
+                uci.set(common.binName, "compiled", "proxy_groups", JSON.stringify(virtualProxyGroups));
                 uci.set(common.binName, "compiled", "rule_providers", JSON.stringify(virtualRuleSets, null, 2));
 
                 console.log(uci.sections(common.binName));
