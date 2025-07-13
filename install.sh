@@ -627,6 +627,8 @@ core_remove() {
 justclash_install() {
     echo "  "
     print_bold_green "Installing JustClash packages..."
+    local apk_file
+    local ipk_file
     if is_bin_installed apk; then
         for apk_file in "$TMP_DOWNLOAD_PATH"/*.apk; do
             if [ -f "$apk_file" ]; then
@@ -644,7 +646,6 @@ justclash_install() {
         done
         echo " - All new .ipk packages installed."
     fi
-
 }
 
 justclash_uninstall() {
