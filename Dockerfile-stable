@@ -10,6 +10,12 @@ RUN make defconfig && \
     make package/luci-app-justclash/compile V=s -j2
 
 RUN mkdir -p /output/stable && \
-    cp bin/packages/x86_64/utilites/justclash_*.ipk /output/stable/ && \
-    cp bin/packages/x86_64/luci/luci-app-justclash_*.ipk /output/stable/ && \
-    cp bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk /output/stable/
+    for f in \
+        bin/packages/x86_64/utilites/justclash_*.ipk \
+        bin/packages/x86_64/luci/luci-app-justclash_*.ipk \
+        bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk; do \
+        [ -e "$f" ] || continue; \
+        base=$(basename "$f"); \
+        newname=$(echo "$base" | sed 's/_/-/'); \
+        cp "$f" "/output/stable/$newname"; \
+    done

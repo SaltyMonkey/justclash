@@ -10,6 +10,6 @@ RUN make defconfig && \
     make package/luci-app-justclash/compile V=s -j2
 
 RUN mkdir -p /output/snapshot && \
-    cp bin/packages/x86_64/utilites/justclash_*.apk /output/snapshot/ && \
-    cp bin/packages/x86_64/luci/luci-app-justclash_*.apk /output/snapshot/ && \
-    cp bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.apk /output/snapshot/
+    cp bin/packages/x86_64/utilites/justclash-*.apk /output/snapshot/ && \
+    cp bin/packages/x86_64/luci/luci-app-justclash-*.apk /output/snapshot/ && \
+    cp bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk /output/snapshot/

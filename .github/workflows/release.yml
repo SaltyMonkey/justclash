@@ -32,6 +32,7 @@ jobs:
           file: ./Dockerfile-stable
           context: .
           tags: justclash/build:stable
+
       - name: Create Stable Docker container
         run: docker create --name stable justclash/build:stable
 
@@ -43,13 +44,41 @@ jobs:
           docker cp stable:/builder/bin/packages/x86_64/luci/luci-app-justclash_*.ipk ./output/
           docker cp stable:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk ./output/
 
-      - name: Renaming packages
+      - name: Rename all output packages (replace first _ with -)
+        shell: bash
+        run: |
+          for f in ./output/*.ipk; do
+            [ -e "$f" ] || continue
+            base=$(basename "$f")
+            newname=$(echo "$base" | sed 's/_/-/')
+            mv "$f" "./output/$newname"
+          done
+
+      - name: Renaming translation file
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          mv ./output/luci-i18n-justclash-ru_*.ipk "./output/luci-i18n-justclash-ru_${VERSION}.ipk"
+          mv ./output/luci-i18n-justclash-ru-*.ipk "./output/luci-i18n-justclash-ru-${VERSION}.ipk"
 
       - name: Remove Docker stable container
         run: docker rm stable
+
+      - name: Build and push snapshot
+        uses: docker/build-push-action@v6
+        with:
+          file: ./Dockerfile-snapshot
+          context: .
+          tags: justclash/build:snapshot
+
+      - name: Create Stable Docker container
+        run: docker create --name snapshot justclash/build:snapshot
+
+      - name: Copy files from stable Docker container
+        run: |
+          mkdir -p ./output
+          rm -f ./output/*.apk
+          docker cp snapshot:/builder/bin/packages/x86_64/utilites/justclash-*.apk ./output/
+          docker cp snapshot:/builder/bin/packages/x86_64/luci/luci-app-justclash-*.apk ./output/
+          docker cp snapshot:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk ./output/
 
       - name: Extract changelog for current version
         run: |
@@ -59,5 +88,5 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./output/*.ipk
+          files: ./output/*.*
         body_path: ./tmp.md

@@ -3,34 +3,37 @@
     image: saltymonkey/owrt-sdk-stable-cached:latest
     container_name: stable-builder
     volumes:
-      - ./justclash:/builder/package/feeds/utilites/justclash
-      - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
-      - ./output/stable:/output
+        - ./justclash:/builder/package/feeds/utilites/justclash
+        - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
+        - ./output/stable:/output
     working_dir: /builder
     command: >
-      /bin/sh -c "
-      make defconfig &&
-      make package/justclash/compile V=s -j2 &&
-      make package/luci-app-justclash/compile V=s -j2 &&
-      cp bin/packages/x86_64/utilites/justclash_*.ipk /output/ &&
-      cp bin/packages/x86_64/luci/luci-app-justclash_*.ipk /output/ &&
-      cp bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk /output/
-      "
+        /bin/bash -c "
+        make defconfig && \
+        make package/justclash/compile V=s -j2 && \
+        make package/luci-app-justclash/compile V=s -j2 && \
+        for f in bin/packages/x86_64/utilites/justclash_*.ipk bin/packages/x86_64/luci/luci-app-justclash_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk; do \
+            [ -e \"$$f\" ] || continue; \
+            base=$$(basename \"$$f\"); \
+            newname=\"$${base/_/-}\"; \
+            cp \"$$f\" \"/output/$$newname\"; \
+        done
+        "
 
   snapshot-builder:
     image: saltymonkey/owrt-sdk-snapshot-cached:latest
     container_name: snapshot-builder
     volumes:
-      - ./justclash:/builder/package/feeds/utilites/justclash
-      - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
-      - ./output/snapshot:/output
+        - ./justclash:/builder/package/feeds/utilites/justclash
+        - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
+        - ./output/snapshot:/output
     working_dir: /builder
     command: >
-      /bin/sh -c "
-      make defconfig &&
-      make package/justclash/compile V=s -j2 &&
-      make package/luci-app-justclash/compile V=s -j2 &&
-      cp bin/packages/x86_64/utilites/justclash_*.apk /output/ &&
-      cp bin/packages/x86_64/luci/luci-app-justclash_*.apk /output/ &&
-      cp bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.apk /output/
-      "
+        /bin/bash -c "
+        make defconfig &&
+        make package/justclash/compile V=s -j2 &&
+        make package/luci-app-justclash/compile V=s -j2 &&
+        cp bin/packages/x86_64/utilites/justclash-*.apk /output/ &&
+        cp bin/packages/x86_64/luci/luci-app-justclash-*.apk /output/ &&
+        cp bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk /output/
+        "
