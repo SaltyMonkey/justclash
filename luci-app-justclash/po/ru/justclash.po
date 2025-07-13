@@ -109,8 +109,8 @@ msgstr "Неверный формат cron. Ожидается: 'минута ч
 msgid "Mihomo autorestart:"
 msgstr "Автоматический перезапуск Mihomo:"
 
-msgid "Core automation"
-msgstr "Автоматизация ядра"
+msgid "Tasks"
+msgstr "Задачи"
 
 msgid "When enabled, the service will configure Mihomo autorestart by cron string."
 msgstr "Если включено, сервис настроит автоматический перезапуск Mihomo по строке cron."
@@ -358,6 +358,9 @@ msgstr "Каждый элемент — правило DOMAIN-SUFFIX для ма
 msgid "Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
 msgstr "Каждый элемент — правило IP-CIDR для маршрутизации через прокси (синтаксис Mihomo). Сейчас только IPv4."
 
+msgid "Each element is an SRC-IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для маршрутизации через прокси (синтаксис Mihomo). Сейчас только IPv4."
+
 msgid "Proxy groups:"
 msgstr "Группы прокси:"
 
@@ -387,6 +390,9 @@ msgstr "Разрешены только URL http:// или https://."
 
 msgid "Check interval:"
 msgstr "Интервал проверки:"
+
+msgid "Predefined RULE-SET lists, select those which you want to route through proxy-group."
+msgstr "Предустановленные списки RULE-SET, выберите те, которые хотите направлять через прокси-группу."
 
 msgid "DIRECT rules:"
 msgstr "Правила DIRECT:"

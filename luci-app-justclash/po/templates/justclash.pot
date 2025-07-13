@@ -109,7 +109,7 @@ msgstr ""
 msgid "Mihomo autorestart:"
 msgstr ""
 
-msgid "Automation"
+msgid "Tasks"
 msgstr ""
 
 msgid "When enabled, the service will configure Mihomo autorestart by cron string."
@@ -358,6 +358,9 @@ msgstr ""
 msgid "Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
 msgstr ""
 
+msgid "Each element is an SRC-IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
+msgstr ""
+
 msgid "Proxy groups:"
 msgstr ""
 
@@ -386,6 +389,9 @@ msgid "Only http:// or https:// URLs are allowed."
 msgstr ""
 
 msgid "Check interval:"
+msgstr ""
+
+msgid "Predefined RULE-SET lists, select those which you want to route through proxy-group."
 msgstr ""
 
 msgid "DIRECT rules:"

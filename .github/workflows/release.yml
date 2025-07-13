@@ -86,7 +86,7 @@ jobs:
       - name: Extract changelog for current version
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
-          awk '/## \['"$VERSION"'\]/ {flag=1} /^## \[/ {if(flag && !/## \['"$VERSION"'\]/) exit} flag' ./CHANGELOG.md > ./tmp.md
+          awk '/## \['"$VERSION"'\]/ {flag=1} /^## \[/ {if(flag && !/## \['"$VERSION"'\]/) exit} flag' ./RELEASENOTES.md > ./tmp.md
 
       - name: Release
         uses: softprops/action-gh-release@v2

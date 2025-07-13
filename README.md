@@ -67,6 +67,9 @@ Prebuilt packages are available in the [Releases](https://github.com/SaltyMonkey
      ```
 
    - **For OpenWrt snapshot or Alpine-based systems using apk (if your firmware uses Alpine package manager):**
+    ```
+    apk add --allow-untrusted justclash-*.apk luci-app-justclash-*.apk luci-i18n-justclash-ru-*.apk
+    ```
 
 Choose the command appropriate for your system:
 - Use `opkg` for standard OpenWrt releases.
@@ -90,6 +93,10 @@ You can build the JustClash packages using the provided Dockerfiles:
 
 After the build, extract the resulting packages from the container and install as above.
 
+### 4. Build from Source (using Docker Compose)
+
+You can build the JustClash packages using the provided Docker compose file, volume mount: /output:
+
 ## Usage
 
 1. Configure via LuCI: **Services → JustClash**.
@@ -99,7 +106,11 @@ After the build, extract the resulting packages from the container and install a
     /etc/init.d/justclash start
     /etc/init.d/justclash stop
     ```
-4. Use diagnostic commands for DNS, ICMP, and routing tests.
+4. Use diagnostic commands for DNS, ICMP, and routing tests and etc. Check command below for more information.
+
+    ```
+    /usr/bin/justclash help
+    ```
 
 ## Limitations
 

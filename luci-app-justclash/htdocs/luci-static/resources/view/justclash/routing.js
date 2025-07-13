@@ -44,6 +44,10 @@ return view.extend({
                 const yamlName = copy.yamlName;
                 delete copy.name;
                 delete copy.yamlName;
+                copy.proxy = common.defaultRuleSetProxy;
+                copy.interval = common.defaultRuleSetUpdateInterval;
+                copy.type = copy.type || "http";
+                copy.format = copy.format || "mrs";
                 selectedRuleSets[yamlName] = copy;
             }
             else {
@@ -93,6 +97,10 @@ return view.extend({
                     const yamlName = copy.yamlName;
                     delete copy.name;
                     delete copy.yamlName;
+                    copy.proxy = section.use_proxy_for_list_update ?  sectionName : common.defaultRuleSetProxy;
+                    copy.interval = section.list_update_interval || common.defaultRuleSetUpdateInterval;
+                    copy.type = copy.type || "http";
+                    copy.format = copy.format || "mrs";
                     selectedRuleSets[yamlName] = copy;
                 } else {
                     console.warn("parseProxiesSection", "selectedBlockRuleSetsNames missed", ruleset);
@@ -146,6 +154,10 @@ return view.extend({
                     const yamlName = copy.yamlName;
                     delete copy.name;
                     delete copy.yamlName;
+                    copy.proxy = section.use_proxy_group_for_list_update ?  sectionName : common.defaultRuleSetProxy;
+                    copy.interval = section.list_update_interval || common.defaultRuleSetUpdateInterval;
+                    copy.type = copy.type || "http";
+                    copy.format = copy.format || "mrs";
                     selectedRuleSets[yamlName] = copy;
                 } else {
                     console.warn("parseProxyGroupsSection", "selectedBlockRuleSetsNames is missing", ruleset);
@@ -239,6 +251,10 @@ return view.extend({
     render() {
         let m, s, s2, s3, s4, s5, o;
 
+        function isListSelected(val) {
+            return val && val.length > 0;
+        }
+
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
         s.anonymous = true;
@@ -260,6 +276,7 @@ return view.extend({
         o = s.option(form.Value, "proxy_link", _("URI:"));
         o.description = _("URI link with connection parameters.");
         o.password = true;
+        o.rmempty = false;
         o.validate = function (section_id, value) {
             return (common.isValidProxyLink(value)) ? true : _("Invalid link.");
         };
@@ -269,6 +286,15 @@ return view.extend({
             o.value(item.yamlName, _(`${item.name}`));
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
+
+        o = s.option(form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
+        o.description = _("If enabled, RULE-SET lists will be updated through proxy.");
+        o.optional = true;
+        o.default = "0";
+
+        o = s.option(form.Value, "list_update_interval", _("List update interval:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultRuleSetUpdateInterval;
         o.optional = true;
 
         o = s.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
@@ -356,7 +382,17 @@ return view.extend({
         rulesets.availableRuleSets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
-        o.description = _("Predefined RULE-SET lists, select ones which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
+        o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy-group.");
+
+        o = s2.option(form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy:"));
+        o.description = _("If enabled, RULE-SET lists will be updated through proxy.");
+        o.optional = true;
+        o.default = "0";
+
+        o = s2.option(form.Value, "list_update_interval", _("List update interval:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultRuleSetUpdateInterval;
+        o.optional = true;
 
         o = s2.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
         o.description = _("One element is one DOMAIN-SUFFIX rule with mihomo syntax.");
@@ -420,7 +456,7 @@ return view.extend({
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional settings for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
 
-        o = s4.option(form.MultiValue, "enabled_blocklist ", _("REJECT RULE_SET:"));
+        o = s4.option(form.MultiValue, "enabled_blocklist", _("REJECT RULE_SET:"));
         rulesets.availableBlockRulesets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
@@ -444,7 +480,7 @@ return view.extend({
         s5.addremove = false;
 
         o = s5.option(form.Value, "final_destination", _("Destination:"));
-        o.default = "DIRECT";
+        o.default = common.defaultRuleSetProxy;
         o.rmempty = false;
         o.validate = function (section_id, value) {
             if (!value || value.trim().length === 0) {

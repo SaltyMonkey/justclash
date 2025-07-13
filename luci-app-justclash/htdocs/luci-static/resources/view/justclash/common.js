@@ -17,6 +17,8 @@ return baseclass.extend({
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
     defaultProxyUpdateChannelOptions: ["alpha", "stable"],
     defaultTimeoutForWSReconnect: 10000,
+    defaultRuleSetUpdateInterval: 86500,
+    defaultRuleSetProxy: "DIRECT",
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },
