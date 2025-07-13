@@ -627,14 +627,24 @@ core_remove() {
 justclash_install() {
     echo "  "
     print_bold_green "Installing JustClash packages..."
-    for ipk_file in "$TMP_DOWNLOAD_PATH"/*.ipk; do
-        if [ -f "$ipk_file" ]; then
-            echo " - Installing $ipk_file"
-            pkg_install "$ipk_file" || print_red "Failed to install $ipk_file"
-        fi
-    done
+    if is_bin_installed apk; then
+        for apk_file in "$TMP_DOWNLOAD_PATH"/*.apk; do
+            if [ -f "$apk_file" ]; then
+                echo " - Installing $apk_file"
+                pkg_install "$apk_file" || print_red "Failed to install $apk_file"
+            fi
+        done
+        echo " - All new .apk packages installed."
+    else
+        for ipk_file in "$TMP_DOWNLOAD_PATH"/*.ipk; do
+            if [ -f "$ipk_file" ]; then
+                echo " - Installing $ipk_file"
+                pkg_install "$ipk_file" || print_red "Failed to install $ipk_file"
+            fi
+        done
+        echo " - All new .ipk packages installed."
+    fi
 
-    echo " - All new .ipk packages installed."
 }
 
 justclash_uninstall() {
@@ -681,35 +691,37 @@ justclash_download() {
 
     print_bold_green "Downloading justClash packages..."
 
-    echo " - Fetching .ipk links from latest JustClash release" "🔍"
     local urls
-    urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
-    if [ -z "$urls" ]; then
-        print_red "No .ipk files found in the latest release."
-        return 1
-    fi
+    local file
 
-    echo " - Found the following .ipk files: ${urls}"
+    if is_bin_installed apk; then
+        echo " - Fetching .apk links from latest JustClash release" "🔍"
+        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.apk')
+        if [ -z "$urls" ]; then
+            print_red "No .apk files found in the latest release."
+            return 1
+        fi
+        echo " - Found the following .apk files: ${urls}"
+    else
+        echo " - Fetching .ipk links from latest JustClash release" "🔍"
+        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
+        if [ -z "$urls" ]; then
+            print_red "No .ipk files found in the latest release."
+            return 1
+        fi
+        echo " - Found the following .ipk files: ${urls}"
+    fi
 
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        wget "$TMP_DOWNLOAD_PATH" -qO "$file" || {
+        wget "$file" -qO "$TMP_DOWNLOAD_PATH" || {
             print_red "Failed to download $file"
             continue
         }
     done
 
-    echo " - All .ipk files saved to $TMP_DOWNLOAD_PATH"
-
-    for ipk_file in "$TMP_DOWNLOAD_PATH"/*.ipk; do
-        if [ -f "$ipk_file" ]; then
-            echo " - Installing $ipk_file"
-            pkg_install "$ipk_file" || print_red "Failed to install $ipk_file"
-        fi
-    done
-
-    echo " - All new .ipk packages downloaded."
+    echo " - All files saved to $TMP_DOWNLOAD_PATH"
 }
 
 install_service() {
