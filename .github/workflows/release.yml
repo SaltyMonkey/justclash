@@ -69,16 +69,19 @@ jobs:
           context: .
           tags: justclash/build:snapshot
 
-      - name: Create Stable Docker container
+      - name: Create Snapshot Docker container
         run: docker create --name snapshot justclash/build:snapshot
 
-      - name: Copy files from stable Docker container
+      - name: Copy files from Snapshot Docker container
         run: |
           mkdir -p ./output
           rm -f ./output/*.apk
           docker cp snapshot:/builder/bin/packages/x86_64/utilites/justclash-*.apk ./output/
           docker cp snapshot:/builder/bin/packages/x86_64/luci/luci-app-justclash-*.apk ./output/
           docker cp snapshot:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk ./output/
+
+      - name: Remove Docker snapshot container
+        run: docker rm snapshot
 
       - name: Extract changelog for current version
         run: |
