@@ -9,6 +9,7 @@
     working_dir: /builder
     command: >
         /bin/bash -c "
+        rm -f bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk &&
         make defconfig && \
         make package/justclash/compile V=s -j2 && \
         make package/luci-app-justclash/compile V=s -j2 && \
@@ -30,6 +31,7 @@
     working_dir: /builder
     command: >
         /bin/bash -c "
+        rm -f bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk &&
         make defconfig &&
         make package/justclash/compile V=s -j2 &&
         make package/luci-app-justclash/compile V=s -j2 &&
