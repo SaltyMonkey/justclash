@@ -244,10 +244,6 @@ return view.extend({
     render() {
         let m, s, s2, s3, s4, s5, o;
 
-        function isListSelected(val) {
-            return val && val.length > 0;
-        }
-
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
         s.anonymous = true;
@@ -449,7 +445,7 @@ return view.extend({
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional settings for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
 
-        o = s4.option(form.MultiValue, "enabled_blocklist", _("REJECT RULE_SET:"));
+        o = s4.option(form.MultiValue, "enabled_blocklist", _("Use with rules:"));
         rulesets.availableBlockRulesets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });

@@ -448,9 +448,6 @@ msgstr ""
 msgid "Disable QUIC:"
 msgstr ""
 
-msgid "REJECT RULE_SET:"
-msgstr ""
-
 msgid "DOMAIN-SUFFIX block:"
 msgstr ""
 
