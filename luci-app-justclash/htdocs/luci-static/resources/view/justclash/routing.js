@@ -10,33 +10,26 @@
 return view.extend({
     parseDirectRulesSection: function (section) {
         const rules = [];
-        const directDomains = common.valueToArray(section.additional_domain_direct);
-        const directDomainsKeyword = common.valueToArray(section.additional_domain_keyword_direct);
-        const directDomainsRegex = common.valueToArray(section.additional_domain_regex_direct);
-        const directDomainsSrcIp = common.valueToArray(section.additional_srcip_direct);
-        const directDomainsDestIp = common.valueToArray(section.additional_destip_direct);
-
         [
-            [directDomains, "DOMAIN-SUFFIX"],
-            [directDomainsKeyword, "DOMAIN-KEYWORD"],
-            [directDomainsRegex, "DOMAIN-REGEX"],
-            [directDomainsSrcIp, "SRC-IP-CIDR"],
-            [directDomainsDestIp, "IP-CIDR"]
+            [common.valueToArray(section.additional_domain_direct), "DOMAIN-SUFFIX"],
+            [common.valueToArray(section.additional_domain_keyword_direct), "DOMAIN-KEYWORD"],
+            [common.valueToArray(section.additional_domain_regex_direct), "DOMAIN-REGEX"],
+            [common.valueToArray(section.additional_srcip_direct), "SRC-IP-CIDR"],
+            [common.valueToArray(section.additional_destip_direct), "IP-CIDR"]
         ].forEach(([arr, type]) => {
             arr.forEach(item => {
                 const val = item.trim();
                 if (val) rules.push(`${type},${val},DIRECT`);
             });
         });
-
         return { rules };
     },
+
     parseBlockRulesSection: function (section) {
         const rules = [];
         const selectedRuleSets = [];
         const selectedBlockRuleSetsNames = common.valueToArray(section.enabled_blocklist);
-        const domainBlockRoutes = common.valueToArray(section.additional_domain_blockroute);
-        const destipBlockRoutes = common.valueToArray(section.additional_destip_blockroute);
+
         selectedBlockRuleSetsNames.forEach(ruleset => {
             const rs = rulesets.availableBlockRulesets.find(x => ruleset === x.yamlName);
             if (rs) {
@@ -49,16 +42,15 @@ return view.extend({
                 copy.type = copy.type || "http";
                 copy.format = copy.format || "mrs";
                 selectedRuleSets[yamlName] = copy;
-            }
-            else {
+            } else {
                 console.warn("parseBlockRulesSection", "selectedBlockRuleSetsNames missed", ruleset);
             }
         });
 
         [
             [Object.keys(selectedRuleSets), "RULE-SET"],
-            [domainBlockRoutes, "DOMAIN-SUFFIX"],
-            [destipBlockRoutes, "IP-CIDR"]
+            [common.valueToArray(section.additional_domain_blockroute), "DOMAIN-SUFFIX"],
+            [common.valueToArray(section.additional_destip_blockroute), "IP-CIDR"]
         ].forEach(([arr, type]) => {
             arr.forEach(val => {
                 const trimmed = val.trim();
@@ -66,9 +58,9 @@ return view.extend({
             });
         });
 
-
         return { rules, selectedRuleSets };
     },
+
     parseProxiesSection: function (section, sectionName) {
         const rules = [];
         const selectedRuleSets = [];
@@ -87,9 +79,6 @@ return view.extend({
         }
         if (proxyObject) {
             const selectedRuleSetsNames = common.valueToArray(section.enabled_list);
-            const srcipRoutes = common.valueToArray(section.additional_srcip_route);
-            const domainRoutes = common.valueToArray(section.additional_domain_route);
-            const destipRoutes = common.valueToArray(section.additional_destip_route);
             selectedRuleSetsNames.forEach(ruleset => {
                 const rs = rulesets.availableRuleSets.find(x => ruleset === x.yamlName);
                 if (rs) {
@@ -108,9 +97,9 @@ return view.extend({
             });
             [
                 [Object.keys(selectedRuleSets), "RULE-SET"],
-                [srcipRoutes, "SRC-IP-CIDR"],
-                [domainRoutes, "DOMAIN-SUFFIX"],
-                [destipRoutes, "IP-CIDR"]
+                [common.valueToArray(section.additional_srcip_route), "SRC-IP-CIDR"],
+                [common.valueToArray(section.additional_domain_route), "DOMAIN-SUFFIX"],
+                [common.valueToArray(section.additional_destip_route), "IP-CIDR"]
             ].forEach(([arr, type]) => {
                 arr.forEach(val => {
                     const trimmed = val.trim();
@@ -123,6 +112,7 @@ return view.extend({
 
         return { proxies, rules, selectedRuleSets };
     },
+
     parseProxyGroupsSection: function (section, sectionName) {
         const proxyGroups = [];
         const rules = [];
@@ -130,7 +120,7 @@ return view.extend({
 
         let proxyList = null;
         if (section.proxies_list)
-            proxyList = common.splitAndTrimString(s.proxies_list, ",");
+            proxyList = common.splitAndTrimString(section.proxies_list, ",");
 
         if (proxyList && proxyList.length > 1) {
             proxyGroups.push({
@@ -143,10 +133,7 @@ return view.extend({
                 use: proxyList,
                 lazy: false
             });
-            const selectedRuleSetsNames = common.valueToArray(s.enabled_list);
-            const srcipRoutes = common.valueToArray(section.additional_srcip_route);
-            const domainRoutes = common.valueToArray(s.additional_domain_route);
-            const destipRoutes = common.valueToArray(s.additional_destip_route);
+            const selectedRuleSetsNames = common.valueToArray(section.enabled_list);
             selectedRuleSetsNames.forEach(ruleset => {
                 const rs = rulesets.availableRuleSets.find(x => ruleset === x.yamlName);
                 if (rs) {
@@ -165,9 +152,9 @@ return view.extend({
             });
             [
                 [Object.keys(selectedRuleSets), "RULE-SET"],
-                [srcipRoutes, "SRC-IP-CIDR"],
-                [domainRoutes, "DOMAIN-SUFFIX"],
-                [destipRoutes, "IP-CIDR"]
+                [common.valueToArray(section.additional_srcip_route), "SRC-IP-CIDR"],
+                [common.valueToArray(section.additional_domain_route), "DOMAIN-SUFFIX"],
+                [common.valueToArray(section.additional_destip_route), "IP-CIDR"]
             ].forEach(([arr, type]) => {
                 arr.forEach(val => {
                     const trimmed = val.trim();
@@ -180,11 +167,13 @@ return view.extend({
 
         return { proxyGroups, rules, selectedRuleSets };
     },
+
     parseFinalRulesSection: function (section, sectionName) {
         let dest = section.final_destination.trim();
-        if (!dest || (dest && dest.length === 0)) dest = "DIRECT";
+        if (!dest) dest = "DIRECT";
         return { rules: [`MATCH,${dest}`] };
     },
+
     handleSaveApply: async function (ev) {
         try {
             await this.handleSave(ev);
