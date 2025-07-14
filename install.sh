@@ -733,7 +733,9 @@ install_service() {
     diagnostic_conflicts_interactive
     core_update "alpha"
     justclash_download
-    justclash_install
+    if [ $? -ne 1 ]; then
+        justclash_install
+    fi
 }
 
 uninstall_service() {
