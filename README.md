@@ -77,15 +77,15 @@ Choose the command appropriate for your system:
 
 ### 3. Build from Source (using Docker)
 
-You can build the JustClash packages using the provided Dockerfiles:
+You can build the JustClash packages using the provided Dockerfiles (with OpenWRT SDK):
 
-- For stable OpenWrt (ipk packages):
+- **For stable OpenWrt (ipk packages):**
 
     ```
     docker build -t justclash-builder-stable -f Dockerfile-stable .
     ```
 
-- For OpenWrt snapshot (apk packages):
+- **For OpenWrt snapshot (apk packages):**
 
     ```
     docker build -t justclash-builder-snapshot -f Dockerfile-snapshot .
@@ -95,16 +95,38 @@ After the build, extract the resulting packages from the container and install a
 
 ### 4. Build from Source (using Docker Compose)
 
-You can build the JustClash packages using the provided Docker compose file, volume mount: /output:
+You can build the JustClash packages using the provided Docker compose file (with OpenWRT SDK), output volume mount: /output:
 
+- **For stable build:**
+
+```
+docker compose -f 'Docker-compose.yml' up -d --build 'stable-builder'
+```
+
+- **For snapshot build:**
+
+```
+docker compose -f 'Docker-compose.yml' up -d --build 'snapshot-builder'
+
+```
 ## Usage
 
 1. Configure via LuCI: **Services → JustClash**.
 2. Or edit `/etc/config/justclash` directly (YAML editing is not supported).
-3. Start/stop the service:
+3. Start/stop/restart the service manually:
+
     ```
     /etc/init.d/justclash start
     /etc/init.d/justclash stop
+    /etc/init.d/justclash restart
+    ```
+
+    or
+
+    ```
+    service justclash stop
+    service justclash start
+    service justclash restart
     ```
 4. Use diagnostic commands for DNS, ICMP, and routing tests and etc. Check command below for more information.
 
@@ -123,7 +145,5 @@ You can build the JustClash packages using the provided Docker compose file, vol
 GPL-2.0
 
 ---
-
-**This project is for educational and demonstration purposes only.**
 
 **Issues and feature requests are accepted via GitHub Issues.**

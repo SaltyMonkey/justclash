@@ -448,9 +448,6 @@ msgstr "Предустановленные списки RULE-SET с реклам
 msgid "Disable QUIC:"
 msgstr "Отключить QUIC:"
 
-msgid "REJECT RULE_SET:"
-msgstr "REJECT RULE_SET:"
-
 msgid "DOMAIN-SUFFIX block:"
 msgstr "DOMAIN-SUFFIX block:"
 
