@@ -6,7 +6,6 @@
 "require tools.widgets as widgets";
 
 return view.extend({
-
     render: function () {
         let m, s, o, tabname;
 

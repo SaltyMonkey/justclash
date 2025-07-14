@@ -4,10 +4,25 @@
 "require ui";
 "require view.justclash.common as common";
 
+const NO_DATA = _("No data");
+const NO_LOGS = _("No logs");
+
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
     handleReset: null,
+
+    async updateLogs(logBox, btn) {
+        btn.disabled = true;
+        try {
+            const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
+            logBox.value = res.stdout || NO_LOGS;
+        } catch (e) {
+            ui.addNotification(_("Error"), e.message, "danger");
+        } finally {
+            btn.disabled = false;
+        }
+    },
 
     render: function () {
         const logBox = E("textarea", {
@@ -17,42 +32,25 @@ return view.extend({
             rows: "200",
             wrap: "off",
         }, []);
-        logBox.value = _("No data");
+        logBox.value = NO_DATA;
 
-        const refreshBtn = E("button", {
+        let refreshBtn;
+        refreshBtn = E("button", {
             class: "cbi-button cbi-button-action",
-            click: () => {
-                refreshBtn.disabled = true;
-                fs.exec(common.binPath, ["systemlogs", common.logsCount])
-                    .then(res => {
-                        logBox.value = res.stdout || _("No logs");
-                    })
-                    .catch(e => {
-                        ui.addNotification(_("Error"), e.message, "danger");
-                    })
-                    .finally(() => {
-                        refreshBtn.disabled = false;
-                    });
-            }
-        }, [
-            _("Update")
-        ]);
+            click: () => this.updateLogs(logBox, refreshBtn)
+        }, [_("Update")]);
 
         const tailBtn = E("button", {
             class: "cbi-button cbi-button-neutral jc-ml",
             click: () => {
                 logBox.scrollTop = logBox.scrollHeight;
             },
-        }, [
-            _("To end")
-        ]);
+        }, [_("To end")]);
 
-        const buttonBar = E("div", {
-            style: "margin-bottom: 1em;"
-        }, [
+        const buttonBar = E("div", { style: "margin-bottom: 1em;" }, [
             refreshBtn,
             tailBtn,
-            //copyBtn
+            // copyBtn
         ]);
 
         return E("div", { class: "cbi-section fade-in" }, [
@@ -62,6 +60,7 @@ return view.extend({
             logBox
         ]);
     },
+
     addCSS() {
         return E("style", {}, `
             .jc-ml {
@@ -71,9 +70,8 @@ return view.extend({
                 width: 100%;
                 font-family: monospace;
                 white-space: pre;
-                overflow: auto;"
+                overflow: auto;
             }
         `);
     },
-
 });

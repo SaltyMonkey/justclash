@@ -97,7 +97,7 @@ return view.extend({
                     const yamlName = copy.yamlName;
                     delete copy.name;
                     delete copy.yamlName;
-                    copy.proxy = section.use_proxy_for_list_update ?  sectionName : common.defaultRuleSetProxy;
+                    copy.proxy = section.use_proxy_for_list_update ? sectionName : common.defaultRuleSetProxy;
                     copy.interval = section.list_update_interval || common.defaultRuleSetUpdateInterval;
                     copy.type = copy.type || "http";
                     copy.format = copy.format || "mrs";
@@ -154,7 +154,7 @@ return view.extend({
                     const yamlName = copy.yamlName;
                     delete copy.name;
                     delete copy.yamlName;
-                    copy.proxy = section.use_proxy_group_for_list_update ?  sectionName : common.defaultRuleSetProxy;
+                    copy.proxy = section.use_proxy_group_for_list_update ? sectionName : common.defaultRuleSetProxy;
                     copy.interval = section.list_update_interval || common.defaultRuleSetUpdateInterval;
                     copy.type = copy.type || "http";
                     copy.format = copy.format || "mrs";
@@ -185,68 +185,72 @@ return view.extend({
         if (!dest || (dest && dest.length === 0)) dest = "DIRECT";
         return { rules: [`MATCH,${dest}`] };
     },
-    handleSaveApply: function (ev) {
-        return this.handleSave(ev).then(() => {
-            return uci.load(common.binName).then(() => {
-                const allSections = uci.sections(common.binName);
+    handleSaveApply: async function (ev) {
+        try {
+            await this.handleSave(ev);
+            await uci.load(common.binName);
+            const allSections = uci.sections(common.binName);
 
-                let virtualRuleSets = {};
-                let virtualProxies = [];
-                let virtualProxyGroups = [];
-                let virtualRules = [];
+            let virtualRuleSets = {};
+            let virtualProxies = [];
+            let virtualProxyGroups = [];
+            let virtualRules = [];
 
-                let virtualDirectRules = [];
-                let virtualBlockRules = [];
-                let virtualFinalRules = [];
-                for (const s of allSections) {
-                    const type = s[".type"];
-                    const name = s.name ? s.name.trim() : "";
-                    switch (type) {
-                        case "proxies":
-                            const proxiesRet = this.parseProxiesSection(s, name);
-                            virtualProxies.push(...proxiesRet.proxies);
-                            virtualRules.push(...proxiesRet.rules);
-                            virtualRuleSets = { ...virtualRuleSets, ...proxiesRet.selectedRuleSets };;
-                            break;
-                        case "proxy_group":
-                            const proxyGroupRet = this.parseProxiesSection(s, name);
-                            virtualProxyGroups.push(...proxyGroupRet.proxyGroups);
-                            virtualRules.push(...proxyGroupRet.rules);
-                            virtualRuleSets = { ...virtualRuleSets, ...proxyGroupRet.selectedRuleSets };;
-                            break;
-                        case "block_rules":
-                            const blockRulesRet = this.parseBlockRulesSection(s);
-                            virtualBlockRules.push(...blockRulesRet.rules);
-                            virtualRuleSets = { ...virtualRuleSets, ...blockRulesRet.selectedRuleSets };;
-                            break;
-                        case "direct_rules":
-                            const directRulesRet = this.parseDirectRulesSection(s);
-                            virtualDirectRules.push(...directRulesRet.rules);
-                            //virtualRuleSets ={ ...virtualRuleSets, ...blockRulesRet.selectedRuleSets}; ;
-                            break;
-                        case "final_rules":
-                            const finalRulesRet = this.parseFinalRulesSection(s);
-                            virtualFinalRules.push(...finalRulesRet.rules);
-                            break;
-                    }
+            let virtualDirectRules = [];
+            let virtualBlockRules = [];
+            let virtualFinalRules = [];
+            for (const s of allSections) {
+                const type = s[".type"];
+                const name = s.name ? s.name.trim() : "";
+                switch (type) {
+                    case "proxies":
+                        const proxiesRet = this.parseProxiesSection(s, name);
+                        virtualProxies.push(...proxiesRet.proxies);
+                        virtualRules.push(...proxiesRet.rules);
+                        virtualRuleSets = { ...virtualRuleSets, ...proxiesRet.selectedRuleSets };
+                        break;
+                    case "proxy_group":
+                        const proxyGroupRet = this.parseProxyGroupsSection(s, name);
+                        virtualProxyGroups.push(...proxyGroupRet.proxyGroups);
+                        virtualRules.push(...proxyGroupRet.rules);
+                        virtualRuleSets = { ...virtualRuleSets, ...proxyGroupRet.selectedRuleSets };
+                        break;
+                    case "block_rules":
+                        const blockRulesRet = this.parseBlockRulesSection(s);
+                        virtualBlockRules.push(...blockRulesRet.rules);
+                        virtualRuleSets = { ...virtualRuleSets, ...blockRulesRet.selectedRuleSets };
+                        break;
+                    case "direct_rules":
+                        const directRulesRet = this.parseDirectRulesSection(s);
+                        virtualDirectRules.push(...directRulesRet.rules);
+                        break;
+                    case "final_rules":
+                        const finalRulesRet = this.parseFinalRulesSection(s);
+                        virtualFinalRules.push(...finalRulesRet.rules);
+                        break;
                 }
+            }
 
-                console.log(virtualRules);
-                console.log(virtualBlockRules);
-                const compiledRules = [...virtualDirectRules, ...virtualBlockRules, ...virtualRules, ...virtualFinalRules];
+            const compiledRules = [
+                ...virtualDirectRules,
+                ...virtualBlockRules,
+                ...virtualRules,
+                ...virtualFinalRules
+            ];
 
-                uci.set(common.binName, "compiled", "rules", JSON.stringify(compiledRules));
-                uci.set(common.binName, "compiled", "proxies", JSON.stringify(virtualProxies));
-                uci.set(common.binName, "compiled", "proxy_groups", JSON.stringify(virtualProxyGroups));
-                uci.set(common.binName, "compiled", "rule_providers", JSON.stringify(virtualRuleSets, null, 2));
+            uci.set(common.binName, "compiled", "rules", JSON.stringify(compiledRules));
+            uci.set(common.binName, "compiled", "proxies", JSON.stringify(virtualProxies));
+            uci.set(common.binName, "compiled", "proxy_groups", JSON.stringify(virtualProxyGroups));
+            uci.set(common.binName, "compiled", "rule_providers", JSON.stringify(virtualRuleSets, null, 2));
 
-                console.log(uci.sections(common.binName));
-                uci.save(common.binName).then(() => {
-                    console.log(uci.sections(common.binName));
-                    rpc.call("uci", "commit", { config: common.binName });
-                }).then(() => { ui.changes.apply(false); });
-            });
-        });
+            await uci.save(common.binName);
+            await rpc.call("uci", "commit", { config: common.binName });
+            await ui.changes.apply(false);
+
+        } catch (e) {
+            console.error("Ошибка при сохранении и применении настроек:", e);
+            ui.showModal(_("Error"), _("Failed to save or apply settings: ") + e.message);
+        }
     },
     render() {
         let m, s, s2, s3, s4, s5, o;
