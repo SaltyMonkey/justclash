@@ -549,7 +549,7 @@ nft_table_add() {
         ip rule add fwmark "$NFT_FWMARK_FINAL" table 100
     fi
 
-    if ! ip route show table 100 | grep -q "local 0.0.0.0/0 dev lo"; then
+    if ! ip route show table 100 | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
         ip route add local 0.0.0.0/0 dev lo table 100
     fi
 
@@ -1278,7 +1278,7 @@ diag_route() {
     fi
     ip rule list
 
-    if ! ip route show table 100 | grep -q "local 0.0.0.0/0 dev lo"; then
+    if ! ip route show table 100 | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
          clog 0 "Route table 100 is incorrect!"
     fi
     ip route show table 100
