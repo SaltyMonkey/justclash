@@ -24,4 +24,4 @@ and etc
 
 - Every router reboot FakeIP cache will be cleaned
 - Every route reboot RULE-SETs will be downloaded again
-- Every top-level page switch changed settings will be lost without "Apple/Save" button pressed
+- All unsaved changes will be lost when switching top level pages unless the "Save" or "Apply" button is pressed.
