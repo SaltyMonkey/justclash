@@ -285,6 +285,14 @@ return view.extend({
         o.datatype = "uinteger";
         o.default = common.defaultRuleSetUpdateInterval;
         o.optional = true;
+        o.validate = function (section_id, value) {
+            if (value === "") return true;
+            let v = parseInt(value);
+            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
+                return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
+            }
+            return true;
+        };
 
         o = s.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
         o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax.");
@@ -382,6 +390,14 @@ return view.extend({
         o.datatype = "uinteger";
         o.default = common.defaultRuleSetUpdateInterval;
         o.optional = true;
+        o.validate = function (section_id, value) {
+            if (value === "") return true;
+            let v = parseInt(value);
+            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
+                return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
+            }
+            return true;
+        };
 
         o = s2.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
         o.description = _("One element is one DOMAIN-SUFFIX rule with mihomo syntax.");
