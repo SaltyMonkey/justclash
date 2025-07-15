@@ -40,9 +40,9 @@ jobs:
         run: |
           mkdir -p ./output
           rm -f ./output/*.ipk
-          docker cp stable:/builder/bin/packages/x86_64/utilites/justclash_*.ipk ./output/
-          docker cp stable:/builder/bin/packages/x86_64/luci/luci-app-justclash_*.ipk ./output/
-          docker cp stable:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk ./output/
+          docker cp stable:/builder/bin/packages/x86_64/utilites/. ./output/
+          docker cp stable:/builder/bin/packages/x86_64/luci/. ./output/
+          rm -rf ./output/tmp
 
       - name: Rename all output packages (replace first _ with -)
         shell: bash
@@ -76,9 +76,9 @@ jobs:
         run: |
           mkdir -p ./output
           rm -f ./output/*.apk
-          docker cp snapshot:/builder/bin/packages/x86_64/utilites/justclash-*.apk ./output/
-          docker cp snapshot:/builder/bin/packages/x86_64/luci/luci-app-justclash-*.apk ./output/
-          docker cp snapshot:/builder/bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk ./output/
+          docker cp snapshot:/builder/bin/packages/x86_64/utilites/. ./output/
+          docker cp snapshot:/builder/bin/packages/x86_64/luci/. ./output/
+          rm -rf ./output/tmp
 
       - name: Remove Docker snapshot container
         run: docker rm snapshot
@@ -91,5 +91,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./output/*.*
+          files: |
+            ./output/*.ipk
+            ./output/*.apk
           body_path: ./tmp.md
