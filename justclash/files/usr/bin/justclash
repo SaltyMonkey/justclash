@@ -1363,7 +1363,12 @@ diag_icmp() {
 diag_report() {
     local running autoload pkg_manager
     running=$(service justclash status)
-    autoload=$(service justclash enabled)
+    service justclash enabled
+    if [ "$?" -eq 0 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
     if command -v apk >/dev/null 2>&1; then
         pkg_manager="APK"
     else
