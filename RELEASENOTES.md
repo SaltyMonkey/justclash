@@ -1,4 +1,4 @@
-## [0.0.1] - 15072025
+## [0.0.1] - rev2 15072025
 
 First JustClash alpha released!
 Bunch of features included as:
