@@ -489,7 +489,7 @@ detect_arch() {
 get_latest_version() {
     local check_url="$1"
     local latest_ver
-    latest_ver=$(wget -O- "$check_url/version.txt" | tr -d '\r\n')
+    latest_ver=$(wget -qO- "$check_url/version.txt" | tr -d '\r\n')
     echo "$latest_ver"
 }
 
@@ -510,13 +510,13 @@ core_download() {
     base_url="${download_url}/${file_name}"
 
     echo " - Downloading mihomo binary"
-    wget -O "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
+    wget -qO "$TMP_DOWNLOAD_PATH/mihomo.gz" "$base_url" || {
         print_red "Failed to download file."
         exit 1
     }
 
     echo " - Extracting to $CORE_PATH"
-    gunzip -c "${TMP_DOWNLOAD_PATH}/mihomo.gz" > "$CORE_PATH" || {
+    gunzip -c "$TMP_DOWNLOAD_PATH/mihomo.gz" > "$CORE_PATH" || {
         print_red "Failed to extract file."
         exit 1
     }
@@ -528,8 +528,8 @@ core_download() {
     fi
 
     echo " - Cleaning up temporary files" "🧹"
-    if ! rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"; then
-        print_red "Failed to clean up temporary file: ${TMP_DOWNLOAD_PATH}/mihomo.gz"
+    if ! rm -f "$TMP_DOWNLOAD_PATH/mihomo.gz"; then
+        print_red "Failed to clean up temporary file: $TMP_DOWNLOAD_PATH/mihomo.gz"
     fi
 }
 
@@ -692,13 +692,13 @@ justclash_download() {
     fi
 
     print_bold_green "Downloading justClash packages..."
-
+    mkdir -p "$TMP_DOWNLOAD_PATH"
     local urls
     local file
 
     if is_bin_installed apk; then
         echo " - Fetching .apk links from latest JustClash release" "🔍"
-        urls=$(wget -O- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.apk')
+        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.apk')
         if [ -z "$urls" ]; then
             print_red "No .apk files found in the latest release."
             return 1
@@ -706,7 +706,7 @@ justclash_download() {
         echo " - Found the following .apk files: ${urls}"
     else
         echo " - Fetching .ipk links from latest JustClash release" "🔍"
-        urls=$(wget -O- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
+        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
         if [ -z "$urls" ]; then
             print_red "No .ipk files found in the latest release."
             return 1
@@ -718,7 +718,7 @@ justclash_download() {
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        wget "$file" -O "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
+        wget "$file" -qO "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
             print_red "Failed to download $file"
             continue
         }
@@ -728,7 +728,7 @@ justclash_download() {
 }
 
 install_service() {
-    mkdir -p "${TMP_DOWNLOAD_PATH}"
+    mkdir -p "$TMP_DOWNLOAD_PATH"
     diagnostic_tools
     diagnostic_net
     diagnostic_mem
