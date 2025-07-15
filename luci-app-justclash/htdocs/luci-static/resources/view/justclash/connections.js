@@ -11,13 +11,17 @@ return view.extend({
     handleSaveApply: null,
     handleReset: null,
     wsErrorNotification: null,
-    getWSURL: function () {
+    getWSURL: function (externalControllerPort) {
         const host = window.location.hostname;
-        const port = 9090;
+        const port = externalControllerPort || 9090;
         return `ws://${host}:${port}/connections`;
     },
-
-    render: function () {
+    load: async function () {
+        await uci.load(common.binName);
+        const externalControllerPort = uci.get("proxy", "proxy", "external_controller_port");
+        return { externalControllerPort };
+    },
+    render: function (results) {
         const container = E("div", { class: "cbi-section fade-in" });
         const table = E("div", { class: "flex-table" });
 
@@ -139,7 +143,7 @@ return view.extend({
         }
 
         const connectWS = () => {
-            const wsUrl = this.getWSURL();
+            const wsUrl = this.getWSURL(results.externalControllerPort);
             this.ws = new WebSocket(wsUrl);
 
             this.ws.onopen = () => {
