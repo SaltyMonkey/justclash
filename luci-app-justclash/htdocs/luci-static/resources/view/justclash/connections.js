@@ -1,6 +1,7 @@
 "use strict";
 "require view";
 "require ui";
+"require uci";
 "require view.justclash.common as common";
 
 return view.extend({
