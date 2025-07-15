@@ -489,7 +489,7 @@ detect_arch() {
 get_latest_version() {
     local check_url="$1"
     local latest_ver
-    latest_ver=$(wget -qO- "$check_url/version.txt" | tr -d '\r\n')
+    latest_ver=$(wget -O- "$check_url/version.txt" | tr -d '\r\n')
     echo "$latest_ver"
 }
 
@@ -510,7 +510,7 @@ core_download() {
     base_url="${download_url}/${file_name}"
 
     echo " - Downloading mihomo binary"
-    wget -qO "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
+    wget -O "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$base_url" || {
         print_red "Failed to download file."
         exit 1
     }
@@ -627,6 +627,7 @@ core_remove() {
 justclash_install() {
     echo "  "
     print_bold_green "Installing JustClash packages..."
+    opkg update
     local apk_file
     local ipk_file
     if is_bin_installed apk; then
@@ -697,7 +698,7 @@ justclash_download() {
 
     if is_bin_installed apk; then
         echo " - Fetching .apk links from latest JustClash release" "🔍"
-        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.apk')
+        urls=$(wget -O- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.apk')
         if [ -z "$urls" ]; then
             print_red "No .apk files found in the latest release."
             return 1
@@ -705,18 +706,19 @@ justclash_download() {
         echo " - Found the following .apk files: ${urls}"
     else
         echo " - Fetching .ipk links from latest JustClash release" "🔍"
-        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
+        urls=$(wget -O- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
         if [ -z "$urls" ]; then
             print_red "No .ipk files found in the latest release."
             return 1
         fi
-        echo " - Found the following .ipk files: ${urls}"
+        echo " - Found the following .ipk files:"
+        echo "${urls}"
     fi
 
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        wget "$file" -qO "$TMP_DOWNLOAD_PATH" || {
+        wget "$file" -O "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
             print_red "Failed to download $file"
             continue
         }
