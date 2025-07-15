@@ -262,7 +262,7 @@ return view.extend({
         .flex-header > div:nth-child(5),
         .flex-row > div:nth-child(5) { /* Rule */
             flex: 0 0 80px;
-            max-width: 120px;
+            max-width: 150px;
         }
         .flex-row:last-child {
             border-bottom: none;

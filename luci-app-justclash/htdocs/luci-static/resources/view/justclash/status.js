@@ -36,12 +36,11 @@ function createTable(results, statusCells) {
     return E("table", { class: "table cbi-rowstyle-1" }, rows);
 }
 
-function createActionButton(action, cssClass, label, handler, disabled = false) {
+function createActionButton(action, cssClass, label, handler) {
     return E("button", {
         class: `cbi-button ${cssClass}`,
         id: `button${action}`,
-        click: handler,
-        disabled
+        click: handler
     }, [label]);
 }
 
@@ -118,23 +117,67 @@ return view.extend({
             }
         });
 
+        const showExecModalHandler = (title, command, args) => ui.createHandlerFn(this, async function () {
+            const buttons = document.querySelectorAll(".cbi-button");
+            buttons.forEach(btn => btn.disabled = true);
+            ui.showModal(title, [E("p", _("Please wait..."))]);
+
+            try {
+                const res = await fs.exec(command, args);
+                ui.showModal(title, [
+                    E("pre", { style: "max-height: 400px; overflow:auto;" }, res.stdout || _("No output")),
+                    E("div", { style: "text-align: right; margin-top: 1em;" }, [
+                        E("button", {
+                            class: "cbi-button",
+                            click: () => ui.hideModal()
+                        }, _("Dismiss"))
+                    ])
+                ]);
+            } catch (e) {
+                ui.showModal(_("Error"), [
+                    E("div", { class: "alert-message error" }, e.message),
+                    E("div", { style: "text-align: right; margin-top: 1em;" }, [
+                        E("button", {
+                            class: "cbi-button",
+                            click: () => ui.hideModal()
+                        }, _("Dismiss"))
+                    ])
+                ]);
+            } finally {
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        });
+
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton("start", "cbi-button-positive", _("Start"), actionHandler("start"), results.infoIsRunning),
-            createActionButton("stop", "cbi-button-negative", _("Stop"), actionHandler("stop"), !results.infoIsRunning)
+            createActionButton("start", "cbi-button-positive", _("Start"), actionHandler("start")),
+            createActionButton("stop", "cbi-button-negative", _("Stop"), actionHandler("stop"))
         ]);
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton("enable", "cbi-button-positive", _("Enable autostart"), actionHandler("enable"), results.infoIsAutostarting),
-            createActionButton("disable", "cbi-button-negative", _("Disable autostart"), actionHandler("disable"), !results.infoIsAutostarting)
+            createActionButton("enable", "cbi-button-positive", _("Enable autostart"), actionHandler("enable")),
+            createActionButton("disable", "cbi-button-negative", _("Disable autostart"), actionHandler("disable"))
+        ]);
+        const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
+            createActionButton("diagnostic", "cbi-button-apply", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
+            createActionButton("config_reset", "cbi-button-apply", _("Reset config"), showExecModalHandler(_("Reset config"), common.binPath, ["config_reset"])),
+            createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"]))
+
         ]);
 
         this.startPolling(statusCells);
+
+        // Not sure why i can't set directly disable flag when creating button, let it be like dat
+        // Set initial button states after rendering
+        setTimeout(() => {
+            this.updateServiceStatus(statusCells);
+        }, 0);
 
         return E("div", { class: "cbi-map" }, [
             this.addCSS(),
             E("div", { class: "cbi-section" }, [
                 statusContainer,
                 actionContainer,
-                actionContainerSecondary
+                actionContainerSecondary,
+                actionContainerThird
             ])
         ]);
     },
