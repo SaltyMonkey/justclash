@@ -292,8 +292,8 @@ msgstr "Прямые DNS-серверы:"
 msgid "Direct nameservers used for DIRECT rules."
 msgstr "DNS-серверы, используемые для правил DIRECT."
 
-msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'."
-msgstr "Недопустимый формат DNS-сервера. Разрешены: quic://, https://, tls://, udp://, IPv4 или 'system'."
+msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4."
+msgstr "Недопустимый формат DNS-сервера. Разрешены: quic://, https://, tls://, udp:// или IPv4."
 
 msgid "Proxy nameservers:"
 msgstr "DNS-серверы прокси:"

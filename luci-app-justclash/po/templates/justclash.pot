@@ -292,7 +292,7 @@ msgstr ""
 msgid "Direct nameservers used for DIRECT rules."
 msgstr ""
 
-msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'."
+msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4."
 msgstr ""
 
 msgid "Proxy nameservers:"
