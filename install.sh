@@ -2,7 +2,7 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest"
+CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest/download"
 CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
 CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash-owrt/releases/latest"
