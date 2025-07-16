@@ -97,7 +97,7 @@ return baseclass.extend({
             name: "No Russia hosts",
             yamlName: "no-russia-hosts",
             behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/yaml/no-russia-hosts.yaml"
+            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/no-russia-hosts.rms"
         },
         {
             name: "Twitch-fix",
