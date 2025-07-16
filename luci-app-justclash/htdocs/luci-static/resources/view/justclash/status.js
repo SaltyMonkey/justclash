@@ -65,16 +65,13 @@ return view.extend({
 
     async load() {
         const [
-            infoDevice, infoOpenWrt, infoPackage, infoLuciPackage, infoCore,
-            cronCore, cronCoreAutorestart
+            infoDevice, infoOpenWrt, infoPackage, infoLuciPackage, infoCore
         ] = await Promise.all([
             fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
             fs.exec(common.binInfoPath, ["info_openwrt"]).catch(() => _("No data")),
             fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("No data")),
             fs.exec(common.binInfoPath, ["info_luci"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("No data")),
-            fs.exec(common.binPath, ["core_update_cron_check"]).catch(() => _("No data")),
-            fs.exec(common.binPath, ["core_autorestart_cron_check"]).catch(() => _("No data")),
+            fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("No data"))
         ]);
         const [infoIsRunning, infoIsAutostarting] = await Promise.all([
             this.isJustClashRunning().catch(() => false),
@@ -82,7 +79,7 @@ return view.extend({
         ]);
         return {
             infoDevice, infoOpenWrt, infoPackage, infoLuciPackage, infoCore,
-            infoIsRunning, infoIsAutostarting, cronCore, cronCoreAutorestart
+            infoIsRunning, infoIsAutostarting
         };
     },
 
