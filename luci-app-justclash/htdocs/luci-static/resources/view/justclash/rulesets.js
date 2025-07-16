@@ -57,7 +57,7 @@ availableRuleSets.push(...buildRules([
     ["x-com", "x-com"],
     ["Youtube", "youtube"],
     ["Telegram", "telegram"],
-    ["Hetzner", "hdrezka", "hetzner"],
+    ["Hetzner", "hetzner", "hetzner"],
     ["OVH", "ovh"],
     ["Nix", "nix"]
 ], "services"));
