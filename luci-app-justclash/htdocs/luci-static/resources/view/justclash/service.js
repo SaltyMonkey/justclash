@@ -31,19 +31,19 @@ return view.extend({
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "block_quic_with_nft", _("Block QUIC from clients:"));
-        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o.description = _("If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes.");
         o.depends("update_nft_tables_at_load", "1");
         o.rmempty = false;
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "block_dot_with_nft", _("Block DoT from clients:"));
-        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o.description = _("If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware.");
         o.depends("update_nft_tables_at_load", "1");
         o.rmempty = false;
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "block_dot_quic_with_nft", _("Block DoQ from clients:"));
-        o.description = _("When enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o.description = _("If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware.");
         o.depends("update_nft_tables_at_load", "1");
         o.rmempty = false;
         o.default = "0";
@@ -89,7 +89,7 @@ return view.extend({
         s.tab(tabname, _("Tasks"));
 
         o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
-        o.description = _("When enabled service will configure autorestart Mihomo by cron string.");
+        o.description = _("When enabled, the service will configure Mihomo autorestart by cron string.");
         o.rmempty = false;
         o.default = "1";
 
@@ -97,7 +97,7 @@ return view.extend({
         common.defaultProxyUpdateChannelOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Release channel for Mihomo updates.");
+        o.description = _("Update channel for Mihomo. Recommended: alpha.");
         o.rmempty = false;
         o.default = common.defaultProxyUpdateChannelOptions[0];
 
@@ -110,7 +110,7 @@ return view.extend({
         o.default = common.defaultUpdateOptions[0];
 
         o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for Mihomo autorestart:"));
-        o.description = _("When enabled, the service will send Telegram notification for Mihomo autorestart cron job");
+        o.description = _("When enabled, the service will send Telegram notification for Mihomo autorestart cron job.");
         o.rmempty = false;
         o.default = "0";
 

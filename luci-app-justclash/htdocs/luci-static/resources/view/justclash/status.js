@@ -155,8 +155,8 @@ return view.extend({
         ]);
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton("diagnostic", "cbi-button-apply", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
-            createActionButton("config_reset", "cbi-button-apply", _("Reset config"), showExecModalHandler(_("Reset config"), common.binPath, ["config_reset"])),
-            createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"]))
+            createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
+            createActionButton("config_reset", "cbi-button-negative", _("Reset config"), showExecModalHandler(_("Reset config"), common.binPath, ["config_reset"]))
 
         ]);
 

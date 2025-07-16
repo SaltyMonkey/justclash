@@ -1,6 +1,15 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "Diagnostic"
+msgstr "Диагностика"
+
+msgid "Reset config"
+msgstr "Сбросить конфигурацию"
+
+msgid "Update Mihomo"
+msgstr "Обновить ядро"
+
 msgid "Yes"
 msgstr "Да"
 
@@ -76,11 +85,20 @@ msgstr "Редактировать NFT-таблицы при запуске:"
 msgid "Block QUIC from clients:"
 msgstr "Блокировать QUIC от клиентов:"
 
+msgid "If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes."
+msgstr "Если включено, сервис будет блокировать QUIC траффик с nft таблицами. Может исправить проблемы с потоковым траффиком."
+
 msgid "Block DoT from clients:"
 msgstr "Блокировать DoT от клиентов:"
 
+msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
+msgstr "Если включено, сервис будет блокировать DOT траффик с nft таблицами. Может исправить DNS проблемы для некоторых устройств."
+
 msgid "Block DoQ from clients:"
 msgstr "Блокировать DoQ от клиентов:"
+
+msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
+msgstr "Если включено, сервис будет блокировать DoQ траффик с nft таблицами. Может исправить DNS проблемы для некоторых устройств."
 
 msgid "Source Network Interface"
 msgstr "Интерфейс захвата"
@@ -108,6 +126,12 @@ msgstr "Неверный формат cron. Ожидается: 'минута ч
 
 msgid "Mihomo autorestart:"
 msgstr "Автоматический перезапуск Mihomo:"
+
+msgid "Mihomo autoupdate channel:"
+msgstr "Канал обновления:"
+
+msgid "Update channel for Mihomo. Recommended: alpha."
+msgstr "Канал обновления ядра Mihomo. Рекоммендуется: Alpha."
 
 msgid "Tasks"
 msgstr "Задачи"
@@ -444,9 +468,6 @@ msgstr "Дополнительные правила для REJECT. Обраба�
 
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
 msgstr "Предустановленные списки RULE-SET с рекламой/вредоносным ПО. Выберите те, которые хотите блокировать через прокси. Оставьте пустым, если не хотите ничего блокировать."
-
-msgid "Disable QUIC:"
-msgstr "Отключить QUIC:"
 
 msgid "DOMAIN-SUFFIX block:"
 msgstr "DOMAIN-SUFFIX block:"

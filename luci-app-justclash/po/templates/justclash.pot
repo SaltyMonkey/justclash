@@ -1,6 +1,15 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "Diagnostic"
+msgstr ""
+
+msgid "Reset config"
+msgstr ""
+
+msgid "Update Mihomo"
+msgstr ""
+
 msgid "Yes"
 msgstr ""
 
@@ -76,10 +85,19 @@ msgstr ""
 msgid "Block QUIC from clients:"
 msgstr ""
 
+msgid "If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes."
+msgstr ""
+
 msgid "Block DoT from clients:"
 msgstr ""
 
+msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
+msgstr ""
+
 msgid "Block DoQ from clients:"
+msgstr ""
+
+msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
 msgstr ""
 
 msgid "Source Network Interface"
@@ -107,6 +125,12 @@ msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 
 msgstr ""
 
 msgid "Mihomo autorestart:"
+msgstr ""
+
+msgid "Mihomo autoupdate channel:"
+msgstr ""
+
+msgid "Update channel for Mihomo. Recommended: alpha."
 msgstr ""
 
 msgid "Tasks"
@@ -443,9 +467,6 @@ msgid "Additional rules for REJECT rules. Will be handled before proxies and pro
 msgstr ""
 
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
-msgstr ""
-
-msgid "Disable QUIC:"
 msgstr ""
 
 msgid "DOMAIN-SUFFIX block:"
