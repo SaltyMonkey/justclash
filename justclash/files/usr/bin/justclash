@@ -897,16 +897,18 @@ sniffer:
 
 EOF
 
-    local rules proxies proxy_groups rule_providers
+    local rules proxies proxy_groups rule_providers proxy_providers
     config_get rules compiled rules
     config_get proxies compiled proxies
     config_get proxy_groups compiled proxy_groups
     config_get rule_providers compiled rule_providers
+    config_get proxy_providers compiled proxy_providers
 
     cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 proxies: $proxies
 proxy-groups: $proxy_groups
 rule-providers: $rule_providers
+proxy-providers: $proxy_providers
 rules: $rules
 
 EOF
