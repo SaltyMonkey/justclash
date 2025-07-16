@@ -97,6 +97,7 @@ return view.extend({
         o.description = _("CIDR for fake IP entries.");
         o.default = "198.18.0.1/22";
         o.rmempty = false;
+        o.readonly = true;
         o.datatype = "cidr4";
 
         o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
