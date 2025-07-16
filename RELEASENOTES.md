@@ -1,3 +1,9 @@
+## [0.0.2] - 16072025
+
+- LuCI: Fix connections page
+- Justclash: Fix reports function
+- RuleSets: Fix no-russia-hosts
+
 ## [0.0.1] - 15072025
 
 First JustClash alpha released!
