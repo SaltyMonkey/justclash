@@ -15,7 +15,7 @@ return view.extend({
     async updateLogs(logBox, btn) {
         btn.disabled = true;
         try {
-            const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
+            const res = await fs.exec(common.binInfoPath, ["systemlogs", common.logsCount]);
             logBox.value = res.stdout || NO_LOGS;
         } catch (e) {
             ui.addNotification(_("Error"), e.message, "danger");
