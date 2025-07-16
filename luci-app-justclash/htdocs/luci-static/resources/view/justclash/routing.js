@@ -27,7 +27,7 @@ return view.extend({
 
     parseBlockRulesSection: function (section) {
         const rules = [];
-        const selectedRuleSets = [];
+        const selectedRuleSets = {};
         const selectedBlockRuleSetsNames = common.valueToArray(section.enabled_blocklist);
 
         selectedBlockRuleSetsNames.forEach(ruleset => {
@@ -63,7 +63,7 @@ return view.extend({
 
     parseProxiesSection: function (section, sectionName) {
         const rules = [];
-        const selectedRuleSets = [];
+        const selectedRuleSets = {};
         const proxies = [];
         let proxyObject = null;
 
@@ -87,7 +87,7 @@ return view.extend({
                     delete copy.name;
                     delete copy.yamlName;
                     copy.proxy = section.use_proxy_for_list_update ? sectionName : common.defaultRuleSetProxy;
-                    copy.interval = section.list_update_interval || common.defaultRuleSetUpdateInterval;
+                    copy.interval = parseInt(section.list_update_interval, 10) || common.defaultRuleSetUpdateInterval;
                     copy.type = copy.type || "http";
                     copy.format = copy.format || "mrs";
                     selectedRuleSets[yamlName] = copy;
@@ -116,11 +116,15 @@ return view.extend({
     parseProxyGroupsSection: function (section, sectionName) {
         const proxyGroups = [];
         const rules = [];
-        const selectedRuleSets = [];
+        const selectedRuleSets = {};
 
         let proxyList = null;
+        let providerList = null;
+
         if (section.proxies_list)
             proxyList = common.splitAndTrimString(section.proxies_list, ",");
+        if (section.providers_list)
+            providerList = common.splitAndTrimString(section.providers_list, ",");
 
         if (proxyList && proxyList.length > 1) {
             proxyGroups.push({
@@ -128,9 +132,10 @@ return view.extend({
                 type: section.group_type,
                 strategy: section.strategy,
                 url: section.check_url,
-                interval: section.interval,
+                interval: parseInt(section.interval, 10),
                 timeout: 5000,
-                use: proxyList,
+                proxies: proxyList,
+                use: providerList,
                 lazy: false
             });
             const selectedRuleSetsNames = common.valueToArray(section.enabled_list);
@@ -142,7 +147,7 @@ return view.extend({
                     delete copy.name;
                     delete copy.yamlName;
                     copy.proxy = section.use_proxy_group_for_list_update ? sectionName : common.defaultRuleSetProxy;
-                    copy.interval = section.list_update_interval || common.defaultRuleSetUpdateInterval;
+                    copy.interval = parseInt(section.list_update_interval, 10) || common.defaultRuleSetUpdateInterval;
                     copy.type = copy.type || "http";
                     copy.format = copy.format || "mrs";
                     selectedRuleSets[yamlName] = copy;
@@ -167,7 +172,43 @@ return view.extend({
 
         return { proxyGroups, rules, selectedRuleSets };
     },
+    parseProxyProvidersSection: function (section, sectionName) {
+        const proxyProviders = {};
 
+        const url = section.subscription?.trim();
+
+        const provider = {
+            type: "http",
+            url,
+            interval: parseInt(section.update_interval, 10) || common.defaultProxyProviderUpdateIntervalSec
+        };
+
+        if (section.health_check) {
+            provider["health-check"] = {
+                enable: true,
+                lazy: true,
+                url: section.health_check_url?.trim() || common.defaultProxyGroupCheckUrl,
+                interval: parseInt(section.health_check_interval, 10) || common.defaultProxyProviderHealthCheckSec,
+                timeout: parseInt(section.health_check_timeout, 10) || common.defaultHealthCheckTimeoutMs
+            };
+        }
+
+        if (section.filter) {
+            provider.filter = section.filter.trim();
+        }
+
+        if (section.exclude_filter) {
+            provider["exclude-filter"] = section.exclude - filter.trim();
+        }
+
+        if (section.exclude_type) {
+            provider["exclude-type"] = section.exclude - type.trim();
+        }
+
+        proxyProviders[sectionName] = provider;
+
+        return { proxyProviders };
+    },
     parseFinalRulesSection: function (section, sectionName) {
         let dest = section.final_destination.trim();
         if (!dest) dest = "DIRECT";
@@ -183,6 +224,8 @@ return view.extend({
             let virtualRuleSets = {};
             let virtualProxies = [];
             let virtualProxyGroups = [];
+            let virtualProxyProviders = {};
+
             let virtualRules = [];
 
             let virtualDirectRules = [];
@@ -203,6 +246,10 @@ return view.extend({
                         virtualProxyGroups.push(...proxyGroupRet.proxyGroups);
                         virtualRules.push(...proxyGroupRet.rules);
                         virtualRuleSets = { ...virtualRuleSets, ...proxyGroupRet.selectedRuleSets };
+                        break;
+                    case "proxy_provider":
+                        const proxyProviderRet = this.parseProxyProvidersSection(s, name);
+                        virtualProxyProviders = { ...virtualProxyProviders, ...proxyProviderRet.proxyProviders };
                         break;
                     case "block_rules":
                         const blockRulesRet = this.parseBlockRulesSection(s);
@@ -231,6 +278,7 @@ return view.extend({
             uci.set(common.binName, "compiled", "proxies", JSON.stringify(virtualProxies));
             uci.set(common.binName, "compiled", "proxy_groups", JSON.stringify(virtualProxyGroups));
             uci.set(common.binName, "compiled", "rule_providers", JSON.stringify(virtualRuleSets, null, 2));
+            uci.set(common.binName, "compiled", "proxy_providers", JSON.stringify(virtualProxyProviders, null, 2));
 
             await uci.save(common.binName);
             await rpc.call("uci", "commit", { config: common.binName });
@@ -242,7 +290,7 @@ return view.extend({
         }
     },
     render() {
-        let m, s, s2, s3, s4, s5, o;
+        let m, s, s2, spp, s3, s4, s5, o;
 
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
@@ -361,6 +409,24 @@ return view.extend({
             return true;
         };
 
+        o = s2.option(form.Value, "providers_list", _("Providers:"));
+        o.placeholder = "provider-name1, provider-name2";
+        o.validate = function (section_id, value) {
+            if (!value) return true;
+
+            let arr = value.split(",").map(s => s.trim()).filter(s => s.length > 0);
+
+            if (arr.length === 0) return _("Field must not be empty");
+
+            for (let name of arr) {
+                if (!common.isValidSimpleName(name)) {
+                    return _("Name must contain only lowercase letters, digits, and underscores");
+                }
+            }
+
+            return true;
+        };
+
         o = s2.option(form.Value, "check_url", _("Check URL:"));
         o.placeholder = common.defaultProxyGroupCheckUrl;
         o.default = common.defaultProxyGroupCheckUrl;
@@ -372,7 +438,7 @@ return view.extend({
 
         o = s2.option(form.Value, "interval", _("Check interval:"));
         o.datatype = "uinteger";
-        o.default = common.defaultProxyGroupInterval;
+        o.default = common.defaultProxyGroupIntervalSec;
         o.rmempty = false;
 
         o = s2.option(form.MultiValue, "enabled_list", _("Use with rules:"));
@@ -419,6 +485,103 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
+        spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies. "));
+        spp.anonymous = true;
+        spp.addremove = true;
+
+        o = spp.option(form.Value, "name", _("Name:"));
+        o.rmempty = false;
+        o.cfgvalue = function (section_id) {
+            const val = uci.get(common.binName, section_id, "name");
+            if (val)
+                return val;
+            return common.generateRandomName(common.genNameProxyProviderPrefix);
+        };
+        o.validate = function (section_id, value) {
+            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+        };
+
+        o = spp.option(form.Value, "subscription", _("Subscription URL:"));
+        o.placeholder = common.defaultProxyProvidersCheckUrl;
+        o.default = common.defaultProxyProvidersCheckUrl;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
+        };
+        o.description = _("Your complete subscription URL with http:// or https://.");
+
+        o = spp.option(form.Value, "update_interval", _("Update interval:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultProxyProviderIntervalSec;
+        o.description = _("Time interval for subscription update check.");
+
+        o = spp.option(form.Flag, "health_check", _("Health check:"));
+        o.default = "1";
+        o.rmempty = false;
+
+        o = spp.option(form.Value, "health_check_url", _("Check URL:"));
+        o.placeholder = common.defaultProxyGroupCheckUrl;
+        o.default = common.defaultProxyGroupCheckUrl;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
+        };
+        o.description = _("URL for node availability check (required for proxy provider functionality).");
+        o.depends("health_check", "1");
+
+        o = spp.option(form.Value, "health_check_interval", _("Check interval:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultProxyProviderHealthCheckSec;
+        o.depends("health_check", "1");
+        o.description = _("Time interval between health checks in seconds.");
+
+        o = spp.option(form.Value, "health_check_timeout", _("Check timeout:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultHealthCheckTimeoutMs;
+        o.depends("health_check", "1");
+        o.description = _("Timeout for each individual health check in milliseconds.");
+
+        o = spp.option(form.Value, "filter", _("Filter:"));
+        o.description = _("Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe).");
+        o.optional = true;
+        o.rmempty = true;
+        o.placeholder = "HK|US|(?i)Netflix";
+        o.validate = function (section_id, value) {
+            return common.isValidKeywordOrRegexList(value, "filter");
+        };
+
+        o = spp.option(form.Value, "exclude_filter", _("Exclude filter:"));
+        o.description = _("Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe).");
+        o.optional = true;
+        o.rmempty = true;
+        o.placeholder = "CN|(?i)douyin";
+        o.validate = function (section_id, value) {
+            return common.isValidKeywordOrRegexList(value, "exclude_filter");
+        };
+
+        o = spp.option(form.Value, "exclude_type", _("Exclude type:"));
+        o.description = _("Exclude type filter.");
+        o.optional = true;
+        o.validate = function (section_id, value) {
+            const regex = /^[a-z0-9|]+$/;
+
+            if (!regex.test(value)) {
+                return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
+            }
+
+            // Опционально: можно указать допустимые типы
+            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5"];
+            const types = value.split("|");
+
+            for (let i = 0; i < types.length; i++) {
+                const type = types[i].trim();
+                if (type && !allowedTypes.includes(type)) {
+                    return _("Unsupported type: ") + type;
+                }
+            }
+
+            return true;
+        };
         s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
         s3.addremove = false;
 

@@ -6,13 +6,18 @@ return baseclass.extend({
     binPath: "/usr/bin/justclash",
     binInfoPath: "/usr/bin/justclash_info",
     genNameProxyPrefix: "proxy",
+    genNameProxyProviderPrefix: "provider",
     logsCount: 650,
     genNameProxyGroupPrefix: "proxygroup",
     defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
-    defaultProxyGroupInterval: 300,
+    defaultProxyProvidersCheckUrl: "https://www.gstatic.com/generate_204",
+    defaultProxyGroupIntervalSec: 360,
     defaultProxyGroupsTypes: ["fallback", "load-balancer"],
     defaultProxyGroupsBalanceModeStrategies: ["consistent-hashing", "round-robin"],
+    defaultProxyProviderIntervalSec: 3600,
+    defaultProxyProviderHealthCheckSec: 360,
+    defaultHealthCheckTimeoutMs: 5000,
     defaultFingerprints: ["chrome", "firefox", "safari", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
     defaultProxyUpdateChannelOptions: ["alpha", "stable"],
@@ -627,6 +632,23 @@ return baseclass.extend({
             new RegExp(value);
         } catch (e) {
             return _("Invalid regular expression: ") + (e.message || e);
+        }
+
+        return true;
+    },
+    isValidKeywordOrRegexList: function (value, ctxLabel) {
+        if (!value) return true;
+
+        const parts = value.split("|");
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i].trim();
+            if (!part) continue;
+
+            try {
+                new RegExp(part); // поддерживается и keyword, и regexp
+            } catch (e) {
+                return _("Invalid expression in ") + ctxLabel + ": " + part;
+            }
         }
 
         return true;
