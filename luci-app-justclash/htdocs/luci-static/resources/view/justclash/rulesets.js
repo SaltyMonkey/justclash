@@ -1,248 +1,76 @@
 "require baseclass";
 
-return baseclass.extend({
-    availableBlockRulesets: [
-        {
-            name: "Google ADS",
-            yamlName: "google-ads",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/google-ads.rms"
-        },
-        {
-            name: "OISD NSFW small",
-            yamlName: "oisd-nsfw-small",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw-small.rms"
-        },
-        {
-            name: "OISD ADS small",
-            yamlName: "oisd-ads-small",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-small.rms"
-        },
-        {
-            name: "Hagezi ADS Pro mini",
-            yamlName: "hagezi-ads-pro-mini",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-mini-ads.rms"
-        },
-        {
-            name: "Hagezi badware Apple",
-            yamlName: "hagezi-badware-apple",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-apple.rms"
-        },
-        {
-            name: "Hagezi badware Huawei",
-            yamlName: "hagezi-badware-huawei",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-huawei.rms"
-        },
-        {
-            name: "Hagezi badware LGWebOS",
-            yamlName: "hagezi-badware-lgwebos",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-lgwebos.rms"
-        },
-        {
-            name: "Hagezi badware RealmeOppo",
-            yamlName: "hagezi-badware-realmeoppo",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-oppo-realme.rms"
-        }, {
-            name: "Hagezi badware Samsung",
-            yamlName: "hagezi-badware-samsung",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-samsung.rms"
-        },
-        {
-            name: "Hagezi badware Vivo",
-            yamlName: "hagezi-badware-vivo",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-vivo.rms"
-        },
-        {
-            name: "Hagezi badware WinOffice",
-            yamlName: "hagezi-badware-winoffice",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-winoffice.rms"
-        },
-        {
-            name: "Hagezi badware Xiaomi",
-            yamlName: "hagezi-badware-xiaomi",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-sw-xiaomi.rms"
-        },
-    ],
-    availableRuleSets: [
-        {
-            name: "Just Domains",
-            yamlName: "justdomains",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/just-domains.rms"
-        },
-        {
-            name: "ITDog Russia inside",
-            yamlName: "russia-inside",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/itdog-russia-inside.rms"
-        },
-        {
-            name: "Antifilter Community",
-            yamlName: "antifilter",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/antifilter-community.rms"
-        },
-        {
-            name: "No Russia hosts",
-            yamlName: "no-russia-hosts",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/no-russia-hosts.rms"
-        },
-        {
-            name: "Twitch-fix",
-            yamlName: "twitch-fix",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/twitch-fix.rms"
-        },
-        {
-            name: "Amazon",
-            yamlName: "amazon",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/amazon.rms"
-        },
-        {
-            name: "Anydesk",
-            yamlName: "anydesk",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/anydesk.rms"
-        },
-        {
-            name: "Atlassian",
-            yamlName: "atlassian",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/atlassian.rms"
-        },
-        {
-            name: "ChatGPT",
-            yamlName: "chatgpt",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/chatgpt.rms"
-        },
-        {
-            name: "ClaudeAI",
-            yamlName: "claudeai",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/claudeai.rms"
-        },
-        {
-            name: "Cloudflare",
-            yamlName: "cloudflare",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/cloudflare.rms"
-        },
-        {
-            name: "Copilot",
-            yamlName: "copilot",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/copilot.rms"
-        },
-        {
-            name: "Deepl",
-            yamlName: "deepl",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/deepl.rms"
-        },
-        {
-            name: "Discord",
-            yamlName: "discord",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/discord.rms"
-        },
-        {
-            name: "Docker",
-            yamlName: "docker",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/docker.rms"
-        },
-        {
-            name: "Gemini",
-            yamlName: "gemini",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/gemini.rms"
-        },
-        {
-            name: "Grok",
-            yamlName: "grok",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/grok.com.rms"
-        },
-                {
-            name: "x-com",
-            yamlName: "x-com",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/x-com.rms"
-        },
-        {
-            name: "Youtube",
-            yamlName: "youtube",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/youtube.rms"
-        },
-        {
-            name: "Telegram",
-            yamlName: "telegram",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/telegram.rms"
-        },
-        {
-            name: "Hetzner",
-            yamlName: "hdrezka",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/hetzner.rms"
-        },
-        {
-            name: "OVH",
-            yamlName: "ovh",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/ovh.rms"
-        },
-        {
-            name: "Nix",
-            yamlName: "nix",
-            behavior: "domain",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/nix.rms"
-        },
-        {
-            name: "AntifilterComm CIDR",
-            yamlName: "antifilter-cidr",
-            behavior: "ipcidr",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/antifilter-community.rms"
-        },
-        {
-            name: "Cloudfront CIDR",
-            yamlName: "cloudfront-cidr",
-            behavior: "ipcidr",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/cloudfront.rms"
-        },
-        {
-            name: "Cloudflare CIDR",
-            yamlName: "cloudflare-cidr",
-            behavior: "ipcidr",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/cloudflare.rms"
-        },
-        {
-            name: "Discord Voice CIDR",
-            yamlName: "discord-voice-cidr",
-            behavior: "ipcidr",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/discord-voice.rms"
-        },
-        {
-            name: "Telegram CIDR",
-            yamlName: "telegram-cidr",
-            behavior: "ipcidr",
-            url: "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/telegram.rms"
-        }
+const BASE_URL = "https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main";
 
-    ]
+function buildRules(items, category, defaultBehavior = "domain") {
+    return items.map(([name, yamlName, fileName, behavior]) => ({
+        name,
+        yamlName,
+        behavior: behavior || defaultBehavior,
+        url: `${BASE_URL}/${category}/${fileName || yamlName}.rms`,
+    }));
+}
+
+const availableBlockRulesets = [];
+
+availableBlockRulesets.push(...buildRules([
+    ["Google ADS", "google-ads"],
+    ["OISD NSFW small", "oisd-nsfw-small"],
+    ["OISD ADS small", "oisd-ads-small", "oisd-small"],
+    ["Hagezi ADS Pro mini", "hagezi-ads-pro-mini", "hagezi-pro-mini-ads"],
+], "ads"));
+
+availableBlockRulesets.push(...buildRules([
+    ["Hagezi badware Apple", "hagezi-badware-apple", "hagezi-sw-apple"],
+    ["Hagezi badware Huawei", "hagezi-badware-huawei", "hagezi-sw-huawei"],
+    ["Hagezi badware LGWebOS", "hagezi-badware-lgwebos", "hagezi-sw-lgwebos"],
+    ["Hagezi badware RealmeOppo", "hagezi-badware-realmeoppo", "hagezi-sw-oppo-realme"],
+    ["Hagezi badware Samsung", "hagezi-badware-samsung", "hagezi-sw-samsung"],
+    ["Hagezi badware Vivo", "hagezi-badware-vivo", "hagezi-sw-vivo"],
+    ["Hagezi badware WinOffice", "hagezi-badware-winoffice", "hagezi-sw-winoffice"],
+    ["Hagezi badware Xiaomi", "hagezi-badware-xiaomi", "hagezi-sw-xiaomi"],
+], "badware"));
+
+const availableRuleSets = [];
+
+availableRuleSets.push(...buildRules([
+    ["Just Domains", "justdomains", "just-domains"],
+    ["ITDog Russia inside", "russia-inside", "itdog-russia-inside"],
+    ["Antifilter Community", "antifilter", "antifilter-community"],
+    ["No Russia hosts", "no-russia-hosts"],
+], "bypass"));
+
+availableRuleSets.push(...buildRules([
+    ["Twitch-fix", "twitch-fix"],
+    ["Amazon", "amazon"],
+    ["Anydesk", "anydesk"],
+    ["Atlassian", "atlassian"],
+    ["ChatGPT", "chatgpt"],
+    ["ClaudeAI", "claudeai"],
+    ["Cloudflare", "cloudflare"],
+    ["Copilot", "copilot"],
+    ["Deepl", "deepl"],
+    ["Discord", "discord"],
+    ["Docker", "docker"],
+    ["Gemini", "gemini"],
+    ["Grok", "grok", "grok.com"],
+    ["x-com", "x-com"],
+    ["Youtube", "youtube"],
+    ["Telegram", "telegram"],
+    ["Hetzner", "hdrezka", "hetzner"],
+    ["OVH", "ovh"],
+    ["Nix", "nix"]
+], "services"));
+
+availableRuleSets.push(...buildRules([
+    ["AntifilterComm CIDR", "antifilter-cidr", "antifilter-community", "ipcidr"],
+    ["Cloudfront CIDR", "cloudfront-cidr", "cloudfront", "ipcidr"],
+    ["Cloudflare CIDR", "cloudflare-cidr", "cloudflare", "ipcidr"],
+    ["Discord Voice CIDR", "discord-voice-cidr", "discord-voice", "ipcidr"],
+    ["Telegram CIDR", "telegram-cidr", "telegram", "ipcidr"]
+], "subnets/ipv4"));
+
+return baseclass.extend({
+    availableBlockRulesets,
+    availableRuleSets
 });
