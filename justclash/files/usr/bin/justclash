@@ -22,7 +22,7 @@ PROCD_MODE=0
 
 config_load justclash
 
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest"
+CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest/download"
 CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
 CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
 NO_DATA_STRING="N/A"
@@ -942,17 +942,21 @@ detect_arch() {
 }
 
 get_latest_version() {
-    if [ -z "$1" ]; then
-        log 1 "Usage: get_latest_version <check_url>"
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        log 1 "Usage: get_latest_version <check_url> <link type[effective/noneffective]>"
         return 1
     fi
-
     local check_url="$1"
+    local link_type="$2"
     local latest_url latest_ver
-    latest_url=$(curl --progress-bar -L -o /dev/null -w '%{url_effective}' "$check_url") || {
-        log 0 "Failed to get effective URL for download" "❌"
-        return 1
-    }
+    if [ "$link_type" = "effective" ]; then
+        latest_url="${check_url}"
+    else
+        latest_url=$(curl --progress-bar -L -o /dev/null -w '%{url_effective}' "$check_url") || {
+            log 0 "Failed to get effective URL for download" "❌"
+            return 1
+        }
+    fi
     latest_ver=$(curl --progress-bar -L "$latest_url/version.txt" | tr -d '\r\n') || {
         log 0 "Failed to get latest version" "❌"
         return 1
@@ -1017,17 +1021,11 @@ core_remove() {
 
 core_update() {
     local cur_ver latest_ver tmp mihomo_update_channel mihomo_cron_update_telegram_notify
-    local check_url download_url
+    local check_url check_url_type download_url
     config_get mihomo_update_channel settings mihomo_update_channel
     config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
 
     log 2 "Checking for Mihomo updates..." "🔄"
-
-    if [ "$mihomo_update_channel" = "alpha" ]; then
-        check_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
-    else
-        check_url=$CORE_RELEASE_URL_PARTIAL
-    fi
 
     cur_ver=$(info_mihomo)
     if [ -z "$cur_ver" ]; then
@@ -1035,8 +1033,18 @@ core_update() {
         return 1
     fi
 
-    tmp=$(get_latest_version "$check_url")
-    if [ $? -eq 1 ]; then
+    if [ "$mihomo_update_channel" = "alpha" ]; then
+        check_url="$CORE_ALPHA_RELEASE_URL_PARTIAL"
+        check_url_type="effective"
+    else
+        check_url="$CORE_RELEASE_URL_PARTIAL"
+        check_url_type="noneffective"
+
+    fi
+
+    tmp=$(get_latest_version "$check_url" "$check_url_type")
+
+    if [ "$?" -eq 1 ]; then
         log 0 "Update process can't be finished." "❌"
         return 1
     fi
