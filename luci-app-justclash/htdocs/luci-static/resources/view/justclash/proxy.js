@@ -106,7 +106,7 @@ return view.extend({
         o.validate = function (section_id, value) {
             if (!value || (value && value.length === 0)) return true;
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
 
             return true;
         };
@@ -117,7 +117,7 @@ return view.extend({
         o.validate = function (section_id, value) {
             if (!value || (value && value.length === 0)) return true;
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
 
             return true;
         };
@@ -129,7 +129,7 @@ return view.extend({
             if (!value || (value && value.length === 0)) return true;
 
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
 
             return true;
         };
@@ -140,7 +140,7 @@ return view.extend({
         o.validate = function (section_id, value) {
             if (!value || (value && value.length === 0)) return true;
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4 or 'system'.");
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
 
             return true;
         };

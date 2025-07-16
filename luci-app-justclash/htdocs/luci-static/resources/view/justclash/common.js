@@ -514,7 +514,8 @@ return baseclass.extend({
         const val = value.trim();
         if (val.startsWith("https://") ||
             val.startsWith("tls://") ||
-            val.startsWith("udp://")) {
+            val.startsWith("udp://") ||
+            val.startsWith("quic://")) {
             return true;
         } else {
             return false;
