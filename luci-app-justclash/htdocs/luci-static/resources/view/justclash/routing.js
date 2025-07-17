@@ -198,11 +198,11 @@ return view.extend({
         }
 
         if (section.exclude_filter) {
-            provider["exclude-filter"] = section.exclude - filter.trim();
+            provider["exclude-filter"] = section["exclude_filter"].trim();
         }
 
         if (section.exclude_type) {
-            provider["exclude-type"] = section.exclude - type.trim();
+            provider["exclude-type"] = section["exclude_type"].trim();
         }
 
         proxyProviders[sectionName] = provider;
@@ -363,6 +363,13 @@ return view.extend({
         s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing)."));
         s2.anonymous = true;
         s2.addremove = true;
+        s2.validate = function (section_id) {
+            const proxies = this.data?.state?.values?.justclash?.[common.binName]?.['proxies_list'] || [];
+            const providers = this.data?.state?.values?.justclash?.[common.binName]?.['providers_list'] || [];
+
+            if (!providers && !proxies) return _('Providers or Proxies must be filled.');
+            return true;
+        };
 
         o = s2.option(form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
@@ -394,7 +401,7 @@ return view.extend({
         o = s2.option(form.Value, "proxies_list", _("Proxies:"));
         o.placeholder = "proxy-name1, proxy-name2";
         o.validate = function (section_id, value) {
-            if (!value) return _("Field must not be empty");
+            if (!value) return true;
 
             let arr = value.split(",").map(s => s.trim()).filter(s => s.length > 0);
 
@@ -502,8 +509,7 @@ return view.extend({
         };
 
         o = spp.option(form.Value, "subscription", _("Subscription URL:"));
-        o.placeholder = common.defaultProxyProvidersCheckUrl;
-        o.default = common.defaultProxyProvidersCheckUrl;
+        o.placeholder = "https://yourSubscriptionUrl";
         o.rmempty = false;
         o.validate = function (section_id, value) {
             return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
@@ -562,9 +568,10 @@ return view.extend({
         o = spp.option(form.Value, "exclude_type", _("Exclude type:"));
         o.description = _("Exclude type filter.");
         o.optional = true;
+        o.rmempty = true;
         o.validate = function (section_id, value) {
+            if (!value) return true;
             const regex = /^[a-z0-9|]+$/;
-
             if (!regex.test(value)) {
                 return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
             }
@@ -649,6 +656,7 @@ return view.extend({
 
         o = s5.option(form.Value, "final_destination", _("Destination:"));
         o.default = common.defaultRuleSetProxy;
+        o.placeholder = common.defaultRuleSetProxy;
         o.rmempty = false;
         o.validate = function (section_id, value) {
             if (!value || value.trim().length === 0) {
@@ -656,7 +664,6 @@ return view.extend({
             }
             return true;
         };
-
         return m.render().then(formEl => {
             return E("div", {}, [
                 this.addCSS(),
