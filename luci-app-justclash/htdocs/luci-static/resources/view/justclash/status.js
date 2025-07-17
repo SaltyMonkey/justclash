@@ -177,7 +177,7 @@ return view.extend({
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton("diagnostic", "cbi-button-apply", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
             createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
-            createActionButton("config_reset", "cbi-button-negative", _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
+            createActionButton("config_reset", "cbi-button-negative jc-margin-right", _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
 
         ]);
 
@@ -240,8 +240,15 @@ return view.extend({
         return E("style", {}, `
             .cbi-button { margin-right: 0.5em; }
             .jc-actions {
+                display: flex;
+                flex-flow: row;
+                flex-wrap: wrap;
+                row-gap: 1em;
                 text-align: left !important;
                 border-top: 0px !important;
+            }
+            .jc-margin-right {
+                margin-left: auto;
             }
         `);
     },
