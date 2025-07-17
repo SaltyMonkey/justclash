@@ -262,12 +262,12 @@ return view.extend({
         .flex-header > div:nth-child(4),
         .flex-row > div:nth-child(4) { /* Chains */
             flex: 0 0 80px;
-            max-width: 100px;
+            max-width: 140px;
         }
         .flex-header > div:nth-child(5),
         .flex-row > div:nth-child(5) { /* Rule */
             flex: 0 0 80px;
-            max-width: 150px;
+            max-width: 110px;
         }
         .flex-row:last-child {
             border-bottom: none;
