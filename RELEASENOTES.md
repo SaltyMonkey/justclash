@@ -1,3 +1,13 @@
+## [0.0.3] - 17072025
+
+- LuCI: Added proxy-providers
+- LuCi: Log page slight change
+- LuCi: FakeIP readonly
+- LuCi: Translation fix
+- Service: Update stable core update
+- Rule-Set: Optimize list
+- Rule-Set: Do not merge in JustDomains list all parsed services
+
 ## [0.0.2] - 16072025
 
 - LuCI: Fix connections page
