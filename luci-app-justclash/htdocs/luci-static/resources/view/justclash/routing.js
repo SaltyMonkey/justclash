@@ -126,7 +126,7 @@ return view.extend({
         if (section.providers_list)
             providerList = common.splitAndTrimString(section.providers_list, ",");
 
-        if (proxyList && proxyList.length > 1) {
+        if ((proxyList && proxyList.length > 1) || (providerList && providerList.length > 1)) {
             proxyGroups.push({
                 sectionName,
                 type: section.group_type,

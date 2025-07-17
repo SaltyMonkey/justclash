@@ -11,12 +11,16 @@ return view.extend({
     handleSave: null,
     handleSaveApply: null,
     handleReset: null,
-
+    autosizeTextarea(textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = textarea.scrollHeight + "px";
+    },
     async updateLogs(logBox, btn) {
         btn.disabled = true;
         try {
             const res = await fs.exec(common.binInfoPath, ["systemlogs", common.logsCount]);
             logBox.value = res.stdout || NO_LOGS;
+            this.autosizeTextarea(logBox);
         } catch (e) {
             ui.addNotification(_("Error"), e.message, "danger");
         } finally {
@@ -25,14 +29,15 @@ return view.extend({
     },
 
     render: function () {
+
         const logBox = E("textarea", {
             readonly: "readonly",
             class: "jc-logs",
             id: "logBox",
-            rows: "200",
             wrap: "off",
         }, []);
         logBox.value = NO_DATA;
+        this.autosizeTextarea(logBox);
 
         let refreshBtn;
         refreshBtn = E("button", {
@@ -70,7 +75,9 @@ return view.extend({
                 width: 100%;
                 font-family: monospace;
                 white-space: pre;
-                overflow: auto;
+                overflow: hidden;
+                resize: none;
+                min-height: 2em;
             }
         `);
     },

@@ -7,7 +7,7 @@ return baseclass.extend({
     binInfoPath: "/usr/bin/justclash_info",
     genNameProxyPrefix: "proxy",
     genNameProxyProviderPrefix: "provider",
-    logsCount: "200",
+    logsCount: "400",
     genNameProxyGroupPrefix: "proxygroup",
     defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
@@ -653,5 +653,4 @@ return baseclass.extend({
 
         return true;
     }
-
 });

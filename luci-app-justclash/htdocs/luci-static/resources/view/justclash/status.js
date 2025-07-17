@@ -113,7 +113,28 @@ return view.extend({
                 buttons.forEach(btn => btn.disabled = false);
             }
         });
-
+        function showDangerConfirm(message, onYes) {
+            ui.showModal(_("ATTENTION!"), [
+                E("div", {}, [
+                    E("strong", { style: "color:#a00" }, _("This action is irreversible!")),
+                    E("div", { style: "margin-top:1em" }, message)
+                ]),
+                E("div", { class: "right" }, [
+                    E("button", {
+                        class: "cbi-button cbi-button-remove",
+                        click: ui.hideModal
+                    }, [_("Cancel")]),
+                    E("button", {
+                        class: "cbi-button cbi-button-negative",
+                        style: "margin-left:1em",
+                        click: function () {
+                            ui.hideModal();
+                            onYes();
+                        }
+                    }, [_("Reset config")])
+                ])
+            ]);
+        }
         const showExecModalHandler = (title, command, args) => ui.createHandlerFn(this, async function () {
             const buttons = document.querySelectorAll(".cbi-button");
             buttons.forEach(btn => btn.disabled = true);
@@ -156,7 +177,7 @@ return view.extend({
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton("diagnostic", "cbi-button-apply", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
             createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
-            createActionButton("config_reset", "cbi-button-negative", _("Reset config"), showExecModalHandler(_("Reset config"), common.binPath, ["config_reset"]))
+            createActionButton("config_reset", "cbi-button-negative", _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
 
         ]);
 
