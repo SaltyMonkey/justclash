@@ -75,7 +75,8 @@ return view.extend({
                 width: 100%;
                 font-family: monospace;
                 white-space: pre;
-                overflow: hidden;
+                overflow-x: auto;
+                overflow-y: hidden;
                 resize: none;
                 min-height: 2em;
             }

@@ -367,14 +367,23 @@ msgstr "Недопустимая ссылка."
 msgid "Use with rules:"
 msgstr "Использовать с правилами:"
 
-msgid "DOMAIN-SUFFIX:"
-msgstr "DOMAIN-SUFFIX:"
+msgid "Domain suffix:"
+msgstr "Domain suffix:"
 
 msgid "Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
 msgstr "Предустановленные списки RULE-SET, выберите те, которые хотите направлять через прокси. Оставьте пустым, если будете использовать прокси с proxy-groups."
 
-msgid "IP-CIDR:"
-msgstr "IP-CIDR:"
+msgid "IPv4 CIDR:"
+msgstr "IPv4 CIDR:"
+
+msgid "Source IPv4 CIDR:"
+msgstr "Source IPv4 CIDR:"
+
+msgid "Domain keyword:"
+msgstr "Domain keyword:"
+
+msgid "Domain regex:"
+msgstr "Domain regex:"
 
 msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax."
 msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через прокси (синтаксис Mihomo)."
@@ -424,20 +433,11 @@ msgstr "Правила DIRECT:"
 msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
 msgstr "Дополнительные настройки для правил DIRECT. Обрабатываются до прокси, proxy groups и REJECT."
 
-msgid "DOMAIN-SUFFIX pass:"
-msgstr "DOMAIN-SUFFIX pass:"
-
 msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax)."
 msgstr "Каждый элемент — правило DOMAIN-SUFFIX для DIRECT (синтаксис Mihomo)."
 
-msgid "DOMAIN-KEYWORD pass:"
-msgstr "DOMAIN-KEYWORD pass:"
-
 msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax)."
 msgstr "Каждый элемент — правило DOMAIN-KEYWORD для DIRECT (синтаксис Mihomo)."
-
-msgid "DOMAIN-REGEX pass:"
-msgstr "DOMAIN-REGEX pass:"
 
 msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax)."
 msgstr "Каждый элемент — правило DOMAIN-REGEX для DIRECT (синтаксис Mihomo)."
@@ -447,9 +447,6 @@ msgstr "SRC-IP-CIDR pass:"
 
 msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.
 msgstr "Каждый элемент — правило SRC-IP-CIDR для DIRECT (синтаксис Mihomo). Сейчас только IPv4."
-
-msgid "IP-CIDR pass:"
-msgstr "IP-CIDR pass:"
 
 msgid "Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
 msgstr "Каждый элемент — правило IP-CIDR для пропуска через прокси (синтаксис Mihomo). Сейчас только IPv4."
@@ -469,20 +466,14 @@ msgstr "Дополнительные правила для REJECT. Обраба�
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
 msgstr "Предустановленные списки RULE-SET с рекламой/вредоносным ПО. Выберите те, которые хотите блокировать через прокси. Оставьте пустым, если не хотите ничего блокировать."
 
-msgid "DOMAIN-SUFFIX block:"
-msgstr "DOMAIN-SUFFIX block:"
-
 msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax)."
 msgstr "Каждый элемент — правило DOMAIN-SUFFIX для блокировки через прокси (синтаксис Mihomo)."
-
-msgid "IP-CIDR block:"
-msgstr "IP-CIDR block:"
 
 msgid "Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
 msgstr "Каждый элемент — правило IP-CIDR для блокировки через прокси (синтаксис Mihomo). Сейчас только IPv4."
 
-msgid "FINAL rule:"
-msgstr "FINAL rule:"
+msgid "End rule:"
+msgstr "End rule:"
 
 msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
 msgstr "Дополнительные настройки для финальных правил, применяемых после всех остальных. Используйте для переопределения или принудительного применения определённых действий."

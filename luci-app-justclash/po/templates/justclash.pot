@@ -367,13 +367,22 @@ msgstr ""
 msgid "Use with rules:"
 msgstr ""
 
-msgid "DOMAIN-SUFFIX:"
+msgid "Domain suffix:"
 msgstr ""
 
 msgid "Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
 msgstr ""
 
-msgid "IP-CIDR:"
+msgid "IPv4 CIDR:"
+msgstr ""
+
+msgid "Source IPv4 CIDR:"
+msgstr ""
+
+msgid "Domain keyword:"
+msgstr ""
+
+msgid "Domain regex:"
 msgstr ""
 
 msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax."
@@ -424,31 +433,16 @@ msgstr ""
 msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
 msgstr ""
 
-msgid "DOMAIN-SUFFIX pass:"
-msgstr ""
-
 msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax)."
-msgstr ""
-
-msgid "DOMAIN-KEYWORD pass:"
 msgstr ""
 
 msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax)."
 msgstr ""
 
-msgid "DOMAIN-REGEX pass:"
-msgstr ""
-
 msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax)."
 msgstr ""
 
-msgid "SRC-IP-CIDR pass:"
-msgstr ""
-
 msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
-msgstr ""
-
-msgid "IP-CIDR pass:"
 msgstr ""
 
 msgid "Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
@@ -469,19 +463,13 @@ msgstr ""
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
 msgstr ""
 
-msgid "DOMAIN-SUFFIX block:"
-msgstr ""
-
 msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax)."
-msgstr ""
-
-msgid "IP-CIDR block:"
 msgstr ""
 
 msgid "Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
 msgstr ""
 
-msgid "FINAL rule:"
+msgid "End rule:"
 msgstr ""
 
 msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."

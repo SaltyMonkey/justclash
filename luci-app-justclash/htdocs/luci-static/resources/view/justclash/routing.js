@@ -290,14 +290,17 @@ return view.extend({
         }
     },
     render() {
-        let m, s, s2, spp, s3, s4, s5, o;
+        let m, s, s2, spp, s3, s4, s5, o, tabname;
 
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
         s.anonymous = true;
         s.addremove = true;
 
-        o = s.option(form.Value, "name", _("Name:"));
+        tabname = "proxiesbasic_tab";
+        s.tab(tabname, _("Basic"));
+
+        o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Virtual proxy name.");
         o.rmempty = false;
         o.cfgvalue = function (section_id) {
@@ -310,7 +313,7 @@ return view.extend({
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
-        o = s.option(form.Value, "proxy_link", _("URI:"));
+        o = s.taboption(tabname, form.Value, "proxy_link", _("URI:"));
         o.description = _("URI link with connection parameters.");
         o.password = true;
         o.rmempty = false;
@@ -318,20 +321,24 @@ return view.extend({
             return (common.isValidProxyLink(value)) ? true : _("Invalid link.");
         };
 
-        o = s.option(form.MultiValue, "enabled_list", _("Use with rules:"));
+        tabname = "proxieslist_tab";
+        s.tab(tabname, _("Rules"));
+
+        o = s.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
         rulesets.availableRuleSets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
 
-        o = s.option(form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
+        o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
         o.description = _("If enabled, RULE-SET lists will be updated through proxy.");
         o.optional = true;
         o.default = "0";
 
-        o = s.option(form.Value, "list_update_interval", _("List update interval:"));
+        o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.datatype = "uinteger";
         o.default = common.defaultRuleSetUpdateInterval;
+        o.placeholder = common.defaultRuleSetUpdateInterval;
         o.optional = true;
         o.validate = function (section_id, value) {
             if (value === "") return true;
@@ -342,20 +349,26 @@ return view.extend({
             return true;
         };
 
-        o = s.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
+        tabname = "proxiesmanualrules_tab";
+        s.tab(tabname, _("Manual"));
+
+        o = s.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
         o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax.");
         o.optional = true;
+        o.placeholder = "domain.tld"
         o.validate = function (section_id, value) {
             return (common.isValidDomainSuffix(value));
         };
 
-        o = s.option(form.DynamicList, "additional_destip_route", _("IP-CIDR:"));
+        o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
         o.description = _("Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now.");
+        o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.datatype = "cidr4";
 
-        o = s.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
+        o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
         o.description = _("Each element is an SRC-IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now.");
+        o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
@@ -363,15 +376,11 @@ return view.extend({
         s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing)."));
         s2.anonymous = true;
         s2.addremove = true;
-        s2.validate = function (section_id) {
-            const proxies = this.data?.state?.values?.justclash?.[common.binName]?.['proxies_list'] || [];
-            const providers = this.data?.state?.values?.justclash?.[common.binName]?.['providers_list'] || [];
 
-            if (!providers && !proxies) return _('Providers or Proxies must be filled.');
-            return true;
-        };
+        tabname = "proxygroupsbasic_tab";
+        s2.tab(tabname, _("Basic"));
 
-        o = s2.option(form.Value, "name", _("Name:"));
+        o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
         o.rmempty = false;
         o.cfgvalue = function (section_id) {
@@ -384,21 +393,21 @@ return view.extend({
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
-        o = s2.option(form.ListValue, "group_type", _("Group type:"));
+        o = s2.taboption(tabname, form.ListValue, "group_type", _("Group type:"));
         common.defaultProxyGroupsTypes.forEach(item => {
             o.value(item, _(`${item}`));
         });
         o.rmempty = false;
         o.default = common.defaultProxyGroupsTypes[0];
 
-        o = s2.option(form.ListValue, "strategy", _("Group strategy:"));
+        o = s2.taboption(tabname, form.ListValue, "strategy", _("Group strategy:"));
         common.defaultProxyGroupsBalanceModeStrategies.forEach(item => {
             o.value(item, _(`${item}`));
         });
         o.default = common.defaultProxyGroupsBalanceModeStrategies[0];
         o.depends("group_type", "load-balancer");
 
-        o = s2.option(form.Value, "proxies_list", _("Proxies:"));
+        o = s2.taboption(tabname, form.Value, "proxies_list", _("Proxies:"));
         o.placeholder = "proxy-name1, proxy-name2";
         o.validate = function (section_id, value) {
             if (!value) return true;
@@ -416,7 +425,7 @@ return view.extend({
             return true;
         };
 
-        o = s2.option(form.Value, "providers_list", _("Providers:"));
+        o = s2.taboption(tabname, form.Value, "providers_list", _("Providers:"));
         o.placeholder = "provider-name1, provider-name2";
         o.validate = function (section_id, value) {
             if (!value) return true;
@@ -434,7 +443,7 @@ return view.extend({
             return true;
         };
 
-        o = s2.option(form.Value, "check_url", _("Check URL:"));
+        o = s2.taboption(tabname, form.Value, "check_url", _("Check URL:"));
         o.placeholder = common.defaultProxyGroupCheckUrl;
         o.default = common.defaultProxyGroupCheckUrl;
         o.rmempty = false;
@@ -443,24 +452,29 @@ return view.extend({
         };
         o.description = _("URL for node availability check (required for group functionality).");
 
-        o = s2.option(form.Value, "interval", _("Check interval:"));
+        o = s2.taboption(tabname, form.Value, "interval", _("Check interval:"));
         o.datatype = "uinteger";
+        o.placeholder = common.defaultProxyGroupIntervalSec;
         o.default = common.defaultProxyGroupIntervalSec;
         o.rmempty = false;
 
-        o = s2.option(form.MultiValue, "enabled_list", _("Use with rules:"));
+        tabname = "proxiesgrouplist_tab";
+        s2.tab(tabname, _("Rules"));
+
+        o = s2.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
         rulesets.availableRuleSets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy-group.");
 
-        o = s2.option(form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy:"));
+        o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy:"));
         o.description = _("If enabled, RULE-SET lists will be updated through proxy.");
         o.optional = true;
         o.default = "0";
 
-        o = s2.option(form.Value, "list_update_interval", _("List update interval:"));
+        o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.datatype = "uinteger";
+        o.placeholder = common.defaultRuleSetUpdateInterval;
         o.default = common.defaultRuleSetUpdateInterval;
         o.optional = true;
         o.validate = function (section_id, value) {
@@ -472,22 +486,28 @@ return view.extend({
             return true;
         };
 
-        o = s2.option(form.DynamicList, "additional_domain_route", _("DOMAIN-SUFFIX:"));
+        tabname = "proxiesgroupmanualrules_tab";
+        s2.tab(tabname, _("Manual"));
+
+        o = s2.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
         o.description = _("One element is one DOMAIN-SUFFIX rule with mihomo syntax.");
         o.optional = true;
+        o.placeholder = "domain.tld"
         o.editable = true;
         o.validate = function (section_id, value) {
             return (common.isValidDomainSuffix(value));
         };
 
-        o = s2.option(form.DynamicList, "additional_destip_route", _("IP-CIDR:"));
+        o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
         o.description = _("One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now.");
+        o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
-        o = s2.option(form.DynamicList, "additional_srcip_route", _("SRC-IP-CIDR:"));
+        o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
         o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
+        o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
@@ -496,7 +516,10 @@ return view.extend({
         spp.anonymous = true;
         spp.addremove = true;
 
-        o = spp.option(form.Value, "name", _("Name:"));
+        tabname = "proxyprovidersbasic_tab";
+        spp.tab(tabname, _("Basic"));
+
+        o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.rmempty = false;
         o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
@@ -508,7 +531,7 @@ return view.extend({
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
-        o = spp.option(form.Value, "subscription", _("Subscription URL:"));
+        o = spp.taboption(tabname, form.Value, "subscription", _("Subscription URL:"));
         o.placeholder = "https://yourSubscriptionUrl";
         o.rmempty = false;
         o.validate = function (section_id, value) {
@@ -516,16 +539,20 @@ return view.extend({
         };
         o.description = _("Your complete subscription URL with http:// or https://.");
 
-        o = spp.option(form.Value, "update_interval", _("Update interval:"));
+        o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
         o.datatype = "uinteger";
+        o.placeholder = common.defaultProxyProviderIntervalSec;
         o.default = common.defaultProxyProviderIntervalSec;
         o.description = _("Time interval for subscription update check.");
 
-        o = spp.option(form.Flag, "health_check", _("Health check:"));
+        tabname = "proxyproviderhelthchk_tab";
+        spp.tab(tabname, _("Health check"));
+
+        o = spp.taboption(tabname, form.Flag, "health_check", _("Health check:"));
         o.default = "1";
         o.rmempty = false;
 
-        o = spp.option(form.Value, "health_check_url", _("Check URL:"));
+        o = spp.taboption(tabname, form.Value, "health_check_url", _("Check URL:"));
         o.placeholder = common.defaultProxyGroupCheckUrl;
         o.default = common.defaultProxyGroupCheckUrl;
         o.rmempty = false;
@@ -535,19 +562,23 @@ return view.extend({
         o.description = _("URL for node availability check (required for proxy provider functionality).");
         o.depends("health_check", "1");
 
-        o = spp.option(form.Value, "health_check_interval", _("Check interval:"));
+        o = spp.taboption(tabname, form.Value, "health_check_interval", _("Check interval:"));
         o.datatype = "uinteger";
+        o.placeholder = common.defaultProxyProviderHealthCheckSec;
         o.default = common.defaultProxyProviderHealthCheckSec;
         o.depends("health_check", "1");
         o.description = _("Time interval between health checks in seconds.");
 
-        o = spp.option(form.Value, "health_check_timeout", _("Check timeout:"));
+        o = spp.taboption(tabname, form.Value, "health_check_timeout", _("Check timeout:"));
         o.datatype = "uinteger";
         o.default = common.defaultHealthCheckTimeoutMs;
         o.depends("health_check", "1");
         o.description = _("Timeout for each individual health check in milliseconds.");
 
-        o = spp.option(form.Value, "filter", _("Filter:"));
+        tabname = "proxyproviderfilter_tab";
+        spp.tab(tabname, _("Filters:"));
+
+        o = spp.taboption(tabname, form.Value, "filter", _("Filter:"));
         o.description = _("Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe).");
         o.optional = true;
         o.rmempty = true;
@@ -556,7 +587,7 @@ return view.extend({
             return common.isValidKeywordOrRegexList(value, "filter");
         };
 
-        o = spp.option(form.Value, "exclude_filter", _("Exclude filter:"));
+        o = spp.taboption(tabname, form.Value, "exclude_filter", _("Exclude filter:"));
         o.description = _("Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe).");
         o.optional = true;
         o.rmempty = true;
@@ -565,8 +596,9 @@ return view.extend({
             return common.isValidKeywordOrRegexList(value, "exclude_filter");
         };
 
-        o = spp.option(form.Value, "exclude_type", _("Exclude type:"));
+        o = spp.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
         o.description = _("Exclude type filter.");
+        o.placeholder = "vless|vmess|ss";
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
@@ -592,38 +624,46 @@ return view.extend({
         s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
         s3.addremove = false;
 
-        o = s3.option(form.DynamicList, "additional_domain_direct", _("DOMAIN-SUFFIX pass:"));
+        tabname = "directbasic_tab";
+        s3.tab(tabname, _("Basic"));
+
+        o = s3.taboption(tabname, form.DynamicList, "additional_domain_direct", _("Domain suffix:"));
         o.description = _("Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax).");
+        o.placeholder = "domain.tld";
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
             return (common.isValidDomainSuffix(value));
         };
 
-        o = s3.option(form.DynamicList, "domain_keyword_direct", _("DOMAIN-KEYWORD pass:"));
+        o = s3.taboption(tabname, form.DynamicList, "additional_domain_keyword_direct", _("Domain keyword:"));
         o.description = _("Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax).");
+        o.placeholder = "google";
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
             return (common.isValidDomainKeyword(value));
         };
 
-        o = s3.option(form.DynamicList, "additional_domain_regexp_direct", _("DOMAIN-REGEX pass:"));
+        o = s3.taboption(tabname, form.DynamicList, "additional_domain_regexp_direct", _("Domain regex:"));
         o.description = _("Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax).");
+        o.placeholder = "^abc.*com";
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
             return (common.isValidDomainRegexp(value));
         };
 
-        o = s3.option(form.DynamicList, "additional_srcip_direct", _("SRC-IP-CIDR pass:"));
+        o = s3.taboption(tabname, form.DynamicList, "additional_srcip_direct", _("Source IPv4 CIDR:"));
         o.description = _("Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.");
+        o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
-        o = s3.option(form.DynamicList, "additional_destip_direct", _("IP-CIDR pass:"));
+        o = s3.taboption(tabname, form.DynamicList, "additional_destip_direct", _("IPv4 CIDR:"));
         o.description = _("Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.");
+        o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
@@ -631,30 +671,41 @@ return view.extend({
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional settings for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
 
-        o = s4.option(form.MultiValue, "enabled_blocklist", _("Use with rules:"));
+        tabname = "rejectrules_tab";
+        s4.tab(tabname, _("Rules:"));
+
+        o = s4.taboption(tabname, form.MultiValue, "enabled_blocklist", _("Use with rules:"));
         rulesets.availableBlockRulesets.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
         o.description = _("Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything.");
 
-        o = s4.option(form.DynamicList, "additional_domain_blockroute", _("DOMAIN-SUFFIX block:"));
+        tabname = "rejectmanualrules_tab";
+        s4.tab(tabname, _("Manual"));
+
+        o = s4.taboption(tabname, form.DynamicList, "additional_domain_blockroute", _("Domain suffix:"));
         o.description = _("Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax).");
         o.optional = true;
+        o.placeholder = "domain.tld";
         o.editable = true;
         o.validate = function (section_id, value) {
             return (common.isValidDomainSuffix(value));
         };
 
-        o = s4.option(form.DynamicList, "additional_destip_blockroute", _("IP-CIDR block:"));
+        o = s4.taboption(tabname, form.DynamicList, "additional_destip_blockroute", _("IPv4 CIDR:"));
         o.description = _("Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now.");
+        o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
-        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("FINAL rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
+        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("End rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
         s5.addremove = false;
 
-        o = s5.option(form.Value, "final_destination", _("Destination:"));
+        tabname = "finalbasic_tab";
+        s5.tab(tabname, _("Basic"));
+
+        o = s5.taboption(tabname, form.Value, "final_destination", _("Destination:"));
         o.default = common.defaultRuleSetProxy;
         o.placeholder = common.defaultRuleSetProxy;
         o.rmempty = false;
