@@ -36,7 +36,22 @@ INITD_PATH="/etc/init.d/justclash"
 # workdir path (in RAM)
 CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
-DEFAULT_CONFIG_PATH="/var/default.justclash.config"
+
+DEFAULT_CONFIG_PATH="/etc/default.justclash.config"
+RULESETS_FILE="/etc/rulesets.justclash.txt"
+RULESETS_BLOCKS_FILE="/etc/blockrulesets.justclash.txt"
+
+DEFAULT_RULESET_PROXY="DIRECT"
+DEFAULT_PROXY="DIRECT"
+DEFAULT_HEALTHCHECK_INTERVAL=360
+DEFAULT_PROVIDERUPDATE_INTERVAL=7200
+DEFAULT_HEALTHCHECK_TIMEOUT=5000
+DEFAULT_RULESET_INTERVAL="86500"
+DEFAULT_TLS_PORT="443"
+DEFAULT_SOCKS_PORT="1080"
+DEFAULT_HEALTHCHECK_URL="http://www.gstatic.com/generate_204"
+DEFAULT_HEALTHCHECK_RESULT=204
+
 CORE_RESTART_MAX_RETRIES=3
 
 DIAG_RESOLVE_URL_YANDEX="ya.ru"
@@ -302,13 +317,6 @@ stop() {
 
     log 2 "Stopping core process" "🐱"
     stop_core
-}
-
-restart() {
-    log 2 "Performing complete restart" "🔄"
-    stop
-    sleep 1
-    start
 }
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
@@ -705,39 +713,27 @@ check_for_conflicts_warn() {
 }
 
 info_device() {
-    local res
-    res=$($CORE_PATH_INFOBIN info_device)
-    echo "$res"
+    $CORE_PATH_INFOBIN info_device
 }
 
 info_openwrt() {
-    local res
-    res=$($CORE_PATH_INFOBIN info_openwrt)
-    echo "$res"
+    $CORE_PATH_INFOBIN info_openwrt
 }
 
 info_mihomo() {
-    local res
-    res=$($CORE_PATH_INFOBIN info_core)
-    echo "$res"
+    $CORE_PATH_INFOBIN info_core
 }
 
 info_package() {
-    local res
-    res=$($CORE_PATH_INFOBIN info_package)
-    echo "$res"
+    $CORE_PATH_INFOBIN info_package
 }
 
 info_luci() {
-    local res
-    res=$($CORE_PATH_INFOBIN info_luci)
-    echo "$res"
+    $CORE_PATH_INFOBIN info_luci
 }
 
 info_conns_console() {
-    local res
-    res=$($CORE_PATH_INFOBIN info_conns_console)
-    echo "$res"
+    $CORE_PATH_INFOBIN info_conns_console
 }
 
 systemlogs() {
@@ -781,6 +777,762 @@ ucibool_to_yaml_bool () {
     esac
 }
 
+parse_ss_url() {
+    local link="${1#ss://}"
+
+    # Удаляем #, но сохраняем query (для plugin)
+    link="${link%%#*}"
+
+    local userinfo hostport method password server port decoded query_part plugin=""
+
+    # Извлечение query (после ?)
+    query_part=""
+    # shellcheck disable=SC2249
+    case "$link" in *\?*) query_part="${link#*\?}"; link="${link%%\?*}"; esac
+
+    if echo "$link" | grep -q '@'; then
+        userinfo="${link%@*}"
+        hostport="${link#*@}"
+
+        decoded="$(echo "$userinfo" | base64 -d 2>/dev/null)"
+        if [ -n "$decoded" ] && echo "$decoded" | grep -q ':'; then
+            method="$(url_decode "${decoded%%:*}")"  # Декодирование
+            password="$(url_decode "${decoded#*:}")"  # Декодирование
+        else
+            method="$(url_decode "${userinfo%%:*}")"
+            password="$(url_decode "${userinfo#*:}")"
+        fi
+    else
+        decoded="$(echo "$link" | base64 -d 2>/dev/null)"
+        userinfo="${decoded%@*}"
+        hostport="${decoded#*@}"
+        method="$(url_decode "${userinfo%%:*}")"
+        password="$(url_decode "${userinfo#*:}")"
+    fi
+
+    server="${hostport%%:*}"
+    port="${hostport##*:}"
+    [ "$server" = "$port" ] && port=1080  # Дефолт для SS
+
+    # Парсинг query (например, для plugin)
+    local temp_query="$query_part"
+    while [ -n "$temp_query" ]; do
+        local param="${temp_query%%&*}"
+        temp_query="${temp_query#"$param"}"
+        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+
+        local k="${param%%=*}"
+        local v="${param#*=}"
+        [ -z "$k" ] && continue
+
+        #case "$k" in
+        #    plugin) plugin="$(url_decode "$v")" ;;
+            # Добавьте другие, если нужно
+        #esac
+    done
+
+    # JSON
+    printf '{"type":"ss","server":"%s","port":%s,"cipher":"%s","password":"%s","udp":true}\n' \
+        "$server" "$port" "$method" "$password"
+    # Если plugin не пустой, его можно добавить в JSON как "plugin": "$plugin"
+}
+
+url_decode() {
+    # shellcheck disable=SC3060
+    local data="${1//+/ }"
+    echo -n "$data" | sed 's/%/\\x/g' | xargs -0 printf '%b'
+}
+
+json_escape() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+parse_socks5_url() {
+    local link="$1"
+    local raw="${link#socks5://}"
+
+    local server="" port="" username="" password=""
+    local userinfo="" hostport=""
+    local name=""
+
+    if echo "$raw" | grep -q '@'; then
+        userinfo="${raw%@*}"
+        hostport="${raw#*@}"
+
+        if echo "$userinfo" | grep -q ':'; then
+            username="$(url_decode "${userinfo%%:*}")"
+            password="$(url_decode "${userinfo#*:}")"
+        else
+            username="$(url_decode "$userinfo")"
+        fi
+    else
+        hostport="$raw"
+    fi
+
+    # host:port
+    server="$(url_decode "${hostport%%:*}")"
+    port="${hostport##*:}"
+
+    [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
+
+    name="socks5_${server}_${port}"
+
+    # Собираем JSON
+    local json="{\"type\":\"socks5\",\"name\":\"$name\",\"server\":\"$server\",\"port\":$port"
+    [ -n "$username" ] && json="$json,\"username\":\"$username\""
+    [ -n "$password" ] && json="$json,\"password\":\"$password\""
+    json="$json,\"udp\":true}"
+
+    echo "$json"
+}
+
+parse_trojan_url() {
+    local url="$1"
+    local raw="${url#trojan://}"
+    raw="${raw%%#*}"
+
+    local userinfo="${raw%@*}"
+    local hostport="${raw#*@}"
+    local password="$(printf '%b' "$(echo "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
+
+    local host="${hostport%%\?*}"
+    local server="${host%%:*}"
+    local port="${host##*:}"
+    [ "$server" = "$port" ] && port="$DEFAULT_TLS_PORT"
+
+    local query_part=""
+    # shellcheck disable=SC2249
+    case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
+
+    local sni="" insecure=0 net="tcp" fp="" alpn="" ws_path="" ws_host="" grpc_service=""
+    local ss_enabled="" ss_method="" ss_password=""
+
+    local temp_query="$query_part"
+    while [ -n "$temp_query" ]; do
+        local param="${temp_query%%&*}"
+        temp_query="${temp_query#"$param"}"
+        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+
+        local k="${param%%=*}"
+        local v="${param#*=}"
+        [ -z "$k" ] && continue
+
+        # shellcheck disable=SC2249
+        case "$k" in
+            sni|peer) sni="$(url_decode "$v")" ;;
+            insecure|allowInsecure) [ "$v" = "1" ] && insecure=1 ;;
+            type) net="$v" ;;
+            fp|client-fingerprint) fp="$v" ;;
+            alpn) alpn="$v" ;;
+            path)
+                if [ -n "$v" ]; then
+                    ws_path="$(url_decode "$v")"
+                else
+                    ws_path="/"
+                fi ;;
+            host) ws_host="$(url_decode "$v")" ;;
+            serviceName) grpc_service="$v" ;;
+            ss) ss_enabled="$v" ;;
+            ss-method) ss_method="$v" ;;
+            ss-password) ss_password="$v" ;;
+        esac
+    done
+
+    local json="{\"type\":\"trojan\",\"server\":\"$server\",\"port\":$port,\"password\":\"$password\",\"udp\":true"
+
+    [ -n "$sni" ] && json="$json,\"sni\":\"$sni\""
+    [ "$insecure" = "1" ] && json="$json,\"skip-cert-verify\":true"
+    json="$json,\"network\":\"$net\""
+
+    [ -n "$fp" ] && json="$json,\"client-fingerprint\":\"$fp\""
+    [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
+
+    if [ "$net" = "ws" ]; then
+        json="$json,\"ws-opts\":{\"path\":\"$ws_path\""
+        [ -n "$ws_host" ] && json="$json,\"headers\":{\"Host\":\"$ws_host\"}"
+        json="$json}"
+    fi
+
+    if [ "$net" = "grpc" ]; then
+        json="$json,\"grpc-opts\":{\"grpc-service-name\":\"$grpc_service\"}"
+    fi
+
+    if [ -n "$ss_enabled" ] && [ -n "$ss_method" ] && [ -n "$ss_password" ]; then
+        json="$json,\"ss-opts\":{\"enabled\":true,\"method\":\"$ss_method\",\"password\":\"$ss_password\"}"
+    fi
+
+    json="$json}"
+    echo "$json"
+}
+
+parse_vless_url() {
+    local link="$1"
+    local raw="${link#vless://}"
+    raw="${raw%%#*}"
+
+    local uuid="${raw%%@*}"
+    local hostport="${raw#*@}"
+    local host="${hostport%%\?*}"
+    local server="${host%%:*}"
+    local port="${host##*:}"
+    [ "$server" = "$port" ] && port=443
+
+    local query_part=""
+    # shellcheck disable=SC2249
+    case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
+
+    local net="tcp" sec="" sni="" fp="" alpn="" flow=""
+    local pbk="" sid="" spx="" sn=""
+
+    local temp_query="$query_part"
+    while [ -n "$temp_query" ]; do
+        local param="${temp_query%%&*}"
+        temp_query="${temp_query#"$param"}"
+        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+
+        local k="${param%%=*}"
+        local v="${param#*=}"
+        [ -z "$k" ] && continue
+
+        # shellcheck disable=SC2249
+        case "$k" in
+            type) net="$v" ;;
+            security) sec="$v" ;;
+            sni|host) sni="$(url_decode "$v")" ;;
+            fp) fp="$v" ;;
+            alpn) alpn="$v" ;;
+            flow) flow="$v" ;;
+            pbk) pbk="$v" ;;
+            sid) sid="$v" ;;
+            spx|path)
+                if [ -n "$v" ]; then
+                    spx="$(url_decode "$v")"
+                else
+                    spx="/"
+                fi ;;
+            serviceName) sn="$v" ;;
+        esac
+    done
+
+    local json="{\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"none\",\"network\":\"$net\",\"udp\":true"
+
+    if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
+        json="$json,\"tls\":true"
+        [ -n "$sni" ] && json="$json,\"servername\":\"$sni\""
+        [ -n "$fp" ] && json="$json,\"client-fingerprint\":\"$fp\""
+        [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
+    fi
+
+    if [ "$sec" = "reality" ]; then
+        local ro=""
+        [ -n "$pbk" ] && ro="$ro\"public-key\":\"$pbk\""
+        [ -n "$sid" ] && ro="${ro:+$ro,}\"short-id\":\"$sid\""
+        [ -n "$spx" ] && ro="${ro:+$ro,}\"spider-x\":\"$spx\""
+        json="$json,\"reality-opts\":{$ro}"
+    fi
+
+    if [ "$net" = "tcp" ] && [ -n "$flow" ]; then
+        json="$json,\"flow\":\"$flow\""
+    fi
+
+    if [ "$net" = "ws" ]; then
+        local wso="\"path\":\"${spx:-/}\""
+        [ -n "$sni" ] && wso="$wso,\"headers\":{\"Host\":\"$sni\"}"
+        json="$json,\"ws-opts\":{$wso}"
+    fi
+
+    if [ "$net" = "grpc" ] && [ -n "$sn" ]; then
+        json="$json,\"grpc-opts\":{\"service-name\":\"$sn\"}"
+    fi
+
+    json="$json}"
+    echo "$json"
+}
+
+handle_proxy_section() {
+    local ruleset_file="$1"
+    local file_rules="$2"     # Путь к файлу для $rules (теперь JSON-массив)
+    local file_rulesets="$3"  # Путь к файлу для $selectedRuleSets
+    local file_proxies="$4"   # Путь к файлу для $proxies
+    local proxies=""
+    local rules_array=""      # Временная строка для сбора правил в JSON-формате (без \n)
+    local selectedRuleSets=""
+
+    # shellcheck disable=SC2317
+    _parse_single_proxy() {
+        local section="$1"
+        local name proxy_link interval use_proxy_for_list_update list val
+
+        config_get name "$section" name
+        config_get proxy_link "$section" proxy_link
+        config_get interval "$section" list_update_interval
+        config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
+
+        [ -z "$name" ] && { echo "⚠️ Skipping proxy without name: $section" >&2; return; }
+        [ -z "$proxy_link" ] && { echo "⚠️ Skipping proxy '$name' without proxy_link" >&2; return; }
+
+        proxy_link=$(echo "$proxy_link" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+        [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
+
+        local proxy_obj=""
+        case "$proxy_link" in
+            ss://*)     proxy_obj=$(parse_ss_url "$proxy_link") ;;
+            socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link") ;;
+            trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link") ;;
+            vless://*)  proxy_obj=$(parse_vless_url "$proxy_link") ;;
+            *) echo "⚠️ Unknown proxy_link: $proxy_link" >&2; return ;;
+        esac
+
+        [ -z "$proxy_obj" ] && { echo "⚠️ Failed to parse proxy_link: $proxy_link" >&2; return; }
+
+        proxy_obj=$(echo "$proxy_obj" | sed "s/^{/{\"name\":\"$name\",/")
+
+        if [ -z "$proxies" ]; then
+            proxies="$proxy_obj"
+        else
+            proxies="$proxies,$proxy_obj"
+        fi
+
+        local added_rulesets="|"
+        config_get list "$section" enabled_list
+        for ruleset in $list; do
+            if echo "$added_rulesets" | grep -q "|$ruleset|"; then
+                continue
+            fi
+
+            local line r_name yaml behavior format url proxy
+            line=$(grep "|$ruleset|" "$ruleset_file" | head -n 1)
+            if [ -n "$line" ]; then
+                r_name=$(echo "$line" | cut -d'|' -f1)
+                yaml=$(echo "$line" | cut -d'|' -f2)
+                behavior=$(echo "$line" | cut -d'|' -f3)
+                format=$(echo "$line" | cut -d'|' -f4)
+                url=$(echo "$line" | cut -d'|' -f5)
+
+                # Изменение: Добавляем правило как JSON-элемент (без \n, с экранированием)
+                local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")  # Без \n
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
+
+                [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                selectedRuleSets="${selectedRuleSets}\"$ruleset\":{\"url\":\"$url\",\"behavior\":\"$behavior\",\"format\":\"$format\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
+                added_rulesets="$added_rulesets$ruleset|"
+            fi
+        done
+
+        config_get list "$section" additional_srcip_route
+        for val in $list; do
+            [ -n "$val" ] && {
+                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
+                rules_array="$rules_array,\"$rule_str\""
+            }
+        done
+        config_get list "$section" additional_domain_route
+        for val in $list; do
+            [ -n "$val" ] && {
+                local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
+                rules_array="$rules_array,\"$rule_str\""
+            }
+        done
+        config_get list "$section" additional_destip_route
+        for val in $list; do
+            [ -n "$val" ] && {
+                local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
+                rules_array="$rules_array,\"$rule_str\""
+            }
+        done
+    }
+
+    config_foreach _parse_single_proxy proxies
+
+    selectedRuleSets="{${selectedRuleSets%,}}"
+
+    proxies="[$proxies]"
+
+    # Изменение: Формируем rules как JSON-массив
+    if [ -n "$rules_array" ]; then
+        rules="[$rules_array]"
+    else
+        rules="[]"
+    fi
+
+    echo "$rules" > "$file_rules"
+    echo "$selectedRuleSets" > "$file_rulesets"
+    echo "$proxies" > "$file_proxies"
+}
+
+
+handle_proxy_group_section() {
+    local ruleset_file="$1"
+    local file_rules="$2"
+    local file_rulesets="$3"
+    local file_proxygroups="$4"
+    local proxy_groups=""
+    local rules_array=""
+    local proxy_groups_rulesets=""
+
+    # shellcheck disable=SC2317  # Called via config_foreach
+    _parse_proxy_group() {
+        local section="$1"
+        local name; config_get name "$section" name
+        [ -z "$name" ] && { echo "⚠️ skip proxy_group without name: $section" >&2; return; }
+
+        local proxies_list providers_list group_type strategy check_url interval check_timeout
+        local filter exclude_filter exclude_type expected_status
+        local enabled_list list_update_interval use_proxy_group_for_list_update list val
+
+        config_get proxies_list "$section" proxies_list
+        config_get providers_list "$section" providers_list
+        config_get group_type "$section" group_type
+        config_get strategy "$section" strategy
+        config_get check_url "$section" check_url
+        config_get expected_status "$section" expected_status
+        config_get interval "$section" interval
+        config_get check_timeout "$section" check_timeout
+        config_get filter "$section" filter
+        config_get exclude_filter "$section" exclude_filter
+        config_get exclude_type "$section" exclude_type
+        config_get enabled_list "$section" enabled_list
+        config_get list_update_interval "$section" list_update_interval
+        config_get_bool use_proxy_group_for_list_update "$section" use_proxy_group_for_list_update 0
+
+        [ -z "$interval" ] && interval=$DEFAULT_HEALTHCHECK_INTERVAL
+        [ -z "$check_timeout" ] && check_timeout=$DEFAULT_HEALTHCHECK_TIMEOUT
+        [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
+        [ -z "$expected_status" ] && expected_status=$DEFAULT_HEALTHCHECK_RESULT
+        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && {
+            echo "⚠️ skip proxy_group '$name': no proxies or providers" >&2; return
+        }
+
+        local escaped_proxies escaped_providers
+        [ -n "$proxies_list" ] && escaped_proxies="\"$(echo "$proxies_list" | sed 's/,/","/g')\""
+        [ -n "$providers_list" ] && escaped_providers="\"$(echo "$providers_list" | sed 's/,/","/g')\""
+
+        local group_json="{\"name\":\"$(json_escape "$name")\",\"type\":\"$(json_escape "$group_type")\",\"strategy\":\"$(json_escape "$strategy")\",\"url\":\"$(json_escape "$check_url")\",\"expected-status\":$expected_status,\"interval\":$interval,\"timeout\":$check_timeout,\"lazy\":true"
+        [ -n "$escaped_proxies" ] && group_json="$group_json,\"proxies\":[$escaped_proxies]"
+        [ -n "$escaped_providers" ] && group_json="$group_json,\"use\":[$escaped_providers]"
+        [ -n "$filter" ] && group_json="$group_json,\"filter\":\"$(json_escape "$filter")\""
+        [ -n "$exclude_filter" ] && group_json="$group_json,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
+        [ -n "$exclude_type" ] && group_json="$group_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+        group_json="$group_json}"
+
+        if [ -z "$proxy_groups" ]; then
+            proxy_groups="$group_json"
+        else
+            proxy_groups="$proxy_groups,$group_json"
+        fi
+
+        local added_rulesets="|"
+        for ruleset in $enabled_list; do
+            if echo "$added_rulesets" | grep -q "|$ruleset|"; then
+                continue
+            fi
+
+            local line r_name yaml behavior format url proxy
+            line=$(grep "|$ruleset|" "$ruleset_file" | head -n 1)
+            if [ -n "$line" ]; then
+                r_name=$(echo "$line" | cut -d'|' -f1)
+                yaml=$(echo "$line" | cut -d'|' -f2)
+                behavior=$(echo "$line" | cut -d'|' -f3)
+                format=$(echo "$line" | cut -d'|' -f4)
+                url=$(echo "$line" | cut -d'|' -f5)
+
+                # shellcheck disable=SC2249
+                case "$r_name" in \#*) continue ;; esac
+
+                local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
+
+                [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                added_rulesets="$added_rulesets$ruleset|"
+            fi
+        done
+
+        config_get list "$section" additional_srcip_route
+        for val in $list; do
+            [ -n "$val" ] && {
+                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
+                rules_array="$rules_array,\"$rule_str\""
+            }
+        done
+
+        config_get list "$section" additional_domain_route
+        for val in $list; do
+            [ -n "$val" ] && {
+                local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
+                rules_array="$rules_array,\"$rule_str\""
+            }
+        done
+
+        config_get list "$section" additional_destip_route
+        for val in $list; do
+            [ -n "$val" ] && {
+                local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
+                rules_array="$rules_array,\"$rule_str\""
+            }
+        done
+    }
+
+    config_foreach _parse_proxy_group proxy_group
+
+    if [ -n "$proxy_groups_rulesets" ]; then
+        proxy_groups_rulesets="{${proxy_groups_rulesets%,}}"
+    else
+        proxy_groups_rulesets="{}"
+    fi
+
+    if [ -n "$proxy_groups" ]; then
+        proxy_groups="[$proxy_groups]"
+    else
+        proxy_groups="[]"
+    fi
+
+    if [ -n "$rules_array" ]; then
+        rules="[$rules_array]"
+    else
+        rules="[]"
+    fi
+
+    echo "$rules" > "$file_rules"
+    echo "$proxy_groups_rulesets" > "$file_rulesets"
+    echo "$proxy_groups" > "$file_proxygroups"
+}
+
+
+handle_proxy_provider_section() {
+    local result=""
+
+    # shellcheck disable=SC2317
+    accumulate_proxy_provider() {
+        local s="$1"
+        local name url interval filter exclude_filter exclude_type
+        local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status
+
+        config_get name "$s" name
+        config_get url "$s" subscription
+        config_get interval "$s" update_interval
+        config_get filter "$s" filter
+        config_get exclude_filter "$s" exclude_filter
+        config_get exclude_type "$s" exclude_type
+        config_get_bool health_check "$s" health_check 0
+
+        { [ -z "$name" ] || [ -z "$url" ]; } && {
+            echo "⚠️ Skipping proxy_provider without name or subscription" >&2
+            return
+        }
+
+        [ -z "$interval" ] && interval=$DEFAULT_PROVIDERUPDATE_INTERVAL
+
+        local entry="{\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval"
+        [ -n "$filter" ] && entry="$entry,\"filter\":\"$(json_escape "$filter")\""
+        [ -n "$exclude_filter" ] && entry="$entry,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
+        [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+
+        if [ "$health_check" = "1" ]; then
+            config_get health_check_expected_status "$s" health_check_expected_status
+            config_get health_check_url "$s" health_check_url
+            config_get health_check_interval "$s" health_check_interval
+            config_get health_check_timeout "$s" health_check_timeout
+
+            [ -z "$health_check_interval" ] && health_check_interval=$DEFAULT_HEALTHCHECK_INTERVAL
+            [ -z "$health_check_timeout" ] && health_check_timeout=$DEFAULT_HEALTHCHECK_TIMEOUT
+            [ -z "$health_check_url" ] && health_check_url=$DEFAULT_HEALTHCHECK_URL
+            [ -z "$health_check_expected_status" ] && health_check_expected_status=$DEFAULT_HEALTHCHECK_RESULT
+
+            entry="$entry,\"health-check\":{\"enable\":true,\"lazy\":true,\"url\":\"$(json_escape "$health_check_url")\",\"expected-status\":$health_check_expected_status,\"interval\":$health_check_interval,\"timeout\":$health_check_timeout}"
+        fi
+
+        entry="$entry}"
+
+        result="$result\"$(json_escape "$name")\":$entry,"
+    }
+
+    config_foreach accumulate_proxy_provider proxy_provider
+
+    if [ -n "$result" ]; then
+        result="{${result%,}}"
+    else
+        result="{}"
+    fi
+
+    echo "$result"
+}
+
+handle_block_rule_section() {
+    local blocklist_file="$1"
+    local file_rules="$2"
+    local file_rulesets="$3"
+    local rules_array=""
+    local selected_rule_sets=""
+
+    local enabled_blocklist
+    config_get enabled_blocklist block_rules enabled_blocklist
+
+    local added_blocklists="|"
+    local val
+    for val in $enabled_blocklist; do
+        if echo "$added_blocklists" | grep -q "|$val|"; then
+            continue
+        fi
+
+        local line name yamlName behavior format url matched
+        line=$(grep "|$val|" "$blocklist_file" | head -n 1)
+        if [ -n "$line" ]; then
+            name=$(echo "$line" | cut -d'|' -f1)
+            yamlName=$(echo "$line" | cut -d'|' -f2)
+            behavior=$(echo "$line" | cut -d'|' -f3)
+            format=$(echo "$line" | cut -d'|' -f4)
+            url=$(echo "$line" | cut -d'|' -f5)
+
+            # shellcheck disable=SC2249
+            case "$name" in \#*) continue ;; esac
+
+            matched=1
+            local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")  # Без \n
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
+
+            selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$DEFAULT_RULESET_PROXY")\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
+            added_blocklists="$added_blocklists$val|"
+        else
+            echo "⚠️ Blocklist '$val' can't be found in $blocklist_file" >&2
+        fi
+    done
+
+    if [ -n "$selected_rule_sets" ]; then
+        selected_rule_sets="{${selected_rule_sets%,}}"
+    else
+        selected_rule_sets="{}"
+    fi
+
+    local additional_domain_blockroute additional_destip_blockroute
+    config_get additional_domain_blockroute block_rules additional_domain_blockroute
+    config_get additional_destip_blockroute block_rules additional_destip_blockroute
+
+    local domain_val
+    for domain_val in $additional_domain_blockroute; do
+        [ -n "$domain_val" ] && {
+            local rule_str=$(printf 'DOMAIN-SUFFIX,%s,REJECT' "$domain_val")
+            rules_array="$rules_array,\"$rule_str\""
+        }
+    done
+
+    local ip_val
+    for ip_val in $additional_destip_blockroute; do
+        [ -n "$ip_val" ] && {
+            local rule_str=$(printf 'IP-CIDR,%s,REJECT' "$ip_val")
+            rules_array="$rules_array,\"$rule_str\""
+        }
+    done
+
+    if [ -n "$rules_array" ]; then
+        rules="[$rules_array]"
+    else
+        rules="[]"
+    fi
+
+    echo "$rules" > "$file_rules"
+    echo "$selected_rule_sets" > "$file_rulesets"
+}
+
+
+handle_direct_rule_section() {
+    local rules_array=""  # Временная строка для сбора правил в JSON-формате (без \n)
+
+    local additional_domain_direct additional_domain_keyword_direct additional_domain_regex_direct
+    local additional_srcip_direct additional_destip_direct
+
+    config_get additional_domain_direct direct_rules additional_domain_direct
+    config_get additional_domain_keyword_direct direct_rules additional_domain_keyword_direct
+    config_get additional_domain_regex_direct direct_rules additional_domain_regex_direct
+    config_get additional_srcip_direct direct_rules additional_srcip_direct
+    config_get additional_destip_direct direct_rules additional_destip_direct
+
+    local val
+    for val in $additional_domain_direct; do
+        [ -n "$val" ] && {
+            local rule_str=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$val")  # Без \n
+            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
+        }
+    done
+
+    for val in $additional_domain_keyword_direct; do
+        [ -n "$val" ] && {
+            local rule_str=$(printf 'DOMAIN-KEYWORD,%s,DIRECT' "$val")
+            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
+            rules_array="$rules_array,\"$rule_str\""
+        }
+    done
+
+    for val in $additional_domain_regex_direct; do
+        [ -n "$val" ] && {
+            local rule_str=$(printf 'DOMAIN-REGEX,%s,DIRECT' "$val")
+            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
+            rules_array="$rules_array,\"$rule_str\""
+        }
+    done
+
+    for val in $additional_srcip_direct; do
+        [ -n "$val" ] && {
+            local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT' "$val")
+            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
+            rules_array="$rules_array,\"$rule_str\""
+        }
+    done
+
+    for val in $additional_destip_direct; do
+        [ -n "$val" ] && {
+            local rule_str=$(printf 'IP-CIDR,%s,DIRECT' "$val")
+            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
+            rules_array="$rules_array,\"$rule_str\""
+        }
+    done
+
+    # Изменение: Формируем результат как JSON-массив
+    local rules
+    if [ -n "$rules_array" ]; then
+        rules="[$rules_array]"
+    else
+        rules="[]"
+    fi
+
+    echo "$rules"
+}
+
+
+handle_final_rule_section() {
+    local dest
+    config_get dest final_rules final_destination
+
+    local rule_str=$(printf 'MATCH,%s' "${dest:-$DEFAULT_PROXY}")  # Без \n
+
+    local rules
+    if [ -n "$rule_str" ]; then
+        rules="[\"$rule_str\"]"
+    else
+        rules="[]"
+    fi
+
+    echo "$rules"
+}
+
+
 core_generate_yaml() {
     local log_level tproxy_port unified_delay
     local tcp_concurrent external_controller_port global_client_fingerprint
@@ -789,19 +1541,6 @@ core_generate_yaml() {
     local dns_listen_port use_hosts use_system_hosts fake_ip_range
 
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver ignore_fake_ip_domains ignore_to_sniff_domains
-
-    # Support for manual config files
-    # If detected - no settings from config file will be applied
-    # DANGEROUS!
-    #if [ -f OVERRIDE_YAML_CONFIG_PATH ]; then
-    #    log 1 "A dangerous state detected: override configuration file found at \"$OVERRIDE_YAML_CONFIG_PATH\". \
-    #    This file will be used as the active configuration, but correct operation is not guaranteed. \
-    #    This may lead to unexpected behavior, service instability, or security vulnerabilities. \
-    #    Please verify the contents of the override configuration file and ensure it is intended for use before proceeding. \
-    #    If this was not expected, investigate the origin of the override file and consider restoring the default configuration."
-    #    cp "$OVERRIDE_YAML_CONFIG_PATH" "$OUTPUT_YAML_CONFIG_PATH"
-    #    return 0
-    #fi
 
     config_get log_level proxy log_level
     config_get tproxy_port proxy tproxy_port
@@ -897,14 +1636,62 @@ sniffer:
 
 EOF
 
-    local rules proxies proxy_groups rule_providers proxy_providers
-    config_get rules compiled rules
-    config_get proxies compiled proxies
-    config_get proxy_groups compiled proxy_groups
-    config_get rule_providers compiled rule_providers
-    config_get proxy_providers compiled proxy_providers
+    local rules_proxies rules_proxygroups rules_block rule_final rules_direct
+    local proxies proxy_groups rule_providers proxy_providers
+    local rulesets_block rulesets_proxygroup rulesets_proxies
+    local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path
+    rule_final=$(handle_final_rule_section)
+    rules_direct=$(handle_direct_rule_section)
+    proxy_providers=$(handle_proxy_provider_section | jq .)
 
-    cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
+    handle_block_rule_section "$RULESETS_BLOCKS_FILE" "$tmp_rules_file" "$tmp_rulesets_path"
+    rules_block=$(cat "$tmp_rules_file" )
+    rulesets_block=$(cat "$tmp_rulesets_path")
+    rm -f "$tmp_rules_file"
+    rm -f "$tmp_rulesets_path"
+
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
+    tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroups.XXXXXX)
+    handle_proxy_group_section "$RULESETS_FILE" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path"
+    rules_proxygroups=$(cat "$tmp_rules_file" )
+    rulesets_proxygroup=$(cat "$tmp_rulesets_path")
+    proxy_groups=$(cat "$tmp_proxygroup_path")
+    rm -f "$tmp_rules_file"
+    rm -f "$tmp_rulesets_path"
+    rm -f "$tmp_proxygroup_path"
+
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
+    tmp_proxies_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxies.XXXXXX)
+    handle_proxy_section "$RULESETS_FILE" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path"
+    rules_proxies=$(cat "$tmp_rules_file")
+    rulesets_proxies=$(cat "$tmp_rulesets_path")
+    proxies=$(cat "$tmp_proxies_path")
+    rm -f "$tmp_rules_file"
+    rm -f "$tmp_rulesets_path"
+    rm -f "$tmp_proxies_path"
+
+rule_providers=$(
+    jq -n \
+        --argjson rulesets_block "$rulesets_block" \
+        --argjson rulesets_proxies "$rulesets_proxies" \
+        --argjson rulesets_proxygroup "$rulesets_proxygroup" \
+        'reduce [ $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
+)
+
+rules=$(jq -n \
+    --arg direct "$rules_direct" \
+    --arg block "$rules_block" \
+    --arg proxygroups "$rules_proxygroups" \
+    --arg proxies "$rules_proxies" \
+    --arg final "$rule_final" \
+    '($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
+)
+
+cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 proxies: $proxies
 proxy-groups: $proxy_groups
 rule-providers: $rule_providers
@@ -1462,6 +2249,8 @@ config_reset() {
         if ! mv /etc/config/justclash /etc/config/justclash.bak; then
             clog 0 "Failed to backup config file"
             return 1
+        else
+            clog  "Old config file can be found at path /etc/config/justclash.bak"
         fi
     fi
 
@@ -1481,7 +2270,6 @@ Usage: justclash <command> [args]
 Service Management:
   start|run               Start the JustClash service.
   stop                    Stop the JustClash service.
-  reload|restart          Restart the service.
   config_show             Show configuration in console
   config_reset            Reset configuration
 
@@ -1527,9 +2315,6 @@ case "$1" in
         ;;
     stop)
         stop
-        ;;
-    reload|restart)
-        restart
         ;;
     config_show)
         config_show

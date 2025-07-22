@@ -12,7 +12,13 @@
                 "/usr/bin/justclash_info": [
                     "exec"
                 ],
-                "/var/default.justclash.config": [
+                "/etc/default.justclash.config": [
+                    "read"
+                ],
+                "/etc/rulesets.justclash.txt": [
+                    "read"
+                ],
+                "/etc/blockrulesets.justclash.txt": [
                     "read"
                 ],
                 "/etc/crontabs/root": [ "read" ]

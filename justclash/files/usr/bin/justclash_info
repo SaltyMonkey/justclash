@@ -55,7 +55,6 @@ info_luci() {
 info_conns_console() {
     local pids
 
-    # Найти PID(ы) по CORE_PATH или CORE_BIN_NAME
     pids=$(pgrep -f "$CORE_PATH")
     if [ -z "$pids" ]; then
         pids=$(pgrep "$CORE_BIN_NAME")

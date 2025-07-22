@@ -135,7 +135,7 @@ return view.extend({
                 ])
             ]);
         }
-        const showExecModalHandler = (title, command, args) => ui.createHandlerFn(this, async function () {
+        const showExecModalHandler = async (title, command, args) => ui.createHandlerFn(this, async function () {
             const buttons = document.querySelectorAll(".cbi-button");
             buttons.forEach(btn => btn.disabled = true);
             ui.showModal(title, [E("p", _("Please wait..."))]);
@@ -177,6 +177,7 @@ return view.extend({
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton("diagnostic", "cbi-button-apply", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
             createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
+            createActionButton("rulesets_updates", "cbi-button-apply", _("Update rules lists"), showExecModalHandler(_("Update RuleSets"), common.binPath, ["rulesets_update"])),
             createActionButton("config_reset", "cbi-button-negative jc-margin-right", _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
 
         ]);
