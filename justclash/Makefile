@@ -68,7 +68,7 @@ define Package/$(PKG_NAME)/postrm
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	[ -f "/usr/bin/mihomo" ] && rm -rf "/usr/bin/mihomo"
+	#[ -f "/usr/bin/mihomo" ] && rm -rf "/usr/bin/mihomo"
 	[ -f "/tmp/justclash" ] && rm -rf "/tmp/justclash"
 	rm -rf /etc/init.d/justclash
 fi
