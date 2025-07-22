@@ -1,3 +1,22 @@
+## [0.0.5] - 23072025
+
+- Mihomo binary will not be removed with main package
+- Sync default uci configs
+- Moved proxy links URI parse to ASH
+- Added json object view for proxy field (untested)
+- Moved to jq and coreutils-base64 when required
+- Dynamic ruleset lists with rules
+- Added more inbuild ruleset lists
+- Fixed config reset action
+- Fixed incorrect filepaths linked to /var
+- Removed initd interface watch trigger to do service restart
+- LuCI: Added warning dialog before config reset start
+- LuCI: Added missed horizontal scrollbar for logs page
+- LuCI: removed bloated logic for settings save
+- LuCI: Removed hardcoded rulesets lists
+- LuCI: Added RuleSets update button
+- LuCI: Tabbed view for routing items
+
 ## [0.0.3] - 17072025
 
 - LuCI: Added proxy-providers
