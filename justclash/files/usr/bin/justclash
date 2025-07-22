@@ -25,6 +25,7 @@ config_load justclash
 CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest/download"
 CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
 CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
+RULESETS_FILES_URL_PARTIAL="https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main"
 NO_DATA_STRING="N/A"
 
 
@@ -38,8 +39,10 @@ CORE_WORKDIR_PATH="/tmp/justclash/"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 
 DEFAULT_CONFIG_PATH="/etc/default.justclash.config"
-RULESETS_FILE="/etc/rulesets.justclash.txt"
-RULESETS_BLOCKS_FILE="/etc/blockrulesets.justclash.txt"
+RULESETS_FILENAME="rulesets.justclash.txt"
+RULESETS_FILE="/etc/${RULESETS_FILENAME}"
+RULESETS_BLOCKS_FILENAME="blockrulesets.justclash.txt"
+RULESETS_BLOCKS_FILE="/etc/${RULESETS_BLOCKS_FILENAME}"
 
 DEFAULT_RULESET_PROXY="DIRECT"
 DEFAULT_PROXY="DIRECT"
@@ -1674,22 +1677,22 @@ EOF
     rm -f "$tmp_rulesets_path"
     rm -f "$tmp_proxies_path"
 
-rule_providers=$(
-    jq -n \
-        --argjson rulesets_block "$rulesets_block" \
-        --argjson rulesets_proxies "$rulesets_proxies" \
-        --argjson rulesets_proxygroup "$rulesets_proxygroup" \
-        'reduce [ $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
-)
+    rule_providers=$(
+        jq -n \
+            --argjson rulesets_block "$rulesets_block" \
+            --argjson rulesets_proxies "$rulesets_proxies" \
+            --argjson rulesets_proxygroup "$rulesets_proxygroup" \
+            'reduce [ $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
+    )
 
-rules=$(jq -n \
-    --arg direct "$rules_direct" \
-    --arg block "$rules_block" \
-    --arg proxygroups "$rules_proxygroups" \
-    --arg proxies "$rules_proxies" \
-    --arg final "$rule_final" \
-    '($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
-)
+    rules=$(jq -n \
+        --arg direct "$rules_direct" \
+        --arg block "$rules_block" \
+        --arg proxygroups "$rules_proxygroups" \
+        --arg proxies "$rules_proxies" \
+        --arg final "$rule_final" \
+        '($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
+    )
 
 cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 proxies: $proxies
@@ -1701,6 +1704,31 @@ rules: $rules
 EOF
 
     return 0;
+}
+
+rulesets_update() {
+    local complete_url
+    log 2 "Downloading RULE-SETs file" "📥"
+    complete_url=${RULESETS_FILES_URL_PARTIAL}/${RULESETS_FILENAME}
+    curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
+        log 0 "Failed to download RULE-SET file." "❌"
+        return 1
+    }
+    rm -f "$RULESETS_FILE"
+    mv "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$RULESETS_FILE"
+    log 2 "RULE-SET file was updated" "✅"
+
+    log 2 "Downloading BLOCK RULE-SETs file" "📥"
+    complete_url=${RULESETS_FILES_URL_PARTIAL}/${RULESETS_BLOCKS_FILENAME}
+    curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
+        log 0 "Failed to download BLOCK RULE-SET file." "❌"
+        return 1
+    }
+    rm -f "$RULESETS_BLOCKS_FILE"
+    mv "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$RULESETS_BLOCKS_FILE"
+    log 2 "BLOCK RULE-SET file was updated" "✅"
+
+    return 0
 }
 
 core_prepare_workdir() {

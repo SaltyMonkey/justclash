@@ -6,17 +6,13 @@ config main 'settings'
     option block_dot_with_nft '0'
     option block_dot_quic_with_nft '0'
     option input_interfaces_to_tproxy_redirect 'br-lan'
-
     option mihomo_update_channel 'alpha'
     option mihomo_autoupdate 'no'
     option mihomo_autorestart '0'
-
     option mihomo_cron_autorestart_telegram_notify '0'
     option mihomo_cron_update_telegram_notify '0'
-
     option mihomo_cron_autorestart_string '0 3 * * 0'
     option mihomo_cron_update_string '0 3 * * 0'
-
     option telegram_chat_id ''
     option telegram_bot_token ''
 
@@ -26,38 +22,30 @@ config proxy 'proxy'
     option unified_delay '1'
     option tcp_concurrent '1'
     option external_controller_port '9090'
-
     option global_client_fingerprint 'chrome'
     option keep_alive_idle '15'
     option keep_alive_interval '15'
     option profile_store_selected '1'
     option profile_store_fake_ip '1'
-
     option core_ntp_enabled '1'
     option core_ntp_server '216.239.35.0'
     option core_ntp_port '123'
     option core_ntp_interval '60'
     option core_ntp_write_system '0'
-
     option dns_listen_port '7894'
     option use_hosts '0'
     option use_system_hosts '1'
     option fake_ip_range '198.18.0.1/22'
-
     list default_nameserver '8.8.8.8'
     list default_nameserver '77.88.8.8'
-
     list direct_nameserver 'https://common.dot.dns.yandex.net/dns-query'
     list direct_nameserver '77.88.8.1'
     list direct_nameserver '77.88.8.8'
-
     list proxy_server_nameserver 'https://dns.quad9.net/dns-query'
     list proxy_server_nameserver 'https://dns.google/dns-query'
-
     list nameserver 'https://dns.quad9.net/dns-query'
     list nameserver 'https://dns.google/dns-query'
     list nameserver 'https://dns.cloudflare.com/dns-query'
-
     list ignore_fake_ip_domains '+.lan'
     list ignore_fake_ip_domains '+.local'
     list ignore_fake_ip_domains '+.localdomain'
@@ -73,7 +61,6 @@ config proxy 'proxy'
     list ignore_fake_ip_domains '+.openwrt.ntp.pool.org'
     list ignore_fake_ip_domains '+.openwrt.org'
     list ignore_fake_ip_domains '+.anydesk.com'
-
     list ignore_to_sniff_domains '+.lan'
     list ignore_to_sniff_domains '+.local'
     list ignore_to_sniff_domains '+.localdomain'
