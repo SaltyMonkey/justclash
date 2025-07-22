@@ -135,7 +135,7 @@ return view.extend({
                 ])
             ]);
         }
-        const showExecModalHandler = async (title, command, args) => ui.createHandlerFn(this, async function () {
+        const showExecModalHandler = (title, command, args) => ui.createHandlerFn(this, async function () {
             const buttons = document.querySelectorAll(".cbi-button");
             buttons.forEach(btn => btn.disabled = true);
             ui.showModal(title, [E("p", _("Please wait..."))]);

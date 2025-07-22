@@ -2374,6 +2374,9 @@ case "$1" in
     core_autorestart_cron_remove)
         core_autorestart_cron_remove
         ;;
+    rulesets_update)
+        rulesets_update
+        ;;
     logs|systemlogs)
         case "$2" in
             *[!0-9]* | '')
