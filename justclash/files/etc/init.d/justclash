@@ -7,7 +7,6 @@ START=99
 STOP=01
 PROGNAME="justclash"
 PROG="/usr/bin/${PROGNAME}"
-RELOAD_DELAY_MS=1000
 
 start_service() {
     procd_open_instance
@@ -34,20 +33,4 @@ restart() {
     stop_service
     sleep 1
     start_service
-}
-
-service_triggers() {
-    local autorestart_at_interface_change autorestart_controlled_interfaces
-    config_load "$PROGNAME"
-    config_get_bool autorestart_at_interface_change settings autorestart_at_interface_change 0
-    config_get autorestart_controlled_interfaces settings autorestart_controlled_interfaces
-
-    # Thx ITDog
-    # TODO: Check if this variable have effect on all procd instance
-    PROCD_RELOAD_DELAY=$RELOAD_DELAY_MS
-    if [ "$autorestart_at_interface_change" -eq 1 ]; then
-            for iface in $autorestart_controlled_interfaces; do
-                procd_add_interface_trigger "interface.*.up" "$iface" /etc/init.d/"${PROGNAME}" reload
-            done
-    fi
 }

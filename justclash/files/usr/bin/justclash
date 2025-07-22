@@ -827,14 +827,12 @@ parse_ss_url() {
 
         #case "$k" in
         #    plugin) plugin="$(url_decode "$v")" ;;
-            # Добавьте другие, если нужно
         #esac
     done
 
     # JSON
     printf '{"type":"ss","server":"%s","port":%s,"cipher":"%s","password":"%s","udp":true}\n' \
         "$server" "$port" "$method" "$password"
-    # Если plugin не пустой, его можно добавить в JSON как "plugin": "$plugin"
 }
 
 url_decode() {
@@ -1051,41 +1049,52 @@ parse_vless_url() {
 
 handle_proxy_section() {
     local ruleset_file="$1"
-    local file_rules="$2"     # Путь к файлу для $rules (теперь JSON-массив)
-    local file_rulesets="$3"  # Путь к файлу для $selectedRuleSets
-    local file_proxies="$4"   # Путь к файлу для $proxies
+    local file_rules="$2"
+    local file_rulesets="$3"
+    local file_proxies="$4"
     local proxies=""
-    local rules_array=""      # Временная строка для сбора правил в JSON-формате (без \n)
+    local rules_array=""
     local selectedRuleSets=""
 
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name proxy_link interval use_proxy_for_list_update list val
+        local name proxy_link interval defined_as_custom_object proxy_link_object use_proxy_for_list_update list val
 
         config_get name "$section" name
         config_get proxy_link "$section" proxy_link
         config_get interval "$section" list_update_interval
+        config_get defined_as_custom_object "$section" defined_as_custom_object 0
+        config_get proxy_link_object "$section" proxy_link_object
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
 
-        [ -z "$name" ] && { echo "⚠️ Skipping proxy without name: $section" >&2; return; }
-        [ -z "$proxy_link" ] && { echo "⚠️ Skipping proxy '$name' without proxy_link" >&2; return; }
-
-        proxy_link=$(echo "$proxy_link" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
-        [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
+        [ -z "$name" ] && { log 1 "Skipping proxy without name: $section" "⚠️"; return; }
 
         local proxy_obj=""
-        case "$proxy_link" in
-            ss://*)     proxy_obj=$(parse_ss_url "$proxy_link") ;;
-            socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link") ;;
-            trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link") ;;
-            vless://*)  proxy_obj=$(parse_vless_url "$proxy_link") ;;
-            *) echo "⚠️ Unknown proxy_link: $proxy_link" >&2; return ;;
-        esac
+        if [ "$defined_as_custom_object" -eq 1 ]; then
+            [ -z "$proxy_link_object" ] && { log 1 "Skipping proxy '$name' without proxy_link_object in manual mode" "⚠️" ; return; }
 
-        [ -z "$proxy_obj" ] && { echo "⚠️ Failed to parse proxy_link: $proxy_link" >&2; return; }
+            proxy_obj=$(echo "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
 
-        proxy_obj=$(echo "$proxy_obj" | sed "s/^{/{\"name\":\"$name\",/")
+            [ -z "$proxy_obj" ] && { log 1 "Failed to process proxy_link_object for '$name'" "⚠️"; return; }
+        else
+            [ -z "$proxy_link" ] && { log 1  "Skipping proxy '$name' without proxy_link" "⚠️"; return; }
+
+            proxy_link=$(echo "$proxy_link" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
+
+            case "$proxy_link" in
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link") ;;
+                socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link") ;;
+                *) log 1 "Unknown proxy_link: $proxy_link" "⚠️"; return ;;
+            esac
+
+            [ -z "$proxy_obj" ] && { log 1 "Failed to parse proxy_link: $proxy_link" "⚠️"; return; }
+
+            proxy_obj=$(echo "$proxy_obj" | sed "s/^{/{\"name\":\"$name\",/")
+        fi
 
         if [ -z "$proxies" ]; then
             proxies="$proxy_obj"
@@ -1109,7 +1118,6 @@ handle_proxy_section() {
                 format=$(echo "$line" | cut -d'|' -f4)
                 url=$(echo "$line" | cut -d'|' -f5)
 
-                # Изменение: Добавляем правило как JSON-элемент (без \n, с экранированием)
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")  # Без \n
                 if [ -n "$rules_array" ]; then
                     rules_array="$rules_array,\"$rule_str\""
@@ -1152,7 +1160,6 @@ handle_proxy_section() {
 
     proxies="[$proxies]"
 
-    # Изменение: Формируем rules как JSON-массив
     if [ -n "$rules_array" ]; then
         rules="[$rules_array]"
     else
@@ -1163,7 +1170,6 @@ handle_proxy_section() {
     echo "$selectedRuleSets" > "$file_rulesets"
     echo "$proxies" > "$file_proxies"
 }
-
 
 handle_proxy_group_section() {
     local ruleset_file="$1"
@@ -1178,7 +1184,7 @@ handle_proxy_group_section() {
     _parse_proxy_group() {
         local section="$1"
         local name; config_get name "$section" name
-        [ -z "$name" ] && { echo "⚠️ skip proxy_group without name: $section" >&2; return; }
+        [ -z "$name" ] && { log 1 "Skip proxy_group without name: $section" "⚠️"; return; }
 
         local proxies_list providers_list group_type strategy check_url interval check_timeout
         local filter exclude_filter exclude_type expected_status
@@ -1204,7 +1210,7 @@ handle_proxy_group_section() {
         [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
         [ -z "$expected_status" ] && expected_status=$DEFAULT_HEALTHCHECK_RESULT
         [ -z "$proxies_list" ] && [ -z "$providers_list" ] && {
-            echo "⚠️ skip proxy_group '$name': no proxies or providers" >&2; return
+            log 1 "Skip proxy_group '$name': no proxies or providers" "⚠️"; return
         }
 
         local escaped_proxies escaped_providers
@@ -1325,7 +1331,7 @@ handle_proxy_provider_section() {
         config_get_bool health_check "$s" health_check 0
 
         { [ -z "$name" ] || [ -z "$url" ]; } && {
-            echo "⚠️ Skipping proxy_provider without name or subscription" >&2
+            log 1 "Skipping proxy_provider without name or subscription" "⚠️"
             return
         }
 
@@ -1406,7 +1412,7 @@ handle_block_rule_section() {
             selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$DEFAULT_RULESET_PROXY")\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
             added_blocklists="$added_blocklists$val|"
         else
-            echo "⚠️ Blocklist '$val' can't be found in $blocklist_file" >&2
+            log 1 "Blocklist '$val' can't be found in $blocklist_file" "⚠️"
         fi
     done
 
@@ -1448,7 +1454,7 @@ handle_block_rule_section() {
 
 
 handle_direct_rule_section() {
-    local rules_array=""  # Временная строка для сбора правил в JSON-формате (без \n)
+    local rules_array=""
 
     local additional_domain_direct additional_domain_keyword_direct additional_domain_regex_direct
     local additional_srcip_direct additional_destip_direct
@@ -1463,7 +1469,6 @@ handle_direct_rule_section() {
     for val in $additional_domain_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$val")  # Без \n
-            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
             if [ -n "$rules_array" ]; then
                 rules_array="$rules_array,\"$rule_str\""
             else
@@ -1475,7 +1480,6 @@ handle_direct_rule_section() {
     for val in $additional_domain_keyword_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-KEYWORD,%s,DIRECT' "$val")
-            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
             rules_array="$rules_array,\"$rule_str\""
         }
     done
@@ -1483,7 +1487,6 @@ handle_direct_rule_section() {
     for val in $additional_domain_regex_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-REGEX,%s,DIRECT' "$val")
-            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
             rules_array="$rules_array,\"$rule_str\""
         }
     done
@@ -1491,7 +1494,6 @@ handle_direct_rule_section() {
     for val in $additional_srcip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT' "$val")
-            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
             rules_array="$rules_array,\"$rule_str\""
         }
     done
@@ -1499,12 +1501,10 @@ handle_direct_rule_section() {
     for val in $additional_destip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'IP-CIDR,%s,DIRECT' "$val")
-            # Если нужно экранировать: rule_str=$(json_escape "$rule_str")
             rules_array="$rules_array,\"$rule_str\""
         }
     done
 
-    # Изменение: Формируем результат как JSON-массив
     local rules
     if [ -n "$rules_array" ]; then
         rules="[$rules_array]"
@@ -1520,7 +1520,7 @@ handle_final_rule_section() {
     local dest
     config_get dest final_rules final_destination
 
-    local rule_str=$(printf 'MATCH,%s' "${dest:-$DEFAULT_PROXY}")  # Без \n
+    local rule_str=$(printf 'MATCH,%s' "${dest:-$DEFAULT_PROXY}")
 
     local rules
     if [ -n "$rule_str" ]; then

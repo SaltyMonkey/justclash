@@ -73,18 +73,6 @@ return view.extend({
             return true;
         };
 
-        o = s.taboption(tabname, form.Flag, "autorestart_at_interface_change", _("Enable automatic restart for bad interface:"));
-        o.description = _("When enabled, service will be restarted when selected interfaces will be reconnected.");
-        o.rmempty = false;
-        o.default = "0";
-
-        o = s.taboption(tabname, widgets.NetworkSelect, 'autorestart_controlled_interfaces', _('Interface for monitoring'), _('Select the WAN interfaces to be monitored for automatic service restart.'));
-        o.depends("autorestart_at_interface_change", "1");
-        o.multiple = true;
-        o.filter = function (section_id, value) {
-            return ["lan", "loopback"].indexOf(value) === -1 && !value.startsWith('@');
-        };
-
         tabname = "coreautomation_tab";
         s.tab(tabname, _("Tasks"));
 
