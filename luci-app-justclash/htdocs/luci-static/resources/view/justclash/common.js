@@ -15,7 +15,7 @@ return baseclass.extend({
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
     defaultProxyProvidersCheckUrl: "https://www.gstatic.com/generate_204",
     defaultProxyGroupIntervalSec: 360,
-    defaultProxyGroupsTypes: ["fallback", "load-balancer", "url-test"],
+    defaultProxyGroupsTypes: ["fallback", "load-balancer", "url-test", "relay"],
     defaultProxyGroupsBalanceModeStrategies: ["consistent-hashing", "round-robin"],
     defaultProxyProviderIntervalSec: 3600,
     defaultProxyProviderHealthCheckSec: 360,
