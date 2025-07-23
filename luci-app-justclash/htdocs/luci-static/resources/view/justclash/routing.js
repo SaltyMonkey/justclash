@@ -565,6 +565,9 @@ return view.extend({
     },
     addCSS() {
         return E("style", {}, `
+            ul.dropdown {
+                height: 315px;
+            }
             .cbi-section {
                 border: 0 !important;
                 border-bottom: 1px solid #595959 !important;
