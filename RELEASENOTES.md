@@ -1,3 +1,10 @@
+## [0.0.52] - 24072025
+
+- Unlocked url-test groups
+- Unlocked relay groups
+- Better dropdown at routing page
+- Updated default ruleset lists
+
 ## [0.0.5] - 23072025
 
 - Mihomo binary will not be removed with main package
