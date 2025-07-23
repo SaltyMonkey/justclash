@@ -1,9 +1,9 @@
-Google ads|google-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/google-ads.mrs
-Hagezi pro ads|hagezi-pro-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-ads.mrs
-Hagezi pro mini ads|hagezi-pro-mini-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-mini-ads.mrs
+Google ADS|google-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/google-ads.mrs
+Hagezi pro ADS|hagezi-pro-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-ads.mrs
+Hagezi pro mini ADS|hagezi-pro-mini-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-mini-ads.mrs
 Oisd big|oisd-big|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-big.mrs
-Oisd nsfw small|oisd-nsfw-small|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw-small.mrs
-Oisd nsfw|oisd-nsfw|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw.mrs
+Oisd NSFW small|oisd-nsfw-small|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw-small.mrs
+Oisd NSFW|oisd-nsfw|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw.mrs
 Oisd small|oisd-small|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-small.mrs
 Hagezi spy apple|hagezi-spy-apple|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-apple.mrs
 Hagezi spy huawei|hagezi-spy-huawei|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-huawei.mrs
