@@ -27,8 +27,15 @@
 
 ## Requirements
 
-### justclash (from justclash/Makefile)
+### justclash old (from justclash/Makefile)
 - `nftables`
+- `curl`
+- `kmod-nft-tproxy`
+
+### justclash since v0.0.5 (from justclash/Makefile)
+- `nftables`
+- `coreutils-base64`
+- `jq`
 - `curl`
 - `kmod-nft-tproxy`
 
@@ -37,7 +44,7 @@
 - `justclash`
 
 - **Firmware:**
-  - Requires OpenWrt 24+.
+  - Requires OpenWrt 24+/23+ unchecked
   - FriendlyWrt 20240115+ (untested).
   - LuCI (web interface) and the above dependencies should be available.
 
