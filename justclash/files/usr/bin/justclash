@@ -1189,7 +1189,7 @@ handle_proxy_group_section() {
         local name; config_get name "$section" name
         [ -z "$name" ] && { log 1 "Skip proxy_group without name: $section" "⚠️"; return; }
 
-        local proxies_list providers_list group_type strategy check_url interval check_timeout
+        local proxies_list providers_list group_type strategy check_url interval check_timeout tolerance
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
 
@@ -1201,6 +1201,7 @@ handle_proxy_group_section() {
         config_get expected_status "$section" expected_status
         config_get interval "$section" interval
         config_get check_timeout "$section" check_timeout
+        config_get tolerance "$section" tolerance
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
         config_get exclude_type "$section" exclude_type
@@ -1220,7 +1221,17 @@ handle_proxy_group_section() {
         [ -n "$proxies_list" ] && escaped_proxies="\"$(echo "$proxies_list" | sed 's/[ ]*//g' | sed 's/,/","/g')\""
         [ -n "$providers_list" ] && escaped_providers="\"$(echo "$providers_list" | sed 's/[ ]*//g' | sed 's/,/","/g')\""
 
-        local group_json="{\"name\":\"$(json_escape "$name")\",\"type\":\"$(json_escape "$group_type")\",\"strategy\":\"$(json_escape "$strategy")\",\"url\":\"$(json_escape "$check_url")\",\"expected-status\":$expected_status,\"interval\":$interval,\"timeout\":$check_timeout,\"lazy\":true"
+        local group_json="{\"name\":\"$(json_escape "$name")\",\
+                        \"type\":\"$(json_escape "$group_type")\",\
+                        \"url\":\"$(json_escape "$check_url")\",\
+                        \"expected-status\":$expected_status,\
+                        \"interval\":$interval,\
+                        \"timeout\":$check_timeout,\
+                        \"lazy\":true"
+
+        [ "$group_type" = "url-test" ] && group_json="$group_json,\"tolerance\":\"$($tolerance)\""
+        [ "$group_type" = "load-balance" ] && group_json="$group_json,\"strategy\":\"$(json_escape "$strategy")\""
+
         [ -n "$escaped_proxies" ] && group_json="$group_json,\"proxies\":[$escaped_proxies]"
         [ -n "$escaped_providers" ] && group_json="$group_json,\"use\":[$escaped_providers]"
         [ -n "$filter" ] && group_json="$group_json,\"filter\":\"$(json_escape "$filter")\""

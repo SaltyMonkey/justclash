@@ -17,6 +17,7 @@ return baseclass.extend({
     defaultProxyGroupIntervalSec: 360,
     defaultProxyGroupsTypes: ["fallback", "load-balancer", "url-test"],
     defaultProxyGroupsBalanceModeStrategies: ["consistent-hashing", "round-robin"],
+    defaultUrlTestTolerance: 50,
     defaultProxyProviderIntervalSec: 3600,
     defaultProxyProviderHealthCheckSec: 360,
     defaultHealthCheckTimeoutMs: 5000,

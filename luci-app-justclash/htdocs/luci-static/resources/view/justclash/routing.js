@@ -240,6 +240,12 @@ return view.extend({
         o.default = common.defaultProxyGroupIntervalSec;
         o.description = _("Time interval between health checks in seconds.");
 
+        o = s2.taboption(tabname, form.Value, "tolerance", _("Tolerance:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultUrlTestTolerance;
+        o.description = _("Proxies switch tolerance, measured in milliseconds (ms).");
+        o.depends("group_type", "url-test");
+
         o = s2.taboption(tabname, form.Value, "check_timeout", _("Check timeout:"));
         o.datatype = "uinteger";
         o.default = common.defaultHealthCheckTimeoutMs;
