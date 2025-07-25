@@ -143,7 +143,7 @@ return view.extend({
             try {
                 const res = await fs.exec(command, args);
                 ui.showModal(title, [
-                    E("pre", { style: "max-height: 400px; overflow:auto;" }, res.stdout || _("No output")),
+                    E("pre", { style: "max-height: 460px; overflow:auto;" }, res.stdout || _("No output")),
                     E("div", { style: "text-align: right; margin-top: 1em;" }, [
                         E("button", {
                             class: "cbi-button",
