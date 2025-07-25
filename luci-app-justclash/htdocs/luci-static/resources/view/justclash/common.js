@@ -21,6 +21,7 @@ return baseclass.extend({
     defaultProxyProviderHealthCheckSec: 360,
     defaultHealthCheckTimeoutMs: 5000,
     defaultHealthCheckResult: 204,
+    defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0",
     defaultFingerprints: ["chrome", "firefox", "safari", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
     defaultProxyUpdateChannelOptions: ["alpha", "stable"],

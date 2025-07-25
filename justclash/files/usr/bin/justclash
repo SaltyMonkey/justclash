@@ -1555,6 +1555,9 @@ core_generate_yaml() {
     config_get global_client_fingerprint proxy global_client_fingerprint
     config_get keep_alive_idle proxy keep_alive_idle
     config_get keep_alive_interval proxy keep_alive_interval
+    config_get global_ua proxy global_ua
+    config_get_bool etag_support proxy etag_support
+    etag_support=$(ucibool_to_yaml_bool "$etag_support")
     config_get_bool profile_store_selected proxy profile_store_selected
     profile_store_selected=$(ucibool_to_yaml_bool "$profile_store_selected")
     config_get_bool profile_store_fake_ip proxy profile_store_fake_ip
@@ -1589,9 +1592,10 @@ tcp-concurrent: $tcp_concurrent
 external-controller: 0.0.0.0:$external_controller_port
 routing-mark: $NFT_FWMARK_PROXY
 global-client-fingerprint: $global_client_fingerprint
-global-ua: Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0
+global-ua: $global_ua
 find-process-mode: off
 geodata-mode: false
+etag-support: $etag_support
 
 keep-alive-idle: $keep_alive_idle
 keep-alive-interval: $keep_alive_interval
@@ -1708,25 +1712,25 @@ EOF
 
 rulesets_update() {
     local complete_url
-    log 2 "Downloading RULE-SETs file" "📥"
+    log 2 "Downloading RULE-SETs list file" "📥"
     complete_url=${RULESETS_FILES_URL_PARTIAL}/${RULESETS_FILENAME}
     curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
-        log 0 "Failed to download RULE-SET file." "❌"
+        log 0 "Failed to download RULE-SETs list file." "❌"
         return 1
     }
     rm -f "$RULESETS_FILE"
     mv "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$RULESETS_FILE"
-    log 2 "RULE-SET file was updated" "✅"
+    log 2 "RULE-SET list file was updated" "✅"
 
-    log 2 "Downloading BLOCK RULE-SETs file" "📥"
+    log 2 "Downloading BLOCK RULE-SETs list file" "📥"
     complete_url=${RULESETS_FILES_URL_PARTIAL}/${RULESETS_BLOCKS_FILENAME}
     curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
-        log 0 "Failed to download BLOCK RULE-SET file." "❌"
+        log 0 "Failed to download BLOCK RULE-SETs list file." "❌"
         return 1
     }
     rm -f "$RULESETS_BLOCKS_FILE"
     mv "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$RULESETS_BLOCKS_FILE"
-    log 2 "BLOCK RULE-SET file was updated" "✅"
+    log 2 "BLOCK RULE-SETs list file was updated" "✅"
 
     return 0
 }

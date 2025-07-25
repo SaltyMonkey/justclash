@@ -53,6 +53,19 @@ return view.extend({
         o.default = common.defaultFingerprints[0];
         o.rmempty = false;
 
+        o = s.taboption(tabname, form.ListValue, "global_ua", _("Global user agent:"));
+        common.defaultFingerprints.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
+        o.description = _("Global UA for external resources download.");
+        o.default = common.defaultUserAgent;
+        o.rmempty = false;
+
+        o = s.taboption(tabname, form.Flag, "etag_support", _("ETag support:"));
+        o.description = _("ETag support for external resources download.");
+        o.rmempty = false;
+        o.default = "1";
+
         o = s.taboption(tabname, form.Value, "keep_alive_idle", _("Keep alive idle:"));
         o.description = _("How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive.");
         o.datatype = "uinteger";
