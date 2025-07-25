@@ -1121,7 +1121,7 @@ handle_proxy_section() {
                 format=$(echo "$line" | cut -d'|' -f4)
                 url=$(echo "$line" | cut -d'|' -f5)
 
-                local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")  # Без \n
+                local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
                 if [ -n "$rules_array" ]; then
                     rules_array="$rules_array,\"$rule_str\""
                 else
@@ -1217,8 +1217,8 @@ handle_proxy_group_section() {
         }
 
         local escaped_proxies escaped_providers
-        [ -n "$proxies_list" ] && escaped_proxies="\"$(echo "$proxies_list" | sed 's/,/","/g')\""
-        [ -n "$providers_list" ] && escaped_providers="\"$(echo "$providers_list" | sed 's/,/","/g')\""
+        [ -n "$proxies_list" ] && escaped_proxies="\"$(echo "$proxies_list" | sed 's/[ ]*//g' | sed 's/,/","/g')\""
+        [ -n "$providers_list" ] && escaped_providers="\"$(echo "$providers_list" | sed 's/[ ]*//g' | sed 's/,/","/g')\""
 
         local group_json="{\"name\":\"$(json_escape "$name")\",\"type\":\"$(json_escape "$group_type")\",\"strategy\":\"$(json_escape "$strategy")\",\"url\":\"$(json_escape "$check_url")\",\"expected-status\":$expected_status,\"interval\":$interval,\"timeout\":$check_timeout,\"lazy\":true"
         [ -n "$escaped_proxies" ] && group_json="$group_json,\"proxies\":[$escaped_proxies]"
@@ -1540,9 +1540,9 @@ core_generate_yaml() {
     local log_level tproxy_port unified_delay
     local tcp_concurrent external_controller_port global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
-    local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port  core_ntp_write_system
+    local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_hosts use_system_hosts fake_ip_range
-
+    local etag_support global_ua mixed_port
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver ignore_fake_ip_domains ignore_to_sniff_domains
 
     config_get log_level proxy log_level
