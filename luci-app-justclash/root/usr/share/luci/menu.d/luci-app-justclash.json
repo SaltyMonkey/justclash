@@ -3,9 +3,9 @@
         "title": "Justclash",
         "order": 43,
         "action": {
-			"type": "alias",
-			"path": "admin/services/justclash/status"
-		},
+            "type": "alias",
+            "path": "admin/services/justclash/status"
+        },
         "depends": {
             "acl": [
                 "luci-app-justclash"
