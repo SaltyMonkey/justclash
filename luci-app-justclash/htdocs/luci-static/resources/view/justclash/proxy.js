@@ -54,9 +54,6 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.ListValue, "global_ua", _("Global user agent:"));
-        common.defaultFingerprints.forEach(item => {
-            o.value(item, _(`${item}`));
-        });
         o.description = _("Global UA for external resources download.");
         o.default = common.defaultUserAgent;
         o.rmempty = false;
