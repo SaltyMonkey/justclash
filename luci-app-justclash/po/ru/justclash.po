@@ -373,8 +373,32 @@ msgstr "Ручные правила"
 msgid "Filters"
 msgstr "Фильтры"
 
-msgid "Health check"
-msgstr "Контроль"
+msgid "Exclude type filter."
+msgstr "Фильтр исключения типов прокси."
+
+msgid "Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe)."
+msgstr "Исключать узлы, соответствующие ключевым словам или регулярным выражениям. Несколько шаблонов можно разделить |."
+
+msgid "Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe)."
+msgstr "Фильтровать узлы, содержащие ключевые слова или соответствующие регулярным выражениям. Несколько шаблонов можно разделить |."
+
+msgid "Timeout for each individual health check in milliseconds."
+msgstr "Таймаут для каждой проверки доступности в миллисекундах."
+
+msgid "Time interval between health checks in seconds."
+msgstr "Интервал между проверками доступности в секундах."
+
+msgid "URL for node availability check (required for proxy provider functionality)."
+msgstr "URL для проверки доступности узла (требуется для функциональности провайдера прокси)."
+
+msgid "Required response status for node availability check (required for proxy provider functionality)."
+msgstr "Требуемый статус ответа для проверки доступности узла (требуется для функциональности провайдера прокси)."
+
+msgid "URL for node availability check (required for proxy group functionality)."
+msgstr "URL для проверки доступности узла (требуется для функциональности группы прокси)."
+
+msgid "Required response status for node availability check (required for proxy group functionality)."
+msgstr "Требуемый статус ответа для проверки доступности узла (требуется для функциональности группы прокси)."
 
 msgid "Health check:"
 msgstr "Контроль доступности:"

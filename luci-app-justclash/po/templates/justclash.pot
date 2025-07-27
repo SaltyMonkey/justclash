@@ -370,6 +370,33 @@ msgstr ""
 msgid "Filters"
 msgstr ""
 
+msgid "Exclude type filter."
+msgstr ""
+
+msgid "Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe)."
+msgstr ""
+
+msgid "Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe)."
+msgstr ""
+
+msgid "Timeout for each individual health check in milliseconds."
+msgstr ""
+
+msgid "Time interval between health checks in seconds."
+msgstr ""
+
+msgid "URL for node availability check (required for proxy provider functionality)."
+msgstr ""
+
+msgid "Required response status for node availability check (required for proxy provider functionality)."
+msgstr ""
+
+msgid "URL for node availability check (required for proxy group functionality)."
+msgstr ""
+
+msgid "Required response status for node availability check (required for proxy group functionality)."
+msgstr ""
+
 msgid "Health check"
 msgstr ""
 

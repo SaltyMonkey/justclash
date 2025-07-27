@@ -202,7 +202,7 @@ return view.extend({
         o.placeholder = common.defaultHealthCheckResult;
         o.default = common.defaultHealthCheckResult;
         o.depends("health_check", "1");
-        o.description = _("Result for successful health check.");
+        o.description = _("Required response status for node availability check (required for proxy provider functionality).");
 
         o = spp.taboption(tabname, form.Value, "health_check_interval", _("Check interval:"));
         o.datatype = "uinteger";
@@ -343,14 +343,14 @@ return view.extend({
         o.validate = function (section_id, value) {
             return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
         };
-        o.description = _("URL for node availability check (required for proxy provider functionality).");
+        o.description = _("URL for node availability check (required for proxy group functionality).");
 
         o = s2.taboption(tabname, form.Value, "expected_status", _("Check status:"));
         o.placeholder = common.defaultHealthCheckResult;
         o.default = common.defaultHealthCheckResult;
         o.datatype = "uinteger";
         o.rmempty = false;
-        o.description = _("URL for node availability check (required for proxy provider functionality).");
+        o.description = _("Required response status for node availability check (required for proxy group functionality).");
 
         o = s2.taboption(tabname, form.Value, "check_interval", _("Check interval:"));
         o.datatype = "uinteger";
@@ -546,7 +546,7 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
-        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("End rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
+        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("FINAL rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
         s5.addremove = false;
 
         tabname = "finalbasic_tab";
