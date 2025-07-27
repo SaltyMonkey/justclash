@@ -21,7 +21,7 @@ return view.extend({
         common.defaultLoggingLevels.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Set up logging level in Mihomo core.");
+        o.description = _("Logging level in Mihomo core.");
         o.default = common.defaultLoggingLevels[0];
         o.rmempty = false;
 
@@ -36,7 +36,7 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("TCP concurrent:"));
-        o.description = _("Enable concurrent TCP connection attempts for each request.");
+        o.description = _("Enable concurrent TCP connection attempts.");
         o.rmempty = false;
         o.default = "1";
 
@@ -53,7 +53,7 @@ return view.extend({
         o.default = common.defaultFingerprints[0];
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.ListValue, "global_ua", _("Global user agent:"));
+        o = s.taboption(tabname, form.Value, "global_ua", _("Global user agent:"));
         o.description = _("Global UA for external resources download.");
         o.default = common.defaultUserAgent;
         o.rmempty = false;
@@ -104,7 +104,7 @@ return view.extend({
         o.default = "1";
 
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
-        o.description = _("CIDR for fake IP entries.");
+        o.description = _("CIDR for fake IP.");
         o.default = "198.18.0.1/22";
         o.rmempty = false;
         o.readonly = true;
@@ -174,7 +174,7 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "core_ntp_port", _("NTP port:"));
-        //o.description = _("NTP port.");
+        o.description = _("External NTP server port.");
         o.datatype = "port";
         o.rmempty = false;
 

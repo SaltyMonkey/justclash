@@ -10,6 +10,9 @@ msgstr ""
 msgid "Update Mihomo"
 msgstr ""
 
+msgid "Update rules lists"
+msgstr ""
+
 msgid "Yes"
 msgstr ""
 
@@ -31,7 +34,7 @@ msgstr ""
 msgid "Service package version:"
 msgstr ""
 
-msgid "Luci package version:"
+msgid "LuCI package version:"
 msgstr ""
 
 msgid "Mihomo core version:"
@@ -67,6 +70,9 @@ msgstr ""
 msgid "Service start"
 msgstr ""
 
+msgid "Delayed boot:"
+msgstr ""
+
 msgid "Start ntpd:"
 msgstr ""
 
@@ -76,7 +82,7 @@ msgstr ""
 msgid "Edit DNS server at startup:"
 msgstr ""
 
-msgid "If enabled, the service will edit DNS server in dnsmasq configuration at start."
+msgid "If enabled, the service will edit DNS settings in dnsmasq configuration at start."
 msgstr ""
 
 msgid "Edit NFT tables at startup:"
@@ -190,7 +196,7 @@ msgstr ""
 msgid "Logging level:"
 msgstr ""
 
-msgid "Set up logging level in Mihomo core."
+msgid "Logging level in Mihomo core."
 msgstr ""
 
 msgid "Tproxy port:"
@@ -211,7 +217,7 @@ msgstr ""
 msgid "TCP concurrent:"
 msgstr ""
 
-msgid "Enable concurrent TCP connection attempts for each request."
+msgid "Enable concurrent TCP connection attempts."
 msgstr ""
 
 msgid "External controller port:"
@@ -221,6 +227,15 @@ msgid "API server port for the external controller."
 msgstr ""
 
 msgid "Global client fingerprint:"
+msgstr ""
+
+msgid "Global user agent:"
+msgstr ""
+
+msgid "ETag support:"
+msgstr ""
+
+msgid "ETag support for external resources download."
 msgstr ""
 
 msgid "Client fingerprint for protocols that support it."
@@ -274,6 +289,9 @@ msgstr ""
 msgid "NTP port:"
 msgstr ""
 
+msgid "External NTP server port."
+msgstr ""
+
 msgid "NTP check interval:"
 msgstr ""
 
@@ -302,6 +320,9 @@ msgid "Load DNS entries from system if possible."
 msgstr ""
 
 msgid "Fake IP range:"
+msgstr ""
+
+msgid "CIDR for fake IP."
 msgstr ""
 
 msgid "Default nameservers:"
@@ -337,6 +358,24 @@ msgstr ""
 msgid "Routing mark:"
 msgstr ""
 
+msgid "Basic"
+msgstr ""
+
+msgid "Rules"
+msgstr ""
+
+msgid "Manual"
+msgstr ""
+
+msgid "Filters"
+msgstr ""
+
+msgid "Health check"
+msgstr ""
+
+msgid "Health check:"
+msgstr "Контроль доступности:"
+
 msgid "Cannot parse proxy URI:"
 msgstr ""
 
@@ -355,7 +394,19 @@ msgstr ""
 msgid "Name must contain only lowercase letters, digits, and underscores"
 msgstr ""
 
-msgid "URI:"
+msgid "URI mode:"
+msgstr ""
+
+msgid "Object mode:"
+msgstr ""
+
+msgid "If selected, allow to define proxy as JSON object."
+msgstr ""
+
+msgid "If selected, RULE-SET lists will be updated through proxy."
+msgstr ""
+
+msgid "If selected, RULE-SET lists will be updated through proxy group."
 msgstr ""
 
 msgid "URI link with connection parameters."
@@ -415,6 +466,21 @@ msgstr ""
 msgid "Check URL:"
 msgstr ""
 
+msgid "Check status:"
+msgstr ""
+
+msgid "Check timeout:"
+msgstr ""
+
+msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy group with Mihomo syntax."
+msgstr ""
+
+msgid "Each element is an IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now."
+msgstr ""
+
+msgid "Each element is an SRC-IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now."
+msgstr ""
+
 msgid "URL for node availability check (required for group functionality)."
 msgstr ""
 
@@ -422,6 +488,21 @@ msgid "Only http:// or https:// URLs are allowed."
 msgstr ""
 
 msgid "Check interval:"
+msgstr ""
+
+msgid "Filter:"
+msgstr ""
+
+msgid "Exclude filter:"
+msgstr ""
+
+msgid "Exclude type:"
+msgstr ""
+
+msgid "Get lists through proxy:"
+msgstr ""
+
+msgid "List update interval:"
 msgstr ""
 
 msgid "Predefined RULE-SET lists, select those which you want to route through proxy-group."
@@ -448,10 +529,22 @@ msgstr ""
 msgid "Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
 msgstr ""
 
-msgid "SRC-IP-CIDR block:"
+msgid "Each element is a SRC-IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
 msgstr ""
 
-msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
+msgid "Proxy provider:"
+msgstr ""
+
+msgid "Proxy providers are external subscription URLs that dynamically load a list of proxies."
+msgstr ""
+
+msgid "Subscription URL:"
+msgstr ""
+
+msgid "Your complete subscription URL with http:// or https://."
+msgstr ""
+
+msgid "Proxy provider name."
 msgstr ""
 
 msgid "REJECT rules:"

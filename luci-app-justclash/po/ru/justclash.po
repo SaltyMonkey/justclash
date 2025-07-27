@@ -10,6 +10,9 @@ msgstr "Сбросить конфигурацию"
 msgid "Update Mihomo"
 msgstr "Обновить ядро"
 
+msgid "Update rules lists"
+msgstr "Обновить списки правил"
+
 msgid "Yes"
 msgstr "Да"
 
@@ -31,8 +34,8 @@ msgstr "Устройство:"
 msgid "Service package version:"
 msgstr "Версия сервиса:"
 
-msgid "Luci package version:"
-msgstr "Версия Luci:"
+msgid "LuCI package version:"
+msgstr "Версия LuCI:"
 
 msgid "Mihomo core version:"
 msgstr "Версия ядра Mihomo:"
@@ -67,6 +70,12 @@ msgstr "Отключить автозапуск"
 msgid "Service start"
 msgstr "Запуск сервиса"
 
+msgid "Delayed boot:"
+msgstr "Отложенный старт:"
+
+msgid "If enabled, the service start will be delayed at router boot."
+msgstr "Если включено, сервис будет загружен с задержкой после включения роутера."
+
 msgid "Start ntpd:"
 msgstr "Запуск ntpd:"
 
@@ -76,8 +85,8 @@ msgstr "Если включено, сервис запускает ntpd для �
 msgid "Edit DNS server at startup:"
 msgstr "Изменять DNS-сервер при запуске:"
 
-msgid "If enabled, the service will edit DNS server in dnsmasq configuration at start."
-msgstr "Если включено, сервис изменит DNS-сервер в конфигурации dnsmasq при запуске."
+msgid "If enabled, the service will edit DNS settings in dnsmasq configuration at start."
+msgstr "Если включено, сервис изменит настройки DNS в конфигурации dnsmasq при запуске."
 
 msgid "Edit NFT tables at startup:"
 msgstr "Редактировать NFT-таблицы при запуске:"
@@ -86,19 +95,19 @@ msgid "Block QUIC from clients:"
 msgstr "Блокировать QUIC от клиентов:"
 
 msgid "If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes."
-msgstr "Если включено, сервис будет блокировать QUIC траффик с nft таблицами. Может исправить проблемы с потоковым траффиком."
+msgstr "Если включено, сервис будет блокировать QUIC траффик nft таблицами. Может исправить проблемы с потоковым траффиком."
 
 msgid "Block DoT from clients:"
 msgstr "Блокировать DoT от клиентов:"
 
 msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
-msgstr "Если включено, сервис будет блокировать DOT траффик с nft таблицами. Может исправить DNS проблемы для некоторых устройств."
+msgstr "Если включено, сервис будет блокировать DOT траффик nft таблицами. Может исправить DNS проблемы для некоторых устройств."
 
 msgid "Block DoQ from clients:"
 msgstr "Блокировать DoQ от клиентов:"
 
 msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
-msgstr "Если включено, сервис будет блокировать DoQ траффик с nft таблицами. Может исправить DNS проблемы для некоторых устройств."
+msgstr "Если включено, сервис будет блокировать DoQ траффик nft таблицами. Может исправить DNS проблемы для некоторых устройств."
 
 msgid "Source Network Interface"
 msgstr "Интерфейс захвата"
@@ -188,10 +197,10 @@ msgid "Basic settings"
 msgstr "Базовые настройки"
 
 msgid "Logging level:"
-msgstr "Уровень логирования:"
+msgstr "Уровень оповещений:"
 
-msgid "Set up logging level in Mihomo core."
-msgstr "Установите уровень логирования в ядре Mihomo."
+msgid "Logging level in Mihomo core."
+msgstr "Уровень оповещений в ядре Mihomo."
 
 msgid "Tproxy port:"
 msgstr "Порт TProxy:"
@@ -211,8 +220,8 @@ msgstr "Специальная метка для внутренних табли
 msgid "TCP concurrent:"
 msgstr "Параллельный TCP:"
 
-msgid "Enable concurrent TCP connection attempts for each request."
-msgstr "Включить параллельные попытки TCP-соединения для каждого запроса."
+msgid "Enable concurrent TCP connection attempts."
+msgstr "Включить параллельность TCP-соединений."
 
 msgid "External controller port:"
 msgstr "Порт внешнего контроллера:"
@@ -222,6 +231,15 @@ msgstr "Порт API-сервера для внешнего контроллер
 
 msgid "Global client fingerprint:"
 msgstr "Глобальный отпечаток клиента:"
+
+msgid "Global user agent:"
+msgstr "Глобальный агент клиента:"
+
+msgid "ETag support:"
+msgstr "Поддержка ETag:"
+
+msgid "ETag support for external resources download."
+msgstr "Поддержка ETag заголовка при загрузке внешних ресурсов."
 
 msgid "Client fingerprint for protocols that support it."
 msgstr "Отпечаток клиента для поддерживаемых протоколов."
@@ -274,6 +292,9 @@ msgstr "Внешний NTP-сервер для синхронизации вре
 msgid "NTP port:"
 msgstr "Порт NTP:"
 
+msgid "External NTP server port."
+msgstr "Порт внешнего NTP-сервера."
+
 msgid "NTP check interval:"
 msgstr "Интервал проверки NTP:"
 
@@ -303,6 +324,9 @@ msgstr "Загружать записи DNS из системы, если воз
 
 msgid "Fake IP range:"
 msgstr "Диапазон Fake IP:"
+
+msgid "CIDR for fake IP."
+msgstr "CIDR адресов используемых для fake IP."
 
 msgid "Default nameservers:"
 msgstr "DNS-серверы по умолчанию:"
@@ -337,6 +361,24 @@ msgstr "Исключить выбранные домены из кэша Fake IP
 msgid "Routing mark:"
 msgstr "Маркер маршрутизации:"
 
+msgid "Basic"
+msgstr "Базовые"
+
+msgid "Rules"
+msgstr "Правила"
+
+msgid "Manual"
+msgstr "Ручные правила"
+
+msgid "Filters"
+msgstr "Фильтры"
+
+msgid "Health check"
+msgstr "Контроль"
+
+msgid "Health check:"
+msgstr "Контроль доступности:"
+
 msgid "Cannot parse proxy URI:"
 msgstr "Не удалось разобрать URI прокси:"
 
@@ -355,8 +397,20 @@ msgstr "Виртуальное имя прокси."
 msgid "Name must contain only lowercase letters, digits, and underscores"
 msgstr "Имя должно содержать только строчные буквы, цифры и подчёркивания"
 
-msgid "URI:"
-msgstr "URI:"
+msgid "URI mode:"
+msgstr "URI ссылка:"
+
+msgid "Object mode:"
+msgstr "Объект:"
+
+msgid "If selected, allow to define proxy as JSON object."
+msgstr "Позволяет указать параметры прокси вручную в виде JSON объекта."
+
+msgid "If selected, RULE-SET lists will be updated through proxy."
+msgstr "При включении будет обновлять RULE-SET списки через прокси."
+
+msgid "If selected, RULE-SET lists will be updated through proxy group."
+msgstr "При включении будет обновлять RULE-SET списки через прокси группу."
 
 msgid "URI link with connection parameters."
 msgstr "URI-ссылка с параметрами подключения."
@@ -368,22 +422,22 @@ msgid "Use with rules:"
 msgstr "Использовать с правилами:"
 
 msgid "Domain suffix:"
-msgstr "Domain suffix:"
+msgstr "Суффикс домен::"
 
 msgid "Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
 msgstr "Предустановленные списки RULE-SET, выберите те, которые хотите направлять через прокси. Оставьте пустым, если будете использовать прокси с proxy-groups."
 
 msgid "IPv4 CIDR:"
-msgstr "IPv4 CIDR:"
+msgstr "IPv4 сеть:"
 
 msgid "Source IPv4 CIDR:"
-msgstr "Source IPv4 CIDR:"
+msgstr "Исх. IPv4 CIDR:"
 
 msgid "Domain keyword:"
-msgstr "Domain keyword:"
+msgstr "Ключ. слово домен:"
 
 msgid "Domain regex:"
-msgstr "Domain regex:"
+msgstr "Рег. выр. домен:"
 
 msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax."
 msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через прокси (синтаксис Mihomo)."
@@ -415,14 +469,50 @@ msgstr "Прокси:"
 msgid "Check URL:"
 msgstr "URL для проверки:"
 
+msgid "Check status:"
+msgstr "Статус успеха:"
+
+msgid "Check timeout:"
+msgstr "Таймаут:"
+
+msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy group with Mihomo syntax."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через группу прокси (синтаксис Mihomo)."
+
+msgid "Each element is an IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для маршрутизации через группу прокси (синтаксис Mihomo). Сейчас только IPv4."
+
+msgid "Each element is an SRC-IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для маршрутизации через группу прокси (синтаксис Mihomo). Сейчас только IPv4."
+
 msgid "URL for node availability check (required for group functionality)."
 msgstr "URL для проверки доступности узла (необходимо для работы групп)."
 
 msgid "Only http:// or https:// URLs are allowed."
 msgstr "Разрешены только URL http:// или https://."
 
+msgid "Time interval for subscription update check."
+msgstr "Интервал обновления данных подписки."
+
+msgid "Update interval:"
+msgstr "Интервал обновления:"
+
 msgid "Check interval:"
 msgstr "Интервал проверки:"
+
+msgid "Filter:"
+msgstr "Фильтр:"
+
+msgid "Exclude filter:"
+msgstr "Исключающий фильтр:"
+
+msgid "Exclude type:"
+msgstr "Фильтр по типу:"
+
+msgid "Get lists through proxy:"
+msgstr "Получать списки через прокси:"
+
+msgid "List update interval:"
+msgstr "Интервал обновления списка:"
 
 msgid "Predefined RULE-SET lists, select those which you want to route through proxy-group."
 msgstr "Предустановленные списки RULE-SET, выберите те, которые хотите направлять через прокси-группу."
@@ -442,20 +532,29 @@ msgstr "Каждый элемент — правило DOMAIN-KEYWORD для DIR
 msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax)."
 msgstr "Каждый элемент — правило DOMAIN-REGEX для DIRECT (синтаксис Mihomo)."
 
-msgid "SRC-IP-CIDR pass:"
-msgstr "SRC-IP-CIDR pass:"
-
-msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.
+msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
 msgstr "Каждый элемент — правило SRC-IP-CIDR для DIRECT (синтаксис Mihomo). Сейчас только IPv4."
 
 msgid "Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
 msgstr "Каждый элемент — правило IP-CIDR для пропуска через прокси (синтаксис Mihomo). Сейчас только IPv4."
 
-msgid "SRC-IP-CIDR block:"
-msgstr "SRC-IP-CIDR block:"
-
 msgid "Each element is a SRC-IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
 msgstr "Каждый элемент — правило SRC-IP-CIDR для блокировки через прокси (синтаксис Mihomo). Сейчас только IPv4."
+
+msgid "Proxy provider:"
+msgstr "Провайдеры прокси:"
+
+msgid "Proxy providers are external subscription URLs that dynamically load a list of proxies."
+msgstr "Провайдеры прокси — это внешние URL подписок, которые динамически загружают список прокси."
+
+msgid "Subscription URL:"
+msgstr "URL подписки:"
+
+msgid "Your complete subscription URL with http:// or https://."
+msgstr "Ваш полный URL подписки с http:// или https://."
+
+msgid "Proxy provider name."
+msgstr "Имя прокси провайдера"
 
 msgid "REJECT rules:"
 msgstr "Правила REJECT:"

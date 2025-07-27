@@ -62,7 +62,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.Flag, "defined_as_custom_object", _("Object mode:"));
-        o.description = _("If selected, allow to define proxy as JSON object");
+        o.description = _("If selected, allow to define proxy as JSON object.");
         o.rmempty = false;
         o.default = "0";
 
@@ -103,7 +103,7 @@ return view.extend({
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
 
         o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
-        o.description = _("If enabled, RULE-SET lists will be updated through proxy.");
+        o.description = _("If selected, RULE-SET lists will be updated through proxy.");
         o.optional = true;
         o.default = "0";
 
@@ -144,6 +144,124 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
+
+        spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies. "));
+        spp.anonymous = true;
+        spp.addremove = true;
+
+        tabname = "proxyprovidersbasic_tab";
+        spp.tab(tabname, _("Basic"));
+
+        o = spp.taboption(tabname, form.Value, "name", _("Name:"));
+        o.rmempty = false;
+        o.cfgvalue = function (section_id) {
+            const val = uci.get(common.binName, section_id, "name");
+            if (val)
+                return val;
+            return common.generateRandomName(common.genNameProxyProviderPrefix);
+        };
+        o.validate = function (section_id, value) {
+            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+        };
+
+        o = spp.taboption(tabname, form.Value, "subscription", _("Subscription URL:"));
+        o.placeholder = "https://yourSubscriptionUrl";
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
+        };
+        o.description = _("Your complete subscription URL with http:// or https://.");
+
+        o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
+        o.rmempty = false;
+        o.datatype = "uinteger";
+        o.placeholder = common.defaultProxyProviderIntervalSec;
+        o.default = common.defaultProxyProviderIntervalSec;
+        o.description = _("Time interval for subscription update check.");
+
+        tabname = "proxyproviderhelthchk_tab";
+        spp.tab(tabname, _("Health check"));
+
+        o = spp.taboption(tabname, form.Flag, "health_check", _("Health check:"));
+        o.default = "1";
+        o.rmempty = false;
+
+        o = spp.taboption(tabname, form.Value, "health_check_url", _("Check URL:"));
+        o.placeholder = common.defaultProxyGroupCheckUrl;
+        o.default = common.defaultProxyGroupCheckUrl;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
+        };
+        o.description = _("URL for node availability check (required for proxy provider functionality).");
+        o.depends("health_check", "1");
+
+        o = spp.taboption(tabname, form.Value, "health_check_expected_status", _("Check status:"));
+        o.rmempty = false;
+        o.datatype = "uinteger";
+        o.placeholder = common.defaultHealthCheckResult;
+        o.default = common.defaultHealthCheckResult;
+        o.depends("health_check", "1");
+        o.description = _("Result for successful health check.");
+
+        o = spp.taboption(tabname, form.Value, "health_check_interval", _("Check interval:"));
+        o.datatype = "uinteger";
+        o.placeholder = common.defaultProxyProviderHealthCheckSec;
+        o.default = common.defaultProxyProviderHealthCheckSec;
+        o.depends("health_check", "1");
+        o.description = _("Time interval between health checks in seconds.");
+
+        o = spp.taboption(tabname, form.Value, "health_check_timeout", _("Check timeout:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultHealthCheckTimeoutMs;
+        o.depends("health_check", "1");
+        o.description = _("Timeout for each individual health check in milliseconds.");
+
+        tabname = "proxyproviderfilter_tab";
+        spp.tab(tabname, _("Filters"));
+
+        o = spp.taboption(tabname, form.Value, "filter", _("Filter:"));
+        o.description = _("Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe).");
+        o.optional = true;
+        o.rmempty = true;
+        o.placeholder = "HK|US|(?i)Netflix";
+        o.validate = function (section_id, value) {
+            return common.isValidKeywordOrRegexList(value, "filter");
+        };
+
+        o = spp.taboption(tabname, form.Value, "exclude_filter", _("Exclude filter:"));
+        o.description = _("Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe).");
+        o.optional = true;
+        o.rmempty = true;
+        o.placeholder = "CN|(?i)douyin";
+        o.validate = function (section_id, value) {
+            return common.isValidKeywordOrRegexList(value, "exclude_filter");
+        };
+
+        o = spp.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
+        o.description = _("Exclude type filter.");
+        o.placeholder = "vless|vmess|ss";
+        o.optional = true;
+        o.rmempty = true;
+        o.validate = function (section_id, value) {
+            if (!value) return true;
+            const regex = /^[a-z0-9|]+$/;
+            if (!regex.test(value)) {
+                return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
+            }
+
+            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5"];
+            const types = value.split("|");
+
+            for (let i = 0; i < types.length; i++) {
+                const type = types[i].trim();
+                if (type && !allowedTypes.includes(type)) {
+                    return _("Unsupported type: ") + type;
+                }
+            }
+
+            return true;
+        };
 
         s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing)."));
         s2.anonymous = true;
@@ -284,7 +402,6 @@ return view.extend({
                 return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
             }
 
-            // Опционально: можно указать допустимые типы
             const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5"];
             const types = value.split("|");
 
@@ -307,7 +424,7 @@ return view.extend({
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy-group.");
 
         o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy:"));
-        o.description = _("If enabled, RULE-SET lists will be updated through proxy.");
+        o.description = _("If selected, RULE-SET lists will be updated through proxy group.");
         o.optional = true;
         o.default = "0";
 
@@ -329,7 +446,7 @@ return view.extend({
         s2.tab(tabname, _("Manual"));
 
         o = s2.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
-        o.description = _("One element is one DOMAIN-SUFFIX rule with mihomo syntax.");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy group with Mihomo syntax.");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.editable = true;
@@ -338,136 +455,19 @@ return view.extend({
         };
 
         o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
-        o.description = _("One element is one IP-CIDR rule with mihomo syntax. IPV4 only right now.");
+        o.description = _("Each element is an IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now.");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
         o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
-        o.description = _("Each element is one SRC-IP-CIDR rule to block with proxy (mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is an SRC-IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now.");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
-        spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies. "));
-        spp.anonymous = true;
-        spp.addremove = true;
-
-        tabname = "proxyprovidersbasic_tab";
-        spp.tab(tabname, _("Basic"));
-
-        o = spp.taboption(tabname, form.Value, "name", _("Name:"));
-        o.rmempty = false;
-        o.cfgvalue = function (section_id) {
-            const val = uci.get(common.binName, section_id, "name");
-            if (val)
-                return val;
-            return common.generateRandomName(common.genNameProxyProviderPrefix);
-        };
-        o.validate = function (section_id, value) {
-            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
-        };
-
-        o = spp.taboption(tabname, form.Value, "subscription", _("Subscription URL:"));
-        o.placeholder = "https://yourSubscriptionUrl";
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
-            return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
-        };
-        o.description = _("Your complete subscription URL with http:// or https://.");
-
-        o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
-        o.datatype = "uinteger";
-        o.placeholder = common.defaultProxyProviderIntervalSec;
-        o.default = common.defaultProxyProviderIntervalSec;
-        o.description = _("Time interval for subscription update check.");
-
-        tabname = "proxyproviderhelthchk_tab";
-        spp.tab(tabname, _("Health check"));
-
-        o = spp.taboption(tabname, form.Flag, "health_check", _("Health check:"));
-        o.default = "1";
-        o.rmempty = false;
-
-        o = spp.taboption(tabname, form.Value, "health_check_url", _("Check URL:"));
-        o.placeholder = common.defaultProxyGroupCheckUrl;
-        o.default = common.defaultProxyGroupCheckUrl;
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
-            return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
-        };
-        o.description = _("URL for node availability check (required for proxy provider functionality).");
-        o.depends("health_check", "1");
-
-        o = spp.taboption(tabname, form.Value, "health_check_expected_status", _("Check status:"));
-        o.rmempty = false;
-        o.datatype = "uinteger";
-        o.placeholder = common.defaultHealthCheckResult;
-        o.default = common.defaultHealthCheckResult;
-        o.depends("health_check", "1");
-        o.description = _("Result for successful health check.");
-
-        o = spp.taboption(tabname, form.Value, "health_check_interval", _("Check interval:"));
-        o.datatype = "uinteger";
-        o.placeholder = common.defaultProxyProviderHealthCheckSec;
-        o.default = common.defaultProxyProviderHealthCheckSec;
-        o.depends("health_check", "1");
-        o.description = _("Time interval between health checks in seconds.");
-
-        o = spp.taboption(tabname, form.Value, "health_check_timeout", _("Check timeout:"));
-        o.datatype = "uinteger";
-        o.default = common.defaultHealthCheckTimeoutMs;
-        o.depends("health_check", "1");
-        o.description = _("Timeout for each individual health check in milliseconds.");
-
-        tabname = "proxyproviderfilter_tab";
-        spp.tab(tabname, _("Filters"));
-
-        o = spp.taboption(tabname, form.Value, "filter", _("Filter:"));
-        o.description = _("Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe).");
-        o.optional = true;
-        o.rmempty = true;
-        o.placeholder = "HK|US|(?i)Netflix";
-        o.validate = function (section_id, value) {
-            return common.isValidKeywordOrRegexList(value, "filter");
-        };
-
-        o = spp.taboption(tabname, form.Value, "exclude_filter", _("Exclude filter:"));
-        o.description = _("Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe).");
-        o.optional = true;
-        o.rmempty = true;
-        o.placeholder = "CN|(?i)douyin";
-        o.validate = function (section_id, value) {
-            return common.isValidKeywordOrRegexList(value, "exclude_filter");
-        };
-
-        o = spp.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
-        o.description = _("Exclude type filter.");
-        o.placeholder = "vless|vmess|ss";
-        o.optional = true;
-        o.rmempty = true;
-        o.validate = function (section_id, value) {
-            if (!value) return true;
-            const regex = /^[a-z0-9|]+$/;
-            if (!regex.test(value)) {
-                return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
-            }
-
-            // Опционально: можно указать допустимые типы
-            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5"];
-            const types = value.split("|");
-
-            for (let i = 0; i < types.length; i++) {
-                const type = types[i].trim();
-                if (type && !allowedTypes.includes(type)) {
-                    return _("Unsupported type: ") + type;
-                }
-            }
-
-            return true;
-        };
         s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
         s3.addremove = false;
 
@@ -515,11 +515,11 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
-        s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional settings for REJECT rules. Will be handled before proxies and proxy groups."));
+        s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional rules for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
 
         tabname = "rejectrules_tab";
-        s4.tab(tabname, _("Rules:"));
+        s4.tab(tabname, _("Rules"));
 
         o = s4.taboption(tabname, form.MultiValue, "enabled_blocklist", _("Use with rules:"));
         result.blockRulesetsItems.forEach(item => {

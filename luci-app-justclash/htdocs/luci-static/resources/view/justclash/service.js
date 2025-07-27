@@ -15,18 +15,23 @@ return view.extend({
         tabname = "serviceautomation_tab";
         s.tab(tabname, _("Basic settings"));
 
+        o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
+        o.description = _("If enabled, the service start will be delayed at router boot.");
+        o.rmempty = false;
+        o.default = "0";
+
         o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Start ntpd:"));
         o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Edit DNS server at startup:"));
-        o.description = _("If enabled, the service will edit DNS server in dnsmasq configuration at start.");
+        o.description = _("If enabled, the service will edit DNS settings in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "update_nft_tables_at_load", _("Edit NFT tables at startup:"));
-        o.description = _("If enabled, service creates NFT tables to redirect traffic to the TPROXY port.");
+        o.description = _("If enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
         o.default = "1";
 

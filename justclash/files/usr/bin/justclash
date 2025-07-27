@@ -325,7 +325,7 @@ stop() {
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
     local attempt=0
-    log 2 "Start: configured retries: $CORE_RESTART_MAX_RETRIES" "🐱"
+    log 2 "Start with configured retries: $CORE_RESTART_MAX_RETRIES" "🐱"
 
     if [ "$PROCD_MODE" -eq 1 ]; then
         local attempt=0
@@ -1326,7 +1326,6 @@ handle_proxy_group_section() {
     echo "$proxy_groups" > "$file_proxygroups"
 }
 
-
 handle_proxy_provider_section() {
     local result=""
 
@@ -1465,7 +1464,6 @@ handle_block_rule_section() {
     echo "$rules" > "$file_rules"
     echo "$selected_rule_sets" > "$file_rulesets"
 }
-
 
 handle_direct_rule_section() {
     local rules_array=""
@@ -1721,7 +1719,7 @@ EOF
     return 0;
 }
 
-rulesets_update() {
+rulesets_list_update() {
     local complete_url
     log 2 "Downloading RULE-SETs list file" "📥"
     complete_url=${RULESETS_FILES_URL_PARTIAL}/${RULESETS_FILENAME}
@@ -2389,8 +2387,8 @@ case "$1" in
     core_autorestart_cron_remove)
         core_autorestart_cron_remove
         ;;
-    rulesets_update)
-        rulesets_update
+    rulesets_list_update)
+        rulesets_list_update
         ;;
     logs|systemlogs)
         case "$2" in

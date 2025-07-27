@@ -8,7 +8,7 @@ const FIELDS = [
     { label: _("Device model:"), key: "infoDevice" },
     { label: _("System version:"), key: "infoOpenWrt" },
     { label: _("Service package version:"), key: "infoPackage" },
-    { label: _("Luci package version:"), key: "infoLuciPackage" },
+    { label: _("LuCI package version:"), key: "infoLuciPackage" },
     { label: _("Mihomo core version:"), key: "infoCore" }
 ];
 
@@ -177,7 +177,7 @@ return view.extend({
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton("diagnostic", "cbi-button-apply", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
             createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
-            createActionButton("rulesets_updates", "cbi-button-apply", _("Update rules lists"), showExecModalHandler(_("Update RuleSets"), common.binPath, ["rulesets_update"])),
+            createActionButton("rulesets_list_updates", "cbi-button-apply", _("Update rules lists"), showExecModalHandler(_("Update RuleSets list"), common.binPath, ["rulesets_list_update"])),
             createActionButton("config_reset", "cbi-button-negative jc-margin-right", _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
 
         ]);

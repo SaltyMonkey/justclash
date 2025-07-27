@@ -1,7 +1,7 @@
 {
     "admin/services/justclash": {
         "title": "Justclash",
-        "order": 43,
+        "order": 13,
         "action": {
             "type": "alias",
             "path": "admin/services/justclash/status"
@@ -33,7 +33,7 @@
     },
         "admin/services/justclash/connections": {
         "title": "Connections",
-        "order": 50,
+        "order": 20,
         "action": {
             "type": "view",
             "path": "justclash/connections"
@@ -49,7 +49,7 @@
     },
     "admin/services/justclash/logs": {
         "title": "Logs",
-        "order": 50,
+        "order": 30,
         "action": {
             "type": "view",
             "path": "justclash/logs"
@@ -65,7 +65,7 @@
     },
     "admin/services/justclash/service": {
         "title": "Service settings",
-        "order": 20,
+        "order": 40,
         "action": {
             "type": "view",
             "path": "justclash/service"
@@ -81,7 +81,7 @@
     },
     "admin/services/justclash/proxy": {
         "title": "Proxy settings",
-        "order": 30,
+        "order": 50,
         "action": {
             "type": "view",
             "path": "justclash/proxy"
@@ -97,7 +97,7 @@
     },
     "admin/services/justclash/routes": {
         "title": "Proxy routing",
-        "order": 40,
+        "order": 60,
         "action": {
             "type": "view",
             "path": "justclash/routing"
