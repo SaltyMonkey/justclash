@@ -1,3 +1,7 @@
+## [0.0.61] - 28072025
+
+- Fixed incorrect boot
+
 ## [0.0.6] - 27072025
 
 - Locked back `Relay group type` until next release - some changes required
