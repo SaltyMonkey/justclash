@@ -562,7 +562,7 @@ msgstr ""
 msgid "Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
 msgstr ""
 
-msgid "End rule:"
+msgid "FINAL rule:"
 msgstr ""
 
 msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."

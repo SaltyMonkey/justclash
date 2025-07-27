@@ -571,8 +571,8 @@ msgstr "Каждый элемент — правило DOMAIN-SUFFIX для бл
 msgid "Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
 msgstr "Каждый элемент — правило IP-CIDR для блокировки через прокси (синтаксис Mihomo). Сейчас только IPv4."
 
-msgid "End rule:"
-msgstr "End rule:"
+msgid "FINAL rule:"
+msgstr "Правило FINAL:"
 
 msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
 msgstr "Дополнительные настройки для финальных правил, применяемых после всех остальных. Используйте для переопределения или принудительного применения определённых действий."
