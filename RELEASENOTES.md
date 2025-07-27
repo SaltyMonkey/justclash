@@ -1,3 +1,25 @@
+## [0.0.6] - 27072025
+
+- Locked back `Relay group type` until next release - some changes required
+- Added `NextDNS` to conflicts
+- Updated default ruleset lists
+- Added `boot delay` functionality (8 sec delay before service start after route boot)
+- Generating more valid proxy-groups in config file (without unused fields)
+- Added `tolerance` field for `url-test proxy group`
+- LuCI: Added `global-ua` and `etag-support` fields for user change
+- LuCI: Rearrange top tabs in service: will be `status -> conns -> logs -> etc` for better UX
+- LuCI: Translated a lot resources for RU language
+- Minor changes
+
+This version requires:
+- Browser cache must be cleaned up
+- UCI config file required new field `delayed_boot ` to be set
+```
+config main 'settings'
+    option delayed_boot '0'
+```
+You must reset config file or to add option manually
+
 ## [0.0.52] - 24072025
 
 - Unlocked url-test groups
