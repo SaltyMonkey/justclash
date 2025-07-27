@@ -49,9 +49,9 @@ boot() {
     if [ "$delayed_boot" -eq 1 ]; then
         logger -p "user.info" -t "$PROGNAME" "Delayed start was enabled. Delaying..."
         sleep 8
-        start_service
+        start
     else
         logger -p "user.info" -t "$PROGNAME" "Delayed start was disabled."
-        start_service
+        start
     fi
 }
