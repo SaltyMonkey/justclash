@@ -9,7 +9,7 @@ return baseclass.extend({
     rulesetsFilePath: "/etc/rulesets.justclash.txt",
     genNameProxyPrefix: "proxy",
     genNameProxyProviderPrefix: "provider",
-    logsCount: "400",
+    logsCount: "800",
     genNameProxyGroupPrefix: "proxygroup",
     defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
