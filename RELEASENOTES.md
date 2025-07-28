@@ -1,3 +1,10 @@
+## [0.0.62] - 29072025
+
+- LuCI: Reworked Logs tab with new features
+- LuCI: Doubled logs required with button in Logs tab
+- Fix core updater for new changes in Mihomo repository
+- LuCI: Logs page translation
+
 ## [0.0.61] - 28072025
 
 - Fixed incorrect boot
