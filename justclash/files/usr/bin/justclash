@@ -1760,14 +1760,14 @@ detect_arch() {
     arch_raw=$(uname -m)
 
     case "$arch_raw" in
-        x86_64) echo "amd64";;
+        x86_64) echo "amd64-v3";;
         aarch64) echo "arm64" ;;
         armv5*) echo "armv5" ;;
         armv6*) echo "armv6" ;;
         armv7*) echo "armv7" ;;
         mips*) echo "mips" ;;
-        i[3-6]86) echo "i386" ;;
-        *) echo "amd64" ;;
+        i[3-6]86) echo "386" ;;
+        *) echo "amd64-v3" ;;
     esac
 }
 
