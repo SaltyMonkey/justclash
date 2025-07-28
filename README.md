@@ -1,7 +1,7 @@
 # JustClash
 
-> **Warning: This is a demo/educational project!**
-> The repository demonstrates how to work with external binary files, as well as basic Linux scripting, network configuration, and routing integration in OpenWrt and FriendlyWrt. It is not intended for production use.
+> [!WARNING]
+> This repository serves as an educational demonstration on handling external binary files, along with fundamental Linux scripting techniques, network configuration setups, and routing integration within OpenWrt and FriendlyWrt environments. It provides practical examples to illustrate these concepts for learning and experimentation purposes. Please note that it is not designed or suitable for production use, as it may contain unoptimized code, potential security vulnerabilities, or incomplete features that could lead to instability in real-world applications. This project is created for scientific and technical purposes, aiming to advance knowledge in embedded systems and networking without any commercial intent. The author bears no responsibility for how the project is used, including any potential misuse, damages, or consequences arising from its application. Use it responsibly in controlled, non-critical settings only.
 
 ## Overview
 
