@@ -15,11 +15,15 @@ return view.extend({
         textarea.style.height = "auto";
         textarea.style.height = textarea.scrollHeight + "px";
     },
-    async updateLogs(logBox, btn) {
+    async updateLogs(logBox, btn, reverseCheckbox, rawLogs) {
         btn.disabled = true;
         try {
             const res = await fs.exec(common.binInfoPath, ["systemlogs", common.logsCount]);
-            logBox.value = res.stdout || NO_LOGS;
+            rawLogs.value = res.stdout || NO_LOGS;
+            if (rawLogs.value.endsWith('\n')) {
+                rawLogs.value = rawLogs.value.slice(0, -1);
+            }
+            this.applyReverse(logBox, reverseCheckbox.checked, rawLogs.value);
             this.autosizeTextarea(logBox);
         } catch (e) {
             ui.addNotification(_("Error"), e.message, "danger");
@@ -27,7 +31,24 @@ return view.extend({
             btn.disabled = false;
         }
     },
+    copyToClipboard(text) {
+        if (navigator.clipboard) {
+            navigator.clipboard
+                .writeText(text)
+                .catch((ex) => {
+                    console.error(ex);
+                });
+        }
+    },
 
+    applyReverse(logBox, isReversed, rawText) {
+        if (isReversed) {
+            const lines = rawText.split("\n").reverse().join("\n");
+            logBox.value = lines;
+        } else {
+            logBox.value = rawText;
+        }
+    },
     render: function () {
 
         const logBox = E("textarea", {
@@ -39,30 +60,75 @@ return view.extend({
         logBox.value = NO_DATA;
         this.autosizeTextarea(logBox);
 
-        let refreshBtn;
-        refreshBtn = E("button", {
+        const rawLogs = { value: NO_DATA };
+
+        const refreshBtn = E("button", {
             class: "cbi-button cbi-button-action",
-            click: () => this.updateLogs(logBox, refreshBtn)
+            click: () => this.updateLogs(logBox, refreshBtn, reverseCheckbox, rawLogs)
         }, [_("Update")]);
 
         const tailBtn = E("button", {
             class: "cbi-button cbi-button-neutral jc-ml",
             click: () => {
-                logBox.scrollTop = logBox.scrollHeight;
+                window.scrollTo({
+                    top: document.documentElement.scrollHeight,
+                    behavior: "smooth"
+                });
             },
-        }, [_("To end")]);
+        }, [_("To bottom")]);
 
-        const buttonBar = E("div", { style: "margin-bottom: 1em;" }, [
+        const isSecure = window.isSecureContext;
+
+        const copyBtn = E("button", {
+            class: "cbi-button cbi-button-positive jc-ml",
+            disabled: !isSecure,
+            title: !isSecure ? _("Can't copy") : "",
+            click: () => {
+                if (logBox.value === NO_DATA || logBox.value === NO_LOGS) return;
+                this.copyToClipboard(logBox.value);
+            },
+        }, [_("Copy logs")]);
+
+        const topBtn = E("button", {
+            class: "cbi-button cbi-button-neutral jc-ml jc-mb",
+            click: () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            },
+        }, [_("To top")]);
+
+        const reverseCheckbox = E("input", {
+            type: "checkbox",
+            id: "reverseLogs",
+            class: "jc-ml",
+            change: () => this.applyReverse(logBox, reverseCheckbox.checked, rawLogs.value)
+        });
+        const reverseLabel = E("label", { for: "reverseLogs", class: "cbi-checkbox-label" }, [_("Reversed Logs")]);
+
+        const settingsBar = E("div", { class: "jc-sb jc-mb" }, [
+            reverseLabel,
+            reverseCheckbox,
+        ]);
+
+        const buttonBar = E("div", { class: "jc-mb" }, [
             refreshBtn,
             tailBtn,
-            // copyBtn
+            copyBtn
+        ]);
+
+        const buttonBottomBar = E("div", { style: "margin-top: 1em;" }, [
+            topBtn
         ]);
 
         return E("div", { class: "cbi-section fade-in" }, [
             this.addCSS(),
             E("h3", { class: "cbi-section-title" }, _("Logs view")),
             buttonBar,
-            logBox
+            settingsBar,
+            logBox,
+            buttonBottomBar
         ]);
     },
 
@@ -71,14 +137,24 @@ return view.extend({
             .jc-ml {
                 margin-left: 0.5em !important;
             }
+            .jc-mb {
+                margin-bottom: 1em !important;
+            }
             .jc-logs {
                 width: 100%;
                 font-family: monospace;
+                font-size: 12px;
                 white-space: pre;
                 overflow-x: auto;
                 overflow-y: hidden;
                 resize: none;
                 min-height: 2em;
+            }
+              .jc-sb {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 0.5em;
             }
         `);
     },
