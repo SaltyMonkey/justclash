@@ -1,6 +1,27 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "Update"
+msgstr "Получить логи"
+
+msgid "To bottom"
+msgstr "В конец"
+
+msgid "Can't copy"
+msgstr "Невозможно копировать"
+
+msgid "Copy logs"
+msgstr "Копировать логи"
+
+msgid "To top"
+msgstr "В начало"
+
+msgid "Reversed Logs"
+msgstr "Новые логи в начале"
+
+msgid "Logs view"
+msgstr "Просмотр логов"
+
 msgid "Diagnostic"
 msgstr "Диагностика"
 
@@ -639,9 +660,3 @@ msgstr "Ошибка"
 
 msgid "No logs"
 msgstr "Нет логов"
-
-msgid "To end"
-msgstr "К концу"
-
-msgid "Logs view"
-msgstr "Просмотр логов"

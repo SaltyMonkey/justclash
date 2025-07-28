@@ -1,6 +1,27 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "Update"
+msgstr ""
+
+msgid "To bottom"
+msgstr ""
+
+msgid "Can't copy"
+msgstr ""
+
+msgid "Copy logs"
+msgstr ""
+
+msgid "To top"
+msgstr ""
+
+msgid "Reversed Logs"
+msgstr ""
+
+msgid "Logs view"
+msgstr ""
+
 msgid "Diagnostic"
 msgstr ""
 
