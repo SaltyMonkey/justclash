@@ -1138,21 +1138,33 @@ handle_proxy_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
-                rules_array="$rules_array,\"$rule_str\""
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
             }
         done
         config_get list "$section" additional_domain_route
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
-                rules_array="$rules_array,\"$rule_str\""
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
             }
         done
         config_get list "$section" additional_destip_route
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
-                rules_array="$rules_array,\"$rule_str\""
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
             }
         done
     }
@@ -1280,7 +1292,11 @@ handle_proxy_group_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
-                rules_array="$rules_array,\"$rule_str\""
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
             }
         done
 
@@ -1288,7 +1304,11 @@ handle_proxy_group_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
-                rules_array="$rules_array,\"$rule_str\""
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
             }
         done
 
@@ -1296,7 +1316,11 @@ handle_proxy_group_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
-                rules_array="$rules_array,\"$rule_str\""
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
             }
         done
     }
@@ -1443,7 +1467,11 @@ handle_block_rule_section() {
     for domain_val in $additional_domain_blockroute; do
         [ -n "$domain_val" ] && {
             local rule_str=$(printf 'DOMAIN-SUFFIX,%s,REJECT' "$domain_val")
-            rules_array="$rules_array,\"$rule_str\""
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
         }
     done
 
@@ -1451,7 +1479,11 @@ handle_block_rule_section() {
     for ip_val in $additional_destip_blockroute; do
         [ -n "$ip_val" ] && {
             local rule_str=$(printf 'IP-CIDR,%s,REJECT' "$ip_val")
-            rules_array="$rules_array,\"$rule_str\""
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
         }
     done
 
@@ -1492,28 +1524,44 @@ handle_direct_rule_section() {
     for val in $additional_domain_keyword_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-KEYWORD,%s,DIRECT' "$val")
-            rules_array="$rules_array,\"$rule_str\""
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
         }
     done
 
     for val in $additional_domain_regex_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-REGEX,%s,DIRECT' "$val")
-            rules_array="$rules_array,\"$rule_str\""
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
         }
     done
 
     for val in $additional_srcip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT' "$val")
-            rules_array="$rules_array,\"$rule_str\""
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
         }
     done
 
     for val in $additional_destip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'IP-CIDR,%s,DIRECT' "$val")
-            rules_array="$rules_array,\"$rule_str\""
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
         }
     done
 
