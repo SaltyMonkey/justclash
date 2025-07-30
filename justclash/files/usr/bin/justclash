@@ -36,9 +36,13 @@ CORE_PATH_INFOBIN="/usr/bin/justclash_info"
 INITD_PATH="/etc/init.d/justclash"
 # workdir path (in RAM)
 CORE_WORKDIR_PATH="/tmp/justclash/"
-OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
+# Mihomo using directory 'rules' by default in workdir
+# if nothing selected in path fields for rules
+CORE_WORKDIR_RULES_PATH="/tmp/justclash/rules"
 
+OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 DEFAULT_CONFIG_PATH="/etc/default.justclash.config"
+DEFAULT_SYMLINKDIR_RULESETS="/etc/justclash_rules"
 RULESETS_FILENAME="rulesets.justclash.txt"
 RULESETS_FILE="/etc/${RULESETS_FILENAME}"
 RULESETS_BLOCKS_FILENAME="blockrulesets.justclash.txt"
@@ -1751,6 +1755,19 @@ core_prepare_workdir() {
         [ -f "$OUTPUT_YAML_CONFIG_PATH" ] && rm -f "$OUTPUT_YAML_CONFIG_PATH"
     else
         mkdir -p "$CORE_WORKDIR_PATH"
+    fi
+
+    local mihomo_persistent_temp_files
+    config_get mihomo_persistent_temp_files settings mihomo_persistent_temp_files
+    if [ "$mihomo_persistent_temp_files" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
+        log 2 "Generating symlink $DEFAULT_SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
+        rm -rf "$CORE_WORKDIR_RULES_PATH"
+        [ ! -d "$DEFAULT_SYMLINKDIR_RULESETS" ] &&  mkdir -p "$DEFAULT_SYMLINKDIR_RULESETS"
+        ln -sf "$DEFAULT_SYMLINKDIR_RULESETS" "$CORE_WORKDIR_RULES_PATH"
+    elif  [ "$mihomo_persistent_temp_files" -eq 0 ] && [ -L "$CORE_WORKDIR_RULES_PATH" ]; then
+        log 2 "Removing old symlink $DEFAULT_SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
+        rm -rf "$DEFAULT_SYMLINKDIR_RULESETS"
+        rm -rf "$CORE_WORKDIR_RULES_PATH"
     fi
 }
 
