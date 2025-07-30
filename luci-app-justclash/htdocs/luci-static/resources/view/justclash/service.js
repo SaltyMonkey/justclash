@@ -20,6 +20,11 @@ return view.extend({
         o.rmempty = false;
         o.default = "0";
 
+        o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Persistent temp files:"));
+        o.description = _("If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!");
+        o.rmempty = false;
+        o.default = "0";
+
         o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Start ntpd:"));
         o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
         o.rmempty = false;
