@@ -1604,7 +1604,7 @@ core_generate_yaml() {
     local tcp_concurrent external_controller_port global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
-    local dns_listen_port use_hosts use_system_hosts fake_ip_range
+    local dns_listen_port use_hosts use_system_hosts fake_ip_range dns_cache_max_size
     local etag_support global_ua mixed_port
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver ignore_fake_ip_domains ignore_to_sniff_domains
 
@@ -1633,6 +1633,7 @@ core_generate_yaml() {
     config_get_bool core_ntp_write_system proxy core_ntp_write_system
     core_ntp_write_system=$(ucibool_to_yaml_bool "$core_ntp_write_system")
     config_get dns_listen_port proxy dns_listen_port
+    config_get dns_cache_max_size proxy dns_cache_max_size
     config_get_bool use_hosts proxy use_hosts
     use_hosts=$(ucibool_to_yaml_bool "$use_hosts")
     config_get_bool use_system_hosts proxy use_system_hosts
@@ -1683,6 +1684,7 @@ dns:
   use-system-hosts: $use_system_hosts
   enhanced-mode: fake-ip
   fake-ip-range: $fake_ip_range
+  cache-max-size: $dns_cache_max_size
   default-nameserver: $default_nameserver
   nameserver: $nameserver
   proxy-server-nameserver: $proxy_server_nameserver

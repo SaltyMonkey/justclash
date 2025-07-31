@@ -103,6 +103,12 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
+        o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
+        o.description = _("DNS cache size.");
+        o.default = "1024";
+        o.rmempty = false;
+        o.datatype = "integer";
+
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
         o.description = _("CIDR for fake IP.");
         o.default = "198.18.0.1/22";
