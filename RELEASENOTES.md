@@ -1,3 +1,8 @@
+## [0.0.64] - 29072025
+
+- New feature: keep downloaded RULE-SETs at NAND optionally
+- Bugfix: Incorrect rules generation if no RULE-SET was selected
+
 ## [0.0.62] - 29072025
 
 - LuCI: Reworked Logs tab with new features
