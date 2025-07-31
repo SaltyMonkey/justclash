@@ -18,6 +18,7 @@
 PROCD_MODE=0
 
 # setup procd variable: $JUSTCLASH_ENV passed from init.d start
+# shellcheck disable=SC2154
 [ "$JUSTCLASH_ENV" = "procd" ] && PROCD_MODE=1 || PROCD_MODE=0
 
 config_load justclash
@@ -790,7 +791,8 @@ parse_ss_url() {
     # Удаляем #, но сохраняем query (для plugin)
     link="${link%%#*}"
 
-    local userinfo hostport method password server port decoded query_part plugin=""
+    local userinfo hostport method password server port decoded query_part
+    #local plugin=""
 
     # Извлечение query (после ?)
     query_part=""
