@@ -634,7 +634,10 @@ justclash_install() {
         for apk_file in "$TMP_DOWNLOAD_PATH"/*.apk; do
             if [ -f "$apk_file" ]; then
                 echo " - Installing $apk_file"
-                pkg_install "$apk_file" || print_red "Failed to install $apk_file"
+                pkg_install "$apk_file" || {
+                    print_red "Failed to install $apk_file"
+                    exit 1
+                }
             fi
         done
         echo " - All new .apk packages installed."
@@ -642,7 +645,10 @@ justclash_install() {
         for ipk_file in "$TMP_DOWNLOAD_PATH"/*.ipk; do
             if [ -f "$ipk_file" ]; then
                 echo " - Installing $ipk_file"
-                pkg_install "$ipk_file" || print_red "Failed to install $ipk_file"
+                pkg_install "$ipk_file" || {
+                    print_red "Failed to install $ipk_file"
+                    exit 1
+                }
             fi
         done
         echo " - All new .ipk packages installed."
@@ -686,6 +692,7 @@ justclash_uninstall() {
 }
 
 justclash_download() {
+    local install_ru="$1"
     if [ -z "$JUSTCLASH_RELEASE_URL_API" ] || [ -z "$TMP_DOWNLOAD_PATH" ]; then
         print_red "Usage: justclash_download_ipk requires JUSTCLASH_RELEASE_URL_API and TMP_DOWNLOAD_PATH to be set"
         return 1
@@ -718,6 +725,10 @@ justclash_download() {
     local file
     for file in $urls; do
         echo " - Downloading $file"
+        #if [ "$install_ru" -eq 1 ] && echo "$file" | grep -q "i18n"; then
+        #    echo " - Skipped $file"
+        #    continue
+        #fi
         wget "$file" -qO "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
             print_red "Failed to download $file"
             continue
@@ -727,6 +738,46 @@ justclash_download() {
     echo " - All files saved to $TMP_DOWNLOAD_PATH"
 }
 
+user_select_lang_install_mode_interactive() {
+    print_bold_green "RU translation installation mode..."
+    while true; do
+            printf "Do you want to install RU translation? y/n: "
+            read -r -p '' inp
+            # shellcheck disable=SC2249
+            case $inp in
+                yes|y|Y)
+                    return 0
+                    ;;
+                n|N|no)
+                    return 1
+                    ;;
+            esac
+    done
+}
+
+localuse_interactive() {
+    print_bold_green "DNSMasq localuse flag setup..."
+    echo "0 - router will resolve domains with WAN DNS servers. (Recommended)"
+    echo "1 - router will resolve domains with itself. (Default)"
+
+    while true; do
+            printf "Do you want to set dnsmasq localuse mode to '0'? y/n: "
+            read -r -p '' inp
+            # shellcheck disable=SC2249
+            case $inp in
+                yes|y|Y)
+                    uci set dhcp.@dnsmasq[0].localuse='0'
+                    uci commit dhcp
+                    exit 0
+                    ;;
+                n|N|no)
+                    echo "Skipped."
+                    exit 0
+                    ;;
+            esac
+    done
+}
+
 install_service() {
     mkdir -p "$TMP_DOWNLOAD_PATH"
     diagnostic_tools
@@ -734,10 +785,16 @@ install_service() {
     diagnostic_mem
     diagnostic_conflicts_interactive
     core_update "alpha"
-    justclash_download
+    #user_select_lang_install_mode_interactive
+    #if [ $? -ne 1 ]; then
+        justclash_download 1
+    #else
+    #    justclash_download 0
+    #fi
     if [ $? -ne 1 ]; then
         justclash_install
     fi
+    localuse_interactive
 }
 
 uninstall_service() {
