@@ -45,7 +45,9 @@ function createActionButton(action, cssClass, label, handler) {
 }
 
 function boolToWord(val) { return val ? _("Yes") : _("No"); }
-function boolToColor(val) { return val ? "green" : "red"; }
+function boolToStyle(active) {
+    return `color: var(--on-primary-color); background-color: ${active ? 'var(--success-color-medium)' : 'var(--error-color-medium)'}; padding: 3px; border-radius: 4px;`;
+}
 
 return view.extend({
     handleSave: null,
@@ -85,13 +87,21 @@ return view.extend({
 
     async render(results) {
         const serviceStatus = E("td", {
-            class: "td left", id: "isrunning",
-            style: `color: ${boolToColor(results.infoIsRunning)}`
-        }, boolToWord(results.infoIsRunning));
+            class: "td left", id: "isrunning"
+        }, [
+            E("span", {
+               style: boolToStyle(results.infoIsRunning)
+            }, boolToWord(results.infoIsRunning))
+        ]);
+
         const daemonStatus = E("td", {
-            class: "td left", id: "isautostarting",
-            style: `color: ${boolToColor(results.infoIsAutostarting)}`
-        }, boolToWord(results.infoIsAutostarting));
+            class: "td left", id: "isautostarting"
+        }, [
+            E("span", {
+               style: boolToStyle(results.infoIsAutostarting)
+            }, boolToWord(results.infoIsAutostarting))
+        ]);
+
         const statusCells = { serviceStatus, daemonStatus };
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
@@ -113,6 +123,7 @@ return view.extend({
                 buttons.forEach(btn => btn.disabled = false);
             }
         });
+
         function showDangerConfirm(message, onYes) {
             ui.showModal(_("ATTENTION!"), [
                 E("div", {}, [
@@ -135,6 +146,7 @@ return view.extend({
                 ])
             ]);
         }
+
         const showExecModalHandler = (title, command, args) => ui.createHandlerFn(this, async function () {
             const buttons = document.querySelectorAll(".cbi-button");
             buttons.forEach(btn => btn.disabled = true);
@@ -179,12 +191,10 @@ return view.extend({
             createActionButton("core_update", "cbi-button-apply", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
             createActionButton("rulesets_list_updates", "cbi-button-apply", _("Update rules lists"), showExecModalHandler(_("Update RuleSets list"), common.binPath, ["rulesets_list_update"])),
             createActionButton("config_reset", "cbi-button-negative jc-margin-right", _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
-
         ]);
 
         this.startPolling(statusCells);
 
-        // Not sure why i can't set directly disable flag when creating button, let it be like dat
         // Set initial button states after rendering
         setTimeout(() => {
             this.updateServiceStatus(statusCells);
@@ -206,10 +216,18 @@ return view.extend({
             this.isJustClashRunning().catch(() => false),
             this.isJustClashAutostartEnabled().catch(() => false)
         ]);
-        statusCells.serviceStatus.textContent = boolToWord(isRunning);
-        statusCells.serviceStatus.style.color = boolToColor(isRunning);
-        statusCells.daemonStatus.textContent = boolToWord(isAutostarting);
-        statusCells.daemonStatus.style.color = boolToColor(isAutostarting);
+
+        const runningSpan = statusCells.serviceStatus.querySelector("span");
+        const autoSpan = statusCells.daemonStatus.querySelector("span");
+
+        if (runningSpan) {
+            runningSpan.textContent = boolToWord(isRunning);
+            runningSpan.style = boolToStyle(isRunning);
+        }
+        if (autoSpan) {
+            autoSpan.textContent = boolToWord(isAutostarting);
+            autoSpan.style = boolToStyle(isAutostarting);
+        }
 
         const btnStart = document.getElementById("buttonstart");
         const btnStop = document.getElementById("buttonstop");
@@ -239,6 +257,12 @@ return view.extend({
 
     addCSS() {
         return E("style", {}, `
+            td {
+                padding: 6px 6px 6px !important;
+            }
+            .cbi-page-actions {
+                margin-bottom: 11px !important;
+            }
             .cbi-button { margin-right: 0.5em; }
             .jc-actions {
                 display: flex;
