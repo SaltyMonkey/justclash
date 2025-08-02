@@ -294,7 +294,7 @@ diagnostic_conflicts_interactive() {
         print_red "Do you want to remove it? yes/no"
 
         while true; do
-                read -r -p '' inp
+                read -r inp
                 case $inp in
                     yes|y|Y)
                         pkg_remove luci-app-https-dns-proxy
@@ -321,7 +321,7 @@ diagnostic_conflicts_interactive() {
         print_red "Do you want to remove Podkop? yes/no"
 
         while true; do
-                read -r -p '' inpp
+                read -r inpp
                 case $inpp in
                 yes|y|Y)
                     pkg_remove luci-app-podkop
@@ -348,7 +348,7 @@ diagnostic_conflicts_interactive() {
         print_red "Do you want to remove luci-app-ssclash? yes/no"
 
         while true; do
-                read -r -p '' inpp
+                read -r inpp
                 case $inpp in
                 yes|y|Y)
                     pkg_remove luci-app-ssclash
@@ -373,7 +373,7 @@ diagnostic_conflicts_interactive() {
         print_red "Do you want to remove mihomo? yes/no"
 
         while true; do
-                read -r -p '' inpp
+                read -r inpp
                 case $inpp in
                 yes|y|Y)
                     pkg_remove mihomo
@@ -398,7 +398,7 @@ diagnostic_conflicts_interactive() {
         print_red "Do you want to remove sing-box? yes/no"
 
         while true; do
-                read -r -p '' inpp
+                read -r inpp
                 case $inpp in
                 yes|y|Y)
                     pkg_remove sing-box
@@ -423,7 +423,7 @@ diagnostic_conflicts_interactive() {
         print_red "Do you want to remove luci-app-passwall? yes/no"
 
         while true; do
-                read -r -p '' inpp
+                read -r inpp
                 case $inpp in
                 yes|y|Y)
                     pkg_remove luci-app-passwall
@@ -448,7 +448,7 @@ diagnostic_conflicts_interactive() {
         print_red "Do you want to remove luci-app-passwall2? yes/no"
 
         while true; do
-                read -r -p '' inpp
+                read -r inpp
                 case $inpp in
                 yes|y|Y)
                     pkg_remove luci-app-passwall2
@@ -742,7 +742,7 @@ user_select_lang_install_mode_interactive() {
     print_bold_green "RU translation installation mode..."
     while true; do
             printf "Do you want to install RU translation? y/n: "
-            read -r -p '' inp
+            read -r inp
             # shellcheck disable=SC2249
             case $inp in
                 yes|y|Y)
@@ -759,15 +759,16 @@ localuse_interactive() {
     print_bold_green "DNSMasq localuse flag setup..."
     echo "0 - router will resolve domains with WAN DNS servers. (Recommended)"
     echo "1 - router will resolve domains with itself. (Default)"
-
+    echo "Router will be rebooted if setting will be applied"
     while true; do
             printf "Do you want to set dnsmasq localuse mode to '0'? y/n: "
-            read -r -p '' inp
+            read -r inp
             # shellcheck disable=SC2249
             case $inp in
                 yes|y|Y)
                     uci set dhcp.@dnsmasq[0].localuse='0'
                     uci commit dhcp
+                    reboot
                     exit 0
                     ;;
                 n|N|no)
@@ -819,7 +820,7 @@ run() {
     print_bold_yellow "4 - Run diagnostic"
     print_bold_yellow "5 - Exit"
     while true; do
-        printf "Enter your choice [1-5]: "
+        printf "Enter your choice [1-6]: "
         read -r choice
        case "$choice" in
             1)
@@ -839,11 +840,15 @@ run() {
                 diagnostic
                 ;;
             5)
+                echo "Starting DNSMasq localuse flag setup..."
+                diagnostic
+                ;;
+            6)
                 echo "Exiting..."
                 exit 0
                 ;;
             *)
-                echo "Invalid option. Please enter a number between 1 and 5."
+                echo "Invalid option. Please enter a number between 1 and 6."
                 ;;
         esac
     done
