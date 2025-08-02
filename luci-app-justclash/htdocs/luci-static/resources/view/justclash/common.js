@@ -128,7 +128,7 @@ return baseclass.extend({
         if (/\s/.test(value))
             return _("Domain must not contain spaces");
 
-        if (!value.includes('.'))
+        if (!value.includes("."))
             return _("Domain must contain at least one dot");
 
         if (/^[.-]/.test(value) || /[.-]$/.test(value))
@@ -137,10 +137,10 @@ return baseclass.extend({
         if (/\.\.|--/.test(value))
             return _("Double dots or double hyphens are not allowed");
 
-        if (value.split('.').some(part => part.length === 0))
+        if (value.split(".").some(part => part.length === 0))
             return _("There must be no empty segments between dots");
 
-        if (value.split('.').some(part => part.length > 63))
+        if (value.split(".").some(part => part.length > 63))
             return _("Each domain segment must not exceed 63 characters");
         if (value.length > 253)
             return _("Suffix length must not exceed 253 characters");

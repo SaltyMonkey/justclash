@@ -20,7 +20,7 @@ return view.extend({
         try {
             const res = await fs.exec(common.binInfoPath, ["systemlogs", common.logsCount]);
             rawLogs.value = res.stdout || NO_LOGS;
-            if (rawLogs.value.endsWith('\n')) {
+            if (rawLogs.value.endsWith("\n")) {
                 rawLogs.value = rawLogs.value.slice(0, -1);
             }
             this.applyReverse(logBox, reverseCheckbox.checked, rawLogs.value);

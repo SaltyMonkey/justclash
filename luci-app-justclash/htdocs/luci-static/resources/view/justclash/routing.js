@@ -68,7 +68,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.TextValue, "proxy_link_object", _("JSON object:"));
         o.description = _("JSON object with connection parameters.");
-        o.rows = 12;
+        o.rows = 10;
         o.optional = true;
         o.depends("defined_as_custom_object", "1");
         o.validate = function (section_id, value) {
