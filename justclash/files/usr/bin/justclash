@@ -84,11 +84,12 @@ NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
 # List of conflicting packages:
 # podkop (custom proxy)
 # and https-dns-proxy (DNS over HTTPS proxy)
-CONFLICTED_PACKAGES="sing-box mihomo nextdns clash luci-app-ssclash podkop https-dns-proxy"
+CONFLICTED_PACKAGES="mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy"
 CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
+BYEDPI_FILEPATH="/etc/init.d/byedpi"
 
 ucibool_to_yesno() {
     case "$1" in
@@ -718,6 +719,12 @@ check_for_conflicts_warn() {
         log 1 "Warning: Zapret service detected by path $ZAPRETINITD_FILEPATH:" "⚠️"
         log 1 "This service can cause unexpected results if configured incorrectly." "⚠️"
     fi
+
+    if [ -f "$BYEDPI_FILEPATH" ]; then
+        log 1 "Warning: ByeDPI service detected by path $BYEDPI_FILEPATH:" "⚠️"
+        log 1 "This service can cause unexpected results if configured incorrectly." "⚠️"
+    fi
+
 }
 
 info_device() {
@@ -758,6 +765,7 @@ generate_json_array_from_named_section() {
     local first=1
 
     # shellcheck disable=SC2317
+    # shellcheck disable=SC2329
     _append_value() {
         local val="$1"
         val=$(printf '%s' "$val" | sed 's/"/\\"/g')
@@ -1360,6 +1368,7 @@ handle_proxy_provider_section() {
     local result=""
 
     # shellcheck disable=SC2317
+    # shellcheck disable=SC2329
     accumulate_proxy_provider() {
         local s="$1"
         local name url interval filter exclude_filter exclude_type
