@@ -2,6 +2,7 @@ Antifilter community|antifilter-community|domain|mrs|https://raw.githubuserconte
 Category dev|category-dev|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/category-dev.mrs
 Category gov RU|category-gov-ru|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/category-gov-ru.mrs
 Category RU|category-ru|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/category-ru.mrs
+Category speedtest|category-speedtest|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/category-speedtest.mrs
 Itdog Russia inside|itdog-russia-inside|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/itdog-russia-inside.mrs
 Just domains|just-domains|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/just-domains.mrs
 No Russia hosts|no-russia-hosts|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/bypass/no-russia-hosts.mrs
@@ -14,6 +15,7 @@ Atlassian|atlassian|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs
 Azure|azure|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/azure.mrs
 Bilibili|bilibili|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/bilibili.mrs
 Broadcom|broadcom|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/broadcom.mrs
+Bunny|bunny|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/bunny.mrs
 Canon|canon|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/canon.mrs
 Chatgpt|chatgpt|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/chatgpt.mrs
 Cisco|cisco|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/cisco.mrs
@@ -29,6 +31,7 @@ Discord|discord|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-par
 Docker|docker|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/docker.mrs
 Doramyclub|doramyclub|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/doramyclub.mrs
 Fastly|fastly|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/fastly.mrs
+Gcore|gcore|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/gcore.mrs
 Gemini|gemini|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/gemini.mrs
 Google play|google-play|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/google-play.mrs
 Google|google|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/google.mrs
