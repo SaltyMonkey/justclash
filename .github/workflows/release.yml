@@ -46,7 +46,6 @@ jobs:
           rm -f ./output/*.ipk
           docker cp stable:/builder/bin/packages/x86_64/utilites/. ./output/
           docker cp stable:/builder/bin/packages/x86_64/luci/. ./output/
-          rm -rf ./output/tmp
 
       - name: Rename all output packages (replace first _ with -)
         shell: bash
@@ -62,6 +61,14 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           mv ./output/luci-i18n-justclash-ru-*.ipk "./output/luci-i18n-justclash-ru-${VERSION}.ipk"
+
+      - name: Copy main files for STABLE release
+        run: |
+            RELEASE_FOLDER=./output/release
+            mkdir -p "$RELEASE_FOLDER"
+            for f in ./output/justclash*.ipk ./output/luci-app-justclash*.ipk ./output/luci-i18n-justclash*.ipk; do
+                [ -e "$f" ] && cp "$f" "$RELEASE_FOLDER"/
+            done
 
       - name: Remove Docker stable container
         run: docker rm stable
@@ -84,6 +91,19 @@ jobs:
           docker cp snapshot:/builder/bin/packages/x86_64/luci/. ./output/
           rm -rf ./output/tmp
 
+      - name: Renaming translation file
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          mv ./output/luci-i18n-justclash-ru-*.apk "./output/luci-i18n-justclash-ru-${VERSION}.apk"
+
+      - name: Copy main files for SNAPSHOT release
+        run: |
+            RELEASE_FOLDER=./output/release
+            mkdir -p "$RELEASE_FOLDER"
+            for f in ./output/justclash*.apk ./output/luci-app-justclash*.apk ./output/luci-i18n-justclash*.apk; do
+                [ -e "$f" ] && cp "$f" "$RELEASE_FOLDER"/
+            done
+
       - name: Remove Docker snapshot container
         run: docker rm snapshot
 
@@ -96,6 +116,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./output/*.ipk
-            ./output/*.apk
+            ./output/release/*.ipk
+            ./output/release/*.apk
           body_path: ./tmp.md
