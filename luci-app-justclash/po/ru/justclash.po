@@ -484,14 +484,14 @@ msgstr "Ключ. слово домен:"
 msgid "Domain regex:"
 msgstr "Рег. выр. домен:"
 
-msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax."
-msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через прокси (синтаксис Mihomo)."
+msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy (Example: google.com)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через прокси (Пример: google.com)."
 
-msgid "Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
-msgstr "Каждый элемент — правило IP-CIDR для маршрутизации через прокси (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is an IP-CIDR rule to route through proxy (Example: 1.1.1.1/32). IPv4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для маршрутизации через прокси (Example: 1.1.1.1/32). Сейчас только IPv4."
 
-msgid "Each element is an SRC-IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now."
-msgstr "Каждый элемент — правило SRC-IP-CIDR для маршрутизации через прокси (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is an SRC-IP-CIDR rule to route through proxy (Example: 192.168.31.212/32). IPv4 only right now."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для маршрутизации через прокси (Пример: 192.168.31.212/32). Сейчас только IPv4."
 
 msgid "Proxy groups:"
 msgstr "Группы прокси:"
@@ -520,14 +520,14 @@ msgstr "Статус успеха:"
 msgid "Check timeout:"
 msgstr "Таймаут:"
 
-msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy group with Mihomo syntax."
-msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через группу прокси (синтаксис Mihomo)."
+msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy group (Example: google.com)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для маршрутизации через группу прокси (Пример: google.com)."
 
-msgid "Each element is an IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now."
-msgstr "Каждый элемент — правило IP-CIDR для маршрутизации через группу прокси (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is an IP-CIDR rule to route through proxy group (Example: 1.1.1.1/32). IPv4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для маршрутизации через группу прокси (Example: 1.1.1.1/32). Сейчас только IPv4."
 
-msgid "Each element is an SRC-IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now."
-msgstr "Каждый элемент — правило SRC-IP-CIDR для маршрутизации через группу прокси (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is an SRC-IP-CIDR rule to route through proxy group (Example: 192.168.31.212/32). IPv4 only right now."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для маршрутизации через группу прокси (Example: 192.168.31.212/32). Сейчас только IPv4."
 
 msgid "URL for node availability check (required for group functionality)."
 msgstr "URL для проверки доступности узла (необходимо для работы групп)."
@@ -568,23 +568,23 @@ msgstr "Правила DIRECT:"
 msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
 msgstr "Дополнительные настройки для правил DIRECT. Обрабатываются до прокси, proxy groups и REJECT."
 
-msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax)."
-msgstr "Каждый элемент — правило DOMAIN-SUFFIX для DIRECT (синтаксис Mihomo)."
+msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для DIRECT (Пример: google.com)."
 
-msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax)."
-msgstr "Каждый элемент — правило DOMAIN-KEYWORD для DIRECT (синтаксис Mihomo)."
+msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Example: google)."
+msgstr "Каждый элемент — правило DOMAIN-KEYWORD для DIRECT (Пример: google)."
 
-msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax)."
-msgstr "Каждый элемент — правило DOMAIN-REGEX для DIRECT (синтаксис Mihomo)."
+msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Example: ^abc.*com)."
+msgstr "Каждый элемент — правило DOMAIN-REGEX для DIRECT (Пример: ^abc.*com)."
 
-msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
-msgstr "Каждый элемент — правило SRC-IP-CIDR для DIRECT (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Example: 192.168.31.212/32). IPV4 only right now."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для DIRECT (Пример: 192.168.31.212/32). Сейчас только IPv4."
 
-msgid "Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now."
-msgstr "Каждый элемент — правило IP-CIDR для пропуска через прокси (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is one IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для пропуска через прокси (Пример: 1.1.1.1/32). Сейчас только IPv4."
 
-msgid "Each element is a SRC-IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
-msgstr "Каждый элемент — правило SRC-IP-CIDR для блокировки через прокси (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is a SRC-IP-CIDR rule to block with proxy (Example: 192.168.31.212/32). IPv4 only right now."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для блокировки через прокси (Пример: 192.168.31.212/32). Сейчас только IPv4."
 
 msgid "Proxy provider:"
 msgstr "Провайдеры прокси:"
@@ -610,11 +610,11 @@ msgstr "Дополнительные правила для REJECT. Обраба�
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
 msgstr "Предустановленные списки RULE-SET с рекламой/вредоносным ПО. Выберите те, которые хотите блокировать через прокси. Оставьте пустым, если не хотите ничего блокировать."
 
-msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax)."
-msgstr "Каждый элемент — правило DOMAIN-SUFFIX для блокировки через прокси (синтаксис Mihomo)."
+msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Example: google.com)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для блокировки через прокси (Пример: google.com)."
 
-msgid "Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now."
-msgstr "Каждый элемент — правило IP-CIDR для блокировки через прокси (синтаксис Mihomo). Сейчас только IPv4."
+msgid "Each element is an IP-CIDR rule to block with proxy (Example: 1.1.1.1/32). IPv4 only right now."
+msgstr "Каждый элемент — правило IP-CIDR для блокировки через прокси (Example: 1.1.1.1/32). Сейчас только IPv4."
 
 msgid "FINAL rule:"
 msgstr "Правило FINAL:"
@@ -659,4 +659,16 @@ msgid "Error"
 msgstr "Ошибка"
 
 msgid "No logs"
-msgstr "Нет логов"
+msgstr "Нет данных"
+
+msgid "To bottom"
+msgstr "В конец"
+
+msgid "To top"
+msgstr "В начало"
+
+msgid "Update"
+msgstr "Запросить логи"
+
+msgid "Copy logs"
+msgstr "Копировать логи"

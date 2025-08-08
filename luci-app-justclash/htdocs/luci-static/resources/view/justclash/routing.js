@@ -121,11 +121,15 @@ return view.extend({
             return true;
         };
 
+        /*o = s.taboption(tabname, form.DynamicList, "user_list", _("User with custom rules:"));
+        o.description = _("Custom RULE-SET list paths placed locally, use complete filesystem path here. Example: /etc/customlist.mrs");
+        o.editable = true;*/
+
         tabname = "proxiesmanualrules_tab";
         s.tab(tabname, _("Manual"));
 
         o = s.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
-        o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy with Mihomo syntax.");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy (Example: google.com).");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.validate = function (section_id, value) {
@@ -133,13 +137,13 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
-        o.description = _("Each element is an IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now.");
+        o.description = _("Each element is an IP-CIDR rule to route through proxy (Example: 1.1.1.1/32). IPv4 only right now.");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.datatype = "cidr4";
 
         o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
-        o.description = _("Each element is an SRC-IP-CIDR rule to route through proxy with Mihomo syntax. IPv4 only right now.");
+        o.description = _("Each element is an SRC-IP-CIDR rule to route through proxy (Example: 192.168.31.212/32). IPv4 only right now.");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
@@ -442,11 +446,15 @@ return view.extend({
             return true;
         };
 
+        /*o = s2.taboption(tabname, form.DynamicList, "user_list", _("User with custom rules:"));
+        o.description = _("Custom RULE-SET list paths placed locally, use complete filesystem path here. Example: /etc/customlist.mrs");
+        o.editable = true;*/
+
         tabname = "proxiesgroupmanualrules_tab";
         s2.tab(tabname, _("Manual"));
 
         o = s2.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
-        o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy group with Mihomo syntax.");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to route through proxy group (Example: google.com).");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.editable = true;
@@ -455,14 +463,14 @@ return view.extend({
         };
 
         o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
-        o.description = _("Each element is an IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now.");
+        o.description = _("Each element is an IP-CIDR rule to route through proxy group (Example: 1.1.1.1/32). IPv4 only right now.");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
         o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
-        o.description = _("Each element is an SRC-IP-CIDR rule to route through proxy group with Mihomo syntax. IPv4 only right now.");
+        o.description = _("Each element is an SRC-IP-CIDR rule to route through proxy group (Example: 192.168.31.212/32). IPv4 only right now.");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
@@ -475,7 +483,7 @@ return view.extend({
         s3.tab(tabname, _("Basic"));
 
         o = s3.taboption(tabname, form.DynamicList, "additional_domain_direct", _("Domain suffix:"));
-        o.description = _("Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Mihomo syntax).");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com).");
         o.placeholder = "domain.tld";
         o.optional = true;
         o.editable = true;
@@ -484,7 +492,7 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.DynamicList, "additional_domain_keyword_direct", _("Domain keyword:"));
-        o.description = _("Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Mihomo syntax).");
+        o.description = _("Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Example: google).");
         o.placeholder = "google";
         o.optional = true;
         o.editable = true;
@@ -493,7 +501,7 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.DynamicList, "additional_domain_regexp_direct", _("Domain regex:"));
-        o.description = _("Each element is a DOMAIN-REGEX rule to pass in DIRECT (Mihomo syntax).");
+        o.description = _("Each element is a DOMAIN-REGEX rule to pass in DIRECT (Example: ^abc.*com).");
         o.placeholder = "^abc.*com";
         o.optional = true;
         o.editable = true;
@@ -502,14 +510,14 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.DynamicList, "additional_srcip_direct", _("Source IPv4 CIDR:"));
-        o.description = _("Each element is one SRC-IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is one SRC-IP-CIDR rule to pass in DIRECT (Example: 192.168.31.212/32). IPV4 only right now.");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
 
         o = s3.taboption(tabname, form.DynamicList, "additional_destip_direct", _("IPv4 CIDR:"));
-        o.description = _("Each element is one IP-CIDR rule to pass in DIRECT (Mihomo syntax). IPV4 only right now.");
+        o.description = _("Each element is one IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now.");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
@@ -527,11 +535,15 @@ return view.extend({
         });
         o.description = _("Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything.");
 
+        /*o = s2.taboption(tabname, form.DynamicList, "user_list", _("User with custom rules:"));
+        o.description = _("Custom RULE-SET list paths placed locally, use complete filesystem path here. Example: /etc/custom_blocklist.mrs");
+        o.editable = true;*/
+
         tabname = "rejectmanualrules_tab";
         s4.tab(tabname, _("Manual"));
 
         o = s4.taboption(tabname, form.DynamicList, "additional_domain_blockroute", _("Domain suffix:"));
-        o.description = _("Each element is a DOMAIN-SUFFIX rule to block with proxy (Mihomo syntax).");
+        o.description = _("Each element is a DOMAIN-SUFFIX rule to block with proxy (Example: google.com).");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.editable = true;
@@ -540,7 +552,7 @@ return view.extend({
         };
 
         o = s4.taboption(tabname, form.DynamicList, "additional_destip_blockroute", _("IPv4 CIDR:"));
-        o.description = _("Each element is an IP-CIDR rule to block with proxy (Mihomo syntax). IPv4 only right now.");
+        o.description = _("Each element is an IP-CIDR rule to block with proxy (Example: 1.1.1.1/32). IPv4 only right now.");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
