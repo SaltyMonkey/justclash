@@ -1,3 +1,11 @@
+## [0.0.65] - 08082025
+
+- Config: Default DNS settings update
+- Service: Dns-failsafe-proxy added in conflicts
+- Service: Updated default rulesets
+- Service: Added `dns-cache-max-size` for mihomo
+- LuCI: Translation update
+
 ## [0.0.64] - 29072025
 
 - New feature: keep downloaded RULE-SETs at NAND optionally
