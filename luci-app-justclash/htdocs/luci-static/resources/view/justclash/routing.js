@@ -305,13 +305,17 @@ return view.extend({
         o.placeholder = "proxy-name";
         o.optional = true;
         o.editable = true;
-        o.datatype = "string";
+        o.validate = function (section_id, value) {
+            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+        };
 
         o = s2.taboption(tabname, form.DynamicList, "providers", _("Providers:"));
         o.placeholder = "provider-name";
         o.optional = true;
         o.editable = true;
-        o.datatype = "string";
+        o.validate = function (section_id, value) {
+            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+        };
 
         tabname = "proxygrouphelthchk_tab";
         s2.tab(tabname, _("Health check"));
