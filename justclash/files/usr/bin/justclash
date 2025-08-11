@@ -1211,15 +1211,18 @@ handle_proxy_group_section() {
     # shellcheck disable=SC2317  # Called via config_foreach
     _parse_proxy_group() {
         local section="$1"
-        local name; config_get name "$section" name
-        [ -z "$name" ] && { log 1 "Skip proxy_group without name: $section" "⚠️"; return; }
-
+        local name;
         local proxies_list providers_list group_type strategy check_url interval check_timeout tolerance
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
 
-        config_get proxies_list "$section" proxies_list
-        config_get providers_list "$section" providers_list
+        config_get name "$section" name
+        [ -z "$name" ] && { log 1 "Skip proxy_group without name: $section" "⚠️"; return; }
+
+        config_get proxies_list "$section" proxies
+        config_get providers_list "$section" providers
+        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log 1 "Skip empty proxy_group $name" "⚠️"; return; }
+
         config_get group_type "$section" group_type
         config_get strategy "$section" strategy
         config_get check_url "$section" check_url
@@ -1238,13 +1241,10 @@ handle_proxy_group_section() {
         [ -z "$check_timeout" ] && check_timeout=$DEFAULT_HEALTHCHECK_TIMEOUT
         [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
         [ -z "$expected_status" ] && expected_status=$DEFAULT_HEALTHCHECK_RESULT
-        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && {
-            log 1 "Skip proxy_group '$name': no proxies or providers" "⚠️"; return
-        }
 
         local escaped_proxies escaped_providers
-        [ -n "$proxies_list" ] && escaped_proxies="\"$(echo "$proxies_list" | sed 's/[ ]*//g' | sed 's/,/","/g')\""
-        [ -n "$providers_list" ] && escaped_providers="\"$(echo "$providers_list" | sed 's/[ ]*//g' | sed 's/,/","/g')\""
+        [ -n "$proxies_list" ] && escaped_proxies="\"$(echo "$proxies_list" | sed -e 's/"/\\"/g' -e 's/[[:space:]]\+/","/g')\""
+        [ -n "$providers_list" ] && escaped_providers="\"$(echo "$providers_list" | sed -e 's/"/\\"/g' -e 's/[[:space:]]\+/","/g')\""
 
         local group_json="{\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
