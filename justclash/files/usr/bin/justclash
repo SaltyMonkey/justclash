@@ -758,32 +758,31 @@ systemlogs() {
     echo "$res"
 }
 
-generate_json_array_from_named_section() {
+simple_uci_list_to_json_arr() {
     local section_name="$1"
     local list_name="$2"
     local result=""
-    local first=1
+    local values
 
-    # shellcheck disable=SC2317
-    # shellcheck disable=SC2329
-    _append_value() {
-        local val="$1"
-        val=$(printf '%s' "$val" | sed 's/"/\\"/g')
-        if [ "$first" -eq 1 ]; then
-            result="\"$val\""
-            first=0
-        else
-            result="${result}, \"$val\""
-        fi
+    config_get values "$section_name" "$list_name"
+
+    [ -z "$values" ] && {
+        echo "[]"
+        return
     }
 
-    config_list_foreach "$section_name" "$list_name" _append_value
+    for val in $values; do
+        [ -n "$val" ] && {
+            val=$(printf '%s' "$val" | sed 's/"/\\"/g')
+            if [ -n "$result" ]; then
+                result="${result}, \"$val\""
+            else
+                result="\"$val\""
+            fi
+        }
+    done
 
-    if [ -z "$result" ]; then
-        echo "[]"
-    else
-        echo "[$result]"
-    fi
+    [ -z "$result" ] && echo "[]" || echo "[$result]"
 }
 
 ucibool_to_yaml_bool () {
@@ -1648,12 +1647,12 @@ core_generate_yaml() {
     config_get_bool use_system_hosts proxy use_system_hosts
     use_system_hosts=$(ucibool_to_yaml_bool "$use_system_hosts")
     config_get fake_ip_range proxy fake_ip_range
-    default_nameserver=$(generate_json_array_from_named_section proxy default_nameserver)
-    direct_nameserver=$(generate_json_array_from_named_section proxy direct_nameserver)
-    proxy_server_nameserver=$(generate_json_array_from_named_section proxy proxy_server_nameserver)
-    nameserver=$(generate_json_array_from_named_section proxy nameserver)
-    ignore_fake_ip_domains=$(generate_json_array_from_named_section proxy ignore_fake_ip_domains)
-    ignore_to_sniff_domains=$(generate_json_array_from_named_section proxy ignore_to_sniff_domains)
+    default_nameserver=$(simple_uci_list_to_json_arr proxy default_nameserver)
+    direct_nameserver=$(simple_uci_list_to_json_arr proxy direct_nameserver)
+    proxy_server_nameserver=$(simple_uci_list_to_json_arr proxy proxy_server_nameserver)
+    nameserver=$(simple_uci_list_to_json_arr proxy nameserver)
+    ignore_fake_ip_domains=$(simple_uci_list_to_json_arr proxy ignore_fake_ip_domains)
+    ignore_to_sniff_domains=$(simple_uci_list_to_json_arr proxy ignore_to_sniff_domains)
 
     cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
