@@ -301,41 +301,17 @@ return view.extend({
         o.default = common.defaultProxyGroupsBalanceModeStrategies[0];
         o.depends("group_type", "load-balancer");
 
-        o = s2.taboption(tabname, form.Value, "proxies_list", _("Proxies:"));
-        o.placeholder = "proxy-name1, proxy-name2";
-        o.validate = function (section_id, value) {
-            if (!value) return true;
+        o = s2.taboption(tabname, form.DynamicList, "proxies", _("Proxies:"));
+        o.placeholder = "proxy-name";
+        o.optional = true;
+        o.editable = true;
+        o.datatype = "string";
 
-            let arr = value.split(",").map(s => s.trim()).filter(s => s.length > 0);
-
-            if (arr.length === 0) return _("Field must not be empty");
-
-            for (let name of arr) {
-                if (!common.isValidSimpleName(name)) {
-                    return _("Name must contain only lowercase letters, digits, and underscores");
-                }
-            }
-
-            return true;
-        };
-
-        o = s2.taboption(tabname, form.Value, "providers_list", _("Providers:"));
-        o.placeholder = "provider-name1, provider-name2";
-        o.validate = function (section_id, value) {
-            if (!value) return true;
-
-            let arr = value.split(",").map(s => s.trim()).filter(s => s.length > 0);
-
-            if (arr.length === 0) return _("Field must not be empty");
-
-            for (let name of arr) {
-                if (!common.isValidSimpleName(name)) {
-                    return _("Name must contain only lowercase letters, digits, and underscores");
-                }
-            }
-
-            return true;
-        };
+        o = s2.taboption(tabname, form.DynamicList, "providers", _("Providers:"));
+        o.placeholder = "provider-name";
+        o.optional = true;
+        o.editable = true;
+        o.datatype = "string";
 
         tabname = "proxygrouphelthchk_tab";
         s2.tab(tabname, _("Health check"));
@@ -418,6 +394,7 @@ return view.extend({
 
             return true;
         };
+
         tabname = "proxiesgrouplist_tab";
         s2.tab(tabname, _("Rules"));
 
