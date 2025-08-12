@@ -508,6 +508,7 @@ return view.extend({
         s3.tab(tabname, _("Rules"));
 
         o = s3.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
+        o.optional = true;
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
@@ -590,6 +591,9 @@ return view.extend({
         return E("style", {}, `
             ul.dropdown {
                 height: 315px;
+            }
+            #cbid\.justclash\.final_rules\.final_destination > ul.dropdown {
+                height: auto !important;
             }
             .cbi-section {
                 border: 0 !important;
