@@ -531,7 +531,7 @@ nft_table_add() {
     if [ "$block_dot_with_nft" = "1" ]; then
         nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol tcp tcp dport 853 drop
     fi
-    if [ "$dot_quic_with_nft" = "1" ]; then
+    if [ "$block_dot_quic_with_nft" = "1" ]; then
         nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp udp dport 853 drop
     fi
 
