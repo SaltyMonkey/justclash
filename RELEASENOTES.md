@@ -1,3 +1,19 @@
+## [0.0.68] - 13082025
+
+- Service: Logic implementation for block NTP
+- Service: Fix for DoQ block option
+- Service: Optimize reading from persistent storage
+- Service: Refactoring
+- LuCI: Added predefined values to final_destination as list
+- LuCI: Added RULE-SETS to DIRECT rules
+- LuCI: change visual forms for some values
+- UCI: Block DoQ and QUIC by default
+- UCI: Update default config
+
+This version requires:
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.0.65] - 08082025
 
 - Config: Default DNS settings update
