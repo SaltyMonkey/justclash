@@ -1064,7 +1064,7 @@ parse_vless_url() {
 }
 
 handle_proxy_section() {
-    local ruleset_file="$1"
+    local ruleset_content="$1"
     local file_rules="$2"
     local file_rulesets="$3"
     local file_proxies="$4"
@@ -1126,7 +1126,7 @@ handle_proxy_section() {
             fi
 
             local line r_name yaml behavior format url proxy
-            line=$(grep "|$ruleset|" "$ruleset_file" | head -n 1)
+            line=$(grep "|$ruleset|" "$ruleset_content" | head -n 1)
             if [ -n "$line" ]; then
                 r_name=$(echo "$line" | cut -d'|' -f1)
                 yaml=$(echo "$line" | cut -d'|' -f2)
@@ -1200,7 +1200,7 @@ handle_proxy_section() {
 }
 
 handle_proxy_group_section() {
-    local ruleset_file="$1"
+    local ruleset_content="$1"
     local file_rules="$2"
     local file_rulesets="$3"
     local file_proxygroups="$4"
@@ -1277,7 +1277,7 @@ handle_proxy_group_section() {
             fi
 
             local line r_name yaml behavior format url proxy
-            line=$(grep "|$ruleset|" "$ruleset_file" | head -n 1)
+            line=$(grep "|$ruleset|" "$ruleset_content" | head -n 1)
             if [ -n "$line" ]; then
                 r_name=$(echo "$line" | cut -d'|' -f1)
                 yaml=$(echo "$line" | cut -d'|' -f2)
@@ -1424,7 +1424,7 @@ handle_proxy_provider_section() {
 }
 
 handle_block_rule_section() {
-    local blocklist_file="$1"
+    local blocklist_content="$1"
     local file_rules="$2"
     local file_rulesets="$3"
     local rules_array=""
@@ -1441,7 +1441,7 @@ handle_block_rule_section() {
         fi
 
         local line name yamlName behavior format url matched
-        line=$(grep "|$val|" "$blocklist_file" | head -n 1)
+        line=$(grep "|$val|" "$blocklist_content" | head -n 1)
         if [ -n "$line" ]; then
             name=$(echo "$line" | cut -d'|' -f1)
             yamlName=$(echo "$line" | cut -d'|' -f2)
@@ -1463,7 +1463,7 @@ handle_block_rule_section() {
             selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$DEFAULT_RULESET_PROXY")\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
             added_blocklists="$added_blocklists$val|"
         else
-            log 1 "Blocklist '$val' can't be found in $blocklist_file" "⚠️"
+            log 1 "Blocklist '$val' can't be found in $blocklist_content" "⚠️"
         fi
     done
 
@@ -1720,13 +1720,18 @@ EOF
     local proxies proxy_groups rule_providers proxy_providers
     local rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path
+    local block_rulesets_content rulesets_content
     rule_final=$(handle_final_rule_section)
     rules_direct=$(handle_direct_rule_section)
     proxy_providers=$(handle_proxy_provider_section | jq .)
 
+    # optimization: load files one time
+    block_rulesets_content=$(cat "$RULESETS_BLOCKS_FILE")
+    rulesets_content=$(cat "$RULESETS_FILE")
+
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
-    handle_block_rule_section "$RULESETS_BLOCKS_FILE" "$tmp_rules_file" "$tmp_rulesets_path"
+    handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
     rules_block=$(cat "$tmp_rules_file" )
     rulesets_block=$(cat "$tmp_rulesets_path")
     rm -f "$tmp_rules_file"
@@ -1735,7 +1740,7 @@ EOF
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
     tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroups.XXXXXX)
-    handle_proxy_group_section "$RULESETS_FILE" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path"
+    handle_proxy_group_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path"
     rules_proxygroups=$(cat "$tmp_rules_file" )
     rulesets_proxygroup=$(cat "$tmp_rulesets_path")
     proxy_groups=$(cat "$tmp_proxygroup_path")
@@ -1746,13 +1751,15 @@ EOF
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
     tmp_proxies_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxies.XXXXXX)
-    handle_proxy_section "$RULESETS_FILE" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path"
+    handle_proxy_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path"
     rules_proxies=$(cat "$tmp_rules_file")
     rulesets_proxies=$(cat "$tmp_rulesets_path")
     proxies=$(cat "$tmp_proxies_path")
     rm -f "$tmp_rules_file"
     rm -f "$tmp_rulesets_path"
     rm -f "$tmp_proxies_path"
+
+    proxies=$(echo "$proxies" | jq .)
 
     rule_providers=$(
         jq -n \
