@@ -569,8 +569,9 @@ return view.extend({
         s5.tab(tabname, _("Basic"));
 
         o = s5.taboption(tabname, form.Value, "final_destination", _("Destination:"));
+        o.value("DIRECT", "DIRECT");
+        o.value("REJECT", "REJECT");
         o.default = common.defaultRuleSetProxy;
-        o.placeholder = common.defaultRuleSetProxy;
         o.rmempty = false;
         o.validate = function (section_id, value) {
             if (!value || value.trim().length === 0) {
