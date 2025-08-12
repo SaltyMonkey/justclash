@@ -510,7 +510,6 @@ return view.extend({
         s3.tab(tabname, _("Rules"));
 
         o = s3.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
-        o.optional = true;
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
@@ -520,7 +519,6 @@ return view.extend({
         o.datatype = "uinteger";
         o.placeholder = common.defaultRuleSetUpdateInterval;
         o.default = common.defaultRuleSetUpdateInterval;
-        o.optional = true;
         o.validate = function (section_id, value) {
             if (value === "") return true;
             let v = parseInt(value);
