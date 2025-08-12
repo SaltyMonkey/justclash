@@ -1512,11 +1512,49 @@ handle_block_rule_section() {
 }
 
 handle_direct_rule_section() {
+    local ruleset_content="$1"
+    local file_rules="$2"
+    local file_rulesets="$3"
     local rules_array=""
+    local direct_rulesets=""
 
     local additional_domain_direct additional_domain_keyword_direct additional_domain_regex_direct
     local additional_srcip_direct additional_destip_direct
+    local list_update_interval enabled_list
 
+
+    config_get list_update_interval direct_rules list_update_interval
+    config_get enabled_list direct_rules enabled_list
+
+    local added_rulesets="|"
+    for ruleset in $enabled_list; do
+        if echo "$added_rulesets" | grep -q "|$ruleset|"; then
+            continue
+        fi
+
+        local line r_name yaml behavior format url proxy
+        line=$(grep "|$ruleset|" "$ruleset_content" | head -n 1)
+        if [ -n "$line" ]; then
+            r_name=$(echo "$line" | cut -d'|' -f1)
+            yaml=$(echo "$line" | cut -d'|' -f2)
+            behavior=$(echo "$line" | cut -d'|' -f3)
+            format=$(echo "$line" | cut -d'|' -f4)
+            url=$(echo "$line" | cut -d'|' -f5)
+
+            # shellcheck disable=SC2249
+            case "$r_name" in \#*) continue ;; esac
+
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "DIRECT")
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
+
+                direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                added_rulesets="$added_rulesets$ruleset|"
+        fi
+    done
     config_get additional_domain_direct direct_rules additional_domain_direct
     config_get additional_domain_keyword_direct direct_rules additional_domain_keyword_direct
     config_get additional_domain_regex_direct direct_rules additional_domain_regex_direct
@@ -1579,6 +1617,12 @@ handle_direct_rule_section() {
         }
     done
 
+    if [ -n "$direct_rulesets" ]; then
+        direct_rulesets="{${direct_rulesets%,}}"
+    else
+        direct_rulesets="{}"
+    fi
+
     local rules
     if [ -n "$rules_array" ]; then
         rules="[$rules_array]"
@@ -1586,9 +1630,9 @@ handle_direct_rule_section() {
         rules="[]"
     fi
 
-    echo "$rules"
+    echo "$rules" > "$file_rules"
+    echo "$direct_rulesets" > "$file_rulesets"
 }
-
 
 handle_final_rule_section() {
     local dest
@@ -1718,16 +1762,23 @@ EOF
 
     local rules_proxies rules_proxygroups rules_block rule_final rules_direct
     local proxies proxy_groups rule_providers proxy_providers
-    local rulesets_block rulesets_proxygroup rulesets_proxies
+    local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path
     local block_rulesets_content rulesets_content
     rule_final=$(handle_final_rule_section)
-    rules_direct=$(handle_direct_rule_section)
     proxy_providers=$(handle_proxy_provider_section | jq .)
 
     # optimization: load files one time
     block_rulesets_content=$(cat "$RULESETS_BLOCKS_FILE")
     rulesets_content=$(cat "$RULESETS_FILE")
+
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesdirect.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesetsdirect.XXXXXX)
+    handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
+    rules_direct=$(cat "$tmp_rules_file")
+    rulesets_direct=$(cat "$tmp_rulesets_path")
+    rm -f "$tmp_rules_file"
+    rm -f "$tmp_rulesets_path"
 
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
@@ -1763,10 +1814,11 @@ EOF
 
     rule_providers=$(
         jq -n \
+            --argjson rulesets_direct "$rulesets_direct" \
             --argjson rulesets_block "$rulesets_block" \
             --argjson rulesets_proxies "$rulesets_proxies" \
             --argjson rulesets_proxygroup "$rulesets_proxygroup" \
-            'reduce [ $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
+            'reduce [ $rulesets_direct, $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
     )
 
     rules=$(jq -n \
