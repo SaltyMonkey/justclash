@@ -306,6 +306,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
+            if (!value) return true;
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
@@ -314,6 +315,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
+            if (!value) return true;
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
