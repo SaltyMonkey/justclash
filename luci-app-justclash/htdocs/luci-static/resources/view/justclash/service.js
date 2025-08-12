@@ -58,6 +58,12 @@ return view.extend({
         o.rmempty = false;
         o.default = "0";
 
+        o = s.taboption(tabname, form.Flag, "block_ntp_with_nft", _("Block NTP from clients:"));
+        o.description = _("If enabled, the service will block NTP traffic with nft tables.");
+        o.depends("update_nft_tables_at_load", "1");
+        o.rmempty = false;
+        o.default = "0";
+
         // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "input_interface_to_tproxy_redirect", _("Source Network Interface"), _("Select the network interface from which the traffic will originate"));
         o.default = "br-lan";
