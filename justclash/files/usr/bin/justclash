@@ -1277,7 +1277,7 @@ handle_proxy_group_section() {
             fi
 
             local line r_name yaml behavior format url proxy
-            line=$(grep "|$ruleset|" "$ruleset_content" | head -n 1)
+            line=$(echo "$ruleset_content" | grep "|$ruleset|" | head -n 1)
             if [ -n "$line" ]; then
                 r_name=$(echo "$line" | cut -d'|' -f1)
                 yaml=$(echo "$line" | cut -d'|' -f2)
@@ -1441,7 +1441,7 @@ handle_block_rule_section() {
         fi
 
         local line name yamlName behavior format url matched
-        line=$(grep "|$val|" "$blocklist_content" | head -n 1)
+        line=$(echo "$blocklist_content" | grep "|$val|" | head -n 1)
         if [ -n "$line" ]; then
             name=$(echo "$line" | cut -d'|' -f1)
             yamlName=$(echo "$line" | cut -d'|' -f2)
@@ -1533,7 +1533,7 @@ handle_direct_rule_section() {
         fi
 
         local line r_name yaml behavior format url proxy
-        line=$(grep "|$ruleset|" "$ruleset_content" | head -n 1)
+        line=$(echo "$ruleset_content" | grep "|$ruleset|" | head -n 1)
         if [ -n "$line" ]; then
             r_name=$(echo "$line" | cut -d'|' -f1)
             yaml=$(echo "$line" | cut -d'|' -f2)
