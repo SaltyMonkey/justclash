@@ -476,14 +476,15 @@ nft_table_add_old() {
 nft_table_add() {
     local update_nft_tables_at_load
     local tproxy_port proxy_fwmark_hex fake_ip_range input_interfaces_to_tproxy_redirect
-    local block_quic_with_nft block_dot_with_nft dot_quic_with_nft
+    local block_quic_with_nft block_dot_with_nft block_dot_quic_with_nft block_ntp_with_nft
     config_get update_nft_tables_at_load settings update_nft_tables_at_load
     config_get tproxy_port proxy tproxy_port
     config_get fake_ip_range proxy fake_ip_range
     config_get input_interfaces_to_tproxy_redirect settings input_interfaces_to_tproxy_redirect "br-lan"
     config_get block_quic_with_nft settings block_quic_with_nft
     config_get block_dot_with_nft settings block_dot_with_nft
-    config_get dot_quic_with_nft settings dot_quic_with_nft
+    config_get block_dot_quic_with_nft settings block_dot_quic_with_nft
+    config_get block_ntp_with_nft settings block_ntp_with_nft
 
     if [ "$update_nft_tables_at_load" = "0" ]; then
         return 0
@@ -537,6 +538,9 @@ nft_table_add() {
 
     nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
 
+    if [ "$block_ntp_with_nft" = "1" ]; then
+        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp udp dport 123 drop
+    fi
     # Исключение по fwmark для br-lan
     nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
 
