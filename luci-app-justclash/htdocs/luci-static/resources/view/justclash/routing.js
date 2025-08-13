@@ -462,8 +462,30 @@ return view.extend({
         s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
         s3.addremove = false;
 
+        tabname = "directruleslist_tab";
+        s3.tab(tabname, _("Rules"));
+
+        o = s3.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
+        result.rulesetsItems.forEach(item => {
+            o.value(item.yamlName, _(`${item.name}`));
+        });
+        o.description = _("Predefined RULE-SET lists, select those which you want to route through DIRECT.");
+
+        o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
+        o.datatype = "uinteger";
+        o.placeholder = common.defaultRuleSetUpdateInterval;
+        o.default = common.defaultRuleSetUpdateInterval;
+        o.validate = function (section_id, value) {
+            if (value === "") return true;
+            let v = parseInt(value);
+            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
+                return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
+            }
+            return true;
+        };
+
         tabname = "directbasic_tab";
-        s3.tab(tabname, _("Basic"));
+        s3.tab(tabname, _("Manual"));
 
         o = s3.taboption(tabname, form.DynamicList, "additional_domain_direct", _("Domain suffix:"));
         o.description = _("Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com).");
@@ -505,28 +527,6 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = "cidr4";
-
-        tabname = "directruleslist_tab";
-        s3.tab(tabname, _("Rules"));
-
-        o = s3.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
-        result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, _(`${item.name}`));
-        });
-        o.description = _("Predefined RULE-SET lists, select those which you want to route through DIRECT.");
-
-        o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.datatype = "uinteger";
-        o.placeholder = common.defaultRuleSetUpdateInterval;
-        o.default = common.defaultRuleSetUpdateInterval;
-        o.validate = function (section_id, value) {
-            if (value === "") return true;
-            let v = parseInt(value);
-            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
-            }
-            return true;
-        };
 
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional rules for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
