@@ -1,6 +1,24 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "Status"
+msgstr "Статус"
+
+msgid "Connections"
+msgstr "Соединения"
+
+msgid "Logs"
+msgstr "Логи"
+
+msgid "Service settings"
+msgstr "Настройки сервиса"
+
+msgid "Proxy settings"
+msgstr "Настройки прокси"
+
+msgid "Proxy routing"
+msgstr "Маршрутизация"
+
 msgid "Update"
 msgstr "Получить логи"
 
