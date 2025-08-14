@@ -590,10 +590,7 @@ return view.extend({
     addCSS() {
         return E("style", {}, `
             ul.dropdown {
-                height: 315px;
-            }
-            #cbid\.justclash\.final_rules\.final_destination > ul.dropdown {
-                height: auto !important;
+                max-height: 315px !important;
             }
             .cbi-section {
                 border: 0 !important;
