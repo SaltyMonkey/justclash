@@ -477,6 +477,7 @@ diagnostic_conflicts_interactive() {
                 case $inpp in
                 yes|y|Y)
                     pkg_remove banip
+                    pkg_remove luci-app-banip
                     break
                     ;;
                 *)
