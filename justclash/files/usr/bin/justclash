@@ -84,7 +84,7 @@ NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
 # List of conflicting packages:
 # podkop (custom proxy)
 # and https-dns-proxy (DNS over HTTPS proxy)
-CONFLICTED_PACKAGES="mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy"
+CONFLICTED_PACKAGES="banip mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy"
 CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
