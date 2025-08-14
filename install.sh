@@ -463,6 +463,32 @@ diagnostic_conflicts_interactive() {
     else
         print_green "NOT FOUND"
     fi
+
+    printf " - banip "
+    if pkg_is_installed banip; then
+        print_red "DETECTED!"
+        print_red "Conflict detected with package: banip."
+        print_red "JustClash and luci-app-passwall are both proxy software of the same type."
+        print_red "You should use only one of them."
+        print_red "Do you want to remove banip? yes/no"
+
+        while true; do
+                read -r inpp
+                case $inpp in
+                yes|y|Y)
+                    pkg_remove banip
+                    break
+                    ;;
+                *)
+                    echo "Exit"
+                    exit 1
+                    ;;
+                esac
+        done
+    else
+        print_green "NOT FOUND"
+    fi
+
     echo " "
 }
 
