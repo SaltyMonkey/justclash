@@ -1,3 +1,23 @@
+## [0.0.73] - 16082025
+
+- Service: Optimize reading from persistent storage
+- Service: Added custom resourcs handlers (support https/http links and local files, only MRS)
+- Install: Added banip in conflicts
+- Install: Added banip in removable options
+- LuCI: Changed validation for Object proxy mode
+- LuCI: Added custom resource fields for direct section (only MRS)
+- LuCI: Added custom resource fields for proxy groups sections (only MRS)
+- LuCI: Added custom resource fields for proxies sections (only MRS)
+- LuCI: Fixed dropdown height for FINAL match
+- LuCI: Changed tabbing position for direct rules
+- LuCI: Top level tabs translation
+- LuCI: Updated predefined fingerprints list
+- UCI: Changed default keep alive values
+
+This version requires:
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.0.68] - 13082025
 
 - Service: Logic implementation for block NTP
