@@ -1080,6 +1080,7 @@ handle_proxy_section() {
     _parse_single_proxy() {
         local section="$1"
         local name proxy_link interval defined_as_custom_object proxy_link_object use_proxy_for_list_update list val
+        local domain_list cidr_list
 
         config_get name "$section" name
         config_get proxy_link "$section" proxy_link
@@ -1151,6 +1152,62 @@ handle_proxy_section() {
             fi
         done
 
+        config_get domain_list "$section" custom_enabled_domain_list
+        for line in $domain_list; do
+            if [ -n "$line" ]; then
+                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
+                case "$line" in
+                    http://*|https://*)
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
+                    ;;
+                *)
+                    if [ -f "$line" ]; then
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                    else
+                        continue
+                    fi
+                    ;;
+                esac
+
+                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
+            fi
+        done
+
+        config_get cidr_list "$section" custom_enabled_cidr_list
+        for line in $cidr_list; do
+            if [ -n "$line" ]; then
+                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
+                case "$line" in
+                    http://*|https://*)
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
+                    ;;
+                *)
+                    if [ -f "$line" ]; then
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                    else
+                        continue
+                    fi
+                    ;;
+                esac
+
+                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
+            fi
+        done
+
         config_get list "$section" additional_srcip_route
         for val in $list; do
             [ -n "$val" ] && {
@@ -1219,6 +1276,7 @@ handle_proxy_group_section() {
         local proxies_list providers_list group_type strategy check_url interval check_timeout tolerance
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
+        local domain_list cidr_list
 
         config_get name "$section" name
         [ -z "$name" ] && { log 1 "Skip proxy_group without name: $section" "⚠️"; return; }
@@ -1302,6 +1360,62 @@ handle_proxy_group_section() {
                 [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
                 proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 added_rulesets="$added_rulesets$ruleset|"
+            fi
+        done
+
+        config_get domain_list "$section" custom_enabled_domain_list
+        for line in $domain_list; do
+            if [ -n "$line" ]; then
+                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
+                case "$line" in
+                    http://*|https://*)
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    ;;
+                *)
+                    if [ -f "$line" ]; then
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                    else
+                        continue
+                    fi
+                    ;;
+                esac
+
+                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
+            fi
+        done
+
+        config_get cidr_list "$section" custom_enabled_cidr_list
+        for line in $cidr_list; do
+            if [ -n "$line" ]; then
+                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
+                case "$line" in
+                    http://*|https://*)
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    ;;
+                *)
+                    if [ -f "$line" ]; then
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                    else
+                        continue
+                    fi
+                    ;;
+                esac
+
+                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
+                if [ -n "$rules_array" ]; then
+                    rules_array="$rules_array,\"$rule_str\""
+                else
+                    rules_array="\"$rule_str\""
+                fi
             fi
         done
 
@@ -1525,10 +1639,12 @@ handle_direct_rule_section() {
     local additional_domain_direct additional_domain_keyword_direct additional_domain_regex_direct
     local additional_srcip_direct additional_destip_direct
     local list_update_interval enabled_list
+    local domain_list cidr_list
 
 
     config_get list_update_interval direct_rules list_update_interval
     config_get enabled_list direct_rules enabled_list
+    [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
 
     local added_rulesets="|"
     for ruleset in $enabled_list; do
@@ -1549,16 +1665,67 @@ handle_direct_rule_section() {
             case "$r_name" in \#*) continue ;; esac
 
             local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "DIRECT")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
 
-                direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
-                added_rulesets="$added_rulesets$ruleset|"
+            direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            added_rulesets="$added_rulesets$ruleset|"
         fi
     done
+
+    config_get domain_list direct_rules custom_enabled_domain_list
+    for line in $domain_list; do
+        if [ -n "$line" ]; then
+            local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
+            case "$line" in
+                http://*|https://*)
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                ;;
+            *)
+                if [ -f "$line" ]; then
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"type\":\"file\"},"
+                else
+                    continue
+                fi
+                ;;
+            esac
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "DIRECT")
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
+        fi
+    done
+
+    config_get cidr_list direct_rules custom_enabled_cidr_list
+    for line in $cidr_list; do
+        if [ -n "$line" ]; then
+            local rng_name=$(md5sum "$line")
+            case "$line" in
+                http://*|https://*)
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
+                ;;
+            *)
+                if [ -f "$line" ]; then
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                else
+                    continue
+                fi
+                ;;
+            esac
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "DIRECT")
+            if [ -n "$rules_array" ]; then
+                rules_array="$rules_array,\"$rule_str\""
+            else
+                rules_array="\"$rule_str\""
+            fi
+        fi
+    done
+
     config_get additional_domain_direct direct_rules additional_domain_direct
     config_get additional_domain_keyword_direct direct_rules additional_domain_keyword_direct
     config_get additional_domain_regex_direct direct_rules additional_domain_regex_direct
