@@ -75,9 +75,14 @@ return view.extend({
             //if (!value || value.length === 0) return true;
             try {
                 const parsed = JSON.parse(value);
-                if (!parsed.type || !parsed.server || !parsed.port) {
-                    return _('JSON must contain at least type, server and server fields');
-                }
+                if (parsed.name)
+                    return _('Name field must not be defined in object.');
+                if (parsed.type =="direct" && (parsed.server || parsed.port))
+                     return _('DIRECT proxy type must be defined without server or port fields.');
+                if (parsed.type =="direct") return true;
+
+                if (!parsed.type || !parsed.server || !parsed.port)
+                    return _('JSON must contain at least type, server and server fields.');
                 return true;
             } catch (e) {
                 return _('Invalid JSON format');
