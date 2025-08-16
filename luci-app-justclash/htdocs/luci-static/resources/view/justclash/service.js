@@ -20,6 +20,13 @@ return view.extend({
         o.rmempty = false;
         o.default = "0";
 
+        o = s.taboption(tabname, form.Value, "delayed_boot_value", _("Delayed boot timeout:"));
+        o.datatype = "uinteger";
+        o.placeholder = "10";
+        o.depends("delayed_boot", "1");
+        o.rmempty = true;
+        o.description = _("Delay timeout value in seconds.");
+
         o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Persistent temp files:"));
         o.description = _("If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!");
         o.rmempty = false;
