@@ -102,6 +102,22 @@ return view.extend({
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
 
+        o = s.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
+        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+        };
+
+        o = s.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
+        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+        };
+
         o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
         o.description = _("If selected, RULE-SET lists will be updated through proxy.");
         o.optional = true;
@@ -410,6 +426,22 @@ return view.extend({
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy-group.");
 
+        o = s2.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
+        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+        };
+
+        o = s2.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom ipcidr list:"));
+        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+        };
+
         o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy:"));
         o.description = _("If selected, RULE-SET lists will be updated through proxy group.");
         o.optional = true;
@@ -470,6 +502,22 @@ return view.extend({
             o.value(item.yamlName, _(`${item.name}`));
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through DIRECT.");
+
+        o = s3.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
+        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+        };
+
+        o = s3.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
+        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+        };
 
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.datatype = "uinteger";

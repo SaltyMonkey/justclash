@@ -66,6 +66,15 @@ return baseclass.extend({
             return false;
         }
     },
+    isValidResourceFilePath: function (value) {
+        if (value === "") return true;
+        if ((value.startsWith("http://")
+            || value.startsWith("https://")
+            || value.startsWith("/"))
+            && value.endsWith(".mrs"))
+            return true;
+        return false;
+    },
     isValidDomainProto: function (value) {
         const val = value.trim();
         if (val.startsWith("https://") ||
