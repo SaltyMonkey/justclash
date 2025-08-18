@@ -245,7 +245,7 @@ compat_fixes() {
     if ! command -v lsmod >/dev/null 2>&1; then
         log 1 "lsmod is missing. Can't check for kernel modules" "⚠️"
     else
-        if lsmod | grep -q br_netfilter && [ "$(sysctl -n net.bridge.bridge-nf-call-iptables 2>/dev/null)" = "1" ]; then
+        if lsmod | grep -qF br_netfilter && [ "$(sysctl -n net.bridge.bridge-nf-call-iptables 2>/dev/null)" = "1" ]; then
             log 1 "br_netfilter is enabled. FriendlyWRT? Fixing module params..." "⚠️"
             sysctl -w net.bridge.bridge-nf-call-iptables=0
             sysctl -w net.bridge.bridge-nf-call-ip6tables=0
@@ -261,9 +261,9 @@ core_validate_yaml() {
     local test_output app_exit_code grep_test_exit_code grep_error_exit_code
     test_output="$("$CORE_PATH" -t -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
     app_exit_code=$?
-    echo "$test_output" | grep -qi "test failed"
+    echo "$test_output" | grep -qiF "test failed"
     grep_test_exit_code=$?
-    echo "$test_output" | grep -qi "error"
+    echo "$test_output" | grep -qiF "error"
     grep_error_exit_code=$?
     if [ "$grep_test_exit_code" -eq 0 ] || [ "$app_exit_code" -ne 0 ] || [ "$grep_error_exit_code" -eq 0 ]; then
         log 0 "Yaml configuration incorrect!" "❌"
@@ -382,7 +382,7 @@ stop_core() {
 }
 
 cleanup_fwmark() {
-    while ip rule show | grep -q "fwmark 0x1 lookup 100"; do
+    while ip rule show | grep -qF "fwmark 0x1 lookup 100"; do
         ip rule del fwmark 1 table 100 2>/dev/null || true
     done
 }
@@ -462,11 +462,11 @@ nft_table_add_old() {
     #nft add rule ip "$NFT_TABLE_NAME" output meta mark 0 ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
 
     cleanup_fwmark
-    if ! ip rule list | grep -q "fwmark 0x1 lookup 100"; then
+    if ! ip rule list | grep -qF "fwmark 0x1 lookup 100"; then
         ip rule add fwmark "$NFT_FWMARK_FINAL" table 100
     fi
 
-    if ! ip route show table 100 | grep -q "local 0.0.0.0/0 dev lo"; then
+    if ! ip route show table 100 | grep -qF "local 0.0.0.0/0 dev lo"; then
         ip route add local 0.0.0.0/0 dev lo table 100
     fi
 
@@ -566,7 +566,7 @@ nft_table_add() {
     #nft add rule ip "$NFT_TABLE_NAME" output ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
 
     cleanup_fwmark
-    if ! ip rule list | grep -q "fwmark 0x1 lookup 100"; then
+    if ! ip rule list | grep -qF "fwmark 0x1 lookup 100"; then
         ip rule add fwmark "$NFT_FWMARK_FINAL" table 100
     fi
 
@@ -1130,7 +1130,7 @@ handle_proxy_section() {
         local added_rulesets="|"
         config_get list "$section" enabled_list
         for ruleset in $list; do
-            if echo "$added_rulesets" | grep -q "|$ruleset|"; then
+            if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
                 continue
             fi
 
@@ -1372,7 +1372,7 @@ handle_proxy_group_section() {
 
         local added_rulesets="|"
         for ruleset in $enabled_list; do
-            if echo "$added_rulesets" | grep -q "|$ruleset|"; then
+            if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
                 continue
             fi
 
@@ -1621,7 +1621,7 @@ handle_block_rule_section() {
     local added_blocklists="|"
     local val
     for val in $enabled_blocklist; do
-        if echo "$added_blocklists" | grep -q "|$val|"; then
+        if echo "$added_blocklists" | grep -qF "|$val|"; then
             continue
         fi
 
@@ -1715,7 +1715,7 @@ handle_direct_rule_section() {
 
     local added_rulesets="|"
     for ruleset in $enabled_list; do
-        if echo "$added_rulesets" | grep -q "|$ruleset|"; then
+        if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
             continue
         fi
 
@@ -2382,7 +2382,7 @@ cron_make_if_missing() {
 
 core_update_cron_check() {
     cron_make_if_missing
-    if grep -q "/usr/bin/justclash core_update" /etc/crontabs/root; then
+    if grep -qF "/usr/bin/justclash core_update" /etc/crontabs/root; then
         return 0
     else
         return 1
@@ -2432,7 +2432,7 @@ core_update_cron_remove() {
 
 core_autorestart_cron_check() {
     cron_make_if_missing
-    if grep -q "${INITD_PATH} reload" /etc/crontabs/root; then
+    if grep -qF "${INITD_PATH} reload" /etc/crontabs/root; then
         return 0
     else
         return 1
@@ -2503,7 +2503,7 @@ diag_nft() {
 
 diag_route() {
     clog 2 "Verifying existence of route rule..."
-    if ! ip rule list | grep -q "fwmark 0x1 lookup 100"; then
+    if ! ip rule list | grep -qF "fwmark 0x1 lookup 100"; then
         clog 0 "Route rule 'ip rule add fwmark ""$NFT_FWMARK_FINAL"" table 100' is missing!"
     fi
     ip rule list
