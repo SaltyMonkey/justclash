@@ -7,6 +7,7 @@ START=99
 STOP=01
 PROGNAME="justclash"
 PROG="/usr/bin/${PROGNAME}"
+DELAY_TIMEOUT=2000
 
 # shellcheck disable=SC1091
 [ -r /lib/functions.sh ] && . /lib/functions.sh
@@ -55,4 +56,10 @@ boot() {
         logger -p "user.info" -t "$PROGNAME" "Delayed start was disabled."
         start
     fi
+}
+
+service_triggers()
+{
+    export PROCD_RELOAD_DELAY=$DELAY_TIMEOUT
+    procd_add_reload_trigger "$PROGNAME"
 }
