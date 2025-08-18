@@ -639,7 +639,7 @@ return view.extend({
     addCSS() {
         return E("style", {}, `
             ul.dropdown {
-                max-height: 315px !important;
+                max-height: 320px !important;
             }
             .cbi-section {
                 border: 0 !important;
