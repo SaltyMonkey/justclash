@@ -180,6 +180,7 @@ return view.extend({
 
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton("start", "cbi-button-positive", _("Start"), actionHandler("start")),
+            createActionButton("restart", "cbi-button-action", _("Restart"), actionHandler("restart")),
             createActionButton("stop", "cbi-button-negative", _("Stop"), actionHandler("stop"))
         ]);
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" }, [
