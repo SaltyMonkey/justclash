@@ -1,3 +1,23 @@
+## [0.0.88] - 18082025
+
+- Service: Optimize greps
+- Service: Refacting
+- Service: Update diagnostic
+- Service: Fix rulesets handling in proxies
+- Service: Added custom logic for delayed vstart
+- Service: Added custom fake-ip logic
+- Service: Remove unused code
+- Init.d: Fix restart logic
+- Init.d: Added autoreload with UCI config update
+- LuCI: Added back restart button
+- LuCI: Minor dropdown height change
+- LuCI: Added fake ip mode controls
+- LuCI: Added delayed boot controls
+
+This version requires:
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.0.73] - 16082025
 
 - Service: Optimize reading from persistent storage
