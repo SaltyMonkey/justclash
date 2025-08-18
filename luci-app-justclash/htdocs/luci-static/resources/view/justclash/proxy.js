@@ -179,7 +179,7 @@ return view.extend({
         o.description = _("Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps.");
         o.rmempty = false;
         o.editable = true;
-        o.depends("fake_ip_filter_mode", "blocklist");
+        o.depends("fake_ip_filter_mode", "blacklist");
 
         tabname = "ntpsettings_tab";
         s.tab(tabname, _("NTP settings"));
