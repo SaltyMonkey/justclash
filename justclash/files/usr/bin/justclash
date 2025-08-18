@@ -1150,7 +1150,7 @@ handle_proxy_section() {
                     rules_array="\"$rule_str\""
                 fi
 
-                [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                 selectedRuleSets="${selectedRuleSets}\"$ruleset\":{\"url\":\"$url\",\"behavior\":\"$behavior\",\"format\":\"$format\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
                 added_rulesets="$added_rulesets$ruleset|"
 
@@ -1170,12 +1170,12 @@ handle_proxy_section() {
                 local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
                 case "$line" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$line" ]; then
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
                     else
                         continue
@@ -1203,12 +1203,12 @@ handle_proxy_section() {
                 local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
                 case "$line" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$line" ]; then
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         continue
@@ -1395,7 +1395,7 @@ handle_proxy_group_section() {
                     rules_array="\"$rule_str\""
                 fi
 
-                [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                 proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 added_rulesets="$added_rulesets$ruleset|"
 
@@ -1415,12 +1415,12 @@ handle_proxy_group_section() {
                 local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
                 case "$line" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$line" ]; then
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
                     else
                         continue
@@ -1448,12 +1448,12 @@ handle_proxy_group_section() {
                 local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
                 case "$line" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$line" ]; then
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         continue
@@ -1731,7 +1731,7 @@ handle_direct_rule_section() {
             # shellcheck disable=SC2249
             case "$r_name" in \#*) continue ;; esac
 
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "DIRECT")
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$DEFAULT_RULESET_PROXY")
             if [ -n "$rules_array" ]; then
                 rules_array="$rules_array,\"$rule_str\""
             else
@@ -1759,7 +1759,7 @@ handle_direct_rule_section() {
                 fi
                 ;;
             esac
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "DIRECT")
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" $DEFAULT_RULESET_PROXY)
             if [ -n "$rules_array" ]; then
                 rules_array="$rules_array,\"$rule_str\""
             else
@@ -1784,7 +1784,7 @@ handle_direct_rule_section() {
                 fi
                 ;;
             esac
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "DIRECT")
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" $DEFAULT_RULESET_PROXY)
             if [ -n "$rules_array" ]; then
                 rules_array="$rules_array,\"$rule_str\""
             else
