@@ -109,6 +109,13 @@ return view.extend({
         o.rmempty = false;
         o.datatype = "integer";
 
+        o = s.taboption(tabname, form.ListValue, "fake_ip_filter_mode", _("Fake IP filter:"));
+        o.value("blacklist", _(`blacklist`));
+        o.value("whitelist", _(`whitelist`))
+        o.description = _("Fake IP working mode.");
+        o.default = "whitelist"
+        o.rmempty = false;
+
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
         o.description = _("CIDR for fake IP.");
         o.default = "198.18.0.1/22";
@@ -161,10 +168,18 @@ return view.extend({
 
             return true;
         };
+
+        o = s.taboption(tabname, form.DynamicList, "custom_fake_ip_domains", _("Use fake IP for domains:"));
+        o.description = _("Include selected domains for the Fake IP cache.");
+        o.rmempty = false;
+        o.editable = true;
+        o.depends("fake_ip_filter_mode", "whitelist");
+
         o = s.taboption(tabname, form.DynamicList, "ignore_fake_ip_domains", _("Skip fake IP for domains:"));
         o.description = _("Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps.");
         o.rmempty = false;
         o.editable = true;
+        o.depends("fake_ip_filter_mode", "blocklist");
 
         tabname = "ntpsettings_tab";
         s.tab(tabname, _("NTP settings"));
