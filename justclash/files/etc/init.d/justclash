@@ -25,20 +25,20 @@ start_service() {
 }
 
 stop_service() {
-    $PROG stop 2>&1
+    $PROG stop
     sleep 1
 }
 
 reload_service() {
-    stop_service
+    stop
     sleep 1
-    start_service
+    start
 }
 
 restart() {
-    stop_service
+    stop
     sleep 1
-    start_service
+    start
 }
 
 boot() {
