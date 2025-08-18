@@ -1072,9 +1072,13 @@ handle_proxy_section() {
     local file_rules="$2"
     local file_rulesets="$3"
     local file_proxies="$4"
+    local file_rulesets_names="$5"
+    local file_proxies_names="$6"
     local proxies=""
     local rules_array=""
     local selectedRuleSets=""
+    local list_rulesets_names=""
+    local list_suffix_names=""
 
     # shellcheck disable=SC2317
     _parse_single_proxy() {
@@ -1149,6 +1153,14 @@ handle_proxy_section() {
                 [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
                 selectedRuleSets="${selectedRuleSets}\"$ruleset\":{\"url\":\"$url\",\"behavior\":\"$behavior\",\"format\":\"$format\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
                 added_rulesets="$added_rulesets$ruleset|"
+
+                if [ "$behavior" = "domain" ]; then
+                    if [ -n "$list_rulesets_names" ]; then
+                        list_rulesets_names="$list_rulesets_names,\"rule-set:$ruleset\""
+                    else
+                        list_rulesets_names="\"rule-set:$ruleset\""
+                    fi
+                fi
             fi
         done
 
@@ -1176,6 +1188,11 @@ handle_proxy_section() {
                     rules_array="$rules_array,\"$rule_str\""
                 else
                     rules_array="\"$rule_str\""
+                fi
+                if [ -n "$list_rulesets_names" ]; then
+                    list_rulesets_names="$list_rulesets_names,\"rule-set:$rng_name\""
+                else
+                    list_rulesets_names="\"rule-set:$rng_name\""
                 fi
             fi
         done
@@ -1228,6 +1245,11 @@ handle_proxy_section() {
                 else
                     rules_array="\"$rule_str\""
                 fi
+                if [ -n "$list_suffix_names" ]; then
+                    list_suffix_names="$list_suffix_names,\"+.$val\""
+                else
+                    list_suffix_names="\"+.$val\""
+                fi
             }
         done
         config_get list "$section" additional_destip_route
@@ -1254,10 +1276,22 @@ handle_proxy_section() {
     else
         rules="[]"
     fi
+    if [ -n "$list_rulesets_names" ]; then
+        list_rulesets_names="[$list_rulesets_names]"
+    else
+        list_rulesets_names="[]"
+    fi
+    if [ -n "$list_suffix_names" ]; then
+        list_suffix_names="[$list_suffix_names]"
+    else
+        list_suffix_names="[]"
+    fi
 
     echo "$rules" > "$file_rules"
     echo "$selectedRuleSets" > "$file_rulesets"
     echo "$proxies" > "$file_proxies"
+    echo "$list_rulesets_names" > "$file_rulesets_names"
+    echo "$list_suffix_names" > "$file_proxies_names"
 }
 
 handle_proxy_group_section() {
@@ -1265,9 +1299,13 @@ handle_proxy_group_section() {
     local file_rules="$2"
     local file_rulesets="$3"
     local file_proxygroups="$4"
+    local file_rulesets_names="$5"
+    local file_proxies_names="$6"
     local proxy_groups=""
     local rules_array=""
     local proxy_groups_rulesets=""
+    local list_rulesets_names=""
+    local list_suffix_names=""
 
     # shellcheck disable=SC2317  # Called via config_foreach
     _parse_proxy_group() {
@@ -1360,6 +1398,14 @@ handle_proxy_group_section() {
                 [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy="DIRECT"
                 proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 added_rulesets="$added_rulesets$ruleset|"
+
+                if [ "$behavior" = "domain" ]; then
+                    if [ -n "$list_rulesets_names" ]; then
+                        list_rulesets_names="$list_rulesets_names,\"rule-set:$ruleset\""
+                    else
+                        list_rulesets_names="\"rule-set:$ruleset\""
+                    fi
+                fi
             fi
         done
 
@@ -1387,6 +1433,11 @@ handle_proxy_group_section() {
                     rules_array="$rules_array,\"$rule_str\""
                 else
                     rules_array="\"$rule_str\""
+                fi
+                if [ -n "$list_rulesets_names" ]; then
+                    list_rulesets_names="$list_rulesets_names,\"rule-set:$rng_name\""
+                else
+                    list_rulesets_names="\"rule-set:$rng_name\""
                 fi
             fi
         done
@@ -1440,6 +1491,11 @@ handle_proxy_group_section() {
                 else
                     rules_array="\"$rule_str\""
                 fi
+                if [ -n "$list_suffix_names" ]; then
+                    list_suffix_names="$list_suffix_names,\"+.$val\""
+                else
+                    list_suffix_names="\"+.$val\""
+                fi
             }
         done
 
@@ -1475,10 +1531,21 @@ handle_proxy_group_section() {
     else
         rules="[]"
     fi
-
+    if [ -n "$list_rulesets_names" ]; then
+        list_rulesets_names="[$list_rulesets_names]"
+    else
+        list_rulesets_names="[]"
+    fi
+    if [ -n "$list_suffix_names" ]; then
+        list_suffix_names="[$list_suffix_names]"
+    else
+        list_suffix_names="[]"
+    fi
     echo "$rules" > "$file_rules"
     echo "$proxy_groups_rulesets" > "$file_rulesets"
     echo "$proxy_groups" > "$file_proxygroups"
+    echo "$list_rulesets_names" > "$file_rulesets_names"
+    echo "$list_suffix_names" > "$file_proxies_names"
 }
 
 handle_proxy_provider_section() {
@@ -1827,9 +1894,15 @@ core_generate_yaml() {
     local tcp_concurrent external_controller_port global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
-    local dns_listen_port use_hosts use_system_hosts fake_ip_range dns_cache_max_size
-    local etag_support global_ua mixed_port
-    local default_nameserver direct_nameserver proxy_server_nameserver nameserver ignore_fake_ip_domains ignore_to_sniff_domains
+    local dns_listen_port use_hosts use_system_hosts fake_ip_filter_mode fake_ip_range dns_cache_max_size
+    local etag_support global_ua #mixed_port
+    local default_nameserver direct_nameserver proxy_server_nameserver nameserver custom_fake_ip_domains ignore_fake_ip_domains ignore_to_sniff_domains
+    local rules_proxies rules_proxygroups rules_block rule_final rules_direct
+    local proxies proxy_groups rule_providers proxy_providers names_suffixes_proxy_groups names_suffixes_proxies names_rulesets_proxy_groups names_rulesets_proxies
+    local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
+    local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path
+    local block_rulesets_content rulesets_content
+    local fake_ip_filter_data
 
     config_get log_level proxy log_level
     config_get tproxy_port proxy tproxy_port
@@ -1861,13 +1934,98 @@ core_generate_yaml() {
     use_hosts=$(ucibool_to_yaml_bool "$use_hosts")
     config_get_bool use_system_hosts proxy use_system_hosts
     use_system_hosts=$(ucibool_to_yaml_bool "$use_system_hosts")
+    config_get fake_ip_filter_mode proxy fake_ip_filter_mode
     config_get fake_ip_range proxy fake_ip_range
     default_nameserver=$(simple_uci_list_to_json_arr proxy default_nameserver)
     direct_nameserver=$(simple_uci_list_to_json_arr proxy direct_nameserver)
     proxy_server_nameserver=$(simple_uci_list_to_json_arr proxy proxy_server_nameserver)
     nameserver=$(simple_uci_list_to_json_arr proxy nameserver)
+    custom_fake_ip_domains=$(simple_uci_list_to_json_arr proxy custom_fake_ip_domains)
     ignore_fake_ip_domains=$(simple_uci_list_to_json_arr proxy ignore_fake_ip_domains)
     ignore_to_sniff_domains=$(simple_uci_list_to_json_arr proxy ignore_to_sniff_domains)
+
+    rule_final=$(handle_final_rule_section)
+    proxy_providers=$(handle_proxy_provider_section | jq .)
+
+    # optimization: load files one time
+    block_rulesets_content=$(cat "$RULESETS_BLOCKS_FILE")
+    rulesets_content=$(cat "$RULESETS_FILE")
+
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesdirect.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesetsdirect.XXXXXX)
+    handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
+    rules_direct=$(cat "$tmp_rules_file")
+    rulesets_direct=$(cat "$tmp_rulesets_path")
+    rm -f "$tmp_rules_file" "$tmp_rulesets_path"
+
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
+    handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
+    rules_block=$(cat "$tmp_rules_file" )
+    rulesets_block=$(cat "$tmp_rulesets_path")
+    rm -f "$tmp_rules_file" "$tmp_rulesets_path"
+
+    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
+    tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroups.XXXXXX)
+    # Files for strings with names in json arrays (for Fake IP filter)
+    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroupsrulesetsnames.XXXXXX)
+    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroupssuffixesnames.XXXXXX)
+    handle_proxy_group_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+    rules_proxygroups=$(cat "$tmp_rules_file" )
+    rulesets_proxygroup=$(cat "$tmp_rulesets_path")
+    proxy_groups=$(cat "$tmp_proxygroup_path")
+    names_rulesets_proxy_groups=$(cat "$tmp_names_rulesets_path")
+    names_suffixes_proxy_groups=$(cat "$tmp_names_suffixes_path")
+    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+
+    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
+    tmp_proxies_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxies.XXXXXX)
+    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxiesrulesetsnames.XXXXXX)
+    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxiessuffixesnames.XXXXXX)
+    handle_proxy_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+    rules_proxies=$(cat "$tmp_rules_file")
+    rulesets_proxies=$(cat "$tmp_rulesets_path")
+    proxies=$(cat "$tmp_proxies_path")
+    names_rulesets_proxies=$(cat "$tmp_names_rulesets_path")
+    names_suffixes_proxies=$(cat "$tmp_names_suffixes_path")
+    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+
+    if [ "$fake_ip_filter_mode" = "whitelist" ]; then
+        fake_ip_filter_data=$(jq -n \
+            --arg custom "$custom_fake_ip_domains" \
+            --arg nrpg "$names_rulesets_proxy_groups" \
+            --arg nspg "$names_suffixes_proxy_groups" \
+            --arg nrp "$names_rulesets_proxies" \
+            --arg nsp "$names_suffixes_proxies" \
+            '($custom | fromjson) + ($nrpg | fromjson) + ($nspg | fromjson) + ($nrp | fromjson) + ($nsp | fromjson)'
+        )
+    else
+        fake_ip_filter_data=$ignore_fake_ip_domains
+    fi
+
+    proxies=$(echo "$proxies" | jq .)
+
+    rule_providers=$(
+        jq -n \
+            --argjson rulesets_direct "$rulesets_direct" \
+            --argjson rulesets_block "$rulesets_block" \
+            --argjson rulesets_proxies "$rulesets_proxies" \
+            --argjson rulesets_proxygroup "$rulesets_proxygroup" \
+            'reduce [ $rulesets_direct, $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
+    )
+
+    rules=$(jq -n \
+        --arg direct "$rules_direct" \
+        --arg block "$rules_block" \
+        --arg proxygroups "$rules_proxygroups" \
+        --arg proxies "$rules_proxies" \
+        --arg final "$rule_final" \
+        '($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
+    )
 
     cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
@@ -1913,8 +2071,8 @@ dns:
   proxy-server-nameserver: $proxy_server_nameserver
   direct-nameserver: $direct_nameserver
   respect-rules: true
-  fake-ip-filter-mode: blacklist
-  fake-ip-filter: $ignore_fake_ip_domains
+  fake-ip-filter-mode: $fake_ip_filter_mode
+  fake-ip-filter: $fake_ip_filter_data
 
 sniffer:
   enable: true
@@ -1929,79 +2087,6 @@ sniffer:
       ports: [443, 8443]
   skip-domain: $ignore_to_sniff_domains
 
-EOF
-
-    local rules_proxies rules_proxygroups rules_block rule_final rules_direct
-    local proxies proxy_groups rule_providers proxy_providers
-    local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
-    local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path
-    local block_rulesets_content rulesets_content
-    rule_final=$(handle_final_rule_section)
-    proxy_providers=$(handle_proxy_provider_section | jq .)
-
-    # optimization: load files one time
-    block_rulesets_content=$(cat "$RULESETS_BLOCKS_FILE")
-    rulesets_content=$(cat "$RULESETS_FILE")
-
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesdirect.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesetsdirect.XXXXXX)
-    handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
-    rules_direct=$(cat "$tmp_rules_file")
-    rulesets_direct=$(cat "$tmp_rulesets_path")
-    rm -f "$tmp_rules_file"
-    rm -f "$tmp_rulesets_path"
-
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
-    handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
-    rules_block=$(cat "$tmp_rules_file" )
-    rulesets_block=$(cat "$tmp_rulesets_path")
-    rm -f "$tmp_rules_file"
-    rm -f "$tmp_rulesets_path"
-
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
-    tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroups.XXXXXX)
-    handle_proxy_group_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path"
-    rules_proxygroups=$(cat "$tmp_rules_file" )
-    rulesets_proxygroup=$(cat "$tmp_rulesets_path")
-    proxy_groups=$(cat "$tmp_proxygroup_path")
-    rm -f "$tmp_rules_file"
-    rm -f "$tmp_rulesets_path"
-    rm -f "$tmp_proxygroup_path"
-
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
-    tmp_proxies_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxies.XXXXXX)
-    handle_proxy_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path"
-    rules_proxies=$(cat "$tmp_rules_file")
-    rulesets_proxies=$(cat "$tmp_rulesets_path")
-    proxies=$(cat "$tmp_proxies_path")
-    rm -f "$tmp_rules_file"
-    rm -f "$tmp_rulesets_path"
-    rm -f "$tmp_proxies_path"
-
-    proxies=$(echo "$proxies" | jq .)
-
-    rule_providers=$(
-        jq -n \
-            --argjson rulesets_direct "$rulesets_direct" \
-            --argjson rulesets_block "$rulesets_block" \
-            --argjson rulesets_proxies "$rulesets_proxies" \
-            --argjson rulesets_proxygroup "$rulesets_proxygroup" \
-            'reduce [ $rulesets_direct, $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
-    )
-
-    rules=$(jq -n \
-        --arg direct "$rules_direct" \
-        --arg block "$rules_block" \
-        --arg proxygroups "$rules_proxygroups" \
-        --arg proxies "$rules_proxies" \
-        --arg final "$rule_final" \
-        '($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
-    )
-
-cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 proxies: $proxies
 proxy-groups: $proxy_groups
 rule-providers: $rule_providers
