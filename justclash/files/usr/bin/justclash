@@ -90,6 +90,7 @@ CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
+YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 
 ucibool_to_yesno() {
     case "$1" in
@@ -2559,6 +2560,12 @@ $(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_GOOGLE"
 
 -> Zapret:
 $(if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "Zapret detected."; else echo "No zapret installed."; fi)
+
+-> ByeDPI:
+$(if [ -f "$BYEDPI_FILEPATH" ]; then echo "ByeDPI detected."; else echo "No ByeDPI installed."; fi)
+
+-> YouubeUnblock:
+$(if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "YoutubeUnblock detected."; else echo "No YoutubeUnblock installed."; fi)
 
 -> DHCP config:
 $(uci show dhcp)
