@@ -466,10 +466,6 @@ return view.extend({
             return true;
         };
 
-        /*o = s2.taboption(tabname, form.DynamicList, "user_list", _("User with custom rules:"));
-        o.description = _("Custom RULE-SET list paths placed locally, use complete filesystem path here. Example: /etc/customlist.mrs");
-        o.editable = true;*/
-
         tabname = "proxiesgroupmanualrules_tab";
         s2.tab(tabname, _("Manual"));
 
