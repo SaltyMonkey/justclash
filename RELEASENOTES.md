@@ -1,3 +1,10 @@
+## [0.0.89] - 18082025
+
+- LuCI: Fix typo
+
+This version requires:
+- Browser cache must be cleaned up
+
 ## [0.0.88] - 18082025
 
 - Service: Optimize greps
