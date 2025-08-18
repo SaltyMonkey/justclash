@@ -439,7 +439,7 @@ return view.extend({
             return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
         };
 
-        o = s2.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom ipcidr list:"));
+        o = s2.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
         o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
         o.optional = true;
         o.editable = true;
