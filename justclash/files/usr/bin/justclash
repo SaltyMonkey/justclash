@@ -460,16 +460,13 @@ nft_table_add() {
     nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
 
     # Маркируем fake IP для br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$NFT_FWMARK_FINAL"
 
-    # Маркируем остальной трафик с br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+    # Маркируем остальной трафик TCP и UDP с br-lan
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto { tcp, udp } meta mark set "$NFT_FWMARK_FINAL"
 
     # TPROXY только для трафика с br-lan и нужной меткой
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NFT_FWMARK_FINAL" ip protocol tcp tproxy to 127.0.0.1:"$tproxy_port"
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NFT_FWMARK_FINAL" ip protocol udp tproxy to 127.0.0.1:"$tproxy_port"
+    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NFT_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     # --- output ---
     #nft add rule ip "$NFT_TABLE_NAME" output mark "$proxy_fwmark_hex" return
