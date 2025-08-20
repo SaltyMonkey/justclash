@@ -441,21 +441,24 @@ nft_table_add() {
     # shellcheck disable=SC2086
     nft add element ip "$NFT_TABLE_NAME" inbound_interfaces { $(echo $input_interfaces_to_tproxy_redirect | sed 's/ /", "/g; s/^/"/; s/$/"/') }
 
-    if [ "$block_quic_with_nft" = "1" ]; then
-        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp udp dport 443 drop
+    if [ "$block_quic_with_nft" = "1" ] || [ "$block_dot_quic_with_nft" = "1" ] || [ "$block_ntp_with_nft" = 1 ]; then
+        local selected_ports=""
+        [ "$block_quic_with_nft" = "1" ] && selected_ports=$selected_ports"443,"
+        [ "$block_dot_quic_with_nft" = "1" ] && selected_ports=$selected_ports"853,"
+        [ "$block_ntp_with_nft" = "1" ] && selected_ports=$selected_ports"123,"
+        selected_ports="${selected_ports%,}"
+
+        if [ -n "$selected_ports" ]; then
+            nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { "$selected_ports" } drop
+        fi
     fi
+
     if [ "$block_dot_with_nft" = "1" ]; then
-        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol tcp tcp dport 853 drop
-    fi
-    if [ "$block_dot_quic_with_nft" = "1" ]; then
-        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp udp dport 853 drop
+        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport 853 drop
     fi
 
     nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
 
-    if [ "$block_ntp_with_nft" = "1" ]; then
-        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip protocol udp udp dport 123 drop
-    fi
     # Исключение по fwmark для br-lan
     nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
 
