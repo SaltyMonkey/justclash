@@ -66,9 +66,9 @@ DIAG_RESOLVE_URL_YANDEX="ya.ru"
 DIAG_IP_CHECK_PING_YANDEX="77.88.8.8"
 DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
 
-NFT_TABLE_NAME="justclash_tproxy"
-NFT_FWMARK_FINAL=1
-NFT_FWMARK_PROXY=255
+NF_TABLE_NAME="justclash_tproxy"
+NF_TABLE_FWMARK_FINAL=1
+NF_TABLE_FWMARK_PROXY=255
 
 # List of NTP server IP addresses:
 # 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
@@ -308,7 +308,7 @@ start() {
     fi
 
     log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
-    nft_table_add
+    nf_table_add
 
     log 2 "Modifying dnsmasq configuration" "🔑"
     dnsmasq_add
@@ -320,7 +320,7 @@ start() {
 stop() {
     log 2 "Closing Justclash service..." "⏳"
     log 2 "Removing TPROXY routing and NFTables table" "🔑"
-    nft_table_remove
+    nf_table_remove
 
     log 2 "Restoring default dnsmasq configuration" "🔑"
     dnsmasq_remove
@@ -388,7 +388,7 @@ cleanup_fwmark() {
     done
 }
 
-nft_table_add() {
+nf_table_add() {
     local nft_apply_changes
     local tproxy_port proxy_fwmark_hex fake_ip_range tproxy_input_interfaces
     local nft_block_quic nft_block_dot nft_block_dot_quic nft_block_ntp
@@ -408,38 +408,38 @@ nft_table_add() {
     [ -z "$tproxy_port" ] && panic "tproxy_port not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range not set"
 
-    proxy_fwmark_hex=$(printf "0x%02X" "$NFT_FWMARK_PROXY")
+    proxy_fwmark_hex=$(printf "0x%02X" "$NF_TABLE_FWMARK_PROXY")
 
-    if nft list table ip "$NFT_TABLE_NAME" 2>/dev/null; then
-        nft delete table ip "$NFT_TABLE_NAME"
+    if nft list table ip "$NF_TABLE_NAME" 2>/dev/null; then
+        nft delete table ip "$NF_TABLE_NAME"
     fi
 
     # Создаём таблицу, цепочку и набор адресов
-    nft add table ip "$NFT_TABLE_NAME"
-    nft add chain ip "$NFT_TABLE_NAME" prerouting '{ type filter hook prerouting priority mangle; policy accept; }'
-    #nft add chain ip "$NFT_TABLE_NAME" output '{ type route hook output priority mangle; policy accept; }'
+    nft add table ip "$NF_TABLE_NAME"
+    nft add chain ip "$NF_TABLE_NAME" prerouting '{ type filter hook prerouting priority mangle; policy accept; }'
+    #nft add chain ip "$NF_TABLE_NAME" output '{ type route hook output priority mangle; policy accept; }'
 
-    nft add set ip "$NFT_TABLE_NAME" fake_ips '{ type ipv4_addr; flags interval; }'
-    nft add element ip "$NFT_TABLE_NAME" fake_ips { "$fake_ip_range" }
+    nft add set ip "$NF_TABLE_NAME" fake_ips '{ type ipv4_addr; flags interval; }'
+    nft add element ip "$NF_TABLE_NAME" fake_ips { "$fake_ip_range" }
 
-    nft add set ip "$NFT_TABLE_NAME" private_ips '{ type ipv4_addr; flags interval; }'
-    nft add element ip "$NFT_TABLE_NAME" private_ips { \
+    nft add set ip "$NF_TABLE_NAME" private_ips '{ type ipv4_addr; flags interval; }'
+    nft add element ip "$NF_TABLE_NAME" private_ips { \
         0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, \
         169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
         192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
         224.0.0.0/4, 240.0.0.0/4 }
 
-    #nft add set ip "$NFT_TABLE_NAME" private_ips_output '{ type ipv4_addr; flags interval; }'
-    #nft add element ip "$NFT_TABLE_NAME" private_ips_output { \
+    #nft add set ip "$NF_TABLE_NAME" private_ips_output '{ type ipv4_addr; flags interval; }'
+    #nft add element ip "$NF_TABLE_NAME" private_ips_output { \
     #    0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, \
     #    169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
     #    192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
     #    224.0.0.0/4, 240.0.0.0/4 }
 
-    nft add set ip "$NFT_TABLE_NAME" inbound_interfaces '{ type ifname; }'
+    nft add set ip "$NF_TABLE_NAME" inbound_interfaces '{ type ifname; }'
     # shellcheck disable=SC2046
     # shellcheck disable=SC2086
-    nft add element ip "$NFT_TABLE_NAME" inbound_interfaces { $(echo $tproxy_input_interfaces | sed 's/ /", "/g; s/^/"/; s/$/"/') }
+    nft add element ip "$NF_TABLE_NAME" inbound_interfaces { $(echo $tproxy_input_interfaces | sed 's/ /", "/g; s/^/"/; s/$/"/') }
 
     if [ "$nft_block_quic" = "1" ] || [ "$nft_block_dot_quic" = "1" ] || [ "$nft_block_ntp" = 1 ]; then
         local selected_ports=""
@@ -449,53 +449,53 @@ nft_table_add() {
         selected_ports="${selected_ports%,}"
 
         if [ -n "$selected_ports" ]; then
-            nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { "$selected_ports" } drop
+            nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { "$selected_ports" } drop
         fi
     fi
 
     if [ "$nft_block_dot" = "1" ]; then
-        nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport 853 drop
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport 853 drop
     fi
 
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
 
     # Исключение по fwmark для br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
 
     # Маркируем fake IP для br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
 
     # Маркируем остальной трафик TCP и UDP с br-lan
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto { tcp, udp } meta mark set "$NFT_FWMARK_FINAL"
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
 
     # TPROXY только для трафика с br-lan и нужной меткой
-    nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NFT_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     # --- output ---
-    #nft add rule ip "$NFT_TABLE_NAME" output mark "$proxy_fwmark_hex" return
-    #nft add rule ip "$NFT_TABLE_NAME" output oifname "lo" return
-    #nft add rule ip "$NFT_TABLE_NAME" output ip daddr @private_ips_output return
-    #nft add rule ip "$NFT_TABLE_NAME" output ip daddr @fake_ips ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
-    #nft add rule ip "$NFT_TABLE_NAME" output ip daddr @fake_ips ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
-    #nft add rule ip "$NFT_TABLE_NAME" output ip protocol tcp meta mark set "$NFT_FWMARK_FINAL"
-    #nft add rule ip "$NFT_TABLE_NAME" output ip protocol udp meta mark set "$NFT_FWMARK_FINAL"
+    #nft add rule ip "$NF_TABLE_NAME" output mark "$proxy_fwmark_hex" return
+    #nft add rule ip "$NF_TABLE_NAME" output oifname "lo" return
+    #nft add rule ip "$NF_TABLE_NAME" output ip daddr @private_ips_output return
+    #nft add rule ip "$NF_TABLE_NAME" output ip daddr @fake_ips ip protocol tcp meta mark set "$NF_TABLE_FWMARK_FINAL"
+    #nft add rule ip "$NF_TABLE_NAME" output ip daddr @fake_ips ip protocol udp meta mark set "$NF_TABLE_FWMARK_FINAL"
+    #nft add rule ip "$NF_TABLE_NAME" output ip protocol tcp meta mark set "$NF_TABLE_FWMARK_FINAL"
+    #nft add rule ip "$NF_TABLE_NAME" output ip protocol udp meta mark set "$NF_TABLE_FWMARK_FINAL"
 
     cleanup_fwmark
     if ! ip rule list | grep -qF "fwmark 0x1 lookup 100"; then
-        ip rule add fwmark "$NFT_FWMARK_FINAL" table 100
+        ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table 100
     fi
 
     if ! ip route show table 100 | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
         ip route add local 0.0.0.0/0 dev lo table 100
     fi
 
-    log 1 "TPROXY: port=$tproxy_port, fwmark=$NFT_FWMARK_FINAL fwmark_proxy=$NFT_FWMARK_PROXY table=100"
+    log 1 "TPROXY: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=100"
 }
 
-nft_table_remove() {
+nf_table_remove() {
     cleanup_fwmark
-    nft flush table ip "$NFT_TABLE_NAME" 2>/dev/null || true
-    nft delete table ip "$NFT_TABLE_NAME" 2>/dev/null || true
+    nft flush table ip "$NF_TABLE_NAME" 2>/dev/null || true
+    nft delete table ip "$NF_TABLE_NAME" 2>/dev/null || true
     ip route flush table 100 2>/dev/null || true
 
     log 2 "TPROXY Clash rules and routing were removed" "⚙️"
@@ -1950,7 +1950,7 @@ tproxy-port: $tproxy_port
 unified-delay: $unified_delay
 tcp-concurrent: $tcp_concurrent
 external-controller: 0.0.0.0:$external_controller_port
-routing-mark: $NFT_FWMARK_PROXY
+routing-mark: $NF_TABLE_FWMARK_PROXY
 global-client-fingerprint: $global_client_fingerprint
 global-ua: $global_ua
 find-process-mode: off
@@ -2402,14 +2402,14 @@ diag_nft() {
         return 1
     fi
 
-    clog 2 "Verifying existence of NFTables table '$NFT_TABLE_NAME'..."
-    if ! nft list table ip "$NFT_TABLE_NAME" >/dev/null 2>&1; then
-        clog 0 "Table '$NFT_TABLE_NAME' not found. Please create the required NFTables table."
+    clog 2 "Verifying existence of NFTables table '$NF_TABLE_NAME'..."
+    if ! nft list table ip "$NF_TABLE_NAME" >/dev/null 2>&1; then
+        clog 0 "Table '$NF_TABLE_NAME' not found. Please create the required NFTables table."
         return 1
     fi
 
     clog 2 "Displaying current NFTables configuration:"
-    nft list table ip "$NFT_TABLE_NAME"
+    nft list table ip "$NF_TABLE_NAME"
 
     clog 2 "NFTables check completed successfully."
 
@@ -2419,7 +2419,7 @@ diag_nft() {
 diag_route() {
     clog 2 "Verifying existence of route rule..."
     if ! ip rule list | grep -qF "fwmark 0x1 lookup 100"; then
-        clog 0 "Route rule 'ip rule add fwmark ""$NFT_FWMARK_FINAL"" table 100' is missing!"
+        clog 0 "Route rule 'ip rule add fwmark ""$NF_TABLE_FWMARK_FINAL"" table 100' is missing!"
     fi
     ip rule list
 
