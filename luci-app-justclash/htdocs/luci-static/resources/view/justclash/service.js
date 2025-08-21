@@ -42,39 +42,39 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "update_nft_tables_at_load", _("Edit NFT tables at startup:"));
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit NFT tables at startup:"));
         o.description = _("If enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "block_quic_with_nft", _("Block QUIC from clients:"));
+        o = s.taboption(tabname, form.Flag, "nft_block_quic", _("Block QUIC from clients:"));
         o.description = _("If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes.");
-        o.depends("update_nft_tables_at_load", "1");
+        o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
 
-        o = s.taboption(tabname, form.Flag, "block_dot_with_nft", _("Block DoT from clients:"));
+        o = s.taboption(tabname, form.Flag, "nft_block_dot", _("Block DoT from clients:"));
         o.description = _("If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware.");
-        o.depends("update_nft_tables_at_load", "1");
+        o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
 
-        o = s.taboption(tabname, form.Flag, "block_dot_quic_with_nft", _("Block DoQ from clients:"));
+        o = s.taboption(tabname, form.Flag, "nft_block_dot_quic", _("Block DoQ from clients:"));
         o.description = _("If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware.");
-        o.depends("update_nft_tables_at_load", "1");
+        o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
 
-        o = s.taboption(tabname, form.Flag, "block_ntp_with_nft", _("Block NTP from clients:"));
+        o = s.taboption(tabname, form.Flag, "nft_block_ntp", _("Block NTP from clients:"));
         o.description = _("If enabled, the service will block NTP traffic with nft tables.");
-        o.depends("update_nft_tables_at_load", "1");
+        o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
 
         // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.DeviceSelect, "input_interface_to_tproxy_redirect", _("Source Network Interface"), _("Select the network interface from which the traffic will originate"));
+        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source Network Interface"), _("Select the network interface from which the traffic will originate"));
         o.default = "br-lan";
-        o.depends("update_nft_tables_at_load", "1");
+        o.depends("nft_apply_changes", "1");
         o.noaliases = true;
         o.nobridges = false;
         o.noinactive = false;

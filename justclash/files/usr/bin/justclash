@@ -389,19 +389,19 @@ cleanup_fwmark() {
 }
 
 nft_table_add() {
-    local update_nft_tables_at_load
-    local tproxy_port proxy_fwmark_hex fake_ip_range input_interfaces_to_tproxy_redirect
-    local block_quic_with_nft block_dot_with_nft block_dot_quic_with_nft block_ntp_with_nft
-    config_get update_nft_tables_at_load settings update_nft_tables_at_load
+    local nft_apply_changes
+    local tproxy_port proxy_fwmark_hex fake_ip_range tproxy_input_interfaces
+    local nft_block_quic nft_block_dot nft_block_dot_quic nft_block_ntp
+    config_get nft_apply_changes settings nft_apply_changes
     config_get tproxy_port proxy tproxy_port
     config_get fake_ip_range proxy fake_ip_range
-    config_get input_interfaces_to_tproxy_redirect settings input_interfaces_to_tproxy_redirect "br-lan"
-    config_get block_quic_with_nft settings block_quic_with_nft
-    config_get block_dot_with_nft settings block_dot_with_nft
-    config_get block_dot_quic_with_nft settings block_dot_quic_with_nft
-    config_get block_ntp_with_nft settings block_ntp_with_nft
+    config_get tproxy_input_interfaces settings tproxy_input_interfaces "br-lan"
+    config_get nft_block_quic settings nft_block_quic
+    config_get nft_block_dot settings nft_block_dot
+    config_get nft_block_dot_quic settings nft_block_dot_quic
+    config_get nft_block_ntp settings nft_block_ntp
 
-    if [ "$update_nft_tables_at_load" = "0" ]; then
+    if [ "$nft_apply_changes" = "0" ]; then
         return 0
     fi
 
@@ -439,13 +439,13 @@ nft_table_add() {
     nft add set ip "$NFT_TABLE_NAME" inbound_interfaces '{ type ifname; }'
     # shellcheck disable=SC2046
     # shellcheck disable=SC2086
-    nft add element ip "$NFT_TABLE_NAME" inbound_interfaces { $(echo $input_interfaces_to_tproxy_redirect | sed 's/ /", "/g; s/^/"/; s/$/"/') }
+    nft add element ip "$NFT_TABLE_NAME" inbound_interfaces { $(echo $tproxy_input_interfaces | sed 's/ /", "/g; s/^/"/; s/$/"/') }
 
-    if [ "$block_quic_with_nft" = "1" ] || [ "$block_dot_quic_with_nft" = "1" ] || [ "$block_ntp_with_nft" = 1 ]; then
+    if [ "$nft_block_quic" = "1" ] || [ "$nft_block_dot_quic" = "1" ] || [ "$nft_block_ntp" = 1 ]; then
         local selected_ports=""
-        [ "$block_quic_with_nft" = "1" ] && selected_ports=$selected_ports"443,"
-        [ "$block_dot_quic_with_nft" = "1" ] && selected_ports=$selected_ports"853,"
-        [ "$block_ntp_with_nft" = "1" ] && selected_ports=$selected_ports"123,"
+        [ "$nft_block_quic" = "1" ] && selected_ports=$selected_ports"443,"
+        [ "$nft_block_dot_quic" = "1" ] && selected_ports=$selected_ports"853,"
+        [ "$nft_block_ntp" = "1" ] && selected_ports=$selected_ports"123,"
         selected_ports="${selected_ports%,}"
 
         if [ -n "$selected_ports" ]; then
@@ -453,7 +453,7 @@ nft_table_add() {
         fi
     fi
 
-    if [ "$block_dot_with_nft" = "1" ]; then
+    if [ "$nft_block_dot" = "1" ]; then
         nft add rule ip "$NFT_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport 853 drop
     fi
 
