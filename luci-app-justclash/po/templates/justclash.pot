@@ -127,25 +127,25 @@ msgstr ""
 msgid "If enabled, the service will edit DNS settings in dnsmasq configuration at start."
 msgstr ""
 
-msgid "Edit NFT tables at startup:"
+msgid "Edit NF tables at startup:"
 msgstr ""
 
 msgid "Block QUIC from clients:"
 msgstr ""
 
-msgid "If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes."
+msgid "If enabled, the service will block QUIC traffic with nf tables. Can solve issues with streams sometimes."
 msgstr ""
 
 msgid "Block DoT from clients:"
 msgstr ""
 
-msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
+msgid "If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware."
 msgstr ""
 
 msgid "Block DoQ from clients:"
 msgstr ""
 
-msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
+msgid "If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware."
 msgstr ""
 
 msgid "Source Network Interface"
@@ -166,7 +166,7 @@ msgstr ""
 msgid "Select the WAN interfaces to be monitored for automatic service restart."
 msgstr ""
 
-msgid "If enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
+msgid "If enabled, the service creates NF tables to redirect traffic to the TPROXY port."
 msgstr ""
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"

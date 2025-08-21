@@ -127,26 +127,26 @@ msgstr "Изменять DNS-сервер при запуске:"
 msgid "If enabled, the service will edit DNS settings in dnsmasq configuration at start."
 msgstr "Если включено, сервис изменит настройки DNS в конфигурации dnsmasq при запуске."
 
-msgid "Edit NFT tables at startup:"
-msgstr "Редактировать NFT-таблицы при запуске:"
+msgid "Edit NF tables at startup:"
+msgstr "Редактировать NF таблицы при запуске:"
 
 msgid "Block QUIC from clients:"
 msgstr "Блокировать QUIC от клиентов:"
 
-msgid "If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes."
-msgstr "Если включено, сервис будет блокировать QUIC траффик nft таблицами. Может исправить проблемы с потоковым траффиком."
+msgid "If enabled, the service will block QUIC traffic with nf tables. Can solve issues with streams sometimes."
+msgstr "Если включено, сервис будет блокировать QUIC траффик nf таблицами. Может исправить проблемы с потоковым траффиком."
 
 msgid "Block DoT from clients:"
 msgstr "Блокировать DoT от клиентов:"
 
-msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
-msgstr "Если включено, сервис будет блокировать DOT траффик nft таблицами. Может исправить DNS проблемы для некоторых устройств."
+msgid "If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware."
+msgstr "Если включено, сервис будет блокировать DOT траффик nf таблицами. Может исправить DNS проблемы для некоторых устройств."
 
 msgid "Block DoQ from clients:"
 msgstr "Блокировать DoQ от клиентов:"
 
-msgid "If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware."
-msgstr "Если включено, сервис будет блокировать DoQ траффик nft таблицами. Может исправить DNS проблемы для некоторых устройств."
+msgid "If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware."
+msgstr "Если включено, сервис будет блокировать DoQ траффик nf таблицами. Может исправить DNS проблемы для некоторых устройств."
 
 msgid "Source Network Interface"
 msgstr "Интерфейс захвата"
@@ -166,8 +166,8 @@ msgstr "Интерфейс для мониторинга"
 msgid "Select the WAN interfaces to be monitored for automatic service restart."
 msgstr "Выберите WAN-интерфейсы для мониторинга и автоматического перезапуска сервиса."
 
-msgid "If enabled, the service creates NFT tables to redirect traffic to the TPROXY port."
-msgstr "Если включено, сервис создаст NFT-таблицы для перенаправления трафика на порт TPROXY."
+msgid "If enabled, the service creates NF tables to redirect traffic to the TPROXY port."
+msgstr "Если включено, сервис создаст NF таблицы для перенаправления трафика на порт TPROXY."
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
 msgstr "Неверный формат cron. Ожидается: 'минута час день месяц день_недели' (например, '0 3 * * 0')"

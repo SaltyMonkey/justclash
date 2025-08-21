@@ -42,31 +42,31 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit NFT tables at startup:"));
-        o.description = _("If enabled, the service creates NFT tables to redirect traffic to the TPROXY port.");
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit NF tables at startup:"));
+        o.description = _("If enabled, the service creates NF tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "nft_block_quic", _("Block QUIC from clients:"));
-        o.description = _("If enabled, the service will block QUIC traffic with nft tables. Can solve issues with streams sometimes.");
+        o.description = _("If enabled, the service will block QUIC traffic with nf tables. Can solve issues with streams sometimes.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "nft_block_dot", _("Block DoT from clients:"));
-        o.description = _("If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware.");
+        o.description = _("If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "nft_block_dot_quic", _("Block DoQ from clients:"));
-        o.description = _("If enabled, the service will block DOT traffic with nft tables. Can solve DNS issues for some hardware.");
+        o.description = _("If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "nft_block_ntp", _("Block NTP from clients:"));
-        o.description = _("If enabled, the service will block NTP traffic with nft tables.");
+        o.description = _("If enabled, the service will block NTP traffic with nf tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
@@ -96,7 +96,7 @@ return view.extend({
             return true;
         };
 
-         o = s4.taboption(tabname, form.DynamicList, "tproxy_excluded_ip", _("Excluded IP from tproxy:"));
+        o = s.taboption(tabname, form.DynamicList, "tproxy_excluded_ip", _("Exclude IP from tproxy:"));
         o.description = _("Each element is IPv4 to exclude from tproxy access.");
         o.rmempty = false;
         o.placeholder = "192.168.31.123";
