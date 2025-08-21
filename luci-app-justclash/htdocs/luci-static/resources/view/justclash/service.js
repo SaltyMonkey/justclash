@@ -32,12 +32,12 @@ return view.extend({
         o.rmempty = false;
         o.default = "0";
 
-        o = s.taboption(tabname, form.Flag, "forcefully_update_ntp_at_load", _("Start ntpd:"));
+        o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start ntpd:"));
         o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "update_dns_server_at_load", _("Edit DNS server at startup:"));
+        o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Edit DNS server at startup:"));
         o.description = _("If enabled, the service will edit DNS settings in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = "1";

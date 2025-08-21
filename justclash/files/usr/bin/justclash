@@ -217,8 +217,8 @@ is_pattern_in_file() {
 }
 
 ntp_force_sync() {
-    local forcefully_update_ntp_at_load
-    config_get_bool forcefully_update_ntp_at_load settings forcefully_update_ntp_at_load
+    local ntpd_start
+    config_get_bool ntpd_start settings ntpd_start
     if [ -z "$NTP_IPS" ]; then
         log 0 "No NTP servers configured" "⚠️"
         return 1
@@ -229,7 +229,7 @@ ntp_force_sync() {
         return 1
     fi
 
-    if [ "$forcefully_update_ntp_at_load" -eq 1 ]; then
+    if [ "$ntpd_start" -eq 1 ]; then
         NTP_ARGS=""
         for ip in $NTP_IPS; do
             NTP_ARGS="$NTP_ARGS -p $ip"
@@ -515,11 +515,11 @@ save_dnsmasq_config() {
 }
 
 dnsmasq_add() {
-    local dns_listen_port update_dns_server_at_load
+    local dns_listen_port dnsmasq_apply_changes
     config_get dns_listen_port proxy dns_listen_port
-    config_get_bool update_dns_server_at_load settings update_dns_server_at_load
+    config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
-    if [ "$update_dns_server_at_load" -eq 1 ]; then
+    if [ "$dnsmasq_apply_changes" -eq 1 ]; then
 
         uci -q delete dhcp.@dnsmasq[0].justclash_server
         for server in $(uci get dhcp.@dnsmasq[0].server 2>/dev/null); do
@@ -551,14 +551,14 @@ dnsmasq_add() {
 dnsmasq_remove() {
     local dns_listen_port
     config_get dns_listen_port proxy dns_listen_port
-    local update_dns_server_at_load
-    config_get_bool update_dns_server_at_load settings update_dns_server_at_load
+    local dnsmasq_apply_changes
+    config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
     local bak_cachesize
     local bak_noresolv
     local server
 
-    if [ "$update_dns_server_at_load" -eq 1 ]; then
+    if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         bak_cachesize=$(uci get dhcp.@dnsmasq[0].justclash_cachesize 2>/dev/null)
         if [ -z "$bak_cachesize" ]; then
             log 1 "dnsmasq revert: cachesize is unset"
