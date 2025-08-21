@@ -4,26 +4,36 @@
 "require fs";
 "require view.justclash.common as common";
 
-const FIELDS = [
-    { label: _("Device model:"), key: "infoDevice" },
-    { label: _("System version:"), key: "infoOpenWrt" },
-    { label: _("Service package version:"), key: "infoPackage" },
-    { label: _("LuCI package version:"), key: "infoLuciPackage" },
-    { label: _("Mihomo core version:"), key: "infoCore" }
-];
-
 function cleanStdout(val) {
     return (val && val.stdout) ? val.stdout.replace("\\n", "").trim() : _("No data");
 }
 
+function asyncTimeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function createTable(results, statusCells) {
-    const rows = FIELDS.map((f, i) =>
-        E("tr", { class: `tr cbi-rowstyle-${i % 2 + 1}` }, [
-            E("td", { class: "td left" }, f.label),
-            E("td", { class: "td left" }, cleanStdout(results[f.key]))
-        ])
-    );
-    rows.push(
+    const rows = [
+        E("tr", { class: "tr cbi-rowstyle-1" }, [
+            E("td", { class: "td left" }, _("Device model:")),
+            E("td", { class: "td left" }, cleanStdout(results.infoDevice))
+        ]),
+        E("tr", { class: "tr cbi-rowstyle-2" }, [
+            E("td", { class: "td left" }, _("System version:")),
+            E("td", { class: "td left" }, cleanStdout(results.infoOpenWrt))
+        ]),
+        E("tr", { class: "tr cbi-rowstyle-1" }, [
+            E("td", { class: "td left" }, _("Service package version:")),
+            E("td", { class: "td left" }, cleanStdout(results.infoPackage))
+        ]),
+        E("tr", { class: "tr cbi-rowstyle-2" }, [
+            E("td", { class: "td left" }, _("LuCI package version:")),
+            E("td", { class: "td left" }, cleanStdout(results.infoLuciPackage))
+        ]),
+        E("tr", { class: "tr cbi-rowstyle-1" }, [
+            E("td", { class: "td left" }, _("Mihomo core version:")),
+            E("td", { class: "td left" }, cleanStdout(results.infoCore))
+        ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
             E("td", { class: "td left" }, _("Service is running:")),
             statusCells.serviceStatus
@@ -32,7 +42,7 @@ function createTable(results, statusCells) {
             E("td", { class: "td left" }, _("Service's autostart:")),
             statusCells.daemonStatus
         ])
-    );
+    ];
     return E("table", { class: "table cbi-rowstyle-1" }, rows);
 }
 
@@ -109,18 +119,18 @@ return view.extend({
             createTable(results, statusCells)
         ]);
 
-        const actionHandler = (action) => ui.createHandlerFn(this, async function () {
+        const actionHandler = (action, timeoutMs) => ui.createHandlerFn(this, async function () {
             const buttons = document.querySelectorAll(".cbi-button");
-            buttons.forEach(btn => btn.disabled = true);
             ui.showModal(_("Executing command..."), [E("p", _("Please wait."))]);
+            buttons.forEach(btn => btn.disabled = true);
             try {
                 await fs.exec(common.initdPath, [action]);
+                if (timeoutMs) await asyncTimeout(timeoutMs)
                 await this.updateServiceStatus(statusCells);
             } catch (e) {
                 ui.addNotification(_("Error"), e.message, "danger");
             } finally {
                 ui.hideModal();
-                buttons.forEach(btn => btn.disabled = false);
             }
         });
 
@@ -179,8 +189,8 @@ return view.extend({
         });
 
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton("start", "cbi-button-positive", _("Start"), actionHandler("start")),
-            createActionButton("restart", "cbi-button-action", _("Restart"), actionHandler("restart")),
+            createActionButton("start", "cbi-button-positive", _("Start"), actionHandler("start", 5000)),
+            createActionButton("restart", "cbi-button-action", _("Restart"), actionHandler("restart", 5000)),
             createActionButton("stop", "cbi-button-negative", _("Stop"), actionHandler("stop"))
         ]);
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" }, [
