@@ -96,6 +96,18 @@ return view.extend({
             return true;
         };
 
+         o = s4.taboption(tabname, form.DynamicList, "tproxy_excluded_ip", _("Excluded IP from tproxy:"));
+        o.description = _("Each element is IPv4 to exclude from tproxy access.");
+        o.rmempty = false;
+        o.placeholder = "192.168.31.123";
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim().length === 0)
+                return true;
+
+            return (common.isValidIpv4(value));
+        };
+
         tabname = "coreautomation_tab";
         s.tab(tabname, _("Tasks"));
 
