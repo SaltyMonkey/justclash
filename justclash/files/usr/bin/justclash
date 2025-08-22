@@ -59,6 +59,7 @@ DEFAULT_TLS_PORT="443"
 DEFAULT_SOCKS_PORT="1080"
 DEFAULT_HEALTHCHECK_URL="http://www.gstatic.com/generate_204"
 DEFAULT_HEALTHCHECK_RESULT=204
+DEFAULT_INPUT_INTERFACE="br-lan"
 
 CORE_RESTART_MAX_RETRIES=3
 
@@ -392,14 +393,19 @@ nf_table_add() {
     local nft_apply_changes
     local tproxy_port proxy_fwmark_hex fake_ip_range tproxy_input_interfaces
     local nft_block_quic nft_block_dot nft_block_dot_quic nft_block_ntp
+    local tproxy_excluded_ip=""
+
     config_get nft_apply_changes settings nft_apply_changes
     config_get tproxy_port proxy tproxy_port
     config_get fake_ip_range proxy fake_ip_range
-    config_get tproxy_input_interfaces settings tproxy_input_interfaces "br-lan"
+    config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
     config_get nft_block_quic settings nft_block_quic
     config_get nft_block_dot settings nft_block_dot
     config_get nft_block_dot_quic settings nft_block_dot_quic
     config_get nft_block_ntp settings nft_block_ntp
+    config_get tproxy_excluded_ip settings tproxy_excluded_ip ""
+
+    tproxy_excluded_ip=$(echo "$tproxy_excluded_ip" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | sed 's/[[:space:]]\+/, /g')
 
     if [ "$nft_apply_changes" = "0" ]; then
         return 0
@@ -420,7 +426,7 @@ nf_table_add() {
     #nft add chain ip "$NF_TABLE_NAME" output '{ type route hook output priority mangle; policy accept; }'
 
     nft add set ip "$NF_TABLE_NAME" fake_ips '{ type ipv4_addr; flags interval; }'
-    nft add element ip "$NF_TABLE_NAME" fake_ips { "$fake_ip_range" }
+    nft add element ip "$NF_TABLE_NAME" fake_ips { $fake_ip_range }
 
     nft add set ip "$NF_TABLE_NAME" private_ips '{ type ipv4_addr; flags interval; }'
     nft add element ip "$NF_TABLE_NAME" private_ips { \
@@ -428,13 +434,6 @@ nf_table_add() {
         169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
         192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
         224.0.0.0/4, 240.0.0.0/4 }
-
-    #nft add set ip "$NF_TABLE_NAME" private_ips_output '{ type ipv4_addr; flags interval; }'
-    #nft add element ip "$NF_TABLE_NAME" private_ips_output { \
-    #    0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, \
-    #    169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
-    #    192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
-    #    224.0.0.0/4, 240.0.0.0/4 }
 
     nft add set ip "$NF_TABLE_NAME" inbound_interfaces '{ type ifname; }'
     # shellcheck disable=SC2046
@@ -449,7 +448,7 @@ nf_table_add() {
         selected_ports="${selected_ports%,}"
 
         if [ -n "$selected_ports" ]; then
-            nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { "$selected_ports" } drop
+            nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $selected_ports } drop
         fi
     fi
 
@@ -461,6 +460,11 @@ nf_table_add() {
 
     # Исключение по fwmark для br-lan
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
+
+    if [ -n "$tproxy_excluded_ip" ]; then
+        # Исключение по tproxy_excluded_ip с br-lan
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip saddr { $tproxy_excluded_ip } meta l4proto { tcp, udp } return
+    fi
 
     # Маркируем fake IP для br-lan
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
