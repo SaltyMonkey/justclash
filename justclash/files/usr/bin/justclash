@@ -395,7 +395,7 @@ nf_table_add() {
     local nft_apply_changes
     local tproxy_port proxy_fwmark_hex fake_ip_range tproxy_input_interfaces
     local nft_block_quic nft_block_dot nft_block_dot_quic nft_block_ntp
-    local tproxy_excluded_ip=""
+    local tproxy_excluded_ips=""
 
     config_get nft_apply_changes settings nft_apply_changes
     config_get tproxy_port proxy tproxy_port
@@ -405,9 +405,9 @@ nf_table_add() {
     config_get nft_block_dot settings nft_block_dot
     config_get nft_block_dot_quic settings nft_block_dot_quic
     config_get nft_block_ntp settings nft_block_ntp
-    config_get tproxy_excluded_ip settings tproxy_excluded_ip ""
+    config_get tproxy_excluded_ips settings tproxy_excluded_ips ""
 
-    tproxy_excluded_ip=$(echo "$tproxy_excluded_ip" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | sed 's/[[:space:]]\+/, /g')
+    tproxy_excluded_ips=$(echo "$tproxy_excluded_ips" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | sed 's/[[:space:]]\+/, /g')
 
     if [ "$nft_apply_changes" = "0" ]; then
         return 0
@@ -463,9 +463,9 @@ nf_table_add() {
     # Исключение по fwmark для br-lan
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
 
-    if [ -n "$tproxy_excluded_ip" ]; then
-        # Исключение по tproxy_excluded_ip с br-lan
-        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip saddr { $tproxy_excluded_ip } meta l4proto { tcp, udp } return
+    if [ -n "$tproxy_excluded_ips" ]; then
+        # Исключение по tproxy_excluded_ips с br-lan
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip saddr { $tproxy_excluded_ips } meta l4proto { tcp, udp } return
     fi
 
     # Маркируем fake IP для br-lan

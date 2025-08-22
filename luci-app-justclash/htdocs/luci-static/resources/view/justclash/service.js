@@ -96,7 +96,7 @@ return view.extend({
             return true;
         };
 
-        o = s.taboption(tabname, form.DynamicList, "tproxy_excluded_ip", _("Exclude IP from tproxy:"));
+        o = s.taboption(tabname, form.DynamicList, "tproxy_excluded_ips", _("Exclude IP from tproxy:"));
         o.description = _("Each element is IPv4 to exclude from tproxy access.");
         o.rmempty = false;
         o.placeholder = "192.168.31.123";
