@@ -70,6 +70,7 @@ DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
 NF_TABLE_NAME="justclash_tproxy"
 NF_TABLE_FWMARK_FINAL=1
 NF_TABLE_FWMARK_PROXY=255
+NF_ROUTE_TABLE=100
 
 # List of NTP server IP addresses:
 # 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
@@ -109,7 +110,7 @@ panic() {
     exit 1
 }
 
-get_log_level_name() {
+get_log_level_console() {
     case "$1" in
         0) echo "ERROR" ;;
         1) echo "WARN" ;;
@@ -147,7 +148,7 @@ clog() {
     [ "$PROCD_MODE" -eq 1 ] && return
 
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    level_str=$(get_log_level_name "$level")
+    level_str=$(get_log_level_console "$level")
 
     printf "[%s] [%s] %s\n" "$timestamp" "$level_str" "$message"
 }
@@ -308,7 +309,7 @@ start() {
         return 1
     fi
 
-    log 2 "Configuring TPROXY routing and creating NFTables table" "🔑"
+    log 2 "Configuring tproxy routing and creating NFTables table" "🔑"
     nf_table_add
 
     log 2 "Modifying dnsmasq configuration" "🔑"
@@ -320,7 +321,7 @@ start() {
 
 stop() {
     log 2 "Closing Justclash service..." "⏳"
-    log 2 "Removing TPROXY routing and NFTables table" "🔑"
+    log 2 "Removing tproxy routing and NFTables table" "🔑"
     nf_table_remove
 
     log 2 "Restoring default dnsmasq configuration" "🔑"
@@ -341,17 +342,17 @@ start_core() {
         while [ "$attempt" -lt "$CORE_RESTART_MAX_RETRIES" ]; do
             "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t justclash
             exit_code=$?
-            log 1 "Restart: mihomo exited with code $exit_code" "❌"
+            log 1 "Procd: mihomo exited with code $exit_code" "❌"
 
             if [ "$exit_code" -eq 0 ]; then
                 break
             fi
 
             attempt=$((attempt + 1))
-            log 0 "Restart:  mihomo crashed, attempt $attempt of $CORE_RESTART_MAX_RETRIES" "❌"
+            log 0 "Procd:  mihomo crashed, attempt $attempt of $CORE_RESTART_MAX_RETRIES" "❌"
 
             if [ "$attempt" -ge "$CORE_RESTART_MAX_RETRIES" ]; then
-                log 0 "Restart:  Failed to restart mihomo after $CORE_RESTART_MAX_RETRIES attempts, exiting" "❌"
+                log 0 "Procd:  Failed to restart mihomo after $CORE_RESTART_MAX_RETRIES attempts, exiting" "❌"
                 exit "$exit_code"
             fi
 
@@ -360,9 +361,9 @@ start_core() {
     else
         "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
         exit_code=$?
-        log 1 "Manual start: mihomo exited with code $exit_code" "❌"
+        log 1 "Manual: mihomo exited with code $exit_code" "❌"
         if [ "$exit_code" -ne 0 ]; then
-            log 0 "Manual start: mihomo crashed, exiting" "❌"
+            log 0 "Manual: mihomo crashed, exiting" "❌"
             exit "$exit_code"
         fi
     fi
@@ -384,8 +385,9 @@ stop_core() {
 }
 
 cleanup_fwmark() {
-    while ip rule show | grep -qF "fwmark 0x1 lookup 100"; do
-        ip rule del fwmark 1 table 100 2>/dev/null || true
+    #todo: change dynamic 0x1
+    while ip rule show | grep -qF "fwmark 0x1 lookup $NF_ROUTE_TABLE"; do
+        ip rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
     done
 }
 
@@ -472,7 +474,7 @@ nf_table_add() {
     # Маркируем остальной трафик TCP и UDP с br-lan
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
 
-    # TPROXY только для трафика с br-lan и нужной меткой
+    # tproxy только для трафика с br-lan и нужной меткой
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     # --- output ---
@@ -485,24 +487,25 @@ nf_table_add() {
     #nft add rule ip "$NF_TABLE_NAME" output ip protocol udp meta mark set "$NF_TABLE_FWMARK_FINAL"
 
     cleanup_fwmark
-    if ! ip rule list | grep -qF "fwmark 0x1 lookup 100"; then
-        ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table 100
+    #todo: change dynamic 0x1
+    if ! ip rule list | grep -qF "fwmark 0x1 lookup $NF_ROUTE_TABLE"; then
+        ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE"
     fi
 
-    if ! ip route show table 100 | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
-        ip route add local 0.0.0.0/0 dev lo table 100
+    if ! ip route show table "$NF_ROUTE_TABLE" | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
+        ip route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE"
     fi
 
-    log 1 "TPROXY: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=100"
+    log 1 "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE"
 }
 
 nf_table_remove() {
     cleanup_fwmark
     nft flush table ip "$NF_TABLE_NAME" 2>/dev/null || true
     nft delete table ip "$NF_TABLE_NAME" 2>/dev/null || true
-    ip route flush table 100 2>/dev/null || true
+    ip route flush table "$NF_ROUTE_TABLE" 2>/dev/null || true
 
-    log 2 "TPROXY Clash rules and routing were removed" "⚙️"
+    log 2 "Tproxy Clash rules and routing were removed" "⚙️"
 }
 
 # Thx Podkop, feels so annoyed already by shell scripting
@@ -2422,15 +2425,15 @@ diag_nft() {
 
 diag_route() {
     clog 2 "Verifying existence of route rule..."
-    if ! ip rule list | grep -qF "fwmark 0x1 lookup 100"; then
-        clog 0 "Route rule 'ip rule add fwmark ""$NF_TABLE_FWMARK_FINAL"" table 100' is missing!"
+    if ! ip rule list | grep -qF "fwmark 0x1 lookup $NF_ROUTE_TABLE"; then
+        clog 0 "Route rule 'ip rule add fwmark ""$NF_TABLE_FWMARK_FINAL"" table $NF_ROUTE_TABLE' is missing!"
     fi
     ip rule list
 
-    if ! ip route show table 100 | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
-         clog 0 "Route table 100 is incorrect!"
+    if ! ip route show table $NF_ROUTE_TABLE | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
+         clog 0 "Route table $NF_ROUTE_TABLE is incorrect!"
     fi
-    ip route show table 100
+    ip route show table $NF_ROUTE_TABLE
 }
 
 diag_proxy_resolver() {
