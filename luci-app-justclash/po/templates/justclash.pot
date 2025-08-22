@@ -148,7 +148,7 @@ msgstr ""
 msgid "If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware."
 msgstr ""
 
-msgid "Source Network Interface"
+msgid "Source network interface:"
 msgstr ""
 
 msgid "Select the network interface from which the traffic will originate"

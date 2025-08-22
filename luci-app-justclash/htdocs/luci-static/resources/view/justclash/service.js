@@ -72,7 +72,7 @@ return view.extend({
         o.default = "0";
 
         // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source Network Interface"), _("Select the network interface from which the traffic will originate"));
+        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
         o.default = "br-lan";
         o.depends("nft_apply_changes", "1");
         o.noaliases = true;
