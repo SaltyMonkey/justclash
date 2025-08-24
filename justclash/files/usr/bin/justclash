@@ -1548,7 +1548,7 @@ handle_block_rule_section() {
         fi
 
         local line name yamlName behavior format url matched
-        line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
+        line=$(echo "$blocklist_content" | grep -F "|$ruleset|" | head -n 1)
         if [ -n "$line" ]; then
             name=$(echo "$line" | cut -d'|' -f1)
             yamlName=$(echo "$line" | cut -d'|' -f2)
