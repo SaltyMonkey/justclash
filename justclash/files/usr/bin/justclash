@@ -29,7 +29,6 @@ CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/dow
 RULESETS_FILES_URL_PARTIAL="https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main"
 NO_DATA_STRING="N/A"
 
-
 CORE_BIN_NAME="mihomo"
 # Path to Mihomo core
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
@@ -202,6 +201,7 @@ is_pattern_in_file() {
     local file="$1"
 
     if [ ! -r "$file" ]; then
+        log 1 "File $file can't be opened!"
         return 1
     fi
     local found_patterns=""
@@ -1190,26 +1190,12 @@ handle_proxy_section() {
     config_foreach _parse_single_proxy proxies
 
     selectedRuleSets="{${selectedRuleSets%,}}"
+    proxies="[${proxies:-}]"
+    rules_array="[${rules_array:-}]"
+    list_rulesets_names="[${list_rulesets_names:-}]"
+    list_suffix_names="[${list_suffix_names:-}]"
 
-    proxies="[$proxies]"
-
-    if [ -n "$rules_array" ]; then
-        rules="[$rules_array]"
-    else
-        rules="[]"
-    fi
-    if [ -n "$list_rulesets_names" ]; then
-        list_rulesets_names="[$list_rulesets_names]"
-    else
-        list_rulesets_names="[]"
-    fi
-    if [ -n "$list_suffix_names" ]; then
-        list_suffix_names="[$list_suffix_names]"
-    else
-        list_suffix_names="[]"
-    fi
-
-    echo "$rules" > "$file_rules"
+    echo "$rules_array" > "$file_rules"
     echo "$selectedRuleSets" > "$file_rulesets"
     echo "$proxies" > "$file_proxies"
     echo "$list_rulesets_names" > "$file_rulesets_names"
@@ -1436,33 +1422,14 @@ handle_proxy_group_section() {
 
     config_foreach _parse_proxy_group proxy_group
 
-    if [ -n "$proxy_groups_rulesets" ]; then
-        proxy_groups_rulesets="{${proxy_groups_rulesets%,}}"
-    else
-        proxy_groups_rulesets="{}"
-    fi
+    proxy_groups_rulesets="{${proxy_groups_rulesets%,}}"
 
-    if [ -n "$proxy_groups" ]; then
-        proxy_groups="[$proxy_groups]"
-    else
-        proxy_groups="[]"
-    fi
 
-    if [ -n "$rules_array" ]; then
-        rules="[$rules_array]"
-    else
-        rules="[]"
-    fi
-    if [ -n "$list_rulesets_names" ]; then
-        list_rulesets_names="[$list_rulesets_names]"
-    else
-        list_rulesets_names="[]"
-    fi
-    if [ -n "$list_suffix_names" ]; then
-        list_suffix_names="[$list_suffix_names]"
-    else
-        list_suffix_names="[]"
-    fi
+    proxy_groups="[${proxy_groups:-}]"
+    rules="[${rules_array:-}]"
+    list_rulesets_names="[${list_rulesets_names:-}]"
+    list_suffix_names="[${list_suffix_names:-}]"
+
     echo "$rules" > "$file_rules"
     echo "$proxy_groups_rulesets" > "$file_rulesets"
     echo "$proxy_groups" > "$file_proxygroups"
@@ -1521,11 +1488,7 @@ handle_proxy_provider_section() {
 
     config_foreach accumulate_proxy_provider proxy_provider
 
-    if [ -n "$result" ]; then
-        result="{${result%,}}"
-    else
-        result="{}"
-    fi
+    result="{${result%,}}"
 
     echo "$result"
 }
@@ -1574,12 +1537,6 @@ handle_block_rule_section() {
         fi
     done
 
-    if [ -n "$selected_rule_sets" ]; then
-        selected_rule_sets="{${selected_rule_sets%,}}"
-    else
-        selected_rule_sets="{}"
-    fi
-
     local additional_domain_blockroute additional_destip_blockroute
     config_get additional_domain_blockroute block_rules additional_domain_blockroute
     config_get additional_destip_blockroute block_rules additional_destip_blockroute
@@ -1608,11 +1565,8 @@ handle_block_rule_section() {
         }
     done
 
-    if [ -n "$rules_array" ]; then
-        rules="[$rules_array]"
-    else
-        rules="[]"
-    fi
+    selected_rule_sets="{${selected_rule_sets%,}}"
+    rules="[${rules_array:-}]"
 
     echo "$rules" > "$file_rules"
     echo "$selected_rule_sets" > "$file_rulesets"
@@ -1777,35 +1731,21 @@ handle_direct_rule_section() {
         }
     done
 
-    if [ -n "$direct_rulesets" ]; then
-        direct_rulesets="{${direct_rulesets%,}}"
-    else
-        direct_rulesets="{}"
-    fi
+    direct_rulesets="{${direct_rulesets%,}}"
+    rules_array="[${rules_array:-}]"
 
-    local rules
-    if [ -n "$rules_array" ]; then
-        rules="[$rules_array]"
-    else
-        rules="[]"
-    fi
-
-    echo "$rules" > "$file_rules"
+    echo "$rules_array" > "$file_rules"
     echo "$direct_rulesets" > "$file_rulesets"
 }
 
 handle_final_rule_section() {
     local dest
+    local rules
     config_get dest final_rules final_destination
 
     local rule_str=$(printf 'MATCH,%s' "${dest:-$DEFAULT_PROXY}")
 
-    local rules
-    if [ -n "$rule_str" ]; then
-        rules="[\"$rule_str\"]"
-    else
-        rules="[]"
-    fi
+    rules="[\"${rule_str:-}\"]"
 
     echo "$rules"
 }
