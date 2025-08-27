@@ -1043,11 +1043,7 @@ handle_proxy_section() {
             proxy_obj=$(echo "$proxy_obj" | sed "s/^{/{\"name\":\"$name\",/")
         fi
 
-        if [ -z "$proxies" ]; then
-            proxies="$proxy_obj"
-        else
-            proxies="$proxies,$proxy_obj"
-        fi
+        proxies="${proxies:+$proxies,}$proxy_obj"
 
         local added_rulesets="|"
         config_get list "$section" enabled_list
@@ -1066,22 +1062,14 @@ handle_proxy_section() {
                 url=$(echo "$line" | cut -d'|' -f5)
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
                 [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                 selectedRuleSets="${selectedRuleSets}\"$ruleset\":{\"url\":\"$url\",\"behavior\":\"$behavior\",\"format\":\"$format\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
                 added_rulesets="$added_rulesets$ruleset|"
 
                 if [ "$behavior" = "domain" ]; then
-                    if [ -n "$list_rulesets_names" ]; then
-                        list_rulesets_names="$list_rulesets_names,\"rule-set:$ruleset\""
-                    else
-                        list_rulesets_names="\"rule-set:$ruleset\""
-                    fi
+                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
                 fi
             fi
         done
@@ -1106,16 +1094,8 @@ handle_proxy_section() {
                 esac
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
-                if [ -n "$list_rulesets_names" ]; then
-                    list_rulesets_names="$list_rulesets_names,\"rule-set:$rng_name\""
-                else
-                    list_rulesets_names="\"rule-set:$rng_name\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
             fi
         done
 
@@ -1139,11 +1119,7 @@ handle_proxy_section() {
                 esac
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             fi
         done
 
@@ -1151,38 +1127,23 @@ handle_proxy_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             }
         done
         config_get list "$section" additional_domain_route
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
-                if [ -n "$list_suffix_names" ]; then
-                    list_suffix_names="$list_suffix_names,\"+.$val\""
-                else
-                    list_suffix_names="\"+.$val\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+                list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$val\""
+
             }
         done
         config_get list "$section" additional_destip_route
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             }
         done
     }
@@ -1272,11 +1233,7 @@ handle_proxy_group_section() {
         [ -n "$exclude_type" ] && group_json="$group_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
         group_json="$group_json}"
 
-        if [ -z "$proxy_groups" ]; then
-            proxy_groups="$group_json"
-        else
-            proxy_groups="$proxy_groups,$group_json"
-        fi
+        proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
 
         local added_rulesets="|"
         for ruleset in $enabled_list; do
@@ -1297,22 +1254,14 @@ handle_proxy_group_section() {
                 case "$r_name" in \#*) continue ;; esac
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
                 [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                 proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 added_rulesets="$added_rulesets$ruleset|"
 
                 if [ "$behavior" = "domain" ]; then
-                    if [ -n "$list_rulesets_names" ]; then
-                        list_rulesets_names="$list_rulesets_names,\"rule-set:$ruleset\""
-                    else
-                        list_rulesets_names="\"rule-set:$ruleset\""
-                    fi
+                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
                 fi
             fi
         done
@@ -1337,16 +1286,8 @@ handle_proxy_group_section() {
                 esac
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
-                if [ -n "$list_rulesets_names" ]; then
-                    list_rulesets_names="$list_rulesets_names,\"rule-set:$rng_name\""
-                else
-                    list_rulesets_names="\"rule-set:$rng_name\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
             fi
         done
 
@@ -1370,11 +1311,7 @@ handle_proxy_group_section() {
                 esac
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             fi
         done
 
@@ -1382,11 +1319,7 @@ handle_proxy_group_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             }
         done
 
@@ -1394,16 +1327,8 @@ handle_proxy_group_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
-                if [ -n "$list_suffix_names" ]; then
-                    list_suffix_names="$list_suffix_names,\"+.$val\""
-                else
-                    list_suffix_names="\"+.$val\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+                list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$val\""
             }
         done
 
@@ -1411,11 +1336,7 @@ handle_proxy_group_section() {
         for val in $list; do
             [ -n "$val" ] && {
                 local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
-                if [ -n "$rules_array" ]; then
-                    rules_array="$rules_array,\"$rule_str\""
-                else
-                    rules_array="\"$rule_str\""
-                fi
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             }
         done
     }
@@ -1510,7 +1431,7 @@ handle_block_rule_section() {
             continue
         fi
 
-        local line name yamlName behavior format url matched
+        local line name yamlName behavior format url
         line=$(echo "$blocklist_content" | grep -F "|$ruleset|" | head -n 1)
         if [ -n "$line" ]; then
             name=$(echo "$line" | cut -d'|' -f1)
@@ -1522,13 +1443,8 @@ handle_block_rule_section() {
             # shellcheck disable=SC2249
             case "$name" in \#*) continue ;; esac
 
-            matched=1
             local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")  # Без \n
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
             selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$DEFAULT_RULESET_PROXY")\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
             added_blocklists="$added_blocklists$val|"
@@ -1545,11 +1461,7 @@ handle_block_rule_section() {
     for domain_val in $additional_domain_blockroute; do
         [ -n "$domain_val" ] && {
             local rule_str=$(printf 'DOMAIN-SUFFIX,%s,REJECT' "$domain_val")
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
 
@@ -1557,11 +1469,7 @@ handle_block_rule_section() {
     for ip_val in $additional_destip_blockroute; do
         [ -n "$ip_val" ] && {
             local rule_str=$(printf 'IP-CIDR,%s,REJECT' "$ip_val")
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
 
@@ -1608,11 +1516,7 @@ handle_direct_rule_section() {
             case "$r_name" in \#*) continue ;; esac
 
             local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$DEFAULT_RULESET_PROXY")
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
             direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
             added_rulesets="$added_rulesets$ruleset|"
@@ -1636,11 +1540,7 @@ handle_direct_rule_section() {
                 ;;
             esac
             local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" $DEFAULT_RULESET_PROXY)
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         fi
     done
 
@@ -1661,11 +1561,7 @@ handle_direct_rule_section() {
                 ;;
             esac
             local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" $DEFAULT_RULESET_PROXY)
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         fi
     done
 
@@ -1679,55 +1575,35 @@ handle_direct_rule_section() {
     for val in $additional_domain_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$val")  # Без \n
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
 
     for val in $additional_domain_keyword_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-KEYWORD,%s,DIRECT' "$val")
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
 
     for val in $additional_domain_regex_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-REGEX,%s,DIRECT' "$val")
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
 
     for val in $additional_srcip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT' "$val")
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
 
     for val in $additional_destip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'IP-CIDR,%s,DIRECT' "$val")
-            if [ -n "$rules_array" ]; then
-                rules_array="$rules_array,\"$rule_str\""
-            else
-                rules_array="\"$rule_str\""
-            fi
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
 
@@ -1749,7 +1625,6 @@ handle_final_rule_section() {
 
     echo "$rules"
 }
-
 
 core_generate_yaml() {
     local log_level tproxy_port unified_delay
