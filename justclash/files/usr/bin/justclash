@@ -1049,6 +1049,7 @@ handle_proxy_section() {
         config_get list "$section" enabled_list
         for ruleset in $list; do
             if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
+                log 1 "Skipping duplicated ruleset: $ruleset" "⚠️"
                 continue
             fi
 
@@ -1238,6 +1239,7 @@ handle_proxy_group_section() {
         local added_rulesets="|"
         for ruleset in $enabled_list; do
             if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
+                log 1 "Skipping duplicated ruleset: $ruleset" "⚠️"
                 continue
             fi
 
@@ -1428,11 +1430,12 @@ handle_block_rule_section() {
     local val
     for val in $enabled_blocklist; do
         if echo "$added_blocklists" | grep -qF "|$val|"; then
+            log 1 "Skipping duplicated ruleset: $val" "⚠️"
             continue
         fi
 
         local line name yamlName behavior format url
-        line=$(echo "$blocklist_content" | grep -F "|$ruleset|" | head -n 1)
+        line=$(echo "$blocklist_content" | grep -F "|$val|" | head -n 1)
         if [ -n "$line" ]; then
             name=$(echo "$line" | cut -d'|' -f1)
             yamlName=$(echo "$line" | cut -d'|' -f2)
@@ -1500,6 +1503,7 @@ handle_direct_rule_section() {
     local added_rulesets="|"
     for ruleset in $enabled_list; do
         if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
+            log 1 "Skipping duplicated ruleset: $ruleset" "⚠️"
             continue
         fi
 
