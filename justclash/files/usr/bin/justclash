@@ -39,6 +39,7 @@ CORE_WORKDIR_PATH="/tmp/justclash/"
 # Mihomo using directory 'rules' by default in workdir
 # if nothing selected in path fields for rules
 CORE_WORKDIR_RULES_PATH="/tmp/justclash/rules"
+CORE_WORKDIR_UCI_HASH_PATH="/tmp/justclash/uci.hash"
 
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
 DEFAULT_CONFIG_PATH="/etc/default.justclash.config"
@@ -299,14 +300,15 @@ start() {
 
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
-
-    log 2 "Generating yaml configuration..." "📦"
-    core_generate_yaml
-
-    log 2 "Validating yaml configuration..." "📦"
-    core_validate_yaml
     if [ $? = 1 ]; then
-        return 1
+        log 2 "Generating yaml configuration..." "🐱"
+        core_generate_yaml
+
+        log 2 "Validating yaml configuration..." "🐱"
+        core_validate_yaml
+        if [ $? = 1 ]; then
+            return 1
+        fi
     fi
 
     log 2 "Configuring tproxy routing and creating NFTables table" "🔑"
@@ -1005,20 +1007,20 @@ handle_proxy_section() {
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name proxy_link interval defined_as_custom_object proxy_link_object use_proxy_for_list_update list val
+        local name proxy_link interval mode proxy_link_object use_proxy_for_list_update list val
         local domain_list cidr_list
 
         config_get name "$section" name
         config_get proxy_link "$section" proxy_link
         config_get interval "$section" list_update_interval
-        config_get defined_as_custom_object "$section" defined_as_custom_object 0
+        config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
 
         [ -z "$name" ] && { log 1 "Skipping proxy without name: $section" "⚠️"; return; }
 
         local proxy_obj=""
-        if [ "$defined_as_custom_object" -eq 1 ]; then
+        if [ "$mode" = "object" ]; then
             [ -z "$proxy_link_object" ] && { log 1 "Skipping proxy '$name' without proxy_link_object in manual mode" "⚠️" ; return; }
 
             proxy_obj=$(echo "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
@@ -1871,15 +1873,30 @@ rulesets_list_update() {
 }
 
 core_prepare_workdir() {
+    local res=1
+    local current_hash=""
+    local saved_hash=""
+    local mihomo_persistent_temp_files
+
     log 2 "Preparing workdir $CORE_WORKDIR_PATH" "📁"
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
-        [ -f "$OUTPUT_YAML_CONFIG_PATH" ] && rm -f "$OUTPUT_YAML_CONFIG_PATH"
+        if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
+            current_hash=$(uci show justclash | md5sum | awk '{print $1}')
+            saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null || echo "")
+            if [ "$current_hash" != "$saved_hash" ]; then
+                log 2 "Outdated $OUTPUT_YAML_CONFIG_PATH was found. Will be recreated." "🐱"
+                rm -f "$OUTPUT_YAML_CONFIG_PATH"
+                echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
+            else
+                log 2 "Up-to-date $OUTPUT_YAML_CONFIG_PATH was found. Will not be modified." "🐱"
+                res=0
+            fi
+        fi
     else
         mkdir -p "$CORE_WORKDIR_PATH"
     fi
 
-    local mihomo_persistent_temp_files
     config_get mihomo_persistent_temp_files settings mihomo_persistent_temp_files
     if [ "$mihomo_persistent_temp_files" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
         log 2 "Generating symlink $DEFAULT_SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
@@ -1891,6 +1908,8 @@ core_prepare_workdir() {
         rm -rf "$DEFAULT_SYMLINKDIR_RULESETS"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
     fi
+
+    return "$res"
 }
 
 # TODO: Remove impossible archs
@@ -2291,7 +2310,7 @@ diag_proxy_resolver() {
 
 diag_external_resolver() {
     if [ -z "$1" ] || [ -z "$2" ]; then
-        log 1 "Usage: diag_external_resolver <domain> <dnsresolver>"
+        log 1 "Usage: diag_external_resolver <domain> <dns resolver>"
         return 1
     fi
     local target="$1"
