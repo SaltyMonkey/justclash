@@ -10,6 +10,7 @@ return baseclass.extend({
     genNameProxyPrefix: "proxy",
     genNameProxyProviderPrefix: "provider",
     logsCount: "800",
+    defaultProxiesModes: ["object", "uri"],
     genNameProxyGroupPrefix: "proxygroup",
     defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",

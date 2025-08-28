@@ -61,16 +61,19 @@ return view.extend({
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
-        o = s.taboption(tabname, form.Flag, "defined_as_custom_object", _("Object mode:"));
+        o = s.taboption(tabname, form.ListValue, "mode", _("Mode:"));
         o.description = _("If selected, allow to define proxy as JSON object.");
+        common.defaultProxiesModes.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
         o.rmempty = false;
-        o.default = "0";
+        o.default = common.defaultProxiesModes[1];
 
         o = s.taboption(tabname, form.TextValue, "proxy_link_object", _("JSON object:"));
         o.description = _("JSON object with connection parameters.");
         o.rows = 10;
         o.optional = true;
-        o.depends("defined_as_custom_object", "1");
+        o.depends("mode", "object");
         o.validate = function (section_id, value) {
             //if (!value || value.length === 0) return true;
             try {
@@ -89,14 +92,14 @@ return view.extend({
             }
         };
 
-        o = s.taboption(tabname, form.Value, "proxy_link", _("URI mode:"));
+        o = s.taboption(tabname, form.Value, "proxy_link_uri", _("URI mode:"));
         o.description = _("URI link with connection parameters.");
         o.password = true;
         o.optional = true;
         o.validate = function (section_id, value) {
             return (common.isValidProxyLink(value)) ? true : _("Invalid link.");
         };
-        o.depends("defined_as_custom_object", "0");
+        o.depends("mode", "uri");
 
         tabname = "proxieslists_tab";
         s.tab(tabname, _("Rules"));
