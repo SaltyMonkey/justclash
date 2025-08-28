@@ -1007,11 +1007,11 @@ handle_proxy_section() {
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name proxy_link interval mode proxy_link_object use_proxy_for_list_update list val
+        local name proxy_link_uri interval mode proxy_link_object use_proxy_for_list_update list val
         local domain_list cidr_list
 
         config_get name "$section" name
-        config_get proxy_link "$section" proxy_link
+        config_get proxy_link_uri "$section" proxy_link_uri
         config_get interval "$section" list_update_interval
         config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
@@ -1027,20 +1027,20 @@ handle_proxy_section() {
 
             [ -z "$proxy_obj" ] && { log 1 "Failed to process proxy_link_object for '$name'" "⚠️"; return; }
         else
-            [ -z "$proxy_link" ] && { log 1  "Skipping proxy '$name' without proxy_link" "⚠️"; return; }
+            [ -z "$proxy_link_uri" ] && { log 1  "Skipping proxy '$name' without proxy_link" "⚠️"; return; }
 
-            proxy_link=$(echo "$proxy_link" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            proxy_link_uri=$(echo "$proxy_link_uri" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
             [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
 
-            case "$proxy_link" in
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link") ;;
-                socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link") ;;
-                *) log 1 "Unknown proxy_link: $proxy_link" "⚠️"; return ;;
+            case "$proxy_link_uri" in
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri") ;;
+                socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri") ;;
+                *) log 1 "Unknown proxy_link_uri type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
-            [ -z "$proxy_obj" ] && { log 1 "Failed to parse proxy_link: $proxy_link" "⚠️"; return; }
+            [ -z "$proxy_obj" ] && { log 1 "Failed to parse proxy_link_uri: $proxy_link_uri" "⚠️"; return; }
 
             proxy_obj=$(echo "$proxy_obj" | sed "s/^{/{\"name\":\"$name\",/")
         fi
