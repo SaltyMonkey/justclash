@@ -1,3 +1,25 @@
+## [0.1.0] - 29082025
+
+- Service: nf tables optimization
+- Service: Fix non working tproxy_input_interfaces option
+- Service: Refactor UCI settings options naming
+- Service: Refactor code
+- Service: Optimize delays for start/restart (speedup load process)
+- Service: Optimize internal checks in code
+- Service: Added tproxy_excluded_ip for nf tables reject
+- Service: Fix block_rule_section_handler
+- Service: Added skip for config.yaml rebuild if possible
+- Service: Improve diagnostic function with more data being shown
+- Service: Fix broken fakeip dns server check in diagnostic
+- Service: Fix broken service autostart check in diagnostic
+- Service: Added warnings for incorrect custom cidr/domain lists parsers
+- LuCI: Update form elements for refactored UCI options
+- LuCI: Simplification for Status page code
+- LuCI: Better visuals for Status page start button
+
+This version requires:
+- UCI config must be reset
+
 ## [0.0.89] - 18082025
 
 - LuCI: Fix typo
