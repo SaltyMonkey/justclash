@@ -244,7 +244,6 @@ ntp_force_sync() {
     sleep 2
 }
 
-
 compat_fixes() {
     if ! command -v lsmod >/dev/null 2>&1; then
         log 1 "lsmod is missing. Can't check for kernel modules" "⚠️"
@@ -2401,7 +2400,7 @@ $(diag_icmp "$DIAG_IP_CHECK_PING_YANDEX" 2)
 $(diag_icmp "$DIAG_IP_CHECK_PING_GOOGLE" 2)
 
 -> DNS resolve $DIAG_RESOLVE_URL_YANDEX with proxy:
-$(diag_proxy_resolver "$DIAG_IP_CHECK_PING_YANDEX")
+$(diag_proxy_resolver "$DIAG_RESOLVE_URL_YANDEX")
 
 -> DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_YANDEX:
 $(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_YANDEX")
