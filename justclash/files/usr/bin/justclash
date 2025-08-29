@@ -2358,11 +2358,10 @@ diag_icmp() {
 diag_report() {
     local running autoload pkg_manager
     running=$(service justclash status)
-    service justclash enabled
-    if [ "$?" -eq 0 ]; then
-        echo "yes"
+    if service justclash enabled; then
+        autoload="yes"
     else
-        echo "no"
+        autoload="no"
     fi
     if command -v apk >/dev/null 2>&1; then
         pkg_manager="APK"
@@ -2414,7 +2413,7 @@ $(if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "Zapret detected."; else echo "No
 -> ByeDPI:
 $(if [ -f "$BYEDPI_FILEPATH" ]; then echo "ByeDPI detected."; else echo "No ByeDPI installed."; fi)
 
--> YouubeUnblock:
+-> YoutubeUnblock:
 $(if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "YoutubeUnblock detected."; else echo "No YoutubeUnblock installed."; fi)
 
 -> DHCP config:
