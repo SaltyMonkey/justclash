@@ -31,13 +31,11 @@ stop_service() {
 
 reload_service() {
     stop
-    sleep 1
     start
 }
 
 restart() {
     stop
-    sleep 1
     start
 }
 

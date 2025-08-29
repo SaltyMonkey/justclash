@@ -358,7 +358,7 @@ start_core() {
                 exit "$exit_code"
             fi
 
-            sleep 5
+            sleep 2
         done
     else
         "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
