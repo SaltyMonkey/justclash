@@ -278,6 +278,8 @@ core_validate_yaml() {
 }
 
 start() {
+    local skip_environment_checks
+
     log 2 "Initializing Justclash service..." "⏳"
 
     if [ ! -f "$CORE_PATH" ]; then
@@ -285,27 +287,30 @@ start() {
         return 1
     fi
 
-    log 2 "Checking for conflicts" "🐞"
-    check_for_conflicts
+    config_get_bool skip_environment_checks settings skip_environment_checks 1
+    if [ "$skip_environment_checks" -eq 1 ]; then
+        log 2 "Checking for conflicts" "🐞"
+        check_for_conflicts
 
-    log 2 "Checking for non critical conflicts" "🐞"
-    check_for_conflicts_warn
+        log 2 "Checking for non critical conflicts" "🐞"
+        check_for_conflicts_warn
 
-    log 2 "Fixing known compatibility problems" "🔑"
-    compat_fixes
+        log 2 "Fixing known compatibility problems" "🔑"
+        compat_fixes
+    fi
 
     log 2 "Synchronizing system time" "🕒"
     ntp_force_sync
 
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
-    if [ $? = 1 ]; then
+    if [ $? -eq 1 ]; then
         log 2 "Generating yaml configuration..." "🐱"
         core_generate_yaml
 
         log 2 "Validating yaml configuration..." "🐱"
         core_validate_yaml
-        if [ $? = 1 ]; then
+        if [ $? -eq 1 ]; then
             return 1
         fi
     fi
@@ -399,6 +404,11 @@ nf_table_add() {
     local tproxy_excluded_ips=""
 
     config_get nft_apply_changes settings nft_apply_changes
+
+    if [ "$nft_apply_changes" = "0" ]; then
+        return 0
+    fi
+
     config_get tproxy_port proxy tproxy_port
     config_get fake_ip_range proxy fake_ip_range
     config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
@@ -409,10 +419,6 @@ nf_table_add() {
     config_get tproxy_excluded_ips settings tproxy_excluded_ips ""
 
     tproxy_excluded_ips=$(echo "$tproxy_excluded_ips" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | sed 's/[[:space:]]\+/, /g')
-
-    if [ "$nft_apply_changes" = "0" ]; then
-        return 0
-    fi
 
     [ -z "$tproxy_port" ] && panic "tproxy_port not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range not set"
@@ -524,11 +530,11 @@ save_dnsmasq_config() {
 
 dnsmasq_add() {
     local dns_listen_port dnsmasq_apply_changes
-    config_get dns_listen_port proxy dns_listen_port
+
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
-
+        config_get dns_listen_port proxy dns_listen_port
         uci -q delete dhcp.@dnsmasq[0].justclash_server
         for server in $(uci get dhcp.@dnsmasq[0].server 2>/dev/null); do
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
@@ -558,7 +564,6 @@ dnsmasq_add() {
 
 dnsmasq_remove() {
     local dns_listen_port
-    config_get dns_listen_port proxy dns_listen_port
     local dnsmasq_apply_changes
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
@@ -567,6 +572,7 @@ dnsmasq_remove() {
     local server
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
+        config_get dns_listen_port proxy dns_listen_port
         bak_cachesize=$(uci get dhcp.@dnsmasq[0].justclash_cachesize 2>/dev/null)
         if [ -z "$bak_cachesize" ]; then
             log 1 "dnsmasq revert: cachesize is unset"
