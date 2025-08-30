@@ -27,6 +27,11 @@ return view.extend({
         o.rmempty = true;
         o.description = _("Delay timeout value in seconds.");
 
+        o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
+        o.description = _("If enabled, minor checks will be disabled at start.");
+        o.rmempty = false;
+        o.default = "0";
+
         o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Persistent temp files:"));
         o.description = _("If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!");
         o.rmempty = false;
