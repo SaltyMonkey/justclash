@@ -287,8 +287,8 @@ start() {
         return 1
     fi
 
-    config_get_bool skip_environment_checks settings skip_environment_checks 1
-    if [ "$skip_environment_checks" -eq 1 ]; then
+    config_get_bool skip_environment_checks settings skip_environment_checks 0
+    if [ "$skip_environment_checks" -eq 0 ]; then
         log 2 "Checking for conflicts" "🐞"
         check_for_conflicts
 

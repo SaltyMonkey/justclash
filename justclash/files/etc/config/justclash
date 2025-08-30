@@ -1,7 +1,7 @@
 config main 'settings'
     option delayed_boot '0'
     option delayed_boot_value '10'
-    option skip_environment_checks '1'
+    option skip_environment_checks '0'
     option mihomo_persistent_temp_files '0'
     option ntpd_start '1'
     option dnsmasq_apply_changes '1'
