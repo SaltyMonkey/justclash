@@ -456,9 +456,7 @@ nf_table_add() {
         [ "$nft_block_ntp" = "1" ] && selected_ports=$selected_ports"123,"
         selected_ports="${selected_ports%,}"
 
-        if [ -n "$selected_ports" ]; then
-            nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $selected_ports } drop
-        fi
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $selected_ports } drop
     fi
 
     if [ "$nft_block_dot" = "1" ]; then
@@ -475,13 +473,8 @@ nf_table_add() {
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip saddr { $tproxy_excluded_ips } meta l4proto { tcp, udp } return
     fi
 
-    # Маркируем fake IP для br-lan
-    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
-
-    # Маркируем остальной трафик TCP и UDP с br-lan
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
 
-    # tproxy только для трафика с br-lan и нужной меткой
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     # --- output ---
