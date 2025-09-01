@@ -863,7 +863,7 @@ parse_trojan_url() {
             insecure|allowInsecure) [ "$v" = "1" ] && insecure=1 ;;
             type) net="$v" ;;
             fp|client-fingerprint) fp="$v" ;;
-            alpn) alpn="$v" ;;
+            alpn) alpn="$(url_decode "$v")" ;;
             path)
                 if [ -n "$v" ]; then
                     ws_path="$(url_decode "$v")"
@@ -922,7 +922,7 @@ parse_vless_url() {
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
     local net="tcp" sec="" sni="" fp="" alpn="" flow=""
-    local pbk="" sid="" spx="" sn=""
+    local pbk="" sid="" spx="" sn="" enc=""
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -938,9 +938,10 @@ parse_vless_url() {
         case "$k" in
             type) net="$v" ;;
             security) sec="$v" ;;
+            encryption) enc="$v" ;;
             sni|host) sni="$(url_decode "$v")" ;;
             fp) fp="$v" ;;
-            alpn) alpn="$v" ;;
+            alpn) alpn="$(url_decode "$v")" ;;
             flow) flow="$v" ;;
             pbk) pbk="$v" ;;
             sid) sid="$v" ;;
@@ -954,7 +955,7 @@ parse_vless_url() {
         esac
     done
 
-    local json="{\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"none\",\"network\":\"$net\",\"udp\":true"
+    local json="{\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
 
     if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
         json="$json,\"tls\":true"
