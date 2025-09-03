@@ -38,7 +38,7 @@ return view.extend({
         };
     },
     render(result) {
-        let m, s, s2, spp, s3, s4, s5, o, tabname;
+        let m, s, s2, spp, s3, s4, s5, o, optionFinal, tabname;
 
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
@@ -450,7 +450,7 @@ return view.extend({
             return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
         };
 
-        o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy:"));
+        o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy-group:"));
         o.description = _("If selected, RULE-SET lists will be updated through proxy group.");
         o.optional = true;
         o.default = "0";
@@ -621,12 +621,12 @@ return view.extend({
         tabname = "finalbasic_tab";
         s5.tab(tabname, _("Basic"));
 
-        o = s5.taboption(tabname, form.Value, "final_destination", _("Destination:"));
-        o.value("DIRECT", "DIRECT");
-        o.value("REJECT", "REJECT");
-        o.default = common.defaultRuleSetProxy;
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
+        optionFinal = s5.taboption(tabname, form.Value, "final_destination", _("Destination:"));
+        optionFinal.value("DIRECT", "DIRECT");
+        optionFinal.value("REJECT", "REJECT");
+        optionFinal.default = common.defaultRuleSetProxy;
+        optionFinal.rmempty = false;
+        optionFinal.validate = function (section_id, value) {
             if (!value || value.trim().length === 0) {
                 return _("This field cannot be empty");
             }

@@ -580,6 +580,9 @@ msgstr "Интервал обновления списка:"
 msgid "Predefined RULE-SET lists, select those which you want to route through proxy-group."
 msgstr "Предустановленные списки RULE-SET, выберите те, которые хотите направлять через прокси-группу."
 
+msgid "Get lists through proxy-group:"
+msgstr "Получать списки через группу прокси:"
+
 msgid "DIRECT rules:"
 msgstr "Правила DIRECT:"
 
