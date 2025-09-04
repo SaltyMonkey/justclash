@@ -37,6 +37,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mixed_port", _("Mixed port:"));
         o.description = _("Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols.");
+        o.depends("use_mixed_port", "1");
         o.datatype = "port";
         o.rmempty = false;
 
