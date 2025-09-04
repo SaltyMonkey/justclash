@@ -1635,11 +1635,12 @@ handle_final_rule_section() {
 
 core_generate_yaml() {
     local log_level tproxy_port unified_delay
+    local use_mixed_port mixed_port
     local tcp_concurrent external_controller_port global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_hosts use_system_hosts fake_ip_filter_mode fake_ip_range dns_cache_max_size
-    local etag_support global_ua #mixed_port
+    local etag_support global_ua
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver custom_fake_ip_domains ignore_fake_ip_domains ignore_to_sniff_domains
     local rules_proxies rules_proxygroups rules_block rule_final rules_direct
     local proxies proxy_groups rule_providers proxy_providers names_suffixes_proxy_groups names_suffixes_proxies names_rulesets_proxy_groups names_rulesets_proxies
@@ -1650,6 +1651,8 @@ core_generate_yaml() {
 
     config_get log_level proxy log_level
     config_get tproxy_port proxy tproxy_port
+    config_get use_mixed_port proxy use_mixed_port
+    config_get mixed_port proxy mixed_port
     config_get_bool unified_delay proxy unified_delay
     unified_delay=$(ucibool_to_yaml_bool "$unified_delay")
     config_get_bool tcp_concurrent proxy tcp_concurrent
@@ -1771,7 +1774,17 @@ core_generate_yaml() {
         '($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
     )
 
-    cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
+    # Support for mixed port
+    # Make sure call for this function handled after 'core_prepare_workdir' since file must be removed
+    if [ "$use_mixed_port" -eq 1 ]; then
+        cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
+allow-lan: true
+mixed-port: $mixed_port
+
+EOF
+    fi
+
+    cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
 ipv6: false
 log-level: $log_level
