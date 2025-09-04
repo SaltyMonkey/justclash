@@ -244,8 +244,14 @@ msgstr "Уровень оповещений в ядре Mihomo."
 msgid "Tproxy port:"
 msgstr "Порт TProxy:"
 
-msgid "Mihomo TProxy port for incoming traffic from user networks."
-msgstr "Порт Mihomo TProxy для входящего трафика из пользовательских сетей."
+msgid "Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic."
+msgstr "Порт прослушивания прозрачного прокси Mihomo (TPROXY) для перенаправленного TCP/UDP-трафика."
+
+msgid "Enable mixed port to allow incoming connections supporting both HTTP(S) and SOCKS5 protocols."
+msgstr "Включить смешанный порт для разрешения входящих соединений, поддерживающих протоколы HTTP(S) и SOCKS5."
+
+msgid "Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols."
+msgstr "Смешанный порт Mihomo для обработки входящего трафика с поддержкой протоколов HTTP(S) и SOCKS5."
 
 msgid "Unified delay:"
 msgstr "Унифицированная задержка:"

@@ -244,7 +244,13 @@ msgstr ""
 msgid "Tproxy port:"
 msgstr ""
 
-msgid "Mihomo TProxy port for incoming traffic from user networks."
+msgid "Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic."
+msgstr ""
+
+msgid "Enable mixed port to allow incoming connections supporting both HTTP(S) and SOCKS5 protocols."
+msgstr ""
+
+msgid "Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols."
 msgstr ""
 
 msgid "Unified delay:"

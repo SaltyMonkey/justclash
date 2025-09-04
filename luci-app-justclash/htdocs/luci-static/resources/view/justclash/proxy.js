@@ -26,7 +26,17 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "tproxy_port", _("Tproxy port:"));
-        o.description = _("Mihomo TProxy port for incoming traffic from user networks.");
+        o.description = _("Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic.");
+        o.datatype = "port";
+        o.rmempty = false;
+
+        o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable mixed port:"));
+        o.description = _("Enable mixed port to allow incoming connections supporting both HTTP(S) and SOCKS5 protocols.");
+        o.default = "0";
+        o.rmempty = false;
+
+        o = s.taboption(tabname, form.Value, "mixed_port", _("Mixed port:"));
+        o.description = _("Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols.");
         o.datatype = "port";
         o.rmempty = false;
 
