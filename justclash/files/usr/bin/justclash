@@ -55,11 +55,18 @@ DEFAULT_HEALTHCHECK_INTERVAL=360
 DEFAULT_PROVIDERUPDATE_INTERVAL=7200
 DEFAULT_HEALTHCHECK_TIMEOUT=5000
 DEFAULT_RULESET_INTERVAL="86500"
-DEFAULT_TLS_PORT="443"
-DEFAULT_SOCKS_PORT="1080"
 DEFAULT_HEALTHCHECK_URL="http://www.gstatic.com/generate_204"
 DEFAULT_HEALTHCHECK_RESULT=204
 DEFAULT_INPUT_INTERFACE="br-lan"
+
+DEFAULT_TLS_PORT=443
+DEFAULT_SECONDARY_TLS_PORT=8443
+DEFAULT_HTTP_PORT=80
+DEFAULT_SECONDARY_HTTP_PORT_RANGE=8080
+DEFAULT_SECONDARY_HTTP_PORT_RANGE_END=8880
+DEFAULT_SOCKS_PORT=1080
+DEFAULT_DOT_PORT=853
+DEFAULT_NTP_PORT=123
 
 CORE_RESTART_MAX_RETRIES=3
 
@@ -78,16 +85,10 @@ NF_ROUTE_TABLE=100
 # 193.232.128.6   — ntp3.stratum2.ru (Russian NTP server)
 # 216.239.35.0    — time.google.com (Google NTP)
 NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
-# String for nft tables
-# Allow traffic on:
-# LAN interfaces (lan*)
-# bridge interface (br-lan)
-#ALLOWED_INTERFACES='{ lan*, br-lan }'
-# List of conflicting packages:
-# podkop (custom proxy)
-# and https-dns-proxy (DNS over HTTPS proxy)
+
 CONFLICTED_PACKAGES="banip mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy"
 CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
+
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
@@ -451,16 +452,16 @@ nf_table_add() {
 
     if [ "$nft_block_quic" = "1" ] || [ "$nft_block_dot_quic" = "1" ] || [ "$nft_block_ntp" = 1 ]; then
         local selected_ports=""
-        [ "$nft_block_quic" = "1" ] && selected_ports=$selected_ports"443,"
-        [ "$nft_block_dot_quic" = "1" ] && selected_ports=$selected_ports"853,"
-        [ "$nft_block_ntp" = "1" ] && selected_ports=$selected_ports"123,"
+        [ "$nft_block_quic" = "1" ] && selected_ports=$selected_ports"$DEFAULT_TLS_PORT,"
+        [ "$nft_block_dot_quic" = "1" ] && selected_ports=$selected_ports"$DEFAULT_DOT_PORT,"
+        [ "$nft_block_ntp" = "1" ] && selected_ports=$selected_ports"$DEFAULT_NTP_PORT,"
         selected_ports="${selected_ports%,}"
 
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $selected_ports } drop
     fi
 
     if [ "$nft_block_dot" = "1" ]; then
-        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport 853 drop
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport $DEFAULT_DOT_PORT drop
     fi
 
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
@@ -754,7 +755,7 @@ parse_ss_url() {
 
     server="${hostport%%:*}"
     port="${hostport##*:}"
-    [ "$server" = "$port" ] && port=1080  # Дефолт для SS
+    [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
 
     # Парсинг query (например, для plugin)
     local temp_query="$query_part"
@@ -915,7 +916,7 @@ parse_vless_url() {
     local host="${hostport%%\?*}"
     local server="${host%%:*}"
     local port="${host##*:}"
-    [ "$server" = "$port" ] && port=443
+    [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
 
     local query_part=""
     # shellcheck disable=SC2249
@@ -1462,9 +1463,8 @@ handle_block_rule_section() {
     done
 
     local additional_domain_blockroute additional_destip_blockroute
-    config_get additional_domain_blockroute block_rules additional_domain_blockroute
-    config_get additional_destip_blockroute block_rules additional_destip_blockroute
 
+    config_get additional_domain_blockroute block_rules additional_domain_blockroute
     local domain_val
     for domain_val in $additional_domain_blockroute; do
         [ -n "$domain_val" ] && {
@@ -1473,6 +1473,7 @@ handle_block_rule_section() {
         }
     done
 
+    config_get additional_destip_blockroute block_rules additional_destip_blockroute
     local ip_val
     for ip_val in $additional_destip_blockroute; do
         [ -n "$ip_val" ] && {
@@ -1577,11 +1578,6 @@ handle_direct_rule_section() {
     done
 
     config_get additional_domain_direct direct_rules additional_domain_direct
-    config_get additional_domain_keyword_direct direct_rules additional_domain_keyword_direct
-    config_get additional_domain_regex_direct direct_rules additional_domain_regex_direct
-    config_get additional_srcip_direct direct_rules additional_srcip_direct
-    config_get additional_destip_direct direct_rules additional_destip_direct
-
     local val
     for val in $additional_domain_direct; do
         [ -n "$val" ] && {
@@ -1590,6 +1586,7 @@ handle_direct_rule_section() {
         }
     done
 
+    config_get additional_domain_keyword_direct direct_rules additional_domain_keyword_direct
     for val in $additional_domain_keyword_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-KEYWORD,%s,DIRECT' "$val")
@@ -1597,6 +1594,7 @@ handle_direct_rule_section() {
         }
     done
 
+    config_get additional_domain_regex_direct direct_rules additional_domain_regex_direct
     for val in $additional_domain_regex_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-REGEX,%s,DIRECT' "$val")
@@ -1604,6 +1602,7 @@ handle_direct_rule_section() {
         }
     done
 
+    config_get additional_srcip_direct direct_rules additional_srcip_direct
     for val in $additional_srcip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT' "$val")
@@ -1611,6 +1610,7 @@ handle_direct_rule_section() {
         }
     done
 
+    config_get additional_destip_direct direct_rules additional_destip_direct
     for val in $additional_destip_direct; do
         [ -n "$val" ] && {
             local rule_str=$(printf 'IP-CIDR,%s,DIRECT' "$val")
@@ -1827,12 +1827,12 @@ sniffer:
   parse-pure-ip: true
   sniff:
     HTTP:
-      ports: [80, 8080-8880]
+      ports: [$DEFAULT_HTTP_PORT, $DEFAULT_SECONDARY_HTTP_PORT_RANGE-$DEFAULT_SECONDARY_HTTP_PORT_RANGE_END]
       override-destination: true
     TLS:
-      ports: [443, 8443]
+      ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]
     QUIC:
-      ports: [443, 8443]
+      ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]
   skip-domain: $ignore_to_sniff_domains
 
 proxies: $proxies
@@ -2010,7 +2010,6 @@ core_update() {
     local cur_ver latest_ver tmp mihomo_update_channel mihomo_cron_update_telegram_notify
     local check_url check_url_type download_url
     config_get mihomo_update_channel settings mihomo_update_channel
-    config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
 
     log 2 "Checking for Mihomo updates..." "🔄"
 
@@ -2052,6 +2051,7 @@ core_update() {
        return 1
     fi
 
+    config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
         core_download "$download_url" "$latest_ver"
