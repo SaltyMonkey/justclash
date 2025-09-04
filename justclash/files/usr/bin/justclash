@@ -95,6 +95,9 @@ ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 
+PKG_LIST_COMMAND=""
+command -v apk >/dev/null 2>&1 && PKG_LIST_COMMAND="apk info" || PKG_LIST_COMMAND="opkg list-installed"
+
 ucibool_to_yesno() {
     case "$1" in
         1) echo "Yes" ;;
@@ -172,16 +175,9 @@ log() {
 
 is_package_installed() {
     local found_pkgs=""
-    local pkgcommand=""
-
-    if command -v apk >/dev/null 2>&1; then
-        pkgcommand="apk info"
-    else
-        pkgcommand="opkg list-installed"
-    fi
 
     for pkg in "$@"; do
-        if $pkgcommand | grep -qw "$pkg"; then
+        if $PKG_LIST_COMMAND | grep -qw "$pkg"; then
             found_pkgs="${found_pkgs:+$found_pkgs }$pkg"
         fi
     done
@@ -2356,17 +2352,12 @@ diag_icmp() {
 }
 
 diag_report() {
-    local running autoload pkg_manager
+    local running autoload
     running=$(service justclash status)
     if service justclash enabled; then
         autoload="yes"
     else
         autoload="no"
-    fi
-    if command -v apk >/dev/null 2>&1; then
-        pkg_manager="APK"
-    else
-        pkg_manager="OPKG"
     fi
 
 cat <<EOF
@@ -2380,7 +2371,6 @@ OpenWRT: $(info_openwrt)
 Service: $(info_package)
 LuCi:    $(info_luci)
 Mihomo:  $(info_mihomo)
-Pkg:     $pkg_manager
 
 -> Status:
 Active:  $running
