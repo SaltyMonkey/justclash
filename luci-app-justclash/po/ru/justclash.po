@@ -112,6 +112,15 @@ msgstr "Запуск сервиса"
 msgid "Delayed boot:"
 msgstr "Отложенный старт:"
 
+msgid "Delayed boot timeout:"
+msgstr "Таймаут отложенной загрузки:"
+
+msgid "Skip environment checks:"
+msgstr "Пропустить проверки окружения:"
+
+msgid "Persistent temp files:"
+msgstr "Постоянные временные файлы:"
+
 msgid "If enabled, the service start will be delayed at router boot."
 msgstr "Если включено, сервис будет загружен с задержкой после включения роутера."
 

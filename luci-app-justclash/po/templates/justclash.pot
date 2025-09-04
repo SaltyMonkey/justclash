@@ -112,6 +112,15 @@ msgstr ""
 msgid "Delayed boot:"
 msgstr ""
 
+msgid "Delayed boot timeout:"
+msgstr ""
+
+msgid "Skip environment checks:"
+msgstr ""
+
+msgid "Persistent temp files:"
+msgstr ""
+
 msgid "If enabled, the service start will be delayed at router boot."
 msgstr ""
 
