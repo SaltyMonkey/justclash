@@ -12,7 +12,7 @@ return view.extend({
         m = new form.Map(common.binName);
         s = m.section(form.NamedSection, "settings");
 
-        tabname = "serviceautomation_tab";
+        tabname = "servicebasic_tab";
         s.tab(tabname, _("Basic settings"));
 
         o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
@@ -104,6 +104,7 @@ return view.extend({
         o = s.taboption(tabname, form.DynamicList, "tproxy_excluded_ips", _("Exclude IP from tproxy:"));
         o.description = _("Each element is IPv4 to exclude from tproxy access.");
         o.rmempty = false;
+        o.depends("nft_apply_changes", "1");
         o.placeholder = "192.168.31.123";
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -113,7 +114,7 @@ return view.extend({
             return (common.isValidIpv4(value));
         };
 
-        tabname = "coreautomation_tab";
+        tabname = "serviceautomation_tab";
         s.tab(tabname, _("Tasks"));
 
         o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
