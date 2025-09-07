@@ -1639,7 +1639,7 @@ core_generate_yaml() {
     local tcp_concurrent external_controller_port global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
-    local dns_listen_port use_hosts use_system_hosts fake_ip_filter_mode fake_ip_range dns_cache_max_size
+    local dns_listen_port use_system_hosts fake_ip_filter_mode fake_ip_range dns_cache_max_size
     local etag_support global_ua
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver custom_fake_ip_domains ignore_fake_ip_domains ignore_to_sniff_domains
     local rules_proxies rules_proxygroups rules_block rule_final rules_direct
@@ -1818,7 +1818,7 @@ dns:
   enable: true
   listen: 127.0.0.1:$dns_listen_port
   ipv6: false
-  use-hosts: $use_hosts
+  use-hosts: false
   use-system-hosts: $use_system_hosts
   enhanced-mode: fake-ip
   fake-ip-range: $fake_ip_range
