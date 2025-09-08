@@ -96,11 +96,6 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.DynamicList, "ignore_to_sniff_domains", _("Excluded from sniffer domains:"));
-        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
-        o.rmempty = false;
-        o.editable = true;
-
         tabname = "dnssettings_tab";
         s.tab(tabname, _("DNS settings"));
 
@@ -191,6 +186,39 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
         o.depends("fake_ip_filter_mode", "blacklist");
+
+        tabname = "sniffersettings_tab";
+        s.tab(tabname, _("Sniffer settings"));
+
+        o = s.taboption(tabname, form.Flag, "sniffer_enable", _("Enable sniffer:"));
+        o.description = _("Enable sniffer in proxy.");
+        o.rmempty = false;
+        o.default = "1";
+
+        o = s.taboption(tabname, form.Flag, "sniffer_parse_pure_ip", _("Parse pure ip:"));
+        o.description = _("Parse pure ip in sniffer.");
+        o.rmempty = false;
+        o.default = "1";
+
+        o = s.taboption(tabname, form.DynamicList, "sniffer_skip_domain", _("Excluded from sniffer domains:"));
+        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o.rmempty = false;
+        o.editable = true;
+
+        o = s.taboption(tabname, form.DynamicList, "sniffer_force_domain", _("Forcefully sniff domains:"));
+        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o.rmempty = false;
+        o.editable = true;
+
+        o = s.taboption(tabname, form.DynamicList, "sniffer_skip_src_address", _("Exclude from sniffer SRC CIDR traffic:"));
+        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o.rmempty = false;
+        o.editable = true;
+
+        o = s.taboption(tabname, form.DynamicList, "sniffer_skip_dst_address", _("Exclude from sniffer DST CIDR traffic:"));
+        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o.rmempty = false;
+        o.editable = true;
 
         tabname = "ntpsettings_tab";
         s.tab(tabname, _("NTP settings"));
