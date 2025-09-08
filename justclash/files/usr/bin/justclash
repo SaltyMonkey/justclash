@@ -1809,7 +1809,6 @@ keep-alive-interval: $keep_alive_interval
 profile:
   store-selected: $profile_store_selected
   store-fake-ip: $profile_store_fake_ip
-  tracing: false
 
 ntp:
   enable: $core_ntp_enabled
