@@ -1075,19 +1075,20 @@ handle_proxy_section() {
 
         config_get domain_list "$section" custom_enabled_domain_list
         for line in $domain_list; do
-            if [ -n "$line" ]; then
-                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
-                case "$line" in
+            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            if [ -n "$clean_line" ]; then
+                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$line" ]; then
+                    if [ -f "$clean_line" ]; then
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom domain list: $line" "⚠️"
+                        log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -1101,19 +1102,20 @@ handle_proxy_section() {
 
         config_get cidr_list "$section" custom_enabled_cidr_list
         for line in $cidr_list; do
-            if [ -n "$line" ]; then
-                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
-                case "$line" in
+            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            if [ -n "$clean_line" ]; then
+                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$line" ]; then
+                    if [ -f "$clean_line" ]; then
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom cidr list: $line" "⚠️"
+                        log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -1180,7 +1182,7 @@ handle_proxy_group_section() {
     # shellcheck disable=SC2317  # Called via config_foreach
     _parse_proxy_group() {
         local section="$1"
-        local name;
+        local name
         local proxies_list providers_list group_type strategy check_url interval check_timeout tolerance
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
@@ -1270,19 +1272,20 @@ handle_proxy_group_section() {
 
         config_get domain_list "$section" custom_enabled_domain_list
         for line in $domain_list; do
-            if [ -n "$line" ]; then
-                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
-                case "$line" in
+            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            if [ -n "$clean_line" ]; then
+                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$line" ]; then
+                    if [ -f "$clean_line" ]; then
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom domain list: $line" "⚠️"
+                        log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -1296,19 +1299,20 @@ handle_proxy_group_section() {
 
         config_get cidr_list "$section" custom_enabled_cidr_list
         for line in $cidr_list; do
-            if [ -n "$line" ]; then
-                local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
-                case "$line" in
+            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            if [ -n "$clean_line" ]; then
+                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$line" ]; then
+                    if [ -f "$clean_line" ]; then
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom cidr list: $line" "⚠️"
+                        log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
