@@ -15,6 +15,44 @@ return view.extend({
         tabname = "servicebasic_tab";
         s.tab(tabname, _("Basic settings"));
 
+       // copypasted from Podkop devs
+        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
+        o.default = "br-lan";
+        o.depends("nft_apply_changes", "1");
+        o.noaliases = true;
+        o.nobridges = false;
+        o.noinactive = false;
+        o.multiple = true;
+        o.filter = function (section_id, value) {
+            if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
+                return false;
+            }
+
+            var device = this.devices.filter(function (dev) {
+                return dev.getName() === value;
+            })[0];
+
+            if (device) {
+                var type = device.getType();
+                return type !== "wifi" && type !== "wireless" && !type.includes("wlan");
+            }
+
+            return true;
+        };
+
+        o = s.taboption(tabname, form.DynamicList, "tproxy_excluded_ips", _("Exclude IP from tproxy:"));
+        o.description = _("Each element is IPv4 to exclude from tproxy access.");
+        o.rmempty = false;
+        o.depends("nft_apply_changes", "1");
+        o.placeholder = "192.168.31.123";
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim().length === 0)
+                return true;
+
+            return (common.isValidIpv4(value));
+        };
+
         o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
         o.description = _("If enabled, the service start will be delayed at router boot.");
         o.rmempty = false;
@@ -75,44 +113,6 @@ return view.extend({
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = "0";
-
-        // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
-        o.default = "br-lan";
-        o.depends("nft_apply_changes", "1");
-        o.noaliases = true;
-        o.nobridges = false;
-        o.noinactive = false;
-        o.multiple = true;
-        o.filter = function (section_id, value) {
-            if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
-                return false;
-            }
-
-            var device = this.devices.filter(function (dev) {
-                return dev.getName() === value;
-            })[0];
-
-            if (device) {
-                var type = device.getType();
-                return type !== "wifi" && type !== "wireless" && !type.includes("wlan");
-            }
-
-            return true;
-        };
-
-        o = s.taboption(tabname, form.DynamicList, "tproxy_excluded_ips", _("Exclude IP from tproxy:"));
-        o.description = _("Each element is IPv4 to exclude from tproxy access.");
-        o.rmempty = false;
-        o.depends("nft_apply_changes", "1");
-        o.placeholder = "192.168.31.123";
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim().length === 0)
-                return true;
-
-            return (common.isValidIpv4(value));
-        };
 
         tabname = "serviceautomation_tab";
         s.tab(tabname, _("Tasks"));
