@@ -446,6 +446,10 @@ nf_table_add() {
     # shellcheck disable=SC2086
     nft add element ip "$NF_TABLE_NAME" inbound_interfaces { $(echo $tproxy_input_interfaces | sed 's/ /", "/g; s/^/"/; s/$/"/') }
 
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
+
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
+
     if [ "$nft_block_quic" = "1" ] || [ "$nft_block_dot_quic" = "1" ] || [ "$nft_block_ntp" = 1 ]; then
         local selected_ports=""
         [ "$nft_block_quic" = "1" ] && selected_ports=$selected_ports"$DEFAULT_TLS_PORT,"
@@ -460,11 +464,6 @@ nf_table_add() {
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport $DEFAULT_DOT_PORT drop
     fi
 
-    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
-
-    # Исключение по fwmark для br-lan
-    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
-
     if [ -n "$tproxy_excluded_ips" ]; then
         # Исключение по tproxy_excluded_ips с br-lan
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip saddr { $tproxy_excluded_ips } meta l4proto { tcp, udp } return
@@ -475,13 +474,17 @@ nf_table_add() {
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     # --- output ---
-    #nft add rule ip "$NF_TABLE_NAME" output mark "$proxy_fwmark_hex" return
-    #nft add rule ip "$NF_TABLE_NAME" output oifname "lo" return
-    #nft add rule ip "$NF_TABLE_NAME" output ip daddr @private_ips_output return
-    #nft add rule ip "$NF_TABLE_NAME" output ip daddr @fake_ips ip protocol tcp meta mark set "$NF_TABLE_FWMARK_FINAL"
-    #nft add rule ip "$NF_TABLE_NAME" output ip daddr @fake_ips ip protocol udp meta mark set "$NF_TABLE_FWMARK_FINAL"
-    #nft add rule ip "$NF_TABLE_NAME" output ip protocol tcp meta mark set "$NF_TABLE_FWMARK_FINAL"
-    #nft add rule ip "$NF_TABLE_NAME" output ip protocol udp meta mark set "$NF_TABLE_FWMARK_FINAL"
+    nft add rule ip "$NF_TABLE_NAME" output mark "$proxy_fwmark_hex" return
+
+    nft add rule ip "$NF_TABLE_NAME" output ip daddr @private_ips return
+
+    nft add rule ip "$NF_TABLE_NAME" output ip protocol udp udp dport { 67,68 } return
+
+    nft add rule ip "$NF_TABLE_NAME" output ip daddr 255.255.255.255 return
+
+    nft add rule ip "$NF_TABLE_NAME" output meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
+
+    nft add rule ip "$NF_TABLE_NAME" output meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     cleanup_fwmark
     #todo: change dynamic 0x1
