@@ -379,6 +379,11 @@ return view.extend({
         o.default = common.defaultHealthCheckTimeoutMs;
         o.description = _("Timeout for each individual health check in milliseconds.");
 
+        o = s2.taboption(tabname, form.Value, "max_failed_times", _("Max failed times:"));
+        o.datatype = "uinteger";
+        o.default = common.defaultHealthCheckTimeoutMs;
+        o.description = _("Timeout for each individual health check in milliseconds.");
+
         tabname = "proxiesgroupfilter_tab";
         s2.tab(tabname, _("Filters"));
 
