@@ -57,6 +57,8 @@ DEFAULT_HEALTHCHECK_TIMEOUT=5000
 DEFAULT_RULESET_INTERVAL="86500"
 DEFAULT_HEALTHCHECK_URL="http://www.gstatic.com/generate_204"
 DEFAULT_HEALTHCHECK_RESULT=204
+DEFAULT_MAX_FAILED_TIMES=5
+
 DEFAULT_INPUT_INTERFACE="br-lan"
 
 DEFAULT_TLS_PORT=443
@@ -1186,7 +1188,7 @@ handle_proxy_group_section() {
     _parse_proxy_group() {
         local section="$1"
         local name
-        local proxies_list providers_list group_type strategy check_url interval check_timeout tolerance
+        local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
         local domain_list cidr_list
@@ -1204,6 +1206,7 @@ handle_proxy_group_section() {
         config_get expected_status "$section" expected_status
         config_get interval "$section" interval
         config_get check_timeout "$section" check_timeout
+        config_get max_failed_times "$section" max_failed_times
         config_get tolerance "$section" tolerance
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
@@ -1212,6 +1215,7 @@ handle_proxy_group_section() {
         config_get list_update_interval "$section" list_update_interval
         config_get_bool use_proxy_group_for_list_update "$section" use_proxy_group_for_list_update 0
 
+        [ -z "$max_failed_times" ] && max_failed_times=$DEFAULT_MAX_FAILED_TIMES
         [ -z "$interval" ] && interval=$DEFAULT_HEALTHCHECK_INTERVAL
         [ -z "$check_timeout" ] && check_timeout=$DEFAULT_HEALTHCHECK_TIMEOUT
         [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
@@ -1227,6 +1231,7 @@ handle_proxy_group_section() {
                         \"expected-status\":$expected_status,\
                         \"interval\":$interval,\
                         \"timeout\":$check_timeout,\
+                        \"max-failed-times\":$max_failed_times,\
                         \"lazy\":true"
 
         [ "$group_type" = "url-test" ] && group_json="$group_json,\"tolerance\":\"$($tolerance)\""
