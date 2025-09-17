@@ -9,16 +9,16 @@
                 "/usr/bin/justclash": [
                     "exec"
                 ],
-                "/usr/bin/justclash_info": [
+                "/usr/lib/justclash/info.sh": [
                     "exec"
                 ],
-                "/etc/default.justclash.config": [
+                "/etc/justclash/default.config": [
                     "read"
                 ],
-                "/etc/rulesets.justclash.txt": [
+                "/etc/justclash/rulesets.txt": [
                     "read"
                 ],
-                "/etc/blockrulesets.justclash.txt": [
+                "/etc/justclash/block.rulesets.txt": [
                     "read"
                 ],
                 "/etc/crontabs/root": [ "read" ]
@@ -29,7 +29,7 @@
         },
         "write": {
             "file": {
-                "/var/default.justclash.config": [
+                "/etc/justclash/default.config": [
                     "write"
                 ],
                 "/etc/crontabs/root": [

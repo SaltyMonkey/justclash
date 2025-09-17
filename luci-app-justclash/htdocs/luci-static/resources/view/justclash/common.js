@@ -4,9 +4,9 @@ return baseclass.extend({
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
-    binInfoPath: "/usr/bin/justclash_info",
-    blockRulesetsFilePath: "/etc/blockrulesets.justclash.txt",
-    rulesetsFilePath: "/etc/rulesets.justclash.txt",
+    binInfoPath: "/usr/lib/justclash/info.sh",
+    blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
+    rulesetsFilePath: "/etc/justclash/rulesets.txt",
     genNameProxyPrefix: "proxy",
     genNameProxyProviderPrefix: "provider",
     logsCount: "800",
@@ -31,6 +31,7 @@ return baseclass.extend({
     defaultRuleSetUpdateInterval: 86500,
     minimalRuleSetUpdateInterval: 21600,
     defaultRuleSetProxy: "DIRECT",
+    defaultBehaviorMixedPort: "BY_RULES",
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },
