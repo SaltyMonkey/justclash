@@ -26,7 +26,6 @@ return baseclass.extend({
     defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0",
     defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
-    defaultProxyUpdateChannelOptions: ["alpha", "stable"],
     defaultTimeoutForWSReconnect: 10000,
     defaultRuleSetUpdateInterval: 86500,
     minimalRuleSetUpdateInterval: 21600,
