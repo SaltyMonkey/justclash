@@ -30,11 +30,9 @@ PROGNAME="justclash"
 
 config_load "$PROGNAME"
 
-ALPHA_TAG="Prerelease-Alpha"
-CORE_RELEASE_URL_PARTIAL="https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
-CORE_DOWNLOAD_PARTIAL="https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/"
-CORE_ALPHA_RELEASE_URL_PARTIAL="$CORE_DOWNLOAD_PARTIAL/$ALPHA_TAG"
-RULESETS_FILES_URL_PARTIAL="https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main"
+CORE_RELEASE_CHECK_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
+CORE_RELEASE_DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download"
+INBUILD_RULESETS_FILES_DOWNLOAD_URL="https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main"
 
 NO_DATA_STRING="N/A"
 
@@ -1569,7 +1567,7 @@ EOF
 rulesets_list_update() {
     local complete_url
     log 2 "Downloading RULE-SETs list file" "📥"
-    complete_url=${RULESETS_FILES_URL_PARTIAL}/${RULESETS_FILENAME}
+    complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
     curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
         log 0 "Failed to download RULE-SETs list file." "❌"
         return 1
@@ -1579,7 +1577,7 @@ rulesets_list_update() {
     log 2 "RULE-SET list file was updated" "✅"
 
     log 2 "Downloading BLOCK RULE-SETs list file" "📥"
-    complete_url=${RULESETS_FILES_URL_PARTIAL}/${RULESETS_BLOCKS_FILENAME}
+    complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_BLOCKS_FILENAME}
     curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
         log 0 "Failed to download BLOCK RULE-SETs list file." "❌"
         return 1
@@ -1688,7 +1686,7 @@ core_download() {
     mkdir -p "$CORE_WORKDIR_PATH"
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
-    base_url="${download_url}/${file_name}"
+    base_url="${download_url}/${param_version}/${file_name}"
 
     log 2 "Downloading mihomo binary" "📥"
     curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
@@ -1730,9 +1728,8 @@ core_remove() {
 }
 
 core_update() {
-    local cur_ver latest_ver mihomo_update_channel mihomo_cron_update_telegram_notify
+    local cur_ver latest_ver mihomo_cron_update_telegram_notify
     local check_url download_url
-    config_get mihomo_update_channel settings mihomo_update_channel
 
     log 2 "Checking for Mihomo updates..." "🔄"
 
@@ -1742,11 +1739,8 @@ core_update() {
         return 1
     fi
 
-    if [ "$mihomo_update_channel" = "alpha" ]; then
-        check_url="$CORE_ALPHA_RELEASE_URL_PARTIAL"
-    else
-        check_url="$CORE_RELEASE_URL_PARTIAL"
-    fi
+    check_url="$CORE_RELEASE_CHECK_URL"
+    download_url="$CORE_RELEASE_DOWNLOAD_URL"
 
     latest_ver=$(get_latest_version "$check_url") || {
         log 0 "Failed to get latest version" "❌"
@@ -1758,12 +1752,6 @@ core_update() {
        log 0 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
        log 0 "Failed to download core"
        return 1
-    fi
-
-    if [ "$mihomo_update_channel" = "alpha" ]; then
-        download_url="$CORE_DOWNLOAD_PARTIAL/$ALPHA_TAG"
-    else
-        download_url="$CORE_DOWNLOAD_PARTIAL/$latest_ver"
     fi
 
     config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
