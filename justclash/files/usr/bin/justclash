@@ -244,6 +244,9 @@ start() {
     log 2 "Synchronizing system time" "🕒"
     ntp_force_sync
 
+    log 2 "Modifying SAFE_PATHS env variable" "📦"
+    safe_paths_add "$DASHBOARD_PATH"
+
     log 2 "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
     if [ $? -eq 1 ]; then
@@ -1504,8 +1507,6 @@ tproxy-port: $tproxy_port
 unified-delay: $unified_delay
 tcp-concurrent: $tcp_concurrent
 external-controller: 0.0.0.0:$external_controller_port
-external-ui-name: $DASHBOARD_NAME
-external-ui: $DASHBOARD_PATH
 external-ui-url: "$DASHBOARD_DEFAULT_URL"
 routing-mark: $NF_TABLE_FWMARK_PROXY
 global-client-fingerprint: $global_client_fingerprint
