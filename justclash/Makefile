@@ -35,17 +35,23 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr/lib/justclash
+	$(INSTALL_BIN) ./files/usr/lib/justclash/compat_fixes.sh $(1)/usr/lib/justclash/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/info.sh $(1)/usr/lib/justclash/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/logging.sh $(1)/usr/lib/justclash/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/migration.sh $(1)/usr/lib/justclash/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/uri_parsers.sh $(1)/usr/lib/justclash/
+
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/justclash $(1)/usr/bin/
-	$(INSTALL_BIN) ./files/usr/bin/justclash_info $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/etc/config/justclash $(1)/etc/config/justclash
+	$(INSTALL_CONF) ./files/etc/config/justclash $(1)/etc/config/
 
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/etc/default.justclash.config $(1)/etc/default.justclash.config
-	$(INSTALL_CONF) ./files/etc/rulesets.justclash.txt $(1)/etc/rulesets.justclash.txt
-	$(INSTALL_CONF) ./files/etc/blockrulesets.justclash.txt $(1)/etc/blockrulesets.justclash.txt
+	$(INSTALL_DIR) $(1)/etc/justclash
+	$(INSTALL_CONF) ./files/etc/justclash/default.config $(1)/etc/justclash/
+	$(INSTALL_CONF) ./files/etc/justclash/rulesets.txt $(1)/etc/justclash/
+	$(INSTALL_CONF) ./files/etc/justclash/block.rulesets.txt $(1)/etc/justclash/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
@@ -70,7 +76,6 @@ define Package/$(PKG_NAME)/postrm
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	#[ -f "/usr/bin/mihomo" ] && rm -rf "/usr/bin/mihomo"
 	[ -f "/tmp/justclash" ] && rm -rf "/tmp/justclash"
-	rm -rf /etc/init.d/justclash
 fi
 exit 0
 endef
