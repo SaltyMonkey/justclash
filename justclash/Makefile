@@ -36,6 +36,7 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/justclash
+	$(INSTALL_BIN) ./files/usr/lib/justclash/helpers.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/compat_fixes.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/info.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/logging.sh $(1)/usr/lib/justclash/

@@ -17,6 +17,7 @@
 . /usr/lib/justclash/migration.sh
 . /usr/lib/justclash/compat_fixes.sh
 . /usr/lib/justclash/uri_parsers.sh
+. /usr/lib/justclash/helpers.sh
 CORE_PATH_INFOBIN=/usr/lib/"$PROGNAME"/info.sh
 
 # Variable for standalone or procd start
