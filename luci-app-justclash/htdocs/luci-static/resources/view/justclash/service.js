@@ -62,7 +62,7 @@ return view.extend({
         o.datatype = "uinteger";
         o.placeholder = "10";
         o.depends("delayed_boot", "1");
-        o.rmempty = true;
+        o.rmempty = false;
         o.description = _("Delay timeout value in seconds.");
 
         o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
@@ -163,13 +163,13 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
         o.datatype = "uinteger";
         o.placeholder = "123456789";
-        o.rmempty = true;
+        o.rmempty = false;
         o.description = _("Telegram chat ID where to send notification.");
 
         o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
         o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
         o.description = _("Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!");
-        o.rmempty = true;
+        o.rmempty = false;
         o.password = true;
         o.validate = function (section_id, value) {
             return (common.isValidTelegramBotToken(value)) ? true : _("Invalid Telegram Bot Token");
