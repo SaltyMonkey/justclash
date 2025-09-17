@@ -49,7 +49,7 @@ return view.extend({
         s.tab(tabname, _("Basic"));
 
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
-        o.description = _("Virtual proxy name.");
+        o.description = _("Proxy name.");
         o.rmempty = false;
         o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");

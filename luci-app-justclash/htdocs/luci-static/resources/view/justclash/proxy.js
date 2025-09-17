@@ -179,12 +179,14 @@ return view.extend({
         o.description = _("Include selected domains for the Fake IP cache.");
         o.rmempty = false;
         o.editable = true;
+        o.optional = true;
         o.depends("fake_ip_filter_mode", "whitelist");
 
         o = s.taboption(tabname, form.DynamicList, "ignore_fake_ip_domains", _("Skip fake IP for domains:"));
         o.description = _("Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps.");
         o.rmempty = false;
         o.editable = true;
+        o.optional = true;
         o.depends("fake_ip_filter_mode", "blacklist");
 
         tabname = "sniffersettings_tab";
@@ -204,21 +206,25 @@ return view.extend({
         o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
+        o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_force_domain", _("Forcefully sniff domains:"));
         o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
+        o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_skip_src_address", _("Exclude from sniffer SRC CIDR traffic:"));
         o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
+        o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_skip_dst_address", _("Exclude from sniffer DST CIDR traffic:"));
         o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
+        o.optional = true;
 
         tabname = "ntpsettings_tab";
         s.tab(tabname, _("NTP settings"));
