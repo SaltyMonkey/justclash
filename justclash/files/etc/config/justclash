@@ -112,5 +112,8 @@ config direct_rules 'direct_rules'
     option list_update_interval '86500'
     list enabled_list ''
 
+config mixed_port_rules 'mixed_port_rules'
+    option exit_rule 'BY_RULES'
+
 config final_rules 'final_rules'
-    option final_destination 'DIRECT'
+    option exit_rule 'DIRECT'

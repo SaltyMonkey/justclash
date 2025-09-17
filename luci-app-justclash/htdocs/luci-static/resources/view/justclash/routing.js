@@ -38,7 +38,7 @@ return view.extend({
         };
     },
     render(result) {
-        let m, s, s2, spp, s3, s4, s5, o, optionFinal, tabname;
+        let m, s, s2, spp, s3, s4, s5, smp, o, optionFinal, tabname;
 
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
@@ -245,6 +245,10 @@ return view.extend({
         o.depends("health_check", "1");
         o.description = _("Timeout for each individual health check in milliseconds.");
 
+        o = spp.taboption(tabname, form.Flag, "health_check_lazy", _("Lazy:"));
+        o.default = '1';
+        o.description = _("Lazy mode");
+
         tabname = "proxyproviderfilter_tab";
         spp.tab(tabname, _("Filters"));
 
@@ -383,6 +387,10 @@ return view.extend({
         o.datatype = "uinteger";
         o.default = '5';
         o.description = _("Timeout for each individual health check in milliseconds.");
+
+        o = s2.taboption(tabname, form.Flag, "lazy", _("Lazy:"));
+        o.default = '1';
+        o.description = _("Lazy mode");
 
         tabname = "proxiesgroupfilter_tab";
         s2.tab(tabname, _("Filters"));
@@ -620,13 +628,31 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
-        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("FINAL rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
+        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mixed port rule:"), _("Additional settings for the mixed port. Use it to override or enforce specific behaviors."));
+        smp.addremove = false;
+
+        tabname = "mixedportbasic_tab";
+        smp.tab(tabname, _("Basic"));
+
+        o = smp.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
+        o.value("DIRECT", "DIRECT");
+        o.value(common.defaultBehaviorMixedPort, "By rules");
+        o.default = common.defaultBehaviorMixedPort;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim().length === 0) {
+                return _("This field cannot be empty");
+            }
+            return true;
+        };
+
+        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Final rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
         s5.addremove = false;
 
         tabname = "finalbasic_tab";
         s5.tab(tabname, _("Basic"));
 
-        optionFinal = s5.taboption(tabname, form.Value, "final_destination", _("Destination:"));
+        optionFinal = s5.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
         optionFinal.value("DIRECT", "DIRECT");
         optionFinal.value("REJECT", "REJECT");
         optionFinal.default = common.defaultRuleSetProxy;

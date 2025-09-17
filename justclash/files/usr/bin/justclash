@@ -13,41 +13,55 @@
 [ -r /lib/functions.sh ] && . /lib/functions.sh
 # shellcheck disable=SC1091
 [ -r /lib/config/uci.sh ] && . /lib/config/uci.sh
+. /usr/lib/justclash/logging.sh
+. /usr/lib/justclash/migration.sh
+. /usr/lib/justclash/compat_fixes.sh
+. /usr/lib/justclash/uri_parsers.sh
+CORE_PATH_INFOBIN=/usr/lib/"$PROGNAME"/info.sh
 
 # Variable for standalone or procd start
 PROCD_MODE=0
+
+PROGNAME="justclash"
 
 # setup procd variable: $JUSTCLASH_ENV passed from init.d start
 # shellcheck disable=SC2154
 [ "$JUSTCLASH_ENV" = "procd" ] && PROCD_MODE=1 || PROCD_MODE=0
 
-config_load justclash
+config_load "$PROGNAME"
 
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest/download"
-CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
-CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
+ALPHA_TAG="Prerelease-Alpha"
+CORE_RELEASE_URL_PARTIAL="https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
+CORE_DOWNLOAD_PARTIAL="https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/"
+CORE_ALPHA_RELEASE_URL_PARTIAL="$CORE_DOWNLOAD_PARTIAL/$ALPHA_TAG"
 RULESETS_FILES_URL_PARTIAL="https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main"
+
 NO_DATA_STRING="N/A"
 
 CORE_BIN_NAME="mihomo"
+
 # Path to Mihomo core
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
-CORE_PATH_INFOBIN="/usr/bin/justclash_info"
-INITD_PATH="/etc/init.d/justclash"
+INITD_PATH="/etc/init.d/${PROGNAME}"
 # workdir path (in RAM)
-CORE_WORKDIR_PATH="/tmp/justclash/"
+CORE_WORKDIR_PATH="/tmp/${PROGNAME}/"
 # Mihomo using directory 'rules' by default in workdir
 # if nothing selected in path fields for rules
-CORE_WORKDIR_RULES_PATH="/tmp/justclash/rules"
-CORE_WORKDIR_UCI_HASH_PATH="/tmp/justclash/uci.hash"
-
+CORE_WORKDIR_RULES_PATH="${CORE_WORKDIR_PATH}rules"
+CORE_WORKDIR_UCI_HASH_PATH="${CORE_WORKDIR_PATH}uci.hash"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}config.yaml"
-DEFAULT_CONFIG_PATH="/etc/default.justclash.config"
-DEFAULT_SYMLINKDIR_RULESETS="/etc/justclash_rules"
-RULESETS_FILENAME="rulesets.justclash.txt"
-RULESETS_FILE="/etc/${RULESETS_FILENAME}"
-RULESETS_BLOCKS_FILENAME="blockrulesets.justclash.txt"
-RULESETS_BLOCKS_FILE="/etc/${RULESETS_BLOCKS_FILENAME}"
+
+ETC_DIR="/etc/${PROGNAME}/"
+RULESETS_BLOCKS_FILENAME="block.rulesets.txt"
+RULESETS_FILENAME="rulesets.txt"
+DEFAULT_SYMLINKDIR_RULESETS="${ETC_DIR}${PROGNAME}_rules"
+RULESETS_BLOCKS_FILE="${ETC_DIR}${RULESETS_BLOCKS_FILENAME}"
+RULESETS_FILE="${ETC_DIR}${RULESETS_FILENAME}"
+
+ETC_CONFIG_DIR="/etc/config/"
+DEFAULT_CONFIG_PATH="${ETC_DIR}default.config"
+CONFIG_PATH="${ETC_CONFIG_DIR}${PROGNAME}"
+CONFIG_BAK_PATH="${ETC_CONFIG_DIR}${PROGNAME}.bak"
 
 DEFAULT_RULESET_PROXY="DIRECT"
 DEFAULT_PROXY="DIRECT"
@@ -76,7 +90,7 @@ DIAG_RESOLVE_URL_YANDEX="ya.ru"
 DIAG_IP_CHECK_PING_YANDEX="77.88.8.8"
 DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
 
-NF_TABLE_NAME="justclash_tproxy"
+NF_TABLE_NAME="${PROGNAME}_tproxy"
 NF_TABLE_FWMARK_FINAL=1
 NF_TABLE_FWMARK_PROXY=255
 NF_ROUTE_TABLE=100
@@ -89,7 +103,7 @@ NF_ROUTE_TABLE=100
 NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
 
 CONFLICTED_PACKAGES="banip mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy"
-CONFLICTED_PATTERNS_DHCP_CONFIG="doh_backup_noresolv doh_backup_server doh_server"
+CONFLICTED_PATTERNS_DHCP_CONFIG="podkop_server podkop_noresolv podkop_cachesize doh_backup_noresolv doh_backup_server doh_server"
 
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
@@ -109,70 +123,9 @@ ucibool_to_yesno() {
 }
 
 panic() {
-    local message="$1"
-    syslog 0 "$message"
-    clog 0 "$message"
+    log 0 "$1" '💥'
     stop
     exit 1
-}
-
-get_log_level_console() {
-    case "$1" in
-        0) echo "ERROR" ;;
-        1) echo "WARN" ;;
-        2) echo "INFO" ;;
-        3) echo "DEBUG" ;;
-        *) echo "UNKN" ;;
-    esac
-}
-
-get_log_level_syslog() {
-    case "$1" in
-        0) echo "user.err" ;;
-        1) echo "user.warning" ;;
-        2) echo "user.info" ;;
-        3) echo "user.debug" ;;
-        *) echo "user.debug" ;;
-    esac
-}
-
-syslog() {
-    local level="$1"
-    local message="$2"
-    local level_syslog=""
-    level_syslog=$(get_log_level_syslog "$level")
-
-    logger -p "$level_syslog" -t "justclash" "$message"
-}
-
-clog() {
-    local level="$1"
-    local message="$2"
-    local timestamp=""
-    local level_str=""
-
-    [ "$PROCD_MODE" -eq 1 ] && return
-
-    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    level_str=$(get_log_level_console "$level")
-
-    printf "[%s] [%s] %s\n" "$timestamp" "$level_str" "$message"
-}
-
-log() {
-    local level="$1"
-    local message="$2"
-    local emoji="${3:-}"
-
-    syslog "$level" "$message"
-
-    [ "$PROCD_MODE" -eq 1 ] && return
-
-    if [ -n "$emoji" ]; then
-        clog "$level" "$emoji ${message}"
-    else
-        clog "$level" "$message"
-    fi
 }
 
 is_package_installed() {
@@ -243,22 +196,6 @@ ntp_force_sync() {
     sleep 2
 }
 
-compat_fixes() {
-    if ! command -v lsmod >/dev/null 2>&1; then
-        log 1 "lsmod is missing. Can't check for kernel modules" "⚠️"
-    else
-        if lsmod | grep -qF br_netfilter && [ "$(sysctl -n net.bridge.bridge-nf-call-iptables 2>/dev/null)" = "1" ]; then
-            log 1 "br_netfilter is enabled. FriendlyWRT? Fixing module params..." "⚠️"
-            sysctl -w net.bridge.bridge-nf-call-iptables=0
-            sysctl -w net.bridge.bridge-nf-call-ip6tables=0
-            log 1 "Set net.bridge.bridge-nf-call-iptables=0" "⚠️"
-            log 1 "Set net.bridge.bridge-nf-call-ip6tables=0" "⚠️"
-        else
-            log 2 "No compatibility fixes required."
-        fi
-    fi
-}
-
 core_validate_yaml() {
     local test_output app_exit_code grep_test_exit_code grep_error_exit_code
     test_output="$("$CORE_PATH" -t -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
@@ -285,6 +222,9 @@ start() {
         log 0 "Mihomo core is not installed." "❌"
         return 1
     fi
+
+    log 2 "Applying migration if required..." "⏳"
+    migration
 
     config_get_bool skip_environment_checks settings skip_environment_checks 0
     if [ "$skip_environment_checks" -eq 0 ]; then
@@ -345,19 +285,19 @@ start_core() {
         local attempt=0
 
         while [ "$attempt" -lt "$CORE_RESTART_MAX_RETRIES" ]; do
-            "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t justclash
+            "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
             exit_code=$?
-            log 1 "Procd: mihomo exited with code $exit_code" "❌"
+            log 1 "Procd mode: mihomo exited with code $exit_code" "❌"
 
             if [ "$exit_code" -eq 0 ]; then
                 break
             fi
 
             attempt=$((attempt + 1))
-            log 0 "Procd:  mihomo crashed, attempt $attempt of $CORE_RESTART_MAX_RETRIES" "❌"
+            log 0 "Procd mode:  mihomo crashed, attempt $attempt of $CORE_RESTART_MAX_RETRIES" "❌"
 
             if [ "$attempt" -ge "$CORE_RESTART_MAX_RETRIES" ]; then
-                log 0 "Procd:  Failed to restart mihomo after $CORE_RESTART_MAX_RETRIES attempts, exiting" "❌"
+                log 0 "Procd mode:  Failed to restart mihomo after $CORE_RESTART_MAX_RETRIES attempts, exiting" "❌"
                 exit "$exit_code"
             fi
 
@@ -366,9 +306,9 @@ start_core() {
     else
         "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
         exit_code=$?
-        log 1 "Manual: mihomo exited with code $exit_code" "❌"
+        log 1 "Manual mode: mihomo exited with code $exit_code" "❌"
         if [ "$exit_code" -ne 0 ]; then
-            log 0 "Manual: mihomo crashed, exiting" "❌"
+            log 0 "Manual mode: mihomo crashed, exiting" "❌"
             exit "$exit_code"
         fi
     fi
@@ -444,9 +384,9 @@ nf_table_add() {
         224.0.0.0/4, 240.0.0.0/4 }
 
     nft add set ip "$NF_TABLE_NAME" inbound_interfaces '{ type ifname; }'
-    # shellcheck disable=SC2046
-    # shellcheck disable=SC2086
-    nft add element ip "$NF_TABLE_NAME" inbound_interfaces { $(echo $tproxy_input_interfaces | sed 's/ /", "/g; s/^/"/; s/$/"/') }
+    for iface in $tproxy_input_interfaces; do
+        nft add element ip "$NF_TABLE_NAME" inbound_interfaces { "\"$iface\"" }
+    done
 
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
 
@@ -476,17 +416,17 @@ nf_table_add() {
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     # --- output ---
-    nft add rule ip "$NF_TABLE_NAME" output mark "$proxy_fwmark_hex" return
+    #nft add rule ip "$NF_TABLE_NAME" output mark "$proxy_fwmark_hex" return
 
-    nft add rule ip "$NF_TABLE_NAME" output ip daddr @private_ips return
+    #nft add rule ip "$NF_TABLE_NAME" output ip daddr @private_ips return
 
-    nft add rule ip "$NF_TABLE_NAME" output ip protocol udp udp dport { 67,68 } return
+    #nft add rule ip "$NF_TABLE_NAME" output ip protocol udp udp dport { 67,68 } return
 
-    nft add rule ip "$NF_TABLE_NAME" output ip daddr 255.255.255.255 return
+    #nft add rule ip "$NF_TABLE_NAME" output ip daddr 255.255.255.255 return
 
-    nft add rule ip "$NF_TABLE_NAME" output meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
+    #nft add rule ip "$NF_TABLE_NAME" output meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
 
-    nft add rule ip "$NF_TABLE_NAME" output meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
+    #nft add rule ip "$NF_TABLE_NAME" output meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     cleanup_fwmark
     #todo: change dynamic 0x1
@@ -530,18 +470,18 @@ dnsmasq_add() {
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
-        uci -q delete dhcp.@dnsmasq[0].justclash_server
+        uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
         for server in $(uci get dhcp.@dnsmasq[0].server 2>/dev/null); do
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
                 log 1 "Dnsmasq save config error: server=127.0.0.1 is already configured. Skip editing DHCP"
                 return 1
             else
-                uci add_list dhcp.@dnsmasq[0].justclash_server="$server"
+                uci add_list dhcp.@dnsmasq[0]."${PROGNAME}"_server="$server"
             fi
         done
 
-        save_dnsmasq_config "dhcp.@dnsmasq[0].noresolv" "dhcp.@dnsmasq[0].justclash_noresolv"
-        save_dnsmasq_config "dhcp.@dnsmasq[0].cachesize" "dhcp.@dnsmasq[0].justclash_cachesize"
+        save_dnsmasq_config "dhcp.@dnsmasq[0].noresolv" "dhcp.@dnsmasq[0].${PROGNAME}_noresolv"
+        save_dnsmasq_config "dhcp.@dnsmasq[0].cachesize" "dhcp.@dnsmasq[0].${PROGNAME}_cachesize"
 
         uci add_list dhcp.@dnsmasq[0].server="127.0.0.1#$dns_listen_port"
         uci set dhcp.@dnsmasq[0].cachesize="0"
@@ -568,14 +508,14 @@ dnsmasq_remove() {
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
-        bak_cachesize=$(uci get dhcp.@dnsmasq[0].justclash_cachesize 2>/dev/null)
+        bak_cachesize=$(uci get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize 2>/dev/null)
         if [ -z "$bak_cachesize" ]; then
             log 1 "dnsmasq revert: cachesize is unset"
         else
             uci set dhcp.@dnsmasq[0].cachesize="$bak_cachesize"
         fi
 
-        bak_noresolv=$(uci get dhcp.@dnsmasq[0].justclash_noresolv 2>/dev/null)
+        bak_noresolv=$(uci get dhcp.@dnsmasq[0]."${PROGNAME}"_noresolv 2>/dev/null)
         if [ "$bak_noresolv" = "unset" ]; then
             log 1 "dnsmasq revert: noresolv is unset"
             uci -q delete dhcp.@dnsmasq[0].noresolv
@@ -586,10 +526,10 @@ dnsmasq_remove() {
         server=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
         if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
             uci -q delete dhcp.@dnsmasq[0].server 2>/dev/null
-            for server in $(uci get dhcp.@dnsmasq[0].justclash_server 2>/dev/null); do
+            for server in $(uci get dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null); do
                 uci add_list dhcp.@dnsmasq[0].server="$server"
             done
-            uci delete dhcp.@dnsmasq[0].justclash_server 2>/dev/null
+            uci delete dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null
         fi
 
         uci commit dhcp
@@ -675,10 +615,6 @@ info_luci() {
     $CORE_PATH_INFOBIN info_luci
 }
 
-info_conns_console() {
-    $CORE_PATH_INFOBIN info_conns_console
-}
-
 systemlogs() {
     local res
     local lines=${1:-40}
@@ -718,278 +654,6 @@ ucibool_to_yaml_bool () {
         1|yes|on|true) echo "true" ;;
         *) echo "false" ;;
     esac
-}
-
-parse_ss_url() {
-    local link="${1#ss://}"
-
-    # Удаляем #, но сохраняем query (для plugin)
-    link="${link%%#*}"
-
-    local userinfo hostport method password server port decoded query_part
-    #local plugin=""
-
-    # Извлечение query (после ?)
-    query_part=""
-    # shellcheck disable=SC2249
-    case "$link" in *\?*) query_part="${link#*\?}"; link="${link%%\?*}"; esac
-
-    if echo "$link" | grep -q '@'; then
-        userinfo="${link%@*}"
-        hostport="${link#*@}"
-
-        decoded="$(echo "$userinfo" | base64 -d 2>/dev/null)"
-        if [ -n "$decoded" ] && echo "$decoded" | grep -q ':'; then
-            method="$(url_decode "${decoded%%:*}")"  # Декодирование
-            password="$(url_decode "${decoded#*:}")"  # Декодирование
-        else
-            method="$(url_decode "${userinfo%%:*}")"
-            password="$(url_decode "${userinfo#*:}")"
-        fi
-    else
-        decoded="$(echo "$link" | base64 -d 2>/dev/null)"
-        userinfo="${decoded%@*}"
-        hostport="${decoded#*@}"
-        method="$(url_decode "${userinfo%%:*}")"
-        password="$(url_decode "${userinfo#*:}")"
-    fi
-
-    server="${hostport%%:*}"
-    port="${hostport##*:}"
-    [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
-
-    # Парсинг query (например, для plugin)
-    local temp_query="$query_part"
-    while [ -n "$temp_query" ]; do
-        local param="${temp_query%%&*}"
-        temp_query="${temp_query#"$param"}"
-        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
-
-        local k="${param%%=*}"
-        local v="${param#*=}"
-        [ -z "$k" ] && continue
-
-        #case "$k" in
-        #    plugin) plugin="$(url_decode "$v")" ;;
-        #esac
-    done
-
-    # JSON
-    printf '{"type":"ss","server":"%s","port":%s,"cipher":"%s","password":"%s","udp":true}\n' \
-        "$server" "$port" "$method" "$password"
-}
-
-url_decode() {
-    # shellcheck disable=SC3060
-    local data="${1//+/ }"
-    echo -n "$data" | sed 's/%/\\x/g' | xargs -0 printf '%b'
-}
-
-json_escape() {
-    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
-}
-
-parse_socks5_url() {
-    local link="$1"
-    local raw="${link#socks5://}"
-
-    local server="" port="" username="" password=""
-    local userinfo="" hostport=""
-    local name=""
-
-    if echo "$raw" | grep -q '@'; then
-        userinfo="${raw%@*}"
-        hostport="${raw#*@}"
-
-        if echo "$userinfo" | grep -q ':'; then
-            username="$(url_decode "${userinfo%%:*}")"
-            password="$(url_decode "${userinfo#*:}")"
-        else
-            username="$(url_decode "$userinfo")"
-        fi
-    else
-        hostport="$raw"
-    fi
-
-    # host:port
-    server="$(url_decode "${hostport%%:*}")"
-    port="${hostport##*:}"
-
-    [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
-
-    name="socks5_${server}_${port}"
-
-    # Собираем JSON
-    local json="{\"type\":\"socks5\",\"name\":\"$name\",\"server\":\"$server\",\"port\":$port"
-    [ -n "$username" ] && json="$json,\"username\":\"$username\""
-    [ -n "$password" ] && json="$json,\"password\":\"$password\""
-    json="$json,\"udp\":true}"
-
-    echo "$json"
-}
-
-parse_trojan_url() {
-    local url="$1"
-    local raw="${url#trojan://}"
-    raw="${raw%%#*}"
-
-    local userinfo="${raw%@*}"
-    local hostport="${raw#*@}"
-    local password="$(printf '%b' "$(echo "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
-
-    local host="${hostport%%\?*}"
-    local server="${host%%:*}"
-    local port="${host##*:}"
-    [ "$server" = "$port" ] && port="$DEFAULT_TLS_PORT"
-
-    local query_part=""
-    # shellcheck disable=SC2249
-    case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
-
-    local sni="" insecure=0 net="tcp" fp="" alpn="" ws_path="" ws_host="" grpc_service=""
-    local ss_enabled="" ss_method="" ss_password=""
-
-    local temp_query="$query_part"
-    while [ -n "$temp_query" ]; do
-        local param="${temp_query%%&*}"
-        temp_query="${temp_query#"$param"}"
-        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
-
-        local k="${param%%=*}"
-        local v="${param#*=}"
-        [ -z "$k" ] && continue
-
-        # shellcheck disable=SC2249
-        case "$k" in
-            sni|peer) sni="$(url_decode "$v")" ;;
-            insecure|allowInsecure) [ "$v" = "1" ] && insecure=1 ;;
-            type) net="$v" ;;
-            fp|client-fingerprint) fp="$v" ;;
-            alpn) alpn="$(url_decode "$v")" ;;
-            path)
-                if [ -n "$v" ]; then
-                    ws_path="$(url_decode "$v")"
-                else
-                    ws_path="/"
-                fi ;;
-            host) ws_host="$(url_decode "$v")" ;;
-            serviceName) grpc_service="$v" ;;
-            ss) ss_enabled="$v" ;;
-            ss-method) ss_method="$v" ;;
-            ss-password) ss_password="$v" ;;
-        esac
-    done
-
-    local json="{\"type\":\"trojan\",\"server\":\"$server\",\"port\":$port,\"password\":\"$password\",\"udp\":true"
-
-    [ -n "$sni" ] && json="$json,\"sni\":\"$sni\""
-    [ "$insecure" = "1" ] && json="$json,\"skip-cert-verify\":true"
-    json="$json,\"network\":\"$net\""
-
-    [ -n "$fp" ] && json="$json,\"client-fingerprint\":\"$fp\""
-    [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
-
-    if [ "$net" = "ws" ]; then
-        json="$json,\"ws-opts\":{\"path\":\"$ws_path\""
-        [ -n "$ws_host" ] && json="$json,\"headers\":{\"Host\":\"$ws_host\"}"
-        json="$json}"
-    fi
-
-    if [ "$net" = "grpc" ]; then
-        json="$json,\"grpc-opts\":{\"grpc-service-name\":\"$grpc_service\"}"
-    fi
-
-    if [ -n "$ss_enabled" ] && [ -n "$ss_method" ] && [ -n "$ss_password" ]; then
-        json="$json,\"ss-opts\":{\"enabled\":true,\"method\":\"$ss_method\",\"password\":\"$ss_password\"}"
-    fi
-
-    json="$json}"
-    echo "$json"
-}
-
-parse_vless_url() {
-    local link="$1"
-    local raw="${link#vless://}"
-    raw="${raw%%#*}"
-
-    local uuid="${raw%%@*}"
-    local hostport="${raw#*@}"
-    local host="${hostport%%\?*}"
-    local server="${host%%:*}"
-    local port="${host##*:}"
-    [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
-
-    local query_part=""
-    # shellcheck disable=SC2249
-    case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
-
-    local net="tcp" sec="" sni="" fp="" alpn="" flow=""
-    local pbk="" sid="" spx="" sn="" enc=""
-
-    local temp_query="$query_part"
-    while [ -n "$temp_query" ]; do
-        local param="${temp_query%%&*}"
-        temp_query="${temp_query#"$param"}"
-        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
-
-        local k="${param%%=*}"
-        local v="${param#*=}"
-        [ -z "$k" ] && continue
-
-        # shellcheck disable=SC2249
-        case "$k" in
-            type) net="$v" ;;
-            security) sec="$v" ;;
-            encryption) enc="$v" ;;
-            sni|host) sni="$(url_decode "$v")" ;;
-            fp) fp="$v" ;;
-            alpn) alpn="$(url_decode "$v")" ;;
-            flow) flow="$v" ;;
-            pbk) pbk="$v" ;;
-            sid) sid="$v" ;;
-            spx|path)
-                if [ -n "$v" ]; then
-                    spx="$(url_decode "$v")"
-                else
-                    spx="/"
-                fi ;;
-            serviceName) sn="$v" ;;
-        esac
-    done
-
-    local json="{\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
-
-    if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
-        json="$json,\"tls\":true"
-        [ -n "$sni" ] && json="$json,\"servername\":\"$sni\""
-        [ -n "$fp" ] && json="$json,\"client-fingerprint\":\"$fp\""
-        [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
-    fi
-
-    if [ "$sec" = "reality" ]; then
-        local ro=""
-        [ -n "$pbk" ] && ro="$ro\"public-key\":\"$pbk\""
-        [ -n "$sid" ] && ro="${ro:+$ro,}\"short-id\":\"$sid\""
-        [ -n "$spx" ] && ro="${ro:+$ro,}\"spider-x\":\"$spx\""
-        json="$json,\"reality-opts\":{$ro}"
-    fi
-
-    if [ "$net" = "tcp" ] && [ -n "$flow" ]; then
-        json="$json,\"flow\":\"$flow\""
-    fi
-
-    if [ "$net" = "ws" ]; then
-        local wso="\"path\":\"${spx:-/}\""
-        [ -n "$sni" ] && wso="$wso,\"headers\":{\"Host\":\"$sni\"}"
-        json="$json,\"ws-opts\":{$wso}"
-    fi
-
-    if [ "$net" = "grpc" ] && [ -n "$sn" ]; then
-        json="$json,\"grpc-opts\":{\"service-name\":\"$sn\"}"
-    fi
-
-    json="$json}"
-    echo "$json"
 }
 
 handle_proxy_section() {
@@ -1034,10 +698,10 @@ handle_proxy_section() {
             [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
 
             case "$proxy_link_uri" in
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri") ;;
-                socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri") ;;
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
+                socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
                 *) log 1 "Unknown proxy_link_uri type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
@@ -1073,7 +737,7 @@ handle_proxy_section() {
                 added_rulesets="$added_rulesets$ruleset|"
 
                 if [ "$behavior" = "domain" ]; then
-                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
+                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
                 fi
             fi
         done
@@ -1188,7 +852,7 @@ handle_proxy_group_section() {
     _parse_proxy_group() {
         local section="$1"
         local name
-        local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance
+        local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
         local domain_list cidr_list
@@ -1207,6 +871,7 @@ handle_proxy_group_section() {
         config_get interval "$section" interval
         config_get check_timeout "$section" check_timeout
         config_get max_failed_times "$section" max_failed_times
+        config_get lazy "$section" lazy
         config_get tolerance "$section" tolerance
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
@@ -1232,9 +897,9 @@ handle_proxy_group_section() {
                         \"interval\":$interval,\
                         \"timeout\":$check_timeout,\
                         \"max-failed-times\":$max_failed_times,\
-                        \"lazy\":true"
+                        \"lazy\":$(ucibool_to_yaml_bool "$lazy")"
 
-        [ "$group_type" = "url-test" ] && group_json="$group_json,\"tolerance\":\"$($tolerance)\""
+        [ "$group_type" = "url-test" ] && group_json="$group_json,\"tolerance\":\"$tolerance\""
         [ "$group_type" = "load-balance" ] && group_json="$group_json,\"strategy\":\"$(json_escape "$strategy")\""
 
         [ -n "$escaped_proxies" ] && group_json="$group_json,\"proxies\":[$escaped_proxies]"
@@ -1380,17 +1045,17 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2317
     # shellcheck disable=SC2329
     accumulate_proxy_provider() {
-        local s="$1"
+        local section="$1"
         local name url interval filter exclude_filter exclude_type
-        local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status
+        local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
 
-        config_get name "$s" name
-        config_get url "$s" subscription
-        config_get interval "$s" update_interval
-        config_get filter "$s" filter
-        config_get exclude_filter "$s" exclude_filter
-        config_get exclude_type "$s" exclude_type
-        config_get_bool health_check "$s" health_check 0
+        config_get name "$section" name
+        config_get url "$section" subscription
+        config_get interval "$section" update_interval
+        config_get filter "$section" filter
+        config_get exclude_filter "$section" exclude_filter
+        config_get exclude_type "$section" exclude_type
+        config_get_bool health_check "$section" health_check 0
 
         { [ -z "$name" ] || [ -z "$url" ]; } && {
             log 1 "Skipping proxy_provider without name or subscription" "⚠️"
@@ -1399,26 +1064,34 @@ handle_proxy_provider_section() {
 
         [ -z "$interval" ] && interval=$DEFAULT_PROVIDERUPDATE_INTERVAL
 
-        local entry="{\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval"
+        local entry="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval"
         [ -n "$filter" ] && entry="$entry,\"filter\":\"$(json_escape "$filter")\""
         [ -n "$exclude_filter" ] && entry="$entry,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
 
         if [ "$health_check" = "1" ]; then
-            config_get health_check_expected_status "$s" health_check_expected_status
-            config_get health_check_url "$s" health_check_url
-            config_get health_check_interval "$s" health_check_interval
-            config_get health_check_timeout "$s" health_check_timeout
+            config_get health_check_expected_status "$section" health_check_expected_status
+            config_get health_check_url "$section" health_check_url
+            config_get health_check_interval "$section" health_check_interval
+            config_get health_check_timeout "$section" health_check_timeout
+            config_get health_check_lazy "$section" health_check_lazy
 
             [ -z "$health_check_interval" ] && health_check_interval=$DEFAULT_HEALTHCHECK_INTERVAL
             [ -z "$health_check_timeout" ] && health_check_timeout=$DEFAULT_HEALTHCHECK_TIMEOUT
             [ -z "$health_check_url" ] && health_check_url=$DEFAULT_HEALTHCHECK_URL
             [ -z "$health_check_expected_status" ] && health_check_expected_status=$DEFAULT_HEALTHCHECK_RESULT
 
-            entry="$entry,\"health-check\":{\"enable\":true,\"lazy\":true,\"url\":\"$(json_escape "$health_check_url")\",\"expected-status\":$health_check_expected_status,\"interval\":$health_check_interval,\"timeout\":$health_check_timeout}"
+            entry="$entry,\"health-check\":{\
+            \"enable\":true,\
+            \"lazy\":$(ucibool_to_yaml_bool "$health_check_lazy"),\
+            \"url\":\"$(json_escape "$health_check_url")\",\
+            \"expected-status\":$health_check_expected_status,\
+            \"interval\":$health_check_interval,\
+            \"timeout\":$health_check_timeout\
+            }"
         fi
 
-        entry="$entry}"
+        entry="{$entry}"
 
         result="$result\"$(json_escape "$name")\":$entry,"
     }
@@ -1566,10 +1239,10 @@ handle_direct_rule_section() {
     config_get cidr_list direct_rules custom_enabled_cidr_list
     for line in $cidr_list; do
         if [ -n "$line" ]; then
-            local rng_name=$(md5sum "$line")
+            local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
             case "$line" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 ;;
             *)
                 if [ -f "$line" ]; then
@@ -1633,12 +1306,27 @@ handle_direct_rule_section() {
     echo "$direct_rulesets" > "$file_rulesets"
 }
 
-handle_final_rule_section() {
-    local dest
-    local rules
-    config_get dest final_rules final_destination
+handle_mixed_port_rules_section() {
+    local exit_rule
+    local rules rule_str
+    config_get exit_rule mixed_port_rules exit_rule
 
-    local rule_str=$(printf 'MATCH,%s' "${dest:-$DEFAULT_PROXY}")
+    if [ "$exit_rule" = "BY_RULES" ]; then
+        rules="[]"
+    else
+        rule_str=$(printf 'IN-TYPE,SOCKS/HTTP,%s' "${exit_rule:-$DEFAULT_PROXY}")
+        rules="[\"${rule_str:-}\"]"
+    fi
+
+    echo "$rules"
+}
+
+handle_final_rule_section() {
+    local exit_rule
+    local rules
+    config_get exit_rule final_rules exit_rule
+
+    local rule_str=$(printf 'MATCH,%s' "${exit_rule:-$DEFAULT_PROXY}")
 
     rules="[\"${rule_str:-}\"]"
 
@@ -1654,7 +1342,7 @@ core_generate_yaml() {
     local dns_listen_port use_system_hosts fake_ip_filter_mode fake_ip_range dns_cache_max_size
     local etag_support global_ua
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver custom_fake_ip_domains ignore_fake_ip_domains fake_ip_filter_data
-    local rules_proxies rules_proxygroups rules_block rule_final rules_direct
+    local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_direct
     local proxies proxy_groups rule_providers proxy_providers names_suffixes_proxy_groups names_suffixes_proxies names_rulesets_proxy_groups names_rulesets_proxies
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path
@@ -1710,6 +1398,7 @@ core_generate_yaml() {
     sniffer_skip_src_address=$(simple_uci_list_to_json_arr proxy sniffer_skip_src_address)
     sniffer_skip_dst_address=$(simple_uci_list_to_json_arr proxy sniffer_skip_dst_address)
 
+    rule_mixed=$(handle_mixed_port_rules_section)
     rule_final=$(handle_final_rule_section)
     proxy_providers=$(handle_proxy_provider_section | jq .)
 
@@ -1785,12 +1474,13 @@ core_generate_yaml() {
     )
 
     rules=$(jq -n \
+        --arg rule_mixed "$rule_mixed" \
         --arg direct "$rules_direct" \
         --arg block "$rules_block" \
         --arg proxygroups "$rules_proxygroups" \
         --arg proxies "$rules_proxies" \
         --arg final "$rule_final" \
-        '($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
+        '($rule_mixed | fromjson) + ($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
     )
 
     # Support for mixed port
@@ -1911,7 +1601,7 @@ core_prepare_workdir() {
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-            current_hash=$(uci show justclash | md5sum | awk '{print $1}')
+            current_hash=$(uci show "$PROGNAME" | md5sum | awk '{print $1}')
             saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null || echo "")
             if [ "$current_hash" != "$saved_hash" ]; then
                 log 2 "Outdated $OUTPUT_YAML_CONFIG_PATH was found. Will be recreated." "🐱"
@@ -1943,38 +1633,46 @@ core_prepare_workdir() {
 
 # TODO: Remove impossible archs
 detect_arch() {
-    local arch_raw
-    arch_raw=$(uname -m)
+    local arch_raw release_info
+    release_info=$(cat /etc/openwrt_release 2>/dev/null)
+    arch_raw=$(echo "$release_info" | sed -n "s/^DISTRIB_ARCH='\(.*\)'$/\1/p")
 
     case "$arch_raw" in
-        x86_64) echo "amd64-v3";;
-        aarch64) echo "arm64" ;;
-        armv5*) echo "armv5" ;;
-        armv6*) echo "armv6" ;;
-        armv7*) echo "armv7" ;;
-        mips*) echo "mips" ;;
-        i[3-6]86) echo "386" ;;
+        aarch64_*) echo "arm64" ;;
+        mips_*)
+            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
+                echo "mips-hardfloat"
+            else
+                echo "mips-softfloat"
+            fi
+            ;;
+        mipsel_*)
+            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
+                echo "mipsle-hardfloat"
+            else
+                echo "mipsle-softfloat"
+            fi
+            ;;
+        mips64_*) echo "mips64" ;;
+        mips64el_*) echo "mips64le" ;;
+        x86_64) echo "amd64-v3" ;;
+        i386_*) echo "386" ;;
+        riscv64_*) echo "riscv64" ;;
+        loongarch64_*) echo "loong64-abi2" ;;
+        *_neon-vfp*) echo "armv7" ;;
+        *_neon* | *_vfp*) echo "armv6" ;;
+        arm_*) echo "armv5" ;;
         *) echo "amd64-v3" ;;
     esac
 }
 
 get_latest_version() {
-    if [ -z "$1" ] || [ -z "$2" ]; then
-        log 1 "Usage: get_latest_version <check_url> <link type[effective/noneffective]>"
-        return 1
-    fi
     local check_url="$1"
-    local link_type="$2"
-    local latest_url latest_ver
-    if [ "$link_type" = "effective" ]; then
-        latest_url="${check_url}"
-    else
-        latest_url=$(curl --progress-bar -L -o /dev/null -w '%{url_effective}' "$check_url") || {
-            log 0 "Failed to get effective URL for download" "❌"
-            return 1
-        }
-    fi
-    latest_ver=$(curl --progress-bar -L "$latest_url/version.txt" | tr -d '\r\n') || {
+    local download_url latest_ver
+    download_url=$(curl -sL "$check_url" | \
+        jq -r '.assets[] | select(.name == "version.txt") | .browser_download_url')
+
+    latest_ver=$(curl -sL "$download_url" | tr -d '\r\n' | sed -n 1p) || {
         log 0 "Failed to get latest version" "❌"
         return 1
     }
@@ -1982,14 +1680,9 @@ get_latest_version() {
 }
 
 core_download() {
-    local arch version file_name base_url param_version download_url
-    param_version="$2"
+    local arch file_name base_url param_version download_url
     download_url="$1"
-
-    if [ -z "$1" ] || [ -z "$2" ]; then
-        log 1 "Usage: core_download <download_url> <version>"
-        return 1
-    fi
+    param_version="$2"
 
     arch=$(detect_arch)
     mkdir -p "$CORE_WORKDIR_PATH"
@@ -2037,8 +1730,8 @@ core_remove() {
 }
 
 core_update() {
-    local cur_ver latest_ver tmp mihomo_update_channel mihomo_cron_update_telegram_notify
-    local check_url check_url_type download_url
+    local cur_ver latest_ver mihomo_update_channel mihomo_cron_update_telegram_notify
+    local check_url download_url
     config_get mihomo_update_channel settings mihomo_update_channel
 
     log 2 "Checking for Mihomo updates..." "🔄"
@@ -2051,34 +1744,26 @@ core_update() {
 
     if [ "$mihomo_update_channel" = "alpha" ]; then
         check_url="$CORE_ALPHA_RELEASE_URL_PARTIAL"
-        check_url_type="effective"
     else
         check_url="$CORE_RELEASE_URL_PARTIAL"
-        check_url_type="noneffective"
-
     fi
 
-    tmp=$(get_latest_version "$check_url" "$check_url_type")
-
-    if [ "$?" -eq 1 ]; then
-        log 0 "Update process can't be finished." "❌"
+    latest_ver=$(get_latest_version "$check_url") || {
+        log 0 "Failed to get latest version" "❌"
         return 1
-    fi
-
-    #TODO: Fix incorrect output handle (github isnt returning empty body)
-    latest_ver=$(echo "$tmp" | sed -n 1p)
-
-    if [ "$mihomo_update_channel" = "alpha" ]; then
-        download_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
-    else
-        download_url=$CORE_RELEASE_URL_PARTIAL_NO_TAG/$latest_ver
-    fi
+    }
 
     if [ -z "$latest_ver" ]; then
        log 0 "Error happened when trying to receive latest version data."
        log 0 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
        log 0 "Failed to download core"
        return 1
+    fi
+
+    if [ "$mihomo_update_channel" = "alpha" ]; then
+        download_url="$CORE_DOWNLOAD_PARTIAL/$ALPHA_TAG"
+    else
+        download_url="$CORE_DOWNLOAD_PARTIAL/$latest_ver"
     fi
 
     config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
@@ -2177,7 +1862,7 @@ cron_make_if_missing() {
 
 core_update_cron_check() {
     cron_make_if_missing
-    if grep -qF "/usr/bin/justclash core_update" /etc/crontabs/root; then
+    if grep -qF "/usr/bin/${PROGNAME} core_update" /etc/crontabs/root; then
         return 0
     else
         return 1
@@ -2187,6 +1872,8 @@ core_update_cron_check() {
 core_update_cron_add() {
     cron_make_if_missing
     local mihomo_cron_update_string
+
+    config_get mihomo_cron_update_string settings mihomo_cron_update_string
 
     if [ -z "$mihomo_cron_update_string" ]; then
         log 0 "Cron schedule string is empty! Cron job not added." "❌"
@@ -2198,8 +1885,7 @@ core_update_cron_add() {
         return 0
     fi
 
-    config_get mihomo_cron_update_string settings mihomo_cron_update_string
-    echo "$mihomo_cron_update_string /usr/bin/justclash core_update" >> /etc/crontabs/root
+    echo "$mihomo_cron_update_string /usr/bin/${PROGNAME} core_update" >> /etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
         log 2 "Cron job added and service restarted" "✅"
@@ -2238,7 +1924,9 @@ core_autorestart_cron_add() {
     cron_make_if_missing
     local mihomo_cron_autorestart_string
 
-     if [ -z "$mihomo_cron_autorestart_string" ]; then
+    config_get mihomo_cron_autorestart_string settings mihomo_cron_autorestart_string
+
+    if [ -z "$mihomo_cron_autorestart_string" ]; then
         log 0 "Cron schedule string is empty! Cron job not added." "❌"
         return 1
     fi
@@ -2248,7 +1936,6 @@ core_autorestart_cron_add() {
         return 0
     fi
 
-    config_get mihomo_cron_autorestart_string settings mihomo_cron_autorestart_string
     echo "$mihomo_cron_autorestart_string ${INITD_PATH} reload" >> /etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
@@ -2256,7 +1943,6 @@ core_autorestart_cron_add() {
     else
         log 2 "Cron job added (service not enabled)" "ℹ️"
     fi
-    log 2 "Core autoupdate cron job added." "✅"
 }
 
 core_autorestart_cron_remove() {
@@ -2387,8 +2073,8 @@ diag_icmp() {
 
 diag_report() {
     local running autoload
-    running=$(service justclash status)
-    if service justclash enabled; then
+    running=$(service "$PROGNAME" status)
+    if service "$PROGNAME" enabled; then
         autoload="yes"
     else
         autoload="no"
@@ -2396,7 +2082,7 @@ diag_report() {
 
 cat <<EOF
 ----------------------------
-JustClash diagnostic report:
+$PROGNAME diagnostic report:
 ----------------------------
 
 -> Basic:
@@ -2450,14 +2136,14 @@ $(uci show network)
 $(uci show dhcp)
 
 -> Service config:
-$(uci show justclash)
+$(uci show "$PROGNAME")
 
 EOF
 
 }
 
 config_show() {
-    uci export justclash
+    uci export "$PROGNAME"
 }
 
 config_reset() {
@@ -2468,20 +2154,20 @@ config_reset() {
 
     clog 2 "Restoring justclash settings..."
 
-    rm -f /etc/config/justclash.bak
+    rm -f "$CONFIG_BAK_PATH"
 
-    if [ ! -f /etc/config/justclash ]; then
+    if [ ! -f "$CONFIG_PATH" ]; then
         clog 0 "Current config file not found, nothing to backup"
     else
-        if ! mv /etc/config/justclash /etc/config/justclash.bak; then
+        if ! mv "$CONFIG_PATH" "$CONFIG_BAK_PATH"; then
             clog 0 "Failed to backup config file"
             return 1
         else
-            clog  "Old config file can be found at path /etc/config/justclash.bak"
+            clog  "Old config file can be found at path ${CONFIG_BAK_PATH}"
         fi
     fi
 
-    if ! cp "$DEFAULT_CONFIG_PATH" /etc/config/justclash; then
+    if ! cp "$DEFAULT_CONFIG_PATH" "$CONFIG_PATH"; then
         clog 0 "Failed to restore default config"
         return 1
     fi
@@ -2518,7 +2204,6 @@ Information Commands:
   info_core               Show Mihomo core version.
   info_package            Show JustClash package version.
   info_luci               Show JustClash LuCI app version.
-  info_conns_console      Show Mihomo connections.
 
 Diagnostics:
   diag_nft                Run nftables diagnostic.
@@ -2600,9 +2285,6 @@ case "$1" in
         ;;
     info_luci)
         info_luci
-        ;;
-    info_conns_console)
-        info_conns_console
         ;;
     diag_nft)
         diag_nft
