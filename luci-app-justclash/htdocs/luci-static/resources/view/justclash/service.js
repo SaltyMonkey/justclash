@@ -15,6 +15,43 @@ return view.extend({
         tabname = "servicebasic_tab";
         s.tab(tabname, _("Basic settings"));
 
+        o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
+        o.description = _("If enabled, the service start will be delayed at router boot.");
+        o.rmempty = false;
+        o.default = "0";
+
+        o = s.taboption(tabname, form.Value, "delayed_boot_value", _("Delayed boot timeout:"));
+        o.datatype = "uinteger";
+        o.placeholder = "10";
+        o.depends("delayed_boot", "1");
+        o.rmempty = false;
+        o.description = _("Delay timeout value in seconds.");
+
+        o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
+        o.description = _("If enabled, minor checks will be disabled at start.");
+        o.rmempty = false;
+        o.default = "0";
+
+        o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Persistent temp files:"));
+        o.description = _("If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!");
+        o.rmempty = false;
+        o.default = "0";
+
+        o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start ntpd:"));
+        o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
+        o.rmempty = false;
+        o.default = "1";
+
+        o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Edit DNS server at startup:"));
+        o.description = _("If enabled, the service will edit DNS settings in dnsmasq configuration at start.");
+        o.rmempty = false;
+        o.default = "1";
+
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit NF tables at startup:"));
+        o.description = _("If enabled, the service creates NF tables to redirect traffic to the TPROXY port.");
+        o.rmempty = false;
+        o.default = "1";
+
        // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
         o.default = "br-lan";
@@ -52,43 +89,6 @@ return view.extend({
 
             return (common.isValidIpv4(value));
         };
-
-        o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
-        o.description = _("If enabled, the service start will be delayed at router boot.");
-        o.rmempty = false;
-        o.default = "0";
-
-        o = s.taboption(tabname, form.Value, "delayed_boot_value", _("Delayed boot timeout:"));
-        o.datatype = "uinteger";
-        o.placeholder = "10";
-        o.depends("delayed_boot", "1");
-        o.rmempty = false;
-        o.description = _("Delay timeout value in seconds.");
-
-        o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
-        o.description = _("If enabled, minor checks will be disabled at start.");
-        o.rmempty = false;
-        o.default = "0";
-
-        o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Persistent temp files:"));
-        o.description = _("If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!");
-        o.rmempty = false;
-        o.default = "0";
-
-        o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start ntpd:"));
-        o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
-        o.rmempty = false;
-        o.default = "1";
-
-        o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Edit DNS server at startup:"));
-        o.description = _("If enabled, the service will edit DNS settings in dnsmasq configuration at start.");
-        o.rmempty = false;
-        o.default = "1";
-
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit NF tables at startup:"));
-        o.description = _("If enabled, the service creates NF tables to redirect traffic to the TPROXY port.");
-        o.rmempty = false;
-        o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "nft_block_quic", _("Block QUIC from clients:"));
         o.description = _("If enabled, the service will block QUIC traffic with nf tables. Can solve issues with streams sometimes.");
