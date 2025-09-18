@@ -58,7 +58,7 @@ RULESETS_BLOCKS_FILE="${ETC_DIR}${RULESETS_BLOCKS_FILENAME}"
 RULESETS_FILE="${ETC_DIR}${RULESETS_FILENAME}"
 
 DASHBOARD_PATH="${ETC_DIR}zashboard"
-DASHBOARD_NAME=ui
+DASHBOARD_NAME="dashboard"
 DASHBOARD_DEFAULT_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
 
 ETC_CONFIG_DIR="/etc/config/"
@@ -1507,6 +1507,8 @@ tproxy-port: $tproxy_port
 unified-delay: $unified_delay
 tcp-concurrent: $tcp_concurrent
 external-controller: 0.0.0.0:$external_controller_port
+external-ui-name: $DASHBOARD_NAME
+external-ui: $DASHBOARD_PATH
 external-ui-url: "$DASHBOARD_DEFAULT_URL"
 routing-mark: $NF_TABLE_FWMARK_PROXY
 global-client-fingerprint: $global_client_fingerprint
