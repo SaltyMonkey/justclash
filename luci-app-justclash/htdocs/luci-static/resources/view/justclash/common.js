@@ -23,6 +23,8 @@ return baseclass.extend({
     defaultProxyProviderHealthCheckSec: 360,
     defaultHealthCheckTimeoutMs: 5000,
     defaultHealthCheckResult: 204,
+    defaultNftOptions: ["BY_RULES", "DROP"],
+    defaultNftNtpOptions: ["BY_RULES", "DROP", "DIRECT"],
     defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0",
     defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],

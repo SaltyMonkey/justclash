@@ -90,29 +90,41 @@ return view.extend({
             return (common.isValidIpv4(value));
         };
 
-        o = s.taboption(tabname, form.Flag, "nft_block_quic", _("Block QUIC from clients:"));
+        o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("QUIC traffic from clients:"));
         o.description = _("If enabled, the service will block QUIC traffic with nf tables. Can solve issues with streams sometimes.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = "0";
+        o.default = defaultNftOptions[0];
+        common.defaultNftOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
 
-        o = s.taboption(tabname, form.Flag, "nft_block_dot", _("Block DoT from clients:"));
+        o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("DoT traffic from clients:"));
         o.description = _("If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = "0";
+        o.default = defaultNftOptions[0];
+        common.defaultNftOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
 
-        o = s.taboption(tabname, form.Flag, "nft_block_dot_quic", _("Block DoQ from clients:"));
+        o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("DoQ traffic from clients:"));
         o.description = _("If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = "0";
+        o.default = defaultNftOptions[0];
+        common.defaultNftOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
 
-        o = s.taboption(tabname, form.Flag, "nft_block_ntp", _("Block NTP from clients:"));
+        o = s.taboption(tabname, form.ListValue, "nft_ntp_mode", _("NTP traffic from clients:"));
         o.description = _("If enabled, the service will block NTP traffic with nf tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = "0";
+        o.default = defaultNftOptions[0];
+        common.defaultNftNtpOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
 
         tabname = "serviceautomation_tab";
         s.tab(tabname, _("Tasks"));
