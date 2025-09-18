@@ -345,7 +345,7 @@ cleanup_fwmark() {
 nf_table_add() {
     local nft_apply_changes
     local tproxy_port proxy_fwmark_hex fake_ip_range tproxy_input_interfaces
-    local nft_block_quic nft_block_dot nft_block_dot_quic nft_block_ntp
+    local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode
     local tproxy_excluded_ips=""
 
     config_get nft_apply_changes settings nft_apply_changes
@@ -357,10 +357,10 @@ nf_table_add() {
     config_get tproxy_port proxy tproxy_port
     config_get fake_ip_range proxy fake_ip_range
     config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
-    config_get nft_block_quic settings nft_block_quic
-    config_get nft_block_dot settings nft_block_dot
-    config_get nft_block_dot_quic settings nft_block_dot_quic
-    config_get nft_block_ntp settings nft_block_ntp
+    config_get nft_quic_mode settings nft_quic_mode
+    config_get nft_dot_mode settings nft_dot_mode
+    config_get nft_dot_quic_mode settings nft_dot_quic_mode
+    config_get nft_ntp_mode settings nft_ntp_mode
     config_get tproxy_excluded_ips settings tproxy_excluded_ips ""
 
     tproxy_excluded_ips=$(echo "$tproxy_excluded_ips" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | sed 's/[[:space:]]\+/, /g')
@@ -398,22 +398,24 @@ nf_table_add() {
 
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
 
-    if [ "$nft_block_quic" = "1" ] || [ "$nft_block_dot_quic" = "1" ] || [ "$nft_block_ntp" = 1 ]; then
-        local selected_ports=""
-        [ "$nft_block_quic" = "1" ] && selected_ports=$selected_ports"$DEFAULT_TLS_PORT,"
-        [ "$nft_block_dot_quic" = "1" ] && selected_ports=$selected_ports"$DEFAULT_DOT_PORT,"
-        [ "$nft_block_ntp" = "1" ] && selected_ports=$selected_ports"$DEFAULT_NTP_PORT,"
-        selected_ports="${selected_ports%,}"
-
-        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $selected_ports } drop
+    if [ "$nft_quic_mode" = "DROP" ]; then
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop
+    fi
+    if [ "$nft_dot_quic_mode" = "DROP" ]; then
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT } drop
+    fi
+    if [ "$nft_dot_mode" = "DROP" ]; then
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport  { $DEFAULT_DOT_PORT } drop
     fi
 
-    if [ "$nft_block_dot" = "1" ]; then
-        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport $DEFAULT_DOT_PORT drop
+    if [ "$nft_ntp_mode" = "DROP" ]; then
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
+    elif [ "$nft_ntp_mode" = "DIRECT" ]; then
+        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
     fi
 
     if [ -n "$tproxy_excluded_ips" ]; then
-        # Исключение по tproxy_excluded_ips с br-lan
+        # Исключение по tproxy_excluded_ips с  @inbound_interfaces
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip saddr { $tproxy_excluded_ips } meta l4proto { tcp, udp } return
     fi
 
