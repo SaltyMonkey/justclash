@@ -363,7 +363,7 @@ nf_table_add() {
     config_get nft_ntp_mode settings nft_ntp_mode
     config_get tproxy_excluded_ips settings tproxy_excluded_ips ""
 
-    tproxy_excluded_ips=$(echo "$tproxy_excluded_ips" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | sed 's/[[:space:]]\+/, /g')
+    tproxy_excluded_ips=$(echo "$tproxy_excluded_ips" | trim | spaces_to_commas)
 
     [ -z "$tproxy_port" ] && panic "tproxy_port not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range not set"
@@ -702,7 +702,7 @@ handle_proxy_section() {
         else
             [ -z "$proxy_link_uri" ] && { log 1  "Skipping proxy '$name' without proxy_link" "⚠️"; return; }
 
-            proxy_link_uri=$(echo "$proxy_link_uri" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            proxy_link_uri=$(echo "$proxy_link_uri" | trim)
             [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
 
             case "$proxy_link_uri" in
@@ -752,7 +752,7 @@ handle_proxy_section() {
 
         config_get domain_list "$section" custom_enabled_domain_list
         for line in $domain_list; do
-            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
                 local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
                 case "$clean_line" in
@@ -762,8 +762,10 @@ handle_proxy_section() {
                     ;;
                 *)
                     if [ -f "$clean_line" ]; then
+                        local escaped_path=$(json_escape "$clean_line")
+                        safe_paths_add "$escaped_path"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
                     else
                         log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                         continue
@@ -779,7 +781,7 @@ handle_proxy_section() {
 
         config_get cidr_list "$section" custom_enabled_cidr_list
         for line in $cidr_list; do
-            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
                 local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
                 case "$clean_line" in
@@ -789,8 +791,10 @@ handle_proxy_section() {
                     ;;
                 *)
                     if [ -f "$clean_line" ]; then
+                        local escaped_path=$(json_escape "$clean_line")
+                        safe_paths_add "$escaped_path"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
                         continue
@@ -895,8 +899,8 @@ handle_proxy_group_section() {
         [ -z "$expected_status" ] && expected_status=$DEFAULT_HEALTHCHECK_RESULT
 
         local escaped_proxies escaped_providers
-        [ -n "$proxies_list" ] && escaped_proxies="\"$(echo "$proxies_list" | sed -e 's/"/\\"/g' -e 's/[[:space:]]\+/","/g')\""
-        [ -n "$providers_list" ] && escaped_providers="\"$(echo "$providers_list" | sed -e 's/"/\\"/g' -e 's/[[:space:]]\+/","/g')\""
+        [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | list_to_json_array)
+        [ -n "$providers_list" ] && escaped_providers=$(echo "$providers_list" | list_to_json_array)
 
         local group_json="{\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
@@ -953,7 +957,7 @@ handle_proxy_group_section() {
 
         config_get domain_list "$section" custom_enabled_domain_list
         for line in $domain_list; do
-            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
                 local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
                 case "$clean_line" in
@@ -963,8 +967,10 @@ handle_proxy_group_section() {
                     ;;
                 *)
                     if [ -f "$clean_line" ]; then
+                        local escaped_path=$(json_escape "$clean_line")
+                        safe_paths_add "$escaped_path"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
                     else
                         log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                         continue
@@ -980,7 +986,7 @@ handle_proxy_group_section() {
 
         config_get cidr_list "$section" custom_enabled_cidr_list
         for line in $cidr_list; do
-            local clean_line=$(echo "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
                 local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
                 case "$clean_line" in
@@ -990,8 +996,10 @@ handle_proxy_group_section() {
                     ;;
                 *)
                     if [ -f "$clean_line" ]; then
+                        local escaped_path=$(json_escape "$clean_line")
+                        safe_paths_add "$escaped_path"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
                         continue
@@ -1141,7 +1149,7 @@ handle_block_rule_section() {
             # shellcheck disable=SC2249
             case "$name" in \#*) continue ;; esac
 
-            local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")  # Без \n
+            local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
             selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$DEFAULT_RULESET_PROXY")\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
@@ -1224,44 +1232,50 @@ handle_direct_rule_section() {
 
     config_get domain_list direct_rules custom_enabled_domain_list
     for line in $domain_list; do
-        if [ -n "$line" ]; then
-            local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
-            case "$line" in
+        local clean_line=$(echo "$line" | trim)
+        if [ -n "$clean_line" ]; then
+            local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+            case "$clean_line" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 ;;
             *)
-                if [ -f "$line" ]; then
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"type\":\"file\"},"
+                if [ -f "$clean_line" ]; then
+                    local escaped_path=$(json_escape "$clean_line")
+                    safe_paths_add "$escaped_path"
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"type\":\"file\"},"
                 else
-                    log 1 "Incorrect value in custom domain list: $line" "⚠️"
+                    log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                     continue
                 fi
                 ;;
             esac
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" $DEFAULT_RULESET_PROXY)
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$DEFAULT_RULESET_PROXY")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         fi
     done
 
     config_get cidr_list direct_rules custom_enabled_cidr_list
     for line in $cidr_list; do
-        if [ -n "$line" ]; then
-            local rng_name=$(printf "%s" "$line" | md5sum | awk '{print $1}')
-            case "$line" in
+        local clean_line=$(echo "$line" | trim)
+        if [ -n "$clean_line" ]; then
+            local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+            case "$clean_line" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 ;;
             *)
                 if [ -f "$line" ]; then
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$(json_escape "$line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                    local escaped_path=$(json_escape "$clean_line")
+                    safe_paths_add "$escaped_path"
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
-                    log 1 "Incorrect value in custom cidr list: $line" "⚠️"
+                    log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
                     continue
                 fi
                 ;;
             esac
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" $DEFAULT_RULESET_PROXY)
+            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$DEFAULT_RULESET_PROXY")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         fi
     done
@@ -1270,7 +1284,7 @@ handle_direct_rule_section() {
     local val
     for val in $additional_domain_direct; do
         [ -n "$val" ] && {
-            local rule_str=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$val")  # Без \n
+            local rule_str=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$val")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done

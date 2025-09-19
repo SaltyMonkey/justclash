@@ -7,6 +7,23 @@
 # External justclash service helpers file
 # --------------------------------------------------------
 
+spaces_to_commas() {
+    sed 's/[[:space:]]\+/, /g'
+}
+
+trim() {
+    sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+list_to_json_array() {
+    local input_list
+    read -r input_list
+
+    if [ -n "$input_list" ]; then
+        printf '"%s"' "$(echo "$input_list" | sed -e 's/"/\\"/g' -e 's/[[:space:]]\+/","/g')"
+    fi
+}
+
 safe_paths_add() {
     local new_value="$1"
     [ -z "$new_value" ] && return
