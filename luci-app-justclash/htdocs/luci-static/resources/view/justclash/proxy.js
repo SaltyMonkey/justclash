@@ -17,6 +17,11 @@ return view.extend({
         tabname = "coresettings_tab";
         s.tab(tabname, _("Basic settings"));
 
+        o = s.taboption(tabname, form.Flag, "enable_zashboard", _("Enable dashboard:"));
+        o.description = _("Enable external dashboard for Mihomo.");
+        o.default = "0";
+        o.rmempty = false;
+
         o = s.taboption(tabname, form.ListValue, "log_level", _("Logging level:"));
         common.defaultLoggingLevels.forEach(item => {
             o.value(item, _(`${item}`));
