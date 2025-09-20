@@ -21,6 +21,10 @@ info_openwrt() {
    grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "$NO_DATA_STRING"
 }
 
+info_openwrt_version() {
+   grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}'
+}
+
 info_mihomo() {
     if [ ! -x "$INFO_CORE_PATH" ]; then
         echo "$NO_DATA_STRING"
@@ -75,6 +79,9 @@ case "$1" in
         ;;
     info_openwrt)
         info_openwrt
+        ;;
+    info_openwrt_version)
+        info_openwrt_version
         ;;
     info_core|info_mihomo)
         info_mihomo

@@ -611,6 +611,10 @@ info_openwrt() {
     $CORE_PATH_INFOBIN info_openwrt
 }
 
+info_openwrt_version() {
+    $CORE_PATH_INFOBIN info_openwrt_version
+}
+
 info_mihomo() {
     $CORE_PATH_INFOBIN info_core
 }
@@ -1062,7 +1066,7 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2329
     accumulate_proxy_provider() {
         local section="$1"
-        local name url interval filter exclude_filter exclude_type
+        local name url subscription_hwid_support interval filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
 
         config_get name "$section" name
@@ -1071,7 +1075,6 @@ handle_proxy_provider_section() {
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
         config_get exclude_type "$section" exclude_type
-        config_get_bool health_check "$section" health_check 0
 
         { [ -z "$name" ] || [ -z "$url" ]; } && {
             log 1 "Skipping proxy_provider without name or subscription" "⚠️"
@@ -1085,7 +1088,18 @@ handle_proxy_provider_section() {
         [ -n "$exclude_filter" ] && entry="$entry,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
 
-        if [ "$health_check" = "1" ]; then
+        config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
+        if [ "$subscription_hwid_support" -eq 1 ]; then
+            entry="$entry,\"header\":{\
+            \"x-hwid\": \"$(hwid_generate)\",\
+            \"x-device-os\":\"OpenWRT\",\
+            \"x-ver-os\":\"$(info_openwrt_version)\",\
+            \"x-device-model\":\"$(info_device)\",\
+            }"
+        fi
+
+        config_get_bool health_check "$section" health_check 0
+        if [ "$health_check" -eq 1 ]; then
             config_get health_check_expected_status "$section" health_check_expected_status
             config_get health_check_url "$section" health_check_url
             config_get health_check_interval "$section" health_check_interval
