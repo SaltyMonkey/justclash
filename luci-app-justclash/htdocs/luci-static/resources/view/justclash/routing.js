@@ -200,6 +200,9 @@ return view.extend({
         };
         o.description = _("Your complete subscription URL with http:// or https://.");
 
+        o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
+        o.default = '0';
+
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
         o.rmempty = false;
         o.datatype = "uinteger";
