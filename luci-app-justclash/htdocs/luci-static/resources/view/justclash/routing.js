@@ -202,6 +202,7 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
         o.default = '0';
+        o.description = _("Send HWID data to server with proxy provider request.")
 
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
         o.rmempty = false;
@@ -638,8 +639,8 @@ return view.extend({
         smp.tab(tabname, _("Basic"));
 
         o = smp.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
-        o.value("DIRECT", "DIRECT");
-        o.value(common.defaultBehaviorMixedPort, "By rules");
+        o.value("DIRECT", _("DIRECT"));
+        o.value(common.defaultBehaviorMixedPort, _("BY_RULES"));
         o.default = common.defaultBehaviorMixedPort;
         o.rmempty = false;
         o.validate = function (section_id, value) {
@@ -656,8 +657,8 @@ return view.extend({
         s5.tab(tabname, _("Basic"));
 
         optionFinal = s5.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
-        optionFinal.value("DIRECT", "DIRECT");
-        optionFinal.value("REJECT", "REJECT");
+        optionFinal.value("DIRECT", _("DIRECT"));
+        optionFinal.value("REJECT", _("REJECT"));
         optionFinal.default = common.defaultRuleSetProxy;
         optionFinal.rmempty = false;
         optionFinal.validate = function (section_id, value) {

@@ -1,10 +1,37 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-msgid "Status"
+msgid "BY_RULES"
 msgstr ""
 
-msgid "Connections"
+msgid "DROP"
+msgstr ""
+
+msgid "DIRECT"
+msgstr ""
+
+msgid "Sniffer settings"
+msgstr ""
+
+msgid "Enable sniffer:"
+msgstr ""
+
+msgid "Parse pure IP:"
+msgstr ""
+
+msgid "Excluded from sniffer domains:"
+msgstr ""
+
+msgid "Forcefully sniff domains:"
+msgstr ""
+
+msgid "Exclude from sniffer SRC CIDR traffic:"
+msgstr ""
+
+msgid "Exclude from sniffer DST CIDR traffic:"
+msgstr ""
+
+msgid "Status"
 msgstr ""
 
 msgid "Logs"
@@ -112,49 +139,58 @@ msgstr ""
 msgid "Delayed boot:"
 msgstr ""
 
+msgid "Skip environment checks:"
+msgstr ""
+
+msgid "Minor checks in script will be disabled at start."
+msgstr ""
+
 msgid "Delayed boot timeout:"
 msgstr ""
 
 msgid "Skip environment checks:"
-msgstr ""
+msgstr "Пропустить проверки окружения:"
+
+msgid "Minor checks in script will be disabled at start."
+msgstr "Незначительные проверки в скрипте будут отключены при запуске."
 
 msgid "Persistent temp files:"
 msgstr ""
 
-msgid "If enabled, the service start will be delayed at router boot."
+msgid "The service start will be delayed at router boot."
 msgstr ""
 
 msgid "Start ntpd:"
 msgstr ""
 
-msgid "If enabled, the service starts ntpd to sync system time and ensure TLS works correctly."
+msgid "The service will start ntpd to sync system time and ensure TLS works correctly."
 msgstr ""
 
 msgid "Edit DNS server at startup:"
 msgstr ""
 
-msgid "If enabled, the service will edit DNS settings in dnsmasq configuration at start."
+msgid "The service will edit DNS settings in dnsmasq configuration at start."
 msgstr ""
 
-msgid "Edit NF tables at startup:"
+msgid "Edit netfilter tables at startup:"
 msgstr ""
 
-msgid "Block QUIC from clients:"
+msgid "QUIC traffic from clients:"
 msgstr ""
 
-msgid "If enabled, the service will block QUIC traffic with nf tables. Can solve issues with streams sometimes."
+msgid "Select a way how QUIC traffic will be handled by netfilter tables."
 msgstr ""
 
-msgid "Block DoT from clients:"
+msgid "DoT traffic from clients:"
 msgstr ""
 
-msgid "If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware."
+msgid "Select a way how DoT traffic will be handled by netfilter tables."
 msgstr ""
 
-msgid "Block DoQ from clients:"
+msgid "DoQ traffic from clients:"
 msgstr ""
 
-msgid "If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware."
+msgid "Select a way how DoQ traffic will be handled by netfilter tables."
 msgstr ""
 
 msgid "Source network interface:"
@@ -175,19 +211,13 @@ msgstr ""
 msgid "Select the WAN interfaces to be monitored for automatic service restart."
 msgstr ""
 
-msgid "If enabled, the service creates NF tables to redirect traffic to the TPROXY port."
+msgid "The service creates netfilter tables to redirect traffic to the tproxy port."
 msgstr ""
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
 msgstr ""
 
 msgid "Mihomo autorestart:"
-msgstr ""
-
-msgid "Mihomo autoupdate channel:"
-msgstr ""
-
-msgid "Update channel for Mihomo. Recommended: alpha."
 msgstr ""
 
 msgid "Tasks"
@@ -253,13 +283,13 @@ msgstr ""
 msgid "Tproxy port:"
 msgstr ""
 
+msgid "Enable mixed port:"
+msggstr ""
+
 msgid "Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic."
 msgstr ""
 
 msgid "Enable mixed port to allow incoming connections supporting both HTTP(S) and SOCKS5 protocols."
-msgstr ""
-
-msgid "Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols."
 msgstr ""
 
 msgid "Unified delay:"
@@ -469,7 +499,7 @@ msgstr ""
 msgid "Name:"
 msgstr ""
 
-msgid "Virtual proxy name."
+msgid "Proxy name."
 msgstr ""
 
 msgid "Name must contain only lowercase letters, digits, and underscores"
@@ -567,6 +597,7 @@ msgstr ""
 
 msgid "Only http:// or https:// URLs are allowed."
 msgstr ""
+
 msgid "Time interval for subscription update check."
 msgstr ""
 
@@ -630,6 +661,12 @@ msgstr ""
 msgid "Subscription URL:"
 msgstr ""
 
+msgid "HWID support:"
+msgstr ""
+
+msgid "Send HWID data to server with proxy provider request."
+msgstr ""
+
 msgid "Your complete subscription URL with http:// or https://."
 msgstr ""
 
@@ -658,36 +695,6 @@ msgid "Additional settings for the final rules applied after all others. Use it 
 msgstr ""
 
 msgid "This field cannot be empty"
-msgstr ""
-
-msgid "Destination:"
-msgstr ""
-
-msgid "Proto"
-msgstr ""
-
-msgid "Connection"
-msgstr ""
-
-msgid "Host/Sniff"
-msgstr ""
-
-msgid "Chains"
-msgstr ""
-
-msgid "Destination"
-msgstr ""
-
-msgid "Rule"
-msgstr ""
-
-msgid "No active connections"
-msgstr ""
-
-msgid "Connection error"
-msgstr ""
-
-msgid "Can't connect to proxy API"
 msgstr ""
 
 msgid "Error"

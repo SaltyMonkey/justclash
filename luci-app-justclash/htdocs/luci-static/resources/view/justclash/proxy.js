@@ -202,7 +202,7 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "sniffer_parse_pure_ip", _("Parse pure ip:"));
+        o = s.taboption(tabname, form.Flag, "sniffer_parse_pure_ip", _("Parse pure IP:"));
         o.description = _("Parse pure ip in sniffer.");
         o.rmempty = false;
         o.default = "1";

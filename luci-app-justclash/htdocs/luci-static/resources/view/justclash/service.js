@@ -16,7 +16,7 @@ return view.extend({
         s.tab(tabname, _("Basic settings"));
 
         o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
-        o.description = _("If enabled, the service start will be delayed at router boot.");
+        o.description = _("The service start will be delayed at router boot.");
         o.rmempty = false;
         o.default = "0";
 
@@ -28,7 +28,7 @@ return view.extend({
         o.description = _("Delay timeout value in seconds.");
 
         o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
-        o.description = _("If enabled, minor checks will be disabled at start.");
+        o.description = _("Minor checks in script will be disabled at start.");
         o.rmempty = false;
         o.default = "0";
 
@@ -38,16 +38,16 @@ return view.extend({
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start ntpd:"));
-        o.description = _("If enabled, the service starts ntpd to sync system time and ensure TLS works correctly.");
+        o.description = _("The service will start ntpd to sync system time and ensure TLS works correctly.");
         o.rmempty = false;
         o.default = "1";
 
         o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Edit DNS server at startup:"));
-        o.description = _("If enabled, the service will edit DNS settings in dnsmasq configuration at start.");
+        o.description = _("The service will edit DNS settings in dnsmasq configuration at start.");
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit NF tables at startup:"));
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit netfilter tables at startup:"));
         o.description = _("If enabled, the service creates NF tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
         o.default = "1";
@@ -60,6 +60,7 @@ return view.extend({
         o.nobridges = false;
         o.noinactive = false;
         o.multiple = true;
+        o.description="Select the network interface from which the traffic will originate";
         o.filter = function (section_id, value) {
             if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
                 return false;
@@ -91,7 +92,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("QUIC traffic from clients:"));
-        o.description = _("If enabled, the service will block QUIC traffic with nf tables. Can solve issues with streams sometimes.");
+        o.description = _("Select a way how QUIC traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = defaultNftOptions[0];
@@ -100,7 +101,7 @@ return view.extend({
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("DoT traffic from clients:"));
-        o.description = _("If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware.");
+        o.description = _("Select a way how DoT traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = defaultNftOptions[0];
@@ -109,7 +110,7 @@ return view.extend({
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("DoQ traffic from clients:"));
-        o.description = _("If enabled, the service will block DOT traffic with nf tables. Can solve DNS issues for some hardware.");
+        o.description = _("Select a way how DoQ traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
         o.default = defaultNftOptions[0];
