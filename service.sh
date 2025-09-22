@@ -2,9 +2,9 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-CORE_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/latest/download"
-CORE_RELEASE_URL_PARTIAL_NO_TAG="https://github.com/metacubex/mihomo/releases/download"
-CORE_ALPHA_RELEASE_URL_PARTIAL="https://github.com/metacubex/mihomo/releases/download/Prerelease-Alpha"
+CORE_RELEASE_CHECK_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
+CORE_RELEASE_DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download"
+
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash-owrt/releases/latest"
 
 URL_GITHUB="github.com"
@@ -135,6 +135,14 @@ pkg_remove() {
         apk del "$pkg"
     else
         opkg remove --force-depends "$pkg"
+    fi
+}
+
+pkg_list_update() {
+    if is_bin_installed apk; then
+        apk update
+    else
+        opkg update
     fi
 }
 
@@ -283,247 +291,102 @@ diagnostic_mem() {
     fi
 }
 
+diagnostic_conflict() {
+    local pkg_name="$1"
+
+    printf " - %s " "$pkg_name"
+    if pkg_is_installed "$pkg_name"; then
+        print_red "DETECTED!"
+        print_red "Conflict detected with package: $pkg_name."
+        print_red "You should remove it before installing JustClash."
+        print_red "Do you want to remove $pkg_name? yes/no"
+
+        while true; do
+            read -r inp
+            case $inp in
+                yes|y|Y)
+                    pkg_remove "$pkg_name"
+                    break
+                    ;;
+                *)
+                    echo "Exit"
+                    exit 1
+                    ;;
+            esac
+        done
+    else
+        print_green "NOT FOUND"
+    fi
+    printf "\n"
+}
+
 diagnostic_conflicts_interactive() {
     echo "  "
     print_bold_green "Checking conflicted packages..."
 
-    printf " - https-dns-proxy "
-    if pkg_is_installed https-dns-proxy; then
-        print_red "DETECTED!"
-        print_red "Detected conflict with package: https-dns-proxy."
-        print_red "Do you want to remove it? yes/no"
-
-        while true; do
-                read -r inp
-                case $inp in
-                    yes|y|Y)
-                        pkg_remove luci-app-https-dns-proxy
-                        pkg_remove https-dns-proxy
-                        pkg_remove luci-i18n-https-dns-proxy*
-                        break
-                        ;;
-                    *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
-
-    printf " - podkop "
-    if pkg_is_installed podkop; then
-        print_red "DETECTED!"
-        print_red "Conflict detected with package: podkop."
-        print_red "JustClash and Podkop are both TPROXY software of the same type."
-        print_red "You should use only one of them."
-        print_red "Do you want to remove Podkop? yes/no"
-
-        while true; do
-                read -r inpp
-                case $inpp in
-                yes|y|Y)
-                    pkg_remove luci-app-podkop
-                    pkg_remove podkop
-                    pkg_remove luci-i18n-podkop*
-                    break
-                    ;;
-                *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
-
-    printf " - luci-app-ssclash "
-    if pkg_is_installed luci-app-ssclash; then
-        print_red "DETECTED!"
-        print_red "Conflict detected with package: luci-app-ssclash ."
-        print_red "JustClash and luci-app-ssclash are both TPROXY software of the same type."
-        print_red "You should use only one of them."
-        print_red "Do you want to remove luci-app-ssclash? yes/no"
-
-        while true; do
-                read -r inpp
-                case $inpp in
-                yes|y|Y)
-                    pkg_remove luci-app-ssclash
-                    break
-                    ;;
-                *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
-
-    printf " - mihomo "
-    if pkg_is_installed mihomo; then
-        print_red "DETECTED!"
-        print_red "Conflict detected with package: mihomo."
-        print_red "JustClash already managing mihomo binary."
-        print_red "You should use only one of them."
-        print_red "Do you want to remove mihomo? yes/no"
-
-        while true; do
-                read -r inpp
-                case $inpp in
-                yes|y|Y)
-                    pkg_remove mihomo
-                    break
-                    ;;
-                *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
-
-    printf " - sing-box "
-    if pkg_is_installed sing-box; then
-        print_red "DETECTED!"
-        print_red "Conflict detected with package: sing-box."
-        print_red "JustClash and sing-box are both TPROXY software of the same type."
-        print_red "You should use only one of them."
-        print_red "Do you want to remove sing-box? yes/no"
-
-        while true; do
-                read -r inpp
-                case $inpp in
-                yes|y|Y)
-                    pkg_remove sing-box
-                    break
-                    ;;
-                *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
-
-    printf " - passwall "
-    if pkg_is_installed luci-app-passwall; then
-        print_red "DETECTED!"
-        print_red "Conflict detected with package: luci-app-passwall."
-        print_red "JustClash and luci-app-passwall are both proxy software of the same type."
-        print_red "You should use only one of them."
-        print_red "Do you want to remove luci-app-passwall? yes/no"
-
-        while true; do
-                read -r inpp
-                case $inpp in
-                yes|y|Y)
-                    pkg_remove luci-app-passwall
-                    break
-                    ;;
-                *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
-
-    printf " - passwall2 "
-    if pkg_is_installed luci-app-passwall2; then
-        print_red "DETECTED!"
-        print_red "Conflict detected with package: luci-app-passwall2."
-        print_red "JustClash and luci-app-passwall are both proxy software of the same type."
-        print_red "You should use only one of them."
-        print_red "Do you want to remove luci-app-passwall2? yes/no"
-
-        while true; do
-                read -r inpp
-                case $inpp in
-                yes|y|Y)
-                    pkg_remove luci-app-passwall2
-                    break
-                    ;;
-                *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
-
-    printf " - banip "
-    if pkg_is_installed banip; then
-        print_red "DETECTED!"
-        print_red "Conflict detected with package: banip."
-        print_red "JustClash and luci-app-passwall are both proxy software of the same type."
-        print_red "You should use only one of them."
-        print_red "Do you want to remove banip? yes/no"
-
-        while true; do
-                read -r inpp
-                case $inpp in
-                yes|y|Y)
-                    pkg_remove banip
-                    pkg_remove luci-app-banip
-                    break
-                    ;;
-                *)
-                    echo "Exit"
-                    exit 1
-                    ;;
-                esac
-        done
-    else
-        print_green "NOT FOUND"
-    fi
+    diagnostic_conflict "https-dns-proxy"
+    diagnostic_conflict "podkop"
+    diagnostic_conflict "luci-app-ssclash"
+    diagnostic_conflict "mihomo"
+    diagnostic_conflict "sing-box"
+    diagnostic_conflict "luci-app-passwall"
+    diagnostic_conflict "luci-app-passwall2"
+    diagnostic_conflict "banip"
 
     echo " "
 }
 
 detect_arch() {
-    local arch_raw
-    arch_raw=$(uname -m)
+    local arch_raw release_info
+    release_info=$(cat /etc/openwrt_release 2>/dev/null)
+    arch_raw=$(echo "$release_info" | sed -n "s/^DISTRIB_ARCH='\(.*\)'$/\1/p")
 
     case "$arch_raw" in
-        x86_64) echo "amd64";;
-        aarch64) echo "arm64" ;;
-        armv5*) echo "armv5" ;;
-        armv6*) echo "armv6" ;;
-        armv7*) echo "armv7" ;;
-        mips*) echo "mips" ;;
-        #riscv64) echo "riscv64" ;;
-        i[3-6]86) echo "i386" ;;
-        *)
-            print_red "Unknown or unsupported architecture: $arch_raw"
-            exit 1
+        aarch64_*) echo "arm64" ;;
+        mips_*)
+            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
+                echo "mips-hardfloat"
+            else
+                echo "mips-softfloat"
+            fi
             ;;
+        mipsel_*)
+            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
+                echo "mipsle-hardfloat"
+            else
+                echo "mipsle-softfloat"
+            fi
+            ;;
+        mips64_*) echo "mips64" ;;
+        mips64el_*) echo "mips64le" ;;
+        x86_64) echo "amd64-v3" ;;
+        i386_*) echo "386" ;;
+        riscv64_*) echo "riscv64" ;;
+        loongarch64_*) echo "loong64-abi2" ;;
+        *_neon-vfp*) echo "armv7" ;;
+        *_neon* | *_vfp*) echo "armv6" ;;
+        arm_*) echo "armv5" ;;
+        *) echo "amd64-v3" ;;
     esac
 }
 
 get_latest_version() {
     local check_url="$1"
-    local latest_ver
-    latest_ver=$(wget -qO- "$check_url/version.txt" | tr -d '\r\n')
+    local download_url latest_ver
+    download_url=$(curl -sL "$check_url" | \
+        jq -r '.assets[] | select(.name == "version.txt") | .browser_download_url')
+
+    latest_ver=$(curl -sL "$download_url" | tr -d '\r\n' | sed -n 1p) || {
+        log 0 "Failed to get latest version" "❌"
+        return 1
+    }
     echo "$latest_ver"
 }
 
 core_download() {
-    local arch version file_name base_url param_version download_url
-    param_version="$2"
+    local arch file_name base_url param_version download_url
     download_url="$1"
+    param_version="$2"
 
     if [ -z "$1" ] || [ -z "$2" ]; then
         print_red "Usage: core_download <download_url> <version>"
@@ -534,7 +397,7 @@ core_download() {
     mkdir -p "$TMP_DOWNLOAD_PATH"
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
-    base_url="${download_url}/${file_name}"
+    base_url="${download_url}/${param_version}/${file_name}"
 
     echo " - Downloading mihomo binary"
     wget -qO "$TMP_DOWNLOAD_PATH/mihomo.gz" "$base_url" || {
@@ -561,25 +424,21 @@ core_download() {
 }
 
 core_update() {
-    local channel="$1"
-    local cur_ver latest_ver tmp
+    local cur_ver latest_ver
     local check_url download_url
 
     rm -rf "$TMP_DOWNLOAD_PATH"
 
     print_bold_green "Checking for Mihomo updates..."
 
-    if [ "$channel" = "alpha" ]; then
-        check_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
-    else
-        check_url=$CORE_RELEASE_URL_PARTIAL
-    fi
-
     cur_ver=$(info_mihomo)
     if [ -z "$cur_ver" ]; then
         print_red "Update process can't be finished."
         exit 1
     fi
+
+    check_url="$CORE_RELEASE_CHECK_URL"
+    download_url="$CORE_RELEASE_DOWNLOAD_URL"
 
     tmp=$(get_latest_version "$check_url")
     if [ $? -eq 1 ]; then
@@ -589,12 +448,6 @@ core_update() {
 
     #TODO: Fix incorrect output handle (github isnt returning empty body)
     latest_ver=$(echo "$tmp" | sed -n 1p)
-
-    if [ "$channel" = "alpha" ]; then
-        download_url=$CORE_ALPHA_RELEASE_URL_PARTIAL
-    else
-        download_url=$CORE_RELEASE_URL_PARTIAL_NO_TAG/$latest_ver
-    fi
 
     if [ -z "$latest_ver" ]; then
        print_red "Error happened when trying to receive latest version data."
@@ -652,11 +505,13 @@ core_remove() {
 }
 
 justclash_install() {
-    echo "  "
-    print_bold_green "Installing JustClash packages..."
-    opkg update
     local apk_file
     local ipk_file
+
+    echo "  "
+    print_bold_green "Installing JustClash packages..."
+    pkg_list_update
+
     if is_bin_installed apk; then
         for apk_file in "$TMP_DOWNLOAD_PATH"/*.apk; do
             if [ -f "$apk_file" ]; then
@@ -783,8 +638,8 @@ user_select_lang_install_mode_interactive() {
 }
 
 localuse_interactive() {
-    print_bold_green "DNSMasq localuse flag setup..."
-    echo "0 - router will resolve domains with WAN DNS servers. (Recommended)"
+    print_bold_green "DNSMasq localuse flag setup... (Optional)"
+    echo "0 - router will resolve domains with ISP DNS servers."
     echo "1 - router will resolve domains with itself. (Default)"
     echo "Router will be rebooted if setting will be applied"
     while true; do
@@ -806,13 +661,22 @@ localuse_interactive() {
     done
 }
 
+install_jq() {
+    echo "  "
+    print_bold_green "Installing helper jq package..."
+
+    pkg_list_update
+    pkg_install jq
+}
+
 install_service() {
     mkdir -p "$TMP_DOWNLOAD_PATH"
     diagnostic_tools
     diagnostic_net
     diagnostic_mem
     diagnostic_conflicts_interactive
-    core_update "alpha"
+    install_jq
+    core_update
     #user_select_lang_install_mode_interactive
     #if [ $? -ne 1 ]; then
         justclash_download 1
@@ -849,7 +713,7 @@ run() {
     while true; do
         printf "Enter your choice [1-6]: "
         read -r choice
-       case "$choice" in
+        case "$choice" in
             1)
                 echo "Installing JustClash..."
                 install_service
@@ -860,22 +724,26 @@ run() {
                 ;;
             3)
                 echo "Updating Mihomo Clash core..."
-                core_update "alpha"
+                core_update
                 ;;
             4)
+                echo "Removing Mihomo Clash core..."
+                core_remove
+                ;;
+            5)
                 echo "Starting diagnostic..."
                 diagnostic
                 ;;
-            5)
-                echo "Starting DNSMasq localuse flag setup..."
-                diagnostic
-                ;;
             6)
+                echo "Starting DNSMasq localuse flag setup..."
+                localuse_interactive
+                ;;
+            7)
                 echo "Exiting..."
                 exit 0
                 ;;
             *)
-                echo "Invalid option. Please enter a number between 1 and 6."
+                echo "Invalid option. Please enter a number between 1 and 7."
                 ;;
         esac
     done
