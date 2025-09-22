@@ -11,12 +11,12 @@
 
 - Launches and supervises the Mihomo/Clash core as a system service.
 - Integration of external binaries with Linux shell scripting.
-- Practical examples of network and routing configuration (TPROXY, firewall, policy routing).
+- Practical examples of network and routing configuration (TPROXY, Mixed port, firewall, policy routing).
 - Integrates with OpenWrt/FriendlyWrt service management.
 - All configuration is handled via UCI (`/etc/config/justclash`).
 - LuCI web interface for controlling and monitoring the service.
-- Diagnostic tools for DNS, ICMP, and routing checks.
-- Safe config reset, backup, and restore patterns.
+- Diagnostic tools for DNS, ICMP, and routing.
+- Safe config reset, backup, and restore functionality.
 
 ## Project Structure
 
@@ -55,7 +55,7 @@
 You can install JustClash with a single command using the provided install script:
 
 ```
-sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash-owrt/refs/heads/main/install.sh)
+sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash-owrt/refs/heads/main/service.sh)
 ```
 
 This method will automatically download and execute the installation script, handling the setup for you.
@@ -98,7 +98,7 @@ You can build the JustClash packages using the provided Dockerfiles (with OpenWR
     docker build -t justclash-builder-snapshot -f Dockerfile-snapshot .
     ```
 
-After the build, extract the resulting packages from the container and install as above.
+After the build, extract the resulting packages from the container and install as explained above.
 
 ### 4. Build from Source (using Docker Compose)
 
