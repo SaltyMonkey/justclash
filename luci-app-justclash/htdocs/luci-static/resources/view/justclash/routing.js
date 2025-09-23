@@ -276,7 +276,7 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
         o.description = _("Exclude type filter.");
-        o.placeholder = "vless|vmess|ss";
+        o.placeholder = "vless|vmess|ss|mieru";
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
@@ -286,7 +286,7 @@ return view.extend({
                 return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
             }
 
-            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5"];
+            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5", "mieru"];
             const types = value.split("|");
 
             for (let i = 0; i < types.length; i++) {
@@ -419,7 +419,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
         o.description = _("Exclude type filter.");
-        o.placeholder = "vless|vmess|ss";
+        o.placeholder = "vless|vmess|ss|mieru";
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
@@ -429,7 +429,7 @@ return view.extend({
                 return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
             }
 
-            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5"];
+            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5", "mieru"];
             const types = value.split("|");
 
             for (let i = 0; i < types.length; i++) {

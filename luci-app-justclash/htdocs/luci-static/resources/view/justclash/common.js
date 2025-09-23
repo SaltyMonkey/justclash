@@ -120,7 +120,8 @@ return baseclass.extend({
             "vless://",
             "trojan://",
             "ss://",
-            "socks5://"
+            "socks5://",
+            "mierus://"
         ];
 
         for (const prefix of allowedPrefixes) {
