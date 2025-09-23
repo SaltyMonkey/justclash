@@ -107,7 +107,7 @@ parse_socks5_url() {
 
     name="socks5_${server}_${port}"
 
-    # Собираем JSON
+    # JSON
     local json="\"type\":\"socks5\",\"name\":\"$name\",\"server\":\"$server\",\"port\":$port"
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
@@ -280,5 +280,98 @@ parse_vless_url() {
     fi
 
     json="{$json}"
+    echo "$json"
+}
+
+parse_mieru_url() {
+    local link="$1" DEFAULT_MIERU_PORT="$2"
+    local raw="${link#mierus://}"
+    raw="${raw%%#*}"
+
+    local auth_host_query
+    auth_host_query="${raw%%\?*}"
+    local query_part=""
+    # shellcheck disable=SC2249
+    case "$raw" in *\?*) query_part="${raw#*\?}" ;; esac
+
+    local auth=""
+    local host=""
+
+    case "$auth_host_query" in *@*)
+        auth="${auth_host_query%@*}"
+        host="${auth_host_query#*@}"
+        ;;
+    *)
+        host="$auth_host_query"
+        ;;
+    esac
+
+    local username="" password=""
+    if [ -n "$auth" ]; then
+        case "$auth" in *:*)
+            username="$(url_decode "${auth%%:*}")"
+            password="$(url_decode "${auth#*:}")"
+            ;;
+        *)
+            username="$(url_decode "$auth")"
+            ;;
+    esac
+    fi
+
+    local server
+    local port
+    case "$host" in *:*)
+        server="${host%%:*}"
+        port="${host##*:}"
+        ;;
+    *)
+        server="$host"
+        port="$DEFAULT_MIERU_PORT"
+        ;;
+    esac
+
+    local multiplexing ports
+    ports=""
+
+    local temp_query="$query_part"
+    while [ -n "$temp_query" ]; do
+        local param="${temp_query%%&*}"
+        temp_query="${temp_query#"$param"}"
+        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+
+        local k="${param%%=*}"
+        local v="${param#*=}"
+        [ -z "$k" ] && continue
+
+        # shellcheck disable=SC2249
+        case "$k" in
+            #mtu) mtu="$v" ;;
+            multiplexing) multiplexing="$v" ;;
+            port)
+                if [ -z "$ports" ]; then
+                    ports="$v"
+                else
+                    ports="$ports,$v"
+                fi
+                ;;
+        esac
+    done
+
+    local json
+    json="\"type\":\"mieru\""
+    json="$json,\"server\":\"$server\""
+    json="$json,\"port\":\"$port\""
+    [ -n "$username" ] && json="$json,\"username\":\"$username\""
+    [ -n "$password" ] && json="$json,\"password\":\"$password\""
+
+    json="$json,\"transport\":\"TCP\""
+    json="$json,\"udp\":true"
+
+    #[ -n "$mtu" ] && json="$json,\"mtu\":\"$mtu\""
+    [ -n "$multiplexing" ] && json="$json,\"multiplexing\":\"$multiplexing\""
+    [ -n "$ports" ] && json="$json,\"port\":\"$ports\""
+
+    json="{$json}"
+
     echo "$json"
 }
