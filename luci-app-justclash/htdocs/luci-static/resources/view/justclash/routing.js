@@ -211,6 +211,18 @@ return view.extend({
         o.default = common.defaultProxyProviderIntervalSec;
         o.description = _("Time interval for subscription update check.");
 
+        o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
+        o.description = _("Use selected proxy to get subscription data from server.");
+        o.value("DIRECT", _("DIRECT"));
+        o.default = common.defaultProxyProviderProxy;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim().length === 0) {
+                return _("This field cannot be empty");
+            }
+            return true;
+        };
+
         tabname = "proxyproviderhelthchk_tab";
         spp.tab(tabname, _("Health check"));
 

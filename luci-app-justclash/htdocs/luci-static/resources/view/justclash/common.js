@@ -32,6 +32,7 @@ return baseclass.extend({
     defaultRuleSetUpdateInterval: 86500,
     minimalRuleSetUpdateInterval: 21600,
     defaultRuleSetProxy: "DIRECT",
+    defaultProxyProviderProxy: "DIRECT",
     defaultBehaviorMixedPort: "BY_RULES",
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
