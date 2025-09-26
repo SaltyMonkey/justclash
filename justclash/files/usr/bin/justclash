@@ -1067,7 +1067,7 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2329
     accumulate_proxy_provider() {
         local section="$1"
-        local name url subscription_hwid_support interval filter exclude_filter exclude_type
+        local name url subscription_hwid_support interval proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
 
         config_get name "$section" name
@@ -1076,6 +1076,7 @@ handle_proxy_provider_section() {
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
         config_get exclude_type "$section" exclude_type
+        config_get proxy "$section" proxy
 
         { [ -z "$name" ] || [ -z "$url" ]; } && {
             log 1 "Skipping proxy_provider without name or subscription" "⚠️"
@@ -1083,8 +1084,9 @@ handle_proxy_provider_section() {
         }
 
         [ -z "$interval" ] && interval=$DEFAULT_PROVIDERUPDATE_INTERVAL
+        [ -z "$proxy" ] && proxy=$DEFAULT_PROXY
 
-        local entry="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval"
+        local entry="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"proxy\":$proxy"
         [ -n "$filter" ] && entry="$entry,\"filter\":\"$(json_escape "$filter")\""
         [ -n "$exclude_filter" ] && entry="$entry,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
