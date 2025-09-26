@@ -1210,7 +1210,7 @@ handle_direct_rule_section() {
     local rules_array=""
     local direct_rulesets=""
 
-    local additional_domain_direct additional_domain_keyword_direct additional_domain_regex_direct
+    local proxy additional_domain_direct additional_domain_keyword_direct additional_domain_regex_direct
     local additional_srcip_direct additional_destip_direct
     local list_update_interval enabled_list
     local domain_list cidr_list
@@ -1218,7 +1218,10 @@ handle_direct_rule_section() {
 
     config_get list_update_interval direct_rules list_update_interval
     config_get enabled_list direct_rules enabled_list
+    config_get proxy direct_rule proxy
+
     [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
+    [ -z "$proxy" ] && list_update_interval=$DEFAULT_PROXY
 
     local added_rulesets="|"
     for ruleset in $enabled_list; do
@@ -1242,7 +1245,7 @@ handle_direct_rule_section() {
             local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$DEFAULT_RULESET_PROXY")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
-            direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
             added_rulesets="$added_rulesets$ruleset|"
         fi
     done
@@ -1254,13 +1257,13 @@ handle_direct_rule_section() {
             local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
             case "$clean_line" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 ;;
             *)
                 if [ -f "$clean_line" ]; then
                     local escaped_path=$(json_escape "$clean_line")
                     safe_paths_add "$escaped_path"
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"DIRECT\",\"type\":\"file\"},"
+                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
                     log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                     continue
