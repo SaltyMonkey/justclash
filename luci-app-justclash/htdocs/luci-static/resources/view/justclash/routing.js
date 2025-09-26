@@ -565,6 +565,18 @@ return view.extend({
             return true;
         };
 
+        o = s3.taboption(tabname, form.Value, "proxy", _("Get lists with proxy:"));
+        o.description = _("Use selected proxy to get subscription data from server.");
+        o.value("DIRECT", _("DIRECT"));
+        o.default = common.defaultRuleSetProxy;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim().length === 0) {
+                return _("This field cannot be empty");
+            }
+            return true;
+        };
+
         tabname = "directbasic_tab";
         s3.tab(tabname, _("Manual"));
 
