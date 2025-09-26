@@ -17,6 +17,7 @@ config proxy_provider
     option subscription    'https://yourSubscriptionUrl'
     option subscription_hwid_support '0'
     option update_interval '3600'
+    option proxy 'DIRECT'
     option health_check    '1'
     option health_check_url              'https://www.google.com/generate_204'
     option health_check_expected_status  '204'
@@ -69,4 +70,4 @@ config block_rules 'block_rules'
     list additional_destip_blockroute    '2.2.2.2/32'
 
 config final_rules 'final_rules'
-    option final_destination 'DIRECT'
+    option exit_node 'DIRECT'
