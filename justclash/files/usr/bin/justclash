@@ -770,7 +770,7 @@ handle_proxy_section() {
                         local escaped_path=$(json_escape "$clean_line")
                         safe_paths_add "$escaped_path"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                         continue
@@ -975,7 +975,7 @@ handle_proxy_group_section() {
                         local escaped_path=$(json_escape "$clean_line")
                         safe_paths_add "$escaped_path"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"type\":\"file\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
                         continue
