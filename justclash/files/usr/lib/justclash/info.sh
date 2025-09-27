@@ -13,6 +13,9 @@ NO_DATA_STRING="N/A"
 INFO_CORE_BIN_NAME="mihomo"
 INFO_CORE_PATH="/usr/bin/${INFO_CORE_BIN_NAME}"
 
+INFO_IS_APK=0
+command -v apk >/dev/null 2>&1 && INFO_IS_APK=1
+
 info_device() {
    cat /tmp/sysinfo/model || echo "$NO_DATA_STRING"
 }
@@ -36,8 +39,8 @@ info_mihomo() {
 info_package() {
     local version
 
-    if command -v apk >/dev/null 2>&1; then
-        version=$(apk info "$PROGNAME" 2>/dev/null | grep -oP 'justclash-\K.*')
+    if [ "$INFO_IS_APK" -eq 1 ]; then
+        version=$(apk info "$PROGNAME" 2>/dev/null | grep -oP "${PROGNAME}-\K.*")
     else
         version=$(opkg list-installed "$PROGNAME" 2>/dev/null | awk '{print $3}')
     fi
@@ -48,8 +51,8 @@ info_package() {
 info_luci() {
     local version
 
-    if command -v apk >/dev/null 2>&1; then
-        version=$(apk info luci-app-"$PROGNAME" 2>/dev/null | grep -oP 'justclash-\K.*')
+    if [ "$INFO_IS_APK" -eq 1 ]; then
+        version=$(apk info luci-app-"$PROGNAME" 2>/dev/null | grep -oP "${PROGNAME}-\K.*")
     else
         version=$(opkg list-installed luci-app-"$PROGNAME" 2>/dev/null | awk '{print $3}')
     fi
