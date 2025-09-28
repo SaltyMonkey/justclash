@@ -7,6 +7,8 @@ CORE_RELEASE_DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download
 
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash-owrt/releases/latest"
 
+FORCE_SPACE_FLAG=0
+
 URL_GITHUB="github.com"
 URL_CHECK_PING="77.88.8.8"
 URL_CHECK_PING_BACKUP="8.8.8.8"
@@ -276,6 +278,8 @@ diagnostic_net() {
 
 diagnostic_mem() {
     local overlay_space
+    local is_just_check=0
+    [ -n "${1}" ] && is_just_check=1
     echo "  "
     print_bold_green "Checking memory requiments... "
     overlay_space=$(df /overlay | awk 'NR==2 {print $4}')
@@ -284,7 +288,7 @@ diagnostic_mem() {
         print_red "FAIL"
         print_red "Warning: Available disk space is below the required minimum of ${MIN_SPACE}."
         print_red "Installation cannot proceed due to insufficient space."
-        exit 1
+        [ "$is_just_check" -eq 0 ] && exit 1
     else
         printf " - Result: "
         print_green "OK"
@@ -673,7 +677,9 @@ install_service() {
     mkdir -p "$TMP_DOWNLOAD_PATH"
     diagnostic_tools
     diagnostic_net
-    diagnostic_mem
+    if [ "$FORCE_SPACE_FLAG" -eq 1 ]; then
+        diagnostic_mem
+    fi
     diagnostic_conflicts_interactive
     install_jq
     core_update
@@ -697,7 +703,7 @@ uninstall_service() {
 diagnostic() {
     diagnostic_tools
     diagnostic_net
-    diagnostic_mem
+    diagnostic_mem 1
     diagnostic_conflicts_interactive
 }
 
@@ -707,9 +713,11 @@ run() {
     print_bold_yellow "JustClash Setup Menu"
     print_bold_yellow "1 - Install JustClash package"
     print_bold_yellow "2 - Uninstall JustClash package"
-    print_bold_yellow "3 - Update/Download latest proxy core"
-    print_bold_yellow "4 - Run diagnostic"
-    print_bold_yellow "5 - Exit"
+    print_bold_yellow "3 - Update/Download latest stable mihomo proxy core"
+    print_bold_yellow "4 - Remove Mihomo core proxy if installed"
+    print_bold_yellow "5 - Run diagnostic"
+    print_bold_yellow "6 - Config DNSMasq local use flag"
+    print_bold_yellow "7 - Exit"
     while true; do
         printf "Enter your choice [1-6]: "
         read -r choice
@@ -750,3 +758,15 @@ run() {
 }
 
 run
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --force-space)
+            FORCE_SPACE_FLAG=1
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            ;;
+    esac
+done
