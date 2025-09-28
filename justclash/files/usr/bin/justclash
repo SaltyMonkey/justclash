@@ -27,7 +27,11 @@ PROGNAME="justclash"
 
 # setup procd variable: $JUSTCLASH_ENV passed from init.d start
 # shellcheck disable=SC2154
-[ "$JUSTCLASH_ENV" = "procd" ] && PROCD_MODE=1 || PROCD_MODE=0
+if [ "$JUSTCLASH_ENV" = "procd" ]; then
+    PROCD_MODE=1
+else
+    PROCD_MODE=0
+fi
 
 config_load "$PROGNAME"
 
@@ -115,7 +119,11 @@ BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 
 PKG_LIST_COMMAND=""
-command -v apk >/dev/null 2>&1 && PKG_LIST_COMMAND="apk info" || PKG_LIST_COMMAND="opkg list-installed"
+if command -v apk >/dev/null 2>&1; then
+    PKG_LIST_COMMAND="apk info"
+else
+    PKG_LIST_COMMAND="opkg list-installed"
+fi
 
 ucibool_to_yesno() {
     case "$1" in
@@ -736,12 +744,10 @@ handle_proxy_section() {
             local line r_name yaml behavior format url proxy
             line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
             if [ -n "$line" ]; then
-                r_name=$(echo "$line" | cut -d'|' -f1)
-                yaml=$(echo "$line" | cut -d'|' -f2)
-                behavior=$(echo "$line" | cut -d'|' -f3)
-                format=$(echo "$line" | cut -d'|' -f4)
-                url=$(echo "$line" | cut -d'|' -f5)
-
+                local orig_ifs=$IFS
+                # shellcheck disable=SC3011
+                IFS='|' read -r r_name yaml behavior format url <<< "$1"
+                IFS=$orig_ifs
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
@@ -938,12 +944,10 @@ handle_proxy_group_section() {
             local line r_name yaml behavior format url proxy
             line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
             if [ -n "$line" ]; then
-                r_name=$(echo "$line" | cut -d'|' -f1)
-                yaml=$(echo "$line" | cut -d'|' -f2)
-                behavior=$(echo "$line" | cut -d'|' -f3)
-                format=$(echo "$line" | cut -d'|' -f4)
-                url=$(echo "$line" | cut -d'|' -f5)
-
+                local orig_ifs=$IFS
+                # shellcheck disable=SC3011
+                IFS='|' read -r r_name yaml behavior format url <<< "$line"
+                IFS=$orig_ifs
                 # shellcheck disable=SC2249
                 case "$r_name" in \#*) continue ;; esac
 
@@ -1157,12 +1161,10 @@ handle_block_rule_section() {
         local line name yamlName behavior format url
         line=$(echo "$blocklist_content" | grep -F "|$val|" | head -n 1)
         if [ -n "$line" ]; then
-            name=$(echo "$line" | cut -d'|' -f1)
-            yamlName=$(echo "$line" | cut -d'|' -f2)
-            behavior=$(echo "$line" | cut -d'|' -f3)
-            format=$(echo "$line" | cut -d'|' -f4)
-            url=$(echo "$line" | cut -d'|' -f5)
-
+            local orig_ifs=$IFS
+            # shellcheck disable=SC3011
+            IFS='|' read -r name yamlName behavior format url <<< "$1"
+            IFS=$orig_ifs
             # shellcheck disable=SC2249
             case "$name" in \#*) continue ;; esac
 
@@ -1221,7 +1223,7 @@ handle_direct_rule_section() {
     config_get proxy direct_rule proxy
 
     [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
-    [ -z "$proxy" ] && list_update_interval=$DEFAULT_PROXY
+    [ -z "$proxy" ] && proxy=$DEFAULT_PROXY
 
     local added_rulesets="|"
     for ruleset in $enabled_list; do
@@ -1233,12 +1235,10 @@ handle_direct_rule_section() {
         local line r_name yaml behavior format url proxy
         line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
         if [ -n "$line" ]; then
-            r_name=$(echo "$line" | cut -d'|' -f1)
-            yaml=$(echo "$line" | cut -d'|' -f2)
-            behavior=$(echo "$line" | cut -d'|' -f3)
-            format=$(echo "$line" | cut -d'|' -f4)
-            url=$(echo "$line" | cut -d'|' -f5)
-
+            local orig_ifs=$IFS
+            # shellcheck disable=SC3011
+            IFS='|' read -r r_name yaml behavior format url <<< "$1"
+            IFS=$orig_ifs
             # shellcheck disable=SC2249
             case "$r_name" in \#*) continue ;; esac
 
