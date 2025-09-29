@@ -1,3 +1,61 @@
+## [0.2.5] - 29092025
+
+- Install-script: Only stable core download
+- Install-script: Rename
+- Install-script: Refactor and bugfixes
+- Install-script: Added `--force-space` flag
+- Workflow: Refactor GitHub workflow with matrix mode
+- Service: Optimized config file hash (hash only for mihomo config related sections)
+- Service: Added Mieru simple URL support
+- Service: Big refactor for file structure
+- Service: Big refactor for code structure
+- Service: Added migration support
+- Service: Updated generated YAML structure (removed options: tracing, use-hosts)
+- Service: Better input data cleanup and sanitization
+- Service: Minor netfilter tables optimization
+- Service: Updated default ruleset lists
+- Service: Fixed MIPS arch detection for mihomo download
+- Service: Fixed amd64/default arch detection for mihomo download (amd64-v3 now)
+- Service: Fixed cron functions logic
+- Service: Optimized logging functions
+- Service: Removed unused `info_conns_console` functions
+- Service: Optimized `apk` check calls in main script
+- Service: Optimized `apk` check calls in info script
+- Service: Added mixed-port support
+- Service: Added simple custom routing for mixed-port
+- Service: Added basic sniffer options customization
+- Service: Added max_failed_times support
+- Service: Added URL decoding for `alph` part in URL
+- Service: Added support for `encryption` part in URL
+- Service: Added skip_environment_checks logic
+- Service: Removed connection tab
+- Service: Update mihomo download logic with GitHub API usage
+- Service: Removed multi-channel download for mihomo
+- Service: Added zashboard support
+- Service: Added zashboard optional logic
+- Service: Added HWID support for proxy-providers
+- Service: Added `SAFE_PATHS` logic support
+- Service: Fixed `SAFE_PATHS` usage for custom local rule-set with CIDR
+- Service: Fixed local rule-set list configuration
+- Service: Fixed custom rule-set with CIDR configuration
+- Service: Added custom behavior for NTP/DoT/DoQ/QUIC traffic
+- InitD: Minor refactor
+- InitD: Fixed incorrect delayed boot
+- UCI: Updated default DNS in config
+- UCI: Updated `ignore_fake_ip_domains` with "+.cudy.net"
+- UCI: Added new options
+- UCI: Update default keep alive options
+- LuCI: Translation rework
+- LuCI: Added sniffer tab
+- LuCI: Minor changes in widget positions
+- LuCI: Fixed optional field for some widgets
+- LuCI: Added widgets for new features
+- Makefile: Minor changes
+
+**This version requires:**
+- UCI config must be reset
+- Browser cache must be cleaned up
+
 ## [0.1.0] - 29082025
 
 - Service: nf tables optimization
