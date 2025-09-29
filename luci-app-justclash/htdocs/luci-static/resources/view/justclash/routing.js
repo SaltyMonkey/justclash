@@ -64,7 +64,7 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "mode", _("Mode:"));
         o.description = _("If selected, allow to define proxy as JSON object.");
         common.defaultProxiesModes.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item, _(`${item.toUpperCase()}`));
         });
         o.rmempty = false;
         o.default = common.defaultProxiesModes[1];
@@ -676,7 +676,7 @@ return view.extend({
 
         o = smp.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
         o.value("DIRECT", _("DIRECT"));
-        o.value(common.defaultBehaviorMixedPort, _("BY_RULES"));
+        o.value(common.defaultBehaviorMixedPort, _(common.defaultBehaviorMixedPort));
         o.default = common.defaultBehaviorMixedPort;
         o.rmempty = false;
         o.validate = function (section_id, value) {

@@ -1,17 +1,26 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "OBJECT"
+msgstr "Объект"
+
+msgid "URI"
+msgstr "Ссылка"
+
 msgid "BY_RULES"
 msgstr "По правилам"
 
 msgid "DROP"
-msgstr "Отбросить"
+msgstr "Блокировать"
+
+msgid "REJECT"
+msgstr "Запрещать"
 
 msgid "DIRECT"
 msgstr "Прямое"
 
 msgid "Sniffer settings"
-msgstr "Настройки анализацота"
+msgstr "Настройки анализатора"
 
 msgid "Enable sniffer:"
 msgstr "Включить анализ:"
@@ -419,10 +428,10 @@ msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "DNS-серверы по умолчанию при запуске. Рекомендуется использовать UDP-серверы."
 
 msgid "Direct nameservers:"
-msgstr "DNSсерверы для DIRECT:"
+msgstr "DNS серверы прямых соединений:"
 
 msgid "Direct nameservers used for DIRECT rules."
-msgstr "DNS-серверы, используемые для правил DIRECT."
+msgstr "DNS-серверы, используемые для правил прямых соединений."
 
 msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4."
 msgstr "Недопустимый формат DNS-сервера. Разрешены: quic://, https://, tls://, udp:// или IPv4."
@@ -505,8 +514,8 @@ msgstr "Имя прокси."
 msgid "Name must contain only lowercase letters, digits, and underscores"
 msgstr "Имя должно содержать только строчные буквы, цифры и подчёркивания."
 
-msgid "URI mode:"
-msgstr "URI-ссылка:"
+msgid "URL mode:"
+msgstr "URL:"
 
 msgid "Object mode:"
 msgstr "JSON-объект:"
@@ -629,25 +638,31 @@ msgid "Get lists through proxy-group:"
 msgstr "Получать списки через proxy-group:"
 
 msgid "DIRECT rules:"
-msgstr "Правила DIRECT:"
+msgstr "Прямые правила:"
 
 msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
-msgstr "Дополнительные настройки DIRECT-правил (обрабатываются до прокси, proxy-groups и REJECT)."
+msgstr "Дополнительные настройки прямых правил (обрабатываются до прокси, proxy-groups и правил запрета)."
 
 msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com)."
-msgstr "Каждый элемент — правило DOMAIN-SUFFIX для DIRECT (пример: google.com)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для прямого соединения (пример: google.com)."
+
+msgid "Get lists with:"
+msgstr "Загружать списки через:"
+
+msgid "Use selected proxy or proxy-group to get lists from server."
+msgstr "Использовать выбранный прокси или группу прокси для загрузки списков RULE-SET."
 
 msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Example: google)."
-msgstr "Каждый элемент — правило DOMAIN-KEYWORD для DIRECT (пример: google)."
+msgstr "Каждый элемент — правило DOMAIN-KEYWORD для прямого соединения (пример: google)."
 
 msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Example: ^abc.*com)."
-msgstr "Каждый элемент — правило DOMAIN-REGEX для DIRECT (пример: ^abc.*com)."
+msgstr "Каждый элемент — правило DOMAIN-REGEX для прямого соединения (пример: ^abc.*com)."
 
 msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Example: 192.168.31.212/32). IPV4 only right now."
-msgstr "Каждый элемент — правило SRC-IP-CIDR для DIRECT (пример: 192.168.31.212/32). Сейчас только IPv4."
+msgstr "Каждый элемент — правило SRC-IP-CIDR для прямого соединения (пример: 192.168.31.212/32). Сейчас только IPv4."
 
 msgid "Each element is one IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now."
-msgstr "Каждый элемент — правило IP-CIDR для DIRECT (пример: 1.1.1.1/32). Сейчас только IPv4."
+msgstr "Каждый элемент — правило IP-CIDR для прямого соединения (пример: 1.1.1.1/32). Сейчас только IPv4."
 
 msgid "Each element is a SRC-IP-CIDR rule to block with proxy (Example: 192.168.31.212/32). IPv4 only right now."
 msgstr "Каждый элемент — правило SRC-IP-CIDR для блокировки прокси (пример: 192.168.31.212/32). Сейчас только IPv4."
@@ -674,19 +689,19 @@ msgid "Proxy provider name."
 msgstr "Имя провайдера прокси."
 
 msgid "REJECT rules:"
-msgstr "Правила REJECT:"
+msgstr "Правила запрета:"
 
 msgid "Additional rules for REJECT rules. Will be handled before proxies and proxy groups."
-msgstr "Дополнительные правила REJECT (обрабатываются до прокси и proxy-groups)."
+msgstr "Дополнительные правила запрета (обрабатываются до прокси и proxy-groups)."
 
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
-msgstr "Предустановленные RULE-SET списки с рекламой/вредоносным ПО. Выберите те, которые хотите блокировать через прокси, или оставьте пустым."
+msgstr "Предустановленные RULE-SET списки с рекламой/вредоносным ПО. Выберите те, которые хотите блокировать, или оставьте пустым."
 
 msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Example: google.com)."
-msgstr "Каждый элемент — правило DOMAIN-SUFFIX для блокировки прокси (пример: google.com)."
+msgstr "Каждый элемент — правило DOMAIN-SUFFIX для блокировки подключения (пример: google.com)."
 
 msgid "Each element is an IP-CIDR rule to block with proxy (Example: 1.1.1.1/32). IPv4 only right now."
-msgstr "Каждый элемент — правило IP-CIDR для блокировки прокси (пример: 1.1.1.1/32). Сейчас только IPv4."
+msgstr "Каждый элемент — правило IP-CIDR для блокировки подключения (пример: 1.1.1.1/32). Сейчас только IPv4."
 
 msgid "FINAL rule:"
 msgstr "Правило FINAL:"

@@ -1,10 +1,19 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "OBJECT"
+msgstr ""
+
+msgid "URI"
+msgstr ""
+
 msgid "BY_RULES"
 msgstr ""
 
 msgid "DROP"
+msgstr ""
+
+msgid "REJECT"
 msgstr ""
 
 msgid "DIRECT"
@@ -505,7 +514,7 @@ msgstr ""
 msgid "Name must contain only lowercase letters, digits, and underscores"
 msgstr ""
 
-msgid "URI mode:"
+msgid "URL mode:"
 msgstr ""
 
 msgid "Object mode:"
@@ -635,6 +644,12 @@ msgid "Additional settings for DIRECT rules. Will be handled before proxies, pro
 msgstr ""
 
 msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com)."
+msgstr ""
+
+msgid "Get lists with:"
+msgstr ""
+
+msgid "Use selected proxy or proxy-group to get lists from server."
 msgstr ""
 
 msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Example: google)."
