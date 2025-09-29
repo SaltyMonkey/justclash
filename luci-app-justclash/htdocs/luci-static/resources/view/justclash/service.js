@@ -78,20 +78,6 @@ return view.extend({
             return true;
         };
 
-        o = s.taboption(tabname, form.DynamicList, "tproxy_excluded_ips", _("Exclude IP from tproxy:"));
-        o.description = _("Each element is IPv4 to exclude from tproxy access.");
-        o.rmempty = false;
-        o.depends("nft_apply_changes", "1");
-        o.placeholder = "192.168.31.123";
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim().length === 0)
-                return true;
-            if (!common.isValidIpv4(value))
-                return false;;
-            return true;
-        };
-
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("QUIC traffic from clients:"));
         o.description = _("Select a way how QUIC traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", "1");

@@ -354,7 +354,6 @@ nf_table_add() {
     local nft_apply_changes
     local tproxy_port proxy_fwmark_hex fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode
-    local tproxy_excluded_ips=""
 
     config_get nft_apply_changes settings nft_apply_changes
 
@@ -369,9 +368,6 @@ nf_table_add() {
     config_get nft_dot_mode settings nft_dot_mode
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_ntp_mode settings nft_ntp_mode
-    config_get tproxy_excluded_ips settings tproxy_excluded_ips ""
-
-    tproxy_excluded_ips=$(echo "$tproxy_excluded_ips" | trim | spaces_to_commas)
 
     [ -z "$tproxy_port" ] && panic "tproxy_port not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range not set"
@@ -420,11 +416,6 @@ nf_table_add() {
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
     elif [ "$nft_ntp_mode" = "DIRECT" ]; then
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
-    fi
-
-    if [ -n "$tproxy_excluded_ips" ]; then
-        # Исключение по tproxy_excluded_ips с  @inbound_interfaces
-        nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip saddr { $tproxy_excluded_ips } meta l4proto { tcp, udp } return
     fi
 
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
