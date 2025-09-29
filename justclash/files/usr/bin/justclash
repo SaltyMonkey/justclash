@@ -714,7 +714,7 @@ handle_proxy_section() {
         else
             [ -z "$proxy_link_uri" ] && { log 1  "Skipping proxy '$name' without proxy_link" "⚠️"; return; }
 
-            proxy_link_uri=$(echo "$proxy_link_uri" | trim)
+            proxy_link_uri=$(echo "$proxy_link_uri" | trim | json_escape)
             [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
 
             case "$proxy_link_uri" in
@@ -910,8 +910,8 @@ handle_proxy_group_section() {
         [ -z "$expected_status" ] && expected_status=$DEFAULT_HEALTHCHECK_RESULT
 
         local escaped_proxies escaped_providers
-        [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | list_to_json_array)
-        [ -n "$providers_list" ] && escaped_providers=$(echo "$providers_list" | list_to_json_array)
+        [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | trim| list_to_json_array)
+        [ -n "$providers_list" ] && escaped_providers=$(echo "$providers_list" | trim | list_to_json_array)
 
         local group_json="{\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
@@ -1652,7 +1652,7 @@ core_prepare_workdir() {
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-            current_hash=$(uci show "$PROGNAME" | md5sum | awk '{print $1}')
+            current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5sum | awk '{print $1}')
             saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null || echo "")
             if [ "$current_hash" != "$saved_hash" ]; then
                 log 2 "Outdated $OUTPUT_YAML_CONFIG_PATH was found. Will be recreated." "🐱"
