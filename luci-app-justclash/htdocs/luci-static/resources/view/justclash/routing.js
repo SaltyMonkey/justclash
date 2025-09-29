@@ -92,7 +92,7 @@ return view.extend({
             }
         };
 
-        o = s.taboption(tabname, form.Value, "proxy_link_uri", _("URI mode:"));
+        o = s.taboption(tabname, form.Value, "proxy_link_uri", _("URL mode:"));
         o.description = _("URI link with connection parameters.");
         o.password = true;
         o.optional = true;
@@ -565,8 +565,8 @@ return view.extend({
             return true;
         };
 
-        o = s3.taboption(tabname, form.Value, "proxy", _("Get lists with proxy:"));
-        o.description = _("Use selected proxy to get subscription data from server.");
+        o = s3.taboption(tabname, form.Value, "proxy", _("Get lists with:"));
+        o.description = _("Use selected proxy or proxy-group to get lists from server.");
         o.value("DIRECT", _("DIRECT"));
         o.default = common.defaultRuleSetProxy;
         o.rmempty = false;
@@ -632,6 +632,18 @@ return view.extend({
             o.value(item.yamlName, _(`${item.name}`));
         });
         o.description = _("Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything.");
+
+        o = s4.taboption(tabname, form.Value, "proxy", _("Get lists with:"));
+        o.description = _("Use selected proxy or proxy-group to get lists from server.");
+        o.value("DIRECT", _("DIRECT"));
+        o.default = common.defaultRuleSetProxy;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim().length === 0) {
+                return _("This field cannot be empty");
+            }
+            return true;
+        };
 
         /*o = s2.taboption(tabname, form.DynamicList, "user_list", _("User with custom rules:"));
         o.description = _("Custom RULE-SET list paths placed locally, use complete filesystem path here. Example: /etc/custom_blocklist.mrs");
