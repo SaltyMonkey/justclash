@@ -744,10 +744,15 @@ handle_proxy_section() {
             local line r_name yaml behavior format url proxy
             line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
             if [ -n "$line" ]; then
-                local orig_ifs=$IFS
-                # shellcheck disable=SC3011
-                IFS='|' read -r r_name yaml behavior format url <<< "$1"
-                IFS=$orig_ifs
+                local rest
+                r_name="${line%%|*}"
+                rest="${line#*|}"
+                yaml="${rest%%|*}"
+                rest="${rest#*|}"
+                behavior="${rest%%|*}"
+                rest="${rest#*|}"
+                format="${rest%%|*}"
+                url="${rest#*|}"
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
@@ -944,10 +949,15 @@ handle_proxy_group_section() {
             local line r_name yaml behavior format url proxy
             line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
             if [ -n "$line" ]; then
-                local orig_ifs=$IFS
-                # shellcheck disable=SC3011
-                IFS='|' read -r r_name yaml behavior format url <<< "$line"
-                IFS=$orig_ifs
+                local rest
+                r_name="${line%%|*}"
+                rest="${line#*|}"
+                yaml="${rest%%|*}"
+                rest="${rest#*|}"
+                behavior="${rest%%|*}"
+                rest="${rest#*|}"
+                format="${rest%%|*}"
+                url="${rest#*|}"
                 # shellcheck disable=SC2249
                 case "$r_name" in \#*) continue ;; esac
 
@@ -1161,10 +1171,15 @@ handle_block_rule_section() {
         local line name yamlName behavior format url
         line=$(echo "$blocklist_content" | grep -F "|$val|" | head -n 1)
         if [ -n "$line" ]; then
-            local orig_ifs=$IFS
-            # shellcheck disable=SC3011
-            IFS='|' read -r name yamlName behavior format url <<< "$1"
-            IFS=$orig_ifs
+            local rest
+            name="${line%%|*}"
+            rest="${line#*|}"
+            yamlName="${rest%%|*}"
+            rest="${rest#*|}"
+            behavior="${rest%%|*}"
+            rest="${rest#*|}"
+            format="${rest%%|*}"
+            url="${rest#*|}"
             # shellcheck disable=SC2249
             case "$name" in \#*) continue ;; esac
 
@@ -1235,10 +1250,15 @@ handle_direct_rule_section() {
         local line r_name yaml behavior format url proxy
         line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
         if [ -n "$line" ]; then
-            local orig_ifs=$IFS
-            # shellcheck disable=SC3011
-            IFS='|' read -r r_name yaml behavior format url <<< "$1"
-            IFS=$orig_ifs
+            local rest
+            r_name="${line%%|*}"
+            rest="${line#*|}"
+            yaml="${rest%%|*}"
+            rest="${rest#*|}"
+            behavior="${rest%%|*}"
+            rest="${rest#*|}"
+            format="${rest%%|*}"
+            url="${rest#*|}"
             # shellcheck disable=SC2249
             case "$r_name" in \#*) continue ;; esac
 
