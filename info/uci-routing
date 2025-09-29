@@ -72,7 +72,7 @@ config block_rules 'block_rules'
     list additional_destip_blockroute    '2.2.2.2/32'
 
 config mixed_port_rules 'mixed_port_rules'
-    option exit_node 'DIRECT'
+    option exit_rule 'DIRECT'
 
 config final_rules 'final_rules'
-    option exit_node 'DIRECT'
+    option exit_rule 'DIRECT'
