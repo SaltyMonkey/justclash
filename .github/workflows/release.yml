@@ -46,7 +46,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Build and push ${{ matrix.type }}
+      - name: Build ${{ matrix.type }}
         uses: docker/build-push-action@v6
         with:
           file: ./Dockerfile-${{ matrix.type }}
