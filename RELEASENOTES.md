@@ -23,7 +23,7 @@
 - Service: Optimized `apk` check calls in info script
 - Service: Added mixed-port support
 - Service: Added simple custom routing for mixed-port
-- Service: Added basic sniffer options customization
+- Service: Added sniffer options tab
 - Service: Added max_failed_times support
 - Service: Added URL decoding for `alph` part in URL
 - Service: Added support for `encryption` part in URL
