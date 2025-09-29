@@ -95,7 +95,7 @@ return view.extend({
         o.description = _("Select a way how QUIC traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0];
         common.defaultNftOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
@@ -104,7 +104,7 @@ return view.extend({
         o.description = _("Select a way how DoT traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0];
         common.defaultNftOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
@@ -113,7 +113,7 @@ return view.extend({
         o.description = _("Select a way how DoQ traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0];
         common.defaultNftOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
@@ -122,7 +122,7 @@ return view.extend({
         o.description = _("If enabled, the service will block NTP traffic with nf tables.");
         o.depends("nft_apply_changes", "1");
         o.rmempty = false;
-        o.default = defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0];
         common.defaultNftNtpOptions.forEach(item => {
             o.value(item, _(`${item}`));
         });
