@@ -38,7 +38,9 @@ jobs:
     needs: check-version
     strategy:
       matrix:
-        type: [stable, snapshot]
+        include:
+          - { type: stable,   ext: ipk }
+          - { type: snapshot, ext: apk }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,14 +60,14 @@ jobs:
       - name: Copy files from ${{ matrix.type }} Docker container
         run: |
           mkdir -p ./output/${{ matrix.type }}
-          rm -f ./output/${{ matrix.type }}/*.${{ matrix.type == 'stable' && 'ipk' || 'apk' }}
+          rm -f ./output/${{ matrix.type }}/*.${{ matrix.ext }} || true
           docker cp ${{ matrix.type }}:/builder/bin/packages/x86_64/utilities/. ./output/${{ matrix.type }}/
           docker cp ${{ matrix.type }}:/builder/bin/packages/x86_64/luci/. ./output/${{ matrix.type }}/
-          if [ "${{ matrix.type }}" == "snapshot" ]; then
-            rm -rf ./output/${{ matrix.type }}/tmp
+          if [ "${{ matrix.type }}" = "snapshot" ]; then
+            rm -rf ./output/${{ matrix.type }}/tmp || true
           fi
 
-      - name: Rename all output packages (replace all _ with -)
+      - name: Rename all output packages (replace _ with -)
         if: matrix.type == 'stable'
         shell: bash
         run: |
@@ -79,7 +81,7 @@ jobs:
       - name: Renaming translation file
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          mv ./output/${{ matrix.type }}/luci-i18n-justclash-ru-*.${{ matrix.type == 'stable' && 'ipk' || 'apk' }} "./output/${{ matrix.type }}/luci-i18n-justclash-ru-${VERSION}.${{ matrix.type == 'stable' && 'ipk' || 'apk' }}"
+          mv ./output/${{ matrix.type }}/luci-i18n-justclash-ru-*.${{ matrix.ext }} "./output/${{ matrix.type }}/luci-i18n-justclash-ru-${VERSION}.${{ matrix.ext }}"
 
       - name: Remove Docker ${{ matrix.type }} container
         run: docker rm ${{ matrix.type }}
@@ -88,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-files-${{ github.ref_name }}-${{ matrix.type }}
-          path: ./output/${{ matrix.type }}/*.${{ matrix.type == 'stable' && 'ipk' || 'apk' }}
+          path: ./output/${{ matrix.type }}/*.${{ matrix.ext }}
           retention-days: 1
           if-no-files-found: error
 
