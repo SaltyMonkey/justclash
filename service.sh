@@ -248,7 +248,7 @@ diagnostic_net() {
     fi
 
     echo "  "
-    print_bold_green  "Checking domain resolution ..."
+    print_bold_green  "Checking domain resolution..."
 
     echo "Testing ${URL_GITHUB} using the default nameserver..."
     check_dns "${URL_GITHUB}"
@@ -307,8 +307,9 @@ diagnostic_conflict() {
 
         while true; do
             read -r inp
+            inp=$(echo "$inp" | tr '[:upper:]' '[:lower:]')
             case $inp in
-                yes|y|Y)
+                yes|y)
                     pkg_remove "$pkg_name"
                     break
                     ;;
@@ -377,13 +378,16 @@ detect_arch() {
 get_latest_version() {
     local check_url="$1"
     local download_url latest_ver
-    download_url=$(curl -sL "$check_url" | \
-        jq -r '.assets[] | select(.name == "version.txt") | .browser_download_url')
 
-    latest_ver=$(curl -sL "$download_url" | tr -d '\r\n' | sed -n 1p) || {
-        log 0 "Failed to get latest version" "❌"
+    download_url=$(wget -qO- "$check_url" | jq -r '.assets[] | select(.name == "version.txt") | .browser_download_url')
+
+    latest_ver=$(wget -qO- "$download_url" | tr -d '\r\n' | sed -n 1p)
+
+    if [ -z "$latest_ver" ]; then
+        print_red "Failed to get latest version" "❌"
         return 1
-    }
+    fi
+
     echo "$latest_ver"
 }
 
@@ -629,12 +633,13 @@ user_select_lang_install_mode_interactive() {
     while true; do
             printf "Do you want to install RU translation? y/n: "
             read -r inp
+            inp=$(echo "$inp" | tr '[:upper:]' '[:lower:]')
             # shellcheck disable=SC2249
             case $inp in
-                yes|y|Y)
+                yes|y)
                     return 0
                     ;;
-                n|N|no)
+                n|no)
                     return 1
                     ;;
             esac
@@ -649,15 +654,16 @@ localuse_interactive() {
     while true; do
             printf "Do you want to set dnsmasq localuse mode to '0'? y/n: "
             read -r inp
+            inp=$(echo "$inp" | tr '[:upper:]' '[:lower:]')
             # shellcheck disable=SC2249
             case $inp in
-                yes|y|Y)
+                yes|y)
                     uci set dhcp.@dnsmasq[0].localuse='0'
                     uci commit dhcp
                     reboot
                     exit 0
                     ;;
-                n|N|no)
+                n|no)
                     echo "Skipped."
                     exit 0
                     ;;
@@ -681,7 +687,6 @@ install_service() {
         diagnostic_mem
     fi
     diagnostic_conflicts_interactive
-    install_jq
     core_update
     #user_select_lang_install_mode_interactive
     #if [ $? -ne 1 ]; then
@@ -757,8 +762,6 @@ run() {
     done
 }
 
-run
-
 while [ $# -gt 0 ]; do
     case "$1" in
         --force-space)
@@ -770,3 +773,6 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
+
+install_jq
+run
