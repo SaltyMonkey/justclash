@@ -60,7 +60,7 @@ jobs:
         run: |
           mkdir -p ./output/${{ matrix.type }}
           rm -f ./output/${{ matrix.type }}/*.${{ matrix.ext }} || true
-          docker cp ${{ matrix.type }}:/builder/bin/packages/x86_64/utilities/. ./output/${{ matrix.type }}/
+          docker cp ${{ matrix.type }}:/builder/bin/packages/x86_64/utilites/. ./output/${{ matrix.type }}/
           docker cp ${{ matrix.type }}:/builder/bin/packages/x86_64/luci/. ./output/${{ matrix.type }}/
           if [ "${{ matrix.type }}" = "snapshot" ]; then
             rm -rf ./output/${{ matrix.type }}/tmp || true
