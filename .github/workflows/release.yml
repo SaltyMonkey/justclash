@@ -1,4 +1,5 @@
-name: Build packages
+name: Build OpenWRT packages
+
 on:
   push:
     tags:
@@ -8,13 +9,14 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build justclash
+  check-version:
+    name: Check version match
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Check version match
         run: |
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
@@ -30,82 +32,86 @@ jobs:
             exit 1
           fi
 
-      - name: Build and push stable
+  build:
+    name: Build justclash ${{ matrix.type }}
+    runs-on: ubuntu-latest
+    needs: check-version
+    strategy:
+      matrix:
+        type: [stable, snapshot]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build and push ${{ matrix.type }}
         uses: docker/build-push-action@v6
         with:
-          file: ./Dockerfile-stable
+          file: ./Dockerfile-${{ matrix.type }}
           context: .
-          tags: justclash/build:stable
+          tags: justclash/build:${{ matrix.type }}
+          push: true
 
-      - name: Create Stable Docker container
-        run: docker create --name stable justclash/build:stable
+      - name: Create ${{ matrix.type }} Docker container
+        run: docker create --name ${{ matrix.type }} justclash/build:${{ matrix.type }}
 
-      - name: Copy files from stable Docker container
+      - name: Copy files from ${{ matrix.type }} Docker container
         run: |
-          mkdir -p ./output
-          rm -f ./output/*.ipk
-          docker cp stable:/builder/bin/packages/x86_64/utilites/. ./output/
-          docker cp stable:/builder/bin/packages/x86_64/luci/. ./output/
+          mkdir -p ./output/${{ matrix.type }}
+          rm -f ./output/${{ matrix.type }}/*.${{ matrix.type == 'stable' && 'ipk' || 'apk' }}
+          docker cp ${{ matrix.type }}:/builder/bin/packages/x86_64/utilities/. ./output/${{ matrix.type }}/
+          docker cp ${{ matrix.type }}:/builder/bin/packages/x86_64/luci/. ./output/${{ matrix.type }}/
+          if [ "${{ matrix.type }}" == "snapshot" ]; then
+            rm -rf ./output/${{ matrix.type }}/tmp
+          fi
 
-      - name: Rename all output packages (replace first _ with -)
+      - name: Rename all output packages (replace all _ with -)
+        if: matrix.type == 'stable'
         shell: bash
         run: |
-          for f in ./output/*.ipk; do
+          for f in ./output/${{ matrix.type }}/*.ipk; do
             [ -e "$f" ] || continue
             base=$(basename "$f")
-            newname=$(echo "$base" | sed 's/_/-/')
-            mv "$f" "./output/$newname"
+            newname=$(echo "$base" | sed 's/_/-/g')
+            mv "$f" "./output/${{ matrix.type }}/$newname"
           done
 
       - name: Renaming translation file
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          mv ./output/luci-i18n-justclash-ru-*.ipk "./output/luci-i18n-justclash-ru-${VERSION}.ipk"
+          mv ./output/${{ matrix.type }}/luci-i18n-justclash-ru-*.${{ matrix.type == 'stable' && 'ipk' || 'apk' }} "./output/${{ matrix.type }}/luci-i18n-justclash-ru-${VERSION}.${{ matrix.type == 'stable' && 'ipk' || 'apk' }}"
 
-      - name: Copy main files for STABLE release
-        run: |
-            RELEASE_FOLDER=./output/release
-            mkdir -p "$RELEASE_FOLDER"
-            for f in ./output/justclash*.ipk ./output/luci-app-justclash*.ipk ./output/luci-i18n-justclash*.ipk; do
-                [ -e "$f" ] && cp "$f" "$RELEASE_FOLDER"/
-            done
+      - name: Remove Docker ${{ matrix.type }} container
+        run: docker rm ${{ matrix.type }}
 
-      - name: Remove Docker stable container
-        run: docker rm stable
-
-      - name: Build and push snapshot
-        uses: docker/build-push-action@v6
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          file: ./Dockerfile-snapshot
-          context: .
-          tags: justclash/build:snapshot
+          name: release-files-${{ github.ref_name }}-${{ matrix.type }}
+          path: ./output/${{ matrix.type }}/*.${{ matrix.type == 'stable' && 'ipk' || 'apk' }}
+          retention-days: 1
+          if-no-files-found: error
 
-      - name: Create Snapshot Docker container
-        run: docker create --name snapshot justclash/build:snapshot
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Copy files from Snapshot Docker container
-        run: |
-          mkdir -p ./output
-          rm -f ./output/*.apk
-          docker cp snapshot:/builder/bin/packages/x86_64/utilites/. ./output/
-          docker cp snapshot:/builder/bin/packages/x86_64/luci/. ./output/
-          rm -rf ./output/tmp
+      - name: Download stable artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-files-${{ github.ref_name }}-stable
+          path: ./output/release
 
-      - name: Renaming translation file
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          mv ./output/luci-i18n-justclash-ru-*.apk "./output/luci-i18n-justclash-ru-${VERSION}.apk"
-
-      - name: Copy main files for SNAPSHOT release
-        run: |
-            RELEASE_FOLDER=./output/release
-            mkdir -p "$RELEASE_FOLDER"
-            for f in ./output/justclash*.apk ./output/luci-app-justclash*.apk ./output/luci-i18n-justclash*.apk; do
-                [ -e "$f" ] && cp "$f" "$RELEASE_FOLDER"/
-            done
-
-      - name: Remove Docker snapshot container
-        run: docker rm snapshot
+      - name: Download snapshot artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-files-${{ github.ref_name }}-snapshot
+          path: ./output/release
 
       - name: Extract changelog for current version
         run: |
@@ -115,7 +121,9 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ./output/release/*.ipk
-            ./output/release/*.apk
+          files: ./output/release/*.*
           body_path: ./tmp.md
+          draft: false
+          prerelease: false
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
