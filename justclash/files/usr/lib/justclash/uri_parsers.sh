@@ -8,29 +8,14 @@
 # --------------------------------------------
 
 url_decode() {
-    local input
-
-    if [ ! -t 0 ]; then
-        input="$(cat)"
-    else
-        input="$1"
-    fi
-
     # shellcheck disable=SC3060
-    input="${input//+/ }"
-    echo -n "$input" | sed 's/%/\\x/g' | xargs -0 printf '%b'
+    local data="${1//+/ }"
+    echo -n "$data" | sed 's/%/\\x/g' | xargs -0 printf '%b'
 }
 
 json_escape() {
-    local input
-
-    if [ ! -t 0 ]; then
-        input="$(cat)"
-    else
-        input="$1"
-    fi
-
-    echo "$input" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
+    printf '%s' "$1" | \
+    sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
 }
 
 parse_ss_url() {
