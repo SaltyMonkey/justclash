@@ -1159,6 +1159,9 @@ handle_block_rule_section() {
 
     local enabled_blocklist
     config_get enabled_blocklist block_rules enabled_blocklist
+    config_get proxy block_rules proxy
+
+    [ -z "$proxy" ] && proxy=$DEFAULT_PROXY
 
     local added_blocklists="|"
     local val
@@ -1186,7 +1189,7 @@ handle_block_rule_section() {
             local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
-            selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$DEFAULT_RULESET_PROXY")\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
+            selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
             added_blocklists="$added_blocklists$val|"
         else
             log 1 "Blocklist '$val' can't be found in $blocklist_content" "⚠️"
@@ -1235,7 +1238,7 @@ handle_direct_rule_section() {
 
     config_get list_update_interval direct_rules list_update_interval
     config_get enabled_list direct_rules enabled_list
-    config_get proxy direct_rule proxy
+    config_get proxy direct_rules proxy
 
     [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
     [ -z "$proxy" ] && proxy=$DEFAULT_PROXY
