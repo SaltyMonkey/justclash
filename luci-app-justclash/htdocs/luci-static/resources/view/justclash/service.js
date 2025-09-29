@@ -87,8 +87,9 @@ return view.extend({
         o.validate = function (section_id, value) {
             if (!value || value.trim().length === 0)
                 return true;
-
-            return (common.isValidIpv4(value));
+            if (!common.isValidIpv4(value))
+                return false;;
+            return true;
         };
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("QUIC traffic from clients:"));
@@ -178,6 +179,9 @@ return view.extend({
         o.placeholder = "123456789";
         o.rmempty = false;
         o.description = _("Telegram chat ID where to send notification.");
+        o.validate = function (section_id, value) {
+            if (!value ||  value.trim().length === 0) return true;
+        };
 
         o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
         o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
@@ -185,7 +189,7 @@ return view.extend({
         o.rmempty = false;
         o.password = true;
         o.validate = function (section_id, value) {
-            return (common.isValidTelegramBotToken(value)) ? true : _("Invalid Telegram Bot Token");
+            return (common.isValidTelegramBotToken(value) || !value ||  value.trim().length === 0) ? true : _("Invalid Telegram Bot Token");
         };
 
         let map_promise = m.render();
