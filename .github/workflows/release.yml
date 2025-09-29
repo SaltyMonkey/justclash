@@ -52,7 +52,6 @@ jobs:
           file: ./Dockerfile-${{ matrix.type }}
           context: .
           tags: justclash/build:${{ matrix.type }}
-          load: true
 
       - name: Create ${{ matrix.type }} Docker container
         run: docker create --name ${{ matrix.type }} justclash/build:${{ matrix.type }}
