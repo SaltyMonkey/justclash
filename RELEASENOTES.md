@@ -1,4 +1,4 @@
-## [0.2.5] - 29092025
+## [0.2.5] - 30092025
 
 - Install-script: Only stable core download
 - Install-script: Rename
