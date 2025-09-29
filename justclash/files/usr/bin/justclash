@@ -714,7 +714,8 @@ handle_proxy_section() {
         else
             [ -z "$proxy_link_uri" ] && { log 1  "Skipping proxy '$name' without proxy_link" "⚠️"; return; }
 
-            proxy_link_uri=$(echo "$proxy_link_uri" | trim | json_escape)
+            proxy_link_uri=$(echo "$proxy_link_uri" | trim)
+            proxy_link_uri=$(json_escape "$proxy_link_uri")
             [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
 
             case "$proxy_link_uri" in
