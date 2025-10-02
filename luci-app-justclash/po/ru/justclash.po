@@ -11,10 +11,10 @@ msgid "BY_RULES"
 msgstr "По правилам"
 
 msgid "DROP"
-msgstr "Блокировать"
+msgstr "Отбрасывать"
 
 msgid "REJECT"
-msgstr "Запрещать"
+msgstr "Отклонять"
 
 msgid "DIRECT"
 msgstr "Прямое"
@@ -23,13 +23,13 @@ msgid "Sniffer settings"
 msgstr "Настройки анализатора"
 
 msgid "Enable sniffer:"
-msgstr "Включить анализ:"
+msgstr "Включить анализатор:"
 
 msgid "Parse pure IP:"
-msgstr "Разбирать чистый IP:"
+msgstr "Разбирать IP-адреса без домена:"
 
 msgid "Excluded from sniffer domains:"
-msgstr "Домены, исключённые из анализа:"
+msgstr "Исключить домены из анализа:"
 
 msgid "Forcefully sniff domains:"
 msgstr "Принудительно анализировать домены:"
@@ -56,13 +56,13 @@ msgid "Proxy routing"
 msgstr "Маршрутизация"
 
 msgid "Update"
-msgstr "Получить логи"
+msgstr "Обновить"
 
 msgid "To bottom"
 msgstr "В конец"
 
 msgid "Can't copy"
-msgstr "Невозможно копировать"
+msgstr "Не удалось скопировать"
 
 msgid "Copy logs"
 msgstr "Копировать логи"
@@ -119,7 +119,7 @@ msgid "Service is running:"
 msgstr "Сервис запущен:"
 
 msgid "Service's autostart:"
-msgstr "Автозапуск сервиса:"
+msgstr "Автозапуск:"
 
 msgid "Executing command..."
 msgstr "Выполнение команды..."
@@ -146,16 +146,7 @@ msgid "Service start"
 msgstr "Запуск сервиса"
 
 msgid "Delayed boot:"
-msgstr "Отложенный запуск:"
-
-msgid "Skip environment checks:"
-msgstr "Пропустить проверки окружения:"
-
-msgid "Minor checks in script will be disabled at start."
-msgstr "Не делать проверки окружения при старте скрипта."
-
-msgid "Delayed boot timeout:"
-msgstr "Таймаут отложенной загрузки:"
+msgstr "Отложенный запуск при старте системы:"
 
 msgid "Skip environment checks:"
 msgstr "Пропустить проверки окружения:"
@@ -163,8 +154,11 @@ msgstr "Пропустить проверки окружения:"
 msgid "Minor checks in script will be disabled at start."
 msgstr "Незначительные проверки в скрипте будут отключены при запуске."
 
+msgid "Delayed boot timeout:"
+msgstr "Таймаут отложенной загрузки:"
+
 msgid "Persistent temp files:"
-msgstr "Постоянные временные файлы:"
+msgstr "Сохранять временные файлы:"
 
 msgid "The service start will be delayed at router boot."
 msgstr "Запуск сервиса будет отложен при загрузке маршрутизатора."
@@ -203,28 +197,16 @@ msgid "Select a way how DoQ traffic will be handled by netfilter tables."
 msgstr "Выберите способ обработки DoQ-трафика таблицами netfilter."
 
 msgid "Source network interface:"
-msgstr "Интерфейс захвата:"
+msgstr "Исходный сетевой интерфейс:"
 
 msgid "Select the network interface from which the traffic will originate"
 msgstr "Выберите сетевой интерфейс, с которого трафик будет перенаправляться на TProxy"
-
-msgid "Enable automatic restart for bad interface:"
-msgstr "Включить автоматический перезапуск при ошибке интерфейса:"
-
-msgid "When enabled, service will be restarted when selected interfaces will be reconnected."
-msgstr "При включении сервис перезапустится при переподключении выбранных интерфейсов."
-
-msgid "Interface for monitoring"
-msgstr "Интерфейс для мониторинга"
-
-msgid "Select the WAN interfaces to be monitored for automatic service restart."
-msgstr "Выберите WAN-интерфейсы для мониторинга и автоперезапуска сервиса."
 
 msgid "The service creates netfilter tables to redirect traffic to the tproxy port."
 msgstr "Сервис создаёт таблицы netfilter для перенаправления трафика на порт tproxy."
 
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
-msgstr "Неверный формат cron. Ожидается: «минута час день месяц день_недели» (например, «0 3 * * 0»)"
+msgstr "Неверный формат cron. Ожидается: «минута час день месяц день_недели» (например, «0 3 * * 0»)."
 
 msgid "Mihomo autorestart:"
 msgstr "Автоперезапуск Mihomo:"
@@ -356,16 +338,13 @@ msgid "Cache profile data if possible."
 msgstr "Кэшировать данные профиля, если возможно."
 
 msgid "Cache Fake IP:"
-msgstr "Кэшировать Fake IP:"
+msgstr "Кэшировать поддельные IP:"
 
 msgid "Cache fake IP data when possible."
-msgstr "Кешировать данные fake IP когда возможно."
-
-msgid "Excluded from sniffer domains:"
-msgstr "Исключить домены из анализа:"
+msgstr "Кэшировать данные поддельных IP, если возможно."
 
 msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
-msgstr "Исключенные домены из детального анализа. Иногда позволяет избежать ошибок в специализированных приложениях."
+msgstr "Исключённые домены из детального анализа. Иногда это помогает избежать ошибок в приложениях."
 
 msgid "NTP settings"
 msgstr "Настройки NTP"
@@ -416,10 +395,10 @@ msgid "Load DNS entries from system if possible."
 msgstr "Загружать записи DNS из системы, если возможно."
 
 msgid "Fake IP range:"
-msgstr "Диапазон Fake IP:"
+msgstr "Диапазон поддельных IP:"
 
 msgid "CIDR for fake IP."
-msgstr "CIDR для Fake IP."
+msgstr "CIDR для поддельных IP."
 
 msgid "Default nameservers:"
 msgstr "DNS по умолчанию:"
@@ -428,10 +407,10 @@ msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "DNS-серверы по умолчанию при запуске. Рекомендуется использовать UDP-серверы."
 
 msgid "Direct nameservers:"
-msgstr "DNS серверы прямых соединений:"
+msgstr "DNS-серверы для прямого соединения:"
 
 msgid "Direct nameservers used for DIRECT rules."
-msgstr "DNS-серверы, используемые для правил прямых соединений."
+msgstr "DNS-серверы, используемые для правил прямого соединения."
 
 msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4."
 msgstr "Недопустимый формат DNS-сервера. Разрешены: quic://, https://, tls://, udp:// или IPv4."
@@ -446,10 +425,10 @@ msgid "Nameservers:"
 msgstr "DNS-серверы:"
 
 msgid "Skip fake IP for domains:"
-msgstr "Исключить Fake IP для доменов:"
+msgstr "Исключить поддельные IP для доменов:"
 
 msgid "Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps."
-msgstr "Исключить выбранные домены из кэша Fake IP (может помочь избежать ошибок приложений)."
+msgstr "Исключить выбранные домены из кэша поддельных IP (может помочь избежать ошибок приложений)."
 
 msgid "Routing mark:"
 msgstr "Маркер маршрутизации:"
@@ -497,7 +476,7 @@ msgid "Health check:"
 msgstr "Контроль доступности:"
 
 msgid "Cannot parse proxy URI:"
-msgstr "Не удаётся разобрать URI прокси:"
+msgstr "Не удалось разобрать URI прокси:"
 
 msgid "Proxies list:"
 msgstr "Список прокси:"
@@ -533,7 +512,7 @@ msgid "URI link with connection parameters."
 msgstr "URI-ссылка с параметрами подключения."
 
 msgid "Invalid link."
-msgstr "Недопустимая ссылка."
+msgstr "Неверная ссылка."
 
 msgid "Use with rules:"
 msgstr "Использовать с правилами:"
@@ -641,7 +620,7 @@ msgid "DIRECT rules:"
 msgstr "Прямые правила:"
 
 msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
-msgstr "Дополнительные настройки прямых правил (обрабатываются до прокси, proxy-groups и правил запрета)."
+msgstr "Дополнительные настройки прямых правил (обрабатываются до прокси, proxy-groups и правил блокировки)."
 
 msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com)."
 msgstr "Каждый элемент — правило DOMAIN-SUFFIX для прямого соединения (пример: google.com)."
@@ -683,19 +662,19 @@ msgid "Send HWID data to server with proxy provider request."
 msgstr "Отправлять данные HWID на сервер при запросе провайдера прокси."
 
 msgid "Your complete subscription URL with http:// or https://."
-msgstr "Полный URL подписки, начинающийся с http:// или https://."
+msgstr "Полный URL подписки (начинается с http:// или https://)."
 
 msgid "Proxy provider name."
 msgstr "Имя провайдера прокси."
 
 msgid "REJECT rules:"
-msgstr "Правила запрета:"
+msgstr "Правила блокировки:"
 
 msgid "Additional rules for REJECT rules. Will be handled before proxies and proxy groups."
-msgstr "Дополнительные правила запрета (обрабатываются до прокси и proxy-groups)."
+msgstr "Дополнительные правила блокировки (обрабатываются до прокси и proxy-groups)."
 
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
-msgstr "Предустановленные RULE-SET списки с рекламой/вредоносным ПО. Выберите те, которые хотите блокировать, или оставьте пустым."
+msgstr "Предустановленные RULE-SET списки с рекламой и вредоносным ПО. Выберите те, которые хотите блокировать, или оставьте пустым."
 
 msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Example: google.com)."
 msgstr "Каждый элемент — правило DOMAIN-SUFFIX для блокировки подключения (пример: google.com)."
@@ -704,13 +683,19 @@ msgid "Each element is an IP-CIDR rule to block with proxy (Example: 1.1.1.1/32)
 msgstr "Каждый элемент — правило IP-CIDR для блокировки подключения (пример: 1.1.1.1/32). Сейчас только IPv4."
 
 msgid "FINAL rule:"
-msgstr "Правило FINAL:"
+msgstr "Финальное правило:"
 
 msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
 msgstr "Дополнительные настройки финальных правил, применяемых после всех остальных."
 
 msgid "This field cannot be empty"
 msgstr "Это поле не может быть пустым"
+
+msgid "Mixed port rule:"
+msgstr "Правило смешанного порта:"
+
+msgid "Additional settings for the mixed port. Use it to override or enforce specific behavior."
+msgstr "Дополнительные настройки для смешанного порта. Используйте их для переопределения или принудительного применения определённого поведения."
 
 msgid "Error"
 msgstr "Ошибка"
@@ -725,7 +710,7 @@ msgid "To top"
 msgstr "В начало"
 
 msgid "Update"
-msgstr "Запросить логи"
+msgstr "Обновить"
 
 msgid "Copy logs"
 msgstr "Копировать логи"

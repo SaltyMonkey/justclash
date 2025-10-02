@@ -1,0 +1,14 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "BY_RULES"
+msgstr "By rules"
+
+msgid "DROP"
+msgstr "Drop"
+
+msgid "REJECT"
+msgstr "Reject"
+
+msgid "DIRECT"
+msgstr "Direct"

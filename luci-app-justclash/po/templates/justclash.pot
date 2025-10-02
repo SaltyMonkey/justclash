@@ -157,12 +157,6 @@ msgstr ""
 msgid "Delayed boot timeout:"
 msgstr ""
 
-msgid "Skip environment checks:"
-msgstr "Пропустить проверки окружения:"
-
-msgid "Minor checks in script will be disabled at start."
-msgstr "Незначительные проверки в скрипте будут отключены при запуске."
-
 msgid "Persistent temp files:"
 msgstr ""
 
@@ -206,18 +200,6 @@ msgid "Source network interface:"
 msgstr ""
 
 msgid "Select the network interface from which the traffic will originate"
-msgstr ""
-
-msgid "Enable automatic restart for bad interface:"
-msgstr ""
-
-msgid "When enabled, service will be restarted when selected interfaces will be reconnected."
-msgstr ""
-
-msgid "Interface for monitoring"
-msgstr ""
-
-msgid "Select the WAN interfaces to be monitored for automatic service restart."
 msgstr ""
 
 msgid "The service creates netfilter tables to redirect traffic to the tproxy port."
@@ -710,6 +692,12 @@ msgid "Additional settings for the final rules applied after all others. Use it 
 msgstr ""
 
 msgid "This field cannot be empty"
+msgstr ""
+
+msgid "Mixed port rule:"
+msgstr ""
+
+msgid "Additional settings for the mixed port. Use it to override or enforce specific behaviors."
 msgstr ""
 
 msgid "Error"
