@@ -1,6 +1,7 @@
 "require baseclass";
 
 return baseclass.extend({
+    justclashLuciVersion: "__COMPILED_VERSION_VARIABLE__",
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
@@ -25,7 +26,7 @@ return baseclass.extend({
     defaultHealthCheckResult: 204,
     defaultNftOptions: ["BY_RULES", "DROP"],
     defaultNftNtpOptions: ["BY_RULES", "DROP", "DIRECT"],
-    defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.2.6172.169 Safari/537.36",
     defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
     defaultTimeoutForWSReconnect: 10000,

@@ -9,6 +9,7 @@
 # Avoid adding simple commands for perfomance
 # --------------------------------------------
 
+VERSION="__COMPILED_VERSION_VARIABLE__"
 # shellcheck disable=SC1091
 [ -r /lib/functions.sh ] && . /lib/functions.sh
 # shellcheck disable=SC1091
@@ -18,7 +19,6 @@
 . /usr/lib/justclash/compat_fixes.sh
 . /usr/lib/justclash/uri_parsers.sh
 . /usr/lib/justclash/helpers.sh
-CORE_PATH_INFOBIN=/usr/lib/"$PROGNAME"/info.sh
 
 # Variable for standalone or procd start
 PROCD_MODE=0
@@ -109,21 +109,12 @@ NF_ROUTE_TABLE=100
 # 216.239.35.0    — time.google.com (Google NTP)
 NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
 
-CONFLICTED_PACKAGES="banip mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy"
 CONFLICTED_PATTERNS_DHCP_CONFIG="podkop_server podkop_noresolv podkop_cachesize doh_backup_noresolv doh_backup_server doh_server"
-
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
-
-PKG_LIST_COMMAND=""
-if command -v apk >/dev/null 2>&1; then
-    PKG_LIST_COMMAND="apk info"
-else
-    PKG_LIST_COMMAND="opkg list-installed"
-fi
 
 ucibool_to_yesno() {
     case "$1" in
@@ -137,23 +128,6 @@ panic() {
     log 0 "$1" '💥'
     stop
     exit 1
-}
-
-is_package_installed() {
-    local found_pkgs=""
-
-    for pkg in "$@"; do
-        if $PKG_LIST_COMMAND | grep -qw "$pkg"; then
-            found_pkgs="${found_pkgs:+$found_pkgs }$pkg"
-        fi
-    done
-
-    if [ -n "$found_pkgs" ]; then
-        echo "$found_pkgs"
-        return 0
-    else
-        return 1
-    fi
 }
 
 is_pattern_in_file() {
@@ -187,11 +161,6 @@ ntp_force_sync() {
     config_get_bool ntpd_start settings ntpd_start
     if [ -z "$NTP_IPS" ]; then
         log 0 "No NTP servers configured" "⚠️"
-        return 1
-    fi
-
-    if ! command -v /usr/sbin/ntpd >/dev/null; then
-        log 0 "ntpd not found, time synchronization skipped" "⚠️"
         return 1
     fi
 
@@ -272,7 +241,7 @@ start() {
     nf_table_add
 
     log 2 "Modifying dnsmasq configuration" "🔑"
-    dnsmasq_add
+    dnsmasq_update
 
     log 2 "Starting Mihomo core" "🐱"
     start_core
@@ -284,7 +253,7 @@ stop() {
     nf_table_remove
 
     log 2 "Restoring default dnsmasq configuration" "🔑"
-    dnsmasq_remove
+    dnsmasq_restore
 
     log 2 "Stopping core process" "🐱"
     stop_core
@@ -470,7 +439,7 @@ save_dnsmasq_config() {
     fi
 }
 
-dnsmasq_add() {
+dnsmasq_update() {
     local dns_listen_port dnsmasq_apply_changes
 
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
@@ -478,7 +447,7 @@ dnsmasq_add() {
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
         uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
-        for server in $(uci get dhcp.@dnsmasq[0].server 2>/dev/null); do
+        for server in $(uci -q get dhcp.@dnsmasq[0].server); do
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
                 log 1 "Dnsmasq save config error: server=127.0.0.1 is already configured. Skip editing DHCP"
                 return 1
@@ -504,7 +473,7 @@ dnsmasq_add() {
 
 }
 
-dnsmasq_remove() {
+dnsmasq_restore() {
     local dns_listen_port
     local dnsmasq_apply_changes
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
@@ -515,14 +484,14 @@ dnsmasq_remove() {
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
-        bak_cachesize=$(uci get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize 2>/dev/null)
+        bak_cachesize=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize)
         if [ -z "$bak_cachesize" ]; then
             log 1 "dnsmasq revert: cachesize is unset"
         else
             uci set dhcp.@dnsmasq[0].cachesize="$bak_cachesize"
         fi
 
-        bak_noresolv=$(uci get dhcp.@dnsmasq[0]."${PROGNAME}"_noresolv 2>/dev/null)
+        bak_noresolv=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_noresolv)
         if [ "$bak_noresolv" = "unset" ]; then
             log 1 "dnsmasq revert: noresolv is unset"
             uci -q delete dhcp.@dnsmasq[0].noresolv
@@ -530,13 +499,13 @@ dnsmasq_remove() {
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
         fi
 
-        server=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
+        server=$(uci -q get dhcp.@dnsmasq[0].server)
         if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
-            uci -q delete dhcp.@dnsmasq[0].server 2>/dev/null
-            for server in $(uci get dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null); do
-                uci add_list dhcp.@dnsmasq[0].server="$server"
+            uci -q delete dhcp.@dnsmasq[0].server
+            for server in $(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_server); do
+                 [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
             done
-            uci delete dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null
+            uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
         fi
 
         uci commit dhcp
@@ -549,19 +518,7 @@ dnsmasq_remove() {
  }
 
 check_for_conflicts() {
-    local installed_pkgs found_patterns pkg pattern
-
-    # For $CONFLICTED_PACKAGES only. We don't need "" to make shell split string
-    # shellcheck disable=SC2086
-    installed_pkgs=$(is_package_installed $CONFLICTED_PACKAGES)
-    if [ -n "$installed_pkgs" ]; then
-        for pkg in $installed_pkgs; do
-            log 1 "Conflict detected: package '$pkg' is installed." "⚠️"
-            log 1 "This package may interfere with the current service setup." "⚠️"
-            log 1 "Please consider uninstalling or reconfiguring the package before proceeding." "⚠️"
-        done
-        panic "Conflicting packages detected. Operation aborted for safety."
-    fi
+    local found_patterns pattern
 
     # For $CONFLICTED_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string
     # shellcheck disable=SC2086
@@ -603,34 +560,33 @@ check_for_conflicts_warn() {
 }
 
 info_device() {
-    $CORE_PATH_INFOBIN info_device
+   cat /tmp/sysinfo/model || echo "$NO_DATA_STRING"
 }
 
 info_openwrt() {
-    $CORE_PATH_INFOBIN info_openwrt
+   grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "$NO_DATA_STRING"
 }
 
 info_openwrt_version() {
-    $CORE_PATH_INFOBIN info_openwrt_version
+   grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}'
 }
 
 info_mihomo() {
-    $CORE_PATH_INFOBIN info_core
+    if [ ! -x "$CORE_PATH" ]; then
+        echo "$NO_DATA_STRING"
+    else
+        "$CORE_PATH" -v 2>/dev/null | head -n1 | awk '{ print $3 }'
+    fi
 }
 
 info_package() {
-    $CORE_PATH_INFOBIN info_package
-}
-
-info_luci() {
-    $CORE_PATH_INFOBIN info_luci
+    echo "$VERSION"
 }
 
 systemlogs() {
-    local res
     local lines=${1:-40}
-    res=$($CORE_PATH_INFOBIN systemlogs "$lines")
-    echo "$res"
+    logread -e "$PROGNAME" | tail -n "$lines"
+    return 0
 }
 
 simple_uci_list_to_json_arr() {
@@ -2145,7 +2101,6 @@ $PROGNAME diagnostic report:
 Device:  $(info_device)
 OpenWRT: $(info_openwrt)
 Service: $(info_package)
-LuCi:    $(info_luci)
 Mihomo:  $(info_mihomo)
 
 -> Status:
@@ -2259,7 +2214,6 @@ Information Commands:
   info_openwrt            Show OpenWrt version.
   info_core               Show Mihomo core version.
   info_package            Show JustClash package version.
-  info_luci               Show JustClash LuCI app version.
 
 Diagnostics:
   diag_nft                Run nftables diagnostic.
@@ -2338,9 +2292,6 @@ case "$1" in
         ;;
     info_package)
         info_package
-        ;;
-    info_luci)
-        info_luci
         ;;
     diag_nft)
         diag_nft

@@ -5,7 +5,7 @@
 "require view.justclash.common as common";
 
 function cleanStdout(val) {
-    return (val && val.stdout) ? val.stdout.replace("\\n", "").trim() : _("No data");
+    return (val && val.stdout) ? val.stdout.replace("\\n", "").trim() : _("Error");
 }
 
 function asyncTimeout(ms) {
@@ -28,7 +28,7 @@ function createTable(results, statusCells) {
         ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
             E("td", { class: "td left" }, _("LuCI package version:")),
-            E("td", { class: "td left" }, cleanStdout(results.infoLuciPackage))
+            E("td", { class: "td left" }, common.justclashLuciVersion)
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
             E("td", { class: "td left" }, _("Mihomo core version:")),
@@ -77,20 +77,19 @@ return view.extend({
 
     async load() {
         const [
-            infoDevice, infoOpenWrt, infoPackage, infoLuciPackage, infoCore
+            infoDevice, infoOpenWrt, infoPackage, infoCore
         ] = await Promise.all([
-            fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_openwrt"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_luci"]).catch(() => _("No data")),
-            fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("No data"))
+            fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("Error")),
+            fs.exec(common.binInfoPath, ["info_openwrt"]).catch(() => _("Error")),
+            fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("Error")),
+            fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("Error"))
         ]);
         const [infoIsRunning, infoIsAutostarting] = await Promise.all([
             this.isJustClashRunning().catch(() => false),
             this.isJustClashAutostartEnabled().catch(() => false)
         ]);
         return {
-            infoDevice, infoOpenWrt, infoPackage, infoLuciPackage, infoCore,
+            infoDevice, infoOpenWrt, infoPackage, infoCore,
             infoIsRunning, infoIsAutostarting
         };
     },

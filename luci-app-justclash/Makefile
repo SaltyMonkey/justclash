@@ -33,4 +33,13 @@ endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
+define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)$(HTDOCS)
+	$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)$(HTDOCS)/
+	$(INSTALL_DIR) $(1)/
+	$(CP) $(PKG_BUILD_DIR)/root/* $(1)/
+	sed -i -e 's/__COMPILED_VERSION_VARIABLE__/$(PKG_VERSION)/g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/common.js || true
+endef
+
 # call BuildPackage - OpenWrt buildroot signature
+$(eval $(call BuildPackage,$(PKG_NAME)))

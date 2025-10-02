@@ -56,6 +56,8 @@ define Package/$(PKG_NAME)/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
+
+	sed -i -e 's/__COMPILED_VERSION_VARIABLE__/$(PKG_VERSION)/g' $(1)/usr/bin/justclash
 endef
 
 define Package/justclash/conffiles

@@ -668,7 +668,7 @@ return view.extend({
         o.editable = true;
         o.datatype = "cidr4";
 
-        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mixed port rule:"), _("Additional settings for the mixed port. Use it to override or enforce specific behaviors."));
+        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mixed port rule:"), _("Additional settings for the mixed port. Use it to override or enforce specific behavior."));
         smp.addremove = false;
 
         tabname = "mixedportbasic_tab";
