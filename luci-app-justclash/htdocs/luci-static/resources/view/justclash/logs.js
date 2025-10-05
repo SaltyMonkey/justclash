@@ -80,7 +80,7 @@ return view.extend({
         const isSecure = window.isSecureContext;
 
         const copyBtn = E("button", {
-            class: "cbi-button cbi-button-positive jc-ml",
+            class: "cbi-button jc-ml",
             disabled: !isSecure,
             title: !isSecure ? _("Can't copy") : "",
             click: () => {

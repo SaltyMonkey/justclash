@@ -15,31 +15,31 @@ function asyncTimeout(ms) {
 function createTable(results, statusCells) {
     const rows = [
         E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, _("Device model:")),
+            E("td", { class: "td left" }, "💻 " + _("Device model:")),
             E("td", { class: "td left" }, cleanStdout(results.infoDevice))
         ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
-            E("td", { class: "td left" }, _("System version:")),
+            E("td", { class: "td left" }, "✨ " + _("System version:")),
             E("td", { class: "td left" }, cleanStdout(results.infoOpenWrt))
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, _("Service package version:")),
+            E("td", { class: "td left" }, "📦 " + _("Service package version:")),
             E("td", { class: "td left" }, cleanStdout(results.infoPackage))
         ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
-            E("td", { class: "td left" }, _("LuCI package version:")),
+            E("td", { class: "td left" }, "📦 " + _("LuCI package version:")),
             E("td", { class: "td left" }, common.justclashLuciVersion)
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, _("Mihomo core version:")),
+            E("td", { class: "td left" }, "😸 " + _("Mihomo core version:")),
             E("td", { class: "td left" }, cleanStdout(results.infoCore))
         ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
-            E("td", { class: "td left" }, _("Service is running:")),
+            E("td", { class: "td left" }, "🚀 " + _("Service is running:")),
             statusCells.serviceStatus
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, _("Service's autostart:")),
+            E("td", { class: "td left" }, "📃 " + _("Service's autostart:")),
             statusCells.daemonStatus
         ])
     ];
@@ -58,7 +58,9 @@ function boolToWord(val) { return val ? _("Yes") : _("No"); }
 function boolToStyle(active) {
     return `color: var(--on-primary-color); background-color: ${active ? 'var(--success-color-medium)' : 'var(--error-color-medium)'}; padding: 3px; border-radius: 4px;`;
 }
-
+function versionStyle(active) {
+    return `color: var(--on-primary-color); background-color: ${active ? 'var(--success-color-medium)' : 'var(--error-color-medium)'}; padding: 3px; border-radius: 4px;`;
+}
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
@@ -79,10 +81,10 @@ return view.extend({
         const [
             infoDevice, infoOpenWrt, infoPackage, infoCore
         ] = await Promise.all([
-            fs.exec(common.binInfoPath, ["info_device"]).catch(() => _("Error")),
-            fs.exec(common.binInfoPath, ["info_openwrt"]).catch(() => _("Error")),
-            fs.exec(common.binInfoPath, ["info_package"]).catch(() => _("Error")),
-            fs.exec(common.binInfoPath, ["info_core"]).catch(() => _("Error"))
+            fs.exec(common.binPath, ["info_device"]).catch(() => _("Error")),
+            fs.exec(common.binPath, ["info_openwrt"]).catch(() => _("Error")),
+            fs.exec(common.binPath, ["info_package"]).catch(() => _("Error")),
+            fs.exec(common.binPath, ["info_core"]).catch(() => _("Error"))
         ]);
         const [infoIsRunning, infoIsAutostarting] = await Promise.all([
             this.isJustClashRunning().catch(() => false),
@@ -271,7 +273,8 @@ return view.extend({
                 padding: 6px 6px 6px !important;
             }
             .cbi-page-actions {
-                margin-bottom: 11px !important;
+                margin-bottom: 10px !important;
+                padding: 10px 10px 10px 10px !important;
             }
             .cbi-button { margin-right: 0.5em; }
             .jc-actions {

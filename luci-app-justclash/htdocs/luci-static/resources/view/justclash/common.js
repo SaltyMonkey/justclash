@@ -5,7 +5,6 @@ return baseclass.extend({
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
-    binInfoPath: "/usr/lib/justclash/info.sh",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
     genNameProxyPrefix: "proxy",
@@ -24,8 +23,8 @@ return baseclass.extend({
     defaultProxyProviderHealthCheckSec: 360,
     defaultHealthCheckTimeoutMs: 5000,
     defaultHealthCheckResult: 204,
-    defaultNftOptions: ["BY_RULES", "DROP"],
-    defaultNftNtpOptions: ["BY_RULES", "DROP", "DIRECT"],
+    defaultNftOptions: ["BY RULES", "DROP"],
+    defaultNftNtpOptions: ["BY RULES", "DROP", "DIRECT"],
     defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.2.6172.169 Safari/537.36",
     defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
@@ -34,7 +33,7 @@ return baseclass.extend({
     minimalRuleSetUpdateInterval: 21600,
     defaultRuleSetProxy: "DIRECT",
     defaultProxyProviderProxy: "DIRECT",
-    defaultBehaviorMixedPort: "BY_RULES",
+    defaultBehaviorMixedPort: "BY RULES",
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },

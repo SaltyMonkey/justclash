@@ -33,6 +33,8 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "tproxy_port", _("Tproxy port:"));
         o.description = _("Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic.");
         o.datatype = "port";
+        o.placeholder = "7893";
+        o.default = "7893";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable mixed port:"));
@@ -44,6 +46,8 @@ return view.extend({
         o.description = _("Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols.");
         o.depends("use_mixed_port", "1");
         o.datatype = "port";
+        o.placeholder = "7892";
+        o.default = "7892";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "unified_delay", _("Unified delay:"));
@@ -58,7 +62,9 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "external_controller_port", _("External controller port:"));
         o.description = _("API server port for the external controller.");
-        o.datatype = "uinteger";
+        o.datatype = "port";
+        o.placeholder = "9090";
+        o.default = "9090";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.ListValue, "global_client_fingerprint", _("Global client fingerprint:"));
@@ -83,12 +89,14 @@ return view.extend({
         o.description = _("How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive.");
         o.datatype = "uinteger";
         o.rmempty = false;
+        o.placeholder = "15";
         o.default = "15";
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Keep alive interval:"));
         o.description = _("How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle.");
         o.datatype = "uinteger";
         o.rmempty = false;
+        o.placeholder = "15";
         o.default = "15";
 
         o = s.taboption(tabname, form.Flag, "profile_store_selected", _("Cache profile data:"));
@@ -107,6 +115,8 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "dns_listen_port", _("DNS listen port:"));
         o.description = _("Proxy DNS server listen port.");
         o.datatype = "port";
+        o.placeholder = "7894";
+        o.default = "7894";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));

@@ -38,7 +38,7 @@ return view.extend({
         o.default = "0";
 
         o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start ntpd:"));
-        o.description = _("The service will start ntpd to sync system time and ensure TLS works correctly.");
+        o.description = _("The service will start ntpd to sync system time and ensure TLS works correctly in system.");
         o.rmempty = false;
         o.default = "1";
 
@@ -165,18 +165,12 @@ return view.extend({
         o.placeholder = "123456789";
         o.rmempty = false;
         o.description = _("Telegram chat ID where to send notification.");
-        o.validate = function (section_id, value) {
-            if (!value ||  value.trim().length === 0) return true;
-        };
 
         o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
         o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
         o.description = _("Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!");
         o.rmempty = false;
         o.password = true;
-        o.validate = function (section_id, value) {
-            return (common.isValidTelegramBotToken(value) || !value ||  value.trim().length === 0) ? true : _("Invalid Telegram Bot Token");
-        };
 
         let map_promise = m.render();
         return map_promise;
