@@ -7,7 +7,7 @@ msgstr ""
 msgid "URI"
 msgstr ""
 
-msgid "BY_RULES"
+msgid "BY RULES"
 msgstr ""
 
 msgid "DROP"
@@ -166,7 +166,7 @@ msgstr ""
 msgid "Start ntpd:"
 msgstr ""
 
-msgid "The service will start ntpd to sync system time and ensure TLS works correctly."
+msgid "The service will start ntpd to sync system time and ensure TLS works correctly in system."
 msgstr ""
 
 msgid "Edit DNS server at startup:"
@@ -538,13 +538,13 @@ msgstr ""
 msgid "Domain regex:"
 msgstr ""
 
-msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy (Example: google.com)."
+msgid "DOMAIN-SUFFIX rule to route through proxy (Example: google.com)."
 msgstr ""
 
-msgid "Each element is an IP-CIDR rule to route through proxy (Example: 1.1.1.1/32). IPv4 only right now."
+msgid "IP-CIDR rule to route through proxy (Example: 1.1.1.1/32). IPv4 only right now."
 msgstr ""
 
-msgid "Each element is an SRC-IP-CIDR rule to route through proxy (Example: 192.168.31.212/32). IPv4 only right now."
+msgid "SRC-IP-CIDR rule to route through proxy (Example: 192.168.31.212/32). IPv4 only right now."
 msgstr ""
 
 msgid "Proxy groups:"
@@ -574,13 +574,13 @@ msgstr ""
 msgid "Check timeout:"
 msgstr ""
 
-msgid "Each element is a DOMAIN-SUFFIX rule to route through proxy group (Example: google.com)."
+msgid "DOMAIN-SUFFIX rule to route through proxy group (Example: google.com)."
 msgstr ""
 
-msgid "Each element is an IP-CIDR rule to route through proxy group (Example: 1.1.1.1/32). IPv4 only right now."
+msgid "IP-CIDR rule to route through proxy group (Example: 1.1.1.1/32). IPv4 only right now."
 msgstr ""
 
-msgid "Each element is an SRC-IP-CIDR rule to route through proxy group (Example: 192.168.31.212/32). IPv4 only right now."
+msgid "SRC-IP-CIDR rule to route through proxy group (Example: 192.168.31.212/32). IPv4 only right now."
 msgstr ""
 
 msgid "URL for node availability check (required for group functionality)."
@@ -589,7 +589,7 @@ msgstr ""
 msgid "Only http:// or https:// URLs are allowed."
 msgstr ""
 
-msgid "Time interval for subscription update check."
+msgid "Time interval for subscription update check in seconds."
 msgstr ""
 
 msgid "Update interval:"
@@ -625,7 +625,7 @@ msgstr ""
 msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
 msgstr ""
 
-msgid "Each element is a DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com)."
+msgid "DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com)."
 msgstr ""
 
 msgid "Get lists with:"
@@ -634,19 +634,19 @@ msgstr ""
 msgid "Use selected proxy or proxy-group to get lists from server."
 msgstr ""
 
-msgid "Each element is one DOMAIN-KEYWORD rule to pass in DIRECT (Example: google)."
+msgid "DOMAIN-KEYWORD rule to pass in DIRECT (Example: google)."
 msgstr ""
 
-msgid "Each element is a DOMAIN-REGEX rule to pass in DIRECT (Example: ^abc.*com)."
+msgid "DOMAIN-REGEX rule to pass in DIRECT (Example: ^abc.*com)."
 msgstr ""
 
-msgid "Each element is one SRC-IP-CIDR rule to pass in DIRECT (Example: 192.168.31.212/32). IPV4 only right now."
+msgid "SRC-IP-CIDR rule to pass in DIRECT (Example: 192.168.31.212/32). IPV4 only right now."
 msgstr ""
 
-msgid "Each element is one IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now."
+msgid "IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now."
 msgstr ""
 
-msgid "Each element is a SRC-IP-CIDR rule to block with proxy (Example: 192.168.31.212/32). IPv4 only right now."
+msgid "SRC-IP-CIDR rule to block with proxy (Example: 192.168.31.212/32). IPv4 only right now."
 msgstr ""
 
 msgid "Proxy provider:"
@@ -679,10 +679,10 @@ msgstr ""
 msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
 msgstr ""
 
-msgid "Each element is a DOMAIN-SUFFIX rule to block with proxy (Example: google.com)."
+msgid "DOMAIN-SUFFIX rule to block with proxy (Example: google.com)."
 msgstr ""
 
-msgid "Each element is an IP-CIDR rule to block with proxy (Example: 1.1.1.1/32). IPv4 only right now."
+msgid "IP-CIDR rule to block with proxy (Example: 1.1.1.1/32). IPv4 only right now."
 msgstr ""
 
 msgid "FINAL rule:"
