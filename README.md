@@ -44,7 +44,7 @@
 - `justclash`
 
 - **Firmware:**
-  - Requires OpenWrt 24+/23+ unchecked
+  - Requires OpenWrt 24+
   - FriendlyWrt 20240115+ (untested).
   - LuCI (web interface) and the above dependencies should be available.
 
