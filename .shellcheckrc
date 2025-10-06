@@ -1,5 +1,8 @@
 enable=avoid-nullary-conditions
+enable=avoid-negated-conditions
 enable=check-unassigned-uppercase
 enable=quote-safe-variables
+enable=deprecate-which
 enable=add-default-case
-disable=SC1083,SC2155
+enable=useless-use-of-cat
+disable=SC1083,SC2155,SC1091
