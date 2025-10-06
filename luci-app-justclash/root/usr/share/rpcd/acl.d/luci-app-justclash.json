@@ -9,9 +9,6 @@
                 "/usr/bin/justclash": [
                     "exec"
                 ],
-                "/usr/lib/justclash/info.sh": [
-                    "exec"
-                ],
                 "/etc/justclash/default.config": [
                     "read"
                 ],

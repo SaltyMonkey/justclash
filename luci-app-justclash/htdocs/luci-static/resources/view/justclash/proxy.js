@@ -132,9 +132,9 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "fake_ip_filter_mode", _("Fake IP filter:"));
         o.value("blacklist", _(`blacklist`));
-        o.value("whitelist", _(`whitelist`))
+        o.value("whitelist", _(`whitelist`));
         o.description = _("Fake IP working mode.");
-        o.default = "whitelist"
+        o.default = "whitelist";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
@@ -272,8 +272,5 @@ return view.extend({
 
         let map_promise = m.render();
         return map_promise;
-    },
-    destroy() {
-
     }
 });

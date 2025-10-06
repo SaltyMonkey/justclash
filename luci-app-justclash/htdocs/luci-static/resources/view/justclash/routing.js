@@ -15,6 +15,7 @@ return view.extend({
             fs.read(common.rulesetsFilePath),
             fs.read(common.blockRulesetsFilePath),
         ]);
+        //ui.addNotification(null, E("p", _("Unable to read the contents") + ": " + (e.message || e)), "error");
         const rulesetsLines = rulesetsFile.split('\n');
 
         const rulesetsItems = rulesetsLines
@@ -80,14 +81,14 @@ return view.extend({
                 const parsed = JSON.parse(value);
                 if (parsed.name)
                     return _('Name field must not be defined in object.');
-                if (parsed.type =="direct" && (parsed.server || parsed.port))
-                     return _('DIRECT proxy type must be defined without server or port fields.');
-                if (parsed.type =="direct") return true;
+                if (parsed.type == "direct" && (parsed.server || parsed.port))
+                    return _('DIRECT proxy type must be defined without server or port fields.');
+                if (parsed.type == "direct") return true;
 
                 if (!parsed.type || !parsed.server || !parsed.port)
                     return _('JSON must contain at least type, server and server fields.');
                 return true;
-            } catch (e) {
+            } catch {
                 return _('Invalid JSON format');
             }
         };
@@ -96,7 +97,7 @@ return view.extend({
         o.description = _("URI link with connection parameters.");
         o.password = true;
         o.optional = true;
-        o.placeholder = "vless://uuid@server:port?type=grpc&security=reality"
+        o.placeholder = "vless://uuid@server:port?type=grpc&security=reality";
         o.validate = function (section_id, value) {
             return (common.isValidProxyLink(value)) ? true : _("Invalid link.");
         };
@@ -115,18 +116,18 @@ return view.extend({
         o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
         o.optional = true;
         o.editable = true;
-        o.placeholder = "/etc/justclash/list.mrs"
+        o.placeholder = "/etc/justclash/list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
         };
 
         o = s.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
         o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
         o.optional = true;
         o.editable = true;
-        o.placeholder = "/etc/justclash/cidr-list.mrs"
+        o.placeholder = "/etc/justclash/cidr-list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
         };
 
         o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
@@ -201,7 +202,7 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
         o.default = '0';
-        o.description = _("Send HWID data to server with proxy provider request.")
+        o.description = _("Send HWID data to server with proxy provider request.");
 
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
         o.rmempty = false;
@@ -469,18 +470,18 @@ return view.extend({
         o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
         o.optional = true;
         o.editable = true;
-        o.placeholder = "/etc/justclash/list.mrs"
+        o.placeholder = "/etc/justclash/list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
         };
 
         o = s2.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
         o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
         o.optional = true;
         o.editable = true;
-        o.placeholder = "/etc/justclash/cidr-list.mrs"
+        o.placeholder = "/etc/justclash/cidr-list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
         };
 
         o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy-group:"));
@@ -544,18 +545,18 @@ return view.extend({
         o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
         o.optional = true;
         o.editable = true;
-        o.placeholder = "/etc/justclash/list.mrs"
+        o.placeholder = "/etc/justclash/list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
         };
 
         o = s3.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
         o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
         o.optional = true;
         o.editable = true;
-        o.placeholder = "/etc/justclash/cidr-list.mrs"
+        o.placeholder = "/etc/justclash/cidr-list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true :  _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
         };
 
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
@@ -726,8 +727,5 @@ return view.extend({
                 padding: 10px 0 10px 0 !important;
             }
         `);
-    },
-    destroy() {
-
     }
 });

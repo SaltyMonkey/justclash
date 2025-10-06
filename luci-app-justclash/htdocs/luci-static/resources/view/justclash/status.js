@@ -4,63 +4,59 @@
 "require fs";
 "require view.justclash.common as common";
 
-function cleanStdout(val) {
-    return (val && val.stdout) ? val.stdout.replace("\\n", "").trim() : _("Error");
-}
+const cleanStdout = (val) =>
+    val && val.stdout ? val.stdout.replace("\\n", "").trim() : _("Error");
 
-function asyncTimeout(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const asyncTimeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function createTable(results, statusCells) {
+const createTable = (results, statusCells) => {
     const rows = [
         E("tr", { class: "tr cbi-rowstyle-1" }, [
             E("td", { class: "td left" }, "💻 " + _("Device model:")),
-            E("td", { class: "td left" }, cleanStdout(results.infoDevice))
+            E("td", { class: "td left" }, cleanStdout(results.infoDevice)),
         ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
             E("td", { class: "td left" }, "✨ " + _("System version:")),
-            E("td", { class: "td left" }, cleanStdout(results.infoOpenWrt))
+            E("td", { class: "td left" }, cleanStdout(results.infoOpenWrt)),
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
             E("td", { class: "td left" }, "📦 " + _("Service package version:")),
-            E("td", { class: "td left" }, cleanStdout(results.infoPackage))
+            E("td", { class: "td left" }, cleanStdout(results.infoPackage)),
         ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
             E("td", { class: "td left" }, "📦 " + _("LuCI package version:")),
-            E("td", { class: "td left" }, common.justclashLuciVersion)
+            E("td", { class: "td left" }, common.justclashLuciVersion),
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
             E("td", { class: "td left" }, "😸 " + _("Mihomo core version:")),
-            E("td", { class: "td left" }, cleanStdout(results.infoCore))
+            E("td", { class: "td left" }, cleanStdout(results.infoCore)),
         ]),
         E("tr", { class: "tr cbi-rowstyle-2" }, [
             E("td", { class: "td left" }, "🚀 " + _("Service is running:")),
-            statusCells.serviceStatus
+            statusCells.serviceStatus,
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
             E("td", { class: "td left" }, "📃 " + _("Service's autostart:")),
-            statusCells.daemonStatus
-        ])
+            statusCells.daemonStatus,
+        ]),
     ];
     return E("table", { class: "table cbi-rowstyle-1" }, rows);
-}
+};
 
-function createActionButton(action, cssClass, label, handler) {
-    return E("button", {
+const createActionButton = (action, cssClass, label, handler) =>
+    E("button", {
         class: `cbi-button ${cssClass}`,
         id: `button${action}`,
-        click: handler
+        click: handler,
     }, [label]);
-}
 
-function boolToWord(val) { return val ? _("Yes") : _("No"); }
-function boolToStyle(active) {
-    return `color: var(--on-primary-color); background-color: ${active ? 'var(--success-color-medium)' : 'var(--error-color-medium)'}; padding: 3px; border-radius: 4px;`;
-}
-function versionStyle(active) {
-    return `color: var(--on-primary-color); background-color: ${active ? 'var(--success-color-medium)' : 'var(--error-color-medium)'}; padding: 3px; border-radius: 4px;`;
-}
+const boolToWord = (val) => (val ? _("Yes") : _("No"));
+
+const boolToStyle = (active) =>
+    `color: var(--on-primary-color); background-color: ${active ? "var(--success-color-medium)" : "var(--error-color-medium)"
+    }; padding: 3px; border-radius: 4px;`;
+
+
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
@@ -98,18 +94,20 @@ return view.extend({
 
     async render(results) {
         const serviceStatus = E("td", {
-            class: "td left", id: "isrunning"
+            class: "td left",
+            id: "isrunning"
         }, [
             E("span", {
-               style: boolToStyle(results.infoIsRunning)
+                style: boolToStyle(results.infoIsRunning)
             }, boolToWord(results.infoIsRunning))
         ]);
 
         const daemonStatus = E("td", {
-            class: "td left", id: "isautostarting"
+            class: "td left",
+            id: "isautostarting"
         }, [
             E("span", {
-               style: boolToStyle(results.infoIsAutostarting)
+                style: boolToStyle(results.infoIsAutostarting)
             }, boolToWord(results.infoIsAutostarting))
         ]);
 
@@ -120,22 +118,23 @@ return view.extend({
             createTable(results, statusCells)
         ]);
 
-        const actionHandler = (action, timeoutMs) => ui.createHandlerFn(this, async function () {
-            const buttons = document.querySelectorAll(".cbi-button");
-            ui.showModal(_("Executing command..."), [E("p", _("Please wait."))]);
-            buttons.forEach(btn => btn.disabled = true);
-            try {
-                await fs.exec(common.initdPath, [action]);
-                if (timeoutMs) await asyncTimeout(timeoutMs)
-                await this.updateServiceStatus(statusCells);
-            } catch (e) {
-                ui.addNotification(_("Error"), e.message, "danger");
-            } finally {
-                ui.hideModal();
-            }
-        });
+        const actionHandler = (action, timeoutMs) =>
+            ui.createHandlerFn(this, async function () {
+                const buttons = document.querySelectorAll(".cbi-button");
+                ui.showModal(_("Executing command..."), [E("p", _("Please wait."))]);
+                buttons.forEach(btn => btn.disabled = true);
+                try {
+                    await fs.exec(common.initdPath, [action]);
+                    if (timeoutMs) await asyncTimeout(timeoutMs);
+                    await this.updateServiceStatus(statusCells);
+                } catch (e) {
+                    ui.addNotification(_("Error"), e.message, "danger");
+                } finally {
+                    ui.hideModal();
+                }
+            });
 
-        function showDangerConfirm(message, onYes) {
+        const showDangerConfirm = (message, onYes) => {
             ui.showModal(_("ATTENTION!"), [
                 E("div", {}, [
                     E("strong", { style: "color:#a00" }, _("This action is irreversible!")),
@@ -156,38 +155,39 @@ return view.extend({
                     }, [_("Reset config")])
                 ])
             ]);
-        }
+        };
 
-        const showExecModalHandler = (title, command, args) => ui.createHandlerFn(this, async function () {
-            const buttons = document.querySelectorAll(".cbi-button");
-            buttons.forEach(btn => btn.disabled = true);
-            ui.showModal(title, [E("p", _("Please wait..."))]);
+        const showExecModalHandler = (title, command, args) =>
+            ui.createHandlerFn(this, async () => {
+                const buttons = document.querySelectorAll(".cbi-button");
+                buttons.forEach(btn => btn.disabled = true);
+                ui.showModal(title, [E("p", _("Please wait..."))]);
 
-            try {
-                const res = await fs.exec(command, args);
-                ui.showModal(title, [
-                    E("pre", { style: "max-height: 460px; overflow:auto;" }, res.stdout || _("No output")),
-                    E("div", { style: "text-align: right; margin-top: 1em;" }, [
-                        E("button", {
-                            class: "cbi-button",
-                            click: () => ui.hideModal()
-                        }, _("Dismiss"))
-                    ])
-                ]);
-            } catch (e) {
-                ui.showModal(_("Error"), [
-                    E("div", { class: "alert-message error" }, e.message),
-                    E("div", { style: "text-align: right; margin-top: 1em;" }, [
-                        E("button", {
-                            class: "cbi-button",
-                            click: () => ui.hideModal()
-                        }, _("Dismiss"))
-                    ])
-                ]);
-            } finally {
-                buttons.forEach(btn => btn.disabled = false);
-            }
-        });
+                try {
+                    const res = await fs.exec(command, args);
+                    ui.showModal(title, [
+                        E("pre", { style: "max-height: 460px; overflow:auto;" }, res.stdout || _("No output")),
+                        E("div", { style: "text-align: right; margin-top: 1em;" }, [
+                            E("button", {
+                                class: "cbi-button",
+                                click: () => ui.hideModal()
+                            }, _("Dismiss"))
+                        ])
+                    ]);
+                } catch (e) {
+                    ui.showModal(_("Error"), [
+                        E("div", { class: "alert-message error" }, e.message),
+                        E("div", { style: "text-align: right; margin-top: 1em;" }, [
+                            E("button", {
+                                class: "cbi-button",
+                                click: () => ui.hideModal()
+                            }, _("Dismiss"))
+                        ])
+                    ]);
+                } finally {
+                    buttons.forEach(btn => btn.disabled = false);
+                }
+            });
 
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton("start", "cbi-button-positive", _("Start"), actionHandler("start", 5000)),
@@ -207,7 +207,6 @@ return view.extend({
 
         this.startPolling(statusCells);
 
-        // Set initial button states after rendering
         setTimeout(() => {
             this.updateServiceStatus(statusCells);
         }, 0);
@@ -269,26 +268,26 @@ return view.extend({
 
     addCSS() {
         return E("style", {}, `
-            td {
-                padding: 6px 6px 6px !important;
-            }
-            .cbi-page-actions {
-                margin-bottom: 10px !important;
-                padding: 10px 10px 10px 10px !important;
-            }
-            .cbi-button { margin-right: 0.5em; }
-            .jc-actions {
-                display: flex;
-                flex-flow: row;
-                flex-wrap: wrap;
-                row-gap: 1em;
-                text-align: left !important;
-                border-top: 0px !important;
-            }
-            .jc-margin-right {
-                margin-left: auto;
-            }
-        `);
+      td {
+        padding: 6px 6px 6px !important;
+      }
+      .cbi-page-actions {
+        margin-bottom: 10px !important;
+        padding: 10px 10px 10px 10px !important;
+      }
+      .cbi-button { margin-right: 0.5em; }
+      .jc-actions {
+        display: flex;
+        flex-flow: row;
+        flex-wrap: wrap;
+        row-gap: 1em;
+        text-align: left !important;
+        border-top: 0px !important;
+      }
+      .jc-margin-right {
+        margin-left: auto;
+      }
+    `);
     },
 
     destroy() {

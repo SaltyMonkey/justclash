@@ -52,7 +52,7 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-       // copypasted from Podkop devs
+        // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
         o.default = "br-lan";
         o.depends("nft_apply_changes", "1");
@@ -60,7 +60,7 @@ return view.extend({
         o.nobridges = false;
         o.noinactive = false;
         o.multiple = true;
-        o.description="Select the network interface from which the traffic will originate";
+        o.description = "Select the network interface from which the traffic will originate";
         o.filter = function (section_id, value) {
             if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
                 return false;
@@ -172,15 +172,6 @@ return view.extend({
         o.rmempty = false;
         o.password = true;
 
-        let map_promise = m.render();
-        return map_promise;
-    },
-    addCSS() {
-        return E("style", {}, `
-
-        `);
-    },
-    destroy() {
-
+        return m.render();
     }
 });
