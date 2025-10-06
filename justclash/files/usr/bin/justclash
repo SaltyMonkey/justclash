@@ -98,8 +98,8 @@ DIAG_IP_CHECK_PING_YANDEX="77.88.8.8"
 DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
 
 NF_TABLE_NAME="${PROGNAME}_tproxy"
-NF_TABLE_FWMARK_FINAL=1
-NF_TABLE_FWMARK_PROXY=255
+NF_TABLE_FWMARK_FINAL=0x1
+NF_TABLE_FWMARK_PROXY=0xFF
 NF_ROUTE_TABLE=100
 
 # List of NTP server IP addresses:
@@ -131,11 +131,6 @@ panic() {
 }
 
 is_pattern_in_file() {
-    if [ -z "$1" ]; then
-        log 1 "Usage: is_pattern_in_file <string>"
-        return 1
-    fi
-
     local file="$1"
 
     if [ ! -r "$file" ]; then
@@ -198,25 +193,23 @@ start() {
 
     log 2 "Initializing Justclash service..." "⏳"
 
-    if [ ! -f "$CORE_PATH" ]; then
-        log 0 "Mihomo core is not installed." "❌"
-        return 1
+    check_requirement || return 1
+
+    config_get_bool skip_environment_checks settings skip_environment_checks 0
+    if [ "$skip_environment_checks" -eq 1 ]; then
+
+        log 2 "Checking for conflicts" "⏳"
+        check_for_conflicts || return 1
+
+        log 2 "Checking for non critical conflicts" "⏳"
+        check_for_conflicts_warn
+
+        log 2 "Fixing known compatibility problems" "🐞"
+        compat_fixes
     fi
 
     log 2 "Applying migration if required..." "⏳"
     migration
-
-    config_get_bool skip_environment_checks settings skip_environment_checks 0
-    if [ "$skip_environment_checks" -eq 0 ]; then
-        log 2 "Checking for conflicts" "🐞"
-        check_for_conflicts
-
-        log 2 "Checking for non critical conflicts" "🐞"
-        check_for_conflicts_warn
-
-        log 2 "Fixing known compatibility problems" "🔑"
-        compat_fixes
-    fi
 
     log 2 "Synchronizing system time" "🕒"
     ntp_force_sync
@@ -231,10 +224,7 @@ start() {
         core_generate_yaml
 
         log 2 "Validating yaml configuration..." "🐱"
-        core_validate_yaml
-        if [ $? -eq 1 ]; then
-            return 1
-        fi
+        core_validate_yaml || return 1
     fi
 
     log 2 "Configuring tproxy routing and creating NFTables table" "🔑"
@@ -305,23 +295,24 @@ stop_core() {
             # DO NOT APPLY "" - STRING MUST BE SPLITTED AUTOMATICALLY
             # shellcheck disable=SC2086
             kill $pids 2>/dev/null
+            log 2 "Core process stopped" "🐱"
+        else
+            log 2 "No matching processes found" "🐱"
         fi
-        log 2 "Core process stopped" "🐱"
     else
        log 2 "JustClash isn't running" "🐱"
     fi
 }
 
 cleanup_fwmark() {
-    #todo: change dynamic 0x1
-    while ip rule show | grep -qF "fwmark 0x1 lookup $NF_ROUTE_TABLE"; do
+    while ip rule show | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup ${NF_ROUTE_TABLE}"; do
         ip rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
     done
 }
 
 nf_table_add() {
     local nft_apply_changes
-    local tproxy_port proxy_fwmark_hex fake_ip_range tproxy_input_interfaces
+    local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode
 
     config_get nft_apply_changes settings nft_apply_changes
@@ -340,8 +331,6 @@ nf_table_add() {
 
     [ -z "$tproxy_port" ] && panic "tproxy_port not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range not set"
-
-    proxy_fwmark_hex=$(printf "0x%02X" "$NF_TABLE_FWMARK_PROXY")
 
     if nft list table ip "$NF_TABLE_NAME" 2>/dev/null; then
         nft delete table ip "$NF_TABLE_NAME"
@@ -367,7 +356,7 @@ nf_table_add() {
         nft add element ip "$NF_TABLE_NAME" inbound_interfaces { "\"$iface\"" }
     done
 
-    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$proxy_fwmark_hex" return
+    nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$NF_TABLE_FWMARK_PROXY" return
 
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
 
@@ -392,7 +381,7 @@ nf_table_add() {
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     # --- output ---
-    #nft add rule ip "$NF_TABLE_NAME" output mark "$proxy_fwmark_hex" return
+    #nft add rule ip "$NF_TABLE_NAME" output mark "$NF_TABLE_FWMARK_PROXY" return
 
     #nft add rule ip "$NF_TABLE_NAME" output ip daddr @private_ips return
 
@@ -405,8 +394,7 @@ nf_table_add() {
     #nft add rule ip "$NF_TABLE_NAME" output meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto { tcp, udp } tproxy to 127.0.0.1:"$tproxy_port"
 
     cleanup_fwmark
-    #todo: change dynamic 0x1
-    if ! ip rule list | grep -qF "fwmark 0x1 lookup $NF_ROUTE_TABLE"; then
+    if ! ip rule list | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup $NF_ROUTE_TABLE"; then
         ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE"
     fi
 
@@ -414,7 +402,7 @@ nf_table_add() {
         ip route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE"
     fi
 
-    log 1 "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE"
+    log 1 "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE" "🛠️"
 }
 
 nf_table_remove() {
@@ -423,7 +411,7 @@ nf_table_remove() {
     nft delete table ip "$NF_TABLE_NAME" 2>/dev/null || true
     ip route flush table "$NF_ROUTE_TABLE" 2>/dev/null || true
 
-    log 2 "Tproxy Clash rules and routing were removed" "⚙️"
+    log 2 "Tproxy rules and routing were removed" "🛠️"
 }
 
 # Thx Podkop, feels so annoyed already by shell scripting
@@ -515,10 +503,40 @@ dnsmasq_restore() {
     else
         log 2 "DNS configuration remains unchanged; update skipped as per configuration rules." "🛠️"
     fi
- }
+}
+
+check_requirement() {
+    local ret=0
+
+    if [ ! -f "$CORE_PATH" ]; then
+        log 0 "Requirement is missing: mihomo core is not installed." "❌"
+        ret=1
+    fi
+
+    if ! command -v jq >/dev/null 2>&1; then
+        log 0 "Requirement is missing: jq is not installed." "❌"
+        ret=1
+    fi
+
+    if ! command -v nft >/dev/null 2>&1; then
+        log 0 "Requirement is missing: nft is not installed." "❌"
+        ret=1
+    fi
+
+    if ! command -v curl >/dev/null 2>&1; then
+        log 0 "Requirement is missing: curl is not installed." "❌"
+        ret=1
+    fi
+
+    if ! command -v md5sum >/dev/null 2>&1; then
+        log 0 "Requirement is missing: coreutils-base64 is not installed." "❌"
+        ret=1
+    fi
+    return "$ret"
+}
 
 check_for_conflicts() {
-    local found_patterns pattern
+    local found_patterns pattern ret
 
     # For $CONFLICTED_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string
     # shellcheck disable=SC2086
@@ -529,8 +547,13 @@ check_for_conflicts() {
             log 1 "This pattern may indicate a configuration clash with the current service." "⚠️"
             log 1 "Please review and edit your DHCP configuration to resolve this issue." "⚠️"
         done
-        panic "Conflicting DHCP configuration patterns detected. Operation aborted for safety."
+        log 0 "Conflicting DHCP configuration patterns detected."
+        ret=1
+    else
+        ret=0
     fi
+
+    return "$ret"
 }
 
 check_for_conflicts_warn() {
@@ -653,13 +676,13 @@ handle_proxy_section() {
 
         local proxy_obj=""
         if [ "$mode" = "object" ]; then
-            [ -z "$proxy_link_object" ] && { log 1 "Skipping proxy '$name' without proxy_link_object in manual mode" "⚠️" ; return; }
+            [ -z "$proxy_link_object" ] && { log 1 "Skipping empty proxy '$name" "⚠️" ; return; }
 
             proxy_obj=$(echo "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
 
-            [ -z "$proxy_obj" ] && { log 1 "Failed to process proxy_link_object for '$name'" "⚠️"; return; }
+            [ -z "$proxy_obj" ] && { log 1 "Failed to process object for '$name'" "⚠️"; return; }
         else
-            [ -z "$proxy_link_uri" ] && { log 1  "Skipping proxy '$name' without proxy_link" "⚠️"; return; }
+            [ -z "$proxy_link_uri" ] && { log 1  "Skipping empty '$name'" "⚠️"; return; }
 
             proxy_link_uri=$(echo "$proxy_link_uri" | trim)
             proxy_link_uri=$(json_escape "$proxy_link_uri")
@@ -668,13 +691,14 @@ handle_proxy_section() {
             case "$proxy_link_uri" in
                 ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
                 socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
+                socks://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
                 trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
                 vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
                 mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
-                *) log 1 "Unknown proxy_link_uri type: $proxy_link_uri" "⚠️"; return ;;
+                *) log 1 "Unknown proxy link type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
-            [ -z "$proxy_obj" ] && { log 1 "Failed to parse proxy_link_uri: $proxy_link_uri" "⚠️"; return; }
+            [ -z "$proxy_obj" ] && { log 1 "Failed to parse proxy link: $proxy_link_uri" "⚠️"; return; }
 
             proxy_obj=$(echo "$proxy_obj" | jq -c --arg name "$name" '. + {name: $name}')
         fi
@@ -718,7 +742,7 @@ handle_proxy_section() {
         for line in $domain_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                local rng_name=$(printf "%s" "$clean_line" | md5_str )
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -747,7 +771,7 @@ handle_proxy_section() {
         for line in $cidr_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                local rng_name=$(printf "%s" "$clean_line" | md5_str )
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -863,7 +887,7 @@ handle_proxy_group_section() {
         [ -z "$expected_status" ] && expected_status=$DEFAULT_HEALTHCHECK_RESULT
 
         local escaped_proxies escaped_providers
-        [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | trim| list_to_json_array)
+        [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | trim | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(echo "$providers_list" | trim | list_to_json_array)
 
         local group_json="{\"name\":\"$(json_escape "$name")\",\
@@ -926,7 +950,7 @@ handle_proxy_group_section() {
         for line in $domain_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                local rng_name=$(printf "%s" "$clean_line" | md5_str )
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -955,7 +979,7 @@ handle_proxy_group_section() {
         for line in $cidr_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+                local rng_name=$(printf "%s" "$clean_line" | md5_str )
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -1225,7 +1249,7 @@ handle_direct_rule_section() {
     for line in $domain_list; do
         local clean_line=$(echo "$line" | trim)
         if [ -n "$clean_line" ]; then
-            local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+            local rng_name=$(printf "%s" "$clean_line" | md5_str )
             case "$clean_line" in
                 http://*|https://*)
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
@@ -1250,7 +1274,7 @@ handle_direct_rule_section() {
     for line in $cidr_list; do
         local clean_line=$(echo "$line" | trim)
         if [ -n "$clean_line" ]; then
-            local rng_name=$(printf "%s" "$clean_line" | md5sum | awk '{print $1}')
+            local rng_name=$(printf "%s" "$clean_line" | md5_str )
             case "$clean_line" in
                 http://*|https://*)
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
@@ -1324,7 +1348,7 @@ handle_mixed_port_rules_section() {
     local rules rule_str
     config_get exit_rule mixed_port_rules exit_rule
 
-    if [ "$exit_rule" = "BY_RULES" ]; then
+    if [ "$exit_rule" = "BY RULES" ]; then
         rules="[]"
     else
         rule_str=$(printf 'IN-TYPE,SOCKS/HTTP,%s' "${exit_rule:-$DEFAULT_PROXY}")
@@ -1623,7 +1647,7 @@ core_prepare_workdir() {
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-            current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5sum | awk '{print $1}')
+            current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str )
             saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null || echo "")
             if [ "$current_hash" != "$saved_hash" ]; then
                 log 2 "Outdated $OUTPUT_YAML_CONFIG_PATH was found. Will be recreated." "🐱"
@@ -1828,11 +1852,6 @@ core_update() {
 }
 
 send_telegram() {
-    if [ -z "$1" ]; then
-        log 1 "Usage: send_telegram <message>"
-        return 1
-    fi
-
     local message="$1"
     local token chat_id
 
@@ -1975,10 +1994,6 @@ core_autorestart_cron_remove() {
 
 diag_nft() {
     clog 2 "Checking for 'nft' command..."
-    if ! command -v nft >/dev/null 2>&1; then
-        clog 0 "The 'nft' command is not available. Please install nftables to continue."
-        return 1
-    fi
 
     clog 2 "Verifying existence of NFTables table '$NF_TABLE_NAME'..."
     if ! nft list table ip "$NF_TABLE_NAME" >/dev/null 2>&1; then
@@ -1996,7 +2011,7 @@ diag_nft() {
 
 diag_route() {
     clog 2 "Verifying existence of route rule..."
-    if ! ip rule list | grep -qF "fwmark 0x1 lookup $NF_ROUTE_TABLE"; then
+    if ! ip rule list | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup $NF_ROUTE_TABLE"; then
         clog 0 "Route rule 'ip rule add fwmark ""$NF_TABLE_FWMARK_FINAL"" table $NF_ROUTE_TABLE' is missing!"
     fi
     ip rule list
@@ -2216,6 +2231,7 @@ Information Commands:
   info_package            Show JustClash package version.
 
 Diagnostics:
+  diag_report             Run diagnostic
   diag_nft                Run nftables diagnostic.
   diag_route              Run route tables diagnostic.
   diag_icmp               Run internet check with ICMP.

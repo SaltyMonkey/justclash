@@ -7,6 +7,10 @@
 # External justclash service helpers file
 # --------------------------------------------------------
 
+md5_str() {
+    md5sum | awk '{print $1}'
+}
+
 spaces_to_commas() {
     sed 's/[[:space:]]\+/, /g'
 }
