@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=$(PKG_NAME)
-	DEPENDS:=+nftables +coreutils-base64 +jq +curl +kmod-nft-tproxy
+	DEPENDS:=+nftables +coreutils-base64 +jq +curl +kmod-nft-tproxy +kmod-nf-tproxy
 	CONFLICTS:=banip mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy
 	PKGARCH:=all
 endef
@@ -38,7 +38,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/justclash
 	$(INSTALL_BIN) ./files/usr/lib/justclash/helpers.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/compat_fixes.sh $(1)/usr/lib/justclash/
-	$(INSTALL_BIN) ./files/usr/lib/justclash/info.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/logging.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/migration.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/uri_parsers.sh $(1)/usr/lib/justclash/
