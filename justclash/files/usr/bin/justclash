@@ -342,6 +342,7 @@ nf_table_add() {
     #nft add chain ip "$NF_TABLE_NAME" output '{ type route hook output priority mangle; policy accept; }'
 
     nft add set ip "$NF_TABLE_NAME" fake_ips '{ type ipv4_addr; flags interval; }'
+    # shellcheck disable=SC2086
     nft add element ip "$NF_TABLE_NAME" fake_ips { $fake_ip_range }
 
     nft add set ip "$NF_TABLE_NAME" private_ips '{ type ipv4_addr; flags interval; }'
@@ -361,18 +362,23 @@ nf_table_add() {
     nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
 
     if [ "$nft_quic_mode" = "DROP" ]; then
+        # shellcheck disable=SC2248
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop
     fi
     if [ "$nft_dot_quic_mode" = "DROP" ]; then
+        # shellcheck disable=SC2248
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT } drop
     fi
     if [ "$nft_dot_mode" = "DROP" ]; then
+        # shellcheck disable=SC2248
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport  { $DEFAULT_DOT_PORT } drop
     fi
 
     if [ "$nft_ntp_mode" = "DROP" ]; then
+        # shellcheck disable=SC2248
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
     elif [ "$nft_ntp_mode" = "DIRECT" ]; then
+        # shellcheck disable=SC2248
         nft add rule ip "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
     fi
 
@@ -583,15 +589,15 @@ check_for_conflicts_warn() {
 }
 
 info_device() {
-   cat /tmp/sysinfo/model || echo "$NO_DATA_STRING"
+   get_hw_model || echo "$NO_DATA_STRING"
 }
 
 info_openwrt() {
-   grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "$NO_DATA_STRING"
+   get_os_version_full || echo "$NO_DATA_STRING"
 }
 
 info_openwrt_version() {
-   grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}'
+   get_os_version || echo "$NO_DATA_STRING"
 }
 
 info_mihomo() {
@@ -1081,9 +1087,9 @@ handle_proxy_provider_section() {
         if [ "$subscription_hwid_support" -eq 1 ]; then
             entry="$entry,\"header\":{\
             \"x-hwid\": \"$(hwid_generate)\",\
-            \"x-device-os\":\"OpenWRT\",\
-            \"x-ver-os\":\"$(info_openwrt_version)\",\
-            \"x-device-model\":\"$(info_device)\",\
+            \"x-device-os\":\"$(get_os_name)\",\
+            \"x-ver-os\":\"$(get_os_version)\",\
+            \"x-device-model\":\"$(get_hw_model)\",\
             }"
         fi
 
@@ -1228,6 +1234,7 @@ handle_direct_rule_section() {
             local rest
             r_name="${line%%|*}"
             rest="${line#*|}"
+            # shellcheck disable=SC2034
             yaml="${rest%%|*}"
             rest="${rest#*|}"
             behavior="${rest%%|*}"
@@ -1677,11 +1684,9 @@ core_prepare_workdir() {
     return "$res"
 }
 
-# TODO: Remove impossible archs
 detect_arch() {
-    local arch_raw release_info
-    release_info=$(cat /etc/openwrt_release 2>/dev/null)
-    arch_raw=$(echo "$release_info" | sed -n "s/^DISTRIB_ARCH='\(.*\)'$/\1/p")
+    local arch_raw
+    arch_raw=$(get_os_arch)
 
     case "$arch_raw" in
         aarch64_*) echo "arm64" ;;
@@ -2016,10 +2021,10 @@ diag_route() {
     fi
     ip rule list
 
-    if ! ip route show table $NF_ROUTE_TABLE | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
+    if ! ip route show table "$NF_ROUTE_TABLE" | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
          clog 0 "Route table $NF_ROUTE_TABLE is incorrect!"
     fi
-    ip route show table $NF_ROUTE_TABLE
+    ip route show table "$NF_ROUTE_TABLE"
 }
 
 diag_proxy_resolver() {

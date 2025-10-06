@@ -55,13 +55,33 @@ safe_paths_clear() {
     export SAFE_PATHS
 }
 
+get_hw_model() {
+    cat /tmp/sysinfo/model
+}
+
+get_os_arch() {
+    grep OPENWRT_ARCH /etc/os-release | cut -d'"' -f2
+}
+
+get_os_name() {
+    grep NAME /etc/os-release | head -n 1 | cut -d'"' -f2
+}
+
+get_os_version_full() {
+    grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2
+}
+
+get_os_version() {
+    grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}'
+}
+
 hwid_generate() {
     local interface mac_addr board_data arch_data str hwid_str
     local no_mac_string="withoutmac"
 
     interface=$(ip route show default | awk '/dev/ {print $5; exit}')
     board_data=$(ubus call system board | jq -r '.board_name')
-    arch_data=$(cat /etc/openwrt_release 2>/dev/null | sed -n "s/^DISTRIB_ARCH='\(.*\)'$/\1/p")
+    arch_data=$(get_os_arch)
 
     if [ -z "$interface" ]; then
         interface=$(ip link show up | awk -F: '/^[0-9]+:/ {print $2}' | sed 's/ //g' | grep -E '^(eth|lan|wan)' | head -n1)
