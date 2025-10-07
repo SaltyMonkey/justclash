@@ -60,13 +60,6 @@ return view.extend({
         o.rmempty = false;
         o.default = "1";
 
-        o = s.taboption(tabname, form.Value, "external_controller_port", _("External controller port:"));
-        o.description = _("API server port for the external controller.");
-        o.datatype = "port";
-        o.placeholder = "9090";
-        o.default = "9090";
-        o.rmempty = false;
-
         o = s.taboption(tabname, form.ListValue, "global_client_fingerprint", _("Global client fingerprint:"));
         common.defaultFingerprints.forEach(item => {
             o.value(item, _(`${item}`));

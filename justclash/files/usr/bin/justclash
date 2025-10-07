@@ -79,7 +79,7 @@ DEFAULT_RULESET_INTERVAL="86500"
 DEFAULT_HEALTHCHECK_URL="http://www.gstatic.com/generate_204"
 DEFAULT_HEALTHCHECK_RESULT=204
 DEFAULT_MAX_FAILED_TIMES=5
-
+DEFAULT_EXTERNAL_CONTROLLER_PORT=9090
 DEFAULT_INPUT_INTERFACE="br-lan"
 
 DEFAULT_TLS_PORT=443
@@ -1388,7 +1388,7 @@ handle_final_rule_section() {
 core_generate_yaml() {
     local use_zashboard log_level tproxy_port unified_delay
     local use_mixed_port mixed_port
-    local tcp_concurrent external_controller_port global_client_fingerprint
+    local tcp_concurrent global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_system_hosts fake_ip_filter_mode fake_ip_range dns_cache_max_size
@@ -1410,7 +1410,6 @@ core_generate_yaml() {
     unified_delay=$(ucibool_to_yaml_bool "$unified_delay")
     config_get_bool tcp_concurrent proxy tcp_concurrent
     tcp_concurrent=$(ucibool_to_yaml_bool "$tcp_concurrent")
-    config_get external_controller_port proxy external_controller_port
     config_get global_client_fingerprint proxy global_client_fingerprint
     config_get keep_alive_idle proxy keep_alive_idle
     config_get keep_alive_interval proxy keep_alive_interval
@@ -1561,7 +1560,7 @@ log-level: $log_level
 tproxy-port: $tproxy_port
 unified-delay: $unified_delay
 tcp-concurrent: $tcp_concurrent
-external-controller: 0.0.0.0:$external_controller_port
+external-controller: 0.0.0.0:$DEFAULT_EXTERNAL_CONTROLLER_PORT
 routing-mark: $NF_TABLE_FWMARK_PROXY
 global-client-fingerprint: $global_client_fingerprint
 global-ua: $global_ua

@@ -298,12 +298,6 @@ msgstr "Параллельный TCP:"
 msgid "Enable concurrent TCP connection attempts."
 msgstr "Включить параллельные попытки TCP-соединений."
 
-msgid "External controller port:"
-msgstr "Порт внешнего контроллера:"
-
-msgid "API server port for the external controller."
-msgstr "Порт API-сервера для внешнего контроллера."
-
 msgid "Global client fingerprint:"
 msgstr "Глобальный отпечаток клиента:"
 

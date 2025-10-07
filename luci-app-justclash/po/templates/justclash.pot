@@ -298,12 +298,6 @@ msgstr ""
 msgid "Enable concurrent TCP connection attempts."
 msgstr ""
 
-msgid "External controller port:"
-msgstr ""
-
-msgid "API server port for the external controller."
-msgstr ""
-
 msgid "Global client fingerprint:"
 msgstr ""
 
