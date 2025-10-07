@@ -7,6 +7,17 @@
 # External justclash service helpers file
 # --------------------------------------------------------
 
+url_decode() {
+    # shellcheck disable=SC3060
+    local data="${1//+/ }"
+    echo -n "$data" | sed 's/%/\\x/g' | xargs -0 printf '%b'
+}
+
+json_escape() {
+    printf '%s' "$1" | \
+    sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
+}
+
 md5_str() {
     md5sum | awk '{print $1}'
 }

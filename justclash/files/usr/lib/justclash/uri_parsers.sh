@@ -7,19 +7,8 @@
 # External justclash service part
 # --------------------------------------------
 
-url_decode() {
-    # shellcheck disable=SC3060
-    local data="${1//+/ }"
-    echo -n "$data" | sed 's/%/\\x/g' | xargs -0 printf '%b'
-}
-
-json_escape() {
-    printf '%s' "$1" | \
-    sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
-}
-
 parse_ss_url() {
-    local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2"
+    local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
 
     # Удаляем #, но сохраняем query (для plugin)
     link="${link%%#*}"
@@ -78,12 +67,11 @@ parse_ss_url() {
 }
 
 parse_socks5_url() {
-    local link="$1" DEFAULT_SOCKS_PORT="$2"
+    local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
     local raw="${link#socks5://}"
 
     local server="" port="" username="" password=""
     local userinfo="" hostport=""
-    local name=""
 
     if echo "$raw" | grep -q '@'; then
         userinfo="${raw%@*}"
@@ -105,19 +93,18 @@ parse_socks5_url() {
 
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
-    name="socks5_${server}_${port}"
-
     # JSON
-    local json="\"type\":\"socks5\",\"name\":\"$name\",\"server\":\"$server\",\"port\":$port"
+    local json="\"type\":\"socks5\",\"server\":\"$server\",\"port\":$port"
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
     json="$json,\"udp\":true"
+    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
 
     echo "{$json}"
 }
 
 parse_trojan_url() {
-    local url="$1" DEFAULT_TLS_PORT="$2"
+    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3"
 
     local raw="${url#trojan://}"
     raw="${raw%%#*}"
@@ -171,6 +158,7 @@ parse_trojan_url() {
 
     local json="\"type\":\"trojan\",\"server\":\"$server\",\"port\":$port,\"password\":\"$password\",\"udp\":true"
 
+    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
     [ -n "$sni" ] && json="$json,\"sni\":\"$sni\""
     [ "$insecure" = "1" ] && json="$json,\"skip-cert-verify\":true"
     json="$json,\"network\":\"$net\""
@@ -196,7 +184,7 @@ parse_trojan_url() {
 }
 
 parse_vless_url() {
-    local link="$1" DEFAULT_TLS_PORT="$2"
+    local link="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3"
     local raw="${link#vless://}"
     raw="${raw%%#*}"
 
@@ -248,6 +236,7 @@ parse_vless_url() {
 
     local json="\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
 
+    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
     [ -n "$penc" ] && json="$json,\"packet-encoding\":\"$penc\""
 
     if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
@@ -284,7 +273,7 @@ parse_vless_url() {
 }
 
 parse_mieru_url() {
-    local link="$1" DEFAULT_MIERU_PORT="$2"
+    local link="$1" DEFAULT_MIERU_PORT="$2" dialer_proxy="$3"
     local raw="${link#mierus://}"
     raw="${raw%%#*}"
 
@@ -363,6 +352,8 @@ parse_mieru_url() {
     json="$json,\"port\":\"$port\""
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
+
+    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
 
     json="$json,\"transport\":\"TCP\""
     json="$json,\"udp\":true"

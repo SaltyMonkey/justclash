@@ -668,11 +668,12 @@ handle_proxy_section() {
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name proxy_link_uri interval mode proxy_link_object use_proxy_for_list_update list val
+        local name proxy_link_uri dialer_proxy interval mode proxy_link_object use_proxy_for_list_update list val
         local domain_list cidr_list
 
         config_get name "$section" name
         config_get proxy_link_uri "$section" proxy_link_uri
+        config_get dialer_proxy "$section" dialer_proxy
         config_get interval "$section" list_update_interval
         config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
@@ -689,18 +690,18 @@ handle_proxy_section() {
             [ -z "$proxy_obj" ] && { log 1 "Failed to process object for '$name'" "⚠️"; return; }
         else
             [ -z "$proxy_link_uri" ] && { log 1  "Skipping empty '$name'" "⚠️"; return; }
-
             proxy_link_uri=$(echo "$proxy_link_uri" | trim)
-            proxy_link_uri=$(json_escape "$proxy_link_uri")
+
+            [ -n "$dialer_proxy" ] && dialer_proxy=$(echo "$dialer_proxy" | trim)
             [ -z "$interval" ] && interval=$DEFAULT_RULESET_INTERVAL
 
             case "$proxy_link_uri" in
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
-                socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
-                socks://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
-                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$DEFAULT_TLS_PORT") ;;
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
+                socks5://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
+                socks://*) proxy_obj=$(parse_socks5_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
+                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
                 *) log 1 "Unknown proxy link type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
@@ -757,11 +758,11 @@ handle_proxy_section() {
                 *)
                     if [ -f "$clean_line" ]; then
                         local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$escaped_path"
+                        safe_paths_add "$(dirname "$clean_line")"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
+                        log 1 "Path is wrong in custom domain list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -786,11 +787,11 @@ handle_proxy_section() {
                 *)
                     if [ -f "$clean_line" ]; then
                         local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$escaped_path"
+                        safe_paths_add "$(dirname "$clean_line")"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
+                        log 1 "Path is wrong in custom cidr list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -965,11 +966,11 @@ handle_proxy_group_section() {
                 *)
                     if [ -f "$clean_line" ]; then
                         local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$escaped_path"
+                        safe_paths_add "$(dirname "$clean_line")"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
+                        log 1 "Path is wrong in custom domain list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -994,11 +995,11 @@ handle_proxy_group_section() {
                 *)
                     if [ -f "$clean_line" ]; then
                         local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$escaped_path"
+                        safe_paths_add "$(dirname "$clean_line")"
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
+                        log 1 "Path is wrong in custom cidr list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -1059,7 +1060,7 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2329
     accumulate_proxy_provider() {
         local section="$1"
-        local name url subscription_hwid_support interval proxy filter exclude_filter exclude_type
+        local name url override_dialer_proxy subscription_hwid_support interval proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
 
         config_get name "$section" name
@@ -1069,6 +1070,7 @@ handle_proxy_provider_section() {
         config_get exclude_filter "$section" exclude_filter
         config_get exclude_type "$section" exclude_type
         config_get proxy "$section" proxy
+        config_get override_dialer_proxy "$section" override_dialer_proxy
 
         { [ -z "$name" ] || [ -z "$url" ]; } && {
             log 1 "Skipping proxy_provider without name or subscription" "⚠️"
@@ -1082,6 +1084,12 @@ handle_proxy_provider_section() {
         [ -n "$filter" ] && entry="$entry,\"filter\":\"$(json_escape "$filter")\""
         [ -n "$exclude_filter" ] && entry="$entry,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+
+        if [ -n "$override_dialer_proxy" ]; then
+            entry="$entry,\"override\":{\
+            \"dialer-proxy\": \"$(echo "$override_dialer_proxy" | trim)\",
+            }"
+        fi
 
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
         if [ "$subscription_hwid_support" -eq 1 ]; then
@@ -1264,10 +1272,10 @@ handle_direct_rule_section() {
             *)
                 if [ -f "$clean_line" ]; then
                     local escaped_path=$(json_escape "$clean_line")
-                    safe_paths_add "$escaped_path"
+                    safe_paths_add "$(dirname "$clean_line")"
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
-                    log 1 "Incorrect value in custom domain list: $clean_line" "⚠️"
+                    log 1 "Path is wrong in custom domain list: $clean_line" "⚠️"
                     continue
                 fi
                 ;;
@@ -1287,12 +1295,12 @@ handle_direct_rule_section() {
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 ;;
             *)
-                if [ -f "$line" ]; then
+                if [ -f "$clean_line" ]; then
                     local escaped_path=$(json_escape "$clean_line")
-                    safe_paths_add "$escaped_path"
+                    safe_paths_add "$(dirname "$clean_line")"
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
-                    log 1 "Incorrect value in custom cidr list: $clean_line" "⚠️"
+                    log 1 "Path is wrong in custom cidr list: $clean_line" "⚠️"
                     continue
                 fi
                 ;;
