@@ -496,6 +496,12 @@ msgstr ""
 msgid "Object mode:"
 msgstr ""
 
+msgid "Connect through:"
+msgstr ""
+
+msgid "Route connections through the specified proxy server, or connect directly if left empty."
+msgstr ""
+
 msgid "If selected, allow to define proxy as JSON object."
 msgstr ""
 

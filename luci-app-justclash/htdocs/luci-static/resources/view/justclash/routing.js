@@ -103,6 +103,18 @@ return view.extend({
         };
         o.depends("mode", "uri");
 
+        o = s.taboption(tabname, form.Value, "dialer_proxy", _("Connect through:"));
+        o.description = _("Route connections through the specified proxy server, or connect directly if left empty.");
+        o.optional = true;
+        o.placeholder = "proxyname_";
+        o.validate = function (section_id, value) {
+            if (value === "" || value === undefined || value === null) {
+                return true;
+            }
+            return (common.isValidSimpleName(value)) ? true : _("Invalid name.");
+        };
+        o.depends("mode", "uri");
+
         tabname = "proxieslists_tab";
         s.tab(tabname, _("Rules"));
 
@@ -199,6 +211,17 @@ return view.extend({
             return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
         };
         o.description = _("Your complete subscription URL with http:// or https://.");
+
+        o = spp.taboption(tabname, form.Value, "override_dialer_proxy", _("Connect through:"));
+        o.description = _("Route connections through the specified proxy server, or connect directly if left empty.");
+        o.optional = true;
+        o.placeholder = "proxyname_";
+        o.validate = function (section_id, value) {
+            if (value === "" || value === undefined || value === null) {
+                return true;
+            }
+            return (common.isValidSimpleName(value)) ? true : _("Invalid name.");
+        };
 
         o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
         o.default = '0';
@@ -717,6 +740,9 @@ return view.extend({
         return E("style", {}, `
             ul.dropdown {
                 max-height: 320px !important;
+            }
+            .cbi-value {
+                margin-bottom: 14px !important;
             }
             .cbi-section {
                 border: 0 !important;

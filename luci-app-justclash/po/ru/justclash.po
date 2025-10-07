@@ -493,6 +493,12 @@ msgstr "URL:"
 msgid "Object mode:"
 msgstr "JSON-объект:"
 
+msgid "Connect through:"
+msgstr "Подключаться через:"
+
+msgid "Route connections through the specified proxy server, or connect directly if left empty."
+msgstr "Направлять соединения через указанный прокси-сервер или подключаться напрямую, если поле оставлено пустым."
+
 msgid "If selected, allow to define proxy as JSON object."
 msgstr "Позволяет указать параметры прокси в виде JSON-объекта."
 
