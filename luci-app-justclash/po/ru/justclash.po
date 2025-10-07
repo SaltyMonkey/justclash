@@ -44,7 +44,7 @@ msgid "Status"
 msgstr "Состояние"
 
 msgid "Logs"
-msgstr "Логи"
+msgstr "Журнал"
 
 msgid "Service settings"
 msgstr "Настройки сервиса"
@@ -65,16 +65,16 @@ msgid "Can't copy"
 msgstr "Не удалось скопировать"
 
 msgid "Copy logs"
-msgstr "Копировать логи"
+msgstr "Копировать журнал"
 
 msgid "To top"
 msgstr "В начало"
 
 msgid "Reversed Logs"
-msgstr "Новые логи в начале"
+msgstr "Новые записи в начале"
 
 msgid "Logs view"
-msgstr "Просмотр логов"
+msgstr "Просмотр журнала"
 
 msgid "Diagnostic"
 msgstr "Диагностика"
