@@ -7,37 +7,40 @@
 const NO_DATA = _("No data");
 const NO_LOGS = _("No logs");
 
+const autosizeTextarea = (textarea) => {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+};
+
+const copyToClipboard = (text) => {
+    if (navigator.clipboard) {
+        navigator.clipboard
+            .writeText(text)
+            .catch((ex) => {
+                console.error(ex);
+            });
+    }
+};
+
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
     handleReset: null,
-    autosizeTextarea(textarea) {
-        textarea.style.height = "auto";
-        textarea.style.height = textarea.scrollHeight + "px";
-    },
+
     async updateLogs(logBox, btn, reverseCheckbox, rawLogs) {
         btn.disabled = true;
         try {
-            const res = await fs.exec(common.binInfoPath, ["systemlogs", common.logsCount]);
+            const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
             rawLogs.value = res.stdout || NO_LOGS;
             if (rawLogs.value.endsWith("\n")) {
                 rawLogs.value = rawLogs.value.slice(0, -1);
             }
             this.applyReverse(logBox, reverseCheckbox.checked, rawLogs.value);
-            this.autosizeTextarea(logBox);
+            autosizeTextarea(logBox);
         } catch (e) {
             ui.addNotification(_("Error"), e.message, "danger");
         } finally {
             btn.disabled = false;
-        }
-    },
-    copyToClipboard(text) {
-        if (navigator.clipboard) {
-            navigator.clipboard
-                .writeText(text)
-                .catch((ex) => {
-                    console.error(ex);
-                });
         }
     },
 
@@ -49,8 +52,8 @@ return view.extend({
             logBox.value = rawText;
         }
     },
-    render: function () {
 
+    render: function () {
         const logBox = E("textarea", {
             readonly: "readonly",
             class: "jc-logs",
@@ -58,7 +61,7 @@ return view.extend({
             wrap: "off",
         }, []);
         logBox.value = NO_DATA;
-        this.autosizeTextarea(logBox);
+        autosizeTextarea(logBox);
 
         const rawLogs = { value: NO_DATA };
 
@@ -85,7 +88,7 @@ return view.extend({
             title: !isSecure ? _("Can't copy") : "",
             click: () => {
                 if (logBox.value === NO_DATA || logBox.value === NO_LOGS) return;
-                this.copyToClipboard(logBox.value);
+                copyToClipboard(logBox.value);
             },
         }, [_("Copy logs")]);
 
