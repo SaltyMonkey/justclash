@@ -425,7 +425,7 @@ core_download() {
         print_red "Failed to set executable permissions: $CORE_PATH"
     fi
 
-    echo " - Cleaning up temporary files" "🧹"
+    echo " - Cleaning up temporary files"
     if ! rm -f "$TMP_DOWNLOAD_PATH/mihomo.gz"; then
         print_red "Failed to clean up temporary file: $TMP_DOWNLOAD_PATH/mihomo.gz"
     fi
@@ -648,9 +648,9 @@ user_select_lang_install_mode_interactive() {
 
 localuse_interactive() {
     print_bold_green "DNSMasq localuse flag setup... (Optional)"
-    echo "0 - router will resolve domains with ISP DNS servers."
-    echo "1 - router will resolve domains with itself. (Default)"
-    echo "Router will be rebooted if setting will be applied"
+    echo "y/yes - router will resolve domains with ISP DNS servers."
+    echo "n/no - router will resolve domains with itself. (Default behavior)"
+    print_red "Router will be rebooted if setting will be applied"
     while true; do
             printf "Do you want to set dnsmasq localuse mode to '0'? y/n: "
             read -r inp
@@ -724,7 +724,7 @@ run() {
     print_bold_yellow "6 - Config DNSMasq local use flag"
     print_bold_yellow "7 - Exit"
     while true; do
-        printf "Enter your choice [1-6]: "
+        printf "Enter your choice [1-7]: "
         read -r choice
         case "$choice" in
             1)
