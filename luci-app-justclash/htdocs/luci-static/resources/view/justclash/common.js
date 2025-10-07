@@ -112,7 +112,7 @@ return baseclass.extend({
     },
     isValidSimpleName: function (value) {
         const val = value.trim();
-        const pattern = /^[a-z0-9_]+$/;
+        const pattern = /^[a-zA-Z0-9_.><-]+$/;
         return pattern.test(val);
     },
     isValidProxyLink: function (value) {
