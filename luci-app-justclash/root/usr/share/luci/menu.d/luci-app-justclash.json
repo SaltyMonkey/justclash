@@ -33,10 +33,26 @@
     },
     "admin/services/justclash/logs": {
         "title": "Logs",
-        "order": 30,
+        "order": 20,
         "action": {
             "type": "view",
             "path": "justclash/logs"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
+     "admin/services/justclash/routes": {
+        "title": "Proxy routing",
+        "order": 30,
+        "action": {
+            "type": "view",
+            "path": "justclash/routing"
         },
         "depends": {
             "acl": [
@@ -69,22 +85,6 @@
         "action": {
             "type": "view",
             "path": "justclash/proxy"
-        },
-        "depends": {
-            "acl": [
-                "luci-app-justclash"
-            ],
-            "uci": {
-                "justclash": true
-            }
-        }
-    },
-    "admin/services/justclash/routes": {
-        "title": "Proxy routing",
-        "order": 60,
-        "action": {
-            "type": "view",
-            "path": "justclash/routing"
         },
         "depends": {
             "acl": [
