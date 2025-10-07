@@ -1,6 +1,7 @@
 config proxies
     option name                'proxy1'
     option mode                'object/uri'
+    option dialer_proxy        'proxy2'
     option proxy_link_object   '{"type":"ss","server":"1.2.3.4","port":12345}'
     option proxy_link_uri      'ss://xxxxxxx...'
     list enabled_list          'rule_set_1'
@@ -27,6 +28,7 @@ config proxy_provider
     option filter                        'HK|US|Netflix'
     option exclude_filter                'CN|douyin'
     option exclude_type                  'vless|ss'
+    option override_dialer_proxy         'proxy2'
 
 config proxy_group
     option name            'group1'
