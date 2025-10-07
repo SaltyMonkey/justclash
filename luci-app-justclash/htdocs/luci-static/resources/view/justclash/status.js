@@ -120,9 +120,7 @@ return view.extend({
 
         const actionHandler = (action, timeoutMs) =>
             ui.createHandlerFn(this, async function () {
-                const buttons = document.querySelectorAll(".cbi-button");
                 ui.showModal(_("Executing command..."), [E("p", _("Please wait."))]);
-                buttons.forEach(btn => btn.disabled = true);
                 try {
                     await fs.exec(common.initdPath, [action]);
                     if (timeoutMs) await asyncTimeout(timeoutMs);
@@ -199,9 +197,9 @@ return view.extend({
             createActionButton("disable", "cbi-button-negative", _("Disable autostart"), actionHandler("disable"))
         ]);
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton("diagnostic", "cbi-button-no-color", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
-            createActionButton("core_update", "cbi-button-no-color", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
-            createActionButton("rulesets_list_updates", "cbi-button-no-color", _("Update rules lists"), showExecModalHandler(_("Update RuleSets list"), common.binPath, ["rulesets_list_update"])),
+            createActionButton("diagnostic", "cbi-button-neutral", _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
+            createActionButton("core_update", "cbi-button-neutral", _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
+            createActionButton("rulesets_list_updates", "cbi-button-neutral", _("Update rules lists"), showExecModalHandler(_("Update RuleSets list"), common.binPath, ["rulesets_list_update"])),
             createActionButton("config_reset", "cbi-button-negative jc-margin-right", _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
         ]);
 
