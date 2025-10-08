@@ -1,4 +1,4 @@
-FROM saltymonkey/owrt-sdk-stable-cached:latest
+FROM saltymonkey/owrt-sdk-apk-cached:latest
 
 WORKDIR /builder
 
@@ -6,5 +6,5 @@ COPY ./justclash package/feeds/utilites/justclash
 COPY ./luci-app-justclash package/feeds/luci/luci-app-justclash
 
 RUN make defconfig && \
-    make package/justclash/compile V=s -j4 && \
+    make package/justclash/compile V=s -j2 && \
     make package/luci-app-justclash/compile V=s -j2
