@@ -2,7 +2,7 @@ FROM saltymonkey/owrt-sdk-apk-cached:latest
 
 WORKDIR /builder
 
-COPY ./justclash package/feeds/utilites/justclash
+COPY ./justclash package/feeds/utilities/justclash
 COPY ./luci-app-justclash package/feeds/luci/luci-app-justclash
 
 RUN make defconfig && \

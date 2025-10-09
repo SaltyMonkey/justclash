@@ -3,7 +3,7 @@
     image: saltymonkey/owrt-sdk-ipk-cached:latest
     container_name: ipk-builder
     volumes:
-        - ./justclash:/builder/package/feeds/utilites/justclash
+        - ./justclash:/builder/package/feeds/utilities/justclash
         - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
         - ./output/ipk:/output
     working_dir: /builder
@@ -13,7 +13,7 @@
         make defconfig && \
         make package/justclash/compile V=s -j2 && \
         make package/luci-app-justclash/compile V=s -j2 && \
-        for f in bin/packages/x86_64/utilites/justclash_*.ipk bin/packages/x86_64/luci/luci-app-justclash_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk; do \
+        for f in bin/packages/x86_64/utilities/justclash_*.ipk bin/packages/x86_64/luci/luci-app-justclash_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk; do \
             [ -e \"$$f\" ] || continue; \
             base=$$(basename \"$$f\"); \
             newname=\"$${base/_/-}\"; \
@@ -25,7 +25,7 @@
     image: saltymonkey/owrt-sdk-apk-cached:latest
     container_name: apk-builder
     volumes:
-        - ./justclash:/builder/package/feeds/utilites/justclash
+        - ./justclash:/builder/package/feeds/utilities/justclash
         - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
         - ./output/apk:/output
     working_dir: /builder
@@ -35,7 +35,7 @@
         make defconfig &&
         make package/justclash/compile V=s -j2 &&
         make package/luci-app-justclash/compile V=s -j2 &&
-        cp bin/packages/x86_64/utilites/justclash-*.apk /output/ &&
+        cp bin/packages/x86_64/utilities/justclash-*.apk /output/ &&
         cp bin/packages/x86_64/luci/luci-app-justclash-*.apk /output/ &&
         cp bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk /output/
         "
