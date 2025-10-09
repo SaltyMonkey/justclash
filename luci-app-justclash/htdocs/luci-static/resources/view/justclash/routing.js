@@ -41,6 +41,18 @@ return view.extend({
     render(result) {
         let m, s, s2, spp, s3, s4, s5, smp, o, optionFinal, tabname;
 
+        const primitives = {
+            TRUE: "1",
+            FALSE: "0"
+        };
+
+        const datatypes = {
+            PORT: "port",
+            UINTEGER: "uinteger",
+            IPADDR: "ipaddr",
+            CIDR4: "cidr4"
+        };
+
         m = new form.Map(common.binName);
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
         s.anonymous = true;
@@ -145,10 +157,10 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
         o.description = _("If selected, RULE-SET lists will be updated through proxy.");
         o.optional = true;
-        o.default = "0";
+        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.default = common.defaultRuleSetUpdateInterval;
         o.placeholder = common.defaultRuleSetUpdateInterval;
         o.optional = true;
@@ -176,14 +188,14 @@ return view.extend({
         o.description = _("IP-CIDR rule to route through proxy (Example: 1.1.1.1/32). IPv4 only right now.");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
-        o.datatype = "cidr4";
+        o.datatype = datatypes.CIDR4;
 
         o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
         o.description = _("SRC-IP-CIDR rule to route through proxy (Example: 192.168.31.212/32). IPv4 only right now.");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
-        o.datatype = "cidr4";
+        o.datatype = datatypes.CIDR4;
 
         spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies. "));
         spp.anonymous = true;
@@ -229,7 +241,7 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
         o.rmempty = false;
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = common.defaultProxyProviderIntervalSec;
         o.default = common.defaultProxyProviderIntervalSec;
         o.description = _("Time interval for subscription update check in seconds.");
@@ -250,7 +262,7 @@ return view.extend({
         spp.tab(tabname, _("Health check"));
 
         o = spp.taboption(tabname, form.Flag, "health_check", _("Health check:"));
-        o.default = "1";
+        o.default = primitives.TRUE;
         o.rmempty = false;
 
         o = spp.taboption(tabname, form.Value, "health_check_url", _("Check URL:"));
@@ -261,27 +273,27 @@ return view.extend({
             return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
         };
         o.description = _("URL for node availability check (required for proxy provider functionality).");
-        o.depends("health_check", "1");
+        o.depends("health_check", primitives.TRUE);
 
         o = spp.taboption(tabname, form.Value, "health_check_expected_status", _("Check status:"));
         o.rmempty = false;
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = common.defaultHealthCheckResult;
         o.default = common.defaultHealthCheckResult;
-        o.depends("health_check", "1");
+        o.depends("health_check", primitives.TRUE);
         o.description = _("Required response status for node availability check (required for proxy provider functionality).");
 
         o = spp.taboption(tabname, form.Value, "health_check_interval", _("Check interval:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = common.defaultProxyProviderHealthCheckSec;
         o.default = common.defaultProxyProviderHealthCheckSec;
-        o.depends("health_check", "1");
+        o.depends("health_check", primitives.TRUE);
         o.description = _("Time interval between health checks in seconds.");
 
         o = spp.taboption(tabname, form.Value, "health_check_timeout", _("Check timeout:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.default = common.defaultHealthCheckTimeoutMs;
-        o.depends("health_check", "1");
+        o.depends("health_check", primitives.TRUE);
         o.description = _("Timeout for each individual health check in milliseconds.");
 
         o = spp.taboption(tabname, form.Flag, "health_check_lazy", _("Lazy:"));
@@ -401,31 +413,31 @@ return view.extend({
         o = s2.taboption(tabname, form.Value, "expected_status", _("Check status:"));
         o.placeholder = common.defaultHealthCheckResult;
         o.default = common.defaultHealthCheckResult;
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         o.description = _("Required response status for node availability check (required for proxy group functionality).");
 
         o = s2.taboption(tabname, form.Value, "check_interval", _("Check interval:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = common.defaultProxyGroupIntervalSec;
         o.default = common.defaultProxyGroupIntervalSec;
         o.description = _("Time interval between health checks in seconds.");
 
         o = s2.taboption(tabname, form.Value, "tolerance", _("Tolerance:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.default = common.defaultUrlTestTolerance;
         o.plaholder = common.defaultUrlTestTolerance;
         o.description = _("Proxies switch tolerance, measured in milliseconds (ms).");
         o.depends("group_type", "url-test");
 
         o = s2.taboption(tabname, form.Value, "check_timeout", _("Check timeout:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.default = common.defaultHealthCheckTimeoutMs;
         o.placeholder = common.defaultHealthCheckTimeoutMs;
         o.description = _("Timeout for each individual health check in milliseconds.");
 
         o = s2.taboption(tabname, form.Value, "max_failed_times", _("Max failed times:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.default = '5';
         o.placeholder = '5';
         o.description = _("Timeout for each individual health check in milliseconds.");
@@ -510,10 +522,10 @@ return view.extend({
         o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy-group:"));
         o.description = _("If selected, RULE-SET lists will be updated through proxy group.");
         o.optional = true;
-        o.default = "0";
+        o.default = primitives.FALSE;
 
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = common.defaultRuleSetUpdateInterval;
         o.default = common.defaultRuleSetUpdateInterval;
         o.optional = true;
@@ -543,14 +555,14 @@ return view.extend({
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
-        o.datatype = "cidr4";
+        o.datatype = datatypes.CIDR4;
 
         o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
         o.description = _("SRC-IP-CIDR rule to route through proxy group (Example: 192.168.31.212/32). IPv4 only right now.");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
-        o.datatype = "cidr4";
+        o.datatype = datatypes.CIDR4;
 
         s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
         s3.addremove = false;
@@ -583,7 +595,7 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = common.defaultRuleSetUpdateInterval;
         o.default = common.defaultRuleSetUpdateInterval;
         o.validate = function (section_id, value) {
@@ -642,14 +654,14 @@ return view.extend({
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
-        o.datatype = "cidr4";
+        o.datatype = datatypes.CIDR4;
 
         o = s3.taboption(tabname, form.DynamicList, "additional_destip_direct", _("IPv4 CIDR:"));
         o.description = _("IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now.");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
-        o.datatype = "cidr4";
+        o.datatype = datatypes.CIDR4;
 
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional rules for REJECT rules. Will be handled before proxies and proxy groups."));
         s4.addremove = false;
@@ -692,7 +704,7 @@ return view.extend({
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
-        o.datatype = "cidr4";
+        o.datatype = datatypes.CIDR4;
 
         smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mixed port rule:"), _("Additional settings for the mixed port. Use it to override or enforce specific behavior."));
         smp.addremove = false;
@@ -729,15 +741,8 @@ return view.extend({
             }
             return true;
         };
-        return m.render().then(formEl => {
-            return E("div", {}, [
-                this.addCSS(),
-                formEl
-            ]);
-        });
-    },
-    addCSS() {
-        return E("style", {}, `
+
+        const style = E("style", {}, `
             ul.dropdown {
                 max-height: 320px !important;
             }
@@ -753,5 +758,12 @@ return view.extend({
                 padding: 10px 0 10px 0 !important;
             }
         `);
+
+        return m.render().then(formEl => {
+            return E("div", {}, [
+                style(),
+                formEl
+            ]);
+        });
     }
 });

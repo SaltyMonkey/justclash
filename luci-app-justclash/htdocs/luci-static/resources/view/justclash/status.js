@@ -266,28 +266,27 @@ return view.extend({
 
     addCSS() {
         return E("style", {}, `
-      td {
-        padding: 6px 6px 6px !important;
-      }
-      .cbi-page-actions {
-        margin-bottom: 10px !important;
-        padding: 10px 10px 10px 10px !important;
-      }
-      .cbi-button { margin-right: 0.5em; }
-      .jc-actions {
-        display: flex;
-        flex-flow: row;
-        flex-wrap: wrap;
-        row-gap: 1em;
-        text-align: left !important;
-        border-top: 0px !important;
-      }
-      .jc-margin-right {
-        margin-left: auto;
-      }
+            td {
+                padding: 6px 6px 6px !important;
+            }
+            .cbi-page-actions {
+                margin-bottom: 10px !important;
+                padding: 10px 10px 10px 10px !important;
+            }
+            .cbi-button { margin-right: 0.5em; }
+            .jc-actions {
+                display: flex;
+                flex-flow: row;
+                flex-wrap: wrap;
+                row-gap: 1em;
+                text-align: left !important;
+                border-top: 0px !important;
+            }
+            .jc-margin-right {
+                margin-left: auto;
+            }
     `);
     },
-
     destroy() {
         if (this.pollInterval) {
             clearInterval(this.pollInterval);

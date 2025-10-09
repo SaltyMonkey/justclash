@@ -9,6 +9,18 @@ return view.extend({
     render: function () {
         let m, s, o, tabname;
 
+        const primitives = {
+            TRUE: "1",
+            FALSE: "0"
+        }
+
+        const datatypes = {
+            PORT: "port",
+            UINTEGER: "uinteger",
+            IPADDR: "ipaddr",
+            CIDR4: "cidr4"
+        };
+
         m = new form.Map(common.binName);
         s = m.section(form.NamedSection, "settings");
 
@@ -18,44 +30,44 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
         o.description = _("The service start will be delayed at router boot.");
         o.rmempty = false;
-        o.default = "0";
+        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "delayed_boot_value", _("Delayed boot timeout:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = "10";
-        o.depends("delayed_boot", "1");
+        o.depends("delayed_boot", primitives.TRUE);
         o.rmempty = false;
         o.description = _("Delay timeout value in seconds.");
 
         o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
         o.description = _("Minor checks in script will be disabled at start.");
         o.rmempty = false;
-        o.default = "0";
+        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Persistent temp files:"));
         o.description = _("If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!");
         o.rmempty = false;
-        o.default = "0";
+        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start ntpd:"));
         o.description = _("The service will start ntpd to sync system time and ensure TLS works correctly in system.");
         o.rmempty = false;
-        o.default = "1";
+        o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Edit DNS server at startup:"));
         o.description = _("The service will edit DNS settings in dnsmasq configuration at start.");
         o.rmempty = false;
-        o.default = "1";
+        o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit netfilter tables at startup:"));
         o.description = _("If enabled, the service creates NF tables to redirect traffic to the TPROXY port.");
         o.rmempty = false;
-        o.default = "1";
+        o.default = primitives.TRUE;
 
         // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
         o.default = "br-lan";
-        o.depends("nft_apply_changes", "1");
+        o.depends("nft_apply_changes", primitives.TRUE);
         o.noaliases = true;
         o.nobridges = false;
         o.noinactive = false;
@@ -80,7 +92,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("QUIC traffic from clients:"));
         o.description = _("Select a way how QUIC traffic will be handled by netfilter tables.");
-        o.depends("nft_apply_changes", "1");
+        o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
         o.default = common.defaultNftOptions[0];
         common.defaultNftOptions.forEach(item => {
@@ -89,7 +101,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("DoT traffic from clients:"));
         o.description = _("Select a way how DoT traffic will be handled by netfilter tables.");
-        o.depends("nft_apply_changes", "1");
+        o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
         o.default = common.defaultNftOptions[0];
         common.defaultNftOptions.forEach(item => {
@@ -98,7 +110,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("DoQ traffic from clients:"));
         o.description = _("Select a way how DoQ traffic will be handled by netfilter tables.");
-        o.depends("nft_apply_changes", "1");
+        o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
         o.default = common.defaultNftOptions[0];
         common.defaultNftOptions.forEach(item => {
@@ -107,7 +119,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "nft_ntp_mode", _("NTP traffic from clients:"));
         o.description = _("If enabled, the service will block NTP traffic with nf tables.");
-        o.depends("nft_apply_changes", "1");
+        o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
         o.default = common.defaultNftOptions[0];
         common.defaultNftNtpOptions.forEach(item => {
@@ -120,7 +132,7 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
         o.description = _("When enabled, the service will configure Mihomo autorestart by cron string.");
         o.rmempty = false;
-        o.default = "1";
+        o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Mihomo autoupdate:"));
         common.defaultUpdateOptions.forEach(item => {
@@ -133,7 +145,7 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for Mihomo autorestart:"));
         o.description = _("When enabled, the service will send Telegram notification for Mihomo autorestart cron job.");
         o.rmempty = false;
-        o.default = "0";
+        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Flag, "mihomo_cron_update_telegram_notify", _("Telegram notify for Mihomo autoupdate:"));
         o.description = _("When enabled, the service will send Telegram notification for Mihomo autoupdate cron job.");
@@ -161,7 +173,7 @@ return view.extend({
         s.tab(tabname, _("Credentials"));
 
         o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
-        o.datatype = "uinteger";
+        o.datatype = datatypes.UINTEGER;
         o.placeholder = "123456789";
         o.rmempty = false;
         o.description = _("Telegram chat ID where to send notification.");
@@ -172,6 +184,17 @@ return view.extend({
         o.rmempty = false;
         o.password = true;
 
-        return m.render();
+        const style =  E("style", {}, `
+            .cbi-value {
+                margin-bottom: 14px !important;
+            }
+        `);
+
+        return m.render().then(formEl => {
+            return E("div", {}, [
+                style(),
+                formEl
+            ]);
+        });
     }
 });

@@ -125,18 +125,7 @@ return view.extend({
             topBtn
         ]);
 
-        return E("div", { class: "cbi-section fade-in" }, [
-            this.addCSS(),
-            E("h3", { class: "cbi-section-title" }, _("Logs view")),
-            buttonBar,
-            settingsBar,
-            logBox,
-            buttonBottomBar
-        ]);
-    },
-
-    addCSS() {
-        return E("style", {}, `
+        const style = E("style", {}, `
             .jc-ml {
                 margin-left: 0.5em !important;
             }
@@ -153,12 +142,20 @@ return view.extend({
                 resize: none;
                 min-height: 2em;
             }
-              .jc-sb {
+            .jc-sb {
                 display: flex;
                 align-items: center;
                 justify-content: flex-start;
                 gap: 0.5em;
             }
         `);
-    },
+        return E("div", { class: "cbi-section fade-in" }, [
+            style(),
+            E("h3", { class: "cbi-section-title" }, _("Logs view")),
+            buttonBar,
+            settingsBar,
+            logBox,
+            buttonBottomBar
+        ]);
+    }
 });
