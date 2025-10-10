@@ -15,7 +15,7 @@ get_log_level() {
         1) echo "user.warning" ;;
         2) echo "user.info"    ;;
         3) echo "user.debug"   ;;
-        *) echo "user.err"   ;;
+        *) echo "user.err"     ;;
     esac
 }
 

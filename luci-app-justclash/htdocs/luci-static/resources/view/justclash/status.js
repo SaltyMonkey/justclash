@@ -56,7 +56,6 @@ const boolToStyle = (active) =>
     `color: var(--on-primary-color); background-color: ${active ? "var(--success-color-medium)" : "var(--error-color-medium)"
     }; padding: 3px; border-radius: 4px;`;
 
-
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
