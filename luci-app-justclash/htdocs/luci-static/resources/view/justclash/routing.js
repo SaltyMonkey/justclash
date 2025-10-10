@@ -298,7 +298,6 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Flag, "health_check_lazy", _("Lazy:"));
         o.default = '1';
-        o.description = _("Lazy mode");
 
         tabname = "proxyproviderfilter_tab";
         spp.tab(tabname, _("Filters"));
