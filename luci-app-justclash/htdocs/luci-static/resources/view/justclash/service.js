@@ -37,7 +37,7 @@ return view.extend({
         o.placeholder = "10";
         o.depends("delayed_boot", primitives.TRUE);
         o.rmempty = false;
-        o.description = _("Delay timeout value in seconds.");
+        o.description = _("Delay value for first start after boot in seconds.");
 
         o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
         o.description = _("Minor checks in script will be disabled at start.");
@@ -118,7 +118,7 @@ return view.extend({
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_ntp_mode", _("NTP traffic from clients:"));
-        o.description = _("If enabled, the service will block NTP traffic with nf tables.");
+        o.description = _("Select a way how NTP traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
         o.default = common.defaultNftOptions[0];

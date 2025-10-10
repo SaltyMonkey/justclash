@@ -129,7 +129,7 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
-        o.description = _("DNS cache size.");
+        o.description = _("Fake IP DNS cache size.");
         o.default = "1024";
         o.rmempty = false;
         o.datatype = "integer";
@@ -171,7 +171,7 @@ return view.extend({
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "proxy_server_nameserver", _("Proxy nameservers:"));
-        o.description = _("Proxy nameservers used for proxy rules.");
+        o.description = _("Nameservers used for proxy servers resolving.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -183,7 +183,7 @@ return view.extend({
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "nameserver", _("Nameservers:"));
-        o.description = _("nameserver_description");
+        o.description = _("Nameservers used for all another traffic.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -217,7 +217,7 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Flag, "sniffer_parse_pure_ip", _("Parse pure IP:"));
-        o.description = _("Parse pure ip in sniffer.");
+        o.description = _("Force domain detection for traffic without resolved domain names.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 

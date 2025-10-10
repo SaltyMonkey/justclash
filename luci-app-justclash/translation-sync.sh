@@ -2,7 +2,7 @@
 
 PROGNAME="justclash"
 ENCODING="UTF-8"
-WIDTH=120
+WIDTH=900
 SRC_DIR="htdocs/luci-static/resources/view/${PROGNAME}"
 OUT_POT="po/templates/${PROGNAME}.pot"
 RU_PO="po/ru/${PROGNAME}.po"
@@ -23,6 +23,7 @@ make_pot() {
             --from-code="$ENCODING" \
             --output="$OUT_POT" \
             --width="$WIDTH" \
+            --no-wrap \
             --package-name="$PROGNAME" \
             "${FILES[@]}"
     echo "POT template generated: $OUT_POT"
@@ -35,7 +36,7 @@ make_po() {
         msgmerge --update --width="$WIDTH" "${po_path}" "$OUT_POT"
     else
         echo "Creating new $po_path using msginit"
-        msginit --no-translator --locale="$LANG" --width="$WIDTH" --input="$OUT_POT" --output-file="${po_path}"
+        msginit --no-translator --locale="$LANG" --width="$WIDTH" --no-wrap --input="$OUT_POT" --output-file="${po_path}"
     fi
     echo "PO file generated: ${po_path}"
 }

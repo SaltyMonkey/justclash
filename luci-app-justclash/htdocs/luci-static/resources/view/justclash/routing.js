@@ -444,7 +444,6 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Flag, "lazy", _("Lazy:"));
         o.default = '1';
-        o.description = _("Lazy mode");
 
         tabname = "proxiesgroupfilter_tab";
         s2.tab(tabname, _("Filters"));
