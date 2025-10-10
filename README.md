@@ -5,14 +5,14 @@
 
 ## Overview
 
-**JustClash** is a simple service package for OpenWrt and FriendlyWrt that manages the Mihomo/Clash core in TPROXY mode. The project showcases how to wrap, configure, and control external proxy binaries, automate Linux service management, and interact with network and routing components in a router environment.
+**JustClash** is a simple service package for OpenWrt that manages the Mihomo/Clash core in TPROXY mode. The project showcases how to wrap, configure, and control external proxy binaries, automate Linux service management, and interact with network and routing components in a router environment.
 
 ## Features
 
 - Launches and supervises the Mihomo/Clash core as a system service.
 - Integration of external binaries with Linux shell scripting.
-- Practical examples of network and routing configuration (TPROXY, Mixed port, firewall, policy routing).
-- Integrates with OpenWrt/FriendlyWrt service management.
+- Simplified network and routing configuration (TPROXY, Mixed port, firewall, policy routing).
+- Integrates with OpenWrt service management.
 - All configuration is handled via UCI (`/etc/config/justclash`).
 - LuCI web interface for controlling and monitoring the service.
 - Diagnostic tools for DNS, ICMP, and routing.
@@ -27,17 +27,13 @@
 
 ## Requirements
 
-### justclash old (from justclash/Makefile)
-- `nftables`
-- `curl`
-- `kmod-nft-tproxy`
-
-### justclash since v0.0.5 (from justclash/Makefile)
+### justclash (from justclash/Makefile)
 - `nftables`
 - `coreutils-base64`
 - `jq`
 - `curl`
 - `kmod-nft-tproxy`
+- `kmod-nf-tproxy`
 
 ### luci-app-justclash (from luci-app-justclash/Makefile)
 - `luci-base`
@@ -46,7 +42,7 @@
 - **Firmware:**
   - Requires OpenWrt 24+
   - FriendlyWrt 20240115+ (untested).
-  - LuCI (web interface) and the above dependencies should be available.
+  - LuCI and the above dependencies should be available.
 
 ## Installation
 
@@ -55,14 +51,14 @@
 You can install JustClash with a single command using the provided install script:
 
 ```
-sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash-owrt/refs/heads/main/service.sh)
+sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh)
 ```
 
 This method will automatically download and execute the installation script, handling the setup for you.
 
 ### 2. Download Prebuilt Packages from Releases
 
-Prebuilt packages are available in the [Releases](https://github.com/SaltyMonkey/justclash-owrt/releases) section of the repository. To install:
+Prebuilt packages are available in the [Releases](https://github.com/SaltyMonkey/justclash/releases) section of the repository. To install:
 
 1. Download the latest `justclash` and `luci-app-justclash` packages for your architecture from the Releases page.
 2. Transfer the packages to your router.
@@ -70,32 +66,28 @@ Prebuilt packages are available in the [Releases](https://github.com/SaltyMonkey
 
    - **For OpenWrt (ipk packages):**
      ```
-     opkg install justclash_*.ipk luci-app-justclash_*.ipk
+     opkg install justclash_*.ipk luci-app-justclash_*.ipk luci-i18n-justclash-ru-*.ipk
      ```
 
-   - **For OpenWrt snapshot or Alpine-based systems using apk (if your firmware uses Alpine package manager):**
+   - **For OpenWrt (apk packages):**
     ```
     apk add --allow-untrusted justclash-*.apk luci-app-justclash-*.apk luci-i18n-justclash-ru-*.apk
     ```
-
-Choose the command appropriate for your system:
-- Use `opkg` for standard OpenWrt releases.
-- Use `apk` if you are on a snapshot or a system with Alpine package manager support.
 
 ### 3. Build from Source (using Docker)
 
 You can build the JustClash packages using the provided Dockerfiles (with OpenWRT SDK):
 
-- **For stable OpenWrt (ipk packages):**
+- **For OpenWrt (ipk packages):**
 
     ```
-    docker build -t justclash-builder-stable -f Dockerfile-stable .
+    docker build -t justclash-builder-ipk -f Dockerfile-ipk .
     ```
 
-- **For OpenWrt snapshot (apk packages):**
+- **For OpenWrt (apk packages):**
 
     ```
-    docker build -t justclash-builder-snapshot -f Dockerfile-snapshot .
+    docker build -t justclash-builder-apk -f Dockerfile-apk .
     ```
 
 After the build, extract the resulting packages from the container and install as explained above.
@@ -104,16 +96,16 @@ After the build, extract the resulting packages from the container and install a
 
 You can build the JustClash packages using the provided Docker compose file (with OpenWRT SDK), output volume mount: /output:
 
-- **For stable build:**
+- **For OpenWrt (ipk packages):**
 
 ```
-docker compose -f 'Docker-compose.yml' up -d --build 'stable-builder'
+docker compose -f 'Docker-compose.yml' up -d --build 'ipk-builder'
 ```
 
-- **For snapshot build:**
+- **For OpenWrt (apk packages):**
 
 ```
-docker compose -f 'Docker-compose.yml' up -d --build 'snapshot-builder'
+docker compose -f 'Docker-compose.yml' up -d --build 'apk-builder'
 
 ```
 ## Usage
