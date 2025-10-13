@@ -973,22 +973,6 @@ msgstr ""
 msgid "Mode for Mihomo autoupdate job."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:145
-msgid "Telegram notify for Mihomo autorestart:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:146
-msgid "When enabled, the service will send Telegram notification for Mihomo autorestart cron job."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:150
-msgid "Telegram notify for Mihomo autoupdate:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:151
-msgid "When enabled, the service will send Telegram notification for Mihomo autoupdate cron job."
-msgstr ""
-
 #: htdocs/luci-static/resources/view/justclash/service.js:154
 msgid "Mihomo autorestart cron:"
 msgstr ""
@@ -1011,22 +995,6 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:173
 msgid "Credentials"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:175
-msgid "Telegram chat ID:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:179
-msgid "Telegram chat ID where to send notification."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:181
-msgid "Telegram bot token:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:183
-msgid "Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:15
@@ -1134,7 +1102,7 @@ msgid "Update Mihomo"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:202
-msgid "Update rules lists"
+msgid "Update service data"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:202
