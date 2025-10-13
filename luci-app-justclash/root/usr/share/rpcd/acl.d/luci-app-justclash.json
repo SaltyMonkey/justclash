@@ -18,11 +18,18 @@
                 "/etc/justclash/block.rulesets.txt": [
                     "read"
                 ],
-                "/etc/crontabs/root": [ "read" ]
+                "/etc/crontabs/root": [
+                    "read"
+                ]
             },
             "uci": [
                 "justclash"
-            ]
+            ],
+            "ubus": {
+                "system": [
+                    "board"
+                ]
+            }
         },
         "write": {
             "file": {
