@@ -7,4 +7,4 @@ COPY ./luci-app-justclash package/feeds/luci/luci-app-justclash
 
 RUN make defconfig && \
     make package/justclash/compile V=s -j4 && \
-    make package/luci-app-justclash/compile V=s -j2
+    make package/luci-app-justclash/compile V=s -j4
