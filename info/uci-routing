@@ -62,8 +62,6 @@ config direct_rules 'direct_rules'
     option list_update_interval          '3600'
     option proxy                         'DIRECT'
     list additional_domain_direct        'example.com'
-    list additional_domain_keyword_direct 'example'
-    list additional_domain_regexp_direct '^abc.*com'
     list additional_srcip_direct         '192.168.2.0/24'
     list additional_destip_direct        '8.8.4.4/32'
 
