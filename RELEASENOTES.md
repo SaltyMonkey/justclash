@@ -1,3 +1,51 @@
+## [0.4.0] - 16102025
+
+- Build: Update docker files and build process
+- Readme: Remove OpenWRT 23 from supported OS
+- Service: Do not call filesystem when required to check script version
+- Service: Static version will be inbuild in script itself
+- Service: Remove magic numbers in nf tables work
+- Service: Move to /etc/os-release in checks functions
+- Service: Remove telegram logic
+- Service: Remove telegram notification logic
+- Service: Refactor check_for_conflicts function so script will not panic
+- Service: Decrease calls amount for info_ functions logic
+- Service: Overall codebase refactor
+- Service: Fix incorrect DEFAULT_RULESET_INTERVAL
+- Service: Fix safe_paths_add for local rulesets
+- Service: Added skip_environment_checks
+- Service: Refactor fake ip filter whitelist logic - added block domains in fake nip too
+- Service: Added &disable-ipv6=true so mihomo will drop AAAA entries from dns responses
+- Service: Remove keywords/regexp domains handling from direct section
+- Translation: Refactor translation files generation with automatic script
+- Translation: Big update
+- LuCI: More descriptions for fields
+- LuCI: Refactor default values
+- LuCI: Refactor status page codebase to be more readable
+- LuCI: Fix incorect buttons state at load at status page
+- LuCI: Refactor a bit status page visuals
+- LuCI: Decrease calls amount to filesystem when check statuses
+- LuCI: Refactor logs page codebase to be more readable
+- LuCI: Refactor visual style for log page
+- LuCI: Load logs at tabs page activation
+- LuCI: Added back connections page
+- LuCI: Refactor connections page codebase to be more readable
+- LuCI: Refactor unused requires
+- LuCI: Remove unused settings from service tab
+- LuCI: Improved overall errors handling in UI
+- Config: Removed mihomo_cron_update_telegram_notify
+- Config: Removed mihomo_cron_autorestart_telegram_notify
+- Config: Removed telegram_chat_id
+- Config: Removed telegram_bot_token
+- Config: Renamed ignore_fake_ip_domains  -> fake_ip_exclude_domains
+- Config: Renamed sniffer_skip_domain -> sniffer_exclude_domain
+- Config: Renamed custom_fake_ip_domains  -> fake_ip_include_domains
+- Config: Removed external_controller_port
+
+**This version requires:**
+- UCI config must be reset
+- Browser cache must be cleaned up
+
 ## [0.2.5] - 30092025
 
 - Install-script: Only stable core download
