@@ -1,6 +1,5 @@
 "use strict";
 "require form";
-"require ui";
 "require view";
 "require view.justclash.common as common";
 
@@ -194,14 +193,14 @@ return view.extend({
             return true;
         };
 
-        o = s.taboption(tabname, form.DynamicList, "custom_fake_ip_domains", _("Use fake IP for domains:"));
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_include_domains", _("Use fake IP for domains:"));
         o.description = _("Include selected domains for the Fake IP cache.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
         o.depends("fake_ip_filter_mode", "whitelist");
 
-        o = s.taboption(tabname, form.DynamicList, "ignore_fake_ip_domains", _("Skip fake IP for domains:"));
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Skip fake IP for domains:"));
         o.description = _("Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps.");
         o.rmempty = false;
         o.editable = true;
@@ -282,7 +281,7 @@ return view.extend({
 
         return m.render().then(formEl => {
             return E("div", {}, [
-                style(),
+                style,
                 formEl
             ]);
         });

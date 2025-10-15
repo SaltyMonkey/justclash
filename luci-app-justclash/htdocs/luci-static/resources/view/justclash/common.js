@@ -29,7 +29,7 @@ return baseclass.extend({
     defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "edge"],
     defaultUpdateOptions: ["no", "check", "chekandupdate"],
     defaultTimeoutForWSReconnect: 10000,
-    defaultRuleSetUpdateInterval: 86500,
+    defaultRuleSetUpdateInterval: 86400,
     minimalRuleSetUpdateInterval: 21600,
     defaultRuleSetProxy: "DIRECT",
     defaultProxyProviderProxy: "DIRECT",
@@ -101,12 +101,6 @@ return baseclass.extend({
 
         return cronRegex.test(val);
     },
-    isValidTelegramBotToken: function (value) {
-        const val = value.trim();
-        if (val.length === 0) return true;
-        const pattern = /^\d{6,}:[A-Za-z0-9_-]+$/;
-        return pattern.test(val);
-    },
     compareArraysWithReturnedResult: function (arr1, arr2) {
         return arr1.filter(value => arr2.includes(value));
     },
@@ -116,7 +110,8 @@ return baseclass.extend({
         return pattern.test(val);
     },
     isValidProxyLink: function (value) {
-        const val = value.trim();
+        const val = value ? value.trim() : "";
+
         const allowedPrefixes = [
             "vless://",
             "trojan://",
@@ -125,13 +120,21 @@ return baseclass.extend({
             "mierus://"
         ];
 
-        for (const prefix of allowedPrefixes) {
-            if (val.startsWith(prefix)) {
-                return true; // OK
-            }
-        }
+        if (!val || val === "") return _("Proxy link cannot be empty!");
 
-        return false;
+        const prefix = allowedPrefixes.find(p => val.startsWith(p));
+        if (!prefix) return _("Input is not supported or incorrect!");
+
+        if (/\s/.test(val)) return _("Proxy link contains not encoded whitespace!");
+
+        try {
+            new URL(val);
+
+            return true;
+
+        } catch (e) {
+            return _("Proxy link can't be parsed!"); // Невалидный URL, например, ошибка разбора
+        }
     },
     isValidDomainSuffix: function (value) {
         if (!value || value.trim().length === 0)

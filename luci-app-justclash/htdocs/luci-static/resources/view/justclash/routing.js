@@ -1,10 +1,8 @@
 "use strict";
-"require ui";
 "require view";
-"require uci";
+//"require uci";
 "require view.justclash.common as common";
 "require form";
-"require rpc";
 "require fs";
 
 return view.extend({
@@ -64,12 +62,12 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
         o.rmempty = false;
-        o.cfgvalue = function (section_id) {
+        /*o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
             return common.generateRandomName(common.genNameProxyPrefix);
-        };
+        };*/
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
@@ -111,7 +109,7 @@ return view.extend({
         o.optional = true;
         o.placeholder = "vless://uuid@server:port?type=grpc&security=reality";
         o.validate = function (section_id, value) {
-            return (common.isValidProxyLink(value)) ? true : _("Invalid link.");
+            return (common.isValidProxyLink(value));
         };
         o.depends("mode", "uri");
 
@@ -160,6 +158,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
+        o.description = _("Interval for updates check in seconds.");
         o.datatype = datatypes.UINTEGER;
         o.default = common.defaultRuleSetUpdateInterval;
         o.placeholder = common.defaultRuleSetUpdateInterval;
@@ -206,12 +205,12 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.rmempty = false;
-        o.cfgvalue = function (section_id) {
+        /*o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
             return common.generateRandomName(common.genNameProxyProviderPrefix);
-        };
+        };*/
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
@@ -355,12 +354,12 @@ return view.extend({
         o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
         o.rmempty = false;
-        o.cfgvalue = function (section_id) {
+        /*o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
             return common.generateRandomName(common.genNameProxyGroupPrefix);
-        };
+        };*/
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
@@ -523,6 +522,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
+        o.description = _("Interval for updates check in seconds.");
         o.datatype = datatypes.UINTEGER;
         o.placeholder = common.defaultRuleSetUpdateInterval;
         o.default = common.defaultRuleSetUpdateInterval;
@@ -569,6 +569,7 @@ return view.extend({
         s3.tab(tabname, _("Rules"));
 
         o = s3.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
+        o.optional = true;
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
@@ -593,7 +594,9 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
+        o.description = _("Interval for updates check in seconds.");
         o.datatype = datatypes.UINTEGER;
+        o.optional = true;
         o.placeholder = common.defaultRuleSetUpdateInterval;
         o.default = common.defaultRuleSetUpdateInterval;
         o.validate = function (section_id, value) {
@@ -627,24 +630,6 @@ return view.extend({
         o.editable = true;
         o.validate = function (section_id, value) {
             return (common.isValidDomainSuffix(value));
-        };
-
-        o = s3.taboption(tabname, form.DynamicList, "additional_domain_keyword_direct", _("Domain keyword:"));
-        o.description = _("DOMAIN-KEYWORD rule to pass in DIRECT (Example: google).");
-        o.placeholder = "google";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            return (common.isValidDomainKeyword(value));
-        };
-
-        o = s3.taboption(tabname, form.DynamicList, "additional_domain_regexp_direct", _("Domain regex:"));
-        o.description = _("DOMAIN-REGEX rule to pass in DIRECT (Example: ^abc.*com).");
-        o.placeholder = "^abc.*com";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            return (common.isValidDomainRegexp(value));
         };
 
         o = s3.taboption(tabname, form.DynamicList, "additional_srcip_direct", _("Source IPv4 CIDR:"));
@@ -759,7 +744,7 @@ return view.extend({
 
         return m.render().then(formEl => {
             return E("div", {}, [
-                style(),
+                style,
                 formEl
             ]);
         });

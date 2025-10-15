@@ -1,6 +1,5 @@
 "use strict";
 "require form";
-"require ui";
 "require view";
 "require view.justclash.common as common";
 "require tools.widgets as widgets";
@@ -142,15 +141,6 @@ return view.extend({
         o.rmempty = false;
         o.default = common.defaultUpdateOptions[0];
 
-        o = s.taboption(tabname, form.Flag, "mihomo_cron_autorestart_telegram_notify", _("Telegram notify for Mihomo autorestart:"));
-        o.description = _("When enabled, the service will send Telegram notification for Mihomo autorestart cron job.");
-        o.rmempty = false;
-        o.default = primitives.FALSE;
-
-        o = s.taboption(tabname, form.Flag, "mihomo_cron_update_telegram_notify", _("Telegram notify for Mihomo autoupdate:"));
-        o.description = _("When enabled, the service will send Telegram notification for Mihomo autoupdate cron job.");
-        o.rmempty = false;
-
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
         o.placeholder = "0 3 * * 0";
         o.default = "0 3 * * 0";
@@ -169,21 +159,6 @@ return view.extend({
             return (common.isValidCronString(value)) ? true : _("Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')");
         };
 
-        tabname = "telegramcredentials_tab";
-        s.tab(tabname, _("Credentials"));
-
-        o = s.taboption(tabname, form.Value, "telegram_chat_id", _("Telegram chat ID:"));
-        o.datatype = datatypes.UINTEGER;
-        o.placeholder = "123456789";
-        o.rmempty = false;
-        o.description = _("Telegram chat ID where to send notification.");
-
-        o = s.taboption(tabname, form.Value, "telegram_bot_token", _("Telegram bot token:"));
-        o.placeholder = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11";
-        o.description = _("Telegram bot control token. WARNING! NEVER SEND IT TO ANYONE!");
-        o.rmempty = false;
-        o.password = true;
-
         const style =  E("style", {}, `
             .cbi-value {
                 margin-bottom: 14px !important;
@@ -192,7 +167,7 @@ return view.extend({
 
         return m.render().then(formEl => {
             return E("div", {}, [
-                style(),
+                style,
                 formEl
             ]);
         });
