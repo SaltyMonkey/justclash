@@ -47,9 +47,25 @@
             }
         }
     },
-     "admin/services/justclash/routes": {
-        "title": "Proxy routing",
+    "admin/services/justclash/connections": {
+        "title": "Connections",
         "order": 30,
+        "action": {
+            "type": "view",
+            "path": "justclash/connections"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
+    "admin/services/justclash/routes": {
+        "title": "Proxy routing",
+        "order": 40,
         "action": {
             "type": "view",
             "path": "justclash/routing"
@@ -65,7 +81,7 @@
     },
     "admin/services/justclash/service": {
         "title": "Service settings",
-        "order": 40,
+        "order": 50,
         "action": {
             "type": "view",
             "path": "justclash/service"
@@ -81,7 +97,7 @@
     },
     "admin/services/justclash/proxy": {
         "title": "Proxy settings",
-        "order": 50,
+        "order": 60,
         "action": {
             "type": "view",
             "path": "justclash/proxy"
