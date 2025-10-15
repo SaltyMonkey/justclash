@@ -620,8 +620,8 @@ simple_uci_list_to_json_arr() {
     for val in $values; do
         [ -n "$val" ] && {
             val=$(printf '%s' "$val" | sed 's/"/\\"/g')
+            [ -n "$add_custom" ] && val="${val}${add_custom}"
             if [ -n "$result" ]; then
-                [ -n "$add_custom" ] && val="${val}${add_custom}"
                 result="${result}, \"$val\""
             else
                 result="\"$val\""
