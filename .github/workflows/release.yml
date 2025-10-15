@@ -84,10 +84,10 @@ jobs:
       - name: Filter required files
         shell: bash
         run: |
-          mkdir -p ./output/filtered/${{ matrix.package_type }}
-          cp ./output/${{ matrix.package_type }}/luci-i18n-justclash-ru-*.${{ matrix.package_type }} ./output/filtered/${{ matrix.package_type }}/
-          cp ./output/${{ matrix.package_type }}/justclash-*.${{ matrix.package_type }} ./output/filtered/${{ matrix.package_type }}/
-          cp ./output/${{ matrix.package_type }}/luci-app-justclash-*.${{ matrix.package_type }} ./output/filtered/${{ matrix.package_type }}/
+          mkdir -p ./output/filtered/${{ matrix.type }}
+          cp ./output/${{ matrix.type }}/luci-i18n-justclash-ru-*.${{ matrix.type }} ./output/filtered/${{ matrix.type }}/
+          cp ./output/${{ matrix.type }}/justclash-*.${{ matrix.type }} ./output/filtered/${{ matrix.type }}/
+          cp ./output/${{ matrix.type }}/luci-app-justclash-*.${{ matrix.type }} ./output/filtered/${{ matrix.type }}/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
