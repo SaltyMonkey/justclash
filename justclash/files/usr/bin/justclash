@@ -9,7 +9,7 @@
 # Avoid adding simple commands for perfomance
 # --------------------------------------------
 
-VERSION="__COMPILED_VERSION_VARIABLE__"
+JUSTCLASH_VERSION="__COMPILED_VERSION_VARIABLE__"
 # shellcheck disable=SC1091
 [ -r /lib/functions.sh ] && . /lib/functions.sh
 # shellcheck disable=SC1091
@@ -75,7 +75,7 @@ DEFAULT_PROXY="DIRECT"
 DEFAULT_HEALTHCHECK_INTERVAL=360
 DEFAULT_PROVIDERUPDATE_INTERVAL=7200
 DEFAULT_HEALTHCHECK_TIMEOUT=5000
-DEFAULT_RULESET_INTERVAL="86500"
+DEFAULT_RULESET_INTERVAL="86400"
 DEFAULT_HEALTHCHECK_URL="http://www.gstatic.com/generate_204"
 DEFAULT_HEALTHCHECK_RESULT=204
 DEFAULT_MAX_FAILED_TIMES=5
@@ -196,7 +196,7 @@ start() {
     check_requirement || return 1
 
     config_get_bool skip_environment_checks settings skip_environment_checks 0
-    if [ "$skip_environment_checks" -eq 1 ]; then
+    if [ "$skip_environment_checks" -eq 0 ]; then
 
         log 2 "Checking for conflicts" "⏳"
         check_for_conflicts || return 1
@@ -239,6 +239,7 @@ start() {
 
 stop() {
     log 2 "Closing Justclash service..." "⏳"
+
     log 2 "Removing tproxy routing and NFTables table" "🔑"
     nf_table_remove
 
@@ -535,7 +536,7 @@ check_requirement() {
     fi
 
     if ! command -v md5sum >/dev/null 2>&1; then
-        log 0 "Requirement is missing: coreutils-base64 is not installed." "❌"
+        log 0 "Requirement is missing: md5sum is not installed." "❌"
         ret=1
     fi
     return "$ret"
@@ -588,28 +589,12 @@ check_for_conflicts_warn() {
 
 }
 
-info_device() {
-   get_hw_model || echo "$NO_DATA_STRING"
-}
-
-info_openwrt() {
-   get_os_version_full || echo "$NO_DATA_STRING"
-}
-
-info_openwrt_version() {
-   get_os_version || echo "$NO_DATA_STRING"
-}
-
 info_mihomo() {
     if [ ! -x "$CORE_PATH" ]; then
         echo "$NO_DATA_STRING"
     else
         "$CORE_PATH" -v 2>/dev/null | head -n1 | awk '{ print $3 }'
     fi
-}
-
-info_package() {
-    echo "$VERSION"
 }
 
 systemlogs() {
@@ -621,6 +606,7 @@ systemlogs() {
 simple_uci_list_to_json_arr() {
     local section_name="$1"
     local list_name="$2"
+    local add_custom="$3"
     local result=""
     local values
 
@@ -635,6 +621,7 @@ simple_uci_list_to_json_arr() {
         [ -n "$val" ] && {
             val=$(printf '%s' "$val" | sed 's/"/\\"/g')
             if [ -n "$result" ]; then
+                [ -n "$add_custom" ] && val="${val}${add_custom}"
                 result="${result}, \"$val\""
             else
                 result="\"$val\""
@@ -815,7 +802,6 @@ handle_proxy_section() {
                 local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
                 list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$val\""
-
             }
         done
         config_get list "$section" additional_destip_route
@@ -865,10 +851,9 @@ handle_proxy_group_section() {
         local domain_list cidr_list
 
         config_get name "$section" name
-        [ -z "$name" ] && { log 1 "Skip proxy_group without name: $section" "⚠️"; return; }
-
         config_get proxies_list "$section" proxies
         config_get providers_list "$section" providers
+        [ -z "$name" ] && { log 1 "Skip proxy_group without name: $section" "⚠️"; return; }
         [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log 1 "Skip empty proxy_group $name" "⚠️"; return; }
 
         config_get group_type "$section" group_type
@@ -897,7 +882,7 @@ handle_proxy_group_section() {
         [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | trim | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(echo "$providers_list" | trim | list_to_json_array)
 
-        local group_json="{\"name\":\"$(json_escape "$name")\",\
+        local group_json="\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
                         \"url\":\"$(json_escape "$check_url")\",\
                         \"expected-status\":$expected_status,\
@@ -906,15 +891,18 @@ handle_proxy_group_section() {
                         \"max-failed-times\":$max_failed_times,\
                         \"lazy\":$(ucibool_to_yaml_bool "$lazy")"
 
-        [ "$group_type" = "url-test" ] && group_json="$group_json,\"tolerance\":\"$tolerance\""
-        [ "$group_type" = "load-balance" ] && group_json="$group_json,\"strategy\":\"$(json_escape "$strategy")\""
+        if [ "$group_type" = "url-test" ]; then
+            group_json="$group_json,\"tolerance\":\"$tolerance\""
+        elif [ "$group_type" = "load-balance" ]; then
+            group_json="$group_json,\"strategy\":\"$(json_escape "$strategy")\""
+        fi
 
         [ -n "$escaped_proxies" ] && group_json="$group_json,\"proxies\":[$escaped_proxies]"
         [ -n "$escaped_providers" ] && group_json="$group_json,\"use\":[$escaped_providers]"
         [ -n "$filter" ] && group_json="$group_json,\"filter\":\"$(json_escape "$filter")\""
         [ -n "$exclude_filter" ] && group_json="$group_json,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && group_json="$group_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
-        group_json="$group_json}"
+        group_json="{$group_json}"
 
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
 
@@ -1140,8 +1128,12 @@ handle_block_rule_section() {
     local blocklist_content="$1"
     local file_rules="$2"
     local file_rulesets="$3"
+    local file_rulesets_names="$4"
+    local file_suffix_names="$5"
     local rules_array=""
     local selected_rule_sets=""
+    local list_rulesets_names=""
+    local list_suffix_names=""
 
     local enabled_blocklist
     config_get enabled_blocklist block_rules enabled_blocklist
@@ -1177,6 +1169,10 @@ handle_block_rule_section() {
 
             selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
             added_blocklists="$added_blocklists$val|"
+
+            if [ "$behavior" = "domain" ]; then
+               list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
+            fi
         else
             log 1 "Blocklist '$val' can't be found in $blocklist_content" "⚠️"
         fi
@@ -1190,6 +1186,7 @@ handle_block_rule_section() {
         [ -n "$domain_val" ] && {
             local rule_str=$(printf 'DOMAIN-SUFFIX,%s,REJECT' "$domain_val")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$domain_val\""
         }
     done
 
@@ -1207,6 +1204,8 @@ handle_block_rule_section() {
 
     echo "$rules" > "$file_rules"
     echo "$selected_rule_sets" > "$file_rulesets"
+    echo "$list_rulesets_names" > "$file_rulesets_names"
+    echo "$list_suffix_names" > "$file_suffix_names"
 }
 
 handle_direct_rule_section() {
@@ -1216,7 +1215,7 @@ handle_direct_rule_section() {
     local rules_array=""
     local direct_rulesets=""
 
-    local proxy additional_domain_direct additional_domain_keyword_direct additional_domain_regex_direct
+    local proxy additional_domain_direct
     local additional_srcip_direct additional_destip_direct
     local list_update_interval enabled_list
     local domain_list cidr_list
@@ -1319,22 +1318,6 @@ handle_direct_rule_section() {
         }
     done
 
-    config_get additional_domain_keyword_direct direct_rules additional_domain_keyword_direct
-    for val in $additional_domain_keyword_direct; do
-        [ -n "$val" ] && {
-            local rule_str=$(printf 'DOMAIN-KEYWORD,%s,DIRECT' "$val")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-        }
-    done
-
-    config_get additional_domain_regex_direct direct_rules additional_domain_regex_direct
-    for val in $additional_domain_regex_direct; do
-        [ -n "$val" ] && {
-            local rule_str=$(printf 'DOMAIN-REGEX,%s,DIRECT' "$val")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-        }
-    done
-
     config_get additional_srcip_direct direct_rules additional_srcip_direct
     for val in $additional_srcip_direct; do
         [ -n "$val" ] && {
@@ -1393,13 +1376,13 @@ core_generate_yaml() {
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_system_hosts fake_ip_filter_mode fake_ip_range dns_cache_max_size
     local etag_support global_ua
-    local default_nameserver direct_nameserver proxy_server_nameserver nameserver custom_fake_ip_domains ignore_fake_ip_domains fake_ip_filter_data
+    local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_include_domains fake_ip_exclude_domains fake_ip_filter_data
     local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_direct
     local proxies proxy_groups rule_providers proxy_providers names_suffixes_proxy_groups names_suffixes_proxies names_rulesets_proxy_groups names_rulesets_proxies
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path
     local block_rulesets_content rulesets_content
-    local sniffer_enable sniffer_parse_pure_ip sniffer_skip_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
+    local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
 
     config_get use_zashboard proxy use_zashboard
     config_get log_level proxy log_level
@@ -1439,14 +1422,14 @@ core_generate_yaml() {
     sniffer_enable=$(ucibool_to_yaml_bool "$sniffer_enable")
     config_get_bool sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
     sniffer_parse_pure_ip=$(ucibool_to_yaml_bool "$sniffer_parse_pure_ip")
-    default_nameserver=$(simple_uci_list_to_json_arr proxy default_nameserver)
-    direct_nameserver=$(simple_uci_list_to_json_arr proxy direct_nameserver)
-    proxy_server_nameserver=$(simple_uci_list_to_json_arr proxy proxy_server_nameserver)
-    nameserver=$(simple_uci_list_to_json_arr proxy nameserver)
-    custom_fake_ip_domains=$(simple_uci_list_to_json_arr proxy custom_fake_ip_domains)
-    ignore_fake_ip_domains=$(simple_uci_list_to_json_arr proxy ignore_fake_ip_domains)
+    default_nameserver=$(simple_uci_list_to_json_arr proxy default_nameserver "&disable-ipv6=true")
+    direct_nameserver=$(simple_uci_list_to_json_arr proxy direct_nameserver "&disable-ipv6=true")
+    proxy_server_nameserver=$(simple_uci_list_to_json_arr proxy proxy_server_nameserver "&disable-ipv6=true")
+    nameserver=$(simple_uci_list_to_json_arr proxy nameserver "&disable-ipv6=true")
+    fake_ip_include_domains=$(simple_uci_list_to_json_arr proxy fake_ip_include_domains)
+    fake_ip_exclude_domains=$(simple_uci_list_to_json_arr proxy fake_ip_exclude_domains)
     sniffer_force_domain=$(simple_uci_list_to_json_arr proxy sniffer_force_domain)
-    sniffer_skip_domain=$(simple_uci_list_to_json_arr proxy sniffer_skip_domain)
+    sniffer_exclude_domain=$(simple_uci_list_to_json_arr proxy sniffer_exclude_domain)
     sniffer_skip_src_address=$(simple_uci_list_to_json_arr proxy sniffer_skip_src_address)
     sniffer_skip_dst_address=$(simple_uci_list_to_json_arr proxy sniffer_skip_dst_address)
 
@@ -1458,27 +1441,32 @@ core_generate_yaml() {
     block_rulesets_content=$(cat "$RULESETS_BLOCKS_FILE")
     rulesets_content=$(cat "$RULESETS_FILE")
 
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesdirect.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesetsdirect.XXXXXX)
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules_direct.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_direct.XXXXXX)
     handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
     rules_direct=$(cat "$tmp_rules_file")
     rulesets_direct=$(cat "$tmp_rulesets_path")
     rm -f "$tmp_rules_file" "$tmp_rulesets_path"
 
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
-    handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules_block.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_block.XXXXXX)
+    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
+    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
+    handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
     rules_block=$(cat "$tmp_rules_file" )
     rulesets_block=$(cat "$tmp_rulesets_path")
-    rm -f "$tmp_rules_file" "$tmp_rulesets_path"
+    names_rulesets_block=$(cat "$tmp_names_rulesets_path")
+    names_suffixes_block=$(cat "$tmp_names_suffixes_path")
+    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
-    tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroups.XXXXXX)
+
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets.XXXXXX)
+    tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_proxygroups.XXXXXX)
     # Files for strings with names in json arrays (for Fake IP filter)
-    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroupsrulesetsnames.XXXXXX)
-    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxygroupssuffixesnames.XXXXXX)
+    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
+    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
     handle_proxy_group_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
     rules_proxygroups=$(cat "$tmp_rules_file" )
     rulesets_proxygroup=$(cat "$tmp_rulesets_path")
@@ -1488,11 +1476,11 @@ core_generate_yaml() {
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmprules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmprulesets.XXXXXX)
-    tmp_proxies_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxies.XXXXXX)
-    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxiesrulesetsnames.XXXXXX)
-    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmpproxiessuffixesnames.XXXXXX)
+    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules.XXXXXX)
+    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets.XXXXXX)
+    tmp_proxies_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_proxies.XXXXXX)
+    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
+    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
     handle_proxy_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
     rules_proxies=$(cat "$tmp_rules_file")
     rulesets_proxies=$(cat "$tmp_rulesets_path")
@@ -1503,15 +1491,17 @@ core_generate_yaml() {
 
     if [ "$fake_ip_filter_mode" = "whitelist" ]; then
         fake_ip_filter_data=$(jq -n \
-            --arg custom "$custom_fake_ip_domains" \
+            --arg custom "$fake_ip_include_domains" \
+            --arg nrb "$names_rulesets_block" \
+            --arg nsb "$names_suffixes_block" \
             --arg nrpg "$names_rulesets_proxy_groups" \
             --arg nspg "$names_suffixes_proxy_groups" \
             --arg nrp "$names_rulesets_proxies" \
             --arg nsp "$names_suffixes_proxies" \
-            '($custom | fromjson) + ($nrpg | fromjson) + ($nspg | fromjson) + ($nrp | fromjson) + ($nsp | fromjson)'
+            '($custom | fromjson) + ($nrb | fromjson) + ($nsb | fromjson) + ($nrpg | fromjson) + ($nspg | fromjson) + ($nrp | fromjson) + ($nsp | fromjson)'
         )
     else
-        fake_ip_filter_data=$ignore_fake_ip_domains
+        fake_ip_filter_data=$fake_ip_exclude_domains
     fi
 
     proxies=$(echo "$proxies" | jq .)
@@ -1610,7 +1600,7 @@ sniffer:
       ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]
     QUIC:
       ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]
-  skip-domain: $sniffer_skip_domain
+  skip-domain: $sniffer_exclude_domain
   force-domain: $sniffer_force_domain
   skip-src-address: $sniffer_skip_src_address
   skip-dst-address: $sniffer_skip_dst_address
@@ -1626,7 +1616,7 @@ EOF
     return 0;
 }
 
-rulesets_list_update() {
+service_data_update() {
     local complete_url
     log 2 "Downloading RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
@@ -1788,7 +1778,7 @@ core_remove() {
 }
 
 core_update() {
-    local cur_ver latest_ver mihomo_cron_update_telegram_notify
+    local cur_ver latest_ver
     local check_url download_url
 
     log 2 "Checking for Mihomo updates..." "🔄"
@@ -1814,19 +1804,12 @@ core_update() {
        return 1
     fi
 
-    config_get_bool mihomo_cron_update_telegram_notify settings mihomo_cron_update_telegram_notify
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             log 0 "Update process can't be finished." "❌"
-            if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
-                send_telegram "Mihomo core binary was missing. Install try for version $latest_ver failed."
-            fi
             return 1
-        fi
-        if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
-            send_telegram "Mihomo core binary was missing. Installed $latest_ver"
         fi
         return 0
     fi
@@ -1845,53 +1828,10 @@ core_update() {
         core_download "$download_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             log 0 "Update process can't be finished." "❌"
-            if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
-                send_telegram "Mihomo core binary was updated. Install try for version: $cur_ver -> $latest_ver failed."
-            fi
             return 1
         fi
-        if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
-            send_telegram "Mihomo core binary was updated. Version: $cur_ver -> $latest_ver"
-        fi
     else
-        if [ "$mihomo_cron_update_telegram_notify" -eq 1 ]; then
-            send_telegram "Mihomo core binary is already up-to-date."
-        fi
         log 2 "Mihomo is already up-to-date." "✅"
-    fi
-
-    return 0
-}
-
-send_telegram() {
-    local message="$1"
-    local token chat_id
-
-    config_get token settings telegram_bot_token
-    config_get chat_id settings telegram_chat_id
-
-    if [ -z "$token" ] || [ -z "$chat_id" ]; then
-        log 1 "Telegram: bot token or chat ID is not configured" "⚠️"
-        return 1
-    fi
-
-    response=$(curl -s -w "\n%{http_code}" -X POST "https://api.telegram.org/bot${token}/sendMessage" \
-        -d chat_id="$chat_id" \
-        -d text="$message" \
-        -d parse_mode="HTML" \
-        -d disable_notification=true)
-
-    local curl_exit=$?
-    http_code=$(echo "$response" | tail -n1)
-
-    if [ "$curl_exit" -ne 0 ]; then
-        log 0 "Telegram: network error, curl exited with code $curl_exit" "❌"
-        return 1
-    fi
-
-    if [ "$http_code" != "200" ]; then
-        log 0 "Telegram: failed to send message (HTTP $http_code)" "❌"
-        return 1
     fi
 
     return 0
@@ -2125,9 +2065,9 @@ $PROGNAME diagnostic report:
 ----------------------------
 
 -> Basic:
-Device:  $(info_device)
-OpenWRT: $(info_openwrt)
-Service: $(info_package)
+Device:  $(get_hw_model || echo "$NO_DATA_STRING")
+OpenWRT: $(get_os_version || echo "$NO_DATA_STRING")
+Service: $JUSTCLASH_VERSION
 Mihomo:  $(info_mihomo)
 
 -> Status:
@@ -2219,10 +2159,13 @@ help() {
 Usage: justclash <command> [args]
 
 Service Management:
-  start|run               Start the JustClash service.
-  stop                    Stop the JustClash service.
+  start|run               Start the service
+  stop                    Stop the service
   config_show             Show configuration in console
   config_reset            Reset configuration
+  info_core|version_core  Show Mihomo core version
+  info_package|version    Show service version
+  service_data_update     Update service files from repository
 
 Mihomo management Commands:
   core_update                     Check current version and update Mihomo if a newer version is available
@@ -2236,31 +2179,26 @@ Mihomo management Commands:
   core_autorestart_cron_add       Add a scheduled task to automatically restart Mihomo periodically
   core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task
 
-Information Commands:
-  info_device             Show device model.
-  info_openwrt            Show OpenWrt version.
-  info_core               Show Mihomo core version.
-  info_package            Show JustClash package version.
-
 Diagnostics:
   diag_report             Run diagnostic
-  diag_nft                Run nftables diagnostic.
-  diag_route              Run route tables diagnostic.
-  diag_icmp               Run internet check with ICMP.
-  diag_proxy_resolver     Run Internal DNS diagnostic.
-  diag_external_resolver  Run Default DNS diagnostic.
+  diag_nft                Run nftables diagnostic
+  diag_route              Run route tables diagnostic
+  diag_icmp               Run internet check with ICMP
+  diag_proxy_resolver     Run Internal DNS diagnostic
+  diag_external_resolver  Run Default DNS diagnostic
 
 Logs:
-  logs|systemlogs [N]     Show last N lines of system logs (default 40).
+  logs|systemlogs [N]     Show last N lines of system logs (default 40)
 
 Help:
-  help|?|command          Show this help message.
+  help|?|command          Show this help message
 
 EOF
 }
 
 case "$1" in
     start|run)
+        [ "$PROCD_MODE" -eq 0 ] && trap stop INT
         start
         ;;
     stop)
@@ -2296,8 +2234,8 @@ case "$1" in
     core_autorestart_cron_remove)
         core_autorestart_cron_remove
         ;;
-    rulesets_list_update)
-        rulesets_list_update
+    service_data_update)
+        service_data_update
         ;;
     logs|systemlogs)
         case "$2" in
@@ -2309,17 +2247,11 @@ case "$1" in
                 ;;
         esac
         ;;
-    info_device)
-        info_device
-        ;;
-    info_openwrt)
-        info_openwrt
-        ;;
-    info_core|info_mihomo)
+    info_core|info_mihomo|version_core)
         info_mihomo
         ;;
-    info_package)
-        info_package
+    info_package|version)
+        echo "$JUSTCLASH_VERSION"
         ;;
     diag_nft)
         diag_nft
@@ -2341,6 +2273,9 @@ case "$1" in
         ;;
     help|?|command)
         help
+        ;;
+    _luci_call)
+        echo "$JUSTCLASH_VERSION,$(info_mihomo)"
         ;;
     *)
         clog 2 "Unknown command: $1"
