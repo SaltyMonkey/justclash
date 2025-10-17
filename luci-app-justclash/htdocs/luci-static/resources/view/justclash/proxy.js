@@ -220,14 +220,14 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.DynamicList, "sniffer_skip_domain", _("Excluded from sniffer domains:"));
+        o = s.taboption(tabname, form.DynamicList, "sniffer_exclude_domain", _("Excluded from sniffer domains:"));
         o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_force_domain", _("Forcefully sniff domains:"));
-        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o.description = _("Domains included for detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
