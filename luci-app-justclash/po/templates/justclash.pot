@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-17 11:24+0300\n"
+"POT-Creation-Date: 2025-10-17 11:52+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -417,12 +417,16 @@ msgstr ""
 msgid "Excluded from sniffer domains:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:224 htdocs/luci-static/resources/view/justclash/proxy.js:230 htdocs/luci-static/resources/view/justclash/proxy.js:236 htdocs/luci-static/resources/view/justclash/proxy.js:242
+#: htdocs/luci-static/resources/view/justclash/proxy.js:224 htdocs/luci-static/resources/view/justclash/proxy.js:236 htdocs/luci-static/resources/view/justclash/proxy.js:242
 msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:229
 msgid "Forcefully sniff domains:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:230
+msgid "Domains included for detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:235

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-17 11:24+0300\n"
+"POT-Creation-Date: 2025-10-17 11:52+0300\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:123
@@ -417,13 +417,18 @@ msgstr "Принудительное обнаружение для всего т
 msgid "Excluded from sniffer domains:"
 msgstr "Исключить домены из анализа:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:224 htdocs/luci-static/resources/view/justclash/proxy.js:230 htdocs/luci-static/resources/view/justclash/proxy.js:236 htdocs/luci-static/resources/view/justclash/proxy.js:242
+#: htdocs/luci-static/resources/view/justclash/proxy.js:224 htdocs/luci-static/resources/view/justclash/proxy.js:236 htdocs/luci-static/resources/view/justclash/proxy.js:242
 msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr "Исключённые домены из детального анализа. Иногда это помогает избежать ошибок в приложениях."
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:229
 msgid "Forcefully sniff domains:"
 msgstr "Принудительно анализировать домены:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:230
+#, fuzzy
+msgid "Domains included for detailed analysis when possible. Sometimes this can help with errors in apps."
+msgstr "Домены для детального анализа. Иногда это помогает избежать ошибок в приложениях."
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:235
 msgid "Exclude from sniffer SRC CIDR traffic:"
