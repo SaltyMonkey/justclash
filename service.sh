@@ -697,7 +697,7 @@ install_service() {
     if [ $? -ne 1 ]; then
         justclash_install
     fi
-    localuse_interactive
+    #localuse_interactive
 }
 
 uninstall_service() {
@@ -721,10 +721,10 @@ run() {
     print_bold_yellow "3 - Update/Download latest stable mihomo proxy core"
     print_bold_yellow "4 - Remove Mihomo core proxy if installed"
     print_bold_yellow "5 - Run diagnostic"
-    print_bold_yellow "6 - Config DNSMasq local use flag"
-    print_bold_yellow "7 - Exit"
+    #print_bold_yellow "6 - Config DNSMasq local use flag"
+    print_bold_yellow "6 - Exit"
     while true; do
-        printf "Enter your choice [1-7]: "
+        printf "Enter your choice [1-6]: "
         read -r choice
         case "$choice" in
             1)
@@ -747,11 +747,11 @@ run() {
                 echo "Starting diagnostic..."
                 diagnostic
                 ;;
+            #6)
+            #    echo "Starting DNSMasq localuse flag setup..."
+            #    localuse_interactive
+            #    ;;
             6)
-                echo "Starting DNSMasq localuse flag setup..."
-                localuse_interactive
-                ;;
-            7)
                 echo "Exiting..."
                 exit 0
                 ;;
