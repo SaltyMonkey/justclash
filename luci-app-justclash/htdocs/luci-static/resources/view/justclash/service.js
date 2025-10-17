@@ -66,7 +66,7 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Edit router netfilter tables at start:"));
         o.description = _("Service creates netfilter tables to redirect traffic from router to the TPROXY port.");
         o.rmempty = false;
-        o.default = "1";
+        o.default = primitives.FALSE;
 
         // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
