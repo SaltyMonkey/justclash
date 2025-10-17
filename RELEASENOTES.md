@@ -1,3 +1,19 @@
+## [0.4.6] - 17102025
+
+- Service: Minor refactor
+- Service: Update netfilter tables
+- Service: Added optional routing for traffic from roure itself
+- Service: Fixed drop AAAA entries from dns responses
+- LuCI: Fixed incorrect excluded domains from sniffer in UI
+- LuCI: Added nft_apply_changes_router in UI
+- Translation: update
+- UCI: Sync keep_alive_idle/keep_alive_interval with default values in UI
+- Install-script: Removed localuse usage
+
+**This version requires:**
+- UCI config must be reset
+- Browser cache must be cleaned up
+
 ## [0.4.0] - 16102025
 
 - Build: Update docker files and build process
