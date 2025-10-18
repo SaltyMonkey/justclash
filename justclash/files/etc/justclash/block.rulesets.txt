@@ -1,6 +1,9 @@
+Category ADS all|category-ads-all|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/category-ads-all.mrs
 Google ADS|google-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/google-ads.mrs
+Hagezi light ADS|hagezi-light-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-light-ads.mrs
 Hagezi pro ADS|hagezi-pro-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-ads.mrs
 Hagezi pro mini ADS|hagezi-pro-mini-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-mini-ads.mrs
+Hagezi pro plus mini ADS|hagezi-pro-plus-mini-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-plus-mini-ads.mrs
 Oisd big|oisd-big|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-big.mrs
 Oisd NSFW small|oisd-nsfw-small|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw-small.mrs
 Oisd NSFW|oisd-nsfw|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw.mrs

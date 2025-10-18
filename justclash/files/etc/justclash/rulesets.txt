@@ -1,4 +1,5 @@
 Antifilter community|antifilter-community|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/block/antifilter-community.mrs
+Category anticensorship|category-anticensorship|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/block/category-anticensorship.mrs
 Category dev|category-dev|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/block/category-dev.mrs
 Category gov RU|category-gov-ru|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/block/category-gov-ru.mrs
 Category RU|category-ru|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/block/category-ru.mrs
@@ -18,6 +19,7 @@ Bilibili|bilibili|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-p
 Broadcom|broadcom|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/broadcom.mrs
 Bunny|bunny|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/bunny.mrs
 Canon|canon|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/canon.mrs
+Cdn77|cdn77|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/cdn77.mrs
 Chatgpt|chatgpt|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/chatgpt.mrs
 Cisco|cisco|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/cisco.mrs
 Claudeai|claudeai|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/claudeai.mrs
@@ -32,6 +34,7 @@ Discord|discord|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-par
 Docker|docker|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/docker.mrs
 Doramyclub|doramyclub|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/doramyclub.mrs
 Fastly|fastly|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/fastly.mrs
+Filmix|filmix|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/filmix.mrs
 Gcore|gcore|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/gcore.mrs
 Gemini|gemini|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/gemini.mrs
 Google play|google-play|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/google-play.mrs
@@ -52,15 +55,21 @@ Linkedin|linkedin|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-p
 Lostfilm|lostfilm|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/lostfilm.mrs
 Medium|medium|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/medium.mrs
 Meta|meta|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/meta.mrs
+Mongodb|mongodb|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/mongodb.mrs
 Netflix|netflix|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/netflix.mrs
 Netlify|netlify|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/netlify.mrs
 Nix|nix|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/nix.mrs
 Nnmclub|nnmclub|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/nnmclub.mrs
 Notebooklm|notebooklm|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/notebooklm.mrs
+Npmjs|npmjs|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/npmjs.mrs
+Nvidia|nvidia|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/nvidia.mrs
 Openwrt|openwrt|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/openwrt.mrs
 Oracle|oracle|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/oracle.mrs
 Ovh|ovh|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/ovh.mrs
+Panasonic|panasonic|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/panasonic.mrs
+Paypal|paypal|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/paypal.mrs
 Perplexity|perplexity|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/perplexity.mrs
+Pixiv|pixiv|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/pixiv.mrs
 Qt|qt|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/qt.mrs
 Qualcomm|qualcomm|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/qualcomm.mrs
 Redhat|redhat|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/redhat.mrs
@@ -69,12 +78,12 @@ Spotify|spotify|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-par
 Tailscale|tailscale|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/tailscale.mrs
 Telegram|telegram|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/telegram.mrs
 Tencent|tencent|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/tencent.mrs
-Tuya|tuya|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/tuya.mrs
 Twitch fix|twitch-fix|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/twitch-fix.mrs
 Twitch|twitch|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/twitch.mrs
 Vercel|vercel|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/vercel.mrs
 Whatsapp|whatsapp|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/whatsapp.mrs
 X|x|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/x.mrs
+Xbox|xbox|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/xbox.mrs
 Youtube|youtube|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/services/youtube.mrs
 Antifilter community CIDR|antifilter-community-ipcidr|ipcidr|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/antifilter-community.mrs
 Apple CIDR|apple-ipcidr|ipcidr|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/apple.mrs
@@ -89,3 +98,4 @@ Hetzner CIDR|hetzner-ipcidr|ipcidr|mrs|https://raw.githubusercontent.com/SaltyMo
 Meta CIDR|meta-ipcidr|ipcidr|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/meta.mrs
 Ovh CIDR|ovh-ipcidr|ipcidr|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/ovh.mrs
 Telegram CIDR|telegram-ipcidr|ipcidr|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/subnets/ipv4/telegram.mrs
+
