@@ -11,7 +11,7 @@ return view.extend({
         const primitives = {
             TRUE: "1",
             FALSE: "0"
-        }
+        };
 
         const datatypes = {
             PORT: "port",
@@ -19,7 +19,6 @@ return view.extend({
             IPADDR: "ipaddr",
             CIDR4: "cidr4"
         };
-
         m = new form.Map(common.binName);
         s = m.section(form.NamedSection, "settings");
 
@@ -130,6 +129,15 @@ return view.extend({
             o.value(item, _(`${item}`));
         });
 
+        o = s.taboption(tabname, form.ListValue, "nft_ntp_mode_router", _("NTP traffic from router:"));
+        o.description = _("Select a way how NTP traffic from router will be handled by netfilter tables.");
+        o.depends("nft_apply_changes_router", primitives.TRUE);
+        o.rmempty = false;
+        o.default = common.defaultNftOptions[0];
+        common.defaultNftNtpOptions.forEach(item => {
+            o.value(item, _(`${item}`));
+        });
+
         tabname = "serviceautomation_tab";
         s.tab(tabname, _("Tasks"));
 
@@ -164,7 +172,7 @@ return view.extend({
             return (common.isValidCronString(value)) ? true : _("Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')");
         };
 
-        const style =  E("style", {}, `
+        const style = E("style", {}, `
             .cbi-value {
                 margin-bottom: 14px !important;
             }

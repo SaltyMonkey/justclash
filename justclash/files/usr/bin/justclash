@@ -314,7 +314,7 @@ cleanup_fwmark() {
 nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
-    local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode
+    local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -330,6 +330,7 @@ nf_table_add() {
     config_get nft_dot_mode settings nft_dot_mode
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_ntp_mode settings nft_ntp_mode
+    config_get nft_ntp_mode_router settings nft_ntp_mode_router
 
     [ -z "$tproxy_port" ] && panic "tproxy_port is not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range is not set"
@@ -404,6 +405,14 @@ nf_table_add() {
  	    nft add rule inet "$NF_TABLE_NAME" output mark "$NF_TABLE_FWMARK_PROXY" return
         nft add rule inet "$NF_TABLE_NAME" output ip daddr @private_ips return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
+
+        if [ "$nft_ntp_mode_router" = "DROP" ]; then
+            # shellcheck disable=SC2248
+            nft add rule inet "$NF_TABLE_NAME" output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
+        elif [ "$nft_ntp_mode_router" = "DIRECT" ]; then
+            # shellcheck disable=SC2248
+            nft add rule inet "$NF_TABLE_NAME" output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
+        fi
 
         nft add rule inet "$NF_TABLE_NAME" output meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
     fi
