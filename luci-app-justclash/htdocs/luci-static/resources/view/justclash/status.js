@@ -139,6 +139,7 @@ const buttonsIDs = {
     ENABLE: "button-enable",
     DISABLE: "button-disable",
     DIAGNOSTIC: "button-diagnostic",
+    CONFIG_SHOW: "button-config-show",
     UPDATE: "button-core-update",
     CONFIG_RESET: "button-config-reset",
     SERVICE_DATA_UPDATE: "button-service-data"
@@ -236,17 +237,21 @@ return view.extend({
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), actionHandler("start", 5000)),
             createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", 5000)),
-            createActionButton(buttonsIDs.STOP, buttons.NEGATIVE, _("Stop"), actionHandler("stop"))
+            createActionButton(buttonsIDs.STOP, buttons.NEGATIVE, _("Stop"), actionHandler("stop")),
+            createActionButton(buttonsIDs.CONFIG_RESET, `${buttons.NEGATIVE} jc-margin-right`, _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
+
         ]);
+
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable autostart"), actionHandler("enable")),
             createActionButton(buttonsIDs.DISABLE, buttons.NEGATIVE, _("Disable autostart"), actionHandler("disable"))
         ]);
+
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
+            createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Mihomo config"), showExecModalHandler(_("Mihomo configuration"), common.binPath, ["diag_mihomo_config"])),
             createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
             createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showExecModalHandler(_("Update service data"), common.binPath, ["service_data_update"])),
-            createActionButton(buttonsIDs.CONFIG_RESET, `${buttons.NEGATIVE} jc-margin-right`, _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
         ]);
 
         this.startPolling(dynamicStatusCells, results.infoIsRunning);
