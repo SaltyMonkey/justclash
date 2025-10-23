@@ -20,18 +20,7 @@ JUSTCLASH_VERSION="__COMPILED_VERSION_VARIABLE__"
 . /usr/lib/justclash/uri_parsers.sh
 . /usr/lib/justclash/helpers.sh
 
-# Variable for standalone or procd start
-PROCD_MODE=0
-
 PROGNAME="justclash"
-
-# setup procd variable: $JUSTCLASH_ENV passed from init.d start
-# shellcheck disable=SC2154
-if [ "$JUSTCLASH_ENV" = "procd" ]; then
-    PROCD_MODE=1
-else
-    PROCD_MODE=0
-fi
 
 config_load "$PROGNAME"
 
@@ -255,7 +244,7 @@ start_core() {
     local attempt=0
     log 2 "Start with configured retries: $CORE_RESTART_MAX_RETRIES" "🐱"
 
-    if [ "$PROCD_MODE" -eq 1 ]; then
+    if [ "$JUSTCLASH_ENV" = "procd" ]; then
         local attempt=0
 
         while [ "$attempt" -lt "$CORE_RESTART_MAX_RETRIES" ]; do
@@ -1528,11 +1517,11 @@ core_generate_yaml() {
 
     rule_providers=$(
         jq -n \
-            --argjson rulesets_direct "$rulesets_direct" \
-            --argjson rulesets_block "$rulesets_block" \
-            --argjson rulesets_proxies "$rulesets_proxies" \
-            --argjson rulesets_proxygroup "$rulesets_proxygroup" \
-            'reduce [ $rulesets_direct, $rulesets_block, $rulesets_proxies, $rulesets_proxygroup ][] as $item ({}; . * $item)'
+        --argjson rulesets_direct "$rulesets_direct" \
+        --argjson rulesets_block "$rulesets_block" \
+        --argjson rulesets_proxygroup "$rulesets_proxygroup" \
+        --argjson rulesets_proxies "$rulesets_proxies" \
+        'reduce [ $rulesets_direct, $rulesets_block, $rulesets_proxygroup, $rulesets_proxies ][] as $item ({}; . * $item)'
     )
 
     rules=$(jq -n \
@@ -2070,6 +2059,10 @@ diag_icmp() {
     fi
 }
 
+diag_mihomo_config() {
+    cat "$OUTPUT_YAML_CONFIG_PATH"
+}
+
 diag_report() {
     local running autoload
     running=$(service "$PROGNAME" status)
@@ -2206,6 +2199,7 @@ Diagnostics:
   diag_icmp               Run internet check with ICMP
   diag_proxy_resolver     Run Internal DNS diagnostic
   diag_external_resolver  Run Default DNS diagnostic
+  diag_mihomo_config      Show generated mihomo config
 
 Logs:
   logs|systemlogs [N]     Show last N lines of system logs (default 40)
@@ -2218,7 +2212,7 @@ EOF
 
 case "$1" in
     start|run)
-        [ "$PROCD_MODE" -eq 0 ] && trap stop INT
+        [ "$JUSTCLASH_ENV" != "procd" ] && trap stop INT
         start
         ;;
     stop)
@@ -2290,6 +2284,9 @@ case "$1" in
         ;;
     diag_icmp)
         diag_icmp "$2" "${3:-3}"
+        ;;
+    diag_show_mihomo_config)
+        diag_show_mihomo_config
         ;;
     help|?|command)
         help
