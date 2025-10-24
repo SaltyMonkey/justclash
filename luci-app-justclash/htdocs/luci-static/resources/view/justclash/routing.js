@@ -75,10 +75,10 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "mode", _("Mode:"));
         o.description = _("If selected, allow to define proxy as JSON object.");
         common.defaultProxiesModes.forEach(item => {
-            o.value(item, _(`${item.toUpperCase()}`));
+            o.value(item.value, _(`${item.text}`));
         });
         o.rmempty = false;
-        o.default = common.defaultProxiesModes[1];
+        o.default = common.defaultProxiesModes[1].value;
 
         o = s.taboption(tabname, form.TextValue, "proxy_link_object", _("JSON object:"));
         o.description = _("JSON object with connection parameters.");
@@ -247,11 +247,11 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
         o.description = _("Use selected proxy to get subscription data from server.");
-        o.value("DIRECT", _("DIRECT"));
-        o.default = common.defaultProxyProviderProxy;
+        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
+        o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            if (!value || value.trim().length === 0) {
+            if (!value || value.trim() === "") {
                 return _("This field cannot be empty");
             }
             return true;
@@ -325,7 +325,7 @@ return view.extend({
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            if (!value) return true;
+            if (!value || value.trim() === "") return true;
             const regex = /^[a-z0-9|]+$/;
             if (!regex.test(value)) {
                 return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
@@ -366,16 +366,16 @@ return view.extend({
 
         o = s2.taboption(tabname, form.ListValue, "group_type", _("Group type:"));
         common.defaultProxyGroupsTypes.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, _(`${item.text}`));
         });
         o.rmempty = false;
-        o.default = common.defaultProxyGroupsTypes[0];
+        o.default = common.defaultProxyGroupsTypes[0].value;
 
         o = s2.taboption(tabname, form.ListValue, "strategy", _("Group strategy:"));
         common.defaultProxyGroupsBalanceModeStrategies.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, _(`${item.text}`));
         });
-        o.default = common.defaultProxyGroupsBalanceModeStrategies[0];
+        o.default = common.defaultProxyGroupsBalanceModeStrategies[0].value;
         o.depends("group_type", "load-balancer");
 
         o = s2.taboption(tabname, form.DynamicList, "proxies", _("Proxies:"));
@@ -383,7 +383,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if (!value) return true;
+            if (!value || value.trim() === "") return true;
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
@@ -392,7 +392,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if (!value) return true;
+            if (!value || value.trim() === "") return true;
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
 
@@ -470,7 +470,7 @@ return view.extend({
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            if (!value) return true;
+            if (!value || value.trim() === "") return true;
             const regex = /^[a-z0-9|]+$/;
             if (!regex.test(value)) {
                 return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
@@ -528,7 +528,7 @@ return view.extend({
         o.default = common.defaultRuleSetUpdateInterval;
         o.optional = true;
         o.validate = function (section_id, value) {
-            if (value === "") return true;
+            if (!value || value.trim() === "") return true;
             let v = parseInt(value);
             if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
                 return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
@@ -600,7 +600,7 @@ return view.extend({
         o.placeholder = common.defaultRuleSetUpdateInterval;
         o.default = common.defaultRuleSetUpdateInterval;
         o.validate = function (section_id, value) {
-            if (value === "") return true;
+            if (!value || value.trim() === "") return true;
             let v = parseInt(value);
             if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
                 return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
@@ -610,11 +610,11 @@ return view.extend({
 
         o = s3.taboption(tabname, form.Value, "proxy", _("Get lists with:"));
         o.description = _("Use selected proxy or proxy-group to get lists from server.");
-        o.value("DIRECT", _("DIRECT"));
-        o.default = common.defaultRuleSetProxy;
+        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
+        o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            if (!value || value.trim().length === 0) {
+            if (!value || value.trim() === "") {
                 return _("This field cannot be empty");
             }
             return true;
@@ -660,11 +660,11 @@ return view.extend({
 
         o = s4.taboption(tabname, form.Value, "proxy", _("Get lists with:"));
         o.description = _("Use selected proxy or proxy-group to get lists from server.");
-        o.value("DIRECT", _("DIRECT"));
-        o.default = common.defaultRuleSetProxy;
+        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
+        o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            if (!value || value.trim().length === 0) {
+            if (!value || value.trim() === "") {
                 return _("This field cannot be empty");
             }
             return true;
@@ -696,12 +696,13 @@ return view.extend({
         smp.tab(tabname, _("Basic"));
 
         o = smp.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
-        o.value("DIRECT", _("DIRECT"));
-        o.value(common.defaultBehaviorMixedPort, _(common.defaultBehaviorMixedPort));
-        o.default = common.defaultBehaviorMixedPort;
+        common.endRuleOptions.forEach(item => {
+            o.value(item.value, `${item.text}`);
+        });
+        o.default = common.endRuleOptions[1].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            if (!value || value.trim().length === 0) {
+            if (!value || value.trim() === "") {
                 return _("This field cannot be empty");
             }
             return true;
@@ -714,12 +715,12 @@ return view.extend({
         s5.tab(tabname, _("Basic"));
 
         optionFinal = s5.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
-        optionFinal.value("DIRECT", _("DIRECT"));
-        optionFinal.value("REJECT", _("REJECT"));
-        optionFinal.default = common.defaultRuleSetProxy;
+        optionFinal.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
+        optionFinal.value(common.endRuleOptions[2].value, common.endRuleOptions[0].text);
+        optionFinal.default = common.endRuleOptions[0].value;
         optionFinal.rmempty = false;
         optionFinal.validate = function (section_id, value) {
-            if (!value || value.trim().length === 0) {
+            if (!value || value.trim() === "") {
                 return _("This field cannot be empty");
             }
             return true;

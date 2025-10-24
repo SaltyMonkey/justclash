@@ -11,7 +11,7 @@ return view.extend({
         const primitives = {
             TRUE: "1",
             FALSE: "0"
-        }
+        };
 
         const datatypes = {
             PORT: "port",
@@ -152,7 +152,7 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if (!value || (value && value.length === 0)) return true;
+            if (!value || value.trim() === "") return true;
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
                 return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
 
@@ -163,7 +163,7 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if (!value || (value && value.length === 0)) return true;
+            if (!value || value.trim() === "") return true;
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
                 return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
 
@@ -174,7 +174,7 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if (!value || (value && value.length === 0)) return true;
+            if (!value || value.trim() === "") return true;
 
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
                 return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
@@ -186,7 +186,7 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if (!value || (value && value.length === 0)) return true;
+            if (!value || value.trim() === "") return true;
             if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
                 return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
 
@@ -273,7 +273,7 @@ return view.extend({
         o.default = primitives.FALSE;
         o.rmempty = false;
 
-        const style =  E("style", {}, `
+        const style = E("style", {}, `
             .cbi-value {
                 margin-bottom: 14px !important;
             }

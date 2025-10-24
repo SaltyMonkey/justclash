@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-17 11:52+0300\n"
+"POT-Creation-Date: 2025-10-24 04:48+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,72 +17,120 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:123
+#: htdocs/luci-static/resources/view/justclash/common.js:26 htdocs/luci-static/resources/view/justclash/common.js:27 htdocs/luci-static/resources/view/justclash/common.js:34
+msgid "By rules"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:26 htdocs/luci-static/resources/view/justclash/common.js:27
+msgid "Drop"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:27 htdocs/luci-static/resources/view/justclash/common.js:34
+msgid "Direct"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:30
+msgid "Disabled"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:30
+msgid "Check and do update"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:34
+msgid "Reject"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:121
 msgid "Proxy link cannot be empty!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:126
+#: htdocs/luci-static/resources/view/justclash/common.js:124
 msgid "Input is not supported or incorrect!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:128
+#: htdocs/luci-static/resources/view/justclash/common.js:126
 msgid "Proxy link contains not encoded whitespace!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:136
+#: htdocs/luci-static/resources/view/justclash/common.js:134
 msgid "Proxy link can't be parsed!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:146
+#: htdocs/luci-static/resources/view/justclash/common.js:143
 msgid "Domain must not contain spaces"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:149
+#: htdocs/luci-static/resources/view/justclash/common.js:146
 msgid "Domain must contain at least one dot"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:152
+#: htdocs/luci-static/resources/view/justclash/common.js:149
 msgid "Suffix must not start or end with a dot or hyphen"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:155
+#: htdocs/luci-static/resources/view/justclash/common.js:152
 msgid "Double dots or double hyphens are not allowed"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:158
+#: htdocs/luci-static/resources/view/justclash/common.js:155
 msgid "There must be no empty segments between dots"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:161
+#: htdocs/luci-static/resources/view/justclash/common.js:158
 msgid "Each domain segment must not exceed 63 characters"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:163
+#: htdocs/luci-static/resources/view/justclash/common.js:160
 msgid "Suffix length must not exceed 253 characters"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:174
+#: htdocs/luci-static/resources/view/justclash/common.js:170
 msgid "Keyword must not contain spaces"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:177
+#: htdocs/luci-static/resources/view/justclash/common.js:173
 msgid "Only one keyword per field is allowed"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:180
+#: htdocs/luci-static/resources/view/justclash/common.js:176
 msgid "Keyword should be at least 2 characters long"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:193
+#: htdocs/luci-static/resources/view/justclash/common.js:187
 msgid "Regexp must not start or end with a space"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:199
+#: htdocs/luci-static/resources/view/justclash/common.js:193
 msgid "Invalid regular expression: "
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:215
+#: htdocs/luci-static/resources/view/justclash/common.js:209
 msgid "Invalid expression in "
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:216
+msgid "Status"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:217
+msgid "Logs"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:218
+msgid "Connections"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:219
+msgid "Routing"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:220
+msgid "Service"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:221
+msgid "Proxy"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/connections.js:38 htdocs/luci-static/resources/view/justclash/connections.js:61
@@ -133,6 +181,10 @@ msgstr ""
 msgid "Can't connect to proxy API"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/dashboard.js:35 htdocs/luci-static/resources/view/justclash/logs.js:164
+msgid "Logs view"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/logs.js:7
 msgid "No data"
 msgstr ""
@@ -141,7 +193,7 @@ msgstr ""
 msgid "No logs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:20 htdocs/luci-static/resources/view/justclash/logs.js:42 htdocs/luci-static/resources/view/justclash/status.js:16 htdocs/luci-static/resources/view/justclash/status.js:69 htdocs/luci-static/resources/view/justclash/status.js:167 htdocs/luci-static/resources/view/justclash/status.js:168 htdocs/luci-static/resources/view/justclash/status.js:172 htdocs/luci-static/resources/view/justclash/status.js:179 htdocs/luci-static/resources/view/justclash/status.js:180 htdocs/luci-static/resources/view/justclash/status.js:188 htdocs/luci-static/resources/view/justclash/status.js:192 htdocs/luci-static/resources/view/justclash/status.js:230 htdocs/luci-static/resources/view/justclash/status.js:315 htdocs/luci-static/resources/view/justclash/status.js:319
+#: htdocs/luci-static/resources/view/justclash/logs.js:20 htdocs/luci-static/resources/view/justclash/logs.js:42 htdocs/luci-static/resources/view/justclash/status.js:16 htdocs/luci-static/resources/view/justclash/status.js:69 htdocs/luci-static/resources/view/justclash/status.js:168 htdocs/luci-static/resources/view/justclash/status.js:169 htdocs/luci-static/resources/view/justclash/status.js:173 htdocs/luci-static/resources/view/justclash/status.js:180 htdocs/luci-static/resources/view/justclash/status.js:181 htdocs/luci-static/resources/view/justclash/status.js:189 htdocs/luci-static/resources/view/justclash/status.js:193 htdocs/luci-static/resources/view/justclash/status.js:231 htdocs/luci-static/resources/view/justclash/status.js:320 htdocs/luci-static/resources/view/justclash/status.js:324
 msgid "Error"
 msgstr ""
 
@@ -167,10 +219,6 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/logs.js:112
 msgid "Reversed Logs"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/logs.js:164
-msgid "Logs view"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:28 htdocs/luci-static/resources/view/justclash/service.js:27
@@ -489,7 +537,7 @@ msgstr ""
 msgid "Proxies defined as outbound connections."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:60 htdocs/luci-static/resources/view/justclash/routing.js:204 htdocs/luci-static/resources/view/justclash/routing.js:352 htdocs/luci-static/resources/view/justclash/routing.js:696 htdocs/luci-static/resources/view/justclash/routing.js:714
+#: htdocs/luci-static/resources/view/justclash/routing.js:60 htdocs/luci-static/resources/view/justclash/routing.js:204 htdocs/luci-static/resources/view/justclash/routing.js:352 htdocs/luci-static/resources/view/justclash/routing.js:696 htdocs/luci-static/resources/view/justclash/routing.js:715
 msgid "Basic"
 msgstr ""
 
@@ -673,11 +721,7 @@ msgstr ""
 msgid "Use selected proxy to get subscription data from server."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:250 htdocs/luci-static/resources/view/justclash/routing.js:613 htdocs/luci-static/resources/view/justclash/routing.js:663 htdocs/luci-static/resources/view/justclash/routing.js:699 htdocs/luci-static/resources/view/justclash/routing.js:717
-msgid "DIRECT"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/routing.js:255 htdocs/luci-static/resources/view/justclash/routing.js:618 htdocs/luci-static/resources/view/justclash/routing.js:668 htdocs/luci-static/resources/view/justclash/routing.js:705 htdocs/luci-static/resources/view/justclash/routing.js:723
+#: htdocs/luci-static/resources/view/justclash/routing.js:255 htdocs/luci-static/resources/view/justclash/routing.js:618 htdocs/luci-static/resources/view/justclash/routing.js:668 htdocs/luci-static/resources/view/justclash/routing.js:706 htdocs/luci-static/resources/view/justclash/routing.js:724
 msgid "This field cannot be empty"
 msgstr ""
 
@@ -893,20 +937,16 @@ msgstr ""
 msgid "Additional settings for the mixed port. Use it to override or enforce specific behavior."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:698 htdocs/luci-static/resources/view/justclash/routing.js:716
+#: htdocs/luci-static/resources/view/justclash/routing.js:698 htdocs/luci-static/resources/view/justclash/routing.js:717
 msgid "Destination:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:710
+#: htdocs/luci-static/resources/view/justclash/routing.js:711
 msgid "Final rule:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:710
+#: htdocs/luci-static/resources/view/justclash/routing.js:711
 msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/routing.js:718
-msgid "REJECT"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:29
@@ -1013,43 +1053,51 @@ msgstr ""
 msgid "Select a way how NTP traffic will be handled by netfilter tables."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/service.js:133
+msgid "NTP traffic from router:"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/service.js:134
+msgid "Select a way how NTP traffic from router will be handled by netfilter tables."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:143
 msgid "Tasks"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:136
+#: htdocs/luci-static/resources/view/justclash/service.js:145
 msgid "Mihomo autorestart:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:137
+#: htdocs/luci-static/resources/view/justclash/service.js:146
 msgid "When enabled, the service will configure Mihomo autorestart by cron string."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:141
+#: htdocs/luci-static/resources/view/justclash/service.js:150
 msgid "Mihomo autoupdate:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:145
+#: htdocs/luci-static/resources/view/justclash/service.js:154
 msgid "Mode for Mihomo autoupdate job."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:149
+#: htdocs/luci-static/resources/view/justclash/service.js:158
 msgid "Mihomo autorestart cron:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:153
+#: htdocs/luci-static/resources/view/justclash/service.js:162
 msgid "Special cron string for Mihomo autorestart job."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:155 htdocs/luci-static/resources/view/justclash/service.js:164
+#: htdocs/luci-static/resources/view/justclash/service.js:164 htdocs/luci-static/resources/view/justclash/service.js:173
 msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:158
+#: htdocs/luci-static/resources/view/justclash/service.js:167
 msgid "Mihomo autoupdate cron:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:162
+#: htdocs/luci-static/resources/view/justclash/service.js:171
 msgid "Special cron string for Mihomo autoupdate job."
 msgstr ""
 
@@ -1105,7 +1153,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:106 htdocs/luci-static/resources/view/justclash/status.js:249
+#: htdocs/luci-static/resources/view/justclash/status.js:106 htdocs/luci-static/resources/view/justclash/status.js:241
 msgid "Reset config"
 msgstr ""
 
@@ -1117,54 +1165,62 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:218
+#: htdocs/luci-static/resources/view/justclash/status.js:219
 msgid "Service status:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:224
+#: htdocs/luci-static/resources/view/justclash/status.js:225
 msgid "Executing command..."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:224
+#: htdocs/luci-static/resources/view/justclash/status.js:225
 msgid "Please wait."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:237
+#: htdocs/luci-static/resources/view/justclash/status.js:238
 msgid "Start"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:238
+#: htdocs/luci-static/resources/view/justclash/status.js:239
 msgid "Restart"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:239
+#: htdocs/luci-static/resources/view/justclash/status.js:240
 msgid "Stop"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:242
-msgid "Enable autostart"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:243
-msgid "Disable autostart"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:246
-msgid "Diagnostic"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:247
-msgid "Update Mihomo"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:248
-msgid "Update service data"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:249
+#: htdocs/luci-static/resources/view/justclash/status.js:241
 msgid "Reset configuration to default?"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:249
+#: htdocs/luci-static/resources/view/justclash/status.js:241
 msgid "Reset config result"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:246
+msgid "Enable autostart"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:247
+msgid "Disable autostart"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:251
+msgid "Diagnostic"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:252
+msgid "Mihomo config"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:252
+msgid "Mihomo configuration"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:253
+msgid "Update Mihomo"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:254
+msgid "Update service data"
 msgstr ""

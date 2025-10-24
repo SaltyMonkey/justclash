@@ -19,6 +19,7 @@ return view.extend({
             IPADDR: "ipaddr",
             CIDR4: "cidr4"
         };
+
         m = new form.Map(common.binName);
         s = m.section(form.NamedSection, "settings");
 
@@ -97,45 +98,45 @@ return view.extend({
         o.description = _("Select a way how QUIC traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
-        o.default = common.defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, `${item.text}`);
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("DoT traffic from clients:"));
         o.description = _("Select a way how DoT traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
-        o.default = common.defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, `${item.text}`);
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("DoQ traffic from clients:"));
         o.description = _("Select a way how DoQ traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
-        o.default = common.defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, `${item.text}`);
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_ntp_mode", _("NTP traffic from clients:"));
         o.description = _("Select a way how NTP traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.rmempty = false;
-        o.default = common.defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0].value;
         common.defaultNftNtpOptions.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, `${item.text}`);
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_ntp_mode_router", _("NTP traffic from router:"));
         o.description = _("Select a way how NTP traffic from router will be handled by netfilter tables.");
         o.depends("nft_apply_changes_router", primitives.TRUE);
         o.rmempty = false;
-        o.default = common.defaultNftOptions[0];
+        o.default = common.defaultNftOptions[0].value;
         common.defaultNftNtpOptions.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, `${item.text}`);
         });
 
         tabname = "serviceautomation_tab";
@@ -148,11 +149,11 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Mihomo autoupdate:"));
         common.defaultUpdateOptions.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, `${item.text}`);
         });
         o.description = _("Mode for Mihomo autoupdate job.");
         o.rmempty = false;
-        o.default = common.defaultUpdateOptions[0];
+        o.default = common.defaultUpdateOptions[0].value;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
         o.placeholder = "0 3 * * 0";

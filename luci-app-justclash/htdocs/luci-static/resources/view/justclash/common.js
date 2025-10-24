@@ -7,33 +7,31 @@ return baseclass.extend({
     binPath: "/usr/bin/justclash",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
-    genNameProxyPrefix: "proxy",
-    genNameProxyProviderPrefix: "provider",
+    //genNameProxyPrefix: "proxy",
+    //genNameProxyProviderPrefix: "provider",
     logsCount: "800",
-    defaultProxiesModes: ["object", "uri"],
+    defaultProxiesModes: [{ value: "object", text: "Object" }, { value: "uri", text: "URL" }],
     genNameProxyGroupPrefix: "proxygroup",
     defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
     defaultProxyProvidersCheckUrl: "https://www.gstatic.com/generate_204",
     defaultProxyGroupIntervalSec: 360,
-    defaultProxyGroupsTypes: ["fallback", "load-balancer", "url-test"],
-    defaultProxyGroupsBalanceModeStrategies: ["consistent-hashing", "round-robin"],
+    defaultProxyGroupsTypes: [{ value: "fallback", text: "Fallback" }, { value: "load-balancer", text: "Load balancer" }, { value: "url-test", text: "URL Test" }],
+    defaultProxyGroupsBalanceModeStrategies: [{ value: "consistent-hashing", text: "Consistent hashing" }, { value: "round-robin", text: "Round robin" }],
     defaultUrlTestTolerance: 50,
     defaultProxyProviderIntervalSec: 3600,
     defaultProxyProviderHealthCheckSec: 360,
     defaultHealthCheckTimeoutMs: 5000,
     defaultHealthCheckResult: 204,
-    defaultNftOptions: ["BY RULES", "DROP"],
-    defaultNftNtpOptions: ["BY RULES", "DROP", "DIRECT"],
+    defaultNftOptions: [{ value: "BY RULES", text: _("By rules") }, { value: "DROP", text: _("Drop") }],
+    defaultNftNtpOptions: [{ value: "BY RULES", text: _("By rules") }, { value: "DROP", text: _("Drop") }, { value: "DIRECT", text: _("Direct") }],
     defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.2.6172.169 Safari/537.36",
     defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "edge"],
-    defaultUpdateOptions: ["no", "check", "chekandupdate"],
+    defaultUpdateOptions: [{ value: "no", text: _("Disabled") }, { value: "checkandupdate", text: _("Check and do update") }],
     defaultTimeoutForWSReconnect: 10000,
     defaultRuleSetUpdateInterval: 86400,
     minimalRuleSetUpdateInterval: 21600,
-    defaultRuleSetProxy: "DIRECT",
-    defaultProxyProviderProxy: "DIRECT",
-    defaultBehaviorMixedPort: "BY RULES",
+    endRuleOptions: [{ value: "DIRECT", text: _("Direct") }, { value: "BY RULES", text: _("By rules") }, { value: "REJECT", text: _("Reject") }],
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },
@@ -137,8 +135,7 @@ return baseclass.extend({
         }
     },
     isValidDomainSuffix: function (value) {
-        if (!value || value.trim().length === 0)
-            return true;
+        if (!value || value.trim() === "") return true;
 
         value = value.trim();
 
@@ -165,10 +162,9 @@ return baseclass.extend({
         return true;
     },
     isValidDomainKeyword: function (value) {
-        if (!value || value.trim().length === 0)
-            return true;
-
         value = value.trim();
+
+        if (!value || value.trim() === "") return true;
 
         if (/\s/.test(value))
             return _("Keyword must not contain spaces");
@@ -182,9 +178,7 @@ return baseclass.extend({
         return true;
     },
     isValidDomainRegexp: function (value) {
-        // Allow empty value
-        if (!value || value.trim().length === 0)
-            return true;
+        if (!value || value.trim() === "") return true;
 
         value = value.trim();
 
@@ -202,7 +196,7 @@ return baseclass.extend({
         return true;
     },
     isValidKeywordOrRegexList: function (value, ctxLabel) {
-        if (!value) return true;
+        if (!value || value.trim() === "") return true;
 
         const parts = value.split("|");
         for (let i = 0; i < parts.length; i++) {
@@ -217,5 +211,12 @@ return baseclass.extend({
         }
 
         return true;
-    }
+    },
+    //for autogeneration, titles luci-app-justclash.json
+    stub_status_tab: _("Status"),
+    stub_logs_tab: _("Logs"),
+    stub_connections_tab: _("Connections"),
+    stub_routing_tab: _("Routing"),
+    stub_service_tab: _("Service"),
+    stub_proxy_tab: _("Proxy")
 });
