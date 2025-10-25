@@ -1627,6 +1627,10 @@ EOF
 
 service_data_update() {
     local complete_url
+
+    mkdir -p "$CORE_WORKDIR_PATH"
+    mkdir -p "$ETC_DIR"
+
     log 2 "Downloading RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
     curl --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
@@ -2063,6 +2067,10 @@ diag_mihomo_config() {
     cat "$OUTPUT_YAML_CONFIG_PATH"
 }
 
+diag_service_config() {
+    cat "$CONFIG_PATH"
+}
+
 diag_report() {
     local running autoload
     running=$(service "$PROGNAME" status)
@@ -2200,6 +2208,7 @@ Diagnostics:
   diag_proxy_resolver     Run Internal DNS diagnostic
   diag_external_resolver  Run Default DNS diagnostic
   diag_mihomo_config      Show generated mihomo config
+  diag_service_config     Show service config
 
 Logs:
   logs|systemlogs [N]     Show last N lines of system logs (default 40)
@@ -2285,8 +2294,11 @@ case "$1" in
     diag_icmp)
         diag_icmp "$2" "${3:-3}"
         ;;
-    diag_show_mihomo_config)
-        diag_show_mihomo_config
+    diag_mihomo_config)
+        diag_mihomo_config
+        ;;
+    diag_service_config)
+        diag_service_config
         ;;
     help|?|command)
         help
