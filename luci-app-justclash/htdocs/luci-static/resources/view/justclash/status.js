@@ -28,6 +28,10 @@ const createTable = (results, dynamicStatusCells) => {
             E("td", { class: "td left" }, results.infoOpenWrt),
         ]),
         E("tr", { class: "tr cbi-rowstyle-1" }, [
+            E("td", { class: "td left" }, "🌐 " + _("Latest service package version:")),
+            E("td", { class: "td left" }, results.infoOnlinePackage),
+        ]),
+        E("tr", { class: "tr cbi-rowstyle-1" }, [
             E("td", { class: "td left" }, "📦 " + _("Service package version:")),
             E("td", { class: "td left" }, results.infoPackage),
         ]),
@@ -50,13 +54,14 @@ const createTable = (results, dynamicStatusCells) => {
     ]);
 };
 
-const showExecModalHandler = (title, command, args) =>
+const showExecModalHandler = (title, warning, command, args) =>
     ui.createHandlerFn(this, async () => {
         ui.showModal(title, [E("p", _("Please wait..."))]);
-
+        const warn = warning ? [E("strong", { style: "color:#a00" }, _("Dangerous action!")), E("div", { style: "margin-top:1em" }, warning)] : [];
         try {
             const res = await fs.exec(command, args);
             ui.showModal(title, [
+                ...warn,
                 E("pre", { style: "max-height: 460px; overflow:auto;" }, res.stdout || _("No output")),
                 E("div", { style: "text-align: right; margin-top: 1em;" }, [
                     E("button", {
@@ -84,29 +89,6 @@ const createActionButton = (action, cssClass, label, handler) =>
         id: `${action}`,
         click: handler,
     }, [label]);
-
-const showDangerConfirm = (message, onYes) => {
-    ui.showModal(_("ATTENTION!"), [
-        E("div", {}, [
-            E("strong", { style: "color:#a00" }, _("This action is irreversible!")),
-            E("div", { style: "margin-top:1em" }, message)
-        ]),
-        E("div", { class: "right" }, [
-            E("button", {
-                class: "cbi-button cbi-button-remove",
-                click: ui.hideModal
-            }, [_("Cancel")]),
-            E("button", {
-                class: "cbi-button cbi-button-negative",
-                style: "margin-left:1em",
-                click: function () {
-                    ui.hideModal();
-                    onYes();
-                }
-            }, [_("Reset config")])
-        ])
-    ]);
-};
 
 const boolToWord = (val) => (val ? _("Yes") : _("No"));
 
@@ -140,6 +122,7 @@ const buttonsIDs = {
     DISABLE: "button-disable",
     DIAGNOSTIC: "button-diagnostic",
     CONFIG_SHOW: "button-config-show",
+    CONFIG_SHOW_SECOND: "button-config-show-second",
     UPDATE: "button-core-update",
     CONFIG_RESET: "button-config-reset",
     SERVICE_DATA_UPDATE: "button-service-data"
@@ -182,6 +165,28 @@ return view.extend({
             })
             .then(data => (cleanStdout(data).split(",")));
 
+        const infoOnlinePackage = await fetch(common.justclashOnlineVersionUrl)
+            .then(response => {
+                if (!response.ok) {
+                    console.error("Error fetching latest release:", response);
+                    return _("Error");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.tag_name) {
+                    return data.tag_name.replace(/^v/, "");
+                }
+                else {
+                    console.error("Error fetching latest release:", data);
+                    return _("Error");
+                }
+            })
+            .catch(e => {
+                console.error("Error fetching latest release:", e);
+                return _("Error");
+            });
+
         const [
             infoIsRunning, infoIsAutostarting
         ] = await Promise.all([
@@ -196,7 +201,7 @@ return view.extend({
         ]);
 
         return {
-            infoDevice, infoOpenWrt, infoPackage, infoCore,
+            infoDevice, infoOpenWrt, infoOnlinePackage, infoPackage, infoCore,
             infoIsRunning, infoIsAutostarting
         };
     },
@@ -238,8 +243,6 @@ return view.extend({
             createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), actionHandler("start", 5000)),
             createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", 5000)),
             createActionButton(buttonsIDs.STOP, buttons.NEGATIVE, _("Stop"), actionHandler("stop")),
-            createActionButton(buttonsIDs.CONFIG_RESET, `${buttons.NEGATIVE} jc-margin-right`, _("Reset config"), () => showDangerConfirm(_("Reset configuration to default?"), showExecModalHandler(_("Reset config result"), common.binPath, ["config_reset"])))
-
         ]);
 
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" }, [
@@ -248,10 +251,11 @@ return view.extend({
         ]);
 
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Diagnostic"), showExecModalHandler(_("Diagnostic"), common.binPath, ["diag_report"])),
-            createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Mihomo config"), showExecModalHandler(_("Mihomo configuration"), common.binPath, ["diag_mihomo_config"])),
-            createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), common.binPath, ["core_update"])),
-            createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showExecModalHandler(_("Update service data"), common.binPath, ["service_data_update"])),
+            createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Diagnostic"), showExecModalHandler(_("Diagnostic"), false, common.binPath, ["diag_report"])),
+            createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), false, common.binPath, ["core_update"])),
+            createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Mihomo config"), showExecModalHandler(_("Mihomo configuration"), _("Do not show your mihomo config to anyone!"), common.binPath, ["diag_mihomo_config"])),
+            createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Service config"), showExecModalHandler(_("Service configuration"), _("Do not show your service config to anyone!"), common.binPath, ["diag_service_config"])),
+            createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showExecModalHandler(_("Update service data"), false, common.binPath, ["service_data_update"])),
         ]);
 
         this.startPolling(dynamicStatusCells, results.infoIsRunning);
