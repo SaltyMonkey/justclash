@@ -2,11 +2,11 @@
 
 - Service: Minor refactor
 - Service: Correct priority for rulesets generation
-- Service: Fix broken service_data_update when /tmp/justclash isnt created before
+- Service: Fix broken service_data_update when /tmp/justclash was not created before
 - Service: Added diag_service_config to print service config
-- Service: Added diag_mihomo_config to prit complete generated mihomo config
+- Service: Added diag_mihomo_config to print generated mihomo config
 - LuCI: Status page minor refactor
-- LuCI: Fix calls for modal widows
+- LuCI: Fix calls for modal windows
 - LuCI: Added online versuion check for status page
 - LuCI: Changed basic string validation in some cases
 - UCI: Doubled fake ip cache size
