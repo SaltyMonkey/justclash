@@ -1,3 +1,22 @@
+## [0.4.9] - 17102025
+
+- Service: Minor refactor
+- Service: Correct priority for rulesets generation
+- Service: Fix broken service_data_update when /tmp/justclash isnt created before
+- Service: Added diag_service_config to print service config
+- Service: Added diag_mihomo_config to prit complete generated mihomo config
+- LuCI: Status page minor refactor
+- LuCI: Fix calls for modal widows
+- LuCI: Added online versuion check for status page
+- LuCI: Changed basic string validation in some cases
+- UCI: Doubled fake ip cache size
+- UCI: Change default NTP server
+- UCI: Added rule for NTP traffic from router
+
+**This version requires:**
+- UCI config must be reset
+- Browser cache must be cleaned up
+
 ## [0.4.6] - 17102025
 
 - Service: Minor refactor
