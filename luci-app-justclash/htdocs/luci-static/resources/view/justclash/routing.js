@@ -716,7 +716,7 @@ return view.extend({
 
         optionFinal = s5.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
         optionFinal.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
-        optionFinal.value(common.endRuleOptions[2].value, common.endRuleOptions[0].text);
+        optionFinal.value(common.endRuleOptions[2].value, common.endRuleOptions[2].text);
         optionFinal.default = common.endRuleOptions[0].value;
         optionFinal.rmempty = false;
         optionFinal.validate = function (section_id, value) {
