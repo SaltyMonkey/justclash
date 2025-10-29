@@ -9,7 +9,7 @@ const NO_LOGS = _("No logs");
 
 const autosizeTextarea = (textarea) => {
     textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
+    textarea.style.height = textarea.scrollHeight + 20 + "px";
 };
 
 const copyToClipboard = (text) => {
