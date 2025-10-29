@@ -85,6 +85,7 @@ CORE_RESTART_MAX_RETRIES=3
 DIAG_RESOLVE_URL_YANDEX="ya.ru"
 DIAG_IP_CHECK_PING_YANDEX="77.88.8.8"
 DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
+DIAG_DOMAIN_CHECK_PING_GITHUB="github.com"
 
 NF_TABLE_NAME="${PROGNAME}_tproxy"
 NF_TABLE_FWMARK_FINAL=0x3
@@ -180,7 +181,7 @@ core_validate_yaml() {
 start() {
     local skip_environment_checks
 
-    log 2 "Initializing Justclash service..." "⏳"
+    log 2 "Initializing Justclash service..." "₍^. .^₎⟆"
 
     check_requirement || return 1
 
@@ -308,9 +309,7 @@ nf_table_add() {
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
 
-    if [ "$nft_apply_changes" = "0" ]; then
-        return 0
-    fi
+    [ "$nft_apply_changes" = "0" ] && return 0
 
     config_get tproxy_port proxy tproxy_port
     config_get fake_ip_range proxy fake_ip_range
@@ -352,6 +351,9 @@ nf_table_add() {
         192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
         224.0.0.0/4, 240.0.0.0/4 }
 
+    #nft add set inet "$NF_TABLE_NAME" vpn_interfaces '{ type ifname; }'
+    #nft add set inet "$NF_TABLE_NAME" vpn_interfaces { type ifname; elements = { "tun*", "tap*", "awg*", "wg*", "ovpn*", "openvpn*", "l2tp*", "pptp*", "sstp*", "ikev2*", "ipsec*" } }
+
     nft add set inet "$NF_TABLE_NAME" inbound_interfaces '{ type ifname; }'
     for iface in $tproxy_input_interfaces; do
         nft add element inet "$NF_TABLE_NAME" inbound_interfaces { "\"$iface\"" }
@@ -392,6 +394,7 @@ nf_table_add() {
     # === OUTPUT chain (priority -150) -router's traffic ===
     if [ "$nft_apply_changes_router" = "1" ]; then
  	    nft add rule inet "$NF_TABLE_NAME" output mark "$NF_TABLE_FWMARK_PROXY" return
+        #nft add rule inet "$NF_TABLE_NAME" output meta oifname @vpn_interfaces return
         nft add rule inet "$NF_TABLE_NAME" output ip daddr @private_ips return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
 
@@ -525,27 +528,27 @@ check_requirement() {
     local ret=0
 
     if [ ! -f "$CORE_PATH" ]; then
-        log 0 "Requirement is missing: mihomo core is not installed." "❌"
+        log 0 "Requirement is missing: mihomo binary is not installed." "❌"
         ret=1
     fi
 
     if ! command -v jq >/dev/null 2>&1; then
-        log 0 "Requirement is missing: jq is not installed." "❌"
+        log 0 "Requirement is missing: jq package is not installed." "❌"
         ret=1
     fi
 
     if ! command -v nft >/dev/null 2>&1; then
-        log 0 "Requirement is missing: nft is not installed." "❌"
+        log 0 "Requirement is missing: nft package is not installed." "❌"
         ret=1
     fi
 
     if ! command -v curl >/dev/null 2>&1; then
-        log 0 "Requirement is missing: curl is not installed." "❌"
+        log 0 "Requirement is missing: curl package is not installed." "❌"
         ret=1
     fi
 
     if ! command -v md5sum >/dev/null 2>&1; then
-        log 0 "Requirement is missing: md5sum is not installed." "❌"
+        log 0 "Requirement is missing: md5sum package is not installed." "❌"
         ret=1
     fi
     return "$ret"
@@ -631,14 +634,14 @@ simple_uci_list_to_json_arr() {
             val=$(printf '%s' "$val" | sed 's/"/\\"/g')
             [ -n "$add_custom" ] && val="${val}${add_custom}"
             if [ -n "$result" ]; then
-                result="${result}, \"$val\""
+                result="${result},\n\"$val\""
             else
                 result="\"$val\""
             fi
         }
     done
 
-    [ -z "$result" ] && echo "[]" || echo "[$result]"
+    [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
 }
 
 ucibool_to_yaml_bool () {
@@ -728,6 +731,7 @@ handle_proxy_section() {
                 rest="${rest#*|}"
                 format="${rest%%|*}"
                 url="${rest#*|}"
+
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
@@ -736,7 +740,7 @@ handle_proxy_section() {
                 added_rulesets="$added_rulesets$ruleset|"
 
                 if [ "$behavior" = "domain" ]; then
-                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
+                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
                 fi
             fi
         done
@@ -766,7 +770,7 @@ handle_proxy_section() {
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
             fi
         done
 
@@ -801,7 +805,7 @@ handle_proxy_section() {
         config_get list "$section" additional_srcip_route
         for val in $list; do
             [ -n "$val" ] && {
-                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
+                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s,%s' "$val" "$name" "no-resolve")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             }
         done
@@ -975,7 +979,7 @@ handle_proxy_group_section() {
 
                 local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
             fi
         done
 
@@ -1010,7 +1014,7 @@ handle_proxy_group_section() {
         config_get list "$section" additional_srcip_route
         for val in $list; do
             [ -n "$val" ] && {
-                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s' "$val" "$name")
+                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s,%s' "$val" "$name" "no-resolve")
                 rules_array="${rules_array:+$rules_array,}\"$rule_str\""
             }
         done
@@ -1083,9 +1087,7 @@ handle_proxy_provider_section() {
         [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
 
         if [ -n "$override_dialer_proxy" ]; then
-            entry="$entry,\"override\":{\
-            \"dialer-proxy\": \"$(echo "$override_dialer_proxy" | trim)\",
-            }"
+            entry="$entry,\"override\":{\"dialer-proxy\":\"$(echo "$override_dialer_proxy" | trim)\" }"
         fi
 
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
@@ -1180,7 +1182,7 @@ handle_block_rule_section() {
             added_blocklists="$added_blocklists$val|"
 
             if [ "$behavior" = "domain" ]; then
-               list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
+               list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$yamlName\""
             fi
         else
             log 1 "Blocklist '$val' can't be found in $blocklist_content" "⚠️"
@@ -1210,6 +1212,8 @@ handle_block_rule_section() {
 
     selected_rule_sets="{${selected_rule_sets%,}}"
     rules="[${rules_array:-}]"
+    list_rulesets_names="[${list_rulesets_names:-}]"
+    list_suffix_names="[${list_suffix_names:-}]"
 
     echo "$rules" > "$file_rules"
     echo "$selected_rule_sets" > "$file_rulesets"
@@ -1221,9 +1225,13 @@ handle_direct_rule_section() {
     local ruleset_content="$1"
     local file_rules="$2"
     local file_rulesets="$3"
+    local file_rulesets_names="$4"
+    local file_suffix_names="$5"
     local rules_array=""
     local direct_rulesets=""
 
+    local list_rulesets_names=""
+    local list_suffix_names=""
     local proxy additional_domain_direct
     local additional_srcip_direct additional_destip_direct
     local list_update_interval enabled_list
@@ -1265,6 +1273,10 @@ handle_direct_rule_section() {
 
             direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
             added_rulesets="$added_rulesets$ruleset|"
+
+            if [ "$behavior" = "domain" ]; then
+               list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
+            fi
         fi
     done
 
@@ -1290,6 +1302,7 @@ handle_direct_rule_section() {
             esac
             local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$DEFAULT_RULESET_PROXY")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
         fi
     done
 
@@ -1313,6 +1326,7 @@ handle_direct_rule_section() {
                 fi
                 ;;
             esac
+
             local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$DEFAULT_RULESET_PROXY")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         fi
@@ -1324,13 +1338,14 @@ handle_direct_rule_section() {
         [ -n "$val" ] && {
             local rule_str=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$val")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$val\""
         }
     done
 
     config_get additional_srcip_direct direct_rules additional_srcip_direct
     for val in $additional_srcip_direct; do
         [ -n "$val" ] && {
-            local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT' "$val")
+            local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT,%s' "$val" "no-resolve")
             rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         }
     done
@@ -1345,9 +1360,13 @@ handle_direct_rule_section() {
 
     direct_rulesets="{${direct_rulesets%,}}"
     rules_array="[${rules_array:-}]"
+    list_rulesets_names="[${list_rulesets_names:-}]"
+    list_suffix_names="[${list_suffix_names:-}]"
 
     echo "$rules_array" > "$file_rules"
     echo "$direct_rulesets" > "$file_rulesets"
+    echo "$list_rulesets_names" > "$file_rulesets_names"
+    echo "$list_suffix_names" > "$file_suffix_names"
 }
 
 handle_mixed_port_rules_section() {
@@ -1388,6 +1407,7 @@ core_generate_yaml() {
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_include_domains fake_ip_exclude_domains fake_ip_filter_data
     local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_direct
     local proxies proxy_groups rule_providers proxy_providers names_suffixes_proxy_groups names_suffixes_proxies names_rulesets_proxy_groups names_rulesets_proxies
+    local names_rulesets_block names_suffixes_block names_rulesets_direct names_suffixes_direct
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path
     local block_rulesets_content rulesets_content
@@ -1452,10 +1472,14 @@ core_generate_yaml() {
 
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules_direct.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_direct.XXXXXX)
-    handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path"
+    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
+    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
+    handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
     rules_direct=$(cat "$tmp_rules_file")
     rulesets_direct=$(cat "$tmp_rulesets_path")
-    rm -f "$tmp_rules_file" "$tmp_rulesets_path"
+    names_rulesets_direct=$(cat "$tmp_names_rulesets_path")
+    names_suffixes_direct=$(cat "$tmp_names_suffixes_path")
+    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules_block.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_block.XXXXXX)
@@ -1469,7 +1493,6 @@ core_generate_yaml() {
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets.XXXXXX)
     tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_proxygroups.XXXXXX)
@@ -1501,13 +1524,15 @@ core_generate_yaml() {
     if [ "$fake_ip_filter_mode" = "whitelist" ]; then
         fake_ip_filter_data=$(jq -n \
             --arg custom "$fake_ip_include_domains" \
+            --arg nrd "$names_rulesets_direct" \
+            --arg nsd "$names_suffixes_direct" \
             --arg nrb "$names_rulesets_block" \
             --arg nsb "$names_suffixes_block" \
             --arg nrpg "$names_rulesets_proxy_groups" \
             --arg nspg "$names_suffixes_proxy_groups" \
             --arg nrp "$names_rulesets_proxies" \
             --arg nsp "$names_suffixes_proxies" \
-            '($custom | fromjson) + ($nrb | fromjson) + ($nsb | fromjson) + ($nrpg | fromjson) + ($nspg | fromjson) + ($nrp | fromjson) + ($nsp | fromjson)'
+            '($custom | fromjson) + ($nrd | fromjson) + ($nsd | fromjson) + ($nrb | fromjson) + ($nsb | fromjson) + ($nrpg | fromjson) + ($nspg | fromjson) + ($nrp | fromjson) + ($nsp | fromjson)'
         )
     else
         fake_ip_filter_data=$fake_ip_exclude_domains
@@ -1962,7 +1987,7 @@ diag_nft() {
 
     clog 2 "Verifying existence of NFTables table '$NF_TABLE_NAME'..."
     if ! nft list table inet "$NF_TABLE_NAME" >/dev/null 2>&1; then
-        clog 0 "Table '$NF_TABLE_NAME' not found. Please create the required NFTables table."
+        clog 0 "Table '$NF_TABLE_NAME' not found. Please create the required NFTables table." "❌"
         return 1
     fi
 
@@ -1977,12 +2002,12 @@ diag_nft() {
 diag_route() {
     clog 2 "Verifying existence of route rule..."
     if ! ip rule list | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup $NF_ROUTE_TABLE"; then
-        clog 0 "Route rule 'ip rule add fwmark ""$NF_TABLE_FWMARK_FINAL"" table $NF_ROUTE_TABLE' is missing!"
+        clog 0 "Route rule 'ip rule add fwmark ""$NF_TABLE_FWMARK_FINAL"" table $NF_ROUTE_TABLE' is missing!" "❌"
     fi
     ip rule list
 
     if ! ip route show table "$NF_ROUTE_TABLE" | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
-         clog 0 "Route table $NF_ROUTE_TABLE is incorrect!"
+         clog 0 "Route table $NF_ROUTE_TABLE is incorrect!" "❌"
     fi
     ip route show table "$NF_ROUTE_TABLE"
 }
@@ -2006,11 +2031,11 @@ diag_proxy_resolver() {
     ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
 
     if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
-        clog 0 "Fake IP DNS query failed"
+        clog 0 "Fake IP DNS query failed" "❌"
         return 1
     else
         echo "$ips"
-        clog 2 "Fake IP DNS query successful"
+        clog 2 "Fake IP DNS query successful" "✅"
         return 0
     fi
 }
@@ -2032,11 +2057,11 @@ diag_external_resolver() {
     ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
 
     if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
-        clog 0 "External DNS query failed"
+        clog 0 "External DNS query failed" "❌"
         return 1
     else
         clog 2 "$ips"
-        clog 2 "External DNS query successful"
+        clog 2 "External DNS query successful" "✅"
         return 0
     fi
 }
@@ -2055,10 +2080,10 @@ diag_icmp() {
     local exit_code=$?
 
     if [ "$exit_code" -eq 0 ]; then
-        clog 2 "Ping to ${target} is successful"
+        clog 2 "Ping to ${target} is successful" "✅"
         clog 2 "$ping_output"
     else
-        clog 0 "Ping to ${target} is failed"
+        clog 0 "Ping to ${target} is failed" "❌"
         clog 0 "$ping_output"
     fi
 }
@@ -2073,68 +2098,66 @@ diag_service_config() {
 
 diag_report() {
     local running autoload
-    running=$(service "$PROGNAME" status)
-    if service "$PROGNAME" enabled; then
-        autoload="yes"
-    else
-        autoload="no"
-    fi
+    service "$PROGNAME" running && running="✅" || running="❌"
+    service "$PROGNAME" enabled && autoload="✅" || autoload="❌"
 
 cat <<EOF
-----------------------------
-$PROGNAME diagnostic report:
-----------------------------
 
--> Basic:
+₍^. .^₎⟆ $PROGNAME diagnostic:
+
+❯❯❯❯ Basic:
 Device:  $(get_hw_model || echo "$NO_DATA_STRING")
 OpenWRT: $(get_os_version || echo "$NO_DATA_STRING")
 Service: $JUSTCLASH_VERSION
 Mihomo:  $(info_mihomo)
 
--> Status:
+❯❯❯❯ Status:
 Active:  $running
 Load:  $autoload
 
--> NFT Tables:
+❯❯❯❯ NFT Tables:
 $(diag_nft)
 
--> Routes:
+❯❯❯❯ Routes:
 $(diag_route)
 
--> ICMP $DIAG_IP_CHECK_PING_YANDEX :
+❯❯❯❯ ICMP $DIAG_IP_CHECK_PING_YANDEX :
 $(diag_icmp "$DIAG_IP_CHECK_PING_YANDEX" 2)
 
--> ICMP $DIAG_IP_CHECK_PING_GOOGLE :
+❯❯❯❯ ICMP $DIAG_IP_CHECK_PING_GOOGLE :
 $(diag_icmp "$DIAG_IP_CHECK_PING_GOOGLE" 2)
 
--> DNS resolve $DIAG_RESOLVE_URL_YANDEX with proxy:
+❯❯❯❯ ICMP $DIAG_DOMAIN_CHECK_PING_GITHUB :
+$(diag_icmp "$DIAG_DOMAIN_CHECK_PING_GITHUB" 2)
+
+❯❯❯❯ DNS resolve $DIAG_RESOLVE_URL_YANDEX with proxy:
 $(diag_proxy_resolver "$DIAG_RESOLVE_URL_YANDEX")
 
--> DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_YANDEX:
+❯❯❯❯ DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_YANDEX:
 $(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_YANDEX")
 
--> DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_GOOGLE:
+❯❯❯❯ DNS resolve $DIAG_RESOLVE_URL_YANDEX with $DIAG_IP_CHECK_PING_GOOGLE:
 $(diag_external_resolver "$DIAG_RESOLVE_URL_YANDEX" "$DIAG_IP_CHECK_PING_GOOGLE")
 
--> Zapret:
-$(if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "Zapret detected."; else echo "No zapret installed."; fi)
+❯❯❯❯ Zapret:
+$(if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "⚠️ Zapret installed."; else echo "✅ No zapret installed."; fi)
 
--> ByeDPI:
-$(if [ -f "$BYEDPI_FILEPATH" ]; then echo "ByeDPI detected."; else echo "No ByeDPI installed."; fi)
+❯❯❯❯ ByeDPI:
+$(if [ -f "$BYEDPI_FILEPATH" ]; then echo "⚠️ ByeDPI installed."; else echo "✅ No ByeDPI installed."; fi)
 
--> YoutubeUnblock:
-$(if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "YoutubeUnblock detected."; else echo "No YoutubeUnblock installed."; fi)
+❯❯❯❯ YoutubeUnblock:
+$(if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "⚠️ YoutubeUnblock installed."; else echo "✅ No YoutubeUnblock installed."; fi)
 
--> /etc/resolv.conf:
+❯❯❯❯ /etc/resolv.conf:
 $(cat /etc/resolv.conf)
 
--> Network config:
+❯❯❯❯ Network config:
 $(uci show network)
 
--> DHCP config:
+❯❯❯❯ DHCP config:
 $(uci show dhcp)
 
--> Service config:
+❯❯❯❯ Service config:
 $(uci show "$PROGNAME")
 
 EOF
