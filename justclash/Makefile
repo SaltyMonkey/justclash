@@ -63,15 +63,6 @@ define Package/justclash/conffiles
 /etc/config/justclash
 endef
 
-define Package/$(PKG_NAME)/prerm
-#!/bin/sh
-# check if we are on real system
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	/usr/bin/justclash stop
-fi
-exit 0
-endef
-
 define Package/$(PKG_NAME)/postrm
 #!/bin/sh
 # check if we are on real system
