@@ -128,7 +128,7 @@ return view.extend({
         tabname = "proxieslists_tab";
         s.tab(tabname, _("Rules"));
 
-        o = s.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
+        o = s.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
@@ -492,7 +492,7 @@ return view.extend({
         tabname = "proxiesgrouplist_tab";
         s2.tab(tabname, _("Rules"));
 
-        o = s2.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
+        o = s2.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
@@ -568,7 +568,7 @@ return view.extend({
         tabname = "directruleslist_tab";
         s3.tab(tabname, _("Rules"));
 
-        o = s3.taboption(tabname, form.MultiValue, "enabled_list", _("Use with rules:"));
+        o = s3.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         o.optional = true;
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
@@ -652,7 +652,7 @@ return view.extend({
         tabname = "rejectrules_tab";
         s4.tab(tabname, _("Rules"));
 
-        o = s4.taboption(tabname, form.MultiValue, "enabled_blocklist", _("Use with rules:"));
+        o = s4.taboption(tabname, form.DynamicList, "enabled_blocklist", _("Use with rules:"));
         result.blockRulesetsItems.forEach(item => {
             o.value(item.yamlName, _(`${item.name}`));
         });
