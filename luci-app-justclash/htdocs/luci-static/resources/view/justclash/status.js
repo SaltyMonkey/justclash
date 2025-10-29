@@ -57,7 +57,7 @@ const createTable = (results, dynamicStatusCells) => {
 const showExecModalHandler = (title, warning, command, args) =>
     ui.createHandlerFn(this, async () => {
         ui.showModal(title, [E("p", _("Please wait..."))]);
-        const warn = warning ? [E("strong", { style: "color:#a00" }, _("Dangerous action!")), E("div", { style: "margin-top:1em" }, warning)] : [];
+        const warn = warning ? [E("strong", { style: "color:var(--error-color-medium)" }, _("Dangerous action!")), E("div", { style: "margin-top:1em;color:var(--error-color-medium)" }, warning)] : [];
         try {
             const res = await fs.exec(command, args);
             ui.showModal(title, [
