@@ -24,7 +24,7 @@ clog() {
     local message="$2"
     local emoji="${3:-}"
 
-    [ "${PROCD_MODE:-0}" -eq 1 ] && return
+    [ "$JUSTCLASH_ENV" = "procd" ] && return
 
     local ts facility
     ts=$(date '+%Y-%m-%d %H:%M:%S.%3N')
