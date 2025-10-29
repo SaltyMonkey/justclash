@@ -1,3 +1,35 @@
+## [0.5.0] - 29102025
+
+- Service: Refactor diagnostic
+- Service: Added github ping in diagnostic
+- Service: Wording change for some messages
+- Service: Better look in generated mihomo config
+- Service: Fix incorrect fake ip generation
+- Service: Fix incorrect config generating
+- Service: Fix broken fake ip code for manual domains in some cases
+- Service: Added no-resolve for srcip_route cidrs
+- Service: Added fake ip for direct rulesets
+- Service: Remove wrong and unused uri parse check
+- Service: remove doubled stop function calls in some cases
+- Service: Fix doubled messge in system journal
+- Service: Update inbuild rulesets
+- LuCI: Status page minor refactor
+- LuCI: Fix for "not visible" last line in Logs text area
+- LuCI: Better inbuild rule-sets selector look in Routing page
+- LuCI: Color text in red for status page modal window
+- UCI: Change some defaults
+nft_apply_changes_router  ->
+fake_ip_range  -> 198.18.0.1/21
+use_system_hosts  -> 0
+fake_ip_filter_mode  -> 'whitelist'
+default_nameserver -> + default_nameserver
+fake_ip_exclude_domains  -> added some connection urls
+sniffer_exclude_domain -> added some connection urls
+
+**This version requires:**
+- UCI config must be reset
+- Browser cache must be cleaned up
+
 ## [0.4.9] - 17102025
 
 - Service: Minor refactor
