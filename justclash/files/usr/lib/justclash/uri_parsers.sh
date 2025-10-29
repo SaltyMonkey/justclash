@@ -236,7 +236,6 @@ parse_vless_url() {
 
     local json="\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
 
-    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
     [ -n "$penc" ] && json="$json,\"packet-encoding\":\"$penc\""
 
     if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
