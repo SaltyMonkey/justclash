@@ -44,6 +44,7 @@ parse_ss_url() {
     server="${hostport%%:*}"
     port="${hostport##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
+    port=$(echo "$port" | tr -cd '0-9')
 
     # Парсинг query (например, для plugin)
     local temp_query="$query_part"
@@ -89,8 +90,8 @@ parse_socks5_url() {
 
     # host:port
     server="$(url_decode "${hostport%%:*}")"
-    port="${hostport##*:}"
 
+    port="${hostport##*:}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
     # JSON
@@ -117,6 +118,7 @@ parse_trojan_url() {
     local server="${host%%:*}"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port="$DEFAULT_TLS_PORT"
+    port=$(echo "$port" | tr -cd '0-9')
 
     local query_part=""
     # shellcheck disable=SC2249
@@ -194,6 +196,7 @@ parse_vless_url() {
     local server="${host%%:*}"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
+    port=$(echo "$port" | tr -cd '0-9')
 
     local query_part=""
     # shellcheck disable=SC2249
@@ -237,6 +240,7 @@ parse_vless_url() {
     local json="\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
 
     [ -n "$penc" ] && json="$json,\"packet-encoding\":\"$penc\""
+    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
 
     if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
         json="$json,\"tls\":true"
