@@ -77,8 +77,12 @@ check_icmp() {
     fi
 }
 
-info_openwrt() {
-   grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2 || echo "${NO_DATA_STRING}"
+get_os_arch() {
+    grep OPENWRT_ARCH /etc/os-release | cut -d'"' -f2 || echo "${NO_DATA_STRING}"
+}
+
+get_os_version() {
+    grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}'
 }
 
 info_device() {
@@ -100,7 +104,7 @@ is_bin_installed() {
 banner() {
     local model openwrt
     model=$(info_device)
-    openwrt=$(info_openwrt)
+    openwrt=$(get_os_version)
     print_bold_yellow "-----------------------------"
     print_bold_yellow "    JustClash Init Script"
     print_bold_yellow "-----------------------------"
@@ -342,9 +346,8 @@ diagnostic_conflicts_interactive() {
 }
 
 detect_arch() {
-    local arch_raw release_info
-    release_info=$(cat /etc/openwrt_release 2>/dev/null)
-    arch_raw=$(echo "$release_info" | sed -n "s/^DISTRIB_ARCH='\(.*\)'$/\1/p")
+    local arch_raw
+    arch_raw=$(get_os_arch)
 
     case "$arch_raw" in
         aarch64_*) echo "arm64" ;;
