@@ -5,13 +5,13 @@
 
 ## Overview
 
-**JustClash** is a simple service package for OpenWrt that manages the Mihomo/Clash core in TPROXY mode. The project showcases how to wrap, configure, and control external proxy binaries, automate Linux service management, and interact with network and routing components in a router environment.
+**JustClash** is a simple service package for OpenWrt that manages the Mihomo/Clash core in tproxy mode. The project showcases how to wrap, configure, and control external proxy binaries, automate Linux service management, and interact with network and routing components in a router environment.
 
 ## Features
 
 - Launches and supervises the Mihomo/Clash core as a system service.
 - Integration of external binaries with Linux shell scripting.
-- Simplified network and routing configuration (TPROXY, Mixed port, firewall, policy routing).
+- Simplified network and routing configuration (tproxy, Mixed port, firewall, policy routing).
 - Integrates with OpenWrt service management.
 - All configuration is handled via UCI (`/etc/config/justclash`).
 - LuCI web interface for controlling and monitoring the service.
@@ -54,7 +54,7 @@ You can install JustClash with a single command using the provided install scrip
 sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh)
 ```
 
-This method will automatically download and execute the installation script, handling the setup for you.
+This method will allow automatically download, execute the installation script and install justclash with minimal manual input, handling the setup for you.
 
 ### 2. Download Prebuilt Packages from Releases
 
@@ -135,7 +135,7 @@ docker compose -f 'Docker-compose.yml' up -d --build 'apk-builder'
 
 ## Limitations
 
-- **TUN mode is not supported.** Only TPROXY mode is available.
+- **TUN mode is not supported.** Only tproxy mode is available.
 - This is a demonstration of service integration, not a full-featured proxy solution.
 - Use at your own risk; no production support.
 
