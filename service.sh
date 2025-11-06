@@ -7,7 +7,7 @@ CORE_RELEASE_DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download
 
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash/releases/latest"
 
-FORCE_SPACE_FLAG=0
+CHECK_SPACE=1
 
 URL_GITHUB="github.com"
 URL_CHECK_PING="77.88.8.8"
@@ -686,7 +686,7 @@ install_service() {
     mkdir -p "$TMP_DOWNLOAD_PATH"
     diagnostic_tools
     diagnostic_net
-    if [ "$FORCE_SPACE_FLAG" -eq 1 ]; then
+    if [ "$CHECK_SPACE" -eq 1 ]; then
         diagnostic_mem
     fi
     diagnostic_conflicts_interactive
@@ -767,8 +767,8 @@ run() {
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --force-space)
-            FORCE_SPACE_FLAG=1
+        --skip-space-check)
+            CHECK_SPACE=0
             shift
             ;;
         *)
