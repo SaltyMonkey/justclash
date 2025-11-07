@@ -16,8 +16,8 @@ JUSTCLASH_VERSION="__COMPILED_VERSION_VARIABLE__"
 [ -r /lib/config/uci.sh ] && . /lib/config/uci.sh
 . /usr/lib/justclash/logging.sh
 . /usr/lib/justclash/migration.sh
-. /usr/lib/justclash/compat_fixes.sh
-. /usr/lib/justclash/uri_parsers.sh
+. /usr/lib/justclash/compat.sh
+. /usr/lib/justclash/uri.sh
 . /usr/lib/justclash/helpers.sh
 
 PROGNAME="justclash"
