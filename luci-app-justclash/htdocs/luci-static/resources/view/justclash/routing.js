@@ -235,7 +235,7 @@ return view.extend({
         };
 
         o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
-        o.default = '0';
+        o.default = primitives.FALSE;
         o.description = _("Send HWID data to server with proxy provider request.");
 
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
@@ -296,7 +296,7 @@ return view.extend({
         o.description = _("Timeout for each individual health check in milliseconds.");
 
         o = spp.taboption(tabname, form.Flag, "health_check_lazy", _("Lazy:"));
-        o.default = '1';
+        o.default = primitives.TRUE;
 
         tabname = "proxyproviderfilter_tab";
         spp.tab(tabname, _("Filters"));
@@ -441,7 +441,7 @@ return view.extend({
         o.description = _("Timeout for each individual health check in milliseconds.");
 
         o = s2.taboption(tabname, form.Flag, "lazy", _("Lazy:"));
-        o.default = '1';
+        o.default = primitives.TRUE;
 
         tabname = "proxiesgroupfilter_tab";
         s2.tab(tabname, _("Filters"));
