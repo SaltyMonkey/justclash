@@ -473,7 +473,7 @@ dnsmasq_update() {
         uci commit dhcp
         log 2 "DNS configuration has been updated with new settings." "🌐"
         /etc/init.d/dnsmasq restart > /dev/null 2>&1
-        log 2 "dnsmasq service has been restarted to apply DNS changes." "🔄"
+        log 2 "Dnsmasq service has been restarted to apply DNS changes." "🔄"
     else
         log 2 "DNS configuration remains unchanged; update skipped as per configuration rules." "🛠️"
     fi
