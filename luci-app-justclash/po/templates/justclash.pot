@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-25 20:43+0300\n"
+"POT-Creation-Date: 2025-11-13 15:39+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -97,39 +97,39 @@ msgstr ""
 msgid "Keyword should be at least 2 characters long"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:188
+#: htdocs/luci-static/resources/view/justclash/common.js:187
 msgid "Regexp must not start or end with a space"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:194
+#: htdocs/luci-static/resources/view/justclash/common.js:192
 msgid "Invalid regular expression: "
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:210
+#: htdocs/luci-static/resources/view/justclash/common.js:208
 msgid "Invalid expression in "
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:217
+#: htdocs/luci-static/resources/view/justclash/common.js:215
 msgid "Status"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:218
+#: htdocs/luci-static/resources/view/justclash/common.js:216
 msgid "Logs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:219
+#: htdocs/luci-static/resources/view/justclash/common.js:217
 msgid "Connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:220
+#: htdocs/luci-static/resources/view/justclash/common.js:218
 msgid "Routing"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:221
+#: htdocs/luci-static/resources/view/justclash/common.js:219
 msgid "Service"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:222
+#: htdocs/luci-static/resources/view/justclash/common.js:220
 msgid "Proxy"
 msgstr ""
 
