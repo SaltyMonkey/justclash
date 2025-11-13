@@ -57,6 +57,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
 
 	sed -i -e 's/__COMPILED_VERSION_VARIABLE__/$(PKG_VERSION)/g' $(1)/usr/bin/justclash
+
+	RANDOM_MAC_REPLACEMENT=$(echo "$(date +%s%N)$RANDOM" | md5sum | cut -c1-30)
+	sed -i -e "s/__withoutmac__/${RANDOM_MAC_REPLACEMENT}/g" $(1)/usr/lib/justclash/helpers.sh || true
 endef
 
 define Package/justclash/conffiles
