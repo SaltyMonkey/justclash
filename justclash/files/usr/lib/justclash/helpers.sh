@@ -87,26 +87,27 @@ get_os_version() {
 }
 
 hwid_generate() {
-    local interface mac_addr board_data arch_data str hwid_str
+    local interface mac_addr board_data arch_data hwid_str
     local no_mac_string="withoutmac"
 
-    interface=$(ip route show default | awk '/dev/ {print $5; exit}')
-    board_data=$(ubus call system board | jq -r '.board_name')
-    arch_data=$(get_os_arch)
+    interface=$(ubus call network.interface dump | jq -r '.interface[] | select(.route[]?.target == "0.0.0.0") | .l3_device' | head -n1)
 
     if [ -z "$interface" ]; then
-        interface=$(ip link show up | awk -F: '/^[0-9]+:/ {print $2}' | sed 's/ //g' | grep -E '^(eth|lan|wan)' | head -n1)
+        interface=$(ubus call network.device status | jq -r 'to_entries[] | select(.value.up == true and .key != "lo" and (.key | startswith("br-") | not)) | .key' | head -n1)
     fi
 
     if [ -n "$interface" ]; then
-        mac_addr=$(ip link show "$interface" | awk '/ether/ {print $2}' | tr -d ':') || echo "$no_mac_string"
+        mac_addr=$(ubus call network.device status "{\"name\":\"$interface\"}" | jq -r '.macaddr // empty' | tr -d ':')
+        [ -z "$mac_addr" ] && mac_addr=$no_mac_string
     else
         mac_addr=$no_mac_string
     fi
 
-    str=hwid_$mac_addr$board_data$arch_data
+    board_data=$(ubus call system board | jq -r '.board_name')
 
-    hwid_str=$(echo "$str" | md5sum | awk '{print $1}' | tr 'A-F' 'a-f' | head -c 14)
+    arch_data=$(get_os_arch)
+
+    hwid_str=$(printf "hwid_%s%s%s" "$mac_addr" "$board_data" "$arch_data" | md5sum | cut -c1-14)
 
     echo "$hwid_str"
 }
