@@ -183,11 +183,9 @@ return baseclass.extend({
 
         value = value.trim();
 
-        // No spaces at start/end
         if (/^\s|\s$/.test(value))
             return _("Regexp must not start or end with a space");
 
-        // Try to compile regexp
         try {
             new RegExp(value);
         } catch (e) {
