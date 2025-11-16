@@ -1,3 +1,14 @@
+## [0.5.2] - 16112025
+
+- Service: Minor changes
+- Service: Refactor HWID into ubus calls
+- Service: Make HWID failover value unique
+- Service: Cleanup server port from incorrect values
+- Service: Update default user agent
+- Install: Sync codebase with script funcs
+- Install: Fix --skip-space-check key
+- UCI: Block QUIC by default
+
 ## [0.5.0] - 29102025
 
 - Service: Refactor diagnostic
