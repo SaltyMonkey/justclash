@@ -116,6 +116,9 @@ return baseclass.extend({
             "trojan://",
             "ss://",
             "socks5://",
+            "socks4://",
+            "socks://",
+            "https://",
             "mierus://"
         ];
 
