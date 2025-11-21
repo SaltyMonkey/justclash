@@ -24,9 +24,9 @@ PROGNAME="justclash"
 
 config_load "$PROGNAME"
 
-CORE_RELEASE_CHECK_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
-CORE_RELEASE_DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download"
-INBUILD_RULESETS_FILES_DOWNLOAD_URL="https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main"
+CORE_RELEASE_CHECK_URL="__CORE_RELEASE_CHECK_URL_VARIABLE__"
+CORE_RELEASE_DOWNLOAD_URL="__CORE_RELEASE_DOWNLOAD_URL_VARIABLE__"
+INBUILD_RULESETS_FILES_DOWNLOAD_URL="__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__"
 
 NO_DATA_STRING="N/A"
 
@@ -52,7 +52,7 @@ RULESETS_FILE="${ETC_DIR}/${RULESETS_FILENAME}"
 
 DASHBOARD_PATH="${ETC_DIR}/zashboard"
 DASHBOARD_NAME="dashboard"
-DASHBOARD_DEFAULT_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+DASHBOARD_DEFAULT_URL="__DASHBOARD_DEFAULT_URL_VARIABLE__"
 
 ETC_CONFIG_DIR="/etc/config"
 DEFAULT_CONFIG_PATH="${ETC_DIR}/default.config"

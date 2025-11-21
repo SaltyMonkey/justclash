@@ -56,10 +56,15 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
 
-	sed -i -e 's/__COMPILED_VERSION_VARIABLE__/$(PKG_VERSION)/g' $(1)/usr/bin/justclash
+	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/bin/justclash
+
+	sed -i -e 's|__CORE_RELEASE_CHECK_URL_VARIABLE__|https://api.github.com/repos/MetaCubeX/mihomo/releases/latest|g' $(1)/usr/bin/justclash
+	sed -i -e 's|__CORE_RELEASE_DOWNLOAD_URL_VARIABLE__|https://github.com/MetaCubeX/mihomo/releases/download|g' $(1)/usr/bin/justclash
+	sed -i -e 's|__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main|g' $(1)/usr/bin/justclash
+	sed -i -e 's|__DASHBOARD_DEFAULT_URL_VARIABLE__|https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip|g' $(1)/usr/bin/justclash
 
 	RANDOM_MAC_REPLACEMENT=$(echo "$(date +%s%N)$RANDOM" | md5sum | cut -c1-30)
-	sed -i -e "s/__withoutmac__/${RANDOM_MAC_REPLACEMENT}/g" $(1)/usr/lib/justclash/helpers.sh || true
+	sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|${RANDOM_MAC_REPLACEMENT}|g" $(1)/usr/lib/justclash/helpers.sh || true
 endef
 
 define Package/justclash/conffiles

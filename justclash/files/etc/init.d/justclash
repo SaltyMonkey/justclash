@@ -47,7 +47,7 @@ boot() {
     config_get_bool delayed_boot_timeout settings delayed_boot_timeout 8
 
     if [ "$delayed_boot" -eq 1 ]; then
-        logger -p "user.info" -t "$PROGNAME" "Delayed start was enabled. Delaying..."
+        logger -p "user.info" -t "$PROGNAME" "[Init.d] Delayed start was enabled. Delaying..."
         sleep "$delayed_boot_timeout"
     fi
 
