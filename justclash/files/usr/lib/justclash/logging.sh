@@ -4,7 +4,7 @@
 # shellcheck shell=dash
 
 # --------------------------------------------
-# External justclash service part
+# External justclash logging part
 # --------------------------------------------
 
 PROGNAME="justclash"

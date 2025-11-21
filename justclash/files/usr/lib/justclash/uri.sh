@@ -4,7 +4,7 @@
 # shellcheck shell=dash
 
 # --------------------------------------------
-# External justclash service part
+# External justclash parsers/generators part
 # --------------------------------------------
 
 parse_ss_url() {
