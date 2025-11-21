@@ -67,9 +67,13 @@ parse_ss_url() {
         "$server" "$port" "$method" "$password"
 }
 
-parse_socks5_url() {
+parse_simple_proxy_url() {
     local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
-    local raw="${link#socks5://}"
+    raw="$link"
+    raw="${raw#https://}"
+    raw="${raw#socks://}"
+    raw="${raw#socks4://}"
+    raw="${raw#socks5://}"
 
     local server="" port="" username="" password=""
     local userinfo="" hostport=""
@@ -98,8 +102,8 @@ parse_socks5_url() {
     local json="\"type\":\"socks5\",\"server\":\"$server\",\"port\":$port"
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
-    json="$json,\"udp\":true"
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
+    json="$json,\"udp\":true"
 
     echo "{$json}"
 }
