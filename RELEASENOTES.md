@@ -1,3 +1,15 @@
+## [0.5.3] - 22112025
+
+- Service: Added simple proxy URI links (socks4://, https://, socks://)
+- UCI: Fixed Yandex DNS in config
+- UCI: Excluded mobile providers from sniffer and fake ip
+- UCI: Added Quad9 default DNS
+- Service: Funcs refactor
+
+**This version requires:**
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.5.2] - 16112025
 
 - Service: Minor changes
@@ -8,6 +20,9 @@
 - Install: Sync codebase with script funcs
 - Install: Fix --skip-space-check key
 - UCI: Block QUIC by default
+
+**This version requires:**
+- Browser cache must be cleaned up
 
 ## [0.5.0] - 29102025
 
