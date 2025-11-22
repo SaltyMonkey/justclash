@@ -1,18 +1,18 @@
-Category ADS all|category-ads-all|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/category-ads-all.mrs
-Google ADS|google-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/google-ads.mrs
-Hagezi light ADS|hagezi-light-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-light-ads.mrs
-Hagezi pro ADS|hagezi-pro-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-ads.mrs
-Hagezi pro mini ADS|hagezi-pro-mini-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-mini-ads.mrs
-Hagezi pro plus mini ADS|hagezi-pro-plus-mini-ads|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/hagezi-pro-plus-mini-ads.mrs
-Oisd big|oisd-big|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-big.mrs
-Oisd NSFW small|oisd-nsfw-small|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw-small.mrs
-Oisd NSFW|oisd-nsfw|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-nsfw.mrs
-Oisd small|oisd-small|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/ads/oisd-small.mrs
-Hagezi spy apple|hagezi-spy-apple|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-apple.mrs
-Hagezi spy huawei|hagezi-spy-huawei|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-huawei.mrs
-Hagezi spy lgwebos|hagezi-spy-lgwebos|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-lgwebos.mrs
-Hagezi spy opporealme|hagezi-spy-opporealme|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-opporealme.mrs
-Hagezi spy samsung|hagezi-spy-samsung|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-samsung.mrs
-Hagezi spy vivo|hagezi-spy-vivo|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-vivo.mrs
-Hagezi spy winoffice|hagezi-spy-winoffice|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-winoffice.mrs
-Hagezi spy xiaomi|hagezi-spy-xiaomi|domain|mrs|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main/badware/hagezi-spy-xiaomi.mrs
+Category ADS all|category-ads-all|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/category-ads-all.mrs
+Google ADS|google-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/google-ads.mrs
+Hagezi light ADS|hagezi-light-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-light-ads.mrs
+Hagezi pro ADS|hagezi-pro-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-ads.mrs
+Hagezi pro mini ADS|hagezi-pro-mini-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-mini-ads.mrs
+Hagezi pro plus mini ADS|hagezi-pro-plus-mini-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-plus-mini-ads.mrs
+Oisd big|oisd-big|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-big.mrs
+Oisd NSFW small|oisd-nsfw-small|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-nsfw-small.mrs
+Oisd NSFW|oisd-nsfw|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-nsfw.mrs
+Oisd small|oisd-small|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-small.mrs
+Hagezi spy apple|hagezi-spy-apple|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-apple.mrs
+Hagezi spy huawei|hagezi-spy-huawei|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-huawei.mrs
+Hagezi spy lgwebos|hagezi-spy-lgwebos|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-lgwebos.mrs
+Hagezi spy opporealme|hagezi-spy-opporealme|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-opporealme.mrs
+Hagezi spy samsung|hagezi-spy-samsung|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-samsung.mrs
+Hagezi spy vivo|hagezi-spy-vivo|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-vivo.mrs
+Hagezi spy winoffice|hagezi-spy-winoffice|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-winoffice.mrs
+Hagezi spy xiaomi|hagezi-spy-xiaomi|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-xiaomi.mrs
