@@ -27,7 +27,7 @@ return baseclass.extend({
     defaultNftOptions: [{ value: "BY RULES", text: _("By rules") }, { value: "DROP", text: _("Drop") }],
     defaultNftNtpOptions: [{ value: "BY RULES", text: _("By rules") }, { value: "DROP", text: _("Drop") }, { value: "DIRECT", text: _("Direct") }],
     defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.2.6172.169 Safari/537.36",
-    defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "edge"],
+    defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "randomized", "edge"],
     defaultUpdateOptions: [{ value: "no", text: _("Disabled") }, { value: "checkandupdate", text: _("Check and do update") }],
     defaultTimeoutForWSReconnect: 10000,
     defaultRuleSetUpdateInterval: 86400,
