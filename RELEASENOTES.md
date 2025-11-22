@@ -1,3 +1,13 @@
+## [0.5.4] - 22112025
+
+- Service: Changed resources links to jsdelivr
+- UCI: Changed default fingerprint to 'random'
+- LuCI: Added 'randomized` in fingerprints list
+
+**This version requires:**
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.5.3] - 22112025
 
 - Service: Added simple proxy URI links (socks4://, https://, socks://)
