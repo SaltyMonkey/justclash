@@ -2,7 +2,7 @@
 
 return baseclass.extend({
     justclashLuciVersion: "__COMPILED_VERSION_VARIABLE__",
-    justclashOnlineVersionUrl: "https://api.github.com/repos/saltymonkey/justclash/releases/latest",
+    justclashOnlineVersionUrl: "__ONLINE_VERSION_CHECK_URL__",
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
