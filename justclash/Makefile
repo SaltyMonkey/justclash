@@ -60,7 +60,7 @@ define Package/$(PKG_NAME)/install
 
 	sed -i -e 's|__CORE_RELEASE_CHECK_URL_VARIABLE__|https://api.github.com/repos/MetaCubeX/mihomo/releases/latest|g' $(1)/usr/bin/justclash
 	sed -i -e 's|__CORE_RELEASE_DOWNLOAD_URL_VARIABLE__|https://github.com/MetaCubeX/mihomo/releases/download|g' $(1)/usr/bin/justclash
-	sed -i -e 's|__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__|https://raw.githubusercontent.com/SaltyMonkey/mrs-parsed-data/refs/heads/main|g' $(1)/usr/bin/justclash
+	sed -i -e 's|__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data|g' $(1)/usr/bin/justclash
 	sed -i -e 's|__DASHBOARD_DEFAULT_URL_VARIABLE__|https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip|g' $(1)/usr/bin/justclash
 
 	RANDOM_MAC_REPLACEMENT=$(echo "$(date +%s%N)$RANDOM" | md5sum | cut -c1-30)
