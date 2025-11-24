@@ -10,15 +10,11 @@
 parse_ss_url() {
     local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
 
-    # Удаляем #, но сохраняем query (для plugin)
     link="${link%%#*}"
 
     local userinfo hostport method password server port decoded query_part
-    #local plugin=""
-
-    # Извлечение query (после ?)
     query_part=""
-    # shellcheck disable=SC2249
+
     case "$link" in *\?*) query_part="${link#*\?}"; link="${link%%\?*}"; esac
 
     if echo "$link" | grep -q '@'; then
@@ -27,8 +23,8 @@ parse_ss_url() {
 
         decoded="$(echo "$userinfo" | base64 -d 2>/dev/null)"
         if [ -n "$decoded" ] && echo "$decoded" | grep -q ':'; then
-            method="$(url_decode "${decoded%%:*}")"  # Декодирование
-            password="$(url_decode "${decoded#*:}")"  # Декодирование
+            method="$(url_decode "${decoded%%:*}")"
+            password="$(url_decode "${decoded#*:}")"
         else
             method="$(url_decode "${userinfo%%:*}")"
             password="$(url_decode "${userinfo#*:}")"
@@ -46,26 +42,17 @@ parse_ss_url() {
     [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
     port=$(echo "$port" | tr -cd '0-9')
 
-    # Парсинг query (например, для plugin)
-    local temp_query="$query_part"
-    while [ -n "$temp_query" ]; do
-        local param="${temp_query%%&*}"
-        temp_query="${temp_query#"$param"}"
-        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+    local json="\"type\":\"ss\""
+    json="$json,\"udp\":true"
+    json="$json,\"server\":\"$server\""
+    json="$json,\"port\":\"$port\""
+    json="$json,\"cipher\":\"$method\""
+    json="$json,\"password\":\"$password\""
+    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
 
-        local k="${param%%=*}"
-        local v="${param#*=}"
-        [ -z "$k" ] && continue
-
-        #case "$k" in
-        #    plugin) plugin="$(url_decode "$v")" ;;
-        #esac
-    done
-
-    # JSON
-    printf '{"type":"ss","server":"%s","port":%s,"cipher":"%s","password":"%s","udp":true}\n' \
-        "$server" "$port" "$method" "$password"
+    echo "{$json}"
 }
+
 
 parse_simple_proxy_url() {
     local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
@@ -99,11 +86,10 @@ parse_simple_proxy_url() {
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
     # JSON
-    local json="\"type\":\"socks5\",\"server\":\"$server\",\"port\":$port"
+    local json="\"type\":\"socks5\",\"udp\":true\",\"server\":\"$server\",\"port\":$port"
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-    json="$json,\"udp\":true"
 
     echo "{$json}"
 }
@@ -275,12 +261,12 @@ parse_vless_url() {
         json="$json,\"grpc-opts\":{\"service-name\":\"$sn\"}"
     fi
 
-    json="{$json}"
-    echo "$json"
+    echo "{$json}"
 }
 
+#Supports only one port/port-range + transport combination
 parse_mieru_url() {
-    local link="$1" DEFAULT_MIERU_PORT="$2" dialer_proxy="$3"
+    local link="$1" dialer_proxy="$2"
     local raw="${link#mierus://}"
     raw="${raw%%#*}"
 
@@ -291,14 +277,14 @@ parse_mieru_url() {
     case "$raw" in *\?*) query_part="${raw#*\?}" ;; esac
 
     local auth=""
-    local host=""
+    local server=""
 
     case "$auth_host_query" in *@*)
         auth="${auth_host_query%@*}"
-        host="${auth_host_query#*@}"
+        server="${auth_host_query#*@}"
         ;;
     *)
-        host="$auth_host_query"
+        server="$auth_host_query"
         ;;
     esac
 
@@ -314,20 +300,8 @@ parse_mieru_url() {
     esac
     fi
 
-    local server
-    local port
-    case "$host" in *:*)
-        server="${host%%:*}"
-        port="${host##*:}"
-        ;;
-    *)
-        server="$host"
-        port="$DEFAULT_MIERU_PORT"
-        ;;
-    esac
-
-    local multiplexing ports
-    ports=""
+    local multiplexing transport handshake_mode port
+    multiplexing="" transport="" handshake_mode="" port=""
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -341,35 +315,30 @@ parse_mieru_url() {
 
         # shellcheck disable=SC2249
         case "$k" in
+            # Seems MTU aren't there in mihomo
             #mtu) mtu="$v" ;;
             multiplexing) multiplexing="$v" ;;
-            port)
-                if [ -z "$ports" ]; then
-                    ports="$v"
-                else
-                    ports="$ports,$v"
-                fi
-                ;;
+            protocol) transport="$v" ;;
+            handshake-mode) handshake_mode="$v" ;;
+            port) port="$v" ;;
         esac
     done
 
     local json
     json="\"type\":\"mieru\""
     json="$json,\"server\":\"$server\""
-    json="$json,\"port\":\"$port\""
+    json="$json,\"udp\":true"
+    [ -n "$handshake_mode" ] && json="$json,\"handshake-mode\":\"$handshake_mode\""
+    [ -n "$transport" ] && json="$json,\"transport\":\"$transport\""
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
-
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-
-    json="$json,\"transport\":\"TCP\""
-    json="$json,\"udp\":true"
-
-    #[ -n "$mtu" ] && json="$json,\"mtu\":\"$mtu\""
     [ -n "$multiplexing" ] && json="$json,\"multiplexing\":\"$multiplexing\""
-    [ -n "$ports" ] && json="$json,\"port\":\"$ports\""
+    if [ -n "$port" ]; then
+        case "$port" in
+            *-*) json="$json,\"port-range\":\"$port\""
+            *) json="$json,\"port\":\"$port\""
+        esac
 
-    json="{$json}"
-
-    echo "$json"
+    echo "{$json}"
 }
