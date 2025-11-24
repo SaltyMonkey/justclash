@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-13 15:39+0300\n"
+"POT-Creation-Date: 2025-11-24 04:40+0300\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:27 htdocs/luci-static/resources/view/justclash/common.js:28 htdocs/luci-static/resources/view/justclash/common.js:35
@@ -28,95 +28,95 @@ msgstr "Проверка и обновление"
 msgid "Reject"
 msgstr "Отклонять"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:122
+#: htdocs/luci-static/resources/view/justclash/common.js:125
 msgid "Proxy link cannot be empty!"
 msgstr "Прокси-ссылка не может быть пустой!"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:125
+#: htdocs/luci-static/resources/view/justclash/common.js:128
 msgid "Input is not supported or incorrect!"
 msgstr "Прокси-ссылка не поддерживается для данного формата!"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:127
+#: htdocs/luci-static/resources/view/justclash/common.js:130
 msgid "Proxy link contains not encoded whitespace!"
 msgstr "Прокси-ссылка содержит пробелы без кодирования!"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:135
+#: htdocs/luci-static/resources/view/justclash/common.js:138
 msgid "Proxy link can't be parsed!"
 msgstr "Прокси-ссылка не может быть распознана!"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:144
+#: htdocs/luci-static/resources/view/justclash/common.js:147
 msgid "Domain must not contain spaces"
 msgstr "Строка с доменом не может содержать пробелы."
 
-#: htdocs/luci-static/resources/view/justclash/common.js:147
+#: htdocs/luci-static/resources/view/justclash/common.js:150
 msgid "Domain must contain at least one dot"
 msgstr "Строка с доменом должна содержать как минимум одну точку."
 
-#: htdocs/luci-static/resources/view/justclash/common.js:150
+#: htdocs/luci-static/resources/view/justclash/common.js:153
 msgid "Suffix must not start or end with a dot or hyphen"
 msgstr "Суффикс не должен начинаться или заканчиваться точкой или дефисом"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:153
+#: htdocs/luci-static/resources/view/justclash/common.js:156
 msgid "Double dots or double hyphens are not allowed"
 msgstr "Двойные точки или двойные дефисы не допускаются"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:156
+#: htdocs/luci-static/resources/view/justclash/common.js:159
 msgid "There must be no empty segments between dots"
 msgstr "Между точками не должно быть пустых сегментов"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:159
+#: htdocs/luci-static/resources/view/justclash/common.js:162
 msgid "Each domain segment must not exceed 63 characters"
 msgstr "Каждый сегмент домена не должен превышать 63 символа"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:161
+#: htdocs/luci-static/resources/view/justclash/common.js:164
 msgid "Suffix length must not exceed 253 characters"
 msgstr "Длина суффикса не должна превышать 253 символа"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:171
+#: htdocs/luci-static/resources/view/justclash/common.js:174
 msgid "Keyword must not contain spaces"
 msgstr "Ключевое слово не должно содержать пробелов"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:174
+#: htdocs/luci-static/resources/view/justclash/common.js:177
 msgid "Only one keyword per field is allowed"
 msgstr "В поле допускается только одно ключевое слово"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:177
+#: htdocs/luci-static/resources/view/justclash/common.js:180
 msgid "Keyword should be at least 2 characters long"
 msgstr "Ключевое слово должно быть длиной не менее 2 символов"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:187
+#: htdocs/luci-static/resources/view/justclash/common.js:190
 msgid "Regexp must not start or end with a space"
 msgstr "Регулярное выражение не должно начинаться или заканчиваться пробелом"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:192
+#: htdocs/luci-static/resources/view/justclash/common.js:195
 msgid "Invalid regular expression: "
 msgstr "Некорректное регулярное выражение: "
 
-#: htdocs/luci-static/resources/view/justclash/common.js:208
+#: htdocs/luci-static/resources/view/justclash/common.js:211
 msgid "Invalid expression in "
 msgstr "Некорректное выражение в "
 
-#: htdocs/luci-static/resources/view/justclash/common.js:215
+#: htdocs/luci-static/resources/view/justclash/common.js:218
 msgid "Status"
 msgstr "Состояние"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:216
+#: htdocs/luci-static/resources/view/justclash/common.js:219
 msgid "Logs"
 msgstr "Журналы"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:217
+#: htdocs/luci-static/resources/view/justclash/common.js:220
 msgid "Connections"
 msgstr "Соединения"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:218
+#: htdocs/luci-static/resources/view/justclash/common.js:221
 msgid "Routing"
 msgstr "Маршрутизация"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:219
+#: htdocs/luci-static/resources/view/justclash/common.js:222
 msgid "Service"
 msgstr "Сервис"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:220
+#: htdocs/luci-static/resources/view/justclash/common.js:223
 msgid "Proxy"
 msgstr "Прокси"
 
@@ -378,142 +378,150 @@ msgid "CIDR for fake IP."
 msgstr "CIDR для поддельных IP."
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:150
+msgid "Fake IP TTL:"
+msgstr "TTL поддельных IP:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:151
+msgid "Time to live time for DNS records from fake IP (in minutes)."
+msgstr "Время актуальности записей механихма поддельных IP (в минутах)."
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:156
 msgid "Default nameservers:"
 msgstr "DNS по умолчанию:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:151
+#: htdocs/luci-static/resources/view/justclash/proxy.js:157
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "DNS сервера по умолчанию при запуске. Рекомендуется использовать UDP-серверы."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:157 htdocs/luci-static/resources/view/justclash/proxy.js:168 htdocs/luci-static/resources/view/justclash/proxy.js:180 htdocs/luci-static/resources/view/justclash/proxy.js:191
+#: htdocs/luci-static/resources/view/justclash/proxy.js:163 htdocs/luci-static/resources/view/justclash/proxy.js:174 htdocs/luci-static/resources/view/justclash/proxy.js:186 htdocs/luci-static/resources/view/justclash/proxy.js:197
 msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4."
 msgstr "Недопустимый формат DNS-сервера. Разрешены: quic://, https://, tls://, udp:// или IPv4."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:161
+#: htdocs/luci-static/resources/view/justclash/proxy.js:167
 msgid "Direct nameservers:"
 msgstr "Прямые DNS:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:162
+#: htdocs/luci-static/resources/view/justclash/proxy.js:168
 msgid "Direct nameservers used for DIRECT rules."
 msgstr "DNS сервера, используемые для правил прямого соединения."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:172
+#: htdocs/luci-static/resources/view/justclash/proxy.js:178
 msgid "Proxy nameservers:"
 msgstr "DNS сервера для прокси:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:173
+#: htdocs/luci-static/resources/view/justclash/proxy.js:179
 msgid "Nameservers used for proxy servers resolving."
 msgstr "DNS сервера, используемые для разрешения адресов прокси-серверов."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:184
+#: htdocs/luci-static/resources/view/justclash/proxy.js:190
 msgid "Nameservers:"
 msgstr "DNS сервера:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:185
+#: htdocs/luci-static/resources/view/justclash/proxy.js:191
 msgid "Nameservers used for all another traffic."
 msgstr "DNS серверы, используемые для всего остального траффика."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:196
+#: htdocs/luci-static/resources/view/justclash/proxy.js:202
 msgid "Use fake IP for domains:"
 msgstr "Исключить поддельные IP для доменов:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:197
+#: htdocs/luci-static/resources/view/justclash/proxy.js:203
 msgid "Include selected domains for the Fake IP cache."
 msgstr "Исключить выбранные домены из кэша поддельных IP (может помочь избежать ошибок приложений)."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:203
+#: htdocs/luci-static/resources/view/justclash/proxy.js:209
 msgid "Skip fake IP for domains:"
 msgstr "Исключить поддельные IP для доменов:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:204
+#: htdocs/luci-static/resources/view/justclash/proxy.js:210
 msgid "Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps."
 msgstr "Исключить выбранные домены из кэша поддельных IP (может помочь избежать ошибок приложений)."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:211
+#: htdocs/luci-static/resources/view/justclash/proxy.js:217
 msgid "Sniffer settings"
 msgstr "Настройки анализатора"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:213
+#: htdocs/luci-static/resources/view/justclash/proxy.js:219
 msgid "Enable sniffer:"
 msgstr "Включить анализатор:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:214
+#: htdocs/luci-static/resources/view/justclash/proxy.js:220
 msgid "Enable sniffer in proxy."
 msgstr "Включить анализатор:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:218
+#: htdocs/luci-static/resources/view/justclash/proxy.js:224
 msgid "Parse pure IP:"
 msgstr "Разбирать IP-адреса без домена:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:219
+#: htdocs/luci-static/resources/view/justclash/proxy.js:225
 msgid "Force domain detection for traffic without resolved domain names."
 msgstr "Принудительное обнаружение для всего трафика, для которого не удалось получить доменное имя."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:223
+#: htdocs/luci-static/resources/view/justclash/proxy.js:229
 msgid "Excluded from sniffer domains:"
 msgstr "Исключить домены из анализа:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:224 htdocs/luci-static/resources/view/justclash/proxy.js:236 htdocs/luci-static/resources/view/justclash/proxy.js:242
+#: htdocs/luci-static/resources/view/justclash/proxy.js:230 htdocs/luci-static/resources/view/justclash/proxy.js:242 htdocs/luci-static/resources/view/justclash/proxy.js:248
 msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr "Исключённые домены из детального анализа. Иногда это помогает избежать ошибок в приложениях."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:229
+#: htdocs/luci-static/resources/view/justclash/proxy.js:235
 msgid "Forcefully sniff domains:"
 msgstr "Принудительно анализировать домены:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:230
+#: htdocs/luci-static/resources/view/justclash/proxy.js:236
 msgid "Domains included for detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr "Домены для детального анализа. Иногда это помогает избежать ошибок в приложениях."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:235
+#: htdocs/luci-static/resources/view/justclash/proxy.js:241
 msgid "Exclude from sniffer SRC CIDR traffic:"
 msgstr "Исключить из анализа исходящий трафик (SRC CIDR):"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:241
+#: htdocs/luci-static/resources/view/justclash/proxy.js:247
 msgid "Exclude from sniffer DST CIDR traffic:"
 msgstr "Исключить из анализа входящий трафик (DST CIDR):"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:248
+#: htdocs/luci-static/resources/view/justclash/proxy.js:254
 msgid "NTP settings"
 msgstr "Настройки NTP"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:250
+#: htdocs/luci-static/resources/view/justclash/proxy.js:256
 msgid "Enable NTP client:"
 msgstr "Включить NTP-клиент:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:251
+#: htdocs/luci-static/resources/view/justclash/proxy.js:257
 msgid "Enable built-in NTP client in proxy."
 msgstr "Включает встроенный NTP-клиент в прокси."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:255
+#: htdocs/luci-static/resources/view/justclash/proxy.js:261
 msgid "Endpoint NTP server:"
 msgstr "NTP-сервер:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:256
+#: htdocs/luci-static/resources/view/justclash/proxy.js:262
 msgid "External NTP server for time syncing."
 msgstr "Внешний NTP-сервер для синхронизации времени."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:260
+#: htdocs/luci-static/resources/view/justclash/proxy.js:266
 msgid "NTP port:"
 msgstr "Порт NTP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:261
+#: htdocs/luci-static/resources/view/justclash/proxy.js:267
 msgid "External NTP server port."
 msgstr "Порт внешнего NTP-сервера."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:265
+#: htdocs/luci-static/resources/view/justclash/proxy.js:271
 msgid "NTP check interval:"
 msgstr "Интервал проверки NTP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:266
+#: htdocs/luci-static/resources/view/justclash/proxy.js:272
 msgid "Interval to check time (in seconds)."
 msgstr "Интервал проверки времени (сек)."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:271
+#: htdocs/luci-static/resources/view/justclash/proxy.js:277
 msgid "Write to system:"
 msgstr "Обновлять в системе:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:272
+#: htdocs/luci-static/resources/view/justclash/proxy.js:278
 msgid "Try to correct system time using the NTP server."
 msgstr "Пытаться корректировать системное время через NTP."
 
