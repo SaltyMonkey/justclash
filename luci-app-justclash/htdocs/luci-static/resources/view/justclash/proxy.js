@@ -147,6 +147,12 @@ return view.extend({
         o.readonly = true;
         o.datatype = "cidr4";
 
+        o = s.taboption(tabname, form.Value, "fake_ip_ttl", _("Fake IP TTL:"));
+        o.description = _("Time to live time for DNS records from fake IP.");
+        o.datatype = datatypes.UINTEGER;
+        o.rmempty = false;
+        o.default = "1";
+
         o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
         o.description = _("Default nameservers used at startup. Recommended to use UDP ones.");
         o.rmempty = false;
