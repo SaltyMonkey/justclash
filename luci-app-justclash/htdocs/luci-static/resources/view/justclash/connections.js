@@ -2,6 +2,7 @@
 "require view";
 "require ui";
 "require view.justclash.common as common";
+"require uci";
 
 const isMobile = () => {
     return window.matchMedia("(max-width: 600px)").matches;
@@ -16,10 +17,10 @@ const formatConnection = (conn) => {
     };
 };
 
-const getWSURL = () => {
+const getWSURL = (token) => {
     const host = window.location.hostname;
     const port = 9090;
-    return `ws://${host}:${port}/connections`;
+    return `ws://${host}:${port}/connections?token=${token}`;
 };
 
 return view.extend({
@@ -30,7 +31,14 @@ return view.extend({
     handleSaveApply: null,
     handleReset: null,
     wsErrorNotification: null,
-    render: function () {
+    load: function() {
+        const token = uci.get("jutclash", "proxy", "api_password");
+        val = val || "";
+        return {
+            token
+        };
+    },
+    render: function (result) {
         const container = E("div", { class: "cbi-section fade-in" });
         const table = E("div", { class: "flex-table" });
 
@@ -134,7 +142,7 @@ return view.extend({
         }
 
         const connectWS = () => {
-            const wsUrl = getWSURL();
+            const wsUrl = getWSURL(result.token);
             this.ws = new WebSocket(wsUrl);
 
             this.ws.onopen = () => {
