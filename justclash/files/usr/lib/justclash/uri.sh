@@ -304,7 +304,6 @@ parse_vless_url() {
     echo "{$json}"
 }
 
-
 parse_hysteria2_url() {
     local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3"
 
