@@ -21,15 +21,33 @@ parse_ss_url() {
         userinfo="${link%@*}"
         hostport="${link#*@}"
 
-        decoded="$(echo "$userinfo" | base64 -d 2>/dev/null)"
-        if [ -n "$decoded" ] && echo "$decoded" | grep -q ':'; then
-            method="$(url_decode "${decoded%%:*}")"
-            password="$(url_decode "${decoded#*:}")"
+        # Проверяем, начинается ли с 2022- (plain text)
+        if echo "$userinfo" | grep -q '^2022-'; then
+            # Plain text format для 2022 ciphers
+            method="${userinfo%%:*}"
+            local pass_part="${userinfo#*:}"
+
+            # Проверяем наличие второго пароля (EIH)
+            if echo "$pass_part" | grep -q ':.*:'; then
+                # Формат: method:serverPass:clientPass
+                password="${pass_part}"
+            else
+                password="${pass_part}"
+            fi
         else
-            method="$(url_decode "${userinfo%%:*}")"
-            password="$(url_decode "${userinfo#*:}")"
+            # Пробуем base64
+            decoded="$(echo "$userinfo" | base64 -d 2>/dev/null)"
+            if [ -n "$decoded" ] && echo "$decoded" | grep -q ':'; then
+                method="$(url_decode "${decoded%%:*}")"
+                password="$(url_decode "${decoded#*:}")"
+            else
+                # Plain text fallback
+                method="$(url_decode "${userinfo%%:*}")"
+                password="$(url_decode "${userinfo#*:}")"
+            fi
         fi
     else
+        # Полностью base64-encoded
         decoded="$(echo "$link" | base64 -d 2>/dev/null)"
         userinfo="${decoded%@*}"
         hostport="${decoded#*@}"
@@ -42,17 +60,11 @@ parse_ss_url() {
     [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
     port=$(echo "$port" | tr -cd '0-9')
 
-    local json="\"type\":\"ss\""
-    json="$json,\"udp\":true"
-    json="$json,\"server\":\"$server\""
-    json="$json,\"port\":\"$port\""
-    json="$json,\"cipher\":\"$method\""
-    json="$json,\"password\":\"$password\""
+    local json="\"type\":\"ss\",\"udp\":true,\"server\":\"$server\",\"port\":$port,\"cipher\":\"$method\",\"password\":\"$password\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
 
     echo "{$json}"
 }
-
 
 parse_simple_proxy_url() {
     local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
@@ -98,6 +110,7 @@ parse_trojan_url() {
     local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3"
 
     local raw="${url#trojan://}"
+    raw="${url#trojan-go://}"
     raw="${raw%%#*}"
 
     local userinfo="${raw%@*}"
@@ -116,6 +129,7 @@ parse_trojan_url() {
 
     local sni="" insecure=0 net="tcp" fp="" alpn="" ws_path="" ws_host="" grpc_service=""
     local ss_enabled="" ss_method="" ss_password=""
+    local security="" pbk="" sid="" spx="" ech=""
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -132,6 +146,11 @@ parse_trojan_url() {
             sni|peer) sni="$(url_decode "$v")" ;;
             insecure|allowInsecure) [ "$v" = "1" ] && insecure=1 ;;
             type) net="$v" ;;
+            security) security="$v" ;;
+            pbk|public-key) pbk="$v" ;;
+            sid|short-id) sid="$v" ;;
+            spx) spx="$(url_decode "$v")" ;;
+            ech) ech="$(url_decode "$v")" ;;
             fp|client-fingerprint) fp="$v" ;;
             alpn) alpn="$(url_decode "$v")" ;;
             path)
@@ -159,17 +178,31 @@ parse_trojan_url() {
     [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
 
     if [ "$net" = "ws" ]; then
-        json="$json,\"ws-opts\":{\"path\":\"$ws_path\""
-        [ -n "$ws_host" ] && json="$json,\"headers\":{\"Host\":\"$ws_host\"}"
-        json="$json}"
+        local wso="\"path\":\"${ws_path:-/}\""
+        [ -n "$ws_host" ] && wso="$wso,\"headers\":{\"Host\":\"$ws_host\"}"
+        json="$json,\"ws-opts\":{$wso}"
     fi
 
     if [ "$net" = "grpc" ]; then
-        json="$json,\"grpc-opts\":{\"grpc-service-name\":\"$grpc_service\"}"
+        local grpco="\"grpc-service-name\":\"$grpc_service\""
+        json="$json,\"grpc-opts\":{$grpco}"
+    fi
+
+    if [ "$security" = "reality" ]; then
+        local realo="\"public-key\":\"$pbk\""
+        [ -n "$sid" ] && realo="$realo,\"short-id\":\"$sid\""
+        [ -n "$spx" ] && realo="$realo,\"spider-x\":\"$spx\""
+        json="$json,\"reality-opts\":{$realo}"
+    fi
+
+    if [ -n "$ech" ]; then
+        local echo="\"enable\":true,\"config\":\"$ech\""
+        json="$json,\"ech-opts\":{$echo}"
     fi
 
     if [ -n "$ss_enabled" ] && [ -n "$ss_method" ] && [ -n "$ss_password" ]; then
-        json="$json,\"ss-opts\":{\"enabled\":true,\"method\":\"$ss_method\",\"password\":\"$ss_password\"}"
+        local sso="\"enabled\":true,\"method\":\"$ss_method\",\"password\":\"$ss_password\""
+        json="$json,\"ss-opts\":{$sso}"
     fi
 
     echo "{$json}"
@@ -193,7 +226,7 @@ parse_vless_url() {
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
     local net="tcp" sec="" sni="" fp="" alpn="" flow="" penc=""
-    local pbk="" sid="" spx="" sn="" enc=""
+    local pbk="" sid="" spx="" sn="" enc="" ech=""
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -224,6 +257,7 @@ parse_vless_url() {
                 fi ;;
             serviceName) sn="$v" ;;
             packetEncoding) penc="$v" ;;
+            ech) ech="$(url_decode "$v")" ;;
         esac
     done
 
@@ -247,6 +281,11 @@ parse_vless_url() {
         json="$json,\"reality-opts\":{$ro}"
     fi
 
+    if [ -n "$ech" ]; then
+        local echo="\"enable\":true,\"config\":\"$ech\""
+        json="$json,\"ech-opts\":{$echo}"
+    fi
+
     if [ "$net" = "tcp" ] && [ -n "$flow" ]; then
         json="$json,\"flow\":\"$flow\""
     fi
@@ -258,11 +297,93 @@ parse_vless_url() {
     fi
 
     if [ "$net" = "grpc" ] && [ -n "$sn" ]; then
-        json="$json,\"grpc-opts\":{\"service-name\":\"$sn\"}"
+        local grpco="\"service-name\":\"$sn\""
+        json="$json,\"grpc-opts\":{$grpco}"
     fi
 
     echo "{$json}"
 }
+
+
+parse_hysteria2_url() {
+    local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3"
+
+    local raw="${url#hysteria2://}"
+    raw="${raw#hy2://}"
+    raw="${raw%%#*}"
+
+    local userinfo hostport password server port query_part
+    query_part=""
+
+    case "$raw" in *\?*) query_part="${raw#*\?}"; raw="${raw%%\?*}"; esac
+
+    if echo "$raw" | grep -q '@'; then
+        userinfo="${raw%@*}"
+        hostport="${raw#*@}"
+        password="$(url_decode "$userinfo")"
+    else
+        hostport="$raw"
+        password=""
+    fi
+
+    server="${hostport%%:*}"
+    port="${hostport##*:}"
+    [ "$server" = "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
+    port=$(echo "$port" | tr -cd '0-9')
+
+    local sni="" insecure=0 obfs="" obfs_password="" up="" down="" ports="" alpn="" fingerprint="" ech=""
+
+    local temp_query="$query_part"
+    while [ -n "$temp_query" ]; do
+        local param="${temp_query%%&*}"
+        temp_query="${temp_query#"$param"}"
+        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+
+        local k="${param%%=*}"
+        local v="${param#*=}"
+        [ -z "$k" ] && continue
+
+        # shellcheck disable=SC2249
+        case "$k" in
+            sni) sni="$(url_decode "$v")" ;;
+            insecure) [ "$v" = "1" ] && insecure=1 ;;
+            obfs) obfs="$(url_decode "$v")" ;;
+            obfs-password|obfsPassword) obfs_password="$(url_decode "$v")" ;;
+            up|upmbps) up="$v" ;;
+            down|downmbps) down="$v" ;;
+            ports) ports="$(url_decode "$v")" ;;
+            alpn) alpn="$(url_decode "$v")" ;;
+            fingerprint|fp) fingerprint="$v" ;;
+            ech) ech="$(url_decode "$v")" ;;
+        esac
+    done
+
+    local json="\"type\":\"hysteria2\",\"server\":\"$server\",\"port\":$port,\"udp\":true"
+
+    [ -n "$password" ] && json="$json,\"password\":\"$password\""
+    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
+    [ -n "$sni" ] && json="$json,\"sni\":\"$sni\""
+    [ "$insecure" = "1" ] && json="$json,\"skip-cert-verify\":true"
+
+    if [ -n "$obfs" ] && [ "$obfs" != "none" ]; then
+        json="$json,\"obfs\":\"$obfs\""
+        [ -n "$obfs_password" ] && json="$json,\"obfs-password\":\"$obfs_password\""
+    fi
+
+    [ -n "$up" ] && json="$json,\"up\":\"$up\""
+    [ -n "$down" ] && json="$json,\"down\":\"$down\""
+    [ -n "$ports" ] && json="$json,\"ports\":\"$ports\""
+    [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
+    [ -n "$fingerprint" ] && json="$json,\"fingerprint\":\"$fingerprint\""
+
+    if [ -n "$ech" ]; then
+        local echo="\"enable\":true,\"config\":\"$ech\""
+        json="$json,\"ech-opts\":{$echo}"
+    fi
+
+    echo "{$json}"
+}
+
 
 #Supports only one port/port-range + transport combination
 parse_mieru_url() {
