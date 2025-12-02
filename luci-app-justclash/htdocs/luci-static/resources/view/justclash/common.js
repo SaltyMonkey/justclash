@@ -181,6 +181,9 @@ return baseclass.extend({
         const allowedPrefixes = [
             "vless://",
             "trojan://",
+            "trojan-go://",
+            "hy2://",
+            "hysteria2://",
             "ss://",
             "socks5://",
             "socks4://",
