@@ -33,7 +33,10 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "delayed_boot_value", _("Delayed boot timeout:"));
         o.datatype = datatypes.UINTEGER;
-        o.placeholder = "10";
+        common.defaultBootDelayValuesSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultBootDelayValuesSec[1].value;
         o.depends("delayed_boot", primitives.TRUE);
         o.rmempty = false;
         o.description = _("Delay value for first start after boot in seconds.");

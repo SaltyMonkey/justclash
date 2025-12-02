@@ -160,8 +160,10 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("Interval for updates check in seconds.");
         o.datatype = datatypes.UINTEGER;
-        o.default = common.defaultRuleSetUpdateInterval;
-        o.placeholder = common.defaultRuleSetUpdateInterval;
+        common.defaultRuleSetUpdateInterval.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultRuleSetUpdateInterval[1].value;
         o.optional = true;
         o.validate = function (section_id, value) {
             if (value === "") return true;
@@ -241,8 +243,10 @@ return view.extend({
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
         o.rmempty = false;
         o.datatype = datatypes.UINTEGER;
-        o.placeholder = common.defaultProxyProviderIntervalSec;
-        o.default = common.defaultProxyProviderIntervalSec;
+        common.defaultProxyProviderUpdateIntervalSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultProxyProviderUpdateIntervalSec[1].value;
         o.description = _("Time interval for subscription update check in seconds.");
 
         o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
@@ -277,21 +281,28 @@ return view.extend({
         o = spp.taboption(tabname, form.Value, "health_check_expected_status", _("Check status:"));
         o.rmempty = false;
         o.datatype = datatypes.UINTEGER;
-        o.placeholder = common.defaultHealthCheckResult;
-        o.default = common.defaultHealthCheckResult;
+        common.defaultHealthCheckResultCode.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultHealthCheckResultCode[1].value;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Required response status for node availability check (required for proxy provider functionality).");
 
         o = spp.taboption(tabname, form.Value, "health_check_interval", _("Check interval:"));
         o.datatype = datatypes.UINTEGER;
-        o.placeholder = common.defaultProxyProviderHealthCheckSec;
-        o.default = common.defaultProxyProviderHealthCheckSec;
+        common.defaultProxyProviderHealthCheckSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultProxyProviderHealthCheckSec[3].value;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Time interval between health checks in seconds.");
 
         o = spp.taboption(tabname, form.Value, "health_check_timeout", _("Check timeout:"));
         o.datatype = datatypes.UINTEGER;
-        o.default = common.defaultHealthCheckTimeoutMs;
+        common.defaultHealthCheckTimeoutMs.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultHealthCheckTimeoutMs[3].value;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Timeout for each individual health check in milliseconds.");
 
@@ -417,14 +428,18 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Value, "check_interval", _("Check interval:"));
         o.datatype = datatypes.UINTEGER;
-        o.placeholder = common.defaultProxyGroupIntervalSec;
+        common.defaultProxyGroupIntervalSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
         o.default = common.defaultProxyGroupIntervalSec;
         o.description = _("Time interval between health checks in seconds.");
 
         o = s2.taboption(tabname, form.Value, "tolerance", _("Tolerance:"));
         o.datatype = datatypes.UINTEGER;
-        o.default = common.defaultUrlTestTolerance;
-        o.plaholder = common.defaultUrlTestTolerance;
+        common.defaultUrlTestToleranceMs.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultUrlTestToleranceMs[4].value;
         o.description = _("Proxies switch tolerance, measured in milliseconds (ms).");
         o.depends("group_type", "url-test");
 
@@ -524,8 +539,10 @@ return view.extend({
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("Interval for updates check in seconds.");
         o.datatype = datatypes.UINTEGER;
-        o.placeholder = common.defaultRuleSetUpdateInterval;
-        o.default = common.defaultRuleSetUpdateInterval;
+        common.defaultRuleSetUpdateInterval.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultRuleSetUpdateInterval[1].value;
         o.optional = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
@@ -597,8 +614,10 @@ return view.extend({
         o.description = _("Interval for updates check in seconds.");
         o.datatype = datatypes.UINTEGER;
         o.optional = true;
-        o.placeholder = common.defaultRuleSetUpdateInterval;
-        o.default = common.defaultRuleSetUpdateInterval;
+        common.defaultRuleSetUpdateInterval.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultRuleSetUpdateInterval[1].value;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
             let v = parseInt(value);

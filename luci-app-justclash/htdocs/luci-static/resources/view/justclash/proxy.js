@@ -92,15 +92,19 @@ return view.extend({
         o.description = _("How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
-        o.placeholder = "15";
-        o.default = "15";
+        common.defaultKeepAliveSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultKeepAliveSec[0].value;
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Keep alive interval:"));
         o.description = _("How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
-        o.placeholder = "15";
-        o.default = "15";
+        common.defaultKeepAliveSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultKeepAliveSec[0].value;
 
         o = s.taboption(tabname, form.Flag, "profile_store_selected", _("Cache profile data:"));
         o.description = _("Cache profile data if possible.");
@@ -128,8 +132,11 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
-        o.description = _("Fake IP DNS cache size.");
-        o.default = "1024";
+        o.description = _("IP DNS cache size.");
+        o.default = common.defaultIPDnsCache[0].value;
+        common.defaultIPDnsCache.forEach(item => {
+            o.value(item.value, item.text);
+        });
         o.rmempty = false;
         o.datatype = "integer";
 
@@ -151,7 +158,10 @@ return view.extend({
         o.description = _("Time to live time for DNS records from fake IP.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
-        o.default = "1";
+        common.defaultFakeIPTtlValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultFakeIPTtlValues[0].value;
 
         o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
         o.description = _("Default nameservers used at startup. Recommended to use UDP ones.");
@@ -272,7 +282,10 @@ return view.extend({
         o.description = _("Interval to check time (in seconds).");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
-        o.default = "600";
+        common.defaultNtpTimeoutCheckValuesSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultNtpTimeoutCheckValues[1].value;
 
         o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
         o.description = _("Try to correct system time using the NTP server.");
