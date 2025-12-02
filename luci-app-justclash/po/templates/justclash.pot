@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-02 10:10+0300\n"
+"POT-Creation-Date: 2025-12-02 11:32+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -305,51 +305,51 @@ msgstr ""
 msgid "Proxy"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:38 htdocs/luci-static/resources/view/justclash/connections.js:61
+#: htdocs/luci-static/resources/view/justclash/connections.js:46 htdocs/luci-static/resources/view/justclash/connections.js:69
 msgid "Proto"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:39 htdocs/luci-static/resources/view/justclash/connections.js:76
+#: htdocs/luci-static/resources/view/justclash/connections.js:47 htdocs/luci-static/resources/view/justclash/connections.js:84
 msgid "Connection"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:40 htdocs/luci-static/resources/view/justclash/connections.js:69 htdocs/luci-static/resources/view/justclash/connections.js:78
+#: htdocs/luci-static/resources/view/justclash/connections.js:48 htdocs/luci-static/resources/view/justclash/connections.js:77 htdocs/luci-static/resources/view/justclash/connections.js:86
 msgid "Host/Sniff"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:41 htdocs/luci-static/resources/view/justclash/connections.js:71 htdocs/luci-static/resources/view/justclash/connections.js:80
+#: htdocs/luci-static/resources/view/justclash/connections.js:49 htdocs/luci-static/resources/view/justclash/connections.js:79 htdocs/luci-static/resources/view/justclash/connections.js:88
 msgid "Chains"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:42 htdocs/luci-static/resources/view/justclash/connections.js:73 htdocs/luci-static/resources/view/justclash/connections.js:82
+#: htdocs/luci-static/resources/view/justclash/connections.js:50 htdocs/luci-static/resources/view/justclash/connections.js:81 htdocs/luci-static/resources/view/justclash/connections.js:90
 msgid "Rule"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:46
+#: htdocs/luci-static/resources/view/justclash/connections.js:54
 msgid "Active Connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:65
+#: htdocs/luci-static/resources/view/justclash/connections.js:73
 msgid "Source"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:67
+#: htdocs/luci-static/resources/view/justclash/connections.js:75
 msgid "Destination"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:169
+#: htdocs/luci-static/resources/view/justclash/connections.js:177
 msgid "No active connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:185
+#: htdocs/luci-static/resources/view/justclash/connections.js:193
 msgid "Unable to read the contents"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:193
+#: htdocs/luci-static/resources/view/justclash/connections.js:201
 msgid "Connection error"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:194
+#: htdocs/luci-static/resources/view/justclash/connections.js:202
 msgid "Can't connect to proxy API"
 msgstr ""
 
@@ -407,306 +407,314 @@ msgid "Enable external dashboard for Mihomo."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:35
-msgid "Logging level:"
+msgid "API password:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:36
+msgid "API token for Bearer authentication."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:39
-msgid "Logging level in Mihomo core."
+msgid "Logging level:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:43
+msgid "Logging level in Mihomo core."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:47
 msgid "Tproxy port:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:44
+#: htdocs/luci-static/resources/view/justclash/proxy.js:48
 msgid "Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:50
+#: htdocs/luci-static/resources/view/justclash/proxy.js:54
 msgid "Enable mixed port:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:51
+#: htdocs/luci-static/resources/view/justclash/proxy.js:55
 msgid "Enable mixed port to allow incoming connections supporting both HTTP(S) and SOCKS5 protocols."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:55
+#: htdocs/luci-static/resources/view/justclash/proxy.js:59
 msgid "Mixed port:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:56
+#: htdocs/luci-static/resources/view/justclash/proxy.js:60
 msgid "Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:63
+#: htdocs/luci-static/resources/view/justclash/proxy.js:67
 msgid "Unified delay:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:64
+#: htdocs/luci-static/resources/view/justclash/proxy.js:68
 msgid "Unified delay for RTT checks."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:68
+#: htdocs/luci-static/resources/view/justclash/proxy.js:72
 msgid "TCP concurrent:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:69
+#: htdocs/luci-static/resources/view/justclash/proxy.js:73
 msgid "Enable concurrent TCP connection attempts."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:73
+#: htdocs/luci-static/resources/view/justclash/proxy.js:77
 msgid "Global client fingerprint:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:77
+#: htdocs/luci-static/resources/view/justclash/proxy.js:81
 msgid "Client fingerprint for protocols that support it."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:81
+#: htdocs/luci-static/resources/view/justclash/proxy.js:85
 msgid "Global user agent:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:82
+#: htdocs/luci-static/resources/view/justclash/proxy.js:86
 msgid "Global UA for external resources download."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:86
+#: htdocs/luci-static/resources/view/justclash/proxy.js:90
 msgid "ETag support:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:87
+#: htdocs/luci-static/resources/view/justclash/proxy.js:91
 msgid "ETag support for external resources download."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:91
+#: htdocs/luci-static/resources/view/justclash/proxy.js:95
 msgid "Keep alive idle:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:92
+#: htdocs/luci-static/resources/view/justclash/proxy.js:96
 msgid "How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:100
+#: htdocs/luci-static/resources/view/justclash/proxy.js:104
 msgid "Keep alive interval:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:101
+#: htdocs/luci-static/resources/view/justclash/proxy.js:105
 msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:109
+#: htdocs/luci-static/resources/view/justclash/proxy.js:113
 msgid "Cache profile data:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:110
+#: htdocs/luci-static/resources/view/justclash/proxy.js:114
 msgid "Cache profile data if possible."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:114
+#: htdocs/luci-static/resources/view/justclash/proxy.js:118
 msgid "Cache Fake IP:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:115
+#: htdocs/luci-static/resources/view/justclash/proxy.js:119
 msgid "Cache fake IP data when possible."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:120
+#: htdocs/luci-static/resources/view/justclash/proxy.js:124
 msgid "DNS settings"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:122
+#: htdocs/luci-static/resources/view/justclash/proxy.js:126
 msgid "DNS listen port:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:123
+#: htdocs/luci-static/resources/view/justclash/proxy.js:127
 msgid "Proxy DNS server listen port."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:129
+#: htdocs/luci-static/resources/view/justclash/proxy.js:133
 msgid "Use system hosts:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:130
+#: htdocs/luci-static/resources/view/justclash/proxy.js:134
 msgid "Load DNS entries from system if possible."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:134
+#: htdocs/luci-static/resources/view/justclash/proxy.js:138
 msgid "DNS cache size:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:135
+#: htdocs/luci-static/resources/view/justclash/proxy.js:139
 msgid "IP DNS cache size."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:143
+#: htdocs/luci-static/resources/view/justclash/proxy.js:147
 msgid "Fake IP filter:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:144
+#: htdocs/luci-static/resources/view/justclash/proxy.js:148
 msgid "blacklist"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:145
+#: htdocs/luci-static/resources/view/justclash/proxy.js:149
 msgid "whitelist"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:146
+#: htdocs/luci-static/resources/view/justclash/proxy.js:150
 msgid "Fake IP working mode."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:150
+#: htdocs/luci-static/resources/view/justclash/proxy.js:154
 msgid "Fake IP range:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:151
+#: htdocs/luci-static/resources/view/justclash/proxy.js:155
 msgid "CIDR for fake IP."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:157
+#: htdocs/luci-static/resources/view/justclash/proxy.js:161
 msgid "Fake IP TTL:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:158
+#: htdocs/luci-static/resources/view/justclash/proxy.js:162
 msgid "Time to live time for DNS records from fake IP."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:166
+#: htdocs/luci-static/resources/view/justclash/proxy.js:170
 msgid "Default nameservers:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:167
+#: htdocs/luci-static/resources/view/justclash/proxy.js:171
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:173 htdocs/luci-static/resources/view/justclash/proxy.js:184 htdocs/luci-static/resources/view/justclash/proxy.js:196 htdocs/luci-static/resources/view/justclash/proxy.js:207
+#: htdocs/luci-static/resources/view/justclash/proxy.js:177 htdocs/luci-static/resources/view/justclash/proxy.js:188 htdocs/luci-static/resources/view/justclash/proxy.js:200 htdocs/luci-static/resources/view/justclash/proxy.js:211
 msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:177
+#: htdocs/luci-static/resources/view/justclash/proxy.js:181
 msgid "Direct nameservers:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:178
+#: htdocs/luci-static/resources/view/justclash/proxy.js:182
 msgid "Direct nameservers used for DIRECT rules."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:188
+#: htdocs/luci-static/resources/view/justclash/proxy.js:192
 msgid "Proxy nameservers:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:189
+#: htdocs/luci-static/resources/view/justclash/proxy.js:193
 msgid "Nameservers used for proxy servers resolving."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:200
+#: htdocs/luci-static/resources/view/justclash/proxy.js:204
 msgid "Nameservers:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:201
+#: htdocs/luci-static/resources/view/justclash/proxy.js:205
 msgid "Nameservers used for all another traffic."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:212
+#: htdocs/luci-static/resources/view/justclash/proxy.js:216
 msgid "Use fake IP for domains:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:213
+#: htdocs/luci-static/resources/view/justclash/proxy.js:217
 msgid "Include selected domains for the Fake IP cache."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:219
+#: htdocs/luci-static/resources/view/justclash/proxy.js:223
 msgid "Skip fake IP for domains:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:220
+#: htdocs/luci-static/resources/view/justclash/proxy.js:224
 msgid "Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:227
+#: htdocs/luci-static/resources/view/justclash/proxy.js:231
 msgid "Sniffer settings"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:229
+#: htdocs/luci-static/resources/view/justclash/proxy.js:233
 msgid "Enable sniffer:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:230
+#: htdocs/luci-static/resources/view/justclash/proxy.js:234
 msgid "Enable sniffer in proxy."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:234
+#: htdocs/luci-static/resources/view/justclash/proxy.js:238
 msgid "Parse pure IP:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:235
+#: htdocs/luci-static/resources/view/justclash/proxy.js:239
 msgid "Force domain detection for traffic without resolved domain names."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:239
+#: htdocs/luci-static/resources/view/justclash/proxy.js:243
 msgid "Excluded from sniffer domains:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:240 htdocs/luci-static/resources/view/justclash/proxy.js:252 htdocs/luci-static/resources/view/justclash/proxy.js:258
+#: htdocs/luci-static/resources/view/justclash/proxy.js:244 htdocs/luci-static/resources/view/justclash/proxy.js:256 htdocs/luci-static/resources/view/justclash/proxy.js:262
 msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:245
+#: htdocs/luci-static/resources/view/justclash/proxy.js:249
 msgid "Forcefully sniff domains:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:246
+#: htdocs/luci-static/resources/view/justclash/proxy.js:250
 msgid "Domains included for detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:251
+#: htdocs/luci-static/resources/view/justclash/proxy.js:255
 msgid "Exclude from sniffer SRC CIDR traffic:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:257
+#: htdocs/luci-static/resources/view/justclash/proxy.js:261
 msgid "Exclude from sniffer DST CIDR traffic:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:264
+#: htdocs/luci-static/resources/view/justclash/proxy.js:268
 msgid "NTP settings"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:266
+#: htdocs/luci-static/resources/view/justclash/proxy.js:270
 msgid "Enable NTP client:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:267
+#: htdocs/luci-static/resources/view/justclash/proxy.js:271
 msgid "Enable built-in NTP client in proxy."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:271
+#: htdocs/luci-static/resources/view/justclash/proxy.js:275
 msgid "Endpoint NTP server:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:272
+#: htdocs/luci-static/resources/view/justclash/proxy.js:276
 msgid "External NTP server for time syncing."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:276
+#: htdocs/luci-static/resources/view/justclash/proxy.js:280
 msgid "NTP port:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:277
+#: htdocs/luci-static/resources/view/justclash/proxy.js:281
 msgid "External NTP server port."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:281
+#: htdocs/luci-static/resources/view/justclash/proxy.js:285
 msgid "NTP check interval:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:282
+#: htdocs/luci-static/resources/view/justclash/proxy.js:286
 msgid "Interval to check time (in seconds)."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:290
+#: htdocs/luci-static/resources/view/justclash/proxy.js:294
 msgid "Write to system:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:291
+#: htdocs/luci-static/resources/view/justclash/proxy.js:295
 msgid "Try to correct system time using the NTP server."
 msgstr ""
 
