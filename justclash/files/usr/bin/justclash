@@ -11,6 +11,8 @@
 
 JUSTCLASH_VERSION="__COMPILED_VERSION_VARIABLE__"
 # shellcheck disable=SC1091
+[ -r /lib/functions/network.sh ] && . /lib/functions/network.sh
+# shellcheck disable=SC1091
 [ -r /lib/functions.sh ] && . /lib/functions.sh
 # shellcheck disable=SC1091
 [ -r /lib/config/uci.sh ] && . /lib/config/uci.sh
@@ -1399,7 +1401,8 @@ handle_final_rule_section() {
 }
 
 core_generate_yaml() {
-    local use_zashboard log_level tproxy_port unified_delay
+    local router_selected_ipaddr
+    local controller_bind_interface use_zashboard api_password log_level tproxy_port unified_delay
     local use_mixed_port mixed_port
     local tcp_concurrent global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
@@ -1415,7 +1418,10 @@ core_generate_yaml() {
     local block_rulesets_content rulesets_content
     local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
 
+    config_get controller_bind_interface proxy controller_bind_interface
+    network_get_ipaddr router_selected_ipaddr controller_bind_interface
     config_get use_zashboard proxy use_zashboard
+    config_get api_password proxy api_password
     config_get log_level proxy log_level
     config_get tproxy_port proxy tproxy_port
     config_get use_mixed_port proxy use_mixed_port
@@ -1587,7 +1593,8 @@ log-level: $log_level
 tproxy-port: $tproxy_port
 unified-delay: $unified_delay
 tcp-concurrent: $tcp_concurrent
-external-controller: 0.0.0.0:$DEFAULT_EXTERNAL_CONTROLLER_PORT
+external-controller: $router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT
+secret: $api_password
 routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")
 global-client-fingerprint: $global_client_fingerprint
 global-ua: $global_ua

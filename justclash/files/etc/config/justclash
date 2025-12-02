@@ -19,6 +19,7 @@ config main 'settings'
     option mihomo_cron_update_string '0 3 * * 0'
 
 config proxy 'proxy'
+    option controller_bind_interface 'lan'
     option use_zashboard '0'
     option api_password 'abcdefghijklmnopqrstuvwxyz1234567890'
     option log_level 'error'
