@@ -32,6 +32,10 @@ return view.extend({
         o.default = primitives.FALSE;
         o.rmempty = false;
 
+        o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
+        o.description = _("API token for Bearer authentication.");
+        o.rmempty = false;
+
         o = s.taboption(tabname, form.ListValue, "log_level", _("Logging level:"));
         common.defaultLoggingLevels.forEach(item => {
             o.value(item, _(`${item}`));
