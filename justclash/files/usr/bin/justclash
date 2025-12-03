@@ -1422,7 +1422,12 @@ core_generate_yaml() {
     local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
 
     config_get controller_bind_interface proxy controller_bind_interface
-    network_get_ipaddr router_selected_ipaddr controller_bind_interface
+    if [ -n "$controller_bind_interface" ]; then
+        network_get_ipaddr router_selected_ipaddr "$controller_bind_interface"
+    else
+        router_selected_ipaddr="0.0.0.0"
+    fi
+
     config_get use_zashboard proxy use_zashboard
     config_get api_password proxy api_password
     config_get log_level proxy log_level
