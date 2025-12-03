@@ -37,7 +37,9 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultBootDelayValuesSec[1].value;
+        o.retain = true;
         o.depends("delayed_boot", primitives.TRUE);
+
         o.rmempty = false;
         o.description = _("Delay value for first start after boot in seconds.");
 
@@ -75,6 +77,7 @@ return view.extend({
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
         o.default = "br-lan";
         o.depends("nft_apply_changes", primitives.TRUE);
+        o.retain = true;
         o.noaliases = true;
         o.nobridges = false;
         o.noinactive = false;
@@ -100,6 +103,7 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("QUIC traffic from clients:"));
         o.description = _("Select a way how QUIC traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
+        o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
@@ -109,6 +113,7 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("DoT traffic from clients:"));
         o.description = _("Select a way how DoT traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
+        o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
@@ -118,6 +123,7 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("DoQ traffic from clients:"));
         o.description = _("Select a way how DoQ traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
+        o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
@@ -127,6 +133,7 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "nft_ntp_mode", _("NTP traffic from clients:"));
         o.description = _("Select a way how NTP traffic will be handled by netfilter tables.");
         o.depends("nft_apply_changes", primitives.TRUE);
+        o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftNtpOptions.forEach(item => {
@@ -136,6 +143,7 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "nft_ntp_mode_router", _("NTP traffic from router:"));
         o.description = _("Select a way how NTP traffic from router will be handled by netfilter tables.");
         o.depends("nft_apply_changes_router", primitives.TRUE);
+        o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftNtpOptions.forEach(item => {

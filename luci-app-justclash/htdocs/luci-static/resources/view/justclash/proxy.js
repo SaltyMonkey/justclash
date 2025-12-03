@@ -2,6 +2,7 @@
 "require form";
 "require view";
 "require view.justclash.common as common";
+"require tools.widgets as widgets";
 
 return view.extend({
 
@@ -26,6 +27,14 @@ return view.extend({
 
         tabname = "coresettings_tab";
         s.tab(tabname, _("Basic settings"));
+
+        // copypasted from Podkop devs
+        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select interface where API controller will be available."));
+        o.default = "lan";
+        o.optional = false;
+        o.nocreate = true;
+        o.multiple = false;
+        o.description = "Select interface where API controller will be available.";
 
         o = s.taboption(tabname, form.Flag, "enable_zashboard", _("Enable dashboard:"));
         o.description = _("Enable external dashboard for Mihomo.");
@@ -59,6 +68,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "mixed_port", _("Mixed port:"));
         o.description = _("Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols.");
         o.depends("use_mixed_port", primitives.TRUE);
+        o.retain = true;
         o.datatype = datatypes.PORT;
         o.placeholder = "7892";
         o.default = "7892";
@@ -216,6 +226,7 @@ return view.extend({
         o = s.taboption(tabname, form.DynamicList, "fake_ip_include_domains", _("Use fake IP for domains:"));
         o.description = _("Include selected domains for the Fake IP cache.");
         o.rmempty = false;
+        o.retain = true;
         o.editable = true;
         o.optional = true;
         o.depends("fake_ip_filter_mode", "whitelist");
@@ -223,6 +234,7 @@ return view.extend({
         o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Skip fake IP for domains:"));
         o.description = _("Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps.");
         o.rmempty = false;
+        o.retain = true;
         o.editable = true;
         o.optional = true;
         o.depends("fake_ip_filter_mode", "blacklist");
@@ -289,7 +301,7 @@ return view.extend({
         common.defaultNtpTimeoutCheckValuesSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultNtpTimeoutCheckValues[1].value;
+        o.default = common.defaultNtpTimeoutCheckValuesSec[1].value;
 
         o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
         o.description = _("Try to correct system time using the NTP server.");
