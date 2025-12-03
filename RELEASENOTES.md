@@ -1,3 +1,25 @@
+## [0.6.2] - 03122025
+
+- Service: Fixed trojan link parser
+- Service: Added hysteria2 parser
+- Service: Fixed SS link parser
+- Service: Added ech parameters parse for links
+- Service: Added aliases support for hy2/trojan/ss links
+- Service: Remove unused port range parse from links
+- Service: Added fake IP TTL support
+- Service: Added Clash API controller bearer auth
+- Service: Clash API controller bind to local interface instead of 0.0.0.0
+- LuCI: Added clash API token for Bearer authentication in UI
+- LuCI: Added clash API controller bind interface selector in UI
+- LuCI: Added fake IP ttl in UI
+- LuCI: Greatly improved UI with predefined values for some options
+- LuCI: Connections page WebSocket using Bearer auth token for data read
+- LuCI: Fix for hidden in UI options losing data in UCI config
+
+**This version requires:**
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.5.4] - 22112025
 
 - Service: Changed resources links to jsdelivr
