@@ -88,7 +88,7 @@ get_os_version() {
 
 hwid_generate() {
     local interface mac_addr board_data arch_data hwid_str
-    local no_mac_string="__COMPILED_DEFAULT_MAC_VARIABLE__"
+    local no_mac_string="NO_MAC_VALUE"
 
     interface=$(ubus call network.interface dump | jq -r '.interface[] | select(.route[]?.target == "0.0.0.0") | .l3_device' | head -n1)
 

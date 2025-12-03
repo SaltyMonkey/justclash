@@ -62,13 +62,6 @@ define Package/$(PKG_NAME)/install
 	sed -i -e 's|__CORE_RELEASE_DOWNLOAD_URL_VARIABLE__|https://github.com/MetaCubeX/mihomo/releases/download|g' $(1)/usr/bin/justclash
 	sed -i -e 's|__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data|g' $(1)/usr/bin/justclash
 	sed -i -e 's|__DASHBOARD_DEFAULT_URL_VARIABLE__|https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip|g' $(1)/usr/bin/justclash
-
-	RANDOM_API_PASSWORD=$(echo "$(date +%s%N)$RANDOM" | md5sum | cut -c1-32)
-	sed -i -e 's|abcdefghijklmnopqrstuvwxyz1234567890|${RANDOM_API_PASSWORD}|g' $(1)/etc/config/justclash
-	sed -i -e 's|abcdefghijklmnopqrstuvwxyz1234567890|${RANDOM_API_PASSWORD}|g' $(1)/etc/justclash/default.config
-
-	RANDOM_MAC_REPLACEMENT=$(echo "$(date +%s%N)$RANDOM" | md5sum | cut -c1-30)
-	sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|${RANDOM_MAC_REPLACEMENT}|g" $(1)/usr/lib/justclash/helpers.sh || true
 endef
 
 define Package/justclash/conffiles
