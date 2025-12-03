@@ -20,7 +20,7 @@ const formatConnection = (conn) => {
 const getWSURL = (token) => {
     const host = window.location.hostname;
     const port = 9090;
-    return `ws://${host}:${port}/connections?token=${token}`;
+    return (token && token != "") ? `ws://${host}:${port}/connections?token=${token}` : `ws://${host}:${port}/connections`
 };
 
 return view.extend({
@@ -31,9 +31,11 @@ return view.extend({
     handleSaveApply: null,
     handleReset: null,
     wsErrorNotification: null,
-    load: function() {
-        const token = uci.get("jutclash", "proxy", "api_password");
-        val = val || "";
+    load: async function()
+    {
+        await uci.load("justclash")
+        let token = uci.get("justclash", "proxy", "api_password");
+        token = token || "";
         return {
             token
         };

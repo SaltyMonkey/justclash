@@ -454,11 +454,7 @@ parse_mieru_url() {
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
     [ -n "$multiplexing" ] && json="$json,\"multiplexing\":\"$multiplexing\""
-    if [ -n "$port" ]; then
-        case "$port" in
-            *-*) json="$json,\"port-range\":\"$port\""
-            *) json="$json,\"port\":\"$port\""
-        esac
+    [ -n  "$port" ] && json="$json,\"port\":\"$port\""
 
     echo "{$json}"
 }
