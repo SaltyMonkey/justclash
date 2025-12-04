@@ -12,6 +12,14 @@ const callSystemBoard = rpc.declare({
     expect: { '': {} }
 });
 
+const fetchWithTimeout = (url, timeout = 3000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    return fetch(url, { signal: controller.signal })
+        .finally(() => clearTimeout(timeoutId));
+};
+
 const cleanStdout = (val) =>
     val && val.stdout ? val.stdout.replace(/[\r\n]+/g, "").trim() : _("Error");
 
@@ -165,7 +173,7 @@ return view.extend({
             })
             .then(data => (cleanStdout(data).split(",")));
 
-        const infoOnlinePackage = await fetch(common.justclashOnlineVersionUrl)
+        const infoOnlinePackage = await fetchWithTimeout(common.justclashOnlineVersionUrl, 5000)
             .then(response => {
                 if (!response.ok) {
                     console.error("Error fetching latest release:", response);
@@ -183,6 +191,10 @@ return view.extend({
                 }
             })
             .catch(e => {
+                if (e.name === 'AbortError') {
+                    console.error("Request timeout:", e);
+                    return _("Timeout");
+                }
                 console.error("Error fetching latest release:", e);
                 return _("Error");
             });
