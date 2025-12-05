@@ -251,6 +251,7 @@ start_core() {
     local attempt=0
     log 2 "Start with configured retries: $CORE_RESTART_MAX_RETRIES" "🐱"
 
+    # shellcheck disable=SC2154
     if [ "$JUSTCLASH_ENV" = "procd" ]; then
         local attempt=0
 
@@ -1682,7 +1683,7 @@ service_data_update() {
 
     log 2 "Downloading RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
-    curl --connect-timeout $CURL_CONNECT_TIMEOUT --speed-limit $CURL_MIN_SPEED_LIMIT_BYTES --speed-time $CURL_MIN_SPEEED_TIMEOUT --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
         log 0 "Failed to download RULE-SETs list file." "❌"
         return 1
     }
@@ -1692,7 +1693,7 @@ service_data_update() {
 
     log 2 "Downloading BLOCK RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_BLOCKS_FILENAME}
-    curl --connect-timeout $CURL_CONNECT_TIMEOUT --speed-limit $CURL_MIN_SPEED_LIMIT_BYTES --speed-time $CURL_MIN_SPEEED_TIMEOUT --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
         log 0 "Failed to download BLOCK RULE-SETs list file." "❌"
         return 1
     }
@@ -1779,10 +1780,10 @@ detect_arch() {
 get_latest_version() {
     local check_url="$1"
     local download_url latest_ver
-    download_url=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --speed-limit $CURL_MIN_SPEED_LIMIT_BYTES --speed-time $CURL_MIN_SPEEED_TIMEOUT -sL "$check_url" | \
+    download_url=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" -sL "$check_url" | \
         jq -r '.assets[] | select(.name == "version.txt") | .browser_download_url')
 
-    latest_ver=$(curl --connect-timeout $CURL_CONNECT_TIMEOUT --speed-limit $CURL_MIN_SPEED_LIMIT_BYTES --speed-time $CURL_MIN_SPEEED_TIMEOUT -sL "$download_url" | tr -d '\r\n' | sed -n 1p) || {
+    latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" -sL "$download_url" | tr -d '\r\n' | sed -n 1p) || {
         log 0 "Failed to get latest version" "❌"
         return 1
     }
@@ -1801,7 +1802,7 @@ core_download() {
     base_url="${download_url}/${param_version}/${file_name}"
 
     log 2 "Downloading mihomo binary" "📥"
-    curl --connect-timeout $CURL_CONNECT_TIMEOUT --speed-limit $CURL_MIN_SPEED_LIMIT_BYTES --speed-time $CURL_MIN_SPEEED_TIMEOUT --progress-bar -L -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" --progress-bar -L -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
         log 0 "Failed to download file." "❌"
         return 1
     }

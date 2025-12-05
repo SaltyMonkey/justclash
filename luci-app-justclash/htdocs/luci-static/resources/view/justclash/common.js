@@ -132,7 +132,7 @@ return baseclass.extend({
         try {
             const url = new URL(value);
             return ["http:", "https:"].includes(url.protocol);
-        } catch (e) {
+        } catch {
             return false;
         }
     },
@@ -204,7 +204,7 @@ return baseclass.extend({
 
             return true;
 
-        } catch (e) {
+        } catch {
             return _("Proxy link can't be parsed!"); // Невалидный URL, например, ошибка разбора
         }
     },
@@ -277,7 +277,7 @@ return baseclass.extend({
 
             try {
                 new RegExp(part); // поддерживается и keyword, и regexp
-            } catch (e) {
+            } catch {
                 return _("Invalid expression in ") + ctxLabel + ": " + part;
             }
         }

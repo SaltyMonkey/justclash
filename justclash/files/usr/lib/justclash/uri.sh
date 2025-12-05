@@ -383,7 +383,6 @@ parse_hysteria2_url() {
     echo "{$json}"
 }
 
-
 #Supports only one port/port-range + transport combination
 parse_mieru_url() {
     local link="$1" dialer_proxy="$2"
