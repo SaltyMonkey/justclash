@@ -167,8 +167,8 @@ return view.extend({
         o.default = common.defaultUpdateOptions[0].value;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
-        o.placeholder = "0 3 * * 0";
-        o.default = "0 3 * * 0";
+        o.placeholder = "0 5 * * 0";
+        o.default = "0 5 * * 0";
         o.rmempty = false;
         o.description = _("Special cron string for Mihomo autorestart job.");
         o.validate = function (section_id, value) {
@@ -176,8 +176,8 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_update_string", _("Mihomo autoupdate cron:"));
-        o.placeholder = "0 3 * * 0";
-        o.default = "0 3 * * 0";
+        o.placeholder = "0 5 * * 0";
+        o.default = "0 5 * * 0";
         o.rmempty = false;
         o.description = _("Special cron string for Mihomo autoupdate job.");
         o.validate = function (section_id, value) {
