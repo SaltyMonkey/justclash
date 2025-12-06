@@ -1567,7 +1567,7 @@ core_generate_yaml() {
             --arg nspg "$names_suffixes_proxy_groups" \
             --arg nrp "$names_rulesets_proxies" \
             --arg nsp "$names_suffixes_proxies" \
-            '($custom | fromjson) + ($nrd | fromjson) + ($nsd | fromjson) + ($nrb | fromjson) + ($nsb | fromjson) + ($nrpg | fromjson) + ($nspg | fromjson) + ($nrp | fromjson) + ($nsp | fromjson)'
+            '($custom | fromjson) + ($nrd | fromjson) + ($nsd | fromjson) + ($nrpg | fromjson) + ($nspg | fromjson) + ($nrp | fromjson) + ($nsp | fromjson)'
         )
     else
         fake_ip_filter_data=$fake_ip_exclude_domains
