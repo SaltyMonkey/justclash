@@ -1190,15 +1190,15 @@ handle_block_rule_section() {
             # shellcheck disable=SC2249
             case "$name" in \#*) continue ;; esac
 
-            local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            if [ "$behavior" = "domain" ]; then
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}$yamlName"
+            else
+                local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")
+                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            fi
 
             selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
             added_blocklists="$added_blocklists$val|"
-
-            if [ "$behavior" = "domain" ]; then
-               list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$yamlName\""
-            fi
         else
             log 1 "Blocklist '$val' can't be found in $blocklist_content" "⚠️"
         fi
@@ -1210,9 +1210,7 @@ handle_block_rule_section() {
     local domain_val
     for domain_val in $additional_domain_blockroute; do
         [ -n "$domain_val" ] && {
-            local rule_str=$(printf 'DOMAIN-SUFFIX,%s,REJECT' "$domain_val")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-            list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$domain_val\""
+            list_suffix_names="${list_suffix_names:+$list_suffix_names,}+.$domain_val"
         }
     done
 
@@ -1227,8 +1225,8 @@ handle_block_rule_section() {
 
     selected_rule_sets="{${selected_rule_sets%,}}"
     rules="[${rules_array:-}]"
-    list_rulesets_names="[${list_rulesets_names:-}]"
-    list_suffix_names="[${list_suffix_names:-}]"
+
+    [ -n "$list_rulesets_names" ] && list_rulesets_names="rule-set:${list_rulesets_names}"
 
     echo "$rules" > "$file_rules"
     echo "$selected_rule_sets" > "$file_rulesets"
@@ -1423,11 +1421,12 @@ core_generate_yaml() {
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_include_domains fake_ip_exclude_domains fake_ip_filter_data
     local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_direct
     local proxies proxy_groups rule_providers proxy_providers names_suffixes_proxy_groups names_suffixes_proxies names_rulesets_proxy_groups names_rulesets_proxies
-    local names_rulesets_block names_suffixes_block names_rulesets_direct names_suffixes_direct
+    local names_rulesets_block_policy names_suffixes_block_policy names_rulesets_direct names_suffixes_direct
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path
     local block_rulesets_content rulesets_content
     local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
+    local nameserver_policy
 
     config_get controller_bind_interface proxy controller_bind_interface
     if [ -n "$controller_bind_interface" ]; then
@@ -1508,13 +1507,13 @@ core_generate_yaml() {
 
     tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules_block.XXXXXX)
     tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_block.XXXXXX)
-    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
-    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
+    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names_policy.XXXXXX)
+    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names_policy.XXXXXX)
     handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
     rules_block=$(cat "$tmp_rules_file" )
     rulesets_block=$(cat "$tmp_rulesets_path")
-    names_rulesets_block=$(cat "$tmp_names_rulesets_path")
-    names_suffixes_block=$(cat "$tmp_names_suffixes_path")
+    names_rulesets_block_policy=$(cat "$tmp_names_rulesets_path")
+    names_suffixes_block_policy=$(cat "$tmp_names_suffixes_path")
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
@@ -1546,13 +1545,24 @@ core_generate_yaml() {
     names_suffixes_proxies=$(cat "$tmp_names_suffixes_path")
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
+    nameserver_policy=$(jq -n \
+        --arg rulesets "$names_rulesets_block_policy" \
+        --arg suffixes "$names_suffixes_block_policy" \
+        '
+        {} |
+        if $rulesets != "" then
+            . + {($rulesets): "rcode://refused"}
+        else . end |
+        if $suffixes != "" then
+            . + {($suffixes): "rcode://refused"}
+        else . end
+        ')
+
     if [ "$fake_ip_filter_mode" = "whitelist" ]; then
         fake_ip_filter_data=$(jq -n \
             --arg custom "$fake_ip_include_domains" \
             --arg nrd "$names_rulesets_direct" \
             --arg nsd "$names_suffixes_direct" \
-            --arg nrb "$names_rulesets_block" \
-            --arg nsb "$names_suffixes_block" \
             --arg nrpg "$names_rulesets_proxy_groups" \
             --arg nspg "$names_suffixes_proxy_groups" \
             --arg nrp "$names_rulesets_proxies" \
@@ -1640,6 +1650,7 @@ dns:
   ipv6: false
   use-hosts: false
   use-system-hosts: $use_system_hosts
+  nameserver-policy: $nameserver_policy
   default-nameserver: $default_nameserver
   nameserver: $nameserver
   proxy-server-nameserver: $proxy_server_nameserver
