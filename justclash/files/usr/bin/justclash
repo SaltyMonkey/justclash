@@ -352,12 +352,13 @@ nf_table_add() {
     nft add element inet "$NF_TABLE_NAME" fake_ips { $fake_ip_range }
 
     nft add set inet "$NF_TABLE_NAME" private_ips '{ type ipv4_addr; flags interval; }'
+    nft add set inet "$NF_TABLE_NAME" private_ips6 '{ type ipv6_addr; flags interval; }'
     nft add element inet "$NF_TABLE_NAME" private_ips { \
         0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, \
         169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
         192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
         224.0.0.0/4, 240.0.0.0/4 }
-
+    nft add element inet "$NF_TABLE_NAME" private_ips6 { ::/128, ::1/128, fe80::/10, fc00::/7, ff00::/8 }
     #nft add set inet "$NF_TABLE_NAME" vpn_interfaces '{ type ifname; }'
     #nft add set inet "$NF_TABLE_NAME" vpn_interfaces { type ifname; elements = { "tun*", "tap*", "awg*", "wg*", "ovpn*", "openvpn*", "l2tp*", "pptp*", "sstp*", "ikev2*", "ipsec*" } }
 
@@ -369,6 +370,7 @@ nf_table_add() {
     # === PREROUTING chain (priority -150) - mark for user interfaces ===
     nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$NF_TABLE_FWMARK_PROXY" return
     nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
+    nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip6 daddr @private_ips6 return
 
     if [ "$nft_quic_mode" = "DROP" ]; then
         # shellcheck disable=SC2248
@@ -403,6 +405,7 @@ nf_table_add() {
  	    nft add rule inet "$NF_TABLE_NAME" output mark "$NF_TABLE_FWMARK_PROXY" return
         #nft add rule inet "$NF_TABLE_NAME" output meta oifname @vpn_interfaces return
         nft add rule inet "$NF_TABLE_NAME" output ip daddr @private_ips return
+        nft add rule inet "$NF_TABLE_NAME" output ip6 daddr @private_ips6 return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
 
         if [ "$nft_ntp_mode_router" = "DROP" ]; then
