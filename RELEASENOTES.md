@@ -1,3 +1,17 @@
+## [0.6.6] - 06122025
+
+- Service: Fixed "unlimited timeout" for curl requests with bad connection
+- Service: Fixed stucked LuCI default page with bad connection
+- UCI: Changed default cron strings
+- Service: Exclude link-local and etc IPv6 addresses from tproxy route
+- Service: Added some special domains for default fake_ip_exclude_domains
+- Service: Improved DNS blocking for blocked section
+- Service: Added randomization for default keys in files/config (improved security)
+
+**This version requires:**
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.6.2] - 03122025
 
 - Service: Fixed trojan link parser
