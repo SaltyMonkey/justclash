@@ -87,7 +87,7 @@ return baseclass.extend({
     ],
     defaultProxiesModes: [{ value: "object", text: "Object" }, { value: "uri", text: "URL" }],
     genNameProxyGroupPrefix: "proxygroup",
-    defaultLoggingLevels: ["info", "warning", "error", "silent", "debug"],
+    defaultLoggingLevels: ["info", "warning", "error", "debug"],
     defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
     defaultProxyProvidersCheckUrl: "https://www.gstatic.com/generate_204",
     defaultProxyGroupsTypes: [{ value: "fallback", text: "Fallback" }, { value: "load-balancer", text: "Load balancer" }, { value: "url-test", text: "URL Test" }],
