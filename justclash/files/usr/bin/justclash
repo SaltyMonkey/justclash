@@ -9,24 +9,35 @@
 # Avoid adding simple commands for perfomance
 # --------------------------------------------
 
+PROGNAME="justclash"
+
+# Simple self contained function for file import
+# Will write logs at fail and call exit
+import() {
+    local file="$1"
+
+    # shellcheck disable=SC1090
+    if ! . "$file" 2>/dev/null; then
+        printf '[%s] [user.err] %s\n' "$(date '+%Y-%m-%d %H:%M:%S.%3N')" "File $file can't be loaded!"
+        logger -p "user.err" -t "$PROGNAME" "File $file can't be loaded!"
+        exit 1
+    fi
+}
+
 CURL_CONNECT_TIMEOUT=15
 CURL_MIN_SPEED_LIMIT_BYTES=5000
 CURL_MIN_SPEEED_TIMEOUT=15
 
 JUSTCLASH_VERSION="__COMPILED_VERSION_VARIABLE__"
-# shellcheck disable=SC1091
-[ -r /lib/functions/network.sh ] && . /lib/functions/network.sh
-# shellcheck disable=SC1091
-[ -r /lib/functions.sh ] && . /lib/functions.sh
-# shellcheck disable=SC1091
-[ -r /lib/config/uci.sh ] && . /lib/config/uci.sh
-. /usr/lib/justclash/logging.sh
-. /usr/lib/justclash/migration.sh
-. /usr/lib/justclash/compat.sh
-. /usr/lib/justclash/uri.sh
-. /usr/lib/justclash/helpers.sh
 
-PROGNAME="justclash"
+import /lib/functions/network.sh
+import /lib/functions.sh
+import /lib/config/uci.sh
+import /usr/lib/justclash/logging.sh
+import /usr/lib/justclash/migration.sh
+import /usr/lib/justclash/compat.sh
+import /usr/lib/justclash/uri.sh
+import /usr/lib/justclash/helpers.sh
 
 config_load "$PROGNAME"
 
