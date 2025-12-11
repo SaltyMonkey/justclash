@@ -123,8 +123,6 @@ ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 
-CACHED_MIHOMO_VER=""
-
 ucibool_to_yesno() {
     case "$1" in
         1) echo "Yes" ;;
@@ -625,15 +623,11 @@ check_for_conflicts_warn() {
 }
 
 info_mihomo() {
-    if [ -z "$CACHED_MIHOMO_VER" ]; then
-        if [ ! -x "$CORE_PATH" ]; then
-            CACHED_MIHOMO_VER="$NO_DATA_STRING"
-        else
-            CACHED_MIHOMO_VER=$("$CORE_PATH" -v 2>/dev/null | head -n1 | awk '{ print $3 }')
-        fi
+    if [ ! -x "$CORE_PATH" ]; then
+        echo "$NO_DATA_STRING"
+    else
+        "$CORE_PATH" -v 2>/dev/null | head -n1 | awk '{ print $3 }'
     fi
-
-    echo "$CACHED_MIHOMO_VER"
 }
 
 systemlogs() {
@@ -1838,8 +1832,6 @@ core_download() {
         return 1
     }
 
-    CACHED_MIHOMO_VER=""
-
     log 2 "Extracting to $CORE_PATH" "⬇️"
     gunzip -c "${CORE_WORKDIR_PATH}/mihomo.gz" > "$CORE_PATH" || {
         log 0 "Failed to extract file." "❌"
@@ -1859,8 +1851,6 @@ core_download() {
 }
 
 core_remove() {
-    CACHED_MIHOMO_VER=""
-
     if [ ! -x "$CORE_PATH" ]; then
         log 0 "Mihomo is not installed." "❌"
         return 1
@@ -2386,7 +2376,6 @@ case "$1" in
     help|?|command)
         help
         ;;
-    # internal function
     _luci_call)
         echo "$JUSTCLASH_VERSION,$(info_mihomo)"
         ;;
