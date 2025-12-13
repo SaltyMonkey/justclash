@@ -8,6 +8,8 @@ Oisd big|oisd-big|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-
 Oisd NSFW small|oisd-nsfw-small|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-nsfw-small.mrs
 Oisd NSFW|oisd-nsfw|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-nsfw.mrs
 Oisd small|oisd-small|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-small.mrs
+Hagezi badware hosters|hagezi-badware-hosters|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-badware-hosters.mrs
+Hagezi dyndns|hagezi-dyndns|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-dyndns.mrs
 Hagezi spy apple|hagezi-spy-apple|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-apple.mrs
 Hagezi spy huawei|hagezi-spy-huawei|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-huawei.mrs
 Hagezi spy lgwebos|hagezi-spy-lgwebos|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-lgwebos.mrs

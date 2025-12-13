@@ -1,11 +1,16 @@
 Antifilter community|antifilter-community|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/antifilter-community.mrs
+Category ai|category-ai|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-ai.mrs
 Category anticensorship|category-anticensorship|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-anticensorship.mrs
 Category dev|category-dev|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-dev.mrs
 Category gov RU|category-gov-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-gov-ru.mrs
+Category remote control|category-remote-control|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-remote-control.mrs
 Category RU|category-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-ru.mrs
 Category speedtest|category-speedtest|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-speedtest.mrs
+Drweb|drweb|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/drweb.mrs
 Itdog Russia inside|itdog-russia-inside|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/itdog-russia-inside.mrs
 Just domains|just-domains|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/just-domains.mrs
+Kaspersky|kaspersky|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/kaspersky.mrs
+Mailru|mailru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/mailru.mrs
 No Russia hosts|no-russia-hosts|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/no-russia-hosts.mrs
 Akamai|akamai|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/akamai.mrs
 Alibaba|alibaba|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/alibaba.mrs
@@ -105,4 +110,3 @@ Hetzner CIDR|hetzner-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/m
 Meta CIDR|meta-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/meta.mrs
 OVH CIDR|ovh-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/ovh.mrs
 Telegram CIDR|telegram-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/telegram.mrs
-
