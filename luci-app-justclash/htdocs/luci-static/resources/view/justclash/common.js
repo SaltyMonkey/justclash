@@ -11,6 +11,13 @@ return baseclass.extend({
     //genNameProxyPrefix: "proxy",
     //genNameProxyProviderPrefix: "provider",
     logsCount: "800",
+    defaultNtpServers: [
+        { value: "194.190.168.1", text: "ntp.msk-ix.ru" },
+        { value: "89.109.251.22", text: "ntp2.vniiftri.ru" },
+        { value: "89.109.251.23", text: "ntp3.vniiftri.ru" },
+        { value: "216.239.35.4", text: "time2.google.com" },
+        { value: "216.239.35.8", text: "time3.google.com" },
+    ],
     defaultKeepAliveSec: [
         { value: "15", text: _("Every 15 seconds") },
         { value: "25", text: _("Every 25 seconds") },
