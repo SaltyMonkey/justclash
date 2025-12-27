@@ -96,7 +96,7 @@ return baseclass.extend({
         "error",
         "debug"
     ],
-    healthCheckUrls: [
+    defaultHealthCheckUrls: [
         "https://www.gstatic.com/generate_204",
         "https://clients3.google.com/generate_204",
         "https://cp.cloudflare.com/generate_204",
