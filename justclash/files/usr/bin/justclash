@@ -487,7 +487,7 @@ dnsmasq_update() {
         save_dnsmasq_config "dhcp.@dnsmasq[0].noresolv" "dhcp.@dnsmasq[0].${PROGNAME}_noresolv"
         save_dnsmasq_config "dhcp.@dnsmasq[0].cachesize" "dhcp.@dnsmasq[0].${PROGNAME}_cachesize"
 
-        uci add_list dhcp.@dnsmasq[0].server="127.0.0.1#$dns_listen_port"
+        uci add_list dhcp.@dnsmasq[0].server="127.0.0.1#${dns_listen_port}"
         uci set dhcp.@dnsmasq[0].cachesize="0"
         uci set dhcp.@dnsmasq[0].noresolv="1"
 
@@ -775,7 +775,7 @@ handle_proxy_section() {
         for line in $domain_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str )
+                local rng_name=$(printf "%s" "$clean_line" | md5_str)
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -804,7 +804,7 @@ handle_proxy_section() {
         for line in $cidr_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str )
+                local rng_name=$(printf "%s" "$clean_line" | md5_str)
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -984,7 +984,7 @@ handle_proxy_group_section() {
         for line in $domain_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str )
+                local rng_name=$(printf "%s" "$clean_line" | md5_str)
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -1013,7 +1013,7 @@ handle_proxy_group_section() {
         for line in $cidr_list; do
             local clean_line=$(echo "$line" | trim)
             if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str )
+                local rng_name=$(printf "%s" "$clean_line" | md5_str)
                 case "$clean_line" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
@@ -1308,7 +1308,7 @@ handle_direct_rule_section() {
     for line in $domain_list; do
         local clean_line=$(echo "$line" | trim)
         if [ -n "$clean_line" ]; then
-            local rng_name=$(printf "%s" "$clean_line" | md5_str )
+            local rng_name=$(printf "%s" "$clean_line" | md5_str)
             case "$clean_line" in
                 http://*|https://*)
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
@@ -1334,7 +1334,7 @@ handle_direct_rule_section() {
     for line in $cidr_list; do
         local clean_line=$(echo "$line" | trim)
         if [ -n "$clean_line" ]; then
-            local rng_name=$(printf "%s" "$clean_line" | md5_str )
+            local rng_name=$(printf "%s" "$clean_line" | md5_str)
             case "$clean_line" in
                 http://*|https://*)
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
@@ -1505,10 +1505,10 @@ core_generate_yaml() {
     block_rulesets_content=$(cat "$RULESETS_BLOCKS_FILE")
     rulesets_content=$(cat "$RULESETS_FILE")
 
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules_direct.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_direct.XXXXXX)
-    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
-    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
+    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules_direct.XXXXXX")
+    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_direct.XXXXXX")
+    tmp_names_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_names.XXXXXX")
+    tmp_names_suffixes_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_suffixes_names.XXXXXX")
     handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
     rules_direct=$(cat "$tmp_rules_file")
     rulesets_direct=$(cat "$tmp_rulesets_path")
@@ -1516,26 +1516,26 @@ core_generate_yaml() {
     names_suffixes_direct=$(cat "$tmp_names_suffixes_path")
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules_block.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_block.XXXXXX)
-    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names_policy.XXXXXX)
-    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names_policy.XXXXXX)
+    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules_block.XXXXXX")
+    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_block.XXXXXX")
+    tmp_names_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_names_policy.XXXXXX")
+    tmp_names_suffixes_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_suffixes_names_policy.XXXXXX")
     handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
-    rules_block=$(cat "$tmp_rules_file" )
+    rules_block=$(cat "$tmp_rules_file")
     rulesets_block=$(cat "$tmp_rulesets_path")
     names_rulesets_block_policy=$(cat "$tmp_names_rulesets_path")
     names_suffixes_block_policy=$(cat "$tmp_names_suffixes_path")
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets.XXXXXX)
-    tmp_proxygroup_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_proxygroups.XXXXXX)
+    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules.XXXXXX")
+    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets.XXXXXX")
+    tmp_proxygroup_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_proxygroups.XXXXXX")
     # Files for strings with names in json arrays (for Fake IP filter)
-    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
-    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
+    tmp_names_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_names.XXXXXX")
+    tmp_names_suffixes_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_suffixes_names.XXXXXX")
     handle_proxy_group_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
-    rules_proxygroups=$(cat "$tmp_rules_file" )
+    rules_proxygroups=$(cat "$tmp_rules_file")
     rulesets_proxygroup=$(cat "$tmp_rulesets_path")
     proxy_groups=$(cat "$tmp_proxygroup_path")
     names_rulesets_proxy_groups=$(cat "$tmp_names_rulesets_path")
@@ -1543,11 +1543,11 @@ core_generate_yaml() {
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rules.XXXXXX)
-    tmp_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets.XXXXXX)
-    tmp_proxies_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_proxies.XXXXXX)
-    tmp_names_rulesets_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_rulesets_names.XXXXXX)
-    tmp_names_suffixes_path=$(mktemp "$CORE_WORKDIR_PATH"/tmp_suffixes_names.XXXXXX)
+    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules.XXXXXX")
+    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets.XXXXXX")
+    tmp_proxies_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_proxies.XXXXXX")
+    tmp_names_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_names.XXXXXX")
+    tmp_names_suffixes_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_suffixes_names.XXXXXX")
     handle_proxy_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
     rules_proxies=$(cat "$tmp_rules_file")
     rulesets_proxies=$(cat "$tmp_rulesets_path")
@@ -1739,7 +1739,7 @@ core_prepare_workdir() {
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-            current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str )
+            current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str)
             saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null || echo "")
             if [ "$current_hash" != "$saved_hash" ]; then
                 log 2 "Outdated $OUTPUT_YAML_CONFIG_PATH was found. Will be recreated." "🐱"
