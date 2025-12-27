@@ -1654,6 +1654,7 @@ dns:
   cache-algorithm: arc
   cache-max-size: $dns_cache_max_size
   listen: 127.0.0.1:$dns_listen_port
+  prefer-h3: false
   ipv6: false
   use-hosts: false
   use-system-hosts: $use_system_hosts
@@ -1662,6 +1663,7 @@ dns:
   nameserver: $nameserver
   proxy-server-nameserver: $proxy_server_nameserver
   direct-nameserver: $direct_nameserver
+  direct-nameserver-follow-policy: true
   respect-rules: true
   enhanced-mode: fake-ip
   fake-ip-range: $fake_ip_range
