@@ -85,21 +85,65 @@ return baseclass.extend({
         { value: "3600", text: _("Every hour") },
         { value: "10800", text: _("Every 3 hour") }
     ],
-    defaultProxiesModes: [{ value: "object", text: "Object" }, { value: "uri", text: "URL" }],
+    defaultProxiesModes: [
+        { value: "object", text: "Object" },
+        { value: "uri", text: "URL" }
+    ],
     genNameProxyGroupPrefix: "proxygroup",
-    defaultLoggingLevels: ["info", "warning", "error", "debug"],
-    defaultProxyGroupCheckUrl: "https://www.gstatic.com/generate_204",
-    defaultProxyProvidersCheckUrl: "https://www.gstatic.com/generate_204",
-    defaultProxyGroupsTypes: [{ value: "fallback", text: "Fallback" }, { value: "load-balancer", text: "Load balancer" }, { value: "url-test", text: "URL Test" }],
-    defaultProxyGroupsBalanceModeStrategies: [{ value: "consistent-hashing", text: "Consistent hashing" }, { value: "round-robin", text: "Round robin" }],
-    defaultNftOptions: [{ value: "BY RULES", text: _("By rules") }, { value: "DROP", text: _("Drop") }],
-    defaultNftNtpOptions: [{ value: "BY RULES", text: _("By rules") }, { value: "DROP", text: _("Drop") }, { value: "DIRECT", text: _("Direct") }],
+    defaultLoggingLevels: [
+        "info",
+        "warning",
+        "error",
+        "debug"
+    ],
+    healthCheckUrls: [
+        "https://www.gstatic.com/generate_204",
+        "https://clients3.google.com/generate_204",
+        "https://cp.cloudflare.com/generate_204",
+        "https://www.gstatic.cn/generate_204",
+        "https://g.cn/generate_204",
+    ],
+    defaultProxyGroupsTypes: [
+        { value: "fallback", text: "Fallback" },
+        { value: "load-balancer", text: "Load balancer" },
+        { value: "url-test", text: "URL Test" }
+    ],
+    defaultProxyGroupsBalanceModeStrategies: [
+        { value: "consistent-hashing", text: "Consistent hashing" },
+        { value: "round-robin", text: "Round robin" }
+    ],
+    defaultNftOptions: [
+        { value: "BY RULES", text: _("By rules") },
+        { value: "DROP", text: _("Drop") }
+    ],
+    defaultNftNtpOptions: [
+        { value: "BY RULES", text: _("By rules") },
+        { value: "DROP", text: _("Drop") },
+        { value: "DIRECT", text: _("Direct") }
+    ],
     defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.2.6172.169 Safari/537.36",
-    defaultFingerprints: ["chrome", "firefox", "safari", "android", "360", "iOS", "random", "randomized", "edge"],
-    defaultUpdateOptions: [{ value: "no", text: _("Disabled") }, { value: "checkandupdate", text: _("Check and do update") }],
+    defaultFingerprints: [
+        "chrome",
+        "firefox",
+        "safari",
+        "android",
+        "360",
+        "iOS",
+        "random",
+        "randomized",
+        "edge"
+    ],
+    defaultUpdateOptions: [
+        { value: "no", text: _("Disabled") },
+        { value: "checkandupdate", text: _("Check and do update") }
+    ],
     defaultTimeoutForWSReconnect: 10000,
     minimalRuleSetUpdateInterval: 21600,
-    endRuleOptions: [{ value: "DIRECT", text: _("Direct") }, { value: "BY RULES", text: _("By rules") }, { value: "REJECT", text: _("Reject") }],
+    endRuleOptions: [
+        { value: "DIRECT", text: _("Direct") },
+        { value: "BY RULES", text: _("By rules") },
+        { value: "REJECT", text: _("Reject") }
+    ],
     generateRandomName: function (prefix) {
         return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
     },
@@ -205,7 +249,7 @@ return baseclass.extend({
             return true;
 
         } catch {
-            return _("Proxy link can't be parsed!"); // Невалидный URL, например, ошибка разбора
+            return _("Proxy link can't be parsed!");
         }
     },
     isValidDomainSuffix: function (value) {
@@ -276,7 +320,7 @@ return baseclass.extend({
             if (!part) continue;
 
             try {
-                new RegExp(part); // поддерживается и keyword, и regexp
+                new RegExp(part);
             } catch {
                 return _("Invalid expression in ") + ctxLabel + ": " + part;
             }

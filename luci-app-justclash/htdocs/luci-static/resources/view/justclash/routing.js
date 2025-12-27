@@ -269,8 +269,10 @@ return view.extend({
         o.rmempty = false;
 
         o = spp.taboption(tabname, form.Value, "health_check_url", _("Check URL:"));
-        o.placeholder = common.defaultProxyGroupCheckUrl;
-        o.default = common.defaultProxyGroupCheckUrl;
+        common.healthCheckUrls.forEach(item => {
+            o.value(item);
+        });
+        o.default = common.healthCheckUrls[0];
         o.rmempty = false;
         o.validate = function (section_id, value) {
             return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
@@ -411,8 +413,10 @@ return view.extend({
         s2.tab(tabname, _("Health check"));
 
         o = s2.taboption(tabname, form.Value, "check_url", _("Check URL:"));
-        o.placeholder = common.defaultProxyGroupCheckUrl;
-        o.default = common.defaultProxyGroupCheckUrl;
+        common.healthCheckUrls.forEach(item => {
+            o.value(item);
+        });
+        o.default = common.healthCheckUrls[0];
         o.rmempty = false;
         o.validate = function (section_id, value) {
             return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
