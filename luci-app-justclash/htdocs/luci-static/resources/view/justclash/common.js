@@ -101,7 +101,8 @@ return baseclass.extend({
         "info",
         "warning",
         "error",
-        "debug"
+        "debug",
+        "silent"
     ],
     defaultHealthCheckUrls: [
         "https://www.gstatic.com/generate_204",
