@@ -110,11 +110,7 @@ NF_TABLE_FWMARK_PROXY=0xff
 NF_ROUTE_TABLE=100
 
 # List of NTP server IP addresses:
-# 194.190.168.1   — ntp1.stratum2.ru (Russian NTP server)
-# 195.208.185.17  — ntp2.stratum2.ru (Russian NTP server)
-# 193.232.128.6   — ntp3.stratum2.ru (Russian NTP server)
-# 216.239.35.0    — time.google.com (Google NTP)
-NTP_IPS="194.190.168.1 195.208.185.17 193.232.128.6 216.239.35.0"
+NTP_IPS="194.190.168.1 89.109.251.22 89.109.251.23 216.239.35.4 216.239.35.8"
 
 CONFLICTED_PATTERNS_DHCP_CONFIG="podkop_server podkop_noresolv podkop_cachesize doh_backup_noresolv doh_backup_server doh_server"
 CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
