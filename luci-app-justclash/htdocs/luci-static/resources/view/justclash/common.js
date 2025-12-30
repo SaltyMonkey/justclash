@@ -91,8 +91,8 @@ return baseclass.extend({
         { value: "10800", text: _("Every 3 hour") }
     ],
     defaultProxiesModes: [
-        { value: "object", text: "Object" },
-        { value: "uri", text: "URL" }
+        { value: "object", text: _("Object") },
+        { value: "uri", text: _("URL") }
     ],
     defaultLoggingLevels: [
         "info",
@@ -109,13 +109,13 @@ return baseclass.extend({
         "https://g.cn/generate_204",
     ],
     defaultProxyGroupsTypes: [
-        { value: "fallback", text: "Fallback" },
-        { value: "load-balancer", text: "Load balancer" },
-        { value: "url-test", text: "URL Test" }
+        { value: "fallback", text: _("Fallback") },
+        { value: "load-balancer", text: _("Load balancer") },
+        { value: "url-test", text: _("URL Test") }
     ],
     defaultProxyGroupsBalanceModeStrategies: [
-        { value: "consistent-hashing", text: "Consistent hashing" },
-        { value: "round-robin", text: "Round robin" }
+        { value: "consistent-hashing", text: _("Consistent hashing") },
+        { value: "round-robin", text: _("Round robin") }
     ],
     defaultNftOptions: [
         { value: "BY RULES", text: _("By rules") },

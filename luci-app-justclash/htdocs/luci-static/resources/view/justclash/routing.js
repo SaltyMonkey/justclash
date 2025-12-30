@@ -75,7 +75,7 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "mode", _("Mode:"));
         o.description = _("If selected, allow to define proxy as JSON object.");
         common.defaultProxiesModes.forEach(item => {
-            o.value(item.value, _(`${item.text}`));
+            o.value(item.value, item.text);
         });
         o.rmempty = false;
         o.default = common.defaultProxiesModes[1].value;
@@ -130,7 +130,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, _(`${item.name}`));
+            o.value(item.yamlName, item.name);
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
 
@@ -379,14 +379,14 @@ return view.extend({
 
         o = s2.taboption(tabname, form.ListValue, "group_type", _("Group type:"));
         common.defaultProxyGroupsTypes.forEach(item => {
-            o.value(item.value, _(`${item.text}`));
+            o.value(item.value, item.text);
         });
         o.rmempty = false;
         o.default = common.defaultProxyGroupsTypes[0].value;
 
         o = s2.taboption(tabname, form.ListValue, "strategy", _("Group strategy:"));
         common.defaultProxyGroupsBalanceModeStrategies.forEach(item => {
-            o.value(item.value, _(`${item.text}`));
+            o.value(item.value, item.text);
         });
         o.default = common.defaultProxyGroupsBalanceModeStrategies[0].value;
         o.depends("group_type", "load-balancer");
@@ -517,7 +517,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, _(`${item.name}`));
+            o.value(item.yamlName, item.name);
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy-group.");
 
@@ -596,7 +596,7 @@ return view.extend({
         o = s3.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         o.optional = true;
         result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, _(`${item.name}`));
+            o.value(item.yamlName, item.name);
         });
         o.description = _("Predefined RULE-SET lists, select those which you want to route through DIRECT.");
 
@@ -681,7 +681,7 @@ return view.extend({
 
         o = s4.taboption(tabname, form.DynamicList, "enabled_blocklist", _("Use with rules:"));
         result.blockRulesetsItems.forEach(item => {
-            o.value(item.yamlName, _(`${item.name}`));
+            o.value(item.yamlName, item.name);
         });
         o.description = _("Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything.");
 
