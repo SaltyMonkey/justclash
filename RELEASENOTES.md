@@ -1,3 +1,27 @@
+## [0.7.0] - 30122025
+
+- Config: Added more inbuild connection check links for fake ip/sniffer ignore
+- Config: Added inbuild local asus link for fake ip/sniffer ignore
+- Config: Added inbuild ntp.ix.ru link for fake ip ignore
+- Config: Changed inbuild default NTP server ip
+- Service: Added ntpd in requiments checks
+- Service: Stop script logic load when files are missing
+- Service: Update internal server IPs for ntpd binary call
+- Service: Minor code changes
+- Service: Changed compat fixes behavior - will not check for loaded br_netfilter
+- Service: Generated config includes `prefer-h3: false` now
+- Service: Generated config includes  `direct-nameserver-follow-policy: true` now
+- LuCI: Added back `silent` log option
+- LuCI: Fixed bunch of controls with incorrect data visibility
+- LuCI: Added back random section names generation
+- LuCI: Added better section names generation
+- LuCI: Translate some non translated fields
+- LuCI: Do not use translation engine for ssome already translated fields
+
+**This version requires:**
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.6.6] - 06122025
 
 - Service: Fixed "unlimited timeout" for curl requests with bad connection
