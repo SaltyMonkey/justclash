@@ -288,9 +288,9 @@ return view.extend({
         o.description = _("External NTP server for time syncing.");
         o.datatype = datatypes.IPADDR;
         common.defaultNtpServers.forEach(item => {
-            o.value(item);
+            o.value(item.value, item.text);
         });
-        o.default = common.defaultNtpServers[0];
+        o.default = common.defaultNtpServers[0].value;
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "core_ntp_port", _("NTP port:"));

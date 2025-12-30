@@ -1,6 +1,6 @@
 "use strict";
 "require view";
-//"require uci";
+"require uci";
 "require view.justclash.common as common";
 "require form";
 "require fs";
@@ -62,12 +62,12 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
         o.rmempty = false;
-        /*o.cfgvalue = function (section_id) {
+        o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName(common.genNameProxyPrefix);
-        };*/
+            return common.generateRandomName(common.adjectives, common.nouns);
+        };
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
@@ -207,12 +207,12 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.rmempty = false;
-        /*o.cfgvalue = function (section_id) {
+        o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName(common.genNameProxyProviderPrefix);
-        };*/
+            return common.generateRandomName(common.adjectives, common.nouns);
+        };
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
@@ -367,12 +367,12 @@ return view.extend({
         o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
         o.rmempty = false;
-        /*o.cfgvalue = function (section_id) {
+        o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName(common.genNameProxyGroupPrefix);
-        };*/
+            return common.generateRandomName(common.adjectives, common.nouns);
+        };
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
         };
@@ -424,8 +424,10 @@ return view.extend({
         o.description = _("URL for node availability check (required for proxy group functionality).");
 
         o = s2.taboption(tabname, form.Value, "expected_status", _("Check status:"));
-        o.placeholder = common.defaultHealthCheckResult;
-        o.default = common.defaultHealthCheckResult;
+        common.defaultHealthCheckResultCode.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultHealthCheckResultCode[1].value;
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         o.description = _("Required response status for node availability check (required for proxy group functionality).");
@@ -435,7 +437,7 @@ return view.extend({
         common.defaultProxyGroupIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultProxyGroupIntervalSec[2];
+        o.default = common.defaultProxyGroupIntervalSec[2].value;
         o.description = _("Time interval between health checks in seconds.");
 
         o = s2.taboption(tabname, form.Value, "tolerance", _("Tolerance:"));
@@ -452,7 +454,7 @@ return view.extend({
         common.defaultHealthCheckTimeoutMs.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultHealthCheckTimeoutMs[3];
+        o.default = common.defaultHealthCheckTimeoutMs[3].value;
         o.description = _("Timeout for each individual health check in milliseconds.");
 
         o = s2.taboption(tabname, form.Value, "max_failed_times", _("Max failed times:"));

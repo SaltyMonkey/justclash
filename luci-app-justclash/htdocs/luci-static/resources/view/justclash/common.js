@@ -8,8 +8,6 @@ return baseclass.extend({
     binPath: "/usr/bin/justclash",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
-    //genNameProxyPrefix: "proxy",
-    //genNameProxyProviderPrefix: "provider",
     logsCount: "800",
     defaultNtpServers: [
         { value: "194.190.168.1", text: "ntp.msk-ix.ru" },
@@ -96,7 +94,6 @@ return baseclass.extend({
         { value: "object", text: "Object" },
         { value: "uri", text: "URL" }
     ],
-    genNameProxyGroupPrefix: "proxygroup",
     defaultLoggingLevels: [
         "info",
         "warning",
@@ -152,9 +149,6 @@ return baseclass.extend({
         { value: "BY RULES", text: _("By rules") },
         { value: "REJECT", text: _("Reject") }
     ],
-    generateRandomName: function (prefix) {
-        return `${prefix}${Math.random().toString(16).substr(2, 8)}`;
-    },
     splitAndTrimString: function (value, delimiter = ",") {
 
         return value.split(delimiter)
@@ -335,6 +329,54 @@ return baseclass.extend({
         }
 
         return true;
+    },
+    adjectives: [
+        'agile','ancient','arcane','astral','atomic','bold','brave','bright','calm','clean',
+        'clever','cold','cool','cosmic','crisp','dark','deep','digital','distant','dry',
+        'eager','early','electric','epic','even','fast','fine','firm','fresh','friendly',
+        'frozen','gentle','grand','green','happy','hard','hidden','hot','humble','icy',
+        'inner','iron','kind','large','light','lively','local','lucky','lunar','magic',
+        'major','mellow','mighty','modern','muted','native','neat','new','nimble','noble',
+        'noisy','northern','odd','open','quiet','quick','rare','rapid','raw','ready',
+        'red','remote','rich','rocky','royal','rugged','safe','sharp','silent','silver',
+        'simple','smooth','solid','solar','soft','stable','steady','stellar','strong','subtle',
+        'sunny','swift','tame','tiny','tough','true','vivid','warm','wild','wise','young'
+    ],
+    nouns:  [
+        'aardvark','albatross','alligator','alpaca','anchovy','anemone','angelfish','anole','ant','anteater',
+        'antelope','ape','armadillo','auk','axolotl','baboon','badger','bandicoot','barnacle','barracuda',
+        'bat','beagle','bear','beaver','bee','beetle','beluga','bison','boar','bobcat',
+        'bonobo','budgie','buffalo','bull','bulldog','bumblebee','butterfly','buzzard','camel','canary',
+        'capybara','caracal','caribou','carp','cassowary','cat','catfish','caterpillar','centipede','chameleon',
+        'cheetah','chicken','chihuahua','chimpanzee','chinchilla','chipmunk','cicada','clam','clownfish','cobra',
+        'cockatoo','cockroach','cod','condor','coral','cougar','cow','coyote','crab','crane',
+        'crayfish','cricket','crocodile','crow','cuckoo','cuttlefish','dachshund','deer','dingo','dodo',
+        'dog','dolphin','donkey','dormouse','dove','dragonfly','duck','eagle','earthworm','echidna',
+        'eel','egret','elephant','elk','emu','falcon','ferret','finch','firefly','fish',
+        'flamingo','flea','fly','fox','frog','gazelle','gecko','gerbil','gibbon','giraffe',
+        'goat','goldfish','goose','gopher','gorilla','grasshopper','greyhound','grouse','guineapig','gull',
+        'haddock','halibut','hamster','hare','harrier','hawk','hedgehog','heron','herring','hippo',
+        'honeybee','hornet','horse','hound','hummingbird','hyena','ibex','ibis','iguana','impala',
+        'jackal','jaguar','jellyfish','kangaroo','kingfisher','kiwi','koala','koi','komodo','kookaburra',
+        'krill','ladybird','lamprey','lemur','leopard','lion','lizard','llama','lobster','locust',
+        'lynx','macaw','mackerel','magpie','manatee','mandrill','manta','marmot','meerkat','minnow',
+        'mole','mongoose','monkey','moose','mosquito','moth','mouse','mule','narwhal','newt',
+        'nightingale','nudibranch','octopus','okapi','opossum','orangutan','orca','ostrich','otter','owl',
+        'oyster','panda','pangolin','panther','parakeet','parrot','peacock','pelican','penguin','perch',
+        'pheasant','pig','pigeon','piranha','platypus','pony','porcupine','porpoise','possum','prawn',
+        'pufferfish','pug','puma','python','quail','quokka','rabbit','raccoon','ram','rat',
+        'rattlesnake','raven','ray','reindeer','rhino','robin','roach','rooster','salamander','salmon',
+        'sandpiper','sardine','scallop','scorpion','seahorse','seal','sealion','shark','sheep','shrew',
+        'shrimp','skunk','sloth','slug','snail','snake','sparrow','spider','squid','squirrel',
+        'starfish','stingray','stork','swan','tadpole','tapir','tarantula','tern','termite','tiger',
+        'toad','toucan','trout','tuna','turkey','turtle','urchin','viper','vulture','walrus',
+        'wasp','weasel','whale','wolf','wolverine','wombat','woodpecker','worm','yak','zebra'
+    ],
+    _pickFromArrRandomly: function (arr){
+        return arr[Math.floor(Math.random() * arr.length)];
+    },
+    generateRandomName: function (arrAdj, arrNoun) {
+        return `${_pickFromArrRandomly(arrAdj)}_${_pickFromArrRandomly(arrNoun)}_${Math.random().toString(16).substr(2, 8)}`;
     },
     //for autogeneration, titles luci-app-justclash.json
     stub_status_tab: _("Status"),
