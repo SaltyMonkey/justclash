@@ -568,6 +568,12 @@ check_requirement() {
         log 0 "Requirement is missing: md5sum package is not installed." "❌"
         ret=1
     fi
+
+    if ! command -v ntpd >/dev/null 2>&1; then
+        log 0 "Requirement is missing: ntpd is not installed." "❌"
+        ret=1
+    fi
+
     return "$ret"
 }
 
@@ -600,7 +606,7 @@ check_for_conflicts_warn() {
     local resolvconf_res=$?
 
     if [ "$resolvconf_res" -eq 0 ]; then
-        log 1 "Warning: External DNS servers are listed in /etc/resolv.conf:" "⚠️"
+        log 1 "Warning: External DNS servers are listed in /etc/resolv.conf" "⚠️"
         log 1 "Found: $external_nameservers" "⚠️"
         log 1 "This may bypass local DNS rules and cause unexpected query results." "⚠️"
         log 1 "If you intend to use a local DNS service, these entries should be removed." "⚠️"
