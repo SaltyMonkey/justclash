@@ -435,7 +435,7 @@ return view.extend({
         common.defaultProxyGroupIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultProxyGroupIntervalSec;
+        o.default = common.defaultProxyGroupIntervalSec[2];
         o.description = _("Time interval between health checks in seconds.");
 
         o = s2.taboption(tabname, form.Value, "tolerance", _("Tolerance:"));
@@ -449,8 +449,10 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Value, "check_timeout", _("Check timeout:"));
         o.datatype = datatypes.UINTEGER;
-        o.default = common.defaultHealthCheckTimeoutMs;
-        o.placeholder = common.defaultHealthCheckTimeoutMs;
+        common.defaultHealthCheckTimeoutMs.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultHealthCheckTimeoutMs[3];
         o.description = _("Timeout for each individual health check in milliseconds.");
 
         o = s2.taboption(tabname, form.Value, "max_failed_times", _("Max failed times:"));
