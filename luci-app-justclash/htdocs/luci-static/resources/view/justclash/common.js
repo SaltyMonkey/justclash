@@ -376,7 +376,7 @@ return baseclass.extend({
         return arr[Math.floor(Math.random() * arr.length)];
     },
     generateRandomName: function (arrAdj, arrNoun) {
-        return `${_pickFromArrRandomly(arrAdj)}_${_pickFromArrRandomly(arrNoun)}_${Math.random().toString(16).substr(2, 8)}`;
+        return `${this._pickFromArrRandomly(arrAdj)}_${this._pickFromArrRandomly(arrNoun)}_${Math.random().toString(16).substr(2, 8)}`;
     },
     //for autogeneration, titles luci-app-justclash.json
     stub_status_tab: _("Status"),
