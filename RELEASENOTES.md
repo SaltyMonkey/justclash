@@ -1,3 +1,7 @@
+## [0.7.1] - 01012026
+
+- LuCI: Fix incorrect change for use_zashboard
+
 ## [0.7.0] - 30122025
 
 - Config: Added more inbuild connection check links for fake ip/sniffer ignore
