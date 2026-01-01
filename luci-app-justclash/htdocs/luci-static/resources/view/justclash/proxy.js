@@ -36,7 +36,7 @@ return view.extend({
         o.multiple = false;
         o.description = "Select interface where API controller will be available.";
 
-        o = s.taboption(tabname, form.Flag, "enable_zashboard", _("Enable dashboard:"));
+        o = s.taboption(tabname, form.Flag, "use_zashboard", _("Enable dashboard:"));
         o.description = _("Enable external dashboard for Mihomo.");
         o.default = primitives.FALSE;
         o.rmempty = false;
