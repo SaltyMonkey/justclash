@@ -1130,16 +1130,11 @@ handle_proxy_provider_section() {
 
         config_get_bool health_check "$section" health_check 0
         if [ "$health_check" -eq 1 ]; then
-            config_get health_check_expected_status "$section" health_check_expected_status
-            config_get health_check_url "$section" health_check_url
-            config_get health_check_interval "$section" health_check_interval
-            config_get health_check_timeout "$section" health_check_timeout
-            config_get health_check_lazy "$section" health_check_lazy
-
-            [ -z "$health_check_interval" ] && health_check_interval=$DEFAULT_HEALTHCHECK_INTERVAL
-            [ -z "$health_check_timeout" ] && health_check_timeout=$DEFAULT_HEALTHCHECK_TIMEOUT
-            [ -z "$health_check_url" ] && health_check_url=$DEFAULT_HEALTHCHECK_URL
-            [ -z "$health_check_expected_status" ] && health_check_expected_status=$DEFAULT_HEALTHCHECK_RESULT
+            config_get health_check_expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
+            config_get health_check_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
+            config_get health_check_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
+            config_get health_check_timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
+            config_get health_check_lazy "$section" health_check_lazy 0
 
             entry="$entry,\"health-check\":{\
             \"enable\":true,\
@@ -1176,9 +1171,7 @@ handle_block_rule_section() {
 
     local enabled_blocklist
     config_get enabled_blocklist block_rules enabled_blocklist
-    config_get proxy block_rules proxy
-
-    [ -z "$proxy" ] && proxy=$DEFAULT_PROXY
+    config_get proxy block_rules proxy "$DEFAULT_PROXY"
 
     local added_blocklists="|"
     local val
@@ -1264,12 +1257,9 @@ handle_direct_rule_section() {
     local domain_list cidr_list
 
 
-    config_get list_update_interval direct_rules list_update_interval
+    config_get list_update_interval direct_rules list_update_interval $DEFAULT_RULESET_INTERVAL
     config_get enabled_list direct_rules enabled_list
-    config_get proxy direct_rules proxy
-
-    [ -z "$list_update_interval" ] && list_update_interval=$DEFAULT_RULESET_INTERVAL
-    [ -z "$proxy" ] && proxy=$DEFAULT_PROXY
+    config_get proxy direct_rules proxy $DEFAULT_PROXY
 
     local added_rulesets="|"
     for ruleset in $enabled_list; do
@@ -1758,7 +1748,7 @@ core_prepare_workdir() {
         mkdir -p "$CORE_WORKDIR_PATH"
     fi
 
-    config_get mihomo_persistent_temp_files settings mihomo_persistent_temp_files
+    config_get mihomo_persistent_temp_files settings mihomo_persistent_temp_files 0
     if [ "$mihomo_persistent_temp_files" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
         log 2 "Generating symlink $DEFAULT_SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
