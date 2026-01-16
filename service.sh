@@ -649,31 +649,6 @@ user_select_lang_install_mode_interactive() {
     done
 }
 
-localuse_interactive() {
-    print_bold_green "DNSMasq localuse flag setup... (Optional)"
-    echo "y/yes - router will resolve domains with ISP DNS servers."
-    echo "n/no - router will resolve domains with itself. (Default behavior)"
-    print_red "Router will be rebooted if setting will be applied"
-    while true; do
-            printf "Do you want to set dnsmasq localuse mode to '0'? y/n: "
-            read -r inp
-            inp=$(echo "$inp" | tr '[:upper:]' '[:lower:]')
-            # shellcheck disable=SC2249
-            case $inp in
-                yes|y)
-                    uci set dhcp.@dnsmasq[0].localuse='0'
-                    uci commit dhcp
-                    reboot
-                    exit 0
-                    ;;
-                n|no)
-                    echo "Skipped."
-                    exit 0
-                    ;;
-            esac
-    done
-}
-
 install_jq() {
     echo "  "
     print_bold_green "Installing helper jq package..."
@@ -700,7 +675,6 @@ install_service() {
     if [ $? -ne 1 ]; then
         justclash_install
     fi
-    #localuse_interactive
 }
 
 uninstall_service() {
@@ -750,10 +724,6 @@ run() {
                 echo "Starting diagnostic..."
                 diagnostic
                 ;;
-            #6)
-            #    echo "Starting DNSMasq localuse flag setup..."
-            #    localuse_interactive
-            #    ;;
             6)
                 echo "Exiting..."
                 exit 0
