@@ -105,7 +105,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "proxy_link_uri", _("URL mode:"));
         o.description = _("URI link with connection parameters.");
-        o.password = true;
+        //o.password = true;
         o.optional = true;
         o.placeholder = "vless://uuid@server:port?type=grpc&security=reality";
         o.validate = function (section_id, value) {
