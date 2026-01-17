@@ -81,11 +81,11 @@ msgid "4096 entries"
 msgstr "4096 вхождения"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:47
-msgid "8192 seconds"
+msgid "8192 entries"
 msgstr "8192 вхождения"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:48
-msgid "16384 seconds"
+msgid "16384 entries"
 msgstr "16384 вхождения"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:51

@@ -94,11 +94,11 @@ msgid "4096 entries"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:47
-msgid "8192 seconds"
+msgid "8192 entries"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:48
-msgid "16384 seconds"
+msgid "16384 entries"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:51

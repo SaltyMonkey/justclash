@@ -44,8 +44,8 @@ return baseclass.extend({
         { value: "1024", text: _("1024 entries") },
         { value: "2048", text: _("2048 entries") },
         { value: "4096", text: _("4096 entries") },
-        { value: "8192", text: _("8192 seconds") },
-        { value: "16384", text: _("16384 seconds") },
+        { value: "8192", text: _("8192 entries") },
+        { value: "16384", text: _("16384 entries") },
     ],
     defaultRuleSetUpdateInterval: [
         { value: "86400", text: _("Every 24 hours") },
