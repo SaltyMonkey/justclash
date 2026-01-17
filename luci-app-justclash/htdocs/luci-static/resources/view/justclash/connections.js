@@ -255,6 +255,11 @@ return view.extend({
                 flex: 0 0 60px;
                 max-width: 70px;
             }
+            .flex-header > div:nth-child(2),
+            .flex-row > div:nth-child(2) { /* Connections */
+                flex: 0 0 300px;
+                max-width: 300px;
+            }
             .flex-header > div:nth-child(4),
             .flex-row > div:nth-child(4) { /* Chains */
                 flex: 0 0 80px;
@@ -262,7 +267,7 @@ return view.extend({
             }
             .flex-header > div:nth-child(5),
             .flex-row > div:nth-child(5) { /* Rule */
-                flex: 0 0 80px;
+                flex: 0 0 65px;
                 max-width: 110px;
             }
             .flex-row:last-child {
