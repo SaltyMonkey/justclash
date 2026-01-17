@@ -70,23 +70,23 @@ msgstr "3 минуты"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:44
 msgid "1024 entries"
-msgstr "1024 вхождения"
+msgstr "1024 записей"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:45
 msgid "2048 entries"
-msgstr "2048 вхождения"
+msgstr "2048 записей"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:46
 msgid "4096 entries"
-msgstr "4096 вхождения"
+msgstr "4096 записей"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:47
 msgid "8192 entries"
-msgstr "8192 вхождения"
+msgstr "8192 записей"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:48
 msgid "16384 entries"
-msgstr "16384 вхождения"
+msgstr "16384 записей"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:51
 msgid "Every 24 hours"
