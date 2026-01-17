@@ -166,6 +166,14 @@ return view.extend({
         o.rmempty = false;
         o.default = common.defaultUpdateOptions[0].value;
 
+        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate_channel", _("Mihomo autoupdate channel:"));
+        common.defaultUpdateChannelOptions.forEach(item => {
+            o.value(item.value, `${item.text}`);
+        });
+        o.description = _("Update channel for Mihomo autoupdate job.");
+        o.rmempty = false;
+        o.default = common.defaultUpdateChannelOptions[0].value;
+
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
         o.placeholder = "0 5 * * 0";
         o.default = "0 5 * * 0";

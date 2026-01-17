@@ -142,6 +142,10 @@ return baseclass.extend({
         { value: "no", text: _("Disabled") },
         { value: "checkandupdate", text: _("Check and do update") }
     ],
+    defaultUpdateChannelOptions: [
+        { value: "stable", text: _("Stable") },
+        { value: "alpha", text: _("Alpha") }
+    ],
     defaultTimeoutForWSReconnect: 10000,
     minimalRuleSetUpdateInterval: 21600,
     endRuleOptions: [
