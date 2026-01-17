@@ -42,7 +42,6 @@ import /usr/lib/justclash/helpers.sh
 config_load "$PROGNAME"
 
 CORE_RELEASE_CHECK_URL="__CORE_RELEASE_CHECK_URL_VARIABLE__"
-CORE_RELEASE_DOWNLOAD_URL="__CORE_RELEASE_DOWNLOAD_URL_VARIABLE__"
 INBUILD_RULESETS_FILES_DOWNLOAD_URL="__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__"
 
 NO_DATA_STRING="N/A"
@@ -1787,32 +1786,111 @@ detect_arch() {
     esac
 }
 
-get_latest_version() {
-    local check_url="$1"
-    local download_url latest_ver
-    download_url=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" -sL "$check_url" | \
-        jq -r '.assets[] | select(.name == "version.txt") | .browser_download_url')
+get_latest_version_url() {
+    local check_url="$1" channel="${2:-stable}"
+    local api_url jq_filter
 
-    latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" -sL "$download_url" | tr -d '\r\n' | sed -n 1p) || {
-        log 0 "Failed to get latest version" "❌"
+    if [ "$channel" = "alpha" ]; then
+        api_url="${check_url%/latest}/releases"
+        jq_filter='[.[] | select(.name == "Prerelease-Alpha")][0].assets[] | select(.name == "version.txt") | .browser_download_url'
+    else
+        api_url="$check_url"
+        jq_filter='.assets[] | select(.name == "version.txt") | .browser_download_url'
+    fi
+
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        -sL "$api_url" | jq -r "$jq_filter"
+}
+
+core_update() {
+    local cur_ver latest_ver channel version_txt_url
+    local check_url channel
+
+    check_url="$CORE_RELEASE_CHECK_URL"
+    channel="${1:-stable}"
+    cur_ver=$(info_mihomo)
+
+    log 2 "Checking for Mihomo updates (channel: $channel)..." "🔄"
+
+    version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
+        log 0 "Failed to get version.txt URL from GitHub API" "❌"
         return 1
     }
-    echo "$latest_ver"
+
+    if [ -z "$version_txt_url" ]; then
+        log 0 "Error: version.txt not found in release assets"
+        log 0 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+        return 1
+    fi
+
+    latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p) || {
+        log 0 "Failed to download version.txt" "❌"
+        return 1
+    }
+
+    if [ -z "$latest_ver" ]; then
+       log 0 "Error happened when trying to receive latest version data."
+       log 0 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+       return 1
+    fi
+
+    if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
+        log 1 "Mihomo is not installed. Installing version $latest_ver ($channel)." "⚠️"
+        core_download "$version_txt_url" "$latest_ver"
+        if [ $? -eq 1 ]; then
+            log 0 "Update process can't be finished." "❌"
+            return 1
+        fi
+        return 0
+    fi
+
+    log 2 "Current Mihomo version: $cur_ver"
+    log 2 "Latest Mihomo version ($channel): $latest_ver"
+
+    if [ "$cur_ver" != "$latest_ver" ]; then
+        log 2 "Removing current mihomo binary..." "⚠️"
+        core_remove
+        if [ $? -eq 1 ]; then
+            log 0 "Update process can't be finished." "❌"
+            return 1
+        fi
+
+        log 2 "Updating Mihomo to version $latest_ver ($channel)" "⬆️"
+        core_download "$version_txt_url" "$latest_ver"
+        if [ $? -eq 1 ]; then
+            log 0 "Update process can't be finished." "❌"
+            return 1
+        fi
+    else
+        log 2 "Mihomo is already up-to-date." "✅"
+    fi
+
+    return 0
 }
 
 core_download() {
-    local arch file_name base_url param_version download_url
-    download_url="$1"
+    local arch file_name base_url param_version version_txt_url download_url
+    version_txt_url="$1"
     param_version="$2"
 
     arch=$(detect_arch)
     mkdir -p "$CORE_WORKDIR_PATH"
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
-    base_url="${download_url}/${param_version}/${file_name}"
+
+    base_url="${version_txt_url%/*}"
+    download_url="${base_url}/${file_name}"
 
     log 2 "Downloading mihomo binary" "📥"
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEEED_TIMEOUT" --progress-bar -L -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$base_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        --progress-bar -L -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$download_url" || {
         log 0 "Failed to download file." "❌"
         return 1
     }
@@ -1848,66 +1926,6 @@ core_remove() {
             return 1
         fi
     fi
-}
-
-core_update() {
-    local cur_ver latest_ver
-    local check_url download_url
-
-    log 2 "Checking for Mihomo updates..." "🔄"
-
-    cur_ver=$(info_mihomo)
-    if [ -z "$cur_ver" ]; then
-        log 0 "Update process can't be finished." "❌"
-        return 1
-    fi
-
-    check_url="$CORE_RELEASE_CHECK_URL"
-    download_url="$CORE_RELEASE_DOWNLOAD_URL"
-
-    latest_ver=$(get_latest_version "$check_url") || {
-        log 0 "Failed to get latest version" "❌"
-        return 1
-    }
-
-    if [ -z "$latest_ver" ]; then
-       log 0 "Error happened when trying to receive latest version data."
-       log 0 "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
-       log 0 "Failed to download core"
-       return 1
-    fi
-
-    if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
-        log 1 "Mihomo is not installed. Installing version $latest_ver." "⚠️"
-        core_download "$download_url" "$latest_ver"
-        if [ $? -eq 1 ]; then
-            log 0 "Update process can't be finished." "❌"
-            return 1
-        fi
-        return 0
-    fi
-
-    log 2 "Current Mihomo version: $cur_ver"
-    log 2 "Latest Mihomo version: $latest_ver"
-
-    if [ "$cur_ver" != "$latest_ver" ]; then
-        log 2 "Removing current mihomo binary..." "⚠️"
-        core_remove
-        if [ $? -eq 1 ]; then
-            log 0 "Update process can't be finished." "❌"
-            return 1
-        fi
-        log 2 "Updating Mihomo to version $latest_ver" "⬆️"
-        core_download "$download_url" "$latest_ver"
-        if [ $? -eq 1 ]; then
-            log 0 "Update process can't be finished." "❌"
-            return 1
-        fi
-    else
-        log 2 "Mihomo is already up-to-date." "✅"
-    fi
-
-    return 0
 }
 
 cron_make_if_missing() {
