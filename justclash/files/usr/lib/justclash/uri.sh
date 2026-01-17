@@ -7,6 +7,115 @@
 # External justclash parsers/generators part
 # --------------------------------------------
 
+parse_sudoku_url() {
+    local link="$1" dialer_proxy="$2"
+    local padding_min="${3:-5}" padding_max="${4:-15}"
+    local raw payload
+
+    raw="$link"
+    raw="${raw#sudoku://}"
+
+    payload="$(printf '%s' "$raw" | base64 -d 2>/dev/null)" || {
+        echo "Error: failed to decode sudoku:// link" >&2
+        return 1
+    }
+
+    echo "$payload" | jq -c \
+        --arg dialer_proxy "$dialer_proxy" \
+        --argjson padding_min "$padding_min" \
+        --argjson padding_max "$padding_max" '
+
+    {
+        type: "sudoku",
+        server: .h,
+        port: .p,
+        key: .k
+    }
+
+    # aead-method (default: chacha20-poly1305)
+    + (if (.e? and (.e | length > 0))
+        then {"aead-method": .e}
+        else {"aead-method": "chacha20-poly1305"}
+      end)
+
+    # table-type: decodeASCII
+    + {
+        "table-type": (
+          if (.a? and ((.a | ascii_downcase) == "ascii"))
+          then "prefer_ascii"
+          else "prefer_entropy"
+          end
+        )
+      }
+
+    # padding
+    + {
+        "padding-min": $padding_min,
+        "padding-max": $padding_max
+      }
+
+    # custom-tables
+    + (if (.ts? and (.ts | type == "array") and (.ts | length > 0))
+        then {"custom-tables": .ts}
+        else {}
+      end)
+
+    # custom-table
+    + (if ((.ts? | not) or (.ts | length == 0)) and (.t? and (.t | length > 0))
+        then {"custom-table": .t}
+        else {}
+      end)
+
+    # enable-pure-downlink = NOT(PackedDownlink)
+    + (if (.x? != null)
+        then {"enable-pure-downlink": (.x | not)}
+        else {"enable-pure-downlink": true}
+      end)
+
+    # http-mask = NOT(DisableHTTPMask)
+    + (if (.hd? != null)
+        then {"http-mask": (.hd | not)}
+        else {}
+      end)
+
+    # http-mask-mode: legacy | stream | poll | auto
+    + (if (.hm? and (.hm | length > 0))
+        then {"http-mask-mode": .hm}
+        else {}
+      end)
+
+    # http-mask-tls
+    + (if (.ht? != null)
+        then {"http-mask-tls": .ht}
+        else {}
+      end)
+
+    # http-mask-host
+    + (if (.hh? and (.hh | length > 0))
+        then {"http-mask-host": .hh}
+        else {}
+      end)
+
+    # http-mask-multiplex: off | auto | on
+    + (if (.hx? and (.hx | length > 0))
+        then {"http-mask-multiplex": .hx}
+        else {}
+      end)
+
+    # path-root
+    + (if (.hy? and (.hy | length > 0))
+        then {"path-root": .hy}
+        else {}
+      end)
+
+    # dialer-proxy
+    + (if ($dialer_proxy | length > 0)
+        then {"dialer-proxy": $dialer_proxy}
+        else {}
+      end)
+    '
+}
+
 parse_ss_url() {
     local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
 

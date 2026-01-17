@@ -728,6 +728,7 @@ handle_proxy_section() {
                 hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
                 vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
                 mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy") ;;
+                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy") ;;
                 *) log 1 "Unknown proxy link type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
