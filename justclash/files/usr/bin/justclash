@@ -1805,11 +1805,12 @@ get_latest_version_url() {
 }
 
 core_update() {
-    local cur_ver latest_ver channel version_txt_url
-    local check_url channel
+    local cur_ver latest_ver version_txt_url
+    local check_url channel mihomo_autoupdate_channel
+    config_get mihomo_autoupdate_channel settings mihomo_autoupdate_channel
 
     check_url="$CORE_RELEASE_CHECK_URL"
-    channel="${1:-stable}"
+    channel=${1:-$mihomo_autoupdate_channel}
     cur_ver=$(info_mihomo)
 
     log 2 "Checking for Mihomo updates (channel: $channel)..." "🔄"
@@ -2265,7 +2266,7 @@ Service Management:
   service_data_update     Update service files from repository
 
 Mihomo management Commands:
-  core_update                     Check current version and update Mihomo if a newer version is available
+  core_update [alpha|stable]      Check current version and update Mihomo if a newer version is available
   core_remove                     Remove the currently installed Mihomo binary
 
   core_update_cron_check          Check if a scheduled Mihomo core auto-update task exists
