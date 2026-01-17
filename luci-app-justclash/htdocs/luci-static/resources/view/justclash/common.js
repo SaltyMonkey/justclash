@@ -235,7 +235,8 @@ return baseclass.extend({
             "socks4://",
             "socks://",
             "https://",
-            "mierus://"
+            "mierus://",
+            "sudoku://"
         ];
 
         if (!val || val === "") return _("Proxy link cannot be empty!");
