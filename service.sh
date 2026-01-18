@@ -3,9 +3,11 @@
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
 CORE_RELEASE_CHECK_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
-CORE_RELEASE_DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download"
-
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash/releases/latest"
+
+CURL_CONNECT_TIMEOUT=15
+CURL_MIN_SPEED_LIMIT_BYTES=5000
+CURL_MIN_SPEEED_TIMEOUT=15
 
 CHECK_SPACE=1
 
@@ -378,98 +380,62 @@ detect_arch() {
     esac
 }
 
-get_latest_version() {
-    local check_url="$1"
-    local download_url latest_ver
+get_latest_version_url() {
+    local check_url="$1" channel="${2:-stable}"
+    local api_url jq_filter
 
-    download_url=$(wget -qO- "$check_url" | jq -r '.assets[] | select(.name == "version.txt") | .browser_download_url')
-
-    latest_ver=$(wget -qO- "$download_url" | tr -d '\r\n' | sed -n 1p)
-
-    if [ -z "$latest_ver" ]; then
-        print_red "Failed to get latest version" "❌"
-        return 1
+    if [ "$channel" = "alpha" ]; then
+        api_url="${check_url%/latest}"
+        jq_filter='[.[] | select(.tag_name == "Prerelease-Alpha")][0].assets[] | select(.name == "version.txt") | .browser_download_url'
+    else
+        api_url="$check_url"
+        jq_filter='.assets[] | select(.name == "version.txt") | .browser_download_url'
     fi
 
-    echo "$latest_ver"
-}
-
-core_download() {
-    local arch file_name base_url param_version download_url
-    download_url="$1"
-    param_version="$2"
-
-    if [ -z "$1" ] || [ -z "$2" ]; then
-        print_red "Usage: core_download <download_url> <version>"
-        return 1
-    fi
-
-    arch=$(detect_arch)
-    mkdir -p "$TMP_DOWNLOAD_PATH"
-
-    file_name="mihomo-linux-${arch}-${param_version}.gz"
-    base_url="${download_url}/${param_version}/${file_name}"
-
-    echo " - Downloading mihomo binary"
-    wget -qO "$TMP_DOWNLOAD_PATH/mihomo.gz" "$base_url" || {
-        print_red "Failed to download file."
-        exit 1
-    }
-
-    echo " - Extracting to $CORE_PATH"
-    gunzip -c "$TMP_DOWNLOAD_PATH/mihomo.gz" > "$CORE_PATH" || {
-        print_red "Failed to extract file."
-        exit 1
-    }
-
-    echo " - Mihomo installed at $CORE_PATH"
-
-    if ! chmod +x "$CORE_PATH"; then
-        print_red "Failed to set executable permissions: $CORE_PATH"
-    fi
-
-    echo " - Cleaning up temporary files"
-    if ! rm -f "$TMP_DOWNLOAD_PATH/mihomo.gz"; then
-        print_red "Failed to clean up temporary file: $TMP_DOWNLOAD_PATH/mihomo.gz"
-    fi
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        -sL "$api_url" | jq -r "$jq_filter"
 }
 
 core_update() {
-    local cur_ver latest_ver
-    local check_url download_url
-
-    rm -rf "$TMP_DOWNLOAD_PATH"
-
-    print_bold_green "Checking for Mihomo updates..."
+    local cur_ver latest_ver version_txt_url
+    local check_url channel
+    channel=${1}
+    check_url="$CORE_RELEASE_CHECK_URL"
 
     cur_ver=$(info_mihomo)
-    if [ -z "$cur_ver" ]; then
-        print_red "Update process can't be finished."
-        exit 1
+
+    echo " - Checking for Mihomo updates (channel: $channel)..."
+
+    version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
+        print_red "Failed to get version.txt URL from GitHub API"
+        return 1
+    }
+
+    if [ -z "$version_txt_url" ]; then
+        print_red "Error: version.txt not found in release assets"
+        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+        return 1
     fi
 
-    check_url="$CORE_RELEASE_CHECK_URL"
-    download_url="$CORE_RELEASE_DOWNLOAD_URL"
-
-    tmp=$(get_latest_version "$check_url")
-    if [ $? -eq 1 ]; then
-        print_red "Update process can't be finished."
-        exit 1
-    fi
-
-    #TODO: Fix incorrect output handle (github isnt returning empty body)
-    latest_ver=$(echo "$tmp" | sed -n 1p)
+    latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p) || {
+        print_red "Failed to download version.txt"
+        return 1
+    }
 
     if [ -z "$latest_ver" ]; then
        print_red "Error happened when trying to receive latest version data."
        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
-       print_red "Failed to download core"
        return 1
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
-        echo " - Mihomo is not installed. Installing version $latest_ver."
-        core_download "$download_url" "$latest_ver"
+        echo " - Mihomo is not installed. Installing version $latest_ver ($channel)."
+        core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             print_red "Update process can't be finished."
             return 1
@@ -478,7 +444,7 @@ core_update() {
     fi
 
     echo " - Current Mihomo version: $cur_ver"
-    echo " - Latest Mihomo version: $latest_ver"
+    echo " - Latest Mihomo version ($channel): $latest_ver"
 
     if [ "$cur_ver" != "$latest_ver" ]; then
         echo " - Removing current mihomo binary..."
@@ -487,8 +453,9 @@ core_update() {
             print_red "Update process can't be finished."
             return 1
         fi
-        echo " - Updating Mihomo to version $latest_ver"
-        core_download "$download_url" "$latest_ver"
+
+        echo " - Updating Mihomo to version $latest_ver ($channel)"
+        core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             print_red "Update process can't be finished."
             return 1
@@ -498,6 +465,46 @@ core_update() {
     fi
 
     return 0
+}
+
+core_download() {
+    local arch file_name base_url param_version version_txt_url download_url
+    version_txt_url="$1"
+    param_version="$2"
+
+    arch=$(detect_arch)
+    mkdir -p "$TMP_DOWNLOAD_PATH"
+
+    file_name="mihomo-linux-${arch}-${param_version}.gz"
+
+    base_url="${version_txt_url%/*}"
+    download_url="${base_url}/${file_name}"
+
+    echo  "- Downloading mihomo binary"
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        --progress-bar -L -o "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$download_url" || {
+        print_red "Failed to download file."
+        return 1
+    }
+
+    echo " - Extracting to $CORE_PATH" "⬇️"
+    gunzip -c "${TMP_DOWNLOAD_PATH}/mihomo.gz" > "$CORE_PATH" || {
+        print_red "Failed to extract file."
+        return 1
+    }
+
+    echo " - Mihomo installed at $CORE_PATH"
+
+    if ! chmod +x "$CORE_PATH"; then
+        print_red "Failed to set executable permissions: $CORE_PATH"
+    fi
+
+    echo " - Cleaning up temporary files"
+    if ! rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"; then
+        print_red "Failed to clean up temporary file: ${TMP_DOWNLOAD_PATH}/mihomo.gz"
+    fi
 }
 
 core_remove() {
@@ -665,7 +672,7 @@ install_service() {
         diagnostic_mem
     fi
     diagnostic_conflicts_interactive
-    core_update
+    core_update "alpha"
     #user_select_lang_install_mode_interactive
     #if [ $? -ne 1 ]; then
         justclash_download 1
@@ -714,7 +721,7 @@ run() {
                 ;;
             3)
                 echo "Updating Mihomo Clash core..."
-                core_update
+                core_update "alpha"
                 ;;
             4)
                 echo "Removing Mihomo Clash core..."
