@@ -1791,8 +1791,8 @@ get_latest_version_url() {
     local api_url jq_filter
 
     if [ "$channel" = "alpha" ]; then
-        api_url="${check_url%/latest}/releases"
-        jq_filter='[.[] | select(.name == "Prerelease-Alpha")][0].assets[] | select(.name == "version.txt") | .browser_download_url'
+        api_url="${check_url%/latest}"
+        jq_filter='[.[] | select(.tag_name == "Prerelease-Alpha")][0].assets[] | select(.name == "version.txt") | .browser_download_url'
     else
         api_url="$check_url"
         jq_filter='.assets[] | select(.name == "version.txt") | .browser_download_url'
