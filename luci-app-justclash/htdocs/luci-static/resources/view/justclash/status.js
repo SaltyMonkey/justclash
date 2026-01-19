@@ -160,7 +160,7 @@ return view.extend({
                 return [_("Error"), _("Error")];
             })
             .then(data => {
-                console.log(data);
+                //console.log(data);
                 return [data.model || _("Error"), data.release ? data.release.description : _("Error")];
             });
 
