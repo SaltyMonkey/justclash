@@ -42,6 +42,7 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
+        o.password = true;
         o.description = _("API token for Bearer authentication.");
         o.rmempty = false;
 
