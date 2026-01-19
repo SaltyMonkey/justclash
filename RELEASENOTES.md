@@ -1,3 +1,31 @@
+## [0.7.6] - 19012026
+
+- Config: Removed predefined tls DNS servers from configs
+- Config: Optimize predefined DNS servers count
+- Config: Added back in predefined DNS servers cloudflare
+- Service: Simplify some code parts
+- Service: Added sudoku link parser
+- Service: Refactored core download function for alpha mihomo channel support
+- Service: Refactored core_update function - support for manual override for channel (parameter `alpha` or `stable`)
+- Service: Bump official Open WRT releases images for build
+- Service: Fix broken cURL timeouts
+- Service: Fix some bugs when important settings can be empty
+- Service: Optimize some code
+- LuCI: Allowed sudoku links in UI
+- LuCI: Added mihomo download channel selector in UI
+- LuCI: Minor changes for connection taB
+- LuCI: Do not hide proxy URI link behind password type field
+- LuCI: Hide behind password type field API password value
+- LuCI: Fix incorrect visible text values for DNS entries
+- Translation: Fix wrong ru translation for DNS entries
+- Rulesets: Added predefined `nintendo` list
+- Rulesets: Added predefined `category-containers` list
+- Rulesets: Added predefined `Datacamp CIDR`(CDN77) list
+
+**This version requires:**
+- Browser cache must be cleaned up
+- UCI config must be reset
+
 ## [0.7.1] - 01012026
 
 - LuCI: Fix incorrect change for use_zashboard
