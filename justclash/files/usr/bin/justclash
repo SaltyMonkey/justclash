@@ -1247,9 +1247,9 @@ handle_direct_rule_section() {
     local domain_list cidr_list
 
 
-    config_get list_update_interval direct_rules list_update_interval $DEFAULT_RULESET_INTERVAL
+    config_get list_update_interval direct_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
     config_get enabled_list direct_rules enabled_list
-    config_get proxy direct_rules proxy $DEFAULT_PROXY
+    config_get proxy direct_rules proxy "$DEFAULT_PROXY"
 
     local added_rulesets="|"
     for ruleset in $enabled_list; do
