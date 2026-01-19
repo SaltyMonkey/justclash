@@ -1,6 +1,7 @@
 Antifilter community|antifilter-community|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/antifilter-community.mrs
 Category ai|category-ai|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-ai.mrs
 Category anticensorship|category-anticensorship|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-anticensorship.mrs
+Category container|category-container|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-container.mrs
 Category dev|category-dev|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-dev.mrs
 Category gov RU|category-gov-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-gov-ru.mrs
 Category remote control|category-remote-control|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-remote-control.mrs
@@ -69,6 +70,7 @@ Meta|meta|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ser
 Mongodb|mongodb|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/mongodb.mrs
 Netflix|netflix|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/netflix.mrs
 Netlify|netlify|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/netlify.mrs
+Nintendo|nintendo|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/nintendo.mrs
 Nix|nix|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/nix.mrs
 Nnmclub|nnmclub|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/nnmclub.mrs
 Notebooklm|notebooklm|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/notebooklm.mrs
@@ -102,6 +104,7 @@ Apple CIDR|apple-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-p
 Bunny CIDR|bunny-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/bunny.mrs
 Cloudflare CIDR|cloudflare-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/cloudflare.mrs
 Cloudfront CIDR|cloudfront-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/cloudfront.mrs
+Datacamp CIDR|datacamp-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/datacamp.mrs
 Digitalocean CIDR|digitalocean-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/digitalocean.mrs
 Discord voice CIDR|discord-voice-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/discord-voice.mrs
 Fastly CIDR|fastly-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/fastly.mrs
