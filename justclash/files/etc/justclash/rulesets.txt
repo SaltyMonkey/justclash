@@ -42,6 +42,7 @@ Discord|discord|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-da
 DNS test|dns-test|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/dns-test.mrs
 Docker|docker|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/docker.mrs
 Doramyclub|doramyclub|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/doramyclub.mrs
+Drweb|drweb|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/drweb.mrs
 Ea|ea|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/ea.mrs
 Fastly|fastly|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/fastly.mrs
 Filmix|filmix|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/filmix.mrs
@@ -58,12 +59,14 @@ IBM|ibm|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/servi
 Instagram|instagram|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/instagram.mrs
 Intel|intel|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/intel.mrs
 Jsdelivr|jsdelivr|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/jsdelivr.mrs
+Kaspersky|kaspersky|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kaspersky.mrs
 Kinopub|kinopub|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kinopub.mrs
 Kinozal|kinozal|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kinozal.mrs
 Kubernetes|kubernetes|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kubernetes.mrs
 Lenovo|lenovo|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/lenovo.mrs
 Linkedin|linkedin|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/linkedin.mrs
 Lostfilm|lostfilm|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/lostfilm.mrs
+Mailru|mailru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/mailru.mrs
 Medium|medium|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/medium.mrs
 Mega|mega|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/mega.mrs
 Meta|meta|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/meta.mrs
