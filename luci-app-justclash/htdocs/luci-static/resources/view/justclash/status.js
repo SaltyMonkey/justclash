@@ -74,6 +74,20 @@ const showExecModalHandler = (title, warning, command, args) =>
                 E("div", { style: "text-align: right; margin-top: 1em;" }, [
                     E("button", {
                         class: "cbi-button",
+                        click: () => {
+                            const ta = document.createElement("textarea");
+                            ta.value = res.stdout;
+                            ta.style.position = "fixed";
+                            ta.style.left = "-9999px";
+                            document.body.appendChild(ta);
+                            ta.focus();
+                            ta.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(ta);
+                        }
+                    }, [_("Copy to clipboard")]),
+                    E("button", {
+                        class: "cbi-button",
                         click: () => ui.hideModal()
                     }, [_("Dismiss")])
                 ])
