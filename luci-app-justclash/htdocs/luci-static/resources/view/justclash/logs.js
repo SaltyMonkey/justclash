@@ -13,14 +13,15 @@ const autosizeTextarea = (textarea) => {
 };
 
 const copyToClipboard = (text) => {
-    if (navigator.clipboard) {
-        navigator.clipboard
-            .writeText(text)
-            .catch((e) => {
-                ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
-                console.error(e);
-            });
-    }
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
 };
 
 return view.extend({
