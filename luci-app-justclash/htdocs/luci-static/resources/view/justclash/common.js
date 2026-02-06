@@ -24,6 +24,7 @@ return baseclass.extend({
         { value: "60", text: _("Every 60 seconds") },
     ],
     defaultNtpTimeoutCheckValuesSec: [
+        { value: "60", text: _("Every minute") },
         { value: "300", text: _("Every 5 minutes") },
         { value: "600", text: _("Every 10 minutes") },
         { value: "1200", text: _("Every 20 minutes") },
