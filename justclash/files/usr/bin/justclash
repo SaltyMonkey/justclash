@@ -1099,7 +1099,7 @@ handle_proxy_provider_section() {
             return
         }
 
-        local entry="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"proxy\":$proxy"
+        local entry="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"proxy\":\"$proxy\""
         [ -n "$filter" ] && entry="$entry,\"filter\":\"$(json_escape "$filter")\""
         [ -n "$exclude_filter" ] && entry="$entry,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
@@ -1114,7 +1114,7 @@ handle_proxy_provider_section() {
             \"x-hwid\": \"$(hwid_generate)\",\
             \"x-device-os\":\"$(get_os_name)\",\
             \"x-ver-os\":\"$(get_os_version)\",\
-            \"x-device-model\":\"$(get_hw_model)\",\
+            \"x-device-model\":\"$(get_hw_model)\"\
             }"
         fi
 
