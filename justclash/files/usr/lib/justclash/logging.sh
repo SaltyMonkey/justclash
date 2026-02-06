@@ -24,6 +24,7 @@ clog() {
     local message="$2"
     local emoji="${3:-}"
 
+    # shellcheck disable=SC2154
     [ "$JUSTCLASH_ENV" = "procd" ] && return
 
     local ts facility
