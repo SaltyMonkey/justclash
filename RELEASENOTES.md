@@ -1,3 +1,30 @@
+## [0.8.0] - 07022026
+
+- Config: Changed default `log_level`
+- Config: Changed default NTP route logic for traffic from router
+- Service: Fixed error in JSON generation for `proxy-providers` when using HWID
+- Service: Fixed error in JSON generation for `proxy-providers` in some cases
+- Service: ECH data will be removed from DNS responses automatically
+- LuCI: Updated `status` page with modernized look
+- LuCI: Updated `logs` page with modernized look
+- LuCI: Updated `connections` page with modernized look
+- LuCI: Added `Copy button` in popups with text at `status` page
+- LuCI: Added proper `Copy button` at `logs` page
+- LuCI: `Reversed logs` is enabled by default for better readability at `logs` page
+- LuCI: Multicolored logs content for better readability
+- LuCI: Raw JSON from Mihomo API can be checked with click at desired row
+- LuCI: Overall better structure for `connection` page
+- LuCI: Overall better structure for `logs` page
+- LuCI: Added `Last fetch` for `logs` page
+- LuCI: Changed how `status` page looks at phone screen
+- LuCI: Changed how `connections` page looks at phone screen
+- LuCI: Move `Controller/API` controls to additional tab in
+
+- Translation: Update
+
+**This version requires:**
+- Browser cache must be cleaned up
+
 ## [0.7.6] - 19012026
 
 - Config: Removed predefined tls DNS servers from configs
