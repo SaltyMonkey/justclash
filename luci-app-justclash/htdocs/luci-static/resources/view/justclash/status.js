@@ -182,15 +182,15 @@ const showExecModalHandler = (title, warning, command, args) =>
                 E("pre", { style: "max-height: 460px; overflow:auto;" }, res.stdout || _("No output")),
                 E("div", { style: "text-align: right; margin-top: 1em;" }, [
                     E("button", {
-                        class: "cbi-button",
+                        class: `cbi-button ${buttons.ACTION}`,
                         click: () => {
                             copyToClipboard(res.stdout);
                             ui.addNotification(null, E("p", _("Data copied to clipboard")), "success");
-                            ui.hideModal()
+                            ui.hideModal();
                         }
                     }, [_("Copy to clipboard")]),
                     E("button", {
-                        class: `cbi-button ${buttons.NEUTRAL}`,
+                        class: "cbi-button",
                         click: () => ui.hideModal()
                     }, [_("Dismiss")])
                 ])

@@ -11,6 +11,18 @@ let noConnectionsMsg = null;
 
 const connectionsData = new Map();
 
+const copyToClipboard = (text) => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+};
+
 const formatConnection = (conn) => {
     return {
         src: conn.metadata.sourceIP + ":" + conn.metadata.sourcePort,
@@ -60,16 +72,9 @@ const showConnectionDetails = (connId) => {
             E("button", {
                 class: "cbi-button cbi-button-action",
                 click: () => {
-                    const ta = document.createElement("textarea");
-                    ta.value = jsonString;
-                    ta.style.position = "fixed";
-                    ta.style.left = "-9999px";
-                    document.body.appendChild(ta);
-                    ta.focus();
-                    ta.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(ta);
+                    copyToClipboard(jsonString);
                     ui.addNotification(null, E("p", _("JSON copied to clipboard")), "success");
+                    ui.hideModal();
                 }
             }, [_("Copy JSON")]),
             E("button", {

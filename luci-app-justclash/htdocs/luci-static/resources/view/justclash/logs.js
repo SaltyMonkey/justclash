@@ -96,7 +96,7 @@ return view.extend({
         });
 
         const refreshBtn = E("button", {
-            class: "cbi-button cbi-button-action",
+            class: "cbi-button cbi-button-positive",
             click: () => updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs)
         }, [_("Update")]);
 
@@ -108,10 +108,11 @@ return view.extend({
         }, [_("To bottom")]);
 
         const copyBtn = E("button", {
-            class: "cbi-button",
+            class: "cbi-button cbi-button-action",
             click: () => {
                 if (rawLogs.value === NO_DATA || rawLogs.value === NO_LOGS) return;
                 copyToClipboard(rawLogs.value);
+                ui.addNotification(null, E("p", _("Data copied to clipboard")), "success");
             },
         }, [_("Copy logs")]);
 
