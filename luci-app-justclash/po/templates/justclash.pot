@@ -431,7 +431,7 @@ msgid "Controller bind:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:32
-msgid "Select interface where API controller will be available."
+msgid "Select network where API controller will be available."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:39

@@ -418,8 +418,8 @@ msgid "Controller bind:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:32
-msgid "Select interface where API controller will be available."
-msgstr "Выберите интерфейс, на котором будет доступен контроллер API."
+msgid "Select network where API controller will be available."
+msgstr "Выберите сеть с которой будет доступен контроллер API."
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:39
 msgid "Enable dashboard:"
