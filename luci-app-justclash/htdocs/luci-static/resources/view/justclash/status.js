@@ -5,136 +5,8 @@
 "require view.justclash.common as common";
 "require rpc";
 
-const callSystemBoard = rpc.declare({
-    object: 'system',
-    method: 'board',
-    params: [],
-    expect: { '': {} }
-});
-
-const fetchWithTimeout = (url, timeout = 3000) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    return fetch(url, { signal: controller.signal })
-        .finally(() => clearTimeout(timeoutId));
-};
-
-const cleanStdout = (val) =>
-    val && val.stdout ? val.stdout.replace(/[\r\n]+/g, "").trim() : _("Error");
-
-const asyncTimeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const createTable = (results, dynamicStatusCells) => {
-    return E("table", { class: "table cbi-rowstyle-1" }, [
-        E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, "💻 " + _("Device model:")),
-            E("td", { class: "td left" }, results.infoDevice),
-        ]),
-        E("tr", { class: "tr cbi-rowstyle-2" }, [
-            E("td", { class: "td left" }, "✨ " + _("System version:")),
-            E("td", { class: "td left" }, results.infoOpenWrt),
-        ]),
-        E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, "🌐 " + _("Latest service package version:")),
-            E("td", { class: "td left" }, results.infoOnlinePackage),
-        ]),
-        E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, "📦 " + _("Service package version:")),
-            E("td", { class: "td left" }, results.infoPackage),
-        ]),
-        E("tr", { class: "tr cbi-rowstyle-2" }, [
-            E("td", { class: "td left" }, "📦 " + _("LuCI package version:")),
-            E("td", { class: "td left" }, common.justclashLuciVersion),
-        ]),
-        E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, "😸 " + _("Mihomo core version:")),
-            E("td", { class: "td left" }, results.infoCore),
-        ]),
-        E("tr", { class: "tr cbi-rowstyle-2" }, [
-            E("td", { class: "td left" }, "🚀 " + _("Service is running:")),
-            dynamicStatusCells.serviceStatus,
-        ]),
-        E("tr", { class: "tr cbi-rowstyle-1" }, [
-            E("td", { class: "td left" }, "📃 " + _("Service's autostart:")),
-            dynamicStatusCells.daemonStatus,
-        ]),
-    ]);
-};
-
-const showExecModalHandler = (title, warning, command, args) =>
-    ui.createHandlerFn(this, async () => {
-        ui.showModal(title, [E("p", _("Please wait..."))]);
-        const warn = warning ? [E("strong", { style: "color:var(--error-color-medium)" }, _("Dangerous action!")), E("div", { style: "margin-top:1em;color:var(--error-color-medium)" }, warning)] : [];
-        try {
-            const res = await fs.exec(command, args);
-            ui.showModal(title, [
-                ...warn,
-                E("pre", { style: "max-height: 460px; overflow:auto;" }, res.stdout || _("No output")),
-                E("div", { style: "text-align: right; margin-top: 1em;" }, [
-                    E("button", {
-                        class: "cbi-button",
-                        click: () => {
-                            const ta = document.createElement("textarea");
-                            ta.value = res.stdout;
-                            ta.style.position = "fixed";
-                            ta.style.left = "-9999px";
-                            document.body.appendChild(ta);
-                            ta.focus();
-                            ta.select();
-                            document.execCommand("copy");
-                            document.body.removeChild(ta);
-                        }
-                    }, [_("Copy to clipboard")]),
-                    E("button", {
-                        class: "cbi-button",
-                        click: () => ui.hideModal()
-                    }, [_("Dismiss")])
-                ])
-            ]);
-        } catch (e) {
-            ui.showModal(_("Error"), [
-                E("div", { class: "alert-message error" }, e.message),
-                E("div", { style: "text-align: right; margin-top: 1em;" }, [
-                    E("button", {
-                        class: "cbi-button",
-                        click: () => ui.hideModal()
-                    }, [_("Dismiss")])
-                ])
-            ]);
-        }
-    });
-
-const createActionButton = (action, cssClass, label, handler) =>
-    E("button", {
-        class: `cbi-button ${cssClass}`,
-        id: `${action}`,
-        click: handler,
-    }, [label]);
-
-const boolToWord = (val) => (val ? _("Yes") : _("No"));
-
-const boolToStyle = (active) => {
-    const color = "var(--on-primary-color)";
-    const background = active
-        ? "var(--success-color-medium)"
-        : "var(--error-color-medium)";
-    const padding = "3px";
-    const borderRadius = "4px";
-
-    return (
-        `color: ${color}; ` +
-        `background-color: ${background}; ` +
-        `padding: ${padding}; ` +
-        `border-radius: ${borderRadius};`
-    );
-};
-const buttons = {
-    POSITIVE: "cbi-button-positive",
-    NEGATIVE: "cbi-button-negative",
-    NEUTRAL: "cbi-button-neutral",
-    ACTION: "cbi-button-action"
-};
+let pollInterval = null;
+const POLL_TIMEOUT = 3000;
 
 const buttonsIDs = {
     START: "button-start",
@@ -150,80 +22,224 @@ const buttonsIDs = {
     SERVICE_DATA_UPDATE: "button-service-data"
 };
 
+const buttons = {
+    POSITIVE: "cbi-button-positive",
+    NEGATIVE: "cbi-button-negative",
+    NEUTRAL: "cbi-button-neutral",
+    ACTION: "cbi-button-action"
+};
+
+const callSystemBoard = rpc.declare({
+    object: 'system',
+    method: 'board',
+    params: [],
+    expect: { '': {} }
+});
+
+const copyToClipboard = (text) => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+};
+
+const fetchWithTimeout = (url, timeout = 3000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    return fetch(url, { signal: controller.signal })
+        .finally(() => clearTimeout(timeoutId));
+};
+
+const cleanStdout = (val) =>
+    val && val.stdout ? val.stdout.replace(/[\r\n]+/g, "").trim() : _("Error");
+
+const asyncTimeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const boolToWordAutostart = (val) => (val ? _("Enabled") : _("Disabled"));
+
+const boolToWordRunning = (val) => (val ? _("Running") : _("Stopped"));
+
+const boolToStyle = (active) => {
+    const color = "var(--on-primary-color, #fff)";
+    const background = active
+        ? "var(--success-color-medium, #4caf50)"
+        : "var(--error-color-medium, #f44336)";
+    return `color: ${color}; background-color: ${background}; padding: 3px 8px; border-radius: 4px; font-weight: bold;`;
+};
+
+const isServiceAutoStartEnabled = async () => {
+    const res = await fs.exec(common.initdPath, ["enabled"]);
+    return res.code === 0;
+};
+
+const isServiceRunning = async () => {
+    const res = await fs.exec(common.initdPath, ["running"]);
+    return res.code === 0;
+};
+
+const createCard = (icon, label, valueContent) => {
+    return E("div", { class: "jc-card" }, [
+        E("div", { class: "jc-card-header" }, [
+            E("span", { class: "jc-card-icon" }, icon),
+            E("span", { class: "jc-card-label" }, label),
+        ]),
+        E("div", { class: "jc-card-body" }, valueContent)
+    ]);
+};
+
+const createStatusGrid = (results, dynamicElements) => {
+    return E("div", {}, [
+        E("div", { class: "jc-grid-top" }, [
+            // Строка 1
+            createCard("🚀", _("Service"), dynamicElements.serviceBadge),
+            createCard("⚡", _("Autostart"), dynamicElements.autoBadge),
+            // Строка 2
+            createCard("💻", _("Device model"), results.infoDevice),
+            createCard("✨", _("System version"), results.infoOpenWrt),
+        ]),
+        // Нижняя сетка (4 колонки)
+        E("div", { class: "jc-grid-bottom" }, [
+            createCard("🌐", _("Latest version"), results.infoOnlinePackage),
+            createCard("📦", _("Service version"), results.infoPackage),
+            createCard("🎨", _("LuCI version"), common.justclashLuciVersion),
+            createCard("😸", _("Mihomo core"), results.infoCore),
+        ])
+    ]);
+};
+
+const updateUI = (dynamicElements, isAutostarting, isRunning) => {
+    if (dynamicElements.serviceBadge) {
+        dynamicElements.serviceBadge.textContent = boolToWordRunning(isRunning);
+        dynamicElements.serviceBadge.setAttribute("style", boolToStyle(isRunning));
+    }
+
+    if (dynamicElements.autoBadge) {
+        dynamicElements.autoBadge.textContent = boolToWordAutostart(isAutostarting);
+        dynamicElements.autoBadge.setAttribute("style", boolToStyle(isAutostarting));
+    }
+
+    const btnStart = document.getElementById(buttonsIDs.START);
+    const btnStop = document.getElementById(buttonsIDs.STOP);
+    const btnEnable = document.getElementById(buttonsIDs.ENABLE);
+    const btnDisable = document.getElementById(buttonsIDs.DISABLE);
+
+    if (btnStart) btnStart.disabled = isRunning;
+    if (btnStop) btnStop.disabled = !isRunning;
+    if (btnEnable) btnEnable.disabled = isAutostarting;
+    if (btnDisable) btnDisable.disabled = !isAutostarting;
+};
+
+const updateServiceStatus = async (dynamicElements) => {
+    const [isRunning, isAutostarting] = await Promise.all([
+        isServiceRunning().catch(() => false),
+        isServiceAutoStartEnabled().catch(() => false)
+    ]);
+
+    requestAnimationFrame(() => {
+        updateUI(dynamicElements, isAutostarting, isRunning);
+    });
+};
+
+const stopPolling = () => {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+};
+
+const startPolling = (dynamicElements) => {
+    stopPolling();
+    pollInterval = setInterval(() => {
+        updateServiceStatus(dynamicElements);
+    }, POLL_TIMEOUT);
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            stopPolling();
+        } else {
+            updateServiceStatus(dynamicElements);
+            pollInterval = setInterval(() => {
+                updateServiceStatus(dynamicElements);
+            }, POLL_TIMEOUT);
+        }
+    }, { once: true });
+};
+
+const showExecModalHandler = (title, warning, command, args) =>
+    async () => {
+        ui.showModal(title, [E("p", _("Please wait..."))]);
+        const warn = warning ? [E("strong", { style: "color:var(--error-color-medium)" }, _("Dangerous action!")), E("div", { style: "margin-top:1em;color:var(--error-color-medium)" }, warning)] : [];
+        try {
+            const res = await fs.exec(command, args);
+            ui.showModal(title, [
+                ...warn,
+                E("pre", { style: "max-height: 460px; overflow:auto;" }, res.stdout || _("No output")),
+                E("div", { style: "text-align: right; margin-top: 1em;" }, [
+                    E("button", {
+                        class: "cbi-button",
+                        click: () => {
+                            copyToClipboard(res.stdout);
+                            ui.addNotification(null, E("p", _("Data copied to clipboard")), "success");
+                            ui.hideModal()
+                        }
+                    }, [_("Copy to clipboard")]),
+                    E("button", {
+                        class: `cbi-button ${buttons.NEUTRAL}`,
+                        click: () => ui.hideModal()
+                    }, [_("Dismiss")])
+                ])
+            ]);
+        } catch (e) {
+            ui.showModal(_("Error"), [
+                E("div", { class: "alert-message error" }, e.message),
+                E("div", { style: "text-align: right; margin-top: 1em;" }, [
+                    E("button", {
+                        class: "cbi-button",
+                        click: () => ui.hideModal()
+                    }, [_("Dismiss")])
+                ])
+            ]);
+        }
+    };
+
+const createActionButton = (action, cssClass, label, handler) =>
+    E("button", {
+        class: `cbi-button ${cssClass}`,
+        id: `${action}`,
+        click: handler,
+    }, [label]);
+
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
     handleReset: null,
-    pollInterval: null,
-    pollServiceStatusTimeout: 3000,
 
-    async isServiceAutoStartEnabled() {
-        const res = await fs.exec(common.initdPath, ["enabled"]);
-        return res.code === 0;
-    },
-    async isServiceRunning() {
-        const res = await fs.exec(common.initdPath, ["running"]);
-        return res.code === 0;
-    },
     async load() {
-        const [
-            infoDevice, infoOpenWrt
-        ] = await callSystemBoard()
-            .catch((e) => {
-                ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
-                return [_("Error"), _("Error")];
-            })
-            .then(data => {
-                //console.log(data);
-                return [data.model || _("Error"), data.release ? data.release.description : _("Error")];
-            });
+        const [infoDevice, infoOpenWrt] = await callSystemBoard()
+            .catch(e => [_("Error"), _("Error")])
+            .then(data => [data.model || _("Error"), data.release ? data.release.description : _("Error")]);
 
-        const [
-            infoPackage, infoCore
-        ] = await fs.exec(common.binPath, ["_luci_call"])
-            .catch((e) => {
-                ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
-                return [_("Error"), _("Error")];
-            })
+        const [infoPackage, infoCore] = await fs.exec(common.binPath, ["_luci_call"])
+            .catch(() => [_("Error"), _("Error")])
             .then(data => (cleanStdout(data).split(",")));
 
         const infoOnlinePackage = await fetchWithTimeout(common.justclashOnlineVersionUrl, 5000)
-            .then(response => {
-                if (!response.ok) {
-                    console.error("Error fetching latest release:", response);
-                    return _("Error");
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data && data.tag_name) {
-                    return data.tag_name.replace(/^v/, "");
-                }
-                else {
-                    console.error("Error fetching latest release:", data);
-                    return _("Error");
-                }
-            })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => data && data.tag_name ? data.tag_name.replace(/^v/, "") : _("Error"))
             .catch(e => {
-                if (e.name === 'AbortError') {
-                    console.error("Request timeout:", e);
-                    return _("Timeout");
-                }
-                console.error("Error fetching latest release:", e);
+                if (e.name === 'AbortError') return _("Timeout");
                 return _("Error");
             });
 
-        const [
-            infoIsRunning, infoIsAutostarting
-        ] = await Promise.all([
-            this.isServiceRunning().catch((e) => {
-                ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
-                return false;
-            }),
-            this.isServiceAutoStartEnabled().catch((e) => {
-                ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
-                return false;
-            })
+        const [infoIsRunning, infoIsAutostarting] = await Promise.all([
+            isServiceRunning().catch(() => false),
+            isServiceAutoStartEnabled().catch(() => false)
         ]);
 
         return {
@@ -231,39 +247,34 @@ return view.extend({
             infoIsRunning, infoIsAutostarting
         };
     },
+
     async render(results) {
-        const serviceStatus = E("td", { class: "td left", id: "is-running" }, [
-            E("span", { style: boolToStyle(results.infoIsRunning) }, [
-                boolToWord(results.infoIsRunning)
-            ])
-        ]);
+        stopPolling();
 
-        const daemonStatus = E("td", { class: "td left", id: "is-autostarting" }, [
-            E("span", { style: boolToStyle(results.infoIsAutostarting) }, [
-                boolToWord(results.infoIsAutostarting)
-            ])
-        ]);
+        const serviceBadge = E("span", { class: "jc-badge" }, _("Loading..."));
+        const autoBadge = E("span", { class: "jc-badge" }, _("Loading..."));
 
-        const dynamicStatusCells = { serviceStatus, daemonStatus };
+        const dynamicElements = { serviceBadge, autoBadge };
 
+        const statusGrid = createStatusGrid(results, dynamicElements);
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Service status:")),
-            createTable(results, dynamicStatusCells)
+            statusGrid
         ]);
 
         const actionHandler = (action, timeoutMs) =>
-            ui.createHandlerFn(this, async function () {
+            async () => {
                 ui.showModal(_("Executing command..."), [E("p", _("Please wait."))]);
                 try {
                     await fs.exec(common.initdPath, [action]);
                     if (timeoutMs) await asyncTimeout(timeoutMs);
-                    await this.updateServiceStatus(dynamicStatusCells);
+                    await updateServiceStatus(dynamicElements);
                 } catch (e) {
-                    ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
+                    ui.addNotification(_("Error"), E("p", e.message), "danger");
                 } finally {
                     ui.hideModal();
                 }
-            });
+            };
 
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), actionHandler("start", 5000)),
@@ -284,12 +295,60 @@ return view.extend({
             createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showExecModalHandler(_("Update service data"), false, common.binPath, ["service_data_update"])),
         ]);
 
-        this.startPolling(dynamicStatusCells, results.infoIsRunning);
-
+        // CSS
         const style = E("style", {}, `
-            td {
-                padding: 6px 6px 6px !important;
+            /* Top Grid: 2 колонки */
+            .jc-grid-top {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-bottom: 15px;
             }
+
+            /* Bottom Grid: 4 колонки */
+            .jc-grid-bottom {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            /* Card Style */
+            .jc-card {
+                border: 1px solid #1676bb;
+                border-radius: 4px;
+                padding: 10px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .jc-card-header {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                opacity: 0.8;
+                font-size: 0.9em;
+                text-transform: uppercase;
+            }
+            .jc-card-icon {
+                font-size: 1.2em;
+                margin-right: 8px;
+            }
+            .jc-card-body {
+                font-size: 1.1em;
+                font-weight: 600;
+                word-break: break-all;
+            }
+
+            @media (max-width: 1000px) {
+                /* На планшетах нижний ряд сворачивается в 2 строки по 2 */
+                .jc-grid-bottom { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (max-width: 600px) {
+                /* На мобильных всё в 1 колонку */
+                .jc-grid-top, .jc-grid-bottom { grid-template-columns: 1fr; }
+            }
+
             .cbi-page-actions {
                 margin-bottom: 10px !important;
                 padding: 10px 10px 10px 10px !important;
@@ -303,13 +362,12 @@ return view.extend({
                 text-align: left !important;
                 border-top: 0px !important;
             }
-            .jc-margin-right {
-                margin-left: auto;
-            }
         `);
 
+        startPolling(dynamicElements);
+
         requestAnimationFrame(() => {
-            this.updateUI(dynamicStatusCells, results.infoIsAutostarting, results.infoIsRunning);
+            updateUI(dynamicElements, results.infoIsAutostarting, results.infoIsRunning);
         });
 
         return E("div", { class: "cbi-map" }, [
@@ -322,62 +380,8 @@ return view.extend({
             ])
         ]);
     },
-    updateUI(dynamicStatusCells, isAutostarting, isRunning) {
-        const runningSpan = dynamicStatusCells.serviceStatus.querySelector("span");
-        const autoSpan = dynamicStatusCells.daemonStatus.querySelector("span");
 
-        if (runningSpan) {
-            runningSpan.textContent = boolToWord(isRunning);
-            runningSpan.style = boolToStyle(isRunning);
-        }
-        if (autoSpan) {
-            autoSpan.textContent = boolToWord(isAutostarting);
-            autoSpan.style = boolToStyle(isAutostarting);
-        }
-
-        const btnStart = document.getElementById(buttonsIDs.START);
-        const btnStop = document.getElementById(buttonsIDs.STOP);
-        const btnEnable = document.getElementById(buttonsIDs.ENABLE);
-        const btnDisable = document.getElementById(buttonsIDs.DISABLE);
-        if (btnStart) btnStart.disabled = isRunning;
-        if (btnStop) btnStop.disabled = !isRunning;
-        if (btnEnable) btnEnable.disabled = isAutostarting;
-        if (btnDisable) btnDisable.disabled = !isAutostarting;
-    },
-    async updateServiceStatus(dynamicStatusCells) {
-        const [isRunning, isAutostarting] = await Promise.all([
-            this.isServiceRunning().catch((e) => {
-                ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
-                return false;
-            }),
-            this.isServiceAutoStartEnabled().catch((e) => {
-                ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
-                return false;
-            })
-        ]);
-        requestAnimationFrame(() => {
-            this.updateUI(dynamicStatusCells, isAutostarting, isRunning);
-        });
-    },
-    startPolling(dynamicStatusCells) {
-        if (this.pollInterval) clearInterval(this.pollInterval);
-        this.pollInterval = setInterval(() => {
-            this.updateServiceStatus(dynamicStatusCells);
-        }, this.pollServiceStatusTimeout);
-
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) {
-                clearInterval(this.pollInterval);
-                this.pollInterval = null;
-            } else {
-                this.startPolling(dynamicStatusCells);
-            }
-        });
-    },
-    destroy() {
-        if (this.pollInterval) {
-            clearInterval(this.pollInterval);
-            this.pollInterval = null;
-        }
+    leave: function () {
+        stopPolling();
     }
 });
