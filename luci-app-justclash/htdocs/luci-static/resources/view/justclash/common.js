@@ -8,7 +8,7 @@ return baseclass.extend({
     binPath: "/usr/bin/justclash",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
-    logsCount: "800",
+    logsCount: "400",
     defaultNtpServers: [
         { value: "194.190.168.1", text: "ntp.msk-ix.ru" },
         { value: "89.109.251.22", text: "ntp2.vniiftri.ru" },
