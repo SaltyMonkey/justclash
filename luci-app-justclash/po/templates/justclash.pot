@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-07 18:37+0300\n"
+"POT-Creation-Date: 2026-02-08 01:15+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -345,63 +345,63 @@ msgstr ""
 msgid "Proxy"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:55
+#: htdocs/luci-static/resources/view/justclash/connections.js:67
 msgid "Connection Details"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:72
+#: htdocs/luci-static/resources/view/justclash/connections.js:76
 msgid "JSON copied to clipboard"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:74
+#: htdocs/luci-static/resources/view/justclash/connections.js:79
 msgid "Copy JSON"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:79
+#: htdocs/luci-static/resources/view/justclash/connections.js:84
 msgid "Close"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:103 htdocs/luci-static/resources/view/justclash/connections.js:125
+#: htdocs/luci-static/resources/view/justclash/connections.js:108 htdocs/luci-static/resources/view/justclash/connections.js:130
 msgid "Proto"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:104 htdocs/luci-static/resources/view/justclash/connections.js:126
+#: htdocs/luci-static/resources/view/justclash/connections.js:109 htdocs/luci-static/resources/view/justclash/connections.js:131
 msgid "Connection"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:105 htdocs/luci-static/resources/view/justclash/connections.js:129
+#: htdocs/luci-static/resources/view/justclash/connections.js:110 htdocs/luci-static/resources/view/justclash/connections.js:134
 msgid "Host/Sniff"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:106 htdocs/luci-static/resources/view/justclash/connections.js:130
+#: htdocs/luci-static/resources/view/justclash/connections.js:111 htdocs/luci-static/resources/view/justclash/connections.js:135
 msgid "Chains"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:107 htdocs/luci-static/resources/view/justclash/connections.js:131
+#: htdocs/luci-static/resources/view/justclash/connections.js:112 htdocs/luci-static/resources/view/justclash/connections.js:136
 msgid "Rule"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:111
+#: htdocs/luci-static/resources/view/justclash/connections.js:116
 msgid "Active Connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:127
+#: htdocs/luci-static/resources/view/justclash/connections.js:132
 msgid "Source"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:128
+#: htdocs/luci-static/resources/view/justclash/connections.js:133
 msgid "Destination"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:199
+#: htdocs/luci-static/resources/view/justclash/connections.js:204
 msgid "No active connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:219
+#: htdocs/luci-static/resources/view/justclash/connections.js:224
 msgid "Connection error"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:220
+#: htdocs/luci-static/resources/view/justclash/connections.js:225
 msgid "Can't connect to proxy API"
 msgstr ""
 
@@ -413,32 +413,48 @@ msgstr ""
 msgid "No logs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:71 htdocs/luci-static/resources/view/justclash/status.js:60 htdocs/luci-static/resources/view/justclash/status.js:199 htdocs/luci-static/resources/view/justclash/status.js:225 htdocs/luci-static/resources/view/justclash/status.js:226 htdocs/luci-static/resources/view/justclash/status.js:229 htdocs/luci-static/resources/view/justclash/status.js:234 htdocs/luci-static/resources/view/justclash/status.js:237 htdocs/luci-static/resources/view/justclash/status.js:273
+#: htdocs/luci-static/resources/view/justclash/logs.js:68 htdocs/luci-static/resources/view/justclash/logs.js:107
+msgid "Last fetch: "
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/logs.js:77 htdocs/luci-static/resources/view/justclash/status.js:60 htdocs/luci-static/resources/view/justclash/status.js:199 htdocs/luci-static/resources/view/justclash/status.js:225 htdocs/luci-static/resources/view/justclash/status.js:226 htdocs/luci-static/resources/view/justclash/status.js:229 htdocs/luci-static/resources/view/justclash/status.js:234 htdocs/luci-static/resources/view/justclash/status.js:237 htdocs/luci-static/resources/view/justclash/status.js:273
 msgid "Error"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:101
+#: htdocs/luci-static/resources/view/justclash/logs.js:112
 msgid "Update"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:108
+#: htdocs/luci-static/resources/view/justclash/logs.js:119
 msgid "To bottom"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:116
+#: htdocs/luci-static/resources/view/justclash/logs.js:126 htdocs/luci-static/resources/view/justclash/status.js:188
+msgid "Data copied to clipboard"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/logs.js:128
 msgid "Copy logs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:123
+#: htdocs/luci-static/resources/view/justclash/logs.js:135
 msgid "To top"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:125
+#: htdocs/luci-static/resources/view/justclash/logs.js:137
 msgid "Reversed Logs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:202
+#: htdocs/luci-static/resources/view/justclash/logs.js:214
 msgid "Logs view"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:26
+msgid "Proxy Configuration"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:26
+msgid "General configuration for usage in the Mihomo core."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:29 htdocs/luci-static/resources/view/justclash/service.js:27
@@ -1197,6 +1213,14 @@ msgstr ""
 msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/service.js:24
+msgid "Service configuration:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:24
+msgid "Main configuration for service startup options and tasks."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/service.js:29
 msgid "Delayed boot:"
 msgstr ""
@@ -1407,10 +1431,6 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:182
 msgid "No output"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:188
-msgid "Data copied to clipboard"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:191
