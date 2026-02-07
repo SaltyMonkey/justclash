@@ -23,7 +23,7 @@ return view.extend({
 
         m = new form.Map(common.binName);
 
-        s = m.section(form.NamedSection, "proxy");
+        s = m.section(form.NamedSection, "proxy", "proxy", _("Proxy Configuration"), _("General configuration for usage in the Mihomo core."));
 
         tabname = "coresettings_tab";
         s.tab(tabname, _("Basic settings"));

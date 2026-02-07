@@ -21,7 +21,7 @@ return view.extend({
         };
 
         m = new form.Map(common.binName);
-        s = m.section(form.NamedSection, "settings");
+        s = m.section(form.NamedSection, "settings", "main", _("Service configuration:"), _("Main configuration for service startup options and tasks."));
 
         tabname = "servicebasic_tab";
         s.tab(tabname, _("Basic settings"));

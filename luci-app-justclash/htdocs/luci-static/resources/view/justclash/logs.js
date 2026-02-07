@@ -104,7 +104,7 @@ return view.extend({
         const lastFetchLabel = E("span", {
             class: "jc-ml",
             style: "color: #999; font-size: 0.9em; display: flex; align-items: center;"
-        }, [ _("Last fetch: -") ]);
+        }, [ _("Last fetch: ") + `${NO_DATA}` ]);
 
         const refreshBtn = E("button", {
             class: "cbi-button cbi-button-positive",
