@@ -58,10 +58,16 @@ const renderLogLines = (container, rawText, isReversed) => {
     container.appendChild(fragment);
 };
 
-const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs) => {
+const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs, lastFetchLabel) => {
     if (btn) btn.disabled = true;
     try {
         const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
+
+        if (lastFetchLabel) {
+            const now = new Date();
+            lastFetchLabel.textContent = _("Last fetch: ") + now.toLocaleString();
+        }
+
         rawLogs.value = res.stdout || NO_LOGS;
         if (rawLogs.value.endsWith("\n")) {
             rawLogs.value = rawLogs.value.slice(0, -1);
@@ -95,9 +101,14 @@ return view.extend({
             change: () => renderLogLines(logContainer, rawLogs.value, reverseCheckbox.checked)
         });
 
+        const lastFetchLabel = E("span", {
+            class: "jc-ml",
+            style: "color: #999; font-size: 0.9em; display: flex; align-items: center;"
+        }, [ _("Last fetch: -") ]);
+
         const refreshBtn = E("button", {
             class: "cbi-button cbi-button-positive",
-            click: () => updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs)
+            click: () => updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs, lastFetchLabel)
         }, [_("Update")]);
 
         const tailBtn = E("button", {
@@ -128,6 +139,7 @@ return view.extend({
         const settingsBar = E("div", { class: "cbi-page-actions jc-actions" }, [
             reverseLabel,
             reverseCheckbox,
+            lastFetchLabel
         ]);
 
         const buttonBar = E("div", { class: "cbi-page-actions jc-actions" }, [
@@ -141,7 +153,7 @@ return view.extend({
         ]);
 
         requestAnimationFrame(() => {
-            updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs);
+            updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs, lastFetchLabel);
         });
 
         const style = E("style", {}, `
@@ -166,7 +178,7 @@ return view.extend({
                 margin-bottom: 10px !important;
 
                 height: 500px;
-                resize: vertical; /* Разрешить менять высоту */
+                resize: vertical;
             }
 
             .log-line {
@@ -174,13 +186,13 @@ return view.extend({
                 border-bottom: 1px solid transparent;
             }
             .log-line:hover {
-                background-color: #2a2d2e; /* Подсветка строки при наведении */
+                background-color: #2a2d2e;
             }
 
-            .log-error { color: #f48771; } /* Светло-красный */
-            .log-warn  { color: #cca700; } /* Желтый */
-            .log-info  { color: #75beff; } /* Голубой */
-            .log-debug { color: #8b949e; } /* Серый */
+            .log-error { color: #f48771; }
+            .log-warn  { color: #cca700; }
+            .log-info  { color: #75beff; }
+            .log-debug { color: #8b949e; }
 
             .jc-actions {
                 display: flex;
