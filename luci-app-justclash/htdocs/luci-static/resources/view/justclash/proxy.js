@@ -28,24 +28,6 @@ return view.extend({
         tabname = "coresettings_tab";
         s.tab(tabname, _("Basic settings"));
 
-        // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select interface where API controller will be available."));
-        o.default = "lan";
-        o.optional = false;
-        o.nocreate = true;
-        o.multiple = false;
-        o.description = "Select interface where API controller will be available.";
-
-        o = s.taboption(tabname, form.Flag, "use_zashboard", _("Enable dashboard:"));
-        o.description = _("Enable external dashboard for Mihomo.");
-        o.default = primitives.FALSE;
-        o.rmempty = false;
-
-        o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
-        o.password = true;
-        o.description = _("API token for Bearer authentication.");
-        o.rmempty = false;
-
         o = s.taboption(tabname, form.ListValue, "log_level", _("Logging level:"));
         common.defaultLoggingLevels.forEach(item => {
             o.value(item, _(`${item}`));
@@ -130,6 +112,27 @@ return view.extend({
         o.description = _("Cache fake IP data when possible.");
         o.rmempty = false;
         o.default = primitives.TRUE;
+
+        tabname = "apicontrollersettings_tab";
+        s.tab(tabname, _("Controller/API settings"));
+
+        // copypasted from Podkop devs
+        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select interface where API controller will be available."));
+        o.default = "lan";
+        o.optional = false;
+        o.nocreate = true;
+        o.multiple = false;
+        o.description = "Select network where API controller will be available.";
+
+        o = s.taboption(tabname, form.Flag, "use_zashboard", _("Enable dashboard:"));
+        o.description = _("Enable external dashboard for Mihomo.");
+        o.default = primitives.FALSE;
+        o.rmempty = false;
+
+        o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
+        o.password = true;
+        o.description = _("API token for Bearer authentication.");
+        o.rmempty = false;
 
         tabname = "dnssettings_tab";
         s.tab(tabname, _("DNS settings"));
