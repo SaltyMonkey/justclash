@@ -1,3 +1,7 @@
+## [0.8.1] - 10022026
+
+- Service: Fix DNS record generation
+
 ## [0.8.0] - 07022026
 
 - Config: Changed default `log_level`
