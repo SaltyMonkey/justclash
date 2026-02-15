@@ -7,33 +7,46 @@
 
 return view.extend({
     async load() {
-        const [
-            rulesetsFile, blockRulesetsFile
-        ] = await Promise.all([
-            fs.read(common.rulesetsFilePath),
-            fs.read(common.blockRulesetsFilePath),
-        ]);
-        //ui.addNotification(null, E("p", _("Unable to read the contents") + ": " + (e.message || e)), "error");
-        const rulesetsLines = rulesetsFile.split('\n');
+        let rulesetsItems = [];
+        let blockRulesetsItems = [];
 
-        const rulesetsItems = rulesetsLines
-            .filter(line => line.trim() && !line.trim().startsWith('#'))
-            .map(line => {
-                const [name, yamlName] = line.split('|');
-                return { name, yamlName };
-            });
+        try {
+            const rulesetsFile = await fs.read(common.rulesetsFilePath);
+            if (rulesetsFile) {
+                const rulesetsLines = rulesetsFile.split('\n');
+                rulesetsItems = rulesetsLines
+                    .filter(line => line.trim() && !line.trim().startsWith('#'))
+                    .map(line => {
+                        const [name, yamlName] = line.split('|');
+                        return { name: name ? name.trim() : null, yamlName: yamlName ? yamlName.trim() : null };
+                    })
+                    .filter(item => item.name && item.yamlName);
+            }
+        } catch (e) {
+            ui.addNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), "error", 3000);
+            console.error("Error loading rulesets:", e);
+        }
 
-        const blockRulesetsLines = blockRulesetsFile.split('\n');
-
-        const blockRulesetsItems = blockRulesetsLines
-            .filter(line => line.trim() && !line.trim().startsWith('#'))
-            .map(line => {
-                const [name, yamlName] = line.split('|');
-                return { name, yamlName };
-            });
+        try {
+            const blockRulesetsFile = await fs.read(common.blockRulesetsFilePath);
+            if (blockRulesetsFile) {
+                const blockRulesetsLines = blockRulesetsFile.split('\n');
+                blockRulesetsItems = blockRulesetsLines
+                    .filter(line => line.trim() && !line.trim().startsWith('#'))
+                    .map(line => {
+                        const [name, yamlName] = line.split('|');
+                        return { name: name ? name.trim() : null, yamlName: yamlName ? yamlName.trim() : null };
+                    })
+                    .filter(item => item.name && item.yamlName);
+            }
+        } catch (e) {
+            ui.addNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), "error", 3000);
+            console.error("Error loading rulesets:", e);
+        }
 
         return {
-            rulesetsItems, blockRulesetsItems
+            rulesetsItems,
+            blockRulesetsItems
         };
     },
     render(result) {

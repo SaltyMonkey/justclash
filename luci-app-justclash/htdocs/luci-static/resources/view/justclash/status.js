@@ -185,7 +185,7 @@ const showExecModalHandler = (title, warning, command, args) =>
                         class: `cbi-button ${buttons.ACTION}`,
                         click: () => {
                             copyToClipboard(res.stdout);
-                            ui.addNotification(null, E("p", _("Data copied to clipboard")), "success");
+                            ui.addNotification(null, E("p", _("Data copied to clipboard")), "success", 3000);
                             ui.hideModal();
                         }
                     }, [_("Copy to clipboard")]),
@@ -270,7 +270,8 @@ return view.extend({
                     if (timeoutMs) await asyncTimeout(timeoutMs);
                     await updateServiceStatus(dynamicElements);
                 } catch (e) {
-                    ui.addNotification(_("Error"), E("p", e.message), "danger");
+                    ui.addNotification(_("Error"), E("p", e.message), "danger", 3000);
+                    console.error("Error:", e);
                 } finally {
                     ui.hideModal();
                 }

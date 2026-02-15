@@ -74,7 +74,8 @@ const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs, lastFetch
         }
         renderLogLines(logContainer, rawLogs.value, reverseCheckbox.checked);
     } catch (e) {
-        ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger");
+        ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger", 3000);
+        console.error("Error:", e);
     } finally {
         if (btn) btn.disabled = false;
     }
@@ -104,7 +105,7 @@ return view.extend({
         const lastFetchLabel = E("span", {
             class: "jc-ml",
             style: "color: #999; font-size: 0.9em; display: flex; align-items: center;"
-        }, [ _("Last fetch: ") + `${NO_DATA}` ]);
+        }, [_("Last fetch: ") + `${NO_DATA}`]);
 
         const refreshBtn = E("button", {
             class: "cbi-button cbi-button-positive",
@@ -123,7 +124,7 @@ return view.extend({
             click: () => {
                 if (rawLogs.value === NO_DATA || rawLogs.value === NO_LOGS) return;
                 copyToClipboard(rawLogs.value);
-                ui.addNotification(null, E("p", _("Data copied to clipboard")), "success");
+                ui.addNotification(null, E("p", _("Data copied to clipboard")), "success", 3000);
             },
         }, [_("Copy logs")]);
 

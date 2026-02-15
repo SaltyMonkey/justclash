@@ -6,7 +6,6 @@
 
 let activeWS = null;
 let reconnectTimer = null;
-let errorNotif = null;
 let noConnectionsMsg = null;
 
 const connectionsData = new Map();
@@ -35,7 +34,7 @@ const formatConnection = (conn) => {
 const getWSURL = (token) => {
     const host = window.location.hostname;
     const port = 9090;
-    return (token && token != "") ? `ws://${host}:${port}/connections?token=${token}` : `ws://${host}:${port}/connections`
+    return (token && token != "") ? `ws://${host}:${port}/connections?token=${token}` : `ws://${host}:${port}/connections`;
 };
 
 const cleanup = () => {
@@ -49,10 +48,6 @@ const cleanup = () => {
     if (reconnectTimer) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
-    }
-    if (errorNotif) {
-        ui.removeNotification(errorNotif);
-        errorNotif = null;
     }
     noConnectionsMsg = null;
     connectionsData.clear();
@@ -73,7 +68,7 @@ const showConnectionDetails = (connId) => {
                 class: "cbi-button cbi-button-action",
                 click: () => {
                     copyToClipboard(jsonString);
-                    ui.addNotification(null, E("p", _("JSON copied to clipboard")), "success");
+                    ui.addNotification(null, E("p", _("JSON copied to clipboard")), "success", 3000);
                     ui.hideModal();
                 }
             }, [_("Copy JSON")]),
@@ -91,7 +86,7 @@ return view.extend({
     handleSaveApply: null,
     handleReset: null,
 
-    load: async function() {
+    load: async function () {
         await uci.load("justclash");
         let token = uci.get("justclash", "proxy", "api_password");
         token = token || "";
@@ -106,10 +101,10 @@ return view.extend({
 
         const header = E("div", { class: "flex-header" }, [
             E("div", { class: "c-proto" }, _("Proto")),
-            E("div", { class: "c-conn" },  _("Connection")),
-            E("div", { class: "c-host" },  _("Host/Sniff")),
+            E("div", { class: "c-conn" }, _("Connection")),
+            E("div", { class: "c-host" }, _("Host/Sniff")),
             E("div", { class: "c-chains" }, _("Chains")),
-            E("div", { class: "c-rule" },  _("Rule"))
+            E("div", { class: "c-rule" }, _("Rule"))
         ]);
 
         table.appendChild(header);
@@ -172,10 +167,6 @@ return view.extend({
 
             activeWS.onopen = () => {
                 console.log("[WS] Connected");
-                if (errorNotif) {
-                    ui.removeNotification(errorNotif);
-                    errorNotif = null;
-                }
             };
 
             activeWS.onmessage = (event) => {
@@ -219,13 +210,14 @@ return view.extend({
 
             activeWS.onerror = (err) => {
                 console.warn("[WS] Error:", err);
-                if (!errorNotif) {
-                    errorNotif = ui.addNotification(
-                        _("Connection error"),
-                        E("p", _("Can't connect to proxy API")),
-                        "error"
-                    );
-                }
+                ui.addNotification(
+                    _("Connection error"),
+                    E("p", _("Can't connect to proxy API")),
+                    "error",
+                    3000
+                );
+                console.error("Connection error", e);
+
             };
 
             activeWS.onclose = () => {
@@ -327,7 +319,7 @@ return view.extend({
         return container;
     },
 
-    leave: function() {
+    leave: function () {
         cleanup();
     }
 });
