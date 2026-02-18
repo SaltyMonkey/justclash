@@ -387,7 +387,7 @@ return baseclass.extend({
     //for autogeneration, titles luci-app-justclash.json
     stub_status_tab: _("Status"),
     stub_logs_tab: _("Logs"),
-    stub_connections_tab: _("Connections"),
+    stub_statistic_tab: _("Statistic"),
     stub_routing_tab: _("Routing"),
     stub_service_tab: _("Service"),
     stub_proxy_tab: _("Proxy")

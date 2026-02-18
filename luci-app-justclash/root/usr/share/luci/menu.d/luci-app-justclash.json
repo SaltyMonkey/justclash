@@ -47,12 +47,12 @@
             }
         }
     },
-    "admin/services/justclash/connections": {
-        "title": "Connections",
+    "admin/services/justclash/statistic": {
+        "title": "Statistic",
         "order": 40,
         "action": {
             "type": "view",
-            "path": "justclash/connections"
+            "path": "justclash/statistic"
         },
         "depends": {
             "acl": [

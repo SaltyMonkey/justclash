@@ -5,10 +5,30 @@
 "require uci";
 
 let activeWS = null;
+let trafficWS = null;
+let memoryWS = null;
 let reconnectTimer = null;
+let reconnectTrafficTimer = null;
+let reconnectMemoryTimer = null;
 let noConnectionsMsg = null;
 
 const connectionsData = new Map();
+const statsData = {
+    traffic: { up: 0, down: 0, upTotal: 0, downTotal: 0 },
+    memory: { inuse: 0, oslimit: 0 }
+};
+
+const formatBytes = (bytes) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+const formatSpeed = (bytesPerSec) => {
+    return formatBytes(bytesPerSec) + "/s";
+};
 
 const copyToClipboard = (text) => {
     const ta = document.createElement("textarea");
@@ -31,10 +51,10 @@ const formatConnection = (conn) => {
     };
 };
 
-const getWSURL = (token) => {
+const getWSURL = (path, token) => {
     const host = window.location.hostname;
     const port = 9090;
-    return (token && token != "") ? `ws://${host}:${port}/connections?token=${token}` : `ws://${host}:${port}/connections`;
+    return (token && token != "") ? `ws://${host}:${port}${path}?token=${token}` : `ws://${host}:${port}${path}`;
 };
 
 const cleanup = () => {
@@ -45,9 +65,31 @@ const cleanup = () => {
         activeWS.close();
         activeWS = null;
     }
+    if (trafficWS) {
+        trafficWS.onclose = null;
+        trafficWS.onerror = null;
+        trafficWS.onmessage = null;
+        trafficWS.close();
+        trafficWS = null;
+    }
+    if (memoryWS) {
+        memoryWS.onclose = null;
+        memoryWS.onerror = null;
+        memoryWS.onmessage = null;
+        memoryWS.close();
+        memoryWS = null;
+    }
     if (reconnectTimer) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
+    }
+    if (reconnectTrafficTimer) {
+        clearTimeout(reconnectTrafficTimer);
+        reconnectTrafficTimer = null;
+    }
+    if (reconnectMemoryTimer) {
+        clearTimeout(reconnectMemoryTimer);
+        reconnectMemoryTimer = null;
     }
     noConnectionsMsg = null;
     connectionsData.clear();
@@ -97,7 +139,30 @@ return view.extend({
         cleanup();
 
         const container = E("div", { class: "cbi-section fade-in" });
-        const table = E("div", { class: "flex-table compact-table" });
+
+        container.appendChild(E("h3", { class: "cbi-section-title" }, _("Statistic")));
+
+        function makeCard(id, title, emoji, initialText) {
+            return E('div', { class: 'jc-card' }, [
+                E('div', { class: 'jc-card-header' }, [
+                    E('span', { class: 'jc-card-icon' }, emoji),
+                    E('span', {}, title)
+                ]),
+                E('div', { class: 'jc-card-body', id: id }, initialText || '-')
+            ]);
+        }
+
+        const statsGrid = E('div', { class: 'jc-cards-grid' }, [
+            makeCard('traffic-up',        _('Upload speed'),      '⬆️', '0 B/s'),
+            makeCard('traffic-down',      _('Download speed'),    '⬇️', '0 B/s'),
+            makeCard('traffic-up-total',  _('Total Up'),    '📤', '0 B'),
+            makeCard('traffic-down-total',_('Total Down'),  '📥', '0 B'),
+            makeCard('memory-inuse',      _('Ram usage'),      '📊', '0 B')
+        ]);
+
+        container.appendChild(statsGrid);
+
+        const table = E("div", { class: "jc-table compact-table" });
 
         const header = E("div", { class: "flex-header" }, [
             E("div", { class: "c-proto" }, _("Proto")),
@@ -108,7 +173,7 @@ return view.extend({
         ]);
 
         table.appendChild(header);
-        container.appendChild(E("h3", { class: "cbi-section-title" }, _("Active Connections")));
+        container.appendChild(E("h3", { class: "cbi-section-title", style: "margin-top: 20px;" }, _("Active Connections")));
         container.appendChild(table);
 
         const rowMap = new Map();
@@ -148,7 +213,7 @@ return view.extend({
             const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
             const chainsStr = conn.chains.join(", ");
             const ruleStr = conn.rule;
-            const desktopConnStr = connObj.src + (connObj.dest ? " → " + connObj.dest : "");
+            const desktopConnStr = connObj.src + (connObj.dest ? " -> " + connObj.dest : "");
 
             const cells = row.childNodes;
 
@@ -162,11 +227,11 @@ return view.extend({
         }
 
         function startWebSocket() {
-            const wsUrl = getWSURL(result.token);
+            const wsUrl = getWSURL("/connections", result.token);
             activeWS = new WebSocket(wsUrl);
 
             activeWS.onopen = () => {
-                console.log("[WS] Connected");
+                console.log("[WS Connections] Connected");
             };
 
             activeWS.onmessage = (event) => {
@@ -209,19 +274,11 @@ return view.extend({
             };
 
             activeWS.onerror = (err) => {
-                console.warn("[WS] Error:", err);
-                ui.addNotification(
-                    _("Connection error"),
-                    E("p", _("Can't connect to proxy API")),
-                    "error",
-                    3000
-                );
-                console.error("Connection error", e);
-
+                console.warn("[WS Connections] Error:", err);
             };
 
             activeWS.onclose = () => {
-                console.warn("[WS] Closed. Retry in 10s...");
+                console.warn("[WS Connections] Closed. Retry in 10s...");
                 activeWS = null;
                 if (reconnectTimer) clearTimeout(reconnectTimer);
 
@@ -233,10 +290,128 @@ return view.extend({
             };
         }
 
+        function startTrafficWS() {
+            const wsUrl = getWSURL("/traffic", result.token);
+            trafficWS = new WebSocket(wsUrl);
+
+            trafficWS.onopen = () => {
+                console.log("[WS Traffic] Connected");
+            };
+
+            trafficWS.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    statsData.traffic = data;
+
+                    document.getElementById("traffic-up").textContent = formatSpeed(data.up);
+                    document.getElementById("traffic-down").textContent = formatSpeed(data.down);
+                    document.getElementById("traffic-up-total").textContent = formatBytes(data.upTotal);
+                    document.getElementById("traffic-down-total").textContent = formatBytes(data.downTotal);
+                } catch (e) {
+                    console.warn("Traffic WS parsing error:", e);
+                }
+            };
+
+            trafficWS.onerror = (err) => {
+                console.warn("[WS Traffic] Error:", err);
+            };
+
+            trafficWS.onclose = () => {
+                console.warn("[WS Traffic] Closed. Retry in 10s...");
+                trafficWS = null;
+                if (reconnectTrafficTimer) clearTimeout(reconnectTrafficTimer);
+
+                reconnectTrafficTimer = setTimeout(() => {
+                    if (document.body.contains(container)) {
+                        startTrafficWS();
+                    }
+                }, common.defaultTimeoutForWSReconnect);
+            };
+        }
+
+        function startMemoryWS() {
+            const wsUrl = getWSURL("/memory", result.token);
+            memoryWS = new WebSocket(wsUrl);
+
+            memoryWS.onopen = () => {
+                console.log("[WS Memory] Connected");
+            };
+
+            memoryWS.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    statsData.memory = data;
+
+                    document.getElementById("memory-inuse").textContent = formatBytes(data.inuse);
+                } catch (e) {
+                    console.warn("Memory WS parsing error:", e);
+                }
+            };
+
+            memoryWS.onerror = (err) => {
+                console.warn("[WS Memory] Error:", err);
+            };
+
+            memoryWS.onclose = () => {
+                console.warn("[WS Memory] Closed. Retry in 10s...");
+                memoryWS = null;
+                if (reconnectMemoryTimer) clearTimeout(reconnectMemoryTimer);
+
+                reconnectMemoryTimer = setTimeout(() => {
+                    if (document.body.contains(container)) {
+                        startMemoryWS();
+                    }
+                }, common.defaultTimeoutForWSReconnect);
+            };
+        }
+
         startWebSocket();
+        startTrafficWS();
+        startMemoryWS();
 
         const style = E("style", {}, `
-            .flex-table {
+            .jc-cards-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 10px;
+                margin-bottom: 14px;
+            }
+
+            /* Card Style */
+            .jc-card {
+                border: 1px solid var(--primary-color, #1676bb);
+                border-radius: 4px;
+                padding: 10px;
+                display: flex;
+                flex-direction: column;
+                background: var(--background-color-high);
+            }
+
+            .jc-card-header {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                opacity: 0.8;
+                font-size: 0.9em;
+                text-transform: uppercase;
+                color: var(--text-color);
+            }
+
+            .jc-card-icon {
+                font-size: 1.2em;
+                margin-right: 8px;
+            }
+
+            .jc-card-body {
+                font-size: 1.1em;
+                font-weight: 600;
+                word-break: break-all;
+                color: var(--text-color);
+                font-family: monospace;
+            }
+
+            /* Connections Table */
+            .jc-table {
                 display: flex;
                 flex-direction: column;
                 width: 100%;
@@ -305,6 +480,10 @@ return view.extend({
             }
 
             @media (max-width: 900px) {
+                .jc-cards-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+
                 .flex-header { display: none; }
                 .flex-row { flex-direction: column; align-items: flex-start; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; padding: 8px; background: var(--background-color-medium, #fff); }
                 .flex-row > div { display: flex; width: 100%; max-width: none; flex: 1 1 auto; white-space: normal; padding: 2px 0; }
@@ -312,6 +491,12 @@ return view.extend({
                 .show-mobile { display: flex !important; }
                 .flex-row > div::before { content: attr(data-label) ": "; font-weight: bold; color: #555; min-width: 110px; display: inline-block; flex-shrink: 0; }
                 .c-proto, .c-host, .c-chains, .c-rule { flex: auto; max-width: none; }
+            }
+
+            @media (max-width: 600px) {
+                .jc-cards-grid {
+                    grid-template-columns: 1fr;
+                }
             }
         `);
 
