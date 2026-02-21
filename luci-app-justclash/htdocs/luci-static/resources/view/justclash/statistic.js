@@ -4,93 +4,57 @@
 "require view.justclash.common as common";
 "require uci";
 
-let connectionsWS = null;
-let trafficWS = null;
-let memoryWS = null;
-let reconnectTimer = null;
-let reconnectTrafficTimer = null;
-let reconnectMemoryTimer = null;
+let wsCleanups = [];
 let noConnectionsMsg = null;
-
 const connectionsData = new Map();
 const statsData = {
     traffic: { up: 0, down: 0, upTotal: 0, downTotal: 0 },
-    memory: { inuse: 0, oslimit: 0 }
+    memory: { inuse: 0 }
 };
 
 const formatBytes = (bytes) => {
-    if (bytes === 0) return "0 B";
+    if (!bytes || bytes === 0) return "0 B";
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB", "TB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
-const formatSpeed = (bytesPerSec) => {
-    return formatBytes(bytesPerSec) + "/s";
+const formatSpeed = (bytesPerSec) => formatBytes(bytesPerSec) + "/s";
+
+const copyToClipboard = async (text) => {
+    if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+    } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+    }
 };
 
-const copyToClipboard = (text) => {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    document.execCommand("copy");
-    document.body.removeChild(ta);
-};
-
-const formatConnection = (conn) => {
-    return {
-        src: conn.metadata.sourceIP + ":" + conn.metadata.sourcePort,
-        dest: conn.metadata.destinationIP
-            ? conn.metadata.destinationIP + ":" + conn.metadata.destinationPort
-            : (conn.metadata.remoteDestination || "")
-    };
-};
+const formatConnection = (conn) => ({
+    src: conn.metadata.sourceIP + ":" + conn.metadata.sourcePort,
+    dest: conn.metadata.destinationIP
+        ? conn.metadata.destinationIP + ":" + conn.metadata.destinationPort
+        : (conn.metadata.remoteDestination || "")
+});
 
 const getWSURL = (path, token) => {
     const host = window.location.hostname;
     const port = 9090;
-    return (token && token != "") ? `ws://${host}:${port}${path}?token=${token}` : `ws://${host}:${port}${path}`;
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
+    return (token && token !== "") ? `${protocol}://${host}:${port}${path}?token=${token}` : `${protocol}://${host}:${port}${path}`;
 };
 
 const cleanup = () => {
-    if (connectionsWS) {
-        connectionsWS.onclose = null;
-        connectionsWS.onerror = null;
-        connectionsWS.onmessage = null;
-        connectionsWS.close();
-        connectionsWS = null;
-    }
-    if (trafficWS) {
-        trafficWS.onclose = null;
-        trafficWS.onerror = null;
-        trafficWS.onmessage = null;
-        trafficWS.close();
-        trafficWS = null;
-    }
-    if (memoryWS) {
-        memoryWS.onclose = null;
-        memoryWS.onerror = null;
-        memoryWS.onmessage = null;
-        memoryWS.close();
-        memoryWS = null;
-    }
-    if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
-    }
-    if (reconnectTrafficTimer) {
-        clearTimeout(reconnectTrafficTimer);
-        reconnectTrafficTimer = null;
-    }
-    if (reconnectMemoryTimer) {
-        clearTimeout(reconnectMemoryTimer);
-        reconnectMemoryTimer = null;
-    }
+    wsCleanups.forEach(fn => fn());
+    wsCleanups = [];
     noConnectionsMsg = null;
     connectionsData.clear();
 };
@@ -98,7 +62,6 @@ const cleanup = () => {
 const showConnectionDetails = (connId) => {
     const conn = connectionsData.get(connId);
     if (!conn) return;
-
     const jsonString = JSON.stringify(conn, null, 2);
 
     ui.showModal(_("Connection Details"), [
@@ -123,6 +86,36 @@ const showConnectionDetails = (connId) => {
     ]);
 };
 
+// Универсальная функция WebSocket с авто-переподключением
+function createWebSocket({ path, token, onMessage, containerCheck }) {
+    let ws = null;
+    let reconnectTimer = null;
+
+    function connect() {
+        ws = new WebSocket(getWSURL(path, token));
+
+        ws.onopen = () => console.log(`[WS ${path}] Connected`);
+        ws.onmessage = onMessage;
+        ws.onerror = (err) => console.warn(`[WS ${path}] Error:`, err);
+        ws.onclose = () => {
+            ws = null;
+            reconnectTimer = setTimeout(() => {
+                if (containerCheck()) connect();
+            }, common.defaultTimeoutForWSReconnect);
+        };
+    }
+
+    connect();
+
+    return () => {
+        if (ws) {
+            ws.onclose = ws.onerror = ws.onmessage = null;
+            ws.close();
+        }
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+}
+
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
@@ -130,8 +123,7 @@ return view.extend({
 
     load: async function () {
         await uci.load("justclash");
-        let token = uci.get("justclash", "proxy", "api_password");
-        token = token || "";
+        let token = uci.get("justclash", "proxy", "api_password") || "";
         return { token };
     },
 
@@ -139,7 +131,6 @@ return view.extend({
         cleanup();
 
         const container = E("div", { class: "cbi-section fade-in" });
-
         container.appendChild(E("h3", { class: "cbi-section-title" }, _("Statistic")));
 
         function makeCard(id, title, emoji, initialText) {
@@ -153,11 +144,11 @@ return view.extend({
         }
 
         const statsGrid = E('div', { class: 'jc-cards-grid' }, [
-            makeCard('traffic-up',        _('Upload speed'),      '⬆️', '0 B/s'),
-            makeCard('traffic-down',      _('Download speed'),    '⬇️', '0 B/s'),
-            makeCard('traffic-up-total',  _('Total Up'),    '📤', '0 B'),
-            makeCard('traffic-down-total',_('Total Down'),  '📥', '0 B'),
-            makeCard('memory-inuse',      _('Ram usage'),      '📊', '0 B')
+            makeCard('traffic-up', _('Upload speed'), '⬆️', '0 B/s'),
+            makeCard('traffic-down', _('Download speed'), '⬇️', '0 B/s'),
+            makeCard('traffic-up-total', _('Total Up'), '📤', '0 B'),
+            makeCard('traffic-down-total', _('Total Down'), '📥', '0 B'),
+            makeCard('memory-inuse', _('Ram usage'), '📊', '0 B')
         ]);
 
         container.appendChild(statsGrid);
@@ -178,15 +169,14 @@ return view.extend({
 
         const rowMap = new Map();
 
+        function highlightNewRow(row) {
+            row.classList.add("jc-new-row");
+            setTimeout(() => row.classList.remove("jc-new-row"), 2000);
+        }
+
         function createRow(conn) {
             const key = conn.id;
-
-            const row = E("div", {
-                class: "flex-row clickable",
-                "data-key": key,
-                click: () => showConnectionDetails(key)
-            });
-
+            const row = E("div", { class: "flex-row clickable", "data-key": key, click: () => showConnectionDetails(key) });
             row.appendChild(E("div", { class: "c-proto", "data-label": _("Proto") }, ""));
             row.appendChild(E("div", { class: "c-conn hide-mobile", "data-label": _("Connection") }, ""));
             row.appendChild(E("div", { class: "c-src show-mobile", "data-label": _("Source") }, ""));
@@ -194,7 +184,6 @@ return view.extend({
             row.appendChild(E("div", { class: "c-host", "data-label": _("Host/Sniff") }, ""));
             row.appendChild(E("div", { class: "c-chains", "data-label": _("Chains") }, ""));
             row.appendChild(E("div", { class: "c-rule", "data-label": _("Rule") }, ""));
-
             return row;
         }
 
@@ -202,11 +191,12 @@ return view.extend({
             const key = conn.id;
             connectionsData.set(key, conn);
             let row = rowMap.get(key);
-
+            let isNew = false;
             if (!row) {
                 row = createRow(conn);
                 table.appendChild(row);
                 rowMap.set(key, row);
+                isNew = true;
             }
 
             const connObj = formatConnection(conn);
@@ -216,35 +206,31 @@ return view.extend({
             const desktopConnStr = connObj.src + (connObj.dest ? " -> " + connObj.dest : "");
 
             const cells = row.childNodes;
+            cells[0].textContent = conn.metadata.network ? conn.metadata.network.toUpperCase() : "";
+            cells[1].textContent = desktopConnStr;
+            cells[2].textContent = connObj.src;
+            cells[3].textContent = connObj.dest;
+            cells[4].textContent = hostStr;
+            cells[5].textContent = chainsStr;
+            cells[6].textContent = ruleStr;
 
-            if (cells[0].textContent !== conn.metadata.network) cells[0].textContent = conn.metadata.network;
-            if (cells[1].textContent !== desktopConnStr) cells[1].textContent = desktopConnStr;
-            if (cells[2].textContent !== connObj.src) cells[2].textContent = connObj.src;
-            if (cells[3].textContent !== connObj.dest) cells[3].textContent = connObj.dest;
-            if (cells[4].textContent !== hostStr) cells[4].textContent = hostStr;
-            if (cells[5].textContent !== chainsStr) cells[5].textContent = chainsStr;
-            if (cells[6].textContent !== ruleStr) cells[6].textContent = ruleStr;
+            if (isNew) highlightNewRow(row);
         }
 
-        function startWebSocket() {
-            const wsUrl = getWSURL("/connections", result.token);
-            connectionsWS = new WebSocket(wsUrl);
-
-            connectionsWS.onopen = () => {
-                console.log("[WS Connections] Connected");
-            };
-
-            connectionsWS.onmessage = (event) => {
+        // WS Connections
+        wsCleanups.push(createWebSocket({
+            path: "/connections",
+            token: result.token,
+            containerCheck: () => document.body.contains(table),
+            onMessage: (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     const conns = Array.isArray(data.connections) ? data.connections : [];
                     const seenKeys = new Set();
-
                     for (const conn of conns) {
                         seenKeys.add(conn.id);
                         updateRow(conn);
                     }
-
                     for (const key of rowMap.keys()) {
                         if (!seenKeys.has(key)) {
                             const row = rowMap.get(key);
@@ -253,251 +239,76 @@ return view.extend({
                             connectionsData.delete(key);
                         }
                     }
-
-                    if (rowMap.size === 0) {
-                        if (!noConnectionsMsg) {
-                            noConnectionsMsg = E("div", { class: "flex-row no-data" }, [
-                                E("div", {}, _("No active connections"))
-                            ]);
-                            table.appendChild(noConnectionsMsg);
-                        }
+                    if (rowMap.size === 0 && !noConnectionsMsg) {
+                        noConnectionsMsg = E("div", { class: "flex-row no-data" }, [E("div", {}, _("No active connections"))]);
+                        table.appendChild(noConnectionsMsg);
                     } else if (noConnectionsMsg) {
-                        if (noConnectionsMsg.parentNode) {
-                            noConnectionsMsg.parentNode.removeChild(noConnectionsMsg);
-                        }
+                        noConnectionsMsg.parentNode?.removeChild(noConnectionsMsg);
                         noConnectionsMsg = null;
                     }
+                } catch (e) { console.warn("WS parsing error:", e); }
+            }
+        }));
 
-                } catch (e) {
-                    console.warn("WS parsing error:", e);
-                }
-            };
-
-            connectionsWS.onerror = (err) => {
-                console.warn("[WS Connections] Error:", err);
-            };
-
-            connectionsWS.onclose = () => {
-                console.warn("[WS Connections] Closed. Retry in 10s...");
-                connectionsWS = null;
-                if (reconnectTimer) clearTimeout(reconnectTimer);
-
-                reconnectTimer = setTimeout(() => {
-                    if (document.body.contains(table)) {
-                        startWebSocket();
-                    }
-                }, common.defaultTimeoutForWSReconnect);
-            };
-        }
-
-        function startTrafficWS() {
-            const wsUrl = getWSURL("/traffic", result.token);
-            trafficWS = new WebSocket(wsUrl);
-
-            trafficWS.onopen = () => {
-                console.log("[WS Traffic] Connected");
-            };
-
-            trafficWS.onmessage = (event) => {
+        // WS Traffic
+        wsCleanups.push(createWebSocket({
+            path: "/traffic",
+            token: result.token,
+            containerCheck: () => document.body.contains(container),
+            onMessage: (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     statsData.traffic = data;
-
                     document.getElementById("traffic-up").textContent = formatSpeed(data.up);
                     document.getElementById("traffic-down").textContent = formatSpeed(data.down);
                     document.getElementById("traffic-up-total").textContent = formatBytes(data.upTotal);
                     document.getElementById("traffic-down-total").textContent = formatBytes(data.downTotal);
-                } catch (e) {
-                    console.warn("Traffic WS parsing error:", e);
-                }
-            };
+                } catch (e) {}
+            }
+        }));
 
-            trafficWS.onerror = (err) => {
-                console.warn("[WS Traffic] Error:", err);
-            };
-
-            trafficWS.onclose = () => {
-                console.warn("[WS Traffic] Closed. Retry in 10s...");
-                trafficWS = null;
-                if (reconnectTrafficTimer) clearTimeout(reconnectTrafficTimer);
-
-                reconnectTrafficTimer = setTimeout(() => {
-                    if (document.body.contains(container)) {
-                        startTrafficWS();
-                    }
-                }, common.defaultTimeoutForWSReconnect);
-            };
-        }
-
-        function startMemoryWS() {
-            const wsUrl = getWSURL("/memory", result.token);
-            memoryWS = new WebSocket(wsUrl);
-
-            memoryWS.onopen = () => {
-                console.log("[WS Memory] Connected");
-            };
-
-            memoryWS.onmessage = (event) => {
+        // WS Memory (только inuse)
+        wsCleanups.push(createWebSocket({
+            path: "/memory",
+            token: result.token,
+            containerCheck: () => document.body.contains(container),
+            onMessage: (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     statsData.memory = data;
-
                     document.getElementById("memory-inuse").textContent = formatBytes(data.inuse);
-                } catch (e) {
-                    console.warn("Memory WS parsing error:", e);
-                }
-            };
-
-            memoryWS.onerror = (err) => {
-                console.warn("[WS Memory] Error:", err);
-            };
-
-            memoryWS.onclose = () => {
-                console.warn("[WS Memory] Closed. Retry in 10s...");
-                memoryWS = null;
-                if (reconnectMemoryTimer) clearTimeout(reconnectMemoryTimer);
-
-                reconnectMemoryTimer = setTimeout(() => {
-                    if (document.body.contains(container)) {
-                        startMemoryWS();
-                    }
-                }, common.defaultTimeoutForWSReconnect);
-            };
-        }
-
-        startWebSocket();
-        startTrafficWS();
-        startMemoryWS();
+                } catch (e) {}
+            }
+        }));
 
         const style = E("style", {}, `
-            .jc-cards-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 10px;
-                margin-bottom: 14px;
-            }
-
-            /* Card Style */
-            .jc-card {
-                border: 1px solid var(--primary-color, #1676bb);
-                border-radius: 4px;
-                padding: 10px;
-                display: flex;
-                flex-direction: column;
-                background: var(--background-color-high);
-            }
-
-            .jc-card-header {
-                display: flex;
-                align-items: center;
-                margin-bottom: 8px;
-                opacity: 0.8;
-                font-size: 0.9em;
-                text-transform: uppercase;
-                color: var(--text-color);
-            }
-
-            .jc-card-icon {
-                font-size: 1.2em;
-                margin-right: 8px;
-            }
-
-            .jc-card-body {
-                font-size: 1.1em;
-                font-weight: 600;
-                word-break: break-all;
-                color: var(--text-color);
-                font-family: monospace;
-            }
-
-            /* Connections Table */
-            .jc-table {
-                display: flex;
-                flex-direction: column;
-                width: 100%;
-                font-family: monospace;
-                font-size: 11px;
-            }
-            .flex-header {
-                border-bottom: 1px solid #e0e0e0;
-                font-weight: bold;
-                background-color: var(--background-color-medium, #f0f0f0);
-                padding: 4px 0;
-            }
-            .flex-header, .flex-row {
-                display: flex;
-                line-height: 1.2;
-                align-items: center;
-            }
-            .flex-header > div, .flex-row > div {
-                padding: 0 4px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-            .flex-row {
-                padding: 3px 0;
-                border-bottom: 1px solid transparent;
-            }
-            .flex-row:nth-child(even) {
-                background: var(--background-color-medium, #fafafa);
-            }
-
-            .flex-row.clickable:hover {
-                background-color: rgba(180, 180, 180, 0.2);
-                cursor: pointer;
-            }
-
-            [data-theme="dark"] .flex-row.clickable:hover {
-                background-color: rgba(100, 100, 100, 0.2);
-            }
-
-            .c-proto   { flex: 0 0 60px; max-width: 70px; }
-            .c-conn    { flex: 2 1 200px; }
-            .c-host    { flex: 2 1 150px; }
-            .c-chains  { flex: 0 0 140px; }
-            .c-rule    { flex: 0 0 110px; }
-
-            .show-mobile { display: none; }
-            .no-data { justify-content: center; padding: 20px; font-style: italic; color: #888; }
-
-            /* JSON Terminal */
-            .jc-json-terminal {
-                width: 100%;
-                font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
-                font-size: 12px;
-                line-height: 1.4;
-                white-space: pre-wrap;
-                word-break: break-all;
-                overflow-y: auto;
-                background-color: #1e1e1e;
-                color: #d4d4d4;
-                border: 1px solid #3c3c3c;
-                border-radius: 6px;
-                padding: 10px;
-                margin: 0;
-                max-height: 500px;
-            }
-
+            .jc-cards-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:14px; }
+            .jc-card { border:1px solid var(--primary-color,#1676bb); border-radius:4px; padding:10px; display:flex; flex-direction:column; background:var(--background-color-high);}
+            .jc-card-header { display:flex; align-items:center; margin-bottom:8px; opacity:0.8; font-size:0.9em; text-transform:uppercase; color:var(--text-color);}
+            .jc-card-icon { font-size:1.2em; margin-right:8px; }
+            .jc-card-body { font-size:1.1em; font-weight:600; word-break:break-all; color:var(--text-color); font-family:monospace;}
+            .jc-table { display:flex; flex-direction:column; width:100%; font-family:monospace; font-size:11px;}
+            .flex-header { border-bottom:1px solid #e0e0e0; font-weight:bold; background-color:var(--background-color-medium,#f0f0f0); padding:4px 0; display:flex; line-height:1.2; align-items:center;}
+            .flex-row { display:flex; padding:3px 0; border-bottom:1px solid transparent; align-items:center; }
+            .flex-row:nth-child(even){background:var(--background-color-medium,#fafafa);}
+            .flex-row.clickable:hover{background-color:rgba(180,180,180,0.2); cursor:pointer;}
+            [data-theme="dark"] .flex-row.clickable:hover{background-color:rgba(100,100,100,0.2);}
+            .c-proto { flex:0 0 60px; max-width:70px; } .c-conn { flex:2 1 200px; } .c-host { flex:2 1 150px; } .c-chains { flex:0 0 140px; } .c-rule { flex:0 0 110px; }
+            .show-mobile{display:none;} .no-data{justify-content:center;padding:20px;font-style:italic;color:#888;}
+            .jc-json-terminal{width:100%; font-family:'Menlo','Consolas','Monaco',monospace; font-size:12px; line-height:1.4; white-space:pre-wrap; word-break:break-all; overflow-y:auto; background-color:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:6px; padding:10px; margin:0; max-height:500px;}
+            .jc-new-row { animation: jcFadeHighlight 2s ease; background-color: rgba(0, 200, 0, 0.15) !important; }
+            @keyframes jcFadeHighlight { 0% { background-color: rgba(0, 200, 0, 0.35); } 100% { background-color: transparent; } }
             @media (max-width: 900px) {
-                .jc-cards-grid {
-                    grid-template-columns: repeat(2, 1fr);
-                }
-
-                .flex-header { display: none; }
-                .flex-row { flex-direction: column; align-items: flex-start; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; padding: 8px; background: var(--background-color-medium, #fff); }
-                .flex-row > div { display: flex; width: 100%; max-width: none; flex: 1 1 auto; white-space: normal; padding: 2px 0; }
-                .hide-mobile { display: none !important; }
-                .show-mobile { display: flex !important; }
-                .flex-row > div::before { content: attr(data-label) ": "; font-weight: bold; color: #555; min-width: 110px; display: inline-block; flex-shrink: 0; }
-                .c-proto, .c-host, .c-chains, .c-rule { flex: auto; max-width: none; }
+                .jc-cards-grid{grid-template-columns:repeat(2,1fr);}
+                .flex-header{display:none;}
+                .flex-row{flex-direction:column; align-items:flex-start; border:1px solid #ccc; border-radius:4px; margin-bottom:10px; padding:8px; background:var(--background-color-medium,#fff);}
+                .flex-row>div{display:flex;width:100%;max-width:none;flex:1 1 auto;white-space:normal;padding:2px 0;}
+                .hide-mobile{display:none !important;}
+                .show-mobile{display:flex !important;}
+                .flex-row>div::before{content:attr(data-label)": "; font-weight:bold; color:#555; min-width:110px; display:inline-block; flex-shrink:0;}
+                .c-proto,.c-host,.c-chains,.c-rule{flex:auto; max-width:none;}
             }
-
-            @media (max-width: 600px) {
-                .jc-cards-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
+            @media (max-width:600px){.jc-cards-grid{grid-template-columns:1fr;}}
         `);
 
         container.appendChild(style);

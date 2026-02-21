@@ -7,40 +7,42 @@
 const NO_DATA = _("No data");
 const NO_LOGS = _("No logs");
 
-const copyToClipboard = (text) => {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    document.execCommand("copy");
-    document.body.removeChild(ta);
+let logsUpdating = false; // Защита от гонки
+
+const copyToClipboard = async (text) => {
+    if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+    } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+    }
 };
 
 const renderLogLines = (container, rawText, isReversed) => {
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
+    while (container.firstChild) container.removeChild(container.firstChild);
 
     if (!rawText) {
         container.textContent = NO_DATA;
         return;
     }
 
-    let lines = rawText.split("\n");
-    if (isReversed) {
-        lines = lines.reverse();
-    }
+    // Разделяем строки
+    let lines = rawText.split("\n").filter(line => line.trim());
+    if (isReversed) lines = lines.slice().reverse(); // Не мутируем исходный массив
 
     const fragment = document.createDocumentFragment();
 
     lines.forEach(line => {
-        if (!line.trim()) return;
-
-        let className = "log-line";
         const lowerLine = line.toLowerCase();
+        let className = "log-line";
+
         if (lowerLine.includes("error") || lowerLine.includes("level=error") || lowerLine.includes("daemon.err")) {
             className += " log-error";
         } else if (lowerLine.includes("warn") || lowerLine.includes("level=warn") || lowerLine.includes("warning") || lowerLine.includes("daemon.warn")) {
@@ -51,14 +53,16 @@ const renderLogLines = (container, rawText, isReversed) => {
             className += " log-debug";
         }
 
-        const lineEl = E("div", { class: className }, line);
-        fragment.appendChild(lineEl);
+        fragment.appendChild(E("div", { class: className }, line));
     });
 
     container.appendChild(fragment);
 };
 
 const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs, lastFetchLabel) => {
+    if (logsUpdating) return; // Предотвращаем overlapping polling
+    logsUpdating = true;
+
     if (btn) btn.disabled = true;
     try {
         const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
@@ -69,15 +73,15 @@ const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs, lastFetch
         }
 
         rawLogs.value = res.stdout || NO_LOGS;
-        if (rawLogs.value.endsWith("\n")) {
-            rawLogs.value = rawLogs.value.slice(0, -1);
-        }
+        if (rawLogs.value.endsWith("\n")) rawLogs.value = rawLogs.value.slice(0, -1);
+
         renderLogLines(logContainer, rawLogs.value, reverseCheckbox.checked);
     } catch (e) {
         ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger", 3000);
         console.error("Error:", e);
     } finally {
         if (btn) btn.disabled = false;
+        logsUpdating = false;
     }
 };
 
@@ -87,11 +91,7 @@ return view.extend({
     handleReset: null,
 
     render: function () {
-        const logContainer = E("div", {
-            class: "jc-logs-terminal",
-            id: "logContainer"
-        }, [NO_DATA]);
-
+        const logContainer = E("div", { class: "jc-logs-terminal", id: "logContainer" }, [NO_DATA]);
         const rawLogs = { value: NO_DATA };
 
         const reverseCheckbox = E("input", {
@@ -102,10 +102,7 @@ return view.extend({
             change: () => renderLogLines(logContainer, rawLogs.value, reverseCheckbox.checked)
         });
 
-        const lastFetchLabel = E("span", {
-            class: "jc-ml",
-            style: "color: #999; font-size: 0.9em; display: flex; align-items: center;"
-        }, [_("Last fetch: ") + `${NO_DATA}`]);
+        const lastFetchLabel = E("span", { class: "jc-ml jc-log-fetch-label" }, [_("Last fetch: ") + NO_DATA]);
 
         const refreshBtn = E("button", {
             class: "cbi-button cbi-button-positive",
@@ -114,9 +111,7 @@ return view.extend({
 
         const tailBtn = E("button", {
             class: "cbi-button cbi-button-neutral",
-            click: () => {
-                logContainer.scrollTop = logContainer.scrollHeight;
-            },
+            click: () => { logContainer.scrollTop = logContainer.scrollHeight; },
         }, [_("To bottom")]);
 
         const copyBtn = E("button", {
@@ -130,35 +125,21 @@ return view.extend({
 
         const topBtn = E("button", {
             class: "cbi-button cbi-button-neutral",
-            click: () => {
-                logContainer.scrollTop = 0;
-            },
+            click: () => { logContainer.scrollTop = 0; },
         }, [_("To top")]);
 
         const reverseLabel = E("label", { for: "reverseLogs", class: "cbi-checkbox-label" }, [_("Reversed Logs")]);
 
-        const settingsBar = E("div", { class: "cbi-page-actions jc-actions" }, [
-            reverseLabel,
-            reverseCheckbox,
-            lastFetchLabel
-        ]);
+        const settingsBar = E("div", { class: "cbi-page-actions jc-actions" }, [reverseLabel, reverseCheckbox, lastFetchLabel]);
+        const buttonBar = E("div", { class: "cbi-page-actions jc-actions" }, [refreshBtn, tailBtn, copyBtn]);
+        const buttonBottomBar = E("div", { class: "cbi-page-actions jc-actions" }, [topBtn]);
 
-        const buttonBar = E("div", { class: "cbi-page-actions jc-actions" }, [
-            refreshBtn,
-            tailBtn,
-            copyBtn
-        ]);
-
-        const buttonBottomBar = E("div", { class: "cbi-page-actions jc-actions" }, [
-            topBtn
-        ]);
-
-        requestAnimationFrame(() => {
-            updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs, lastFetchLabel);
-        });
+        // Инициируем первичное обновление логов
+        requestAnimationFrame(() => updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs, lastFetchLabel));
 
         const style = E("style", {}, `
             .jc-ml { margin-left: 0.5em !important; }
+            .jc-log-fetch-label { color: #999; font-size: 0.9em; display: flex; align-items: center; }
 
             .jc-logs-terminal {
                 width: 100%;
@@ -169,27 +150,18 @@ return view.extend({
                 word-break: break-all;
                 overflow-y: auto;
                 overflow-x: hidden;
-
                 background-color: #1e1e1e;
                 color: #d4d4d4;
                 border: 1px solid #3c3c3c;
                 border-radius: 6px;
-
                 padding: 10px;
                 margin-bottom: 10px !important;
-
                 height: 500px;
                 resize: vertical;
             }
 
-            .log-line {
-                padding: 1px 0;
-                border-bottom: 1px solid transparent;
-            }
-            .log-line:hover {
-                background-color: #2a2d2e;
-            }
-
+            .log-line { padding: 1px 0; border-bottom: 1px solid transparent; }
+            .log-line:hover { background-color: #2a2d2e; }
             .log-error { color: #f48771; }
             .log-warn  { color: #cca700; }
             .log-info  { color: #75beff; }
@@ -203,10 +175,7 @@ return view.extend({
                 text-align: left !important;
                 border-top: 0px !important;
             }
-            .cbi-page-actions {
-                margin-bottom: 10px !important;
-                padding: 10px 10px 10px 10px !important;
-            }
+            .cbi-page-actions { margin-bottom: 10px !important; padding: 10px !important; }
             .cbi-button { margin-right: 0.5em; }
         `);
 
