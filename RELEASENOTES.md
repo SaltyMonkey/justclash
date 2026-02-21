@@ -1,3 +1,19 @@
+## [0.8.4] - 21022026
+
+- LuCI: Fix `status` page possible parallel fetches in case of removed popup by blockers
+- LuCI: Fix `status` page possible parallel fetches for service data
+- LuCI: Fix `status` page possible memory leaks
+- LuCI: Minor `status` page refactor
+- LuCI: Removed `connections` page
+- LuCI: Added `statistic` page
+- LuCI: Added to `statistic` page basic mihomo api data output
+- LuCI: Fix `statistic` page possible memory leaks
+- LuCI: Fix `logs` page possible parallel fetches for service data
+- LuCI: Minor `logs` page refactor
+
+**This version requires:**
+- Browser cache must be cleaned up
+
 ## [0.8.1] - 10022026
 
 - Service: Fix DNS record generation
