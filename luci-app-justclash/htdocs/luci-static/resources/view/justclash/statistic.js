@@ -4,7 +4,7 @@
 "require view.justclash.common as common";
 "require uci";
 
-let activeWS = null;
+let connectionsWS = null;
 let trafficWS = null;
 let memoryWS = null;
 let reconnectTimer = null;
@@ -58,12 +58,12 @@ const getWSURL = (path, token) => {
 };
 
 const cleanup = () => {
-    if (activeWS) {
-        activeWS.onclose = null;
-        activeWS.onerror = null;
-        activeWS.onmessage = null;
-        activeWS.close();
-        activeWS = null;
+    if (connectionsWS) {
+        connectionsWS.onclose = null;
+        connectionsWS.onerror = null;
+        connectionsWS.onmessage = null;
+        connectionsWS.close();
+        connectionsWS = null;
     }
     if (trafficWS) {
         trafficWS.onclose = null;
@@ -228,13 +228,13 @@ return view.extend({
 
         function startWebSocket() {
             const wsUrl = getWSURL("/connections", result.token);
-            activeWS = new WebSocket(wsUrl);
+            connectionsWS = new WebSocket(wsUrl);
 
-            activeWS.onopen = () => {
+            connectionsWS.onopen = () => {
                 console.log("[WS Connections] Connected");
             };
 
-            activeWS.onmessage = (event) => {
+            connectionsWS.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     const conns = Array.isArray(data.connections) ? data.connections : [];
@@ -273,13 +273,13 @@ return view.extend({
                 }
             };
 
-            activeWS.onerror = (err) => {
+            connectionsWS.onerror = (err) => {
                 console.warn("[WS Connections] Error:", err);
             };
 
-            activeWS.onclose = () => {
+            connectionsWS.onclose = () => {
                 console.warn("[WS Connections] Closed. Retry in 10s...");
-                activeWS = null;
+                connectionsWS = null;
                 if (reconnectTimer) clearTimeout(reconnectTimer);
 
                 reconnectTimer = setTimeout(() => {
