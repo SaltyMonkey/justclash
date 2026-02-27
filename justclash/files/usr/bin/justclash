@@ -1644,7 +1644,7 @@ dns:
   listen: 127.0.0.1:$dns_listen_port
   prefer-h3: false
   ipv6: false
-  use-hosts: false
+  use-hosts: $use_system_hosts
   use-system-hosts: $use_system_hosts
   nameserver-policy: $nameserver_policy
   default-nameserver: $default_nameserver
