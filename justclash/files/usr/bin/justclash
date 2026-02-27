@@ -1694,7 +1694,7 @@ service_data_update() {
 
     log 2 "Downloading RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
         log 0 "Failed to download RULE-SETs list file." "❌"
         return 1
     }
@@ -1703,7 +1703,7 @@ service_data_update() {
 
     log 2 "Downloading BLOCK RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_BLOCKS_FILENAME}
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
         log 0 "Failed to download BLOCK RULE-SETs list file." "❌"
         return 1
     }
