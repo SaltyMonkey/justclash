@@ -8,6 +8,8 @@
 let pollInterval = null;
 let pollingInProgress = false;
 let actionInProgress = false;
+let visibilityChangeHandler = null;
+let clipboardTextarea = null;
 const POLL_TIMEOUT = 3000;
 
 const buttonsIDs = {
@@ -42,15 +44,17 @@ const copyToClipboard = async (text) => {
     if (navigator.clipboard) {
         await navigator.clipboard.writeText(text);
     } else {
-        const ta = document.createElement("textarea");
+        const ta = clipboardTextarea || document.createElement("textarea");
+        clipboardTextarea = ta;
         ta.value = text;
         ta.style.position = "fixed";
         ta.style.left = "-9999px";
-        document.body.appendChild(ta);
+        if (!ta.parentNode)
+            document.body.appendChild(ta);
         ta.focus();
         ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
+        if (!document.execCommand("copy"))
+            throw new Error(_("Unable to copy to clipboard"));
     }
 };
 
@@ -117,15 +121,10 @@ const updateUI = (dynamicElements, isAutostarting, isRunning) => {
         dynamicElements.autoBadge.className = `jc-badge ${isAutostarting ? 'jc-badge-active' : 'jc-badge-inactive'}`;
     }
 
-    const btnStart = document.getElementById(buttonsIDs.START);
-    const btnStop = document.getElementById(buttonsIDs.STOP);
-    const btnEnable = document.getElementById(buttonsIDs.ENABLE);
-    const btnDisable = document.getElementById(buttonsIDs.DISABLE);
-
-    if (btnStart) btnStart.disabled = isRunning;
-    if (btnStop) btnStop.disabled = !isRunning;
-    if (btnEnable) btnEnable.disabled = isAutostarting;
-    if (btnDisable) btnDisable.disabled = !isAutostarting;
+    if (dynamicElements.btnStart) dynamicElements.btnStart.disabled = isRunning;
+    if (dynamicElements.btnStop) dynamicElements.btnStop.disabled = !isRunning;
+    if (dynamicElements.btnEnable) dynamicElements.btnEnable.disabled = isAutostarting;
+    if (dynamicElements.btnDisable) dynamicElements.btnDisable.disabled = !isAutostarting;
 };
 
 const updateServiceStatus = async (dynamicElements) => {
@@ -154,7 +153,11 @@ const startPolling = (dynamicElements) => {
     stopPolling();
     pollInterval = setInterval(() => updateServiceStatus(dynamicElements), POLL_TIMEOUT);
 
-    document.addEventListener("visibilitychange", () => {
+    if (visibilityChangeHandler) {
+        document.removeEventListener("visibilitychange", visibilityChangeHandler);
+    }
+
+    visibilityChangeHandler = () => {
         if (document.hidden) {
             stopPolling();
         } else {
@@ -163,7 +166,9 @@ const startPolling = (dynamicElements) => {
                 pollInterval = setInterval(() => updateServiceStatus(dynamicElements), POLL_TIMEOUT);
             }
         }
-    }, { once: true });
+    };
+
+    document.addEventListener("visibilitychange", visibilityChangeHandler);
 };
 
 const showExecModalHandler = (title, warning, command, args) => async () => {
@@ -213,23 +218,30 @@ return view.extend({
     handleReset: null,
 
     async load() {
-        const [infoDevice, infoOpenWrt] = await callSystemBoard()
-            .catch(() => [_("Error"), _("Error")])
-            .then(data => [data.model || _("Error"), data.release ? data.release.description : _("Error")]);
+        const boardPromise = callSystemBoard()
+            .then(data => [data.model || _("Error"), data.release ? data.release.description : _("Error")])
+            .catch(() => [_("Error"), _("Error")]);
 
-        const [infoPackage, infoCore] = await fs.exec(common.binPath, ["_luci_call"])
-            .catch(() => [_("Error"), _("Error")])
-            .then(data => cleanStdout(data).split(","));
+        const packagePromise = fs.exec(common.binPath, ["_luci_call"])
+            .then(data => cleanStdout(data).split(","))
+            .catch(() => [_("Error"), _("Error")]);
 
-        const infoOnlinePackage = await fetchWithTimeout(common.justclashOnlineVersionUrl, 5000)
+        const onlinePromise = fetchWithTimeout(common.justclashOnlineVersionUrl, 5000)
             .then(res => res.ok ? res.json() : null)
             .then(data => data && data.tag_name ? data.tag_name.replace(/^v/, "") : _("Error"))
             .catch(e => e.name === 'AbortError' ? _("Timeout") : _("Error"));
 
-        const [infoIsRunning, infoIsAutostarting] = await Promise.all([
+        const statusPromise = Promise.all([
             isServiceRunning().catch(() => false),
             isServiceAutoStartEnabled().catch(() => false)
         ]);
+
+        const [
+            [infoDevice, infoOpenWrt],
+            [infoPackage, infoCore],
+            infoOnlinePackage,
+            [infoIsRunning, infoIsAutostarting]
+        ] = await Promise.all([boardPromise, packagePromise, onlinePromise, statusPromise]);
 
         return { infoDevice, infoOpenWrt, infoOnlinePackage, infoPackage, infoCore, infoIsRunning, infoIsAutostarting };
     },
@@ -239,13 +251,7 @@ return view.extend({
 
         const serviceBadge = E("span", { class: "jc-badge" }, _("Loading..."));
         const autoBadge = E("span", { class: "jc-badge" }, _("Loading..."));
-        const dynamicElements = { serviceBadge, autoBadge };
-
-        const statusGrid = createStatusGrid(results, dynamicElements);
-        const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Service status:")),
-            statusGrid
-        ]);
+        let dynamicElements = { serviceBadge, autoBadge };
 
         const actionHandler = (action, timeoutMs) => async () => {
             if (actionInProgress) return;
@@ -264,15 +270,28 @@ return view.extend({
             }
         };
 
+        const btnStart = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), actionHandler("start", 5000));
+        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", 5000));
+        const btnStop = createActionButton(buttonsIDs.STOP, buttons.NEGATIVE, _("Stop"), actionHandler("stop"));
+        const btnEnable = createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable autostart"), actionHandler("enable"));
+        const btnDisable = createActionButton(buttonsIDs.DISABLE, buttons.NEGATIVE, _("Disable autostart"), actionHandler("disable"));
+        dynamicElements = { serviceBadge, autoBadge, btnStart, btnStop, btnEnable, btnDisable };
+
+        const statusGrid = createStatusGrid(results, dynamicElements);
+        const statusContainer = E("div", { class: "cbi-section fade-in" }, [
+            E("h3", { class: "cbi-section-title" }, _("Service status:")),
+            statusGrid
+        ]);
+
         const actionContainer = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), actionHandler("start", 5000)),
-            createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", 5000)),
-            createActionButton(buttonsIDs.STOP, buttons.NEGATIVE, _("Stop"), actionHandler("stop"))
+            btnStart,
+            btnRestart,
+            btnStop
         ]);
 
         const actionContainerSecondary = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable autostart"), actionHandler("enable")),
-            createActionButton(buttonsIDs.DISABLE, buttons.NEGATIVE, _("Disable autostart"), actionHandler("disable"))
+            btnEnable,
+            btnDisable
         ]);
 
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
@@ -323,5 +342,9 @@ return view.extend({
 
     leave() {
         stopPolling();
+        if (visibilityChangeHandler) {
+            document.removeEventListener("visibilitychange", visibilityChangeHandler);
+            visibilityChangeHandler = null;
+        }
     }
 });

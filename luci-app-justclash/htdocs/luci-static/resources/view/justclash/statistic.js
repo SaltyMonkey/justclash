@@ -26,15 +26,17 @@ const copyToClipboard = async (text) => {
     if (navigator.clipboard) {
         await navigator.clipboard.writeText(text);
     } else {
-        const ta = document.createElement("textarea");
+        const ta = clipboardTextarea || document.createElement("textarea");
+        clipboardTextarea = ta;
         ta.value = text;
         ta.style.position = "fixed";
         ta.style.left = "-9999px";
-        document.body.appendChild(ta);
+        if (!ta.parentNode)
+            document.body.appendChild(ta);
         ta.focus();
         ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
+        if (!document.execCommand("copy"))
+            throw new Error(_("Unable to copy to clipboard"));
     }
 };
 
@@ -72,7 +74,7 @@ const showConnectionDetails = (connId) => {
             E("button", {
                 class: "cbi-button cbi-button-action",
                 click: () => {
-                    copyToClipboard(jsonString);
+                    copyToClipboard(jsonString || "");
                     ui.addNotification(null, E("p", _("JSON copied to clipboard")), "success", 3000);
                     ui.hideModal();
                 }
@@ -152,6 +154,11 @@ return view.extend({
         ]);
 
         container.appendChild(statsGrid);
+        const trafficUpEl = statsGrid.querySelector("#traffic-up");
+        const trafficDownEl = statsGrid.querySelector("#traffic-down");
+        const trafficUpTotalEl = statsGrid.querySelector("#traffic-up-total");
+        const trafficDownTotalEl = statsGrid.querySelector("#traffic-down-total");
+        const memoryInuseEl = statsGrid.querySelector("#memory-inuse");
 
         const table = E("div", { class: "jc-table compact-table" });
 
@@ -259,10 +266,10 @@ return view.extend({
                 try {
                     const data = JSON.parse(event.data);
                     statsData.traffic = data;
-                    document.getElementById("traffic-up").textContent = formatSpeed(data.up);
-                    document.getElementById("traffic-down").textContent = formatSpeed(data.down);
-                    document.getElementById("traffic-up-total").textContent = formatBytes(data.upTotal);
-                    document.getElementById("traffic-down-total").textContent = formatBytes(data.downTotal);
+                    trafficUpEl.textContent = formatSpeed(data.up);
+                    trafficDownEl.textContent = formatSpeed(data.down);
+                    trafficUpTotalEl.textContent = formatBytes(data.upTotal);
+                    trafficDownTotalEl.textContent = formatBytes(data.downTotal);
                 } catch (e) {}
             }
         }));
@@ -276,7 +283,7 @@ return view.extend({
                 try {
                     const data = JSON.parse(event.data);
                     statsData.memory = data;
-                    document.getElementById("memory-inuse").textContent = formatBytes(data.inuse);
+                    memoryInuseEl.textContent = formatBytes(data.inuse);
                 } catch (e) {}
             }
         }));

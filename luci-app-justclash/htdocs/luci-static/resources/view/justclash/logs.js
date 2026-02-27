@@ -9,27 +9,44 @@ const NO_LOGS = _("No logs");
 
 let logsUpdating = false; // Защита от гонки
 
+const LOG_LEVEL_RULES = [
+    { suffix: " log-error", tokens: ["error", "level=error", "daemon.err"] },
+    { suffix: " log-warn", tokens: ["warn", "level=warn", "warning", "daemon.warn"] },
+    { suffix: " log-info", tokens: ["info", "level=info"] },
+    { suffix: " log-debug", tokens: ["debug", "level=debug"] }
+];
+
+const classifyLogLine = (lowerLine) => {
+    for (const rule of LOG_LEVEL_RULES) {
+        for (const token of rule.tokens) {
+            if (lowerLine.includes(token)) return `log-line${rule.suffix}`;
+        }
+    }
+
+    return "log-line";
+};
+
 const copyToClipboard = async (text) => {
     if (navigator.clipboard) {
         await navigator.clipboard.writeText(text);
     } else {
-        const ta = document.createElement("textarea");
+        const ta = clipboardTextarea || document.createElement("textarea");
+        clipboardTextarea = ta;
         ta.value = text;
         ta.style.position = "fixed";
         ta.style.left = "-9999px";
-        document.body.appendChild(ta);
+        if (!ta.parentNode)
+            document.body.appendChild(ta);
         ta.focus();
         ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
+        if (!document.execCommand("copy"))
+            throw new Error(_("Unable to copy to clipboard"));
     }
 };
 
 const renderLogLines = (container, rawText, isReversed) => {
-    while (container.firstChild) container.removeChild(container.firstChild);
-
     if (!rawText) {
-        container.textContent = NO_DATA;
+        container.replaceChildren(document.createTextNode(NO_DATA));
         return;
     }
 
@@ -41,22 +58,12 @@ const renderLogLines = (container, rawText, isReversed) => {
 
     lines.forEach(line => {
         const lowerLine = line.toLowerCase();
-        let className = "log-line";
-
-        if (lowerLine.includes("error") || lowerLine.includes("level=error") || lowerLine.includes("daemon.err")) {
-            className += " log-error";
-        } else if (lowerLine.includes("warn") || lowerLine.includes("level=warn") || lowerLine.includes("warning") || lowerLine.includes("daemon.warn")) {
-            className += " log-warn";
-        } else if (lowerLine.includes("info") || lowerLine.includes("level=info")) {
-            className += " log-info";
-        } else if (lowerLine.includes("debug") || lowerLine.includes("level=debug")) {
-            className += " log-debug";
-        }
+        const className = classifyLogLine(lowerLine);
 
         fragment.appendChild(E("div", { class: className }, line));
     });
 
-    container.appendChild(fragment);
+    container.replaceChildren(fragment);
 };
 
 const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs, lastFetchLabel) => {
@@ -118,7 +125,7 @@ return view.extend({
             class: "cbi-button cbi-button-action",
             click: () => {
                 if (rawLogs.value === NO_DATA || rawLogs.value === NO_LOGS) return;
-                copyToClipboard(rawLogs.value);
+                copyToClipboard(rawLogs.value || "");
                 ui.addNotification(null, E("p", _("Data copied to clipboard")), "success", 3000);
             },
         }, [_("Copy logs")]);
