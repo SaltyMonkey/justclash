@@ -139,6 +139,7 @@ is_pattern_in_file() {
         log 1 "File $file can't be opened!"
         return 1
     fi
+    shift
     local found_patterns=""
     for pattern in "$@"; do
         if grep -qE "$pattern" "$file"; then
@@ -522,12 +523,29 @@ dnsmasq_restore() {
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
         fi
 
-        server=$(uci -q get dhcp.@dnsmasq[0].server)
-        if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
+        local current_servers backup_servers has_local_server
+        current_servers=$(uci -q get dhcp.@dnsmasq[0].server)
+        backup_servers=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_server)
+        has_local_server=0
+        for server in $current_servers; do
+            if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
+                has_local_server=1
+                break
+            fi
+        done
+
+        if [ "$has_local_server" -eq 1 ]; then
             uci -q delete dhcp.@dnsmasq[0].server
-            for server in $(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_server); do
-                 [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
-            done
+            if [ -n "$backup_servers" ]; then
+                for server in $backup_servers; do
+                    [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
+                done
+            else
+                for server in $current_servers; do
+                    [ "$server" = "127.0.0.1#${dns_listen_port}" ] && continue
+                    [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
+                done
+            fi
             uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
         fi
 
@@ -581,7 +599,7 @@ check_for_conflicts() {
 
     # For $CONFLICTED_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string
     # shellcheck disable=SC2086
-    found_patterns=$(is_pattern_in_file "$CONFLICTED_PATTERNS_FILEPATH" "$CONFLICTED_PATTERNS_DHCP_CONFIG")
+    found_patterns=$(is_pattern_in_file "$CONFLICTED_PATTERNS_FILEPATH" $CONFLICTED_PATTERNS_DHCP_CONFIG)
     if [ -n "$found_patterns" ]; then
         for pattern in $found_patterns; do
             log 1 "Conflict detected: pattern '$pattern' found in /etc/config/dhcp." "⚠️"
@@ -627,13 +645,13 @@ info_mihomo() {
     if [ ! -x "$CORE_PATH" ]; then
         echo "$NO_DATA_STRING"
     else
-        "$CORE_PATH" -v 2>/dev/null | head -n1 | awk '{ print $3 }'
+        "$CORE_PATH" -v 2>/dev/null | awk 'NR == 1 { print $3; exit }'
     fi
 }
 
 systemlogs() {
     local lines=${1:-40}
-    logread -e "$PROGNAME" | tail -n "$lines"
+    logread -e "$PROGNAME" -l "$lines"
     return 0
 }
 
@@ -741,13 +759,13 @@ handle_proxy_section() {
         local added_rulesets="|"
         config_get list "$section" enabled_list
         for ruleset in $list; do
-            if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
-                log 1 "Skipping duplicated ruleset: $ruleset" "⚠️"
-                continue
-            fi
+            case "$added_rulesets" in
+                *"|$ruleset|"*) log 1 "Skipping duplicated ruleset: $ruleset"; continue ;;
+            esac
+
 
             local line r_name yaml behavior format url proxy
-            line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
+            line=$(printf '%s\n' "$ruleset_content" | awk -F'|' -v key="$ruleset" '$2 == key { print; exit }')
             if [ -n "$line" ]; then
                 local rest
                 r_name="${line%%|*}"
@@ -942,13 +960,13 @@ handle_proxy_group_section() {
 
         local added_rulesets="|"
         for ruleset in $enabled_list; do
-            if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
-                log 1 "Skipping duplicated ruleset: $ruleset" "⚠️"
-                continue
-            fi
+            case "$added_rulesets" in
+                *"|$ruleset|"*) log 1 "Skipping duplicated ruleset: $ruleset"; continue ;;
+            esac
+
 
             local line r_name yaml behavior format url proxy
-            line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
+            line=$(printf '%s\n' "$ruleset_content" | awk -F'|' -v key="$ruleset" '$2 == key { print; exit }')
             if [ -n "$line" ]; then
                 local rest
                 r_name="${line%%|*}"
@@ -1166,13 +1184,13 @@ handle_block_rule_section() {
     local added_blocklists="|"
     local val
     for val in $enabled_blocklist; do
-        if echo "$added_blocklists" | grep -qF "|$val|"; then
-            log 1 "Skipping duplicated ruleset: $val" "⚠️"
-            continue
-        fi
+        case "$added_blocklists" in
+            *"|$val|"*) log 1 "Skipping duplicated ruleset: $val"; continue ;;
+        esac
+
 
         local line name yamlName behavior format url
-        line=$(echo "$blocklist_content" | grep -F "|$val|" | head -n 1)
+        line=$(printf '%s\n' "$blocklist_content" | awk -F'|' -v key="$val" '$2 == key { print; exit }')
         if [ -n "$line" ]; then
             local rest
             name="${line%%|*}"
@@ -1253,13 +1271,13 @@ handle_direct_rule_section() {
 
     local added_rulesets="|"
     for ruleset in $enabled_list; do
-        if echo "$added_rulesets" | grep -qF "|$ruleset|"; then
-            log 1 "Skipping duplicated ruleset: $ruleset" "⚠️"
-            continue
-        fi
+        case "$added_rulesets" in
+            *"|$ruleset|"*) log 1 "Skipping duplicated ruleset: $ruleset"; continue ;;
+        esac
+
 
         local line r_name yaml behavior format url proxy
-        line=$(echo "$ruleset_content" | grep -F "|$ruleset|" | head -n 1)
+        line=$(printf '%s\n' "$ruleset_content" | awk -F'|' -v key="$ruleset" '$2 == key { print; exit }')
         if [ -n "$line" ]; then
             local rest
             r_name="${line%%|*}"
