@@ -470,15 +470,32 @@ dnsmasq_update() {
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
-        uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
-        for server in $(uci -q get dhcp.@dnsmasq[0].server); do
+        local server server_line server_lines
+
+        server_lines=$(uci -q show dhcp.@dnsmasq[0].server 2>/dev/null)
+        while IFS= read -r server_line; do
+            [ -z "$server_line" ] && continue
+            server="${server_line#*=}"
+            server="${server#\'}"
+            server="${server%\'}"
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
                 log 1 "Dnsmasq save config error: server=127.0.0.1 is already configured. Skip editing DHCP"
                 return 1
-            else
-                uci add_list dhcp.@dnsmasq[0]."${PROGNAME}"_server="$server"
             fi
-        done
+        done <<EOF
+$server_lines
+EOF
+
+        uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
+        while IFS= read -r server_line; do
+            [ -z "$server_line" ] && continue
+            server="${server_line#*=}"
+            server="${server#\'}"
+            server="${server%\'}"
+            [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0]."${PROGNAME}"_server="$server"
+        done <<EOF
+$server_lines
+EOF
 
         save_dnsmasq_config "dhcp.@dnsmasq[0].noresolv" "dhcp.@dnsmasq[0].${PROGNAME}_noresolv"
         save_dnsmasq_config "dhcp.@dnsmasq[0].cachesize" "dhcp.@dnsmasq[0].${PROGNAME}_cachesize"
@@ -523,28 +540,46 @@ dnsmasq_restore() {
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
         fi
 
-        local current_servers backup_servers has_local_server
-        current_servers=$(uci -q get dhcp.@dnsmasq[0].server)
-        backup_servers=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_server)
+        local current_server_lines backup_server_lines has_local_server server_line
+        current_server_lines=$(uci -q show dhcp.@dnsmasq[0].server 2>/dev/null)
+        backup_server_lines=$(uci -q show dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null)
         has_local_server=0
-        for server in $current_servers; do
+        while IFS= read -r server_line; do
+            [ -z "$server_line" ] && continue
+            server="${server_line#*=}"
+            server="${server#\'}"
+            server="${server%\'}"
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
                 has_local_server=1
                 break
             fi
-        done
+        done <<EOF
+$current_server_lines
+EOF
 
         if [ "$has_local_server" -eq 1 ]; then
             uci -q delete dhcp.@dnsmasq[0].server
-            if [ -n "$backup_servers" ]; then
-                for server in $backup_servers; do
+            if [ -n "$backup_server_lines" ]; then
+                while IFS= read -r server_line; do
+                    [ -z "$server_line" ] && continue
+                    server="${server_line#*=}"
+                    server="${server#\'}"
+                    server="${server%\'}"
                     [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
-                done
+                done <<EOF
+$backup_server_lines
+EOF
             else
-                for server in $current_servers; do
+                while IFS= read -r server_line; do
+                    [ -z "$server_line" ] && continue
+                    server="${server_line#*=}"
+                    server="${server#\'}"
+                    server="${server%\'}"
                     [ "$server" = "127.0.0.1#${dns_listen_port}" ] && continue
                     [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
-                done
+                done <<EOF
+$current_server_lines
+EOF
             fi
             uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
         fi
@@ -2025,7 +2060,7 @@ core_autorestart_cron_add() {
     fi
 
     if core_autorestart_cron_check > /dev/null; then
-        log 1 "Core autoupdate cron job already exists." "ℹ️"
+        log 1 "Core autorestart cron job already exists." "ℹ️"
         return 0
     fi
 
