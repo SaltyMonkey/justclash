@@ -207,7 +207,7 @@ parse_simple_proxy_url() {
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
     # JSON
-    local json="\"type\":\"socks5\",\"udp\":true\",\"server\":\"$server\",\"port\":$port"
+    local json="\"type\":\"socks5\",\"udp\":true,\"server\":\"$server\",\"port\":$port"
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
