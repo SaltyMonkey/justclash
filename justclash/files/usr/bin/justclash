@@ -294,18 +294,14 @@ start_core() {
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 stop_core() {
-    if pgrep -f "$(basename "$0")" >/dev/null; then
-        pids=$(pgrep -f "$(basename "$CORE_PATH")")
-        if [ -n "$pids" ]; then
-            # DO NOT APPLY "" - STRING MUST BE SPLITTED AUTOMATICALLY
-            # shellcheck disable=SC2086
-            kill $pids 2>/dev/null
-            log 2 "Core process stopped" "🐱"
-        else
-            log 2 "No matching processes found" "🐱"
-        fi
+    pids=$(pgrep -f "$(basename "$CORE_PATH")")
+    if [ -n "$pids" ]; then
+        # DO NOT APPLY "" - STRING MUST BE SPLITTED AUTOMATICALLY
+        # shellcheck disable=SC2086
+        kill $pids 2>/dev/null
+        log 2 "Core process stopped" "🐱"
     else
-       log 2 "JustClash isn't running" "🐱"
+        log 2 "Core isn't running" "🐱"
     fi
 }
 
