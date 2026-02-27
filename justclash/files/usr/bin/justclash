@@ -1698,8 +1698,7 @@ service_data_update() {
         log 0 "Failed to download RULE-SETs list file." "❌"
         return 1
     }
-    rm -f "$RULESETS_FILE"
-    mv "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$RULESETS_FILE"
+    mv -f "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$RULESETS_FILE"
     log 2 "RULE-SET list file was updated" "✅"
 
     log 2 "Downloading BLOCK RULE-SETs list file" "📥"
@@ -1708,8 +1707,7 @@ service_data_update() {
         log 0 "Failed to download BLOCK RULE-SETs list file." "❌"
         return 1
     }
-    rm -f "$RULESETS_BLOCKS_FILE"
-    mv "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$RULESETS_BLOCKS_FILE"
+    mv -f "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$RULESETS_BLOCKS_FILE"
     log 2 "BLOCK RULE-SETs list file was updated" "✅"
 
     return 0
