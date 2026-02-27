@@ -1214,7 +1214,7 @@ handle_block_rule_section() {
             selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
             added_blocklists="$added_blocklists$val|"
         else
-            log 1 "Blocklist '$val' can't be found in $blocklist_content" "⚠️"
+            log 1 "Blocklist key '$val' was not found in block ruleset index." "⚠️"
         fi
     done
 
@@ -1994,9 +1994,9 @@ core_update_cron_remove() {
         sed -i '\|/usr/bin/justclash core_update|d' /etc/crontabs/root
         if /etc/init.d/cron enabled; then
             /etc/init.d/cron restart
-            log 2 "Cron job added and service restarted" "✅"
+            log 2 "Cron job removed and service restarted" "✅"
         else
-            log 2 "Cron job added (service not enabled)" "ℹ️"
+            log 2 "Cron job removed (service not enabled)" "ℹ️"
         fi
         log 2 "Core autoupdate cron job removed." "🗑️"
     else
@@ -2044,9 +2044,9 @@ core_autorestart_cron_remove() {
         sed -i "/${INITD_PATH} reload/d" /etc/crontabs/root
         if /etc/init.d/cron enabled; then
             /etc/init.d/cron restart
-            log 2 "Cron job added and service restarted" "✅"
+            log 2 "Cron job removed and service restarted" "✅"
         else
-            log 2 "Cron job added (service not enabled)" "ℹ️"
+            log 2 "Cron job removed (service not enabled)" "ℹ️"
         fi
         log 2 "Core autoupdate cron job removed." "🗑️"
     else
@@ -2119,7 +2119,7 @@ diag_external_resolver() {
     fi
     local target="$1"
     local resolver="$2"
-    local ip_output exit_code
+    local ip_output exit_code ips
 
     clog 2 "Testing DNS resolution..."
 
@@ -2257,7 +2257,7 @@ config_reset() {
             clog 0 "Failed to backup config file"
             return 1
         else
-            clog  "Old config file can be found at path ${CONFIG_BAK_PATH}"
+            clog 2 "Old config file can be found at path ${CONFIG_BAK_PATH}"
         fi
     fi
 
