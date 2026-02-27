@@ -704,7 +704,7 @@ handle_proxy_section() {
 
         local proxy_obj=""
         if [ "$mode" = "object" ]; then
-            [ -z "$proxy_link_object" ] && { log 1 "Skipping empty proxy '$name" "⚠️" ; return; }
+            [ -z "$proxy_link_object" ] && { log 1 "Skipping empty proxy '$name'" "⚠️" ; return; }
 
             proxy_obj=$(echo "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
 
