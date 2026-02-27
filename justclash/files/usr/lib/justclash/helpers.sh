@@ -75,7 +75,7 @@ get_os_arch() {
 }
 
 get_os_name() {
-    grep NAME /etc/os-release | head -n 1 | cut -d'"' -f2
+    grep '^NAME=' /etc/os-release | cut -d'"' -f2
 }
 
 get_os_version_full() {
