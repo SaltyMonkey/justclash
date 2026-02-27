@@ -1587,6 +1587,8 @@ core_generate_yaml() {
         '($rule_mixed | fromjson) + ($direct | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
     )
 
+    : > "$OUTPUT_YAML_CONFIG_PATH"
+
     # Support for mixed port
     # Make sure call for this function handled after 'core_prepare_workdir' since file must be removed
     if [ "$use_mixed_port" -eq 1 ]; then
@@ -1598,7 +1600,7 @@ EOF
     fi
 
     if [ "$use_zashboard" -eq 1 ]; then
-        cat <<EOF > "$OUTPUT_YAML_CONFIG_PATH"
+        cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 external-ui-name: $DASHBOARD_NAME
 external-ui: $DASHBOARD_PATH
 external-ui-url: "$DASHBOARD_DEFAULT_URL"
