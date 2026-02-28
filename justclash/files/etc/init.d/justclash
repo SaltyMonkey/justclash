@@ -40,15 +40,15 @@ restart() {
 }
 
 boot() {
-    local delayed_boot delayed_boot_timeout
+    local delayed_boot delayed_boot_value
 
     config_load "$PROGNAME"
     config_get_bool delayed_boot settings delayed_boot 0
-    config_get_bool delayed_boot_timeout settings delayed_boot_timeout 8
+    config_get delayed_boot_value settings delayed_boot_value 8
 
     if [ "$delayed_boot" -eq 1 ]; then
         logger -p "user.info" -t "$PROGNAME" "Delayed start was enabled. Delaying..."
-        sleep "$delayed_boot_timeout"
+        sleep "$delayed_boot_value"
     fi
 
     start
