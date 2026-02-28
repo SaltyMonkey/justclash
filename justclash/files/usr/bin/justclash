@@ -715,6 +715,25 @@ simple_uci_list_to_json_arr() {
     [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
 }
 
+lookup_many_rulesets_full() {
+    local ruleset_content="$1"
+    local keys="$2"
+
+    printf '%s\n' "$ruleset_content" | awk -F'|' -v keys="$keys" '
+        BEGIN {
+            split(keys, arr, /[[:space:]]+/)
+            for (i in arr) {
+                if (arr[i] != "") {
+                    need[arr[i]] = 1
+                }
+            }
+        }
+        $1 !~ /^#/ && ($2 in need) {
+            print $0
+        }
+    '
+}
+
 ucibool_to_yaml_bool () {
     case "$1" in
         1|yes|on|true) echo "true" ;;
@@ -739,7 +758,7 @@ handle_proxy_section() {
     _parse_single_proxy() {
         local section="$1"
         local name proxy_link_uri dialer_proxy list_update_interval mode proxy_link_object use_proxy_for_list_update list val
-        local domain_list cidr_list
+        local domain_list cidr_list matched_rulesets
 
         config_get name "$section" name
         config_get proxy_link_uri "$section" proxy_link_uri
@@ -787,39 +806,42 @@ handle_proxy_section() {
 
         proxies="${proxies:+$proxies,}$proxy_obj"
 
-        local added_rulesets="|"
         config_get list "$section" enabled_list
-        for ruleset in $list; do
+        matched_rulesets=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
+        local added_rulesets="|"
+        while IFS= read -r line; do
+            [ -z "$line" ] && continue
+
+            local ruleset r_name yaml behavior format url proxy rest
+            r_name="${line%%|*}"
+            rest="${line#*|}"
+            ruleset="${rest%%|*}"
+            rest="${rest#*|}"
+            yaml="${rest%%|*}"
+            rest="${rest#*|}"
+            behavior="${rest%%|*}"
+            rest="${rest#*|}"
+            format="${rest%%|*}"
+            url="${rest#*|}"
+
             case "$added_rulesets" in
                 *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
             esac
 
+            local rule_str
+            rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
-            local line r_name yaml behavior format url proxy
-            line=$(printf '%s\n' "$ruleset_content" | awk -F'|' -v key="$ruleset" '$2 == key { print; exit }')
-            if [ -n "$line" ]; then
-                local rest
-                r_name="${line%%|*}"
-                rest="${line#*|}"
-                yaml="${rest%%|*}"
-                rest="${rest#*|}"
-                behavior="${rest%%|*}"
-                rest="${rest#*|}"
-                format="${rest%%|*}"
-                url="${rest#*|}"
+            [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
+            selectedRuleSets="${selectedRuleSets}\"$ruleset\":{\"url\":\"$url\",\"behavior\":\"$behavior\",\"format\":\"$format\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            added_rulesets="$added_rulesets$ruleset|"
 
-                local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-
-                [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                selectedRuleSets="${selectedRuleSets}\"$ruleset\":{\"url\":\"$url\",\"behavior\":\"$behavior\",\"format\":\"$format\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
-                added_rulesets="$added_rulesets$ruleset|"
-
-                if [ "$behavior" = "domain" ]; then
-                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
-                fi
+            if [ "$behavior" = "domain" ]; then
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
             fi
-        done
+        done <<EOF
+$matched_rulesets
+EOF
 
         config_get domain_list "$section" custom_enabled_domain_list
         for line in $domain_list; do
@@ -937,7 +959,7 @@ handle_proxy_group_section() {
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
-        local domain_list cidr_list
+        local domain_list cidr_list matched_rulesets
 
         config_get name "$section" name
         config_get proxies_list "$section" proxies
@@ -989,40 +1011,41 @@ handle_proxy_group_section() {
 
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
 
+        matched_rulesets=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
         local added_rulesets="|"
-        for ruleset in $enabled_list; do
+        while IFS= read -r line; do
+            [ -z "$line" ] && continue
+
+            local ruleset r_name yaml behavior format url proxy rest
+            r_name="${line%%|*}"
+            rest="${line#*|}"
+            ruleset="${rest%%|*}"
+            rest="${rest#*|}"
+            yaml="${rest%%|*}"
+            rest="${rest#*|}"
+            behavior="${rest%%|*}"
+            rest="${rest#*|}"
+            format="${rest%%|*}"
+            url="${rest#*|}"
+
             case "$added_rulesets" in
                 *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
             esac
 
+            local rule_str
+            rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
-            local line r_name yaml behavior format url proxy
-            line=$(printf '%s\n' "$ruleset_content" | awk -F'|' -v key="$ruleset" '$2 == key { print; exit }')
-            if [ -n "$line" ]; then
-                local rest
-                r_name="${line%%|*}"
-                rest="${line#*|}"
-                yaml="${rest%%|*}"
-                rest="${rest#*|}"
-                behavior="${rest%%|*}"
-                rest="${rest#*|}"
-                format="${rest%%|*}"
-                url="${rest#*|}"
-                # shellcheck disable=SC2249
-                case "$r_name" in \#*) continue ;; esac
+            [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
+            proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            added_rulesets="$added_rulesets$ruleset|"
 
-                local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-
-                [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
-                added_rulesets="$added_rulesets$ruleset|"
-
-                if [ "$behavior" = "domain" ]; then
-                    list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
-                fi
+            if [ "$behavior" = "domain" ]; then
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
             fi
-        done
+        done <<EOF
+$matched_rulesets
+EOF
 
         config_get domain_list "$section" custom_enabled_domain_list
         for line in $domain_list; do
@@ -1212,41 +1235,49 @@ handle_block_rule_section() {
     config_get enabled_blocklist block_rules enabled_blocklist
     config_get proxy block_rules proxy "$DEFAULT_PROXY"
 
+    local matched_rulesets
+    matched_rulesets=$(lookup_many_rulesets_full "$blocklist_content" "$enabled_blocklist")
+
     local added_blocklists="|"
-    local val
-    for val in $enabled_blocklist; do
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+
+        local val name yamlName behavior format url rest
+        name="${line%%|*}"
+        rest="${line#*|}"
+        val="${rest%%|*}"
+        rest="${rest#*|}"
+        yamlName="${rest%%|*}"
+        rest="${rest#*|}"
+        behavior="${rest%%|*}"
+        rest="${rest#*|}"
+        format="${rest%%|*}"
+        url="${rest#*|}"
+
         case "$added_blocklists" in
             *"|$val|"*) log warn "Skipping duplicated ruleset: $val"; continue ;;
         esac
 
-
-        local line name yamlName behavior format url
-        line=$(printf '%s\n' "$blocklist_content" | awk -F'|' -v key="$val" '$2 == key { print; exit }')
-        if [ -n "$line" ]; then
-            local rest
-            name="${line%%|*}"
-            rest="${line#*|}"
-            yamlName="${rest%%|*}"
-            rest="${rest#*|}"
-            behavior="${rest%%|*}"
-            rest="${rest#*|}"
-            format="${rest%%|*}"
-            url="${rest#*|}"
-            # shellcheck disable=SC2249
-            case "$name" in \#*) continue ;; esac
-
-            if [ "$behavior" = "domain" ]; then
-                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}$yamlName"
-            else
-                local rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-            fi
-
-            selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
-            added_blocklists="$added_blocklists$val|"
+        if [ "$behavior" = "domain" ]; then
+            list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}$yamlName"
         else
-            log warn "Blocklist key '$val' was not found in block ruleset index." "⚠️"
+            local rule_str
+            rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")
+            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
         fi
+
+        selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
+        added_blocklists="$added_blocklists$val|"
+    done <<EOF
+$matched_rulesets
+EOF
+
+    local val
+    for val in $enabled_blocklist; do
+        case "$added_blocklists" in
+            *"|$val|"*) ;;
+            *) log warn "Blocklist key '$val' was not found in block ruleset index." "⚠️" ;;
+        esac
     done
 
     local additional_domain_blockroute additional_destip_blockroute
@@ -1300,40 +1331,43 @@ handle_direct_rule_section() {
     config_get enabled_list direct_rules enabled_list
     config_get proxy direct_rules proxy "$DEFAULT_PROXY"
 
+    local matched_rulesets
+    matched_rulesets=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
+
     local added_rulesets="|"
-    for ruleset in $enabled_list; do
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+
+        local ruleset r_name yaml behavior format url rest
+        r_name="${line%%|*}"
+        rest="${line#*|}"
+        ruleset="${rest%%|*}"
+        rest="${rest#*|}"
+        # shellcheck disable=SC2034
+        yaml="${rest%%|*}"
+        rest="${rest#*|}"
+        behavior="${rest%%|*}"
+        rest="${rest#*|}"
+        format="${rest%%|*}"
+        url="${rest#*|}"
+
         case "$added_rulesets" in
             *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
         esac
 
+        local rule_str
+        rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
+        rules_array="${rules_array:+$rules_array,}\"$rule_str\""
 
-        local line r_name yaml behavior format url proxy
-        line=$(printf '%s\n' "$ruleset_content" | awk -F'|' -v key="$ruleset" '$2 == key { print; exit }')
-        if [ -n "$line" ]; then
-            local rest
-            r_name="${line%%|*}"
-            rest="${line#*|}"
-            # shellcheck disable=SC2034
-            yaml="${rest%%|*}"
-            rest="${rest#*|}"
-            behavior="${rest%%|*}"
-            rest="${rest#*|}"
-            format="${rest%%|*}"
-            url="${rest#*|}"
-            # shellcheck disable=SC2249
-            case "$r_name" in \#*) continue ;; esac
+        direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+        added_rulesets="$added_rulesets$ruleset|"
 
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-
-            direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
-            added_rulesets="$added_rulesets$ruleset|"
-
-            if [ "$behavior" = "domain" ]; then
-               list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
-            fi
+        if [ "$behavior" = "domain" ]; then
+           list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
         fi
-    done
+    done <<EOF
+$matched_rulesets
+EOF
 
     config_get domain_list direct_rules custom_enabled_domain_list
     for line in $domain_list; do
