@@ -116,7 +116,8 @@ return baseclass.extend({
     ],
     defaultProxyGroupsBalanceModeStrategies: [
         { value: "consistent-hashing", text: _("Consistent hashing") },
-        { value: "round-robin", text: _("Round robin") }
+        { value: "round-robin", text: _("Round robin") },
+        { value: "sticky-sessions", text: _("Sticky sessions") }
     ],
     defaultNftOptions: [
         { value: "BY RULES", text: _("By rules") },
