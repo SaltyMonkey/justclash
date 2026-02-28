@@ -18,7 +18,7 @@ import() {
 
     # shellcheck disable=SC1090
     if ! . "$file" 2>/dev/null; then
-        printf '[%s] [user.err] %s\n' "$(date '+%Y-%m-%d %H:%M:%S.%3N')" "File $file can't be loaded!"
+        printf '[%s] [user.err] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "File $file can't be loaded!"
         logger -p "user.err" -t "$PROGNAME" "File $file can't be loaded!"
         exit 1
     fi

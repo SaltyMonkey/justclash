@@ -28,7 +28,7 @@ clog() {
     [ "$JUSTCLASH_ENV" = "procd" ] && return
 
     local ts facility
-    ts=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+    ts=$(date '+%Y-%m-%d %H:%M:%S')
     facility=$(get_log_level "$level")
 
     printf '[%s] [%s] %s\n' "$ts" "$facility" "${emoji:+$emoji }$message"
