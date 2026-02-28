@@ -81,10 +81,18 @@ define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	# randomize api password if default value detected
-	RANDOM_API_PASSWORD=$$(echo "$$(date +%s%N)$$RANDOM" | md5sum | cut -c1-32)
-	sed -i -e "s|abcdefghijklmnopqrstuvwxyz1234567890|$${RANDOM_API_PASSWORD}|g" /etc/config/justclash || true
-	sed -i -e "s|abcdefghijklmnopqrstuvwxyz1234567890|$${RANDOM_API_PASSWORD}|g" /etc/justclash/default.config || true
+	# randomize api password only when package default is still in use
+	DEFAULT_API_PASSWORD='abcdefghijklmnopqrstuvwxyz1234567890'
+	CURRENT_API_PASSWORD="$$(uci -q get justclash.proxy.api_password)"
+
+	if [ "$${CURRENT_API_PASSWORD}" = "$${DEFAULT_API_PASSWORD}" ]; then
+		RANDOM_API_PASSWORD="$$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | sha256sum | cut -c1-32)"
+		if [ -n "$${RANDOM_API_PASSWORD}" ]; then
+			uci set justclash.proxy.api_password="$${RANDOM_API_PASSWORD}"
+			uci commit justclash
+			sed -i -e "s|$${DEFAULT_API_PASSWORD}|$${RANDOM_API_PASSWORD}|g" /etc/justclash/default.config || true
+		fi
+	fi
 	# randomize failover mac string if placeholder value detected
 	RANDOM_MAC_REPLACEMENT=$$(echo "$$(date +%s%N)$$RANDOM" | md5sum | cut -c1-30)
 	sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|$${RANDOM_MAC_REPLACEMENT}|g" /usr/lib/justclash/helpers.sh || true
