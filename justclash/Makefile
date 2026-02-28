@@ -94,8 +94,8 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		fi
 	fi
 	# randomize failover mac string if placeholder value detected
-	RANDOM_MAC_REPLACEMENT=$$(echo "$$(date +%s%N)$$RANDOM" | md5sum | cut -c1-30)
-	sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|$${RANDOM_MAC_REPLACEMENT}|g" /usr/lib/justclash/helpers.sh || true
+	RANDOM_MAC_REPLACEMENT="$$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | sha256sum | cut -c1-30)"
+	[ -n "$${RANDOM_MAC_REPLACEMENT}" ] && sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|$${RANDOM_MAC_REPLACEMENT}|g" /usr/lib/justclash/helpers.sh || true
 fi
 endef
 
