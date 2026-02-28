@@ -66,7 +66,7 @@ const showConnectionDetails = (connId) => {
     if (!conn) return;
     const jsonString = JSON.stringify(conn, null, 2);
 
-    ui.showModal(_("Connection Details"), [
+    ui.showModal(_("Connection details"), [
         E("div", { class: "json-viewer-container" }, [
             E("pre", { class: "jc-json-terminal" }, jsonString)
         ]),
@@ -75,10 +75,10 @@ const showConnectionDetails = (connId) => {
                 class: "cbi-button cbi-button-action",
                 click: () => {
                     copyToClipboard(jsonString || "");
-                    ui.addNotification(null, E("p", _("JSON copied to clipboard")), "success", 3000);
+                    ui.addNotification(null, E("p", _("Copied to clipboard")), "success", 3000);
                     ui.hideModal();
                 }
-            }, [_("Copy JSON")]),
+            }, [_("Copy details")]),
             E("button", {
                 class: "cbi-button cbi-button-neutral",
                 style: "margin-left: 5px;",
@@ -133,7 +133,7 @@ return view.extend({
         cleanup();
 
         const container = E("div", { class: "cbi-section fade-in" });
-        container.appendChild(E("h3", { class: "cbi-section-title" }, _("Statistic")));
+        container.appendChild(E("h3", { class: "cbi-section-title" }, _("Statistics")));
 
         function makeCard(id, title, emoji, initialText) {
             return E('div', { class: 'jc-card' }, [

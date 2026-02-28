@@ -21,17 +21,17 @@ return view.extend({
         };
 
         m = new form.Map(common.binName);
-        s = m.section(form.NamedSection, "settings", "main", _("Service configuration:"), _("Main configuration for service startup options and tasks."));
+        s = m.section(form.NamedSection, "settings", "main", _("Service settings:"), _("Main service settings and scheduled tasks."));
 
         tabname = "servicebasic_tab";
         s.tab(tabname, _("Basic settings"));
 
-        o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delayed boot:"));
-        o.description = _("The service start will be delayed at router boot.");
+        o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delay startup after boot:"));
+        o.description = _("Start the service a little later after the router boots. Useful if the router needs extra time to bring up storage, WAN, or other services.");
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.Value, "delayed_boot_value", _("Delayed boot timeout:"));
+        o = s.taboption(tabname, form.Value, "delayed_boot_value", _("Startup delay:"));
         o.datatype = datatypes.UINTEGER;
         common.defaultBootDelayValuesSec.forEach(item => {
             o.value(item.value, item.text);
@@ -41,40 +41,40 @@ return view.extend({
         o.depends("delayed_boot", primitives.TRUE);
 
         o.rmempty = false;
-        o.description = _("Delay value for first start after boot in seconds.");
+        o.description = _("Choose how many seconds to wait before the first service start after boot.");
 
-        o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip environment checks:"));
-        o.description = _("Minor checks in script will be disabled at start.");
+        o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip startup checks:"));
+        o.description = _("Skip some safety checks during startup. This can speed up startup, but it may hide problems with files, permissions, or system settings.");
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Persistent temp files:"));
-        o.description = _("If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!");
+        o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Store downloaded lists in router memory:"));
+        o.description = _("If enabled, downloaded rules stay in internal router storage after restart. Use this only if you need it, because frequent writes can wear out built-in flash memory faster.");
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start ntpd:"));
-        o.description = _("The service will start ntpd to sync system time and ensure TLS works correctly in system.");
+        o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start time sync service:"));
+        o.description = _("Start time sync so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Edit DNS server at startup:"));
-        o.description = _("The service will edit DNS settings in dnsmasq configuration at start.");
+        o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Change DNS settings at startup:"));
+        o.description = _("Update DNS settings automatically when the service starts. Use this if you want JustClash to manage dnsmasq DNS settings for you.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Edit netfilter tables at startup:"));
-        o.description = _("Service creates netfilter tables to redirect traffic to the TPROXY port.");
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Set traffic rules at startup:"));
+        o.description = _("Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Edit router netfilter tables at start:"));
-        o.description = _("Service creates netfilter tables to redirect traffic from router to the TPROXY port.");
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Set router traffic rules at startup:"));
+        o.description = _("Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too.");
         o.rmempty = false;
         o.default = primitives.FALSE;
 
         // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Source network interface:"), _("Select the network interface from which the traffic will originate"));
+        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interface:"), _("Select which network interface client traffic comes from."));
         o.default = "br-lan";
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
@@ -82,7 +82,7 @@ return view.extend({
         o.nobridges = false;
         o.noinactive = false;
         o.multiple = true;
-        o.description = "Select the network interface from which the traffic will originate";
+        o.description = _("Select which network interface client traffic comes from. This is usually your LAN bridge; do not select WAN unless you know exactly why.");
         o.filter = function (section_id, value) {
             if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
                 return false;
@@ -100,8 +100,8 @@ return view.extend({
             return true;
         };
 
-        o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("QUIC traffic from clients:"));
-        o.description = _("Select a way how QUIC traffic will be handled by netfilter tables.");
+        o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
+        o.description = _("Choose how to handle QUIC traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -110,8 +110,8 @@ return view.extend({
             o.value(item.value, `${item.text}`);
         });
 
-        o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("DoT traffic from clients:"));
-        o.description = _("Select a way how DoT traffic will be handled by netfilter tables.");
+        o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("Client DoT traffic:"));
+        o.description = _("Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -120,8 +120,8 @@ return view.extend({
             o.value(item.value, `${item.text}`);
         });
 
-        o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("DoQ traffic from clients:"));
-        o.description = _("Select a way how DoQ traffic will be handled by netfilter tables.");
+        o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("Client DoQ traffic:"));
+        o.description = _("Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -130,8 +130,8 @@ return view.extend({
             o.value(item.value, `${item.text}`);
         });
 
-        o = s.taboption(tabname, form.ListValue, "nft_ntp_mode", _("NTP traffic from clients:"));
-        o.description = _("Select a way how NTP traffic will be handled by netfilter tables.");
+        o = s.taboption(tabname, form.ListValue, "nft_ntp_mode", _("Client NTP traffic:"));
+        o.description = _("Choose how to handle time sync requests from devices on your network. The selected mode decides whether these requests are redirected, bypassed, or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -140,8 +140,8 @@ return view.extend({
             o.value(item.value, `${item.text}`);
         });
 
-        o = s.taboption(tabname, form.ListValue, "nft_ntp_mode_router", _("NTP traffic from router:"));
-        o.description = _("Select a way how NTP traffic from router will be handled by netfilter tables.");
+        o = s.taboption(tabname, form.ListValue, "nft_ntp_mode_router", _("Router NTP traffic:"));
+        o.description = _("Choose how to handle time sync requests from the router itself. The selected mode decides whether these requests are redirected, bypassed, or blocked.");
         o.depends("nft_apply_changes_router", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -151,45 +151,45 @@ return view.extend({
         });
 
         tabname = "serviceautomation_tab";
-        s.tab(tabname, _("Tasks"));
+        s.tab(tabname, _("Scheduled tasks"));
 
-        o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Mihomo autorestart:"));
-        o.description = _("When enabled, the service will configure Mihomo autorestart by cron string.");
+        o = s.taboption(tabname, form.Flag, "mihomo_autorestart", _("Restart Mihomo automatically:"));
+        o.description = _("Restart Mihomo on a schedule, for example once a week or once a day.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Mihomo autoupdate:"));
+        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Update Mihomo automatically:"));
         common.defaultUpdateOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
-        o.description = _("Mode for Mihomo autoupdate job.");
+        o.description = _("Choose whether Mihomo should update automatically, and under what conditions.");
         o.rmempty = false;
         o.default = common.defaultUpdateOptions[0].value;
 
-        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate_channel", _("Mihomo autoupdate channel:"));
+        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate_channel", _("Update channel:"));
         common.defaultUpdateChannelOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
-        o.description = _("Update channel for Mihomo autoupdate job.");
+        o.description = _("Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs.");
         o.rmempty = false;
         o.default = common.defaultUpdateChannelOptions[0].value;
 
-        o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Mihomo autorestart cron:"));
+        o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Restart schedule:"));
         o.placeholder = "0 5 * * 0";
         o.default = "0 5 * * 0";
         o.rmempty = false;
-        o.description = _("Special cron string for Mihomo autorestart job.");
+        o.description = _("Use cron format to choose when Mihomo should restart automatically.");
         o.validate = function (section_id, value) {
-            return (common.isValidCronString(value)) ? true : _("Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')");
+            return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
         };
 
-        o = s.taboption(tabname, form.Value, "mihomo_cron_update_string", _("Mihomo autoupdate cron:"));
+        o = s.taboption(tabname, form.Value, "mihomo_cron_update_string", _("Update schedule:"));
         o.placeholder = "0 5 * * 0";
         o.default = "0 5 * * 0";
         o.rmempty = false;
-        o.description = _("Special cron string for Mihomo autoupdate job.");
+        o.description = _("Use cron format to choose when Mihomo should check for updates automatically.");
         o.validate = function (section_id, value) {
-            return (common.isValidCronString(value)) ? true : _("Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')");
+            return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
         };
 
         const style = E("style", {}, `

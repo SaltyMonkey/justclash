@@ -23,7 +23,7 @@ return view.extend({
 
         m = new form.Map(common.binName);
 
-        s = m.section(form.NamedSection, "proxy", "proxy", _("Proxy Configuration"), _("General configuration for usage in the Mihomo core."));
+        s = m.section(form.NamedSection, "proxy", "proxy", _("Proxy settings"), _("Main proxy settings used by Mihomo."));
 
         tabname = "coresettings_tab";
         s.tab(tabname, _("Basic settings"));
@@ -32,24 +32,24 @@ return view.extend({
         common.defaultLoggingLevels.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Logging level in Mihomo core.");
+        o.description = _("Choose how much information Mihomo writes to the log. Higher levels help with debugging, but create more log entries.");
         o.default = common.defaultLoggingLevels[0];
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Value, "tproxy_port", _("Tproxy port:"));
-        o.description = _("Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic.");
+        o = s.taboption(tabname, form.Value, "tproxy_port", _("Transparent proxy port:"));
+        o.description = _("Port used for redirected TCP/UDP traffic. Change it only if this port is already used by another service.");
         o.datatype = datatypes.PORT;
         o.placeholder = "7893";
         o.default = "7893";
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable mixed port:"));
-        o.description = _("Enable mixed port to allow incoming connections supporting both HTTP(S) and SOCKS5 protocols.");
+        o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable shared proxy port:"));
+        o.description = _("Use one port for both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy.");
         o.default = primitives.FALSE;
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Value, "mixed_port", _("Mixed port:"));
-        o.description = _("Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols.");
+        o = s.taboption(tabname, form.Value, "mixed_port", _("Shared proxy port:"));
+        o.description = _("Port that accepts both HTTP(S) and SOCKS5 connections from apps and devices on your network.");
         o.depends("use_mixed_port", primitives.TRUE);
         o.retain = true;
         o.datatype = datatypes.PORT;
@@ -57,36 +57,36 @@ return view.extend({
         o.default = "7892";
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "unified_delay", _("Unified delay:"));
-        o.description = _("Unified delay for RTT checks.");
+        o = s.taboption(tabname, form.Flag, "unified_delay", _("Use one delay value:"));
+        o.description = _("Use the same delay value when checking response time, so test results stay more consistent.");
         o.default = primitives.TRUE;
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("TCP concurrent:"));
-        o.description = _("Enable concurrent TCP connection attempts.");
+        o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("Try TCP connections in parallel:"));
+        o.description = _("Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.ListValue, "global_client_fingerprint", _("Global client fingerprint:"));
+        o = s.taboption(tabname, form.ListValue, "global_client_fingerprint", _("Client profile for all connections:"));
         common.defaultFingerprints.forEach(item => {
             o.value(item, _(`${item}`));
         });
-        o.description = _("Client fingerprint for protocols that support it.");
+        o.description = _("How the client identifies itself for supported protocols. Leave the default unless your provider expects a specific profile.");
         o.default = common.defaultFingerprints[0];
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Value, "global_ua", _("Global user agent:"));
-        o.description = _("Global UA for external resources download.");
+        o = s.taboption(tabname, form.Value, "global_ua", _("User-Agent for downloads:"));
+        o.description = _("User-Agent sent when downloading external files such as subscriptions or rule lists.");
         o.default = common.defaultUserAgent;
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "etag_support", _("ETag support:"));
-        o.description = _("ETag support for external resources download.");
+        o = s.taboption(tabname, form.Flag, "etag_support", _("Check whether files changed:"));
+        o.description = _("Only download external files again when the server says they changed. This saves bandwidth and avoids unnecessary updates.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.Value, "keep_alive_idle", _("Keep alive idle:"));
-        o.description = _("How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive.");
+        o = s.taboption(tabname, form.Value, "keep_alive_idle", _("Idle time before connection check:"));
+        o.description = _("How long to wait with no activity before checking whether the connection is still alive. Shorter values detect dead connections sooner.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         common.defaultKeepAliveSec.forEach(item => {
@@ -94,8 +94,8 @@ return view.extend({
         });
         o.default = common.defaultKeepAliveSec[0].value;
 
-        o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Keep alive interval:"));
-        o.description = _("How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle.");
+        o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Connection check interval:"));
+        o.description = _("How often to repeat that check after the connection becomes idle.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         common.defaultKeepAliveSec.forEach(item => {
@@ -103,13 +103,13 @@ return view.extend({
         });
         o.default = common.defaultKeepAliveSec[0].value;
 
-        o = s.taboption(tabname, form.Flag, "profile_store_selected", _("Cache profile data:"));
-        o.description = _("Cache profile data if possible.");
+        o = s.taboption(tabname, form.Flag, "profile_store_selected", _("Save profile data:"));
+        o.description = _("Keep profile data when possible, so selected items can be restored after a restart.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.Flag, "profile_store_fake_ip", _("Cache Fake IP:"));
-        o.description = _("Cache fake IP data when possible.");
+        o = s.taboption(tabname, form.Flag, "profile_store_fake_ip", _("Save fake IP addresses:"));
+        o.description = _("Keep assigned fake IP addresses when possible, which can reduce repeated DNS work after restarts.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
@@ -117,21 +117,21 @@ return view.extend({
         s.tab(tabname, _("Controller/API settings"));
 
         // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select interface where API controller will be available."));
+        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select which network will allow access to the API controller and dashboard."));
         o.default = "lan";
         o.optional = false;
         o.nocreate = true;
         o.multiple = false;
-        o.description = "Select network where API controller will be available.";
+        o.description = _("Select which network will allow access to the API controller and dashboard.");
 
         o = s.taboption(tabname, form.Flag, "use_zashboard", _("Enable dashboard:"));
-        o.description = _("Enable external dashboard for Mihomo.");
+        o.description = _("Enable the web dashboard for Mihomo. Turn this on only if you need the dashboard interface.");
         o.default = primitives.FALSE;
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
         o.password = true;
-        o.description = _("API token for Bearer authentication.");
+        o.description = _("Password or token required to access the API controller.");
         o.rmempty = false;
 
         tabname = "dnssettings_tab";

@@ -34,7 +34,7 @@ msgid "Every 45 seconds"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:24
-msgid "Every 60 seconds"
+msgid "Every 1 minute"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:27
@@ -162,11 +162,11 @@ msgid "100 milliseconds"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:72
-msgid "Server code 200"
+msgid "Response code 200"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:73
-msgid "Server code 204"
+msgid "Response code 204"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:76
@@ -325,7 +325,7 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:389
+#: htdocs/luci-static/resources/view/justclash/common.js:389 htdocs/luci-static/resources/view/justclash/logs.js:191
 msgid "Logs"
 msgstr ""
 
@@ -345,20 +345,28 @@ msgstr ""
 msgid "Proxy"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:67
-msgid "Connection Details"
+#: htdocs/luci-static/resources/view/justclash/statistic.js:69
+msgid "Connection details"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:76
-msgid "JSON copied to clipboard"
+#: htdocs/luci-static/resources/view/justclash/statistic.js:78
+msgid "Copied to clipboard"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:79
-msgid "Copy JSON"
+#: htdocs/luci-static/resources/view/justclash/statistic.js:81
+msgid "Copy details"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:84
+#: htdocs/luci-static/resources/view/justclash/statistic.js:86
 msgid "Close"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/statistic.js:39
+msgid "Unable to copy to clipboard"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/statistic.js:136
+msgid "Statistics"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/connections.js:108 htdocs/luci-static/resources/view/justclash/connections.js:130
@@ -410,51 +418,47 @@ msgid "No data"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/logs.js:8
-msgid "No logs"
+msgid "No log entries"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:68 htdocs/luci-static/resources/view/justclash/logs.js:107
-msgid "Last fetch: "
+#: htdocs/luci-static/resources/view/justclash/logs.js:79 htdocs/luci-static/resources/view/justclash/logs.js:112
+msgid "Last updated: "
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/logs.js:77 htdocs/luci-static/resources/view/justclash/status.js:60 htdocs/luci-static/resources/view/justclash/status.js:199 htdocs/luci-static/resources/view/justclash/status.js:225 htdocs/luci-static/resources/view/justclash/status.js:226 htdocs/luci-static/resources/view/justclash/status.js:229 htdocs/luci-static/resources/view/justclash/status.js:234 htdocs/luci-static/resources/view/justclash/status.js:237 htdocs/luci-static/resources/view/justclash/status.js:273
 msgid "Error"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:112
-msgid "Update"
+#: htdocs/luci-static/resources/view/justclash/logs.js:117
+msgid "Refresh"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:119
-msgid "To bottom"
+#: htdocs/luci-static/resources/view/justclash/logs.js:122
+msgid "Scroll to bottom"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/logs.js:126 htdocs/luci-static/resources/view/justclash/status.js:188
 msgid "Data copied to clipboard"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:128
-msgid "Copy logs"
+#: htdocs/luci-static/resources/view/justclash/logs.js:131
+msgid "Copy log"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:135
-msgid "To top"
+#: htdocs/luci-static/resources/view/justclash/logs.js:136
+msgid "Scroll to top"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/logs.js:137
-msgid "Reversed Logs"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/logs.js:214
-msgid "Logs view"
+#: htdocs/luci-static/resources/view/justclash/logs.js:138
+msgid "Newest first"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:26
-msgid "Proxy Configuration"
+msgid "Proxy settings"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:26
-msgid "General configuration for usage in the Mihomo core."
+msgid "Main proxy settings used by Mihomo."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:29 htdocs/luci-static/resources/view/justclash/service.js:27
@@ -466,103 +470,103 @@ msgid "Logging level:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:35
-msgid "Logging level in Mihomo core."
+msgid "Choose how much information Mihomo writes to the log. Higher levels help with debugging, but create more log entries."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:39
-msgid "Tproxy port:"
+msgid "Transparent proxy port:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:40
-msgid "Listening port of Mihomo Transparent Proxy (TPROXY) for redirected TCP/UDP traffic."
+msgid "Port used for redirected TCP/UDP traffic. Change it only if this port is already used by another service."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:46
-msgid "Enable mixed port:"
+msgid "Enable shared proxy port:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:47
-msgid "Enable mixed port to allow incoming connections supporting both HTTP(S) and SOCKS5 protocols."
+msgid "Use one port for both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:51
-msgid "Mixed port:"
+msgid "Shared proxy port:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:52
-msgid "Mihomo mixed port for handling incoming traffic with support for HTTP(S) and SOCKS5 protocols."
+msgid "Port that accepts both HTTP(S) and SOCKS5 connections from apps and devices on your network."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:60
-msgid "Unified delay:"
+msgid "Use one delay value:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:61
-msgid "Unified delay for RTT checks."
+msgid "Use the same delay value when checking response time, so test results stay more consistent."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:65
-msgid "TCP concurrent:"
+msgid "Try TCP connections in parallel:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:66
-msgid "Enable concurrent TCP connection attempts."
+msgid "Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:70
-msgid "Global client fingerprint:"
+msgid "Client profile for all connections:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:74
-msgid "Client fingerprint for protocols that support it."
+msgid "How the client identifies itself for supported protocols. Leave the default unless your provider expects a specific profile."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:78
-msgid "Global user agent:"
+msgid "User-Agent for downloads:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:79
-msgid "Global UA for external resources download."
+msgid "User-Agent sent when downloading external files such as subscriptions or rule lists."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:83
-msgid "ETag support:"
+msgid "Check whether files changed:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:84
-msgid "ETag support for external resources download."
+msgid "Only download external files again when the server says they changed. This saves bandwidth and avoids unnecessary updates."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:88
-msgid "Keep alive idle:"
+msgid "Idle time before connection check:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:89
-msgid "How long a connection can remain idle before the system starts sending keep-alive probes to check if the other end is still responsive."
+msgid "How long to wait with no activity before checking whether the connection is still alive. Shorter values detect dead connections sooner."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:97
-msgid "Keep alive interval:"
+msgid "Connection check interval:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:98
-msgid "How frequently TCP keepalive probes are sent after a connection has been idle for the duration specified by keep-alive idle."
+msgid "How often to repeat that check after the connection becomes idle."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:106
-msgid "Cache profile data:"
+msgid "Save profile data:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:107
-msgid "Cache profile data if possible."
+msgid "Keep profile data when possible, so selected items can be restored after a restart."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:111
-msgid "Cache Fake IP:"
+msgid "Save fake IP addresses:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:112
-msgid "Cache fake IP data when possible."
+msgid "Keep assigned fake IP addresses when possible, which can reduce repeated DNS work after restarts."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:117
@@ -574,7 +578,7 @@ msgid "Controller bind:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:120
-msgid "Select interface where API controller will be available."
+msgid "Select which network will allow access to the API controller and dashboard."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:127
@@ -582,7 +586,7 @@ msgid "Enable dashboard:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:128
-msgid "Enable external dashboard for Mihomo."
+msgid "Enable the web dashboard for Mihomo. Turn this on only if you need the dashboard interface."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:132
@@ -590,7 +594,7 @@ msgid "API password:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:134
-msgid "API token for Bearer authentication."
+msgid "Password or token required to access the API controller."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:138
@@ -886,7 +890,7 @@ msgid "Use with custom domain list:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:138 htdocs/luci-static/resources/view/justclash/routing.js:147 htdocs/luci-static/resources/view/justclash/routing.js:525 htdocs/luci-static/resources/view/justclash/routing.js:534 htdocs/luci-static/resources/view/justclash/routing.js:604 htdocs/luci-static/resources/view/justclash/routing.js:613
-msgid "Each element is custom rules-provider MRS file from WEB or absolute local file path."
+msgid "Each entry can be a web link or an absolute local path to an MRS rules file."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:143 htdocs/luci-static/resources/view/justclash/routing.js:152 htdocs/luci-static/resources/view/justclash/routing.js:530 htdocs/luci-static/resources/view/justclash/routing.js:539 htdocs/luci-static/resources/view/justclash/routing.js:609 htdocs/luci-static/resources/view/justclash/routing.js:618
@@ -910,11 +914,11 @@ msgid "List update interval:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:161 htdocs/luci-static/resources/view/justclash/routing.js:548 htdocs/luci-static/resources/view/justclash/routing.js:622
-msgid "Interval for updates check in seconds."
+msgid "How often remote lists should be checked for updates, in seconds."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:178 htdocs/luci-static/resources/view/justclash/routing.js:565 htdocs/luci-static/resources/view/justclash/routing.js:651 htdocs/luci-static/resources/view/justclash/routing.js:701
-msgid "Manual"
+msgid "Custom rules"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:180 htdocs/luci-static/resources/view/justclash/routing.js:567 htdocs/luci-static/resources/view/justclash/routing.js:653 htdocs/luci-static/resources/view/justclash/routing.js:703
@@ -922,7 +926,7 @@ msgid "Domain suffix:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:181
-msgid "DOMAIN-SUFFIX rule to route through proxy (Example: google.com)."
+msgid "Traffic to domains matching this suffix will go through this proxy (example: google.com)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:188 htdocs/luci-static/resources/view/justclash/routing.js:576 htdocs/luci-static/resources/view/justclash/routing.js:669 htdocs/luci-static/resources/view/justclash/routing.js:712
@@ -930,7 +934,7 @@ msgid "IPv4 CIDR:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:189
-msgid "IP-CIDR rule to route through proxy (Example: 1.1.1.1/32). IPv4 only right now."
+msgid "Traffic to this IPv4 address or subnet will go through this proxy (example: 1.1.1.1/32)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:194 htdocs/luci-static/resources/view/justclash/routing.js:583 htdocs/luci-static/resources/view/justclash/routing.js:662
@@ -938,7 +942,7 @@ msgid "Source IPv4 CIDR:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:195
-msgid "SRC-IP-CIDR rule to route through proxy (Example: 192.168.31.212/32). IPv4 only right now."
+msgid "Traffic from this local IPv4 address or subnet will go through this proxy (example: 192.168.31.212/32)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:201
@@ -1130,15 +1134,15 @@ msgid "If selected, RULE-SET lists will be updated through proxy group."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:568
-msgid "DOMAIN-SUFFIX rule to route through proxy group (Example: google.com)."
+msgid "Traffic to domains matching this suffix will go through the selected proxy group (example: google.com)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:577
-msgid "IP-CIDR rule to route through proxy group (Example: 1.1.1.1/32). IPv4 only right now."
+msgid "Traffic to this IPv4 address or subnet will go through the selected proxy group (example: 1.1.1.1/32)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:584
-msgid "SRC-IP-CIDR rule to route through proxy group (Example: 192.168.31.212/32). IPv4 only right now."
+msgid "Traffic from this local IPv4 address or subnet will go through the selected proxy group (example: 192.168.31.212/32)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:590
@@ -1146,239 +1150,239 @@ msgid "DIRECT rules:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:590
-msgid "Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."
+msgid "Extra direct rules. These are applied before proxy rules, proxy groups, and block rules."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:601
-msgid "Predefined RULE-SET lists, select those which you want to route through DIRECT."
+msgid "Ready-made lists for traffic that should bypass the proxy."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:638 htdocs/luci-static/resources/view/justclash/routing.js:688
-msgid "Get lists with:"
+msgid "Download lists through:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:639 htdocs/luci-static/resources/view/justclash/routing.js:689
-msgid "Use selected proxy or proxy-group to get lists from server."
+msgid "Choose which proxy or group should be used when downloading these lists from the internet."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:654
-msgid "DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com)."
+msgid "Traffic to domains matching this suffix will bypass the proxy (example: google.com)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:663
-msgid "SRC-IP-CIDR rule to pass in DIRECT (Example: 192.168.31.212/32). IPV4 only right now."
+msgid "Traffic from this local IPv4 address or subnet will bypass the proxy (example: 192.168.31.212/32)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:670
-msgid "IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now."
+msgid "Traffic to this IPv4 address or subnet will bypass the proxy (example: 1.1.1.1/32)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:676
-msgid "REJECT rules:"
+msgid "Block rules:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:676
-msgid "Additional rules for REJECT rules. Will be handled before proxies and proxy groups."
+msgid "Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:686
-msgid "Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything."
+msgid "Ready-made blocklists for ads and harmful sites. Matching traffic will be blocked. Choose the ones you want to use, or leave this empty."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:704
-msgid "DOMAIN-SUFFIX rule to block with proxy (Example: google.com)."
+msgid "Traffic to domains matching this suffix will be blocked (example: google.com)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:713
-msgid "IP-CIDR rule to block with proxy (Example: 1.1.1.1/32). IPv4 only right now."
+msgid "Traffic to this IPv4 address or subnet will be blocked (example: 1.1.1.1/32)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:719
-msgid "Mixed port rule:"
+msgid "Shared port rule:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:719
-msgid "Additional settings for the mixed port. Use it to override or enforce specific behavior."
+msgid "Extra settings for traffic that arrives through the shared proxy port. Use this when that port should behave differently from the default route."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:725 htdocs/luci-static/resources/view/justclash/routing.js:744
-msgid "Destination:"
+msgid "Send traffic to:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:738
-msgid "Final rule:"
+msgid "Default rule:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:738
-msgid "Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."
+msgid "Used when no other rule matches. This is the fallback action for the remaining traffic."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:24
-msgid "Service configuration:"
+msgid "Service settings:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:24
-msgid "Main configuration for service startup options and tasks."
+msgid "Main service settings and scheduled tasks."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:29
-msgid "Delayed boot:"
+msgid "Delay startup after boot:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:30
-msgid "The service start will be delayed at router boot."
+msgid "Start the service a little later after the router boots. Useful if the router needs extra time to bring up storage, WAN, or other services."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:34
-msgid "Delayed boot timeout:"
+msgid "Startup delay:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:44
-msgid "Delay value for first start after boot in seconds."
+msgid "Choose how many seconds to wait before the first service start after boot."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:46
-msgid "Skip environment checks:"
+msgid "Skip startup checks:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:47
-msgid "Minor checks in script will be disabled at start."
+msgid "Skip some safety checks during startup. This can speed up startup, but it may hide problems with files, permissions, or system settings."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:51
-msgid "Persistent temp files:"
+msgid "Store downloaded lists in router memory:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:52
-msgid "If enabled, the service will keep downloaded rules at persistent storage. WARNING! DANGEROUS FOR YOUR NAND!"
+msgid "If enabled, downloaded rules stay in internal router storage after restart. Use this only if you need it, because frequent writes can wear out built-in flash memory faster."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:56
-msgid "Start ntpd:"
+msgid "Start time sync service:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:57
-msgid "The service will start ntpd to sync system time and ensure TLS works correctly in system."
+msgid "Start time sync so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:61
-msgid "Edit DNS server at startup:"
+msgid "Change DNS settings at startup:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:62
-msgid "The service will edit DNS settings in dnsmasq configuration at start."
+msgid "Update DNS settings automatically when the service starts. Use this if you want JustClash to manage dnsmasq DNS settings for you."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:66
-msgid "Edit netfilter tables at startup:"
+msgid "Set traffic rules at startup:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:67
-msgid "Service creates netfilter tables to redirect traffic to the TPROXY port."
+msgid "Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:71
-msgid "Edit router netfilter tables at start:"
+msgid "Set router traffic rules at startup:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:72
-msgid "Service creates netfilter tables to redirect traffic from router to the TPROXY port."
+msgid "Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:77
-msgid "Source network interface:"
+msgid "Client traffic interface:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:77
-msgid "Select the network interface from which the traffic will originate"
+msgid "Select which network interface client traffic comes from. This is usually your LAN bridge; do not select WAN unless you know exactly why."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:103
-msgid "QUIC traffic from clients:"
+msgid "Client QUIC traffic:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:104
-msgid "Select a way how QUIC traffic will be handled by netfilter tables."
+msgid "Choose how to handle QUIC traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:113
-msgid "DoT traffic from clients:"
+msgid "Client DoT traffic:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:114
-msgid "Select a way how DoT traffic will be handled by netfilter tables."
+msgid "Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:123
-msgid "DoQ traffic from clients:"
+msgid "Client DoQ traffic:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:124
-msgid "Select a way how DoQ traffic will be handled by netfilter tables."
+msgid "Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:133
-msgid "NTP traffic from clients:"
+msgid "Client NTP traffic:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:134
-msgid "Select a way how NTP traffic will be handled by netfilter tables."
+msgid "Choose how to handle time sync requests from devices on your network. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:143
-msgid "NTP traffic from router:"
+msgid "Router NTP traffic:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:144
-msgid "Select a way how NTP traffic from router will be handled by netfilter tables."
+msgid "Choose how to handle time sync requests from the router itself. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:154
-msgid "Tasks"
+msgid "Scheduled tasks"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:156
-msgid "Mihomo autorestart:"
+msgid "Restart Mihomo automatically:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:157
-msgid "When enabled, the service will configure Mihomo autorestart by cron string."
+msgid "Restart Mihomo on a schedule, for example once a week or once a day."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:161
-msgid "Mihomo autoupdate:"
+msgid "Update Mihomo automatically:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:165
-msgid "Mode for Mihomo autoupdate job."
+msgid "Choose whether Mihomo should update automatically, and under what conditions."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:169
-msgid "Mihomo autoupdate channel:"
+msgid "Update channel:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:173
-msgid "Update channel for Mihomo autoupdate job."
+msgid "Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:177
-msgid "Mihomo autorestart cron:"
+msgid "Restart schedule:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:181
-msgid "Special cron string for Mihomo autorestart job."
+msgid "Use cron format to choose when Mihomo should restart automatically."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:183 htdocs/luci-static/resources/view/justclash/service.js:192
-msgid "Invalid cron format. Expected: 'minute hour day month weekday' (e.g., '0 3 * * 0')"
+msgid "Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:186
-msgid "Mihomo autoupdate cron:"
+msgid "Update schedule:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:190
-msgid "Special cron string for Mihomo autoupdate job."
+msgid "Use cron format to choose when Mihomo should check for updates automatically."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:64
@@ -1393,24 +1397,24 @@ msgstr ""
 msgid "Stopped"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/status.js:100
+msgid "Start on boot"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/status.js:101
-msgid "Autostart"
+msgid "Router model"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:103
-msgid "Device model"
+#: htdocs/luci-static/resources/view/justclash/status.js:102
+msgid "OpenWrt version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:104
-msgid "System version"
+#: htdocs/luci-static/resources/view/justclash/status.js:105
+msgid "Latest release"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:108
-msgid "Latest version"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:109
-msgid "Service version"
+#: htdocs/luci-static/resources/view/justclash/status.js:106
+msgid "Installed version"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:110
@@ -1429,8 +1433,8 @@ msgstr ""
 msgid "Dangerous action!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:182
-msgid "No output"
+#: htdocs/luci-static/resources/view/justclash/status.js:186
+msgid "No response"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:191
@@ -1449,12 +1453,12 @@ msgstr ""
 msgid "Loading..."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:261
-msgid "Service status:"
+#: htdocs/luci-static/resources/view/justclash/status.js:282
+msgid "Current status:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:267
-msgid "Executing command..."
+#: htdocs/luci-static/resources/view/justclash/status.js:259
+msgid "Running command..."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:267
@@ -1481,38 +1485,46 @@ msgstr ""
 msgid "Disable autostart"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:291
-msgid "Diagnostic"
+#: htdocs/luci-static/resources/view/justclash/status.js:298
+msgid "Run diagnostics"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:292
-msgid "Update Mihomo"
+#: htdocs/luci-static/resources/view/justclash/status.js:298
+msgid "Diagnostic report"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:293
+#: htdocs/luci-static/resources/view/justclash/status.js:299
+msgid "Update core"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:299
+msgid "Update Mihomo core"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:300 htdocs/luci-static/resources/view/justclash/status.js:300
+msgid "Show Mihomo config"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:300
 msgid "Mihomo config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:293
-msgid "Mihomo configuration"
+#: htdocs/luci-static/resources/view/justclash/status.js:300
+msgid "Do not share your Mihomo config with anyone."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:293
-msgid "Do not show your mihomo config to anyone!"
+#: htdocs/luci-static/resources/view/justclash/status.js:301 htdocs/luci-static/resources/view/justclash/status.js:301
+msgid "Show service config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:294
+#: htdocs/luci-static/resources/view/justclash/status.js:301
 msgid "Service config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:294
-msgid "Service configuration"
+#: htdocs/luci-static/resources/view/justclash/status.js:301
+msgid "Do not share your service config with anyone."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:294
-msgid "Do not show your service config to anyone!"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/status.js:295
-msgid "Update service data"
+#: htdocs/luci-static/resources/view/justclash/status.js:302 htdocs/luci-static/resources/view/justclash/status.js:302
+msgid "Refresh service data"
 msgstr ""

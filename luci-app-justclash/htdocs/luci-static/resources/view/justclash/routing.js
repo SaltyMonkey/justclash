@@ -148,7 +148,7 @@ return view.extend({
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
 
         o = s.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/list.mrs";
@@ -157,7 +157,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/cidr-list.mrs";
@@ -171,7 +171,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.description = _("Interval for updates check in seconds.");
+        o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
         common.defaultRuleSetUpdateInterval.forEach(item => {
             o.value(item.value, item.text);
@@ -188,10 +188,10 @@ return view.extend({
         };
 
         tabname = "proxiesmanualrules_tab";
-        s.tab(tabname, _("Manual"));
+        s.tab(tabname, _("Custom rules"));
 
         o = s.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
-        o.description = _("DOMAIN-SUFFIX rule to route through proxy (Example: google.com).");
+        o.description = _("Traffic to domains matching this suffix will go through this proxy (example: google.com).");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.validate = function (section_id, value) {
@@ -199,13 +199,13 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
-        o.description = _("IP-CIDR rule to route through proxy (Example: 1.1.1.1/32). IPv4 only right now.");
+        o.description = _("Traffic to this IPv4 address or subnet will go through this proxy (example: 1.1.1.1/32).");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.datatype = datatypes.CIDR4;
 
         o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
-        o.description = _("SRC-IP-CIDR rule to route through proxy (Example: 192.168.31.212/32). IPv4 only right now.");
+        o.description = _("Traffic from this local IPv4 address or subnet will go through this proxy (example: 192.168.31.212/32).");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
@@ -535,7 +535,7 @@ return view.extend({
         o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy-group.");
 
         o = s2.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/list.mrs";
@@ -544,7 +544,7 @@ return view.extend({
         };
 
         o = s2.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/cidr-list.mrs";
@@ -558,7 +558,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.description = _("Interval for updates check in seconds.");
+        o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
         common.defaultRuleSetUpdateInterval.forEach(item => {
             o.value(item.value, item.text);
@@ -575,10 +575,10 @@ return view.extend({
         };
 
         tabname = "proxiesgroupmanualrules_tab";
-        s2.tab(tabname, _("Manual"));
+        s2.tab(tabname, _("Custom rules"));
 
         o = s2.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
-        o.description = _("DOMAIN-SUFFIX rule to route through proxy group (Example: google.com).");
+        o.description = _("Traffic to domains matching this suffix will go through the selected proxy group (example: google.com).");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.editable = true;
@@ -587,20 +587,20 @@ return view.extend({
         };
 
         o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
-        o.description = _("IP-CIDR rule to route through proxy group (Example: 1.1.1.1/32). IPv4 only right now.");
+        o.description = _("Traffic to this IPv4 address or subnet will go through the selected proxy group (example: 1.1.1.1/32).");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
         o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
-        o.description = _("SRC-IP-CIDR rule to route through proxy group (Example: 192.168.31.212/32). IPv4 only right now.");
+        o.description = _("Traffic from this local IPv4 address or subnet will go through the selected proxy group (example: 192.168.31.212/32).");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
-        s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Additional settings for DIRECT rules. Will be handled before proxies, proxy groups and REJECT rules."));
+        s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Extra direct rules. These are applied before proxy rules, proxy groups, and block rules."));
         s3.addremove = false;
 
         tabname = "directruleslist_tab";
@@ -611,10 +611,10 @@ return view.extend({
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, item.name);
         });
-        o.description = _("Predefined RULE-SET lists, select those which you want to route through DIRECT.");
+        o.description = _("Ready-made lists for traffic that should bypass the proxy.");
 
         o = s3.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/list.mrs";
@@ -623,7 +623,7 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each element is custom rules-provider MRS file from WEB or absolute local file path.");
+        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/cidr-list.mrs";
@@ -632,7 +632,7 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.description = _("Interval for updates check in seconds.");
+        o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
         o.optional = true;
         common.defaultRuleSetUpdateInterval.forEach(item => {
@@ -648,8 +648,8 @@ return view.extend({
             return true;
         };
 
-        o = s3.taboption(tabname, form.Value, "proxy", _("Get lists with:"));
-        o.description = _("Use selected proxy or proxy-group to get lists from server.");
+        o = s3.taboption(tabname, form.Value, "proxy", _("Download lists through:"));
+        o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");
         o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
@@ -661,10 +661,10 @@ return view.extend({
         };
 
         tabname = "directbasic_tab";
-        s3.tab(tabname, _("Manual"));
+        s3.tab(tabname, _("Custom rules"));
 
         o = s3.taboption(tabname, form.DynamicList, "additional_domain_direct", _("Domain suffix:"));
-        o.description = _("DOMAIN-SUFFIX rule to pass in DIRECT (Example: google.com).");
+        o.description = _("Traffic to domains matching this suffix will bypass the proxy (example: google.com).");
         o.placeholder = "domain.tld";
         o.optional = true;
         o.editable = true;
@@ -673,20 +673,20 @@ return view.extend({
         };
 
         o = s3.taboption(tabname, form.DynamicList, "additional_srcip_direct", _("Source IPv4 CIDR:"));
-        o.description = _("SRC-IP-CIDR rule to pass in DIRECT (Example: 192.168.31.212/32). IPV4 only right now.");
+        o.description = _("Traffic from this local IPv4 address or subnet will bypass the proxy (example: 192.168.31.212/32).");
         o.placeholder = "192.168.31.212/32";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
         o = s3.taboption(tabname, form.DynamicList, "additional_destip_direct", _("IPv4 CIDR:"));
-        o.description = _("IP-CIDR rule to pass in DIRECT (Example: 1.1.1.1/32). IPV4 only right now.");
+        o.description = _("Traffic to this IPv4 address or subnet will bypass the proxy (example: 1.1.1.1/32).");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
-        s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("REJECT rules:"), _("Additional rules for REJECT rules. Will be handled before proxies and proxy groups."));
+        s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("Block rules:"), _("Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."));
         s4.addremove = false;
 
         tabname = "rejectrules_tab";
@@ -696,10 +696,10 @@ return view.extend({
         result.blockRulesetsItems.forEach(item => {
             o.value(item.yamlName, item.name);
         });
-        o.description = _("Predefined RULE-SET lists with ads/badware. Select those you want to block with the proxy. Leave empty if you don't want to block anything.");
+        o.description = _("Ready-made blocklists for ads and harmful sites. Matching traffic will be blocked. Choose the ones you want to use, or leave this empty.");
 
-        o = s4.taboption(tabname, form.Value, "proxy", _("Get lists with:"));
-        o.description = _("Use selected proxy or proxy-group to get lists from server.");
+        o = s4.taboption(tabname, form.Value, "proxy", _("Download lists through:"));
+        o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");
         o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
@@ -711,10 +711,10 @@ return view.extend({
         };
 
         tabname = "rejectmanualrules_tab";
-        s4.tab(tabname, _("Manual"));
+        s4.tab(tabname, _("Custom rules"));
 
         o = s4.taboption(tabname, form.DynamicList, "additional_domain_blockroute", _("Domain suffix:"));
-        o.description = _("DOMAIN-SUFFIX rule to block with proxy (Example: google.com).");
+        o.description = _("Traffic to domains matching this suffix will be blocked (example: google.com).");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.editable = true;
@@ -723,19 +723,19 @@ return view.extend({
         };
 
         o = s4.taboption(tabname, form.DynamicList, "additional_destip_blockroute", _("IPv4 CIDR:"));
-        o.description = _("IP-CIDR rule to block with proxy (Example: 1.1.1.1/32). IPv4 only right now.");
+        o.description = _("Traffic to this IPv4 address or subnet will be blocked (example: 1.1.1.1/32).");
         o.placeholder = "8.8.8.8/32";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
-        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mixed port rule:"), _("Additional settings for the mixed port. Use it to override or enforce specific behavior."));
+        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Shared port rule:"), _("Extra settings for traffic that arrives through the shared proxy port. Use this when that port should behave differently from the default route."));
         smp.addremove = false;
 
         tabname = "mixedportbasic_tab";
         smp.tab(tabname, _("Basic"));
 
-        o = smp.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
+        o = smp.taboption(tabname, form.Value, "exit_rule", _("Send traffic to:"));
         common.endRuleOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
@@ -748,13 +748,13 @@ return view.extend({
             return true;
         };
 
-        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Final rule:"), _("Additional settings for the final rules applied after all others. Use it to override or enforce specific behaviors."));
+        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Default rule:"), _("Used when no other rule matches. This is the fallback action for the remaining traffic."));
         s5.addremove = false;
 
         tabname = "finalbasic_tab";
         s5.tab(tabname, _("Basic"));
 
-        optionFinal = s5.taboption(tabname, form.Value, "exit_rule", _("Destination:"));
+        optionFinal = s5.taboption(tabname, form.Value, "exit_rule", _("Send traffic to:"));
         optionFinal.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
         optionFinal.value(common.endRuleOptions[2].value, common.endRuleOptions[2].text);
         optionFinal.default = common.endRuleOptions[0].value;

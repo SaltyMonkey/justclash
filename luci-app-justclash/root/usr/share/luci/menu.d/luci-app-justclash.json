@@ -48,7 +48,7 @@
         }
     },
     "admin/services/justclash/statistic": {
-        "title": "Statistic",
+        "title": "Statistics",
         "order": 40,
         "action": {
             "type": "view",

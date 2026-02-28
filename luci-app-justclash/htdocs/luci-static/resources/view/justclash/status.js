@@ -97,13 +97,13 @@ const createStatusGrid = (results, dynamicElements) => {
     return E("div", {}, [
         E("div", { class: "jc-grid-top" }, [
             createCard("🚀", _("Service"), dynamicElements.serviceBadge),
-            createCard("⚡", _("Autostart"), dynamicElements.autoBadge),
-            createCard("💻", _("Device model"), results.infoDevice),
-            createCard("✨", _("System version"), results.infoOpenWrt),
+            createCard("⚡", _("Start on boot"), dynamicElements.autoBadge),
+            createCard("💻", _("Router model"), results.infoDevice),
+            createCard("✨", _("OpenWrt version"), results.infoOpenWrt),
         ]),
         E("div", { class: "jc-grid-bottom" }, [
-            createCard("🌐", _("Latest version"), results.infoOnlinePackage),
-            createCard("📦", _("Service version"), results.infoPackage),
+            createCard("🌐", _("Latest release"), results.infoOnlinePackage),
+            createCard("📦", _("Installed version"), results.infoPackage),
             createCard("🎨", _("LuCI version"), common.justclashLuciVersion),
             createCard("😸", _("Mihomo core"), results.infoCore),
         ])
@@ -183,7 +183,7 @@ const showExecModalHandler = (title, warning, command, args) => async () => {
         const res = await fs.exec(command, args);
         ui.showModal(title, [
             ...warn,
-            E("pre", { class: "jc-modal-pre" }, res.stdout || _("No output")),
+            E("pre", { class: "jc-modal-pre" }, res.stdout || _("No response")),
             E("div", { class: "jc-modal-actions" }, [
                 E("button", {
                     class: `cbi-button ${buttons.ACTION}`,
@@ -256,7 +256,7 @@ return view.extend({
         const actionHandler = (action, timeoutMs) => async () => {
             if (actionInProgress) return;
             actionInProgress = true;
-            ui.showModal(_("Executing command..."), [E("p", _("Please wait."))]);
+            ui.showModal(_("Running command..."), [E("p", _("Please wait."))]);
             try {
                 await fs.exec(common.initdPath, [action]);
                 if (timeoutMs) await asyncTimeout(timeoutMs);
@@ -279,7 +279,7 @@ return view.extend({
 
         const statusGrid = createStatusGrid(results, dynamicElements);
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Service status:")),
+            E("h3", { class: "cbi-section-title" }, _("Current status:")),
             statusGrid
         ]);
 
@@ -295,11 +295,11 @@ return view.extend({
         ]);
 
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Diagnostic"), showExecModalHandler(_("Diagnostic"), false, common.binPath, ["diag_report"])),
-            createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update Mihomo"), showExecModalHandler(_("Update Mihomo"), false, common.binPath, ["core_update"])),
-            createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Mihomo config"), showExecModalHandler(_("Mihomo configuration"), _("Do not show your mihomo config to anyone!"), common.binPath, ["diag_mihomo_config"])),
-            createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Service config"), showExecModalHandler(_("Service configuration"), _("Do not show your service config to anyone!"), common.binPath, ["diag_service_config"])),
-            createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showExecModalHandler(_("Update service data"), false, common.binPath, ["service_data_update"]))
+            createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), false, common.binPath, ["diag_report"])),
+            createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showExecModalHandler(_("Update Mihomo core"), false, common.binPath, ["core_update"])),
+            createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), _("Do not share your Mihomo config with anyone."), common.binPath, ["diag_mihomo_config"])),
+            createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Show service config"), showExecModalHandler(_("Service config"), _("Do not share your service config with anyone."), common.binPath, ["diag_service_config"])),
+            createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Refresh service data"), showExecModalHandler(_("Refresh service data"), false, common.binPath, ["service_data_update"]))
         ]);
 
         const style = E("style", {}, `

@@ -5,7 +5,7 @@
 "require view.justclash.common as common";
 
 const NO_DATA = _("No data");
-const NO_LOGS = _("No logs");
+const NO_LOGS = _("No log entries");
 
 let logsUpdating = false; // Защита от гонки
 
@@ -76,7 +76,7 @@ const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs, lastFetch
 
         if (lastFetchLabel) {
             const now = new Date();
-            lastFetchLabel.textContent = _("Last fetch: ") + now.toLocaleString();
+            lastFetchLabel.textContent = _("Last updated: ") + now.toLocaleString();
         }
 
         rawLogs.value = res.stdout || NO_LOGS;
@@ -109,17 +109,17 @@ return view.extend({
             change: () => renderLogLines(logContainer, rawLogs.value, reverseCheckbox.checked)
         });
 
-        const lastFetchLabel = E("span", { class: "jc-ml jc-log-fetch-label" }, [_("Last fetch: ") + NO_DATA]);
+        const lastFetchLabel = E("span", { class: "jc-ml jc-log-fetch-label" }, [_("Last updated: ") + NO_DATA]);
 
         const refreshBtn = E("button", {
             class: "cbi-button cbi-button-positive",
             click: () => updateLogs(logContainer, refreshBtn, reverseCheckbox, rawLogs, lastFetchLabel)
-        }, [_("Update")]);
+        }, [_("Refresh")]);
 
         const tailBtn = E("button", {
             class: "cbi-button cbi-button-neutral",
             click: () => { logContainer.scrollTop = logContainer.scrollHeight; },
-        }, [_("To bottom")]);
+        }, [_("Scroll to bottom")]);
 
         const copyBtn = E("button", {
             class: "cbi-button cbi-button-action",
@@ -128,14 +128,14 @@ return view.extend({
                 copyToClipboard(rawLogs.value || "");
                 ui.addNotification(null, E("p", _("Data copied to clipboard")), "success", 3000);
             },
-        }, [_("Copy logs")]);
+        }, [_("Copy log")]);
 
         const topBtn = E("button", {
             class: "cbi-button cbi-button-neutral",
             click: () => { logContainer.scrollTop = 0; },
-        }, [_("To top")]);
+        }, [_("Scroll to top")]);
 
-        const reverseLabel = E("label", { for: "reverseLogs", class: "cbi-checkbox-label" }, [_("Reversed Logs")]);
+        const reverseLabel = E("label", { for: "reverseLogs", class: "cbi-checkbox-label" }, [_("Newest first")]);
 
         const settingsBar = E("div", { class: "cbi-page-actions jc-actions" }, [reverseLabel, reverseCheckbox, lastFetchLabel]);
         const buttonBar = E("div", { class: "cbi-page-actions jc-actions" }, [refreshBtn, tailBtn, copyBtn]);
@@ -188,7 +188,7 @@ return view.extend({
 
         return E("div", { class: "cbi-section fade-in" }, [
             style,
-            E("h3", { class: "cbi-section-title" }, _("Logs view")),
+            E("h3", { class: "cbi-section-title" }, _("Logs")),
             buttonBar,
             settingsBar,
             logContainer,

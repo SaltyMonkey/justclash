@@ -21,7 +21,7 @@ return baseclass.extend({
         { value: "25", text: _("Every 25 seconds") },
         { value: "35", text: _("Every 35 seconds") },
         { value: "45", text: _("Every 45 seconds") },
-        { value: "60", text: _("Every 60 seconds") },
+        { value: "60", text: _("Every 1 minute") },
     ],
     defaultNtpTimeoutCheckValuesSec: [
         { value: "60", text: _("Every minute") },
@@ -69,8 +69,8 @@ return baseclass.extend({
         { value: "100", text: _("100 milliseconds") },
     ],
     defaultHealthCheckResultCode: [
-        { value: "200", text: _("Server code 200") },
-        { value: "204", text: _("Server code 204") },
+        { value: "200", text: _("Response code 200") },
+        { value: "204", text: _("Response code 204") },
     ],
     defaultHealthCheckTimeoutMs: [
         { value: "1000", text: _("1 second") },
@@ -387,7 +387,7 @@ return baseclass.extend({
     //for autogeneration, titles luci-app-justclash.json
     stub_status_tab: _("Status"),
     stub_logs_tab: _("Logs"),
-    stub_statistic_tab: _("Statistic"),
+    stub_statistic_tab: _("Statistics"),
     stub_routing_tab: _("Routing"),
     stub_service_tab: _("Service"),
     stub_proxy_tab: _("Proxy")
