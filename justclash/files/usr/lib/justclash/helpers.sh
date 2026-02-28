@@ -18,16 +18,60 @@ json_escape() {
     sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
 }
 
+yaml_quote() {
+    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C tr -d '[:space:][:cntrl:]' | sed 's/\\/\\\\/g; s/"/\\"/g')"
+}
+
+yaml_quote_soft() {
+    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C tr -d '[:cntrl:]' | sed 's/\\/\\\\/g; s/"/\\"/g')"
+}
+
+format_uci_bool_as_yaml() {
+    case "$1" in
+        1|yes|on|true) echo "true" ;;
+        *) echo "false" ;;
+    esac
+}
+
+format_uci_list_as_json_array() {
+    local section_name="$1"
+    local list_name="$2"
+    local add_custom="$3"
+    local result=""
+    local values
+
+    config_get values "$section_name" "$list_name"
+
+    [ -z "$values" ] && {
+        echo "[]"
+        return
+    }
+
+    for val in $values; do
+        [ -n "$val" ] && {
+            val=$(printf '%s' "$val" | sed 's/"/\\"/g')
+            [ -n "$add_custom" ] && val="${val}${add_custom}"
+            if [ -n "$result" ]; then
+                result="${result},\n\"$val\""
+            else
+                result="\"$val\""
+            fi
+        }
+    done
+
+    [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
+}
+
 md5_str() {
     md5sum | awk '{print $1}'
 }
 
 spaces_to_commas() {
-    sed 's/[[:space:]]\+/, /g'
+    LC_ALL=C sed 's/[[:space:]]\+/, /g'
 }
 
 trim() {
-    sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+    LC_ALL=C sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
 list_to_json_array() {

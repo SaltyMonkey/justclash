@@ -686,35 +686,6 @@ systemlogs() {
     return 0
 }
 
-simple_uci_list_to_json_arr() {
-    local section_name="$1"
-    local list_name="$2"
-    local add_custom="$3"
-    local result=""
-    local values
-
-    config_get values "$section_name" "$list_name"
-
-    [ -z "$values" ] && {
-        echo "[]"
-        return
-    }
-
-    for val in $values; do
-        [ -n "$val" ] && {
-            val=$(printf '%s' "$val" | sed 's/"/\\"/g')
-            [ -n "$add_custom" ] && val="${val}${add_custom}"
-            if [ -n "$result" ]; then
-                result="${result},\n\"$val\""
-            else
-                result="\"$val\""
-            fi
-        }
-    done
-
-    [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
-}
-
 lookup_many_rulesets_full() {
     local ruleset_content="$1"
     local keys="$2"
@@ -732,13 +703,6 @@ lookup_many_rulesets_full() {
             print $0
         }
     '
-}
-
-ucibool_to_yaml_bool () {
-    case "$1" in
-        1|yes|on|true) echo "true" ;;
-        *) echo "false" ;;
-    esac
 }
 
 handle_proxy_section() {
@@ -824,6 +788,7 @@ handle_proxy_section() {
             format="${rest%%|*}"
             url="${rest#*|}"
 
+            # shellcheck disable=SC2249
             case "$added_rulesets" in
                 *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
             esac
@@ -994,7 +959,7 @@ handle_proxy_group_section() {
                         \"interval\":$interval,\
                         \"timeout\":$check_timeout,\
                         \"max-failed-times\":$max_failed_times,\
-                        \"lazy\":$(ucibool_to_yaml_bool "$lazy")"
+                        \"lazy\":$(format_uci_bool_as_yaml "$lazy")"
 
         if [ "$group_type" = "url-test" ]; then
             group_json="$group_json,\"tolerance\":\"$tolerance\""
@@ -1028,6 +993,7 @@ handle_proxy_group_section() {
             format="${rest%%|*}"
             url="${rest#*|}"
 
+            # shellcheck disable=SC2249
             case "$added_rulesets" in
                 *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
             esac
@@ -1200,7 +1166,7 @@ handle_proxy_provider_section() {
 
             entry="$entry,\"health-check\":{\
             \"enable\":true,\
-            \"lazy\":$(ucibool_to_yaml_bool "$health_check_lazy"),\
+            \"lazy\":$(format_uci_bool_as_yaml "$health_check_lazy"),\
             \"url\":\"$(json_escape "$health_check_url")\",\
             \"expected-status\":$health_check_expected_status,\
             \"interval\":$health_check_interval,\
@@ -1254,6 +1220,7 @@ handle_block_rule_section() {
         format="${rest%%|*}"
         url="${rest#*|}"
 
+        # shellcheck disable=SC2249
         case "$added_blocklists" in
             *"|$val|"*) log warn "Skipping duplicated ruleset: $val"; continue ;;
         esac
@@ -1351,6 +1318,7 @@ handle_direct_rule_section() {
         format="${rest%%|*}"
         url="${rest#*|}"
 
+        # shellcheck disable=SC2249
         case "$added_rulesets" in
             *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
         esac
@@ -1518,49 +1486,38 @@ core_generate_yaml() {
     config_get use_mixed_port proxy use_mixed_port
     config_get mixed_port proxy mixed_port
     config_get_bool unified_delay proxy unified_delay
-    unified_delay=$(ucibool_to_yaml_bool "$unified_delay")
     config_get_bool tcp_concurrent proxy tcp_concurrent
-    tcp_concurrent=$(ucibool_to_yaml_bool "$tcp_concurrent")
     config_get global_client_fingerprint proxy global_client_fingerprint
     config_get keep_alive_idle proxy keep_alive_idle
     config_get keep_alive_interval proxy keep_alive_interval
     config_get global_ua proxy global_ua
     config_get_bool etag_support proxy etag_support
-    etag_support=$(ucibool_to_yaml_bool "$etag_support")
     config_get_bool profile_store_selected proxy profile_store_selected
-    profile_store_selected=$(ucibool_to_yaml_bool "$profile_store_selected")
     config_get_bool profile_store_fake_ip proxy profile_store_fake_ip
-    profile_store_fake_ip=$(ucibool_to_yaml_bool "$profile_store_fake_ip")
     config_get_bool core_ntp_enabled proxy core_ntp_enabled
-    core_ntp_enabled=$(ucibool_to_yaml_bool "$core_ntp_enabled")
     config_get core_ntp_server proxy core_ntp_server
     config_get core_ntp_port proxy core_ntp_port
     config_get core_ntp_interval proxy core_ntp_interval
     config_get_bool core_ntp_write_system proxy core_ntp_write_system
-    core_ntp_write_system=$(ucibool_to_yaml_bool "$core_ntp_write_system")
     config_get dns_listen_port proxy dns_listen_port
     config_get dns_cache_max_size proxy dns_cache_max_size
     config_get_bool use_hosts proxy use_hosts
-    use_hosts=$(ucibool_to_yaml_bool "$use_hosts")
     config_get_bool use_system_hosts proxy use_system_hosts
-    use_system_hosts=$(ucibool_to_yaml_bool "$use_system_hosts")
     config_get fake_ip_filter_mode proxy fake_ip_filter_mode
     config_get fake_ip_range proxy fake_ip_range
     config_get fake_ip_ttl proxy fake_ip_ttl
     config_get_bool sniffer_enable proxy sniffer_enable
-    sniffer_enable=$(ucibool_to_yaml_bool "$sniffer_enable")
     config_get_bool sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
-    sniffer_parse_pure_ip=$(ucibool_to_yaml_bool "$sniffer_parse_pure_ip")
-    default_nameserver=$(simple_uci_list_to_json_arr proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true")
-    direct_nameserver=$(simple_uci_list_to_json_arr proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true")
-    proxy_server_nameserver=$(simple_uci_list_to_json_arr proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true")
-    nameserver=$(simple_uci_list_to_json_arr proxy nameserver "#disable-ipv6=true&disable-qtype-65=true")
-    fake_ip_include_domains=$(simple_uci_list_to_json_arr proxy fake_ip_include_domains)
-    fake_ip_exclude_domains=$(simple_uci_list_to_json_arr proxy fake_ip_exclude_domains)
-    sniffer_force_domain=$(simple_uci_list_to_json_arr proxy sniffer_force_domain)
-    sniffer_exclude_domain=$(simple_uci_list_to_json_arr proxy sniffer_exclude_domain)
-    sniffer_skip_src_address=$(simple_uci_list_to_json_arr proxy sniffer_skip_src_address)
-    sniffer_skip_dst_address=$(simple_uci_list_to_json_arr proxy sniffer_skip_dst_address)
+    default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true")
+    direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true")
+    proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true")
+    nameserver=$(format_uci_list_as_json_array proxy nameserver "#disable-ipv6=true&disable-qtype-65=true")
+    fake_ip_include_domains=$(format_uci_list_as_json_array proxy fake_ip_include_domains)
+    fake_ip_exclude_domains=$(format_uci_list_as_json_array proxy fake_ip_exclude_domains)
+    sniffer_force_domain=$(format_uci_list_as_json_array proxy sniffer_force_domain)
+    sniffer_exclude_domain=$(format_uci_list_as_json_array proxy sniffer_exclude_domain)
+    sniffer_skip_src_address=$(format_uci_list_as_json_array proxy sniffer_skip_src_address)
+    sniffer_skip_dst_address=$(format_uci_list_as_json_array proxy sniffer_skip_dst_address)
 
     rule_mixed=$(handle_mixed_port_rules_section)
     rule_final=$(handle_final_rule_section)
@@ -1684,39 +1641,39 @@ EOF
 
     if [ "$use_zashboard" -eq 1 ]; then
         cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-external-ui-name: $DASHBOARD_NAME
-external-ui: $DASHBOARD_PATH
-external-ui-url: "$DASHBOARD_DEFAULT_URL"
+external-ui-name: $(yaml_quote "$DASHBOARD_NAME")
+external-ui: $(yaml_quote "$DASHBOARD_PATH")
+external-ui-url: $(yaml_quote "$DASHBOARD_DEFAULT_URL")
 EOF
     fi
 
     cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
 ipv6: false
-log-level: $log_level
+log-level: $(yaml_quote "$log_level")
 tproxy-port: $tproxy_port
-unified-delay: $unified_delay
-tcp-concurrent: $tcp_concurrent
-external-controller: $router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT
-secret: $api_password
+unified-delay: $(format_uci_bool_as_yaml "$unified_delay")
+tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")
+external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")
+secret: $(yaml_quote "$api_password")
 routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")
-global-client-fingerprint: $global_client_fingerprint
-global-ua: $global_ua
+global-client-fingerprint: $(yaml_quote "$global_client_fingerprint")
+global-ua: $(yaml_quote_soft "$global_ua")
 find-process-mode: off
 geodata-mode: false
-etag-support: $etag_support
+etag-support: $(format_uci_bool_as_yaml "$etag_support")
 
 keep-alive-idle: $keep_alive_idle
 keep-alive-interval: $keep_alive_interval
 
 profile:
-  store-selected: $profile_store_selected
-  store-fake-ip: $profile_store_fake_ip
+  store-selected: $(format_uci_bool_as_yaml "$profile_store_selected")
+  store-fake-ip: $(format_uci_bool_as_yaml "$profile_store_fake_ip")
 
 ntp:
-  enable: $core_ntp_enabled
-  write-to-system: $core_ntp_write_system
-  server: $core_ntp_server
+  enable: $(format_uci_bool_as_yaml "$core_ntp_enabled")
+  write-to-system: $(format_uci_bool_as_yaml "$core_ntp_write_system")
+  server: $(yaml_quote "$core_ntp_server")
   port: $core_ntp_port
   interval: $core_ntp_interval
 
@@ -1724,11 +1681,11 @@ dns:
   enable: true
   cache-algorithm: arc
   cache-max-size: $dns_cache_max_size
-  listen: 127.0.0.1:$dns_listen_port
+  listen: $(yaml_quote "127.0.0.1:$dns_listen_port")
   prefer-h3: false
   ipv6: false
-  use-hosts: $use_system_hosts
-  use-system-hosts: $use_system_hosts
+  use-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")
+  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")
   nameserver-policy: $nameserver_policy
   default-nameserver: $default_nameserver
   nameserver: $nameserver
@@ -1738,13 +1695,13 @@ dns:
   respect-rules: true
   enhanced-mode: fake-ip
   fake-ip-range: $fake_ip_range
-  fake-ip-filter-mode: $fake_ip_filter_mode
+  fake-ip-filter-mode: $(yaml_quote "$fake_ip_filter_mode")
   fake-ip-filter: $fake_ip_filter_data
   fake-ip-ttl: $fake_ip_ttl
 
 sniffer:
-  enable: $sniffer_enable
-  parse-pure-ip: $sniffer_parse_pure_ip
+  enable: $(format_uci_bool_as_yaml "$sniffer_enable")
+  parse-pure-ip: $(format_uci_bool_as_yaml "$sniffer_parse_pure_ip")
   sniff:
     HTTP:
       ports: [$DEFAULT_HTTP_PORT, $DEFAULT_SECONDARY_HTTP_PORT_RANGE-$DEFAULT_SECONDARY_HTTP_PORT_RANGE_END]
@@ -2106,16 +2063,16 @@ core_autorestart_cron_add() {
 core_autorestart_cron_remove() {
     cron_make_if_missing
     if core_autorestart_cron_check > /dev/null; then
-        sed -i "/${INITD_PATH} reload/d" /etc/crontabs/root
+        sed -i "\|${INITD_PATH} reload|d" /etc/crontabs/root
         if /etc/init.d/cron enabled; then
             /etc/init.d/cron restart
             log info "Cron job removed and service restarted" "✅"
         else
             log info "Cron job removed (service not enabled)" "ℹ️"
         fi
-        log info "Core autoupdate cron job removed." "🗑️"
+        log info "Core autorestart cron job removed." "🗑️"
     else
-        log info "Core autoupdate cron job not found." "ℹ️"
+        log info "Core autorestart cron job not found." "ℹ️"
     fi
 }
 

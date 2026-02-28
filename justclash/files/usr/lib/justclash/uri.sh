@@ -124,6 +124,7 @@ parse_ss_url() {
     local userinfo hostport method password server port decoded query_part
     query_part=""
 
+    # shellcheck disable=SC2249
     case "$link" in *\?*) query_part="${link#*\?}"; link="${link%%\?*}"; esac
 
     if echo "$link" | grep -q '@'; then
@@ -423,6 +424,7 @@ parse_hysteria2_url() {
     local userinfo hostport password server port query_part
     query_part=""
 
+    # shellcheck disable=SC2249
     case "$raw" in *\?*) query_part="${raw#*\?}"; raw="${raw%%\?*}"; esac
 
     if echo "$raw" | grep -q '@'; then
