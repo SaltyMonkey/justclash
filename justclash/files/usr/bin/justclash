@@ -1031,14 +1031,14 @@ handle_proxy_group_section() {
                 local rng_name=$(printf "%s" "$clean_line" | md5_str)
                 case "$clean_line" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$clean_line" ]; then
                         local escaped_path=$(json_escape "$clean_line")
                         safe_paths_add "$(dirname "$clean_line")"
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         log warn "Path is wrong in custom domain list: $clean_line" "⚠️"
@@ -1060,14 +1060,14 @@ handle_proxy_group_section() {
                 local rng_name=$(printf "%s" "$clean_line" | md5_str)
                 case "$clean_line" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$clean_line" ]; then
                         local escaped_path=$(json_escape "$clean_line")
                         safe_paths_add "$(dirname "$clean_line")"
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
                         log warn "Path is wrong in custom cidr list: $clean_line" "⚠️"
