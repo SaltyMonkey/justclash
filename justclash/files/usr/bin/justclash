@@ -183,9 +183,9 @@ core_validate_yaml() {
     echo "$test_output" | grep -qiF "error"
     grep_error_exit_code=$?
     if [ "$grep_test_exit_code" -eq 0 ] || [ "$app_exit_code" -ne 0 ] || [ "$grep_error_exit_code" -eq 0 ]; then
-        log error "Yaml configuration incorrect!" "❌"
+        log error "Generated YAML configuration is invalid." "❌"
         log error "$test_output" "❌"
-        log error "Mihomo config validation is failed." "❌"
+        log error "Mihomo configuration validation failed." "❌"
         return 1
     fi
     return 0
@@ -194,7 +194,7 @@ core_validate_yaml() {
 start() {
     local skip_environment_checks
 
-    log info "Initializing Justclash service..." "₍^. .^₎⟆"
+    log info "Initializing JustClash service..." "₍^. .^₎⟆"
 
     check_requirement || return 1
 
@@ -204,7 +204,7 @@ start() {
         log info "Checking for conflicts" "⏳"
         check_for_conflicts || return 1
 
-        log info "Checking for non critical conflicts" "⏳"
+        log info "Checking for non-critical conflicts" "⏳"
         check_for_conflicts_warn
 
         log info "Fixing known compatibility problems" "🐞"
@@ -217,16 +217,16 @@ start() {
     log info "Synchronizing system time" "🕒"
     ntp_force_sync
 
-    log info "Modifying SAFE_PATHS env variable" "📦"
+    log info "Updating SAFE_PATHS environment variable" "📦"
     safe_paths_add "$DASHBOARD_PATH"
 
     log info "Preparing Mihomo working directory" "📦"
     core_prepare_workdir
     if [ $? -eq 1 ]; then
-        log info "Generating yaml configuration..." "🐱"
+        log info "Generating YAML configuration..." "🐱"
         core_generate_yaml
 
-        log info "Validating yaml configuration..." "🐱"
+        log info "Validating YAML configuration..." "🐱"
         core_validate_yaml || return 1
     fi
 
@@ -241,7 +241,7 @@ start() {
 }
 
 stop() {
-    log info "Closing Justclash service..." "⏳"
+    log info "Stopping JustClash service..." "⏳"
 
     log info "Removing tproxy routing and NFTables table" "🔑"
     nf_table_remove
@@ -256,7 +256,7 @@ stop() {
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
     local attempt=0
-    log info "Start with configured retries: $DEFAULT_CORE_RESTART_RETRIES" "🐱"
+    log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries" "🐱"
 
     # shellcheck disable=SC2154
     if [ "$JUSTCLASH_ENV" = "procd" ]; then
@@ -265,17 +265,17 @@ start_core() {
         while [ "$attempt" -lt "$DEFAULT_CORE_RESTART_RETRIES" ]; do
             "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
             exit_code=$?
-            log warn "Procd mode: mihomo exited with code $exit_code" "❌"
+            log warn "Procd mode: Mihomo exited with code $exit_code" "❌"
 
             if [ "$exit_code" -eq 0 ]; then
                 break
             fi
 
             attempt=$((attempt + 1))
-            log error "Procd mode: mihomo crashed, attempt $attempt of $DEFAULT_CORE_RESTART_RETRIES" "❌"
+            log error "Procd mode: Mihomo crashed, attempt $attempt of $DEFAULT_CORE_RESTART_RETRIES" "❌"
 
             if [ "$attempt" -ge "$DEFAULT_CORE_RESTART_RETRIES" ]; then
-                log error "Procd mode:  Failed to restart mihomo after $DEFAULT_CORE_RESTART_RETRIES attempts, exiting" "❌"
+                log error "Procd mode: failed to restart Mihomo after $DEFAULT_CORE_RESTART_RETRIES attempts; exiting" "❌"
                 exit "$exit_code"
             fi
 
@@ -284,9 +284,9 @@ start_core() {
     else
         "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
         exit_code=$?
-        log warn "Manual mode: mihomo exited with code $exit_code" "❌"
+        log warn "Manual mode: Mihomo exited with code $exit_code" "❌"
         if [ "$exit_code" -ne 0 ]; then
-            log error "Manual mode: mihomo crashed, exiting" "❌"
+            log error "Manual mode: Mihomo crashed; exiting" "❌"
             exit "$exit_code"
         fi
     fi
@@ -301,7 +301,7 @@ stop_core() {
         kill $pids 2>/dev/null
         log info "Core process stopped" "🐱"
     else
-        log info "Core isn't running" "🐱"
+        log info "Core process is not running" "🐱"
     fi
 }
 
@@ -475,7 +475,7 @@ dnsmasq_update() {
             server="${server#\'}"
             server="${server%\'}"
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
-                log warn "Dnsmasq save config error: server=127.0.0.1 is already configured. Skip editing DHCP"
+                log warn "dnsmasq already uses 127.0.0.1#${dns_listen_port}; skipping dnsmasq changes."
                 return 1
             fi
         done <<EOF
@@ -501,11 +501,11 @@ EOF
         uci set dhcp.@dnsmasq[0].noresolv="1"
 
         uci commit dhcp
-        log info "DNS configuration has been updated with new settings." "🌐"
+        log info "DNS configuration updated." "🌐"
         /etc/init.d/dnsmasq restart > /dev/null 2>&1
-        log info "Dnsmasq service has been restarted to apply DNS changes." "🔄"
+        log info "dnsmasq restarted to apply DNS changes." "🔄"
     else
-        log info "DNS configuration remains unchanged; update skipped as per configuration rules." "🛠️"
+        log info "Skipping dnsmasq changes because dnsmasq_apply_changes is disabled." "🛠️"
     fi
 
 }
@@ -523,14 +523,14 @@ dnsmasq_restore() {
         config_get dns_listen_port proxy dns_listen_port
         bak_cachesize=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize)
         if [ -z "$bak_cachesize" ]; then
-            log warn "dnsmasq revert: cachesize is unset"
+            log warn "dnsmasq restore: backup cachesize is unset"
         else
             uci set dhcp.@dnsmasq[0].cachesize="$bak_cachesize"
         fi
 
         bak_noresolv=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_noresolv)
         if [ "$bak_noresolv" = "unset" ]; then
-            log warn "dnsmasq revert: noresolv is unset"
+            log warn "dnsmasq restore: backup noresolv is unset"
             uci -q delete dhcp.@dnsmasq[0].noresolv
         else
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
@@ -581,11 +581,11 @@ EOF
         fi
 
         uci commit dhcp
-        log info "DNS configuration has been restored." "🌐"
+        log info "DNS configuration restored." "🌐"
         /etc/init.d/dnsmasq restart > /dev/null 2>&1
-        log info "dnsmasq service has been restarted to apply DNS changes." "🔄"
+        log info "dnsmasq restarted to apply DNS changes." "🔄"
     else
-        log info "DNS configuration remains unchanged; update skipped as per configuration rules." "🛠️"
+        log info "Skipping dnsmasq restore because dnsmasq_apply_changes is disabled." "🛠️"
     fi
 }
 
@@ -825,7 +825,7 @@ EOF
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Path is wrong in custom domain list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom domain list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -854,7 +854,7 @@ EOF
                         [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Path is wrong in custom cidr list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom CIDR list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -929,8 +929,8 @@ handle_proxy_group_section() {
         config_get name "$section" name
         config_get proxies_list "$section" proxies
         config_get providers_list "$section" providers
-        [ -z "$name" ] && { log warn "Skip proxy_group without name: $section" "⚠️"; return; }
-        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log warn "Skip empty proxy_group $name" "⚠️"; return; }
+        [ -z "$name" ] && { log warn "Skipping proxy group without a name: $section" "⚠️"; return; }
+        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log warn "Skipping empty proxy group: $name" "⚠️"; return; }
 
         config_get group_type "$section" group_type
         config_get strategy "$section" strategy
@@ -1030,7 +1030,7 @@ EOF
                         [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Path is wrong in custom domain list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom domain list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -1059,7 +1059,7 @@ EOF
                         [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
                         proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Path is wrong in custom cidr list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom CIDR list: $clean_line" "⚠️"
                         continue
                     fi
                     ;;
@@ -1133,7 +1133,7 @@ handle_proxy_provider_section() {
         config_get override_dialer_proxy "$section" override_dialer_proxy
 
         { [ -z "$name" ] || [ -z "$url" ]; } && {
-            log warn "Skipping proxy_provider without name or subscription" "⚠️"
+        log warn "Skipping proxy provider without a name or subscription" "⚠️"
             return
         }
 
@@ -1352,7 +1352,7 @@ EOF
                     safe_paths_add "$(dirname "$clean_line")"
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
-                    log warn "Path is wrong in custom domain list: $clean_line" "⚠️"
+                    log warn "Invalid path in custom domain list: $clean_line" "⚠️"
                     continue
                 fi
                 ;;
@@ -1378,7 +1378,7 @@ EOF
                     safe_paths_add "$(dirname "$clean_line")"
                     direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
-                    log warn "Path is wrong in custom cidr list: $clean_line" "⚠️"
+                    log warn "Invalid path in custom CIDR list: $clean_line" "⚠️"
                     continue
                 fi
                 ;;
@@ -1735,25 +1735,25 @@ service_data_update() {
     mkdir -p "$ETC_DIR"
     rm -f "$tmp_rulesets_file" "$tmp_block_rulesets_file"
 
-    log info "Downloading RULE-SETs list file" "📥"
+    log info "Downloading ruleset list" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_rulesets_file" "$complete_url" || {
-        log error "Failed to download RULE-SETs list file." "❌"
+        log error "Failed to download the ruleset list." "❌"
         rm -f "$tmp_rulesets_file"
         return 1
     }
     mv -f "$tmp_rulesets_file" "$RULESETS_FILE"
-    log info "RULE-SET list file was updated" "✅"
+    log info "Ruleset list updated." "✅"
 
-    log info "Downloading BLOCK RULE-SETs list file" "📥"
+    log info "Downloading block ruleset list" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_BLOCKS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_block_rulesets_file" "$complete_url" || {
-        log error "Failed to download BLOCK RULE-SETs list file." "❌"
+        log error "Failed to download the block ruleset list." "❌"
         rm -f "$tmp_block_rulesets_file"
         return 1
     }
     mv -f "$tmp_block_rulesets_file" "$RULESETS_BLOCKS_FILE"
-    log info "BLOCK RULE-SETs list file was updated" "✅"
+    log info "Block ruleset list updated." "✅"
 
     return 0
 }
@@ -1771,11 +1771,11 @@ core_prepare_workdir() {
             current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str)
             saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null || echo "")
             if [ "$current_hash" != "$saved_hash" ]; then
-                log info "Outdated $OUTPUT_YAML_CONFIG_PATH was found. Will be recreated." "🐱"
+                log info "Existing $OUTPUT_YAML_CONFIG_PATH is outdated and will be regenerated." "🐱"
                 rm -f "$OUTPUT_YAML_CONFIG_PATH"
                 echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
             else
-                log info "Up-to-date $OUTPUT_YAML_CONFIG_PATH was found. Will not be modified." "🐱"
+                log info "Existing $OUTPUT_YAML_CONFIG_PATH is up to date and will be reused." "🐱"
                 res=0
             fi
         fi
@@ -1785,7 +1785,7 @@ core_prepare_workdir() {
 
     config_get mihomo_persistent_temp_files settings mihomo_persistent_temp_files 0
     if [ "$mihomo_persistent_temp_files" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
-        log info "Generating symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
+        log info "Creating symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
         [ ! -d "$SYMLINKDIR_RULESETS" ] &&  mkdir -p "$SYMLINKDIR_RULESETS"
         ln -sf "$SYMLINKDIR_RULESETS" "$CORE_WORKDIR_RULES_PATH"
@@ -1861,13 +1861,13 @@ core_update() {
     log info "Checking for Mihomo updates (channel: $channel)..." "🔄"
 
     version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
-        log error "Failed to get version.txt URL from GitHub API" "❌"
+        log error "Failed to get the version.txt URL from the GitHub API." "❌"
         return 1
     }
 
     if [ -z "$version_txt_url" ]; then
-        log error "Error: version.txt not found in release assets"
-        log error "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+        log error "Release asset version.txt was not found."
+        log error "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
         return 1
     fi
 
@@ -1875,13 +1875,13 @@ core_update() {
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
         -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p) || {
-        log error "Failed to download version.txt" "❌"
+        log error "Failed to download version.txt." "❌"
         return 1
     }
 
     if [ -z "$latest_ver" ]; then
-       log error "Error happened when trying to receive latest version data."
-       log error "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+       log error "Failed to retrieve the latest version information."
+       log error "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
        return 1
     fi
 
@@ -1889,7 +1889,7 @@ core_update() {
         log warn "Mihomo is not installed. Installing version $latest_ver ($channel)." "⚠️"
         core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log error "Update process can't be finished." "❌"
+            log error "Core update failed." "❌"
             return 1
         fi
         return 0
@@ -1902,14 +1902,14 @@ core_update() {
         log info "Removing current mihomo binary..." "⚠️"
         core_remove
         if [ $? -eq 1 ]; then
-            log error "Update process can't be finished." "❌"
+            log error "Core update failed." "❌"
             return 1
         fi
 
         log info "Updating Mihomo to version $latest_ver ($channel)" "⬆️"
         core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log error "Update process can't be finished." "❌"
+            log error "Core update failed." "❌"
             return 1
         fi
     else
@@ -1920,12 +1920,14 @@ core_update() {
 }
 
 core_download() {
-    local arch file_name base_url param_version version_txt_url download_url
+    local arch file_name base_url param_version version_txt_url download_url tmp_archive_path
     version_txt_url="$1"
     param_version="$2"
+    tmp_archive_path="${CORE_WORKDIR_PATH}/mihomo.gz"
 
     arch=$(detect_arch)
     mkdir -p "$CORE_WORKDIR_PATH"
+    rm -f "$tmp_archive_path"
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
 
@@ -1936,14 +1938,16 @@ core_download() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        --progress-bar -L -o "${CORE_WORKDIR_PATH}/mihomo.gz" "$download_url" || {
-        log error "Failed to download file." "❌"
+        --progress-bar -L -o "$tmp_archive_path" "$download_url" || {
+        rm -f "$tmp_archive_path"
+        log error "Failed to download the Mihomo archive." "❌"
         return 1
     }
 
     log info "Extracting to $CORE_PATH" "⬇️"
-    gunzip -c "${CORE_WORKDIR_PATH}/mihomo.gz" > "$CORE_PATH" || {
-        log error "Failed to extract file." "❌"
+    gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
+        rm -f "$tmp_archive_path"
+        log error "Failed to extract the Mihomo archive." "❌"
         return 1
     }
 
@@ -1954,8 +1958,8 @@ core_download() {
     fi
 
     log info "Cleaning up temporary files" "🧹"
-    if ! rm -f "${CORE_WORKDIR_PATH}/mihomo.gz"; then
-        log error "Failed to clean up temporary file: ${CORE_WORKDIR_PATH}/mihomo.gz" "❌"
+    if ! rm -f "$tmp_archive_path"; then
+        log error "Failed to clean up temporary file: $tmp_archive_path" "❌"
     fi
 }
 
@@ -2082,8 +2086,6 @@ core_autorestart_cron_remove() {
 }
 
 diag_nft() {
-    clog info "Checking for 'nft' command..."
-
     clog info "Verifying existence of NFTables table '$NF_TABLE_NAME'..."
     if ! nft list table inet "$NF_TABLE_NAME" >/dev/null 2>&1; then
         clog error "Table '$NF_TABLE_NAME' not found. Please create the required NFTables table." "❌"
@@ -2101,7 +2103,7 @@ diag_nft() {
 diag_route() {
     clog info "Verifying existence of route rule..."
     if ! ip rule list | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup $NF_ROUTE_TABLE"; then
-        clog error "Route rule 'ip rule add fwmark ""$NF_TABLE_FWMARK_FINAL"" table $NF_ROUTE_TABLE' is missing!" "❌"
+        clog error "Required route rule is missing: ip rule add fwmark $NF_TABLE_FWMARK_FINAL table $NF_ROUTE_TABLE" "❌"
     fi
     ip rule list
 
@@ -2159,7 +2161,7 @@ diag_external_resolver() {
         clog error "External DNS query failed" "❌"
         return 1
     else
-        clog info "$ips"
+        clog info "Resolved addresses: $ips"
         clog info "External DNS query successful" "✅"
         return 0
     fi
@@ -2182,7 +2184,7 @@ diag_icmp() {
         clog info "Ping to ${target} is successful" "✅"
         clog info "$ping_output"
     else
-        clog error "Ping to ${target} is failed" "❌"
+        clog error "Ping to ${target} failed" "❌"
         clog error "$ping_output"
     fi
 }
@@ -2269,31 +2271,31 @@ config_show() {
 
 config_reset() {
     if [ ! -f "$DEFAULT_CONFIG_PATH" ]; then
-        clog error "Default config file is missing. Can't use restore functionality"
+        clog error "Default configuration file is missing. Restore is unavailable."
         return 1
     fi
 
-    clog info "Restoring justclash settings..."
+    clog info "Restoring JustClash settings..."
 
     rm -f "$CONFIG_BAK_PATH"
 
     if [ ! -f "$CONFIG_PATH" ]; then
-        clog error "Current config file not found, nothing to backup"
+        clog error "Current configuration file was not found; nothing to back up."
     else
         if ! mv "$CONFIG_PATH" "$CONFIG_BAK_PATH"; then
-            clog error "Failed to backup config file"
+            clog error "Failed to back up the current configuration file."
             return 1
         else
-            clog info "Old config file can be found at path ${CONFIG_BAK_PATH}"
+            clog info "Previous configuration file was saved to ${CONFIG_BAK_PATH}"
         fi
     fi
 
     if ! cp "$DEFAULT_CONFIG_PATH" "$CONFIG_PATH"; then
-        clog error "Failed to restore default config"
+        clog error "Failed to restore the default configuration."
         return 1
     fi
 
-    clog info "Default settings will be applied at next service restart..."
+    clog info "Default settings will be applied on the next service restart."
     return 0
 }
 
