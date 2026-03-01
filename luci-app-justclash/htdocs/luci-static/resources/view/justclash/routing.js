@@ -26,7 +26,7 @@ return view.extend({
                     .filter(item => item.name && item.yamlName);
             }
         } catch (e) {
-            ui.addTimeLimitedNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), NOTIFICATION_TIMEOUT, "error");
+            ui.addNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), "error");
             console.error("Error loading rulesets:", e);
         }
 

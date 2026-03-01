@@ -133,9 +133,19 @@ return view.extend({
     handleReset: null,
 
     load: async function () {
-        await uci.load("justclash");
-        let token = uci.get("justclash", "proxy", "api_password") || "";
-        return { token };
+        try {
+            await uci.load("justclash");
+            const token = uci.get("justclash", "proxy", "api_password") || "";
+            return { token, configLoadFailed: false };
+        } catch (e) {
+            console.error("Failed to load justclash config", e);
+            ui.addNotification(
+                _("Error"),
+                E("p", _("Failed to load rulesets") + ": " + (e.message || e)),
+                "danger"
+            );
+            return { token: "", configLoadFailed: true };
+        }
     },
 
     render: function (result) {
@@ -233,69 +243,72 @@ return view.extend({
             if (isNew) highlightNewRow(row);
         }
 
-        // WS Connections
-        wsCleanups.push(createWebSocket({
-            path: "/connections",
-            token: result.token,
-            containerCheck: () => document.body.contains(table),
-            onMessage: (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    const conns = Array.isArray(data.connections) ? data.connections : [];
-                    const seenKeys = new Set();
-                    for (const conn of conns) {
-                        seenKeys.add(conn.id);
-                        updateRow(conn);
-                    }
-                    for (const key of rowMap.keys()) {
-                        if (!seenKeys.has(key)) {
-                            const row = rowMap.get(key);
-                            if (row.parentNode) row.parentNode.removeChild(row);
-                            rowMap.delete(key);
-                            connectionsData.delete(key);
+        if (!result.configLoadFailed) {
+            // WS Connections
+            wsCleanups.push(createWebSocket({
+                path: "/connections",
+                token: result.token,
+                containerCheck: () => document.body.contains(table),
+                onMessage: (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        const conns = Array.isArray(data.connections) ? data.connections : [];
+                        const seenKeys = new Set();
+                        for (const conn of conns) {
+                            seenKeys.add(conn.id);
+                            updateRow(conn);
                         }
-                    }
-                    if (rowMap.size === 0 && !noConnectionsMsg) {
-                        noConnectionsMsg = E("div", { class: "flex-row no-data" }, [E("div", {}, _("No active connections"))]);
-                        table.appendChild(noConnectionsMsg);
-                    } else if (noConnectionsMsg) {
-                        noConnectionsMsg.parentNode?.removeChild(noConnectionsMsg);
-                        noConnectionsMsg = null;
-                    }
-                } catch (e) { console.warn("WS parsing error:", e); }
-            }
-        }));
+                        for (const key of rowMap.keys()) {
+                            if (!seenKeys.has(key)) {
+                                const row = rowMap.get(key);
+                                if (row.parentNode) row.parentNode.removeChild(row);
+                                rowMap.delete(key);
+                                connectionsData.delete(key);
+                            }
+                        }
+                        if (rowMap.size === 0 && !noConnectionsMsg) {
+                            noConnectionsMsg = E("div", { class: "flex-row no-data" }, [E("div", {}, _("No active connections"))]);
+                            table.appendChild(noConnectionsMsg);
+                        } else if (noConnectionsMsg) {
+                            noConnectionsMsg.parentNode?.removeChild(noConnectionsMsg);
+                            noConnectionsMsg = null;
+                        }
+                    } catch (e) { console.warn("WS parsing error:", e); }
+                }
+            }));
 
-        // WS Traffic
-        wsCleanups.push(createWebSocket({
-            path: "/traffic",
-            token: result.token,
-            containerCheck: () => document.body.contains(container),
-            onMessage: (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    statsData.traffic = data;
-                    trafficUpEl.textContent = formatSpeed(data.up);
-                    trafficDownEl.textContent = formatSpeed(data.down);
-                    trafficUpTotalEl.textContent = formatBytes(data.upTotal);
-                    trafficDownTotalEl.textContent = formatBytes(data.downTotal);
-                } catch (e) {}
-            }
-        }));
+            // WS Traffic
+            wsCleanups.push(createWebSocket({
+                path: "/traffic",
+                token: result.token,
+                containerCheck: () => document.body.contains(container),
+                onMessage: (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        statsData.traffic = data;
+                        trafficUpEl.textContent = formatSpeed(data.up);
+                        trafficDownEl.textContent = formatSpeed(data.down);
+                        trafficUpTotalEl.textContent = formatBytes(data.upTotal);
+                        trafficDownTotalEl.textContent = formatBytes(data.downTotal);
+                    } catch (e) { }
+                }
+            }));
 
-        // WS Memory (только inuse)
-        wsCleanups.push(createWebSocket({
-            path: "/memory",
-            token: result.token,
-            containerCheck: () => document.body.contains(container),
-            onMessage: (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    statsData.memory = data;
-                    memoryInuseEl.textContent = formatBytes(data.inuse);
-                } catch (e) {}
-            }
-        }));
+            // WS Memory (только inuse)
+            wsCleanups.push(createWebSocket({
+                path: "/memory",
+                token: result.token,
+                containerCheck: () => document.body.contains(container),
+                onMessage: (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        statsData.memory = data;
+                        memoryInuseEl.textContent = formatBytes(data.inuse);
+                    } catch (e) { }
+                }
+            }));
+
+        }
 
         const style = E("style", {}, `
             .jc-cards-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:14px; }

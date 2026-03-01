@@ -181,6 +181,29 @@ return view.extend({
         });
         o.default = common.defaultFakeIPTtlValues[0].value;
 
+        o = s.taboption(tabname, form.DynamicList, "nameserver_policy", _("Nameserver policy:"));
+        o.description = _("Domain-specific DNS policy in the format domain/nameserver (example: +.arpa/10.0.0.1).");
+        o.rmempty = false;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
+
+            const separatorIndex = value.indexOf("/");
+            if (separatorIndex <= 0 || separatorIndex === value.length - 1)
+                return _("Invalid policy format. Use domain/nameserver.");
+
+            const matcher = value.slice(0, separatorIndex).trim();
+            const nameserver = value.slice(separatorIndex + 1).trim();
+
+            if (!matcher)
+                return _("Domain matcher cannot be empty.");
+
+            if ((!common.isValidIpv4(nameserver)) && (!common.isValidDomainProto(nameserver)))
+                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
+
+            return true;
+        };
+
         o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
         o.description = _("Default nameservers used at startup. Recommended to use UDP ones.");
         o.rmempty = false;
