@@ -1376,6 +1376,18 @@ msgstr "Используйте формат cron, чтобы указать вр
 msgid "Enabled"
 msgstr "Включен"
 
+#: htdocs/luci-static/resources/view/justclash/routing.js:77
+msgid "Enable or disable this proxy entry without removing it."
+msgstr "Включите или отключите этот прокси, не удаляя его."
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:229
+msgid "Enable or disable this proxy provider without removing it."
+msgstr "Включите или отключите этого провайдера прокси, не удаляя его."
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:394
+msgid "Enable or disable this proxy group without removing it."
+msgstr "Включите или отключите эту группу прокси, не удаляя ее."
+
 #: htdocs/luci-static/resources/view/justclash/status.js:66
 msgid "Running"
 msgstr "Запущен"

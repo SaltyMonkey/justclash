@@ -68,9 +68,15 @@ return view.extend({
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
         s.anonymous = true;
         s.addremove = true;
+        s.sortable = true;
 
         tabname = "proxiesbasic_tab";
         s.tab(tabname, _("Basic"));
+
+        o = s.taboption(tabname, form.Flag, "enabled", _("Enabled"));
+        o.description = _("Enable or disable this proxy entry without removing it.");
+        o.default = o.enabled;
+        o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
@@ -214,9 +220,15 @@ return view.extend({
         spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies. "));
         spp.anonymous = true;
         spp.addremove = true;
+        spp.sortable = true;
 
         tabname = "proxyprovidersbasic_tab";
         spp.tab(tabname, _("Basic"));
+
+        o = spp.taboption(tabname, form.Flag, "enabled", _("Enabled"));
+        o.description = _("Enable or disable this proxy provider without removing it.");
+        o.default = o.enabled;
+        o.rmempty = false;
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.rmempty = false;
@@ -373,9 +385,15 @@ return view.extend({
         s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing)."));
         s2.anonymous = true;
         s2.addremove = true;
+        s2.sortable = true;
 
         tabname = "proxygroupsbasic_tab";
         s2.tab(tabname, _("Basic"));
+
+        o = s2.taboption(tabname, form.Flag, "enabled", _("Enabled"));
+        o.description = _("Enable or disable this proxy group without removing it.");
+        o.default = o.enabled;
+        o.rmempty = false;
 
         o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");

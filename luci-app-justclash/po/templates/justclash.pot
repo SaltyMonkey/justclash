@@ -1389,6 +1389,18 @@ msgstr ""
 msgid "Enabled"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/routing.js:77
+msgid "Enable or disable this proxy entry without removing it."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:229
+msgid "Enable or disable this proxy provider without removing it."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:394
+msgid "Enable or disable this proxy group without removing it."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/status.js:66
 msgid "Running"
 msgstr ""
