@@ -1471,6 +1471,7 @@ core_generate_yaml() {
     local dns_listen_port use_system_hosts fake_ip_filter_mode fake_ip_range fake_ip_ttl dns_cache_max_size
     local etag_support global_ua
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_include_domains fake_ip_exclude_domains fake_ip_filter_data
+    local nameserver_policy_custom
     local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_direct
     local proxies proxy_groups rule_providers proxy_providers names_suffixes_proxy_groups names_suffixes_proxies names_rulesets_proxy_groups names_rulesets_proxies
     local names_rulesets_block_policy names_suffixes_block_policy names_rulesets_direct names_suffixes_direct
@@ -1520,6 +1521,7 @@ core_generate_yaml() {
     direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true")
     proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true")
     nameserver=$(format_uci_list_as_json_array proxy nameserver "#disable-ipv6=true&disable-qtype-65=true")
+    nameserver_policy_custom=$(format_uci_list_as_json_array proxy nameserver_policy)
     fake_ip_include_domains=$(format_uci_list_as_json_array proxy fake_ip_include_domains)
     fake_ip_exclude_domains=$(format_uci_list_as_json_array proxy fake_ip_exclude_domains)
     sniffer_force_domain=$(format_uci_list_as_json_array proxy sniffer_force_domain)
@@ -1587,10 +1589,23 @@ core_generate_yaml() {
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
 
     nameserver_policy=$(jq -n \
+        --arg custom_entries "$nameserver_policy_custom" \
         --arg rulesets "$names_rulesets_block_policy" \
         --arg suffixes "$names_suffixes_block_policy" \
         '
         {} |
+        if $custom_entries != "[]" then
+            . + (
+                reduce ($custom_entries | fromjson)[] as $item ({};
+                    ($item | split("/")) as $parts |
+                    if ($parts | length) < 2 then
+                        .
+                    else
+                        . + { ($parts[0]): ($parts[1:] | join("/")) }
+                    end
+                )
+            )
+        else . end |
         if $rulesets != "" then
             . + {($rulesets): "rcode://refused"}
         else . end |
