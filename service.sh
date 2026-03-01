@@ -108,7 +108,7 @@ banner() {
     model=$(info_device)
     openwrt=$(get_os_version)
     print_bold_yellow "-----------------------------"
-    print_bold_yellow "    JustClash Init Script"
+    print_bold_yellow "    JustClash Setup Script"
     print_bold_yellow "-----------------------------"
     print_bold_yellow "System:      ${openwrt}"
     print_bold_yellow "Device model: ${model}"
@@ -215,14 +215,14 @@ diagnostic_tools() {
 
     if [ "$ii_nft" -ne 0 ] || [ "$ii_logread" -ne 0 ]; then
         print_red "One or more required basic tools (nft, logread) are not available."
-        print_red "This may indicate unsupported, incorrect, or custom OpenWRT firmware."
+        print_red "This may indicate unsupported, incorrect, or custom OpenWrt firmware."
         print_red "Please verify your firmware and/or install the necessary packages."
         exit 1
     fi
 
     if [ "$ii_apk" -eq 1 ] && [ "$ii_opkg" -eq 1 ]; then
         print_red "All package managers are missing."
-        print_red "This may indicate unsupported, incorrect, or broken OpenWRT firmware."
+        print_red "This may indicate unsupported, incorrect, or broken OpenWrt firmware."
         print_red "Please verify your firmware and/or install the necessary packages."
         exit 1
     fi
@@ -287,12 +287,12 @@ diagnostic_mem() {
     local is_just_check=0
     [ -n "${1}" ] && is_just_check=1
     echo "  "
-    print_bold_green "Checking memory requiments... "
+    print_bold_green "Checking memory requirements..."
     overlay_space=$(df /overlay | awk 'NR==2 {print $4}')
     if [ "$overlay_space" -lt "$MIN_SPACE" ]; then
         printf " - Result: "
         print_red "FAIL"
-        print_red "Warning: Available disk space is below the required minimum of ${MIN_SPACE}."
+        print_red "Available disk space is below the required minimum of ${MIN_SPACE}."
         print_red "Installation cannot proceed due to insufficient space."
         [ "$is_just_check" -eq 0 ] && exit 1
     else
@@ -320,7 +320,7 @@ diagnostic_conflict() {
                     break
                     ;;
                 *)
-                    echo "Exit"
+                    echo "Exiting."
                     exit 1
                     ;;
             esac
@@ -333,7 +333,7 @@ diagnostic_conflict() {
 
 diagnostic_conflicts_interactive() {
     echo "  "
-    print_bold_green "Checking conflicted packages..."
+    print_bold_green "Checking conflicting packages..."
 
     diagnostic_conflict "https-dns-proxy"
     diagnostic_conflict "podkop"
@@ -409,13 +409,13 @@ core_update() {
     echo " - Checking for Mihomo updates (channel: $channel)..."
 
     version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
-        print_red "Failed to get version.txt URL from GitHub API"
+        print_red "Failed to get the version.txt URL from the GitHub API."
         return 1
     }
 
     if [ -z "$version_txt_url" ]; then
-        print_red "Error: version.txt not found in release assets"
-        print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+        print_red "Release asset version.txt was not found."
+        print_red "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
         return 1
     fi
 
@@ -423,13 +423,13 @@ core_update() {
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
         -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p) || {
-        print_red "Failed to download version.txt"
+        print_red "Failed to download version.txt."
         return 1
     }
 
     if [ -z "$latest_ver" ]; then
-       print_red "Error happened when trying to receive latest version data."
-       print_red "It may be due to a GitHub API rate limit or the release may not exist. Please check manually."
+       print_red "Failed to retrieve the latest version information."
+       print_red "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
        return 1
     fi
 
@@ -437,7 +437,7 @@ core_update() {
         echo " - Mihomo is not installed. Installing version $latest_ver ($channel)."
         core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            print_red "Update process can't be finished."
+            print_red "Core update failed."
             return 1
         fi
         return 0
@@ -450,14 +450,14 @@ core_update() {
         echo " - Removing current mihomo binary..."
         core_remove
         if [ $? -eq 1 ]; then
-            print_red "Update process can't be finished."
+            print_red "Core update failed."
             return 1
         fi
 
         echo " - Updating Mihomo to version $latest_ver ($channel)"
         core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            print_red "Update process can't be finished."
+            print_red "Core update failed."
             return 1
         fi
     else
@@ -485,13 +485,13 @@ core_download() {
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
         --progress-bar -L -o "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$download_url" || {
-        print_red "Failed to download file."
+        print_red "Failed to download the Mihomo archive."
         return 1
     }
 
     echo " - Extracting to $CORE_PATH" "⬇️"
     gunzip -c "${TMP_DOWNLOAD_PATH}/mihomo.gz" > "$CORE_PATH" || {
-        print_red "Failed to extract file."
+        print_red "Failed to extract the Mihomo archive."
         return 1
     }
 
@@ -509,7 +509,7 @@ core_download() {
 
 core_remove() {
     if [ ! -x "$CORE_PATH" ]; then
-        print_red "Mihomo is already not installed."
+        print_red "Mihomo is not installed."
         return 1
     else
         if rm -f "$CORE_PATH"; then
@@ -522,7 +522,7 @@ core_remove() {
     fi
 }
 
-justclash_install() {
+packages_install() {
     local apk_file
     local ipk_file
 
@@ -574,16 +574,16 @@ justclash_uninstall() {
         pkg_remove luci-app-justclash
     fi
 
-    pkg_is_installed luci-i18n-justclash*
+    pkg_is_installed luci-i18n-justclash-ru
     laijc_is_installed="$?"
     if [ "$laijc_is_installed" -eq 0 ]; then
         echo " - LuCI i18n JustClash package was found. Removing..."
-        pkg_remove luci-i18n-justclash*
+        pkg_remove luci-i18n-justclash-ru
     fi
 
     if [ "$jc_is_installed" -ne 0 ] && [ "$lajc_is_installed" -ne 0 ]; then
-        echo " - JustClash was not found. Was it already installed before?"
-        echo " - Cleaning up known JustClash folders and files"
+        echo " - JustClash package was not found."
+        echo " - Cleaning up known JustClash files and directories."
         rm -rf /usr/bin/justclash
         rm -rf /usr/bin/mihomo
         rm -rf /tmp/justclash/
@@ -591,14 +591,14 @@ justclash_uninstall() {
     fi
 }
 
-justclash_download() {
+packages_download() {
     local install_ru="$1"
     if [ -z "$JUSTCLASH_RELEASE_URL_API" ] || [ -z "$TMP_DOWNLOAD_PATH" ]; then
-        print_red "Usage: justclash_download_ipk requires JUSTCLASH_RELEASE_URL_API and TMP_DOWNLOAD_PATH to be set"
+        print_red "Usage: packages_download requires JUSTCLASH_RELEASE_URL_API and TMP_DOWNLOAD_PATH to be set."
         return 1
     fi
 
-    print_bold_green "Downloading justClash packages..."
+    print_bold_green "Downloading JustClash packages..."
     mkdir -p "$TMP_DOWNLOAD_PATH"
     local urls
     local file
@@ -625,10 +625,10 @@ justclash_download() {
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        #if [ "$install_ru" -eq 1 ] && echo "$file" | grep -q "i18n"; then
-        #    echo " - Skipped $file"
-        #    continue
-        #fi
+        if [ "$install_ru" -ne 1 ] && echo "$file" | grep -q "luci-i18n-justclash-ru"; then
+            echo " - Skipping $file"
+            continue
+        fi
         wget "$file" -qO "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
             print_red "Failed to download $file"
             continue
@@ -638,8 +638,8 @@ justclash_download() {
     echo " - All files saved to $TMP_DOWNLOAD_PATH"
 }
 
-user_select_lang_install_mode_interactive() {
-    print_bold_green "RU translation installation mode..."
+install_translation_interactive() {
+    print_bold_green "Russian translation installation mode..."
     while true; do
             printf "Do you want to install RU translation? y/n: "
             read -r inp
@@ -665,7 +665,9 @@ install_jq() {
 }
 
 install_service() {
+    local install_ru=0
     mkdir -p "$TMP_DOWNLOAD_PATH"
+
     diagnostic_tools
     diagnostic_net
     if [ "$CHECK_SPACE" -eq 1 ]; then
@@ -673,14 +675,11 @@ install_service() {
     fi
     diagnostic_conflicts_interactive
     core_update "alpha"
-    #user_select_lang_install_mode_interactive
-    #if [ $? -ne 1 ]; then
-        justclash_download 1
-    #else
-    #    justclash_download 0
-    #fi
+    install_translation_interactive
+    [ $? -eq 0 ] && install_ru=1
+    packages_download "$install_ru"
     if [ $? -ne 1 ]; then
-        justclash_install
+        packages_install
     fi
 }
 
@@ -702,9 +701,9 @@ run() {
     print_bold_yellow "JustClash Setup Menu"
     print_bold_yellow "1 - Install JustClash package"
     print_bold_yellow "2 - Uninstall JustClash package"
-    print_bold_yellow "3 - Update/Download latest stable mihomo proxy core"
-    print_bold_yellow "4 - Remove Mihomo core proxy if installed"
-    print_bold_yellow "5 - Run diagnostic"
+    print_bold_yellow "3 - Update or download the latest Mihomo core"
+    print_bold_yellow "4 - Remove the Mihomo core if installed"
+    print_bold_yellow "5 - Run diagnostics"
     #print_bold_yellow "6 - Config DNSMasq local use flag"
     print_bold_yellow "6 - Exit"
     while true; do
@@ -720,15 +719,15 @@ run() {
                 uninstall_service
                 ;;
             3)
-                echo "Updating Mihomo Clash core..."
+                echo "Updating the Mihomo core..."
                 core_update "alpha"
                 ;;
             4)
-                echo "Removing Mihomo Clash core..."
+                echo "Removing the Mihomo core..."
                 core_remove
                 ;;
             5)
-                echo "Starting diagnostic..."
+                echo "Starting diagnostics..."
                 diagnostic
                 ;;
             6)
@@ -736,7 +735,7 @@ run() {
                 exit 0
                 ;;
             *)
-                echo "Invalid option. Please enter a number between 1 and 7."
+                echo "Invalid option. Please enter a number between 1 and 6."
                 ;;
         esac
     done
