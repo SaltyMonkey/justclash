@@ -721,10 +721,11 @@ handle_proxy_section() {
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name proxy_link_uri dialer_proxy list_update_interval mode proxy_link_object use_proxy_for_list_update list val
+        local name enabled proxy_link_uri dialer_proxy list_update_interval mode proxy_link_object use_proxy_for_list_update list val
         local domain_list cidr_list matched_rulesets
 
         config_get name "$section" name
+        config_get_bool enabled "$section" enabled 1
         config_get proxy_link_uri "$section" proxy_link_uri
         config_get dialer_proxy "$section" dialer_proxy
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
@@ -732,6 +733,7 @@ handle_proxy_section() {
         config_get proxy_link_object "$section" proxy_link_object
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
 
+        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy: $section" "⚠️"; return; }
         [ -z "$name" ] && { log warn "Skipping proxy without name: $section" "⚠️"; return; }
 
         local proxy_obj=""
@@ -920,15 +922,18 @@ handle_proxy_group_section() {
     # shellcheck disable=SC2317  # Called via config_foreach
     _parse_proxy_group() {
         local section="$1"
-        local name
+        local name enabled
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
         local filter exclude_filter exclude_type expected_status
         local enabled_list list_update_interval use_proxy_group_for_list_update list val
         local domain_list cidr_list matched_rulesets
 
         config_get name "$section" name
+        config_get_bool enabled "$section" enabled 1
         config_get proxies_list "$section" proxies
         config_get providers_list "$section" providers
+
+        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy group: $section" "⚠️"; return; }
         [ -z "$name" ] && { log warn "Skipping proxy group without a name: $section" "⚠️"; return; }
         [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log warn "Skipping empty proxy group: $name" "⚠️"; return; }
 
@@ -1118,12 +1123,13 @@ handle_proxy_provider_section() {
 
     # shellcheck disable=SC2317
     # shellcheck disable=SC2329
-    accumulate_proxy_provider() {
+    _handle_proxy_provider() {
         local section="$1"
-        local name url override_dialer_proxy subscription_hwid_support interval proxy filter exclude_filter exclude_type
+        local name enabled url override_dialer_proxy subscription_hwid_support interval proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
 
         config_get name "$section" name
+        config_get_bool enabled "$section" enabled 1
         config_get url "$section" subscription
         config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
         config_get filter "$section" filter
@@ -1132,6 +1138,7 @@ handle_proxy_provider_section() {
         config_get proxy "$section" proxy "$DEFAULT_PROXY"
         config_get override_dialer_proxy "$section" override_dialer_proxy
 
+        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy provider: $section" "⚠️"; return; }
         { [ -z "$name" ] || [ -z "$url" ]; } && {
         log warn "Skipping proxy provider without a name or subscription" "⚠️"
             return
@@ -1179,7 +1186,7 @@ handle_proxy_provider_section() {
         result="$result\"$(json_escape "$name")\":$entry,"
     }
 
-    config_foreach accumulate_proxy_provider proxy_provider
+    config_foreach _handle_proxy_provider proxy_provider
 
     result="{${result%,}}"
 
