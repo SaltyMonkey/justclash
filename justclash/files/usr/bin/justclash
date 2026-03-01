@@ -2338,7 +2338,7 @@ EOF
 
 case "$1" in
     start|run)
-        [ "$JUSTCLASH_ENV" != "procd" ] && trap stop INT
+        [ "$JUSTCLASH_ENV" != "procd" ] && trap stop INT TERM HUP
         start
         ;;
     stop)
