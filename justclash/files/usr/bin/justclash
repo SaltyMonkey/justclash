@@ -272,7 +272,7 @@ start_core() {
             fi
 
             attempt=$((attempt + 1))
-            log error "Procd mode:  mihomo crashed, attempt $attempt of $DEFAULT_CORE_RESTART_RETRIES" "❌"
+            log error "Procd mode: mihomo crashed, attempt $attempt of $DEFAULT_CORE_RESTART_RETRIES" "❌"
 
             if [ "$attempt" -ge "$DEFAULT_CORE_RESTART_RETRIES" ]; then
                 log error "Procd mode:  Failed to restart mihomo after $DEFAULT_CORE_RESTART_RETRIES attempts, exiting" "❌"
@@ -1728,26 +1728,31 @@ EOF
 
 service_data_update() {
     local complete_url
+    local tmp_rulesets_file="${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}.tmp"
+    local tmp_block_rulesets_file="${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}.tmp"
 
     mkdir -p "$CORE_WORKDIR_PATH"
     mkdir -p "$ETC_DIR"
+    rm -f "$tmp_rulesets_file" "$tmp_block_rulesets_file"
 
     log info "Downloading RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$complete_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_rulesets_file" "$complete_url" || {
         log error "Failed to download RULE-SETs list file." "❌"
+        rm -f "$tmp_rulesets_file"
         return 1
     }
-    mv -f "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}" "$RULESETS_FILE"
+    mv -f "$tmp_rulesets_file" "$RULESETS_FILE"
     log info "RULE-SET list file was updated" "✅"
 
     log info "Downloading BLOCK RULE-SETs list file" "📥"
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_BLOCKS_FILENAME}
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$complete_url" || {
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_block_rulesets_file" "$complete_url" || {
         log error "Failed to download BLOCK RULE-SETs list file." "❌"
+        rm -f "$tmp_block_rulesets_file"
         return 1
     }
-    mv -f "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}" "$RULESETS_BLOCKS_FILE"
+    mv -f "$tmp_block_rulesets_file" "$RULESETS_BLOCKS_FILE"
     log info "BLOCK RULE-SETs list file was updated" "✅"
 
     return 0
