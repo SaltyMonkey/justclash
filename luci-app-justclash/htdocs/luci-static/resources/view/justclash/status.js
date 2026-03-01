@@ -5,12 +5,16 @@
 "require view.justclash.common as common";
 "require rpc";
 
+const POLL_TIMEOUT = 3000;
+const FETCH_TIMEOUT = 2000;
+const ACTION_DELAY_TIMEOUT = 5000;
+const NOTIFICATION_TIMEOUT = 3000;
+
 let pollInterval = null;
 let pollingInProgress = false;
 let actionInProgress = false;
 let visibilityChangeHandler = null;
 let clipboardTextarea = null;
-const POLL_TIMEOUT = 3000;
 
 const buttonsIDs = {
     START: "button-start",
@@ -58,7 +62,7 @@ const copyToClipboard = async (text) => {
     }
 };
 
-const fetchWithTimeout = (url, timeout = 3000) => {
+const fetchWithTimeout = (url, timeout = FETCH_TIMEOUT) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     return fetch(url, { signal: controller.signal })
@@ -171,7 +175,7 @@ const startPolling = (dynamicElements) => {
     document.addEventListener("visibilitychange", visibilityChangeHandler);
 };
 
-const showExecModalHandler = (title, warning, command, args) => async () => {
+const showExecModalHandler = (title, warning, command, args, afterExec) => async () => {
     const warn = warning ? [
         E("strong", { class: "jc-modal-warning" }, _("Dangerous action!")),
         E("div", { class: "jc-modal-warning-text" }, warning)
@@ -181,16 +185,23 @@ const showExecModalHandler = (title, warning, command, args) => async () => {
 
     try {
         const res = await fs.exec(command, args);
+        if (afterExec)
+            await afterExec(res);
         ui.showModal(title, [
             ...warn,
             E("pre", { class: "jc-modal-pre" }, res.stdout || _("No response")),
             E("div", { class: "jc-modal-actions" }, [
                 E("button", {
                     class: `cbi-button ${buttons.ACTION}`,
-                    click: () => {
-                        copyToClipboard(res.stdout || "");
-                        ui.addNotification(null, E("p", _("Data copied to clipboard")), "success", 3000);
-                        ui.hideModal();
+                    click: async () => {
+                        try {
+                            await copyToClipboard(res.stdout || "");
+                            ui.addTimeLimitedNotification(null, E("p", _("Data copied to clipboard")), NOTIFICATION_TIMEOUT, "success");
+                            ui.hideModal();
+                        } catch (e) {
+                            ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), NOTIFICATION_TIMEOUT, "danger");
+                            console.error("Failed to copy modal output to clipboard", e);
+                        }
                     }
                 }, [_("Copy to clipboard")]),
                 E("button", {
@@ -226,7 +237,7 @@ return view.extend({
             .then(data => cleanStdout(data).split(","))
             .catch(() => [_("Error"), _("Error")]);
 
-        const onlinePromise = fetchWithTimeout(common.justclashOnlineVersionUrl, 5000)
+        const onlinePromise = fetchWithTimeout(common.justclashOnlineVersionUrl)
             .then(res => res.ok ? res.json() : null)
             .then(data => data && data.tag_name ? data.tag_name.replace(/^v/, "") : _("Error"))
             .catch(e => e.name === 'AbortError' ? _("Timeout") : _("Error"));
@@ -251,7 +262,9 @@ return view.extend({
 
         const serviceBadge = E("span", { class: "jc-badge" }, _("Loading..."));
         const autoBadge = E("span", { class: "jc-badge" }, _("Loading..."));
-        let dynamicElements = { serviceBadge, autoBadge };
+        const packageValue = E("span", {}, results.infoPackage);
+        const coreValue = E("span", {}, results.infoCore);
+        let dynamicElements = { serviceBadge, autoBadge, packageValue, coreValue };
 
         const actionHandler = (action, timeoutMs) => async () => {
             if (actionInProgress) return;
@@ -262,7 +275,7 @@ return view.extend({
                 if (timeoutMs) await asyncTimeout(timeoutMs);
                 await updateServiceStatus(dynamicElements);
             } catch (e) {
-                ui.addNotification(_("Error"), E("p", e.message), "danger", 3000);
+                ui.addTimeLimitedNotification(_("Error"), E("p", e.message), NOTIFICATION_TIMEOUT, "danger");
                 console.error(e);
             } finally {
                 ui.hideModal();
@@ -270,14 +283,18 @@ return view.extend({
             }
         };
 
-        const btnStart = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), actionHandler("start", 5000));
-        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", 5000));
+        const btnStart = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), actionHandler("start", ACTION_DELAY_TIMEOUT));
+        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", ACTION_DELAY_TIMEOUT));
         const btnStop = createActionButton(buttonsIDs.STOP, buttons.NEGATIVE, _("Stop"), actionHandler("stop"));
         const btnEnable = createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable autostart"), actionHandler("enable"));
         const btnDisable = createActionButton(buttonsIDs.DISABLE, buttons.NEGATIVE, _("Disable autostart"), actionHandler("disable"));
-        dynamicElements = { serviceBadge, autoBadge, btnStart, btnStop, btnEnable, btnDisable };
+        dynamicElements = { serviceBadge, autoBadge, packageValue, coreValue, btnStart, btnStop, btnEnable, btnDisable };
 
-        const statusGrid = createStatusGrid(results, dynamicElements);
+        const statusGrid = createStatusGrid({
+            ...results,
+            infoPackage: packageValue,
+            infoCore: coreValue
+        }, dynamicElements);
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Current status:")),
             statusGrid
@@ -296,7 +313,16 @@ return view.extend({
 
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
             createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), false, common.binPath, ["diag_report"])),
-            createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showExecModalHandler(_("Update Mihomo core"), false, common.binPath, ["core_update"])),
+            createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showExecModalHandler(_("Update Mihomo core"), false, common.binPath, ["core_update"], async () => {
+                const res = await fs.exec(common.binPath, ["_luci_call"]);
+                const [infoPackage, infoCore] = cleanStdout(res).split(",");
+
+                if (dynamicElements.packageValue)
+                    dynamicElements.packageValue.textContent = infoPackage || _("Error");
+
+                if (dynamicElements.coreValue)
+                    dynamicElements.coreValue.textContent = infoCore || _("Error");
+            })),
             createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), _("Do not share your Mihomo config with anyone."), common.binPath, ["diag_mihomo_config"])),
             createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Show service config"), showExecModalHandler(_("Service config"), _("Do not share your service config with anyone."), common.binPath, ["diag_service_config"])),
             createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Refresh service data"), showExecModalHandler(_("Refresh service data"), false, common.binPath, ["service_data_update"]))

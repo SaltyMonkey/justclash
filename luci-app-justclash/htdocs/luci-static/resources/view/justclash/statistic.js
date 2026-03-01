@@ -4,8 +4,13 @@
 "require view.justclash.common as common";
 "require uci";
 
+const NOTIFICATION_TIMEOUT = 3000;
+const ROW_HIGHLIGHT_TIMEOUT = 2000;
+const CONTROLLER_PORT = 9090;
+
 let wsCleanups = [];
 let noConnectionsMsg = null;
+
 const connectionsData = new Map();
 const statsData = {
     traffic: { up: 0, down: 0, upTotal: 0, downTotal: 0 },
@@ -49,9 +54,8 @@ const formatConnection = (conn) => ({
 
 const getWSURL = (path, token) => {
     const host = window.location.hostname;
-    const port = 9090;
     const protocol = location.protocol === "https:" ? "wss" : "ws";
-    return (token && token !== "") ? `${protocol}://${host}:${port}${path}?token=${token}` : `${protocol}://${host}:${port}${path}`;
+    return (token && token !== "") ? `${protocol}://${host}:${CONTROLLER_PORT}${path}?token=${token}` : `${protocol}://${host}:${CONTROLLER_PORT}${path}`;
 };
 
 const cleanup = () => {
@@ -73,10 +77,15 @@ const showConnectionDetails = (connId) => {
         E("div", { class: "right", style: "margin-top: 10px;" }, [
             E("button", {
                 class: "cbi-button cbi-button-action",
-                click: () => {
-                    copyToClipboard(jsonString || "");
-                    ui.addNotification(null, E("p", _("Copied to clipboard")), "success", 3000);
-                    ui.hideModal();
+                click: async () => {
+                    try {
+                        await copyToClipboard(jsonString || "");
+                        ui.addTimeLimitedNotification(null, E("p", _("Copied to clipboard")), NOTIFICATION_TIMEOUT, "success");
+                        ui.hideModal();
+                    } catch (e) {
+                        ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), NOTIFICATION_TIMEOUT, "danger");
+                        console.error("Failed to copy connection details to clipboard", e);
+                    }
                 }
             }, [_("Copy details")]),
             E("button", {
@@ -178,7 +187,7 @@ return view.extend({
 
         function highlightNewRow(row) {
             row.classList.add("jc-new-row");
-            setTimeout(() => row.classList.remove("jc-new-row"), 2000);
+            setTimeout(() => row.classList.remove("jc-new-row"), ROW_HIGHLIGHT_TIMEOUT);
         }
 
         function createRow(conn) {

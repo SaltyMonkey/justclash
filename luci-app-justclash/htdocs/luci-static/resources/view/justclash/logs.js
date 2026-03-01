@@ -6,8 +6,10 @@
 
 const NO_DATA = _("No data");
 const NO_LOGS = _("No log entries");
+const NOTIFICATION_TIMEOUT = 3000;
 
 let logsUpdating = false; // Защита от гонки
+let clipboardTextarea = false;
 
 const LOG_LEVEL_RULES = [
     { suffix: " log-error", tokens: ["error", "level=error", "daemon.err"] },
@@ -17,13 +19,11 @@ const LOG_LEVEL_RULES = [
 ];
 
 const classifyLogLine = (lowerLine) => {
-    for (const rule of LOG_LEVEL_RULES) {
-        for (const token of rule.tokens) {
-            if (lowerLine.includes(token)) return `log-line${rule.suffix}`;
-        }
-    }
+    const matchedRule = LOG_LEVEL_RULES.find(rule =>
+        rule.tokens.some(token => lowerLine.includes(token))
+    );
 
-    return "log-line";
+    return matchedRule ? `log-line${matchedRule.suffix}` : "log-line";
 };
 
 const copyToClipboard = async (text) => {
@@ -84,7 +84,7 @@ const updateLogs = async (logContainer, btn, reverseCheckbox, rawLogs, lastFetch
 
         renderLogLines(logContainer, rawLogs.value, reverseCheckbox.checked);
     } catch (e) {
-        ui.addNotification(_("Error"), E("p", `${e.message || e}`), "danger", 3000);
+        ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), NOTIFICATION_TIMEOUT, "danger");
         console.error("Error:", e);
     } finally {
         if (btn) btn.disabled = false;
@@ -123,10 +123,15 @@ return view.extend({
 
         const copyBtn = E("button", {
             class: "cbi-button cbi-button-action",
-            click: () => {
+            click: async () => {
                 if (rawLogs.value === NO_DATA || rawLogs.value === NO_LOGS) return;
-                copyToClipboard(rawLogs.value || "");
-                ui.addNotification(null, E("p", _("Data copied to clipboard")), "success", 3000);
+                try {
+                    await copyToClipboard(rawLogs.value || "");
+                    ui.addTimeLimitedNotification(null, E("p", _("Data copied to clipboard")), NOTIFICATION_TIMEOUT, "success");
+                } catch (e) {
+                    ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), NOTIFICATION_TIMEOUT, "danger");
+                    console.error("Failed to copy logs to clipboard", e);
+                }
             },
         }, [_("Copy log")]);
 

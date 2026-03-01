@@ -5,6 +5,9 @@
 "require form";
 "require fs";
 
+const NOTIFICATION_TIMEOUT = 3000;
+const JSON_OBJECT_ROWS = 10;
+
 return view.extend({
     async load() {
         let rulesetsItems = [];
@@ -23,7 +26,7 @@ return view.extend({
                     .filter(item => item.name && item.yamlName);
             }
         } catch (e) {
-            ui.addNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), "error", 3000);
+            ui.addTimeLimitedNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), NOTIFICATION_TIMEOUT, "error");
             console.error("Error loading rulesets:", e);
         }
 
@@ -40,7 +43,7 @@ return view.extend({
                     .filter(item => item.name && item.yamlName);
             }
         } catch (e) {
-            ui.addNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), "error", 3000);
+            ui.addTimeLimitedNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), NOTIFICATION_TIMEOUT, "error");
             console.error("Error loading rulesets:", e);
         }
 
@@ -101,7 +104,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.TextValue, "proxy_link_object", _("JSON object:"));
         o.description = _("JSON object with connection parameters.");
-        o.rows = 10;
+        o.rows = JSON_OBJECT_ROWS;
         o.optional = true;
         o.depends("mode", "object");
         o.validate = function (section_id, value) {
