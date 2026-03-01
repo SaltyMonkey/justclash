@@ -27,6 +27,7 @@ import() {
 CURL_CONNECT_TIMEOUT=15
 CURL_MIN_SPEED_LIMIT_BYTES=5000
 CURL_MIN_SPEED_TIMEOUT=15
+NSLOOKUP_TIMEOUT=5
 
 JUSTCLASH_VERSION="__COMPILED_VERSION_VARIABLE__"
 
@@ -2132,7 +2133,7 @@ diag_proxy_resolver() {
     clog info "Testing Fake IP DNS resolution..."
 
     local ip_output
-    ip_output=$(nslookup "$target" 127.0.0.1:"$dns_listen_port" 2>/dev/null)
+    ip_output=$(nslookup -timeout="$NSLOOKUP_TIMEOUT" "$target" 127.0.0.1:"$dns_listen_port" 2>/dev/null)
     local exit_code=$?
 
     local ips
@@ -2159,7 +2160,7 @@ diag_external_resolver() {
 
     clog info "Testing DNS resolution..."
 
-    ip_output=$(nslookup "$target" "$resolver" 2>/dev/null)
+    ip_output=$(nslookup -timeout="$NSLOOKUP_TIMEOUT" "$target" "$resolver" 2>/dev/null)
     exit_code=$?
 
     ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')

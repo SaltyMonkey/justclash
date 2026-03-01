@@ -8,6 +8,7 @@ JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash/re
 CURL_CONNECT_TIMEOUT=15
 CURL_MIN_SPEED_LIMIT_BYTES=5000
 CURL_MIN_SPEEED_TIMEOUT=15
+NSLOOKUP_TIMEOUT=5
 
 CHECK_SPACE=1
 
@@ -54,9 +55,9 @@ check_dns() {
     local ip
 
     if [ -n "$resolver" ]; then
-        ip=$(nslookup "$domain" "$resolver" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
+        ip=$(nslookup -timeout="$NSLOOKUP_TIMEOUT" "$domain" "$resolver" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
     else
-        ip=$(nslookup "$domain" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
+        ip=$(nslookup -timeout="$NSLOOKUP_TIMEOUT" "$domain" 2>/dev/null | awk '/^Address: / {print $2}' | tail -n1)
     fi
 
     if [ -n "$ip" ]; then
