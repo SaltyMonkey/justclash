@@ -590,6 +590,26 @@ msgid "Enable the web dashboard for Mihomo. Turn this on only if you need the da
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:132
+msgid "Web dashboard:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:133
+msgid "Choose which web dashboard Mihomo should download and serve."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:134
+msgid "zashboard"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:135
+msgid "metacubexd"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:136
+msgid "Yacd-meta"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:140
 msgid "API password:"
 msgstr ""
 

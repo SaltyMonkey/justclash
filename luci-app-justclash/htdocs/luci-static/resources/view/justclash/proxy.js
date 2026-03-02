@@ -124,10 +124,24 @@ return view.extend({
         o.multiple = false;
         o.description = _("Select which network will allow access to the API controller and dashboard.");
 
-        o = s.taboption(tabname, form.Flag, "use_zashboard", _("Enable dashboard:"));
+        o = s.taboption(tabname, form.Flag, "use_dashboard", _("Enable dashboard:"));
         o.description = _("Enable the web dashboard for Mihomo. Turn this on only if you need the dashboard interface.");
         o.default = primitives.FALSE;
         o.rmempty = false;
+        o.cfgvalue = function (section_id) {
+            return uci.get(common.binName, section_id, "use_dashboard")
+                ?? uci.get(common.binName, section_id, "use_zashboard")
+                ?? primitives.FALSE;
+        };
+
+        o = s.taboption(tabname, form.ListValue, "dashboard_repo", _("Web dashboard:"));
+        o.description = _("Choose which web dashboard Mihomo should download and serve.");
+        o.value("zashboard", _("zashboard"));
+        o.value("metacubexd", _("metacubexd"));
+        o.value("yacd-meta", _("Yacd-meta"));
+        o.default = "metacubexd";
+        o.rmempty = false;
+        o.depends("use_dashboard", primitives.TRUE);
 
         o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
         o.password = true;
