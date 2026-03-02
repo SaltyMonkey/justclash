@@ -67,9 +67,10 @@ SYMLINKDIR_RULESETS="${ETC_DIR}/${PROGNAME}_rules"
 RULESETS_BLOCKS_FILE="${ETC_DIR}/${RULESETS_BLOCKS_FILENAME}"
 RULESETS_FILE="${ETC_DIR}/${RULESETS_FILENAME}"
 
-DASHBOARD_PATH="${ETC_DIR}/zashboard"
-DASHBOARD_NAME="dashboard"
-DASHBOARD_DEFAULT_URL="__DASHBOARD_DEFAULT_URL_VARIABLE__"
+DASHBOARD_PATH="${ETC_DIR}/dashboard"
+DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
+DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
 
 ETC_CONFIG_DIR="/etc/config"
 DEFAULT_CONFIG_PATH="${ETC_DIR}/default.config"
@@ -1461,9 +1462,28 @@ handle_final_rule_section() {
     echo "$rules"
 }
 
+get_dashboard_url() {
+    local dashboard_repo="$1"
+
+    case "$dashboard_repo" in
+        metacubexd)
+            echo "$DASHBOARD_METACUBEXD_URL"
+            ;;
+        yacd-meta)
+            echo "$DASHBOARD_YACD_META_URL"
+            ;;
+        zashboard)
+            echo "$DASHBOARD_ZASHBOARD_URL"
+            ;;
+        *)
+            echo "$DASHBOARD_METACUBEXD_URL"
+            ;;
+    esac
+}
+
 core_generate_yaml() {
     local router_selected_ipaddr
-    local controller_bind_interface use_zashboard api_password log_level tproxy_port unified_delay
+    local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level tproxy_port unified_delay
     local use_mixed_port mixed_port
     local tcp_concurrent global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
@@ -1488,7 +1508,13 @@ core_generate_yaml() {
         router_selected_ipaddr="0.0.0.0"
     fi
 
-    config_get use_zashboard proxy use_zashboard
+    config_get use_dashboard_raw proxy use_dashboard
+    if [ -n "$use_dashboard_raw" ]; then
+        config_get_bool use_dashboard proxy use_dashboard
+    else
+        config_get_bool use_dashboard proxy use_zashboard 0
+    fi
+    config_get dashboard_repo proxy dashboard_repo "metacubexd"
     config_get api_password proxy api_password
     config_get log_level proxy log_level
     config_get tproxy_port proxy tproxy_port
@@ -1517,6 +1543,7 @@ core_generate_yaml() {
     config_get fake_ip_ttl proxy fake_ip_ttl
     config_get_bool sniffer_enable proxy sniffer_enable
     config_get_bool sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
+    dashboard_url=$(get_dashboard_url "$dashboard_repo")
     default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true")
     direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true")
     proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true")
@@ -1662,11 +1689,10 @@ mixed-port: $mixed_port
 EOF
     fi
 
-    if [ "$use_zashboard" -eq 1 ]; then
+    if [ "$use_dashboard" -eq 1 ]; then
         cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-external-ui-name: $(yaml_quote "$DASHBOARD_NAME")
 external-ui: $(yaml_quote "$DASHBOARD_PATH")
-external-ui-url: $(yaml_quote "$DASHBOARD_DEFAULT_URL")
+external-ui-url: $(yaml_quote "$dashboard_url")
 EOF
     fi
 
