@@ -482,19 +482,19 @@ msgid "Port used for redirected TCP/UDP traffic. Change it only if this port is 
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:46
-msgid "Enable shared proxy port:"
+msgid "Enable Mihomo mixed port:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:47
-msgid "Use one port for both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy."
+msgid "Use the Mihomo mixed port so one port handles both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:51
-msgid "Shared proxy port:"
+msgid "Mihomo mixed port:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:52
-msgid "Port that accepts both HTTP(S) and SOCKS5 connections from apps and devices on your network."
+msgid "Port used by the Mihomo mixed port listener for both HTTP(S) and SOCKS5 connections from apps and devices on your network."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:60
@@ -586,7 +586,7 @@ msgid "Enable dashboard:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:128
-msgid "Enable the web dashboard for Mihomo. Turn this on only if you need the dashboard interface."
+msgid "Enable an additional external web dashboard for Mihomo. Turn this on only if you need a separate dashboard interface."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:132
@@ -970,7 +970,11 @@ msgid "Proxy provider:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:201
-msgid "Proxy providers are external subscription URLs that dynamically load a list of proxies. "
+msgid "Proxy providers are external subscription URLs that dynamically load a list of proxies."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:208
+msgid "Proxy provider name."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:220
@@ -1021,6 +1025,10 @@ msgstr ""
 msgid "Health check:"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/routing.js:267
+msgid "Enable availability checks for nodes from this proxy provider."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/routing.js:271 htdocs/luci-static/resources/view/justclash/routing.js:415
 msgid "Check URL:"
 msgstr ""
@@ -1055,6 +1063,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:311 htdocs/luci-static/resources/view/justclash/routing.js:466
 msgid "Lazy:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:311
+msgid "Run provider health checks only when needed instead of probing on every interval."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:315 htdocs/luci-static/resources/view/justclash/routing.js:470
@@ -1098,7 +1110,7 @@ msgid "Proxy groups:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:360
-msgid "Group proxies for special routing (fallback, load balancing)."
+msgid "Group proxies for special routing (fallback, load balancing, URL test)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:368
@@ -1109,16 +1121,32 @@ msgstr ""
 msgid "Group type:"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/routing.js:380
+msgid "Choose how this group selects a proxy, such as fallback, load balancing, or URL test."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/routing.js:387
 msgid "Group strategy:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:387
+msgid "Choose how the load-balancer group distributes traffic across available proxies."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:394
 msgid "Proxies:"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/routing.js:394
+msgid "List proxy entries that belong to this group."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/routing.js:403
 msgid "Providers:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:403
+msgid "List proxy providers whose nodes should be included in this group."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:424
@@ -1139,6 +1167,14 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:460
 msgid "Max failed times:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:460
+msgid "How many failed health checks are allowed before the node is treated as unavailable."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:466
+msgid "Run group health checks only when needed instead of probing on every interval."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:522
@@ -1218,15 +1254,19 @@ msgid "Traffic to this IPv4 address or subnet will be blocked (example: 1.1.1.1/
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:719
-msgid "Shared port rule:"
+msgid "Mihomo mixed port rule:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:719
-msgid "Extra settings for traffic that arrives through the shared proxy port. Use this when that port should behave differently from the default route."
+msgid "Extra settings for traffic that arrives through the Mihomo mixed port. Use this when that port should behave differently from the default route."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:725 htdocs/luci-static/resources/view/justclash/routing.js:744
 msgid "Send traffic to:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:725
+msgid "Choose which proxy, group, or action handles traffic that comes in through the Mihomo mixed port."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:738
@@ -1235,6 +1275,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:738
 msgid "Used when no other rule matches. This is the fallback action for the remaining traffic."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:744
+msgid "Choose the fallback action for traffic that does not match any earlier rule."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:24
@@ -1282,7 +1326,7 @@ msgid "Start time sync service:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:57
-msgid "Start time sync so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail."
+msgid "Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:61
@@ -1322,7 +1366,7 @@ msgid "Client QUIC traffic:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:104
-msgid "Choose how to handle QUIC traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
+msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:113
@@ -1465,6 +1509,10 @@ msgstr ""
 msgid "Dangerous action!"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/status.js:177
+msgid "Diagnostic output may include sensitive configuration and connection details."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/status.js:186
 msgid "No response"
 msgstr ""
@@ -1558,5 +1606,5 @@ msgid "Do not share your service config with anyone."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:302 htdocs/luci-static/resources/view/justclash/status.js:302
-msgid "Refresh service data"
+msgid "Update service data"
 msgstr ""

@@ -54,7 +54,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start time sync service:"));
-        o.description = _("Start time sync so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
+        o.description = _("Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
@@ -101,7 +101,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
-        o.description = _("Choose how to handle QUIC traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
+        o.description = _("Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -158,6 +158,16 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
+        o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Restart schedule:"));
+        o.placeholder = "0 5 * * 0";
+        o.default = "0 5 * * 0";
+        o.rmempty = false;
+        o.depends("mihomo_autorestart", primitives.TRUE);
+        o.description = _("Use cron format to choose when Mihomo should restart automatically.");
+        o.validate = function (section_id, value) {
+            return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
+        };
+
         o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Update Mihomo automatically:"));
         common.defaultUpdateOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
@@ -173,15 +183,6 @@ return view.extend({
         o.description = _("Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs.");
         o.rmempty = false;
         o.default = common.defaultUpdateChannelOptions[0].value;
-
-        o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Restart schedule:"));
-        o.placeholder = "0 5 * * 0";
-        o.default = "0 5 * * 0";
-        o.rmempty = false;
-        o.description = _("Use cron format to choose when Mihomo should restart automatically.");
-        o.validate = function (section_id, value) {
-            return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
-        };
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_update_string", _("Update schedule:"));
         o.placeholder = "0 5 * * 0";

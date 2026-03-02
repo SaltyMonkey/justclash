@@ -312,7 +312,7 @@ return view.extend({
         ]);
 
         const actionContainerThird = E("div", { class: "cbi-page-actions jc-actions" }, [
-            createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), false, common.binPath, ["diag_report"])),
+            createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), _("Diagnostic output may include sensitive configuration and connection details."), common.binPath, ["diag_report"])),
             createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showExecModalHandler(_("Update Mihomo core"), false, common.binPath, ["core_update"], async () => {
                 const res = await fs.exec(common.binPath, ["_luci_call"]);
                 const [infoPackage, infoCore] = cleanStdout(res).split(",");
@@ -325,7 +325,7 @@ return view.extend({
             })),
             createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), _("Do not share your Mihomo config with anyone."), common.binPath, ["diag_mihomo_config"])),
             createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Show service config"), showExecModalHandler(_("Service config"), _("Do not share your service config with anyone."), common.binPath, ["diag_service_config"])),
-            createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Refresh service data"), showExecModalHandler(_("Refresh service data"), false, common.binPath, ["service_data_update"]))
+            createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showExecModalHandler(_("Update service data"), false, common.binPath, ["service_data_update"]))
         ]);
 
         const style = E("style", {}, `

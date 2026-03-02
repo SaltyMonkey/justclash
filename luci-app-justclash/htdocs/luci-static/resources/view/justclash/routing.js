@@ -220,7 +220,7 @@ return view.extend({
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
-        spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies. "));
+        spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies."));
         spp.anonymous = true;
         spp.addremove = true;
         spp.sortable = true;
@@ -234,6 +234,7 @@ return view.extend({
         o.rmempty = false;
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
+        o.description = _("Proxy provider name.");
         o.rmempty = false;
         o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
@@ -295,6 +296,7 @@ return view.extend({
         o = spp.taboption(tabname, form.Flag, "health_check", _("Health check:"));
         o.default = primitives.TRUE;
         o.rmempty = false;
+        o.description = _("Enable availability checks for nodes from this proxy provider.");
 
         o = spp.taboption(tabname, form.Value, "health_check_url", _("Check URL:"));
         common.defaultHealthCheckUrls.forEach(item => {
@@ -338,6 +340,7 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Flag, "health_check_lazy", _("Lazy:"));
         o.default = primitives.TRUE;
+        o.description = _("Run provider health checks only when needed instead of probing on every interval.");
 
         tabname = "proxyproviderfilter_tab";
         spp.tab(tabname, _("Filters"));
@@ -385,7 +388,7 @@ return view.extend({
             return true;
         };
 
-        s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing)."));
+        s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing, URL test)."));
         s2.anonymous = true;
         s2.addremove = true;
         s2.sortable = true;
@@ -417,6 +420,7 @@ return view.extend({
         });
         o.rmempty = false;
         o.default = common.defaultProxyGroupsTypes[0].value;
+        o.description = _("Choose how this group selects a proxy, such as fallback, load balancing, or URL test.");
 
         o = s2.taboption(tabname, form.ListValue, "strategy", _("Group strategy:"));
         common.defaultProxyGroupsBalanceModeStrategies.forEach(item => {
@@ -424,8 +428,10 @@ return view.extend({
         });
         o.default = common.defaultProxyGroupsBalanceModeStrategies[0].value;
         o.depends("group_type", "load-balancer");
+        o.description = _("Choose how the load-balancer group distributes traffic across available proxies.");
 
         o = s2.taboption(tabname, form.DynamicList, "proxies", _("Proxies:"));
+        o.description = _("List proxy entries that belong to this group.");
         o.placeholder = "proxy-name";
         o.optional = true;
         o.editable = true;
@@ -435,6 +441,7 @@ return view.extend({
         };
 
         o = s2.taboption(tabname, form.DynamicList, "providers", _("Providers:"));
+        o.description = _("List proxy providers whose nodes should be included in this group.");
         o.placeholder = "provider-name";
         o.optional = true;
         o.editable = true;
@@ -495,10 +502,11 @@ return view.extend({
         o.datatype = datatypes.UINTEGER;
         o.default = '5';
         o.placeholder = '5';
-        o.description = _("Timeout for each individual health check in milliseconds.");
+        o.description = _("How many failed health checks are allowed before the node is treated as unavailable.");
 
         o = s2.taboption(tabname, form.Flag, "lazy", _("Lazy:"));
         o.default = primitives.TRUE;
+        o.description = _("Run group health checks only when needed instead of probing on every interval.");
 
         tabname = "proxiesgroupfilter_tab";
         s2.tab(tabname, _("Filters"));
@@ -750,7 +758,7 @@ return view.extend({
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
-        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Shared port rule:"), _("Extra settings for traffic that arrives through the shared proxy port. Use this when that port should behave differently from the default route."));
+        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mihomo mixed port rule:"), _("Extra settings for traffic that arrives through the Mihomo mixed port. Use this when that port should behave differently from the default route."));
         smp.addremove = false;
 
         tabname = "mixedportbasic_tab";
@@ -762,6 +770,7 @@ return view.extend({
         });
         o.default = common.endRuleOptions[1].value;
         o.rmempty = false;
+        o.description = _("Choose which proxy, group, or action handles traffic that comes in through the Mihomo mixed port.");
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") {
                 return _("This field cannot be empty");
@@ -780,6 +789,7 @@ return view.extend({
         optionFinal.value(common.endRuleOptions[2].value, common.endRuleOptions[2].text);
         optionFinal.default = common.endRuleOptions[0].value;
         optionFinal.rmempty = false;
+        optionFinal.description = _("Choose the fallback action for traffic that does not match any earlier rule.");
         optionFinal.validate = function (section_id, value) {
             if (!value || value.trim() === "") {
                 return _("This field cannot be empty");

@@ -1,4 +1,5 @@
 "use strict";
+"require uci";
 "require form";
 "require view";
 "require view.justclash.common as common";
@@ -43,13 +44,13 @@ return view.extend({
         o.default = "7893";
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable shared proxy port:"));
-        o.description = _("Use one port for both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy.");
+        o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable Mihomo mixed port:"));
+        o.description = _("Use the Mihomo mixed port so one port handles both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy.");
         o.default = primitives.FALSE;
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Value, "mixed_port", _("Shared proxy port:"));
-        o.description = _("Port that accepts both HTTP(S) and SOCKS5 connections from apps and devices on your network.");
+        o = s.taboption(tabname, form.Value, "mixed_port", _("Mihomo mixed port:"));
+        o.description = _("Port used by the Mihomo mixed port listener for both HTTP(S) and SOCKS5 connections from apps and devices on your network.");
         o.depends("use_mixed_port", primitives.TRUE);
         o.retain = true;
         o.datatype = datatypes.PORT;
@@ -125,7 +126,7 @@ return view.extend({
         o.description = _("Select which network will allow access to the API controller and dashboard.");
 
         o = s.taboption(tabname, form.Flag, "use_dashboard", _("Enable dashboard:"));
-        o.description = _("Enable the web dashboard for Mihomo. Turn this on only if you need the dashboard interface.");
+        o.description = _("Enable an additional external web dashboard for Mihomo. Turn this on only if you need a separate dashboard interface.");
         o.default = primitives.FALSE;
         o.rmempty = false;
         o.cfgvalue = function (section_id) {
