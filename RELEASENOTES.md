@@ -1,3 +1,46 @@
+## [0.8.5] - 02032026
+
+- Config: Added predefined `nameserver policy` entries for special domains in default config
+- Config: Added additional special domains to `sniffer ignore` list
+- Build: Improved randomization for API password placeholders
+- Build: Improved randomization for MAC placeholders
+- Parser: Updated `sudoku` parser with missing `udp: true`
+- Parser: Updated `vless` parser from URL with `tfo`
+- Init.d: Fixed delayed boot logic
+- Init.d: Fixed locked `init.d` loop when delayed boot is enabled
+- Service: Added support for `nameserver policy`
+- Service: Added `enabled` logic for `proxy`, `proxy-groups` and `proxy-providers`
+- Service: Added `nslookup` timeout in calls
+- Service: Fixed stucked `nslookup` in edge cases
+- Service: Improved dashboard selection handling
+- Service: Fixed incorrect config generation when `dashboard` and `mixed port` are enabled
+- Service: Fixed `socks` proxy generation
+- Service: Fixed `dnsmasq restore` function
+- Service: Fixed incorrect logic in `stop core`
+- Service: Fixed manual foreground start trap handling
+- Service: Fixed `proxy group generation` logic
+- Service: Fixed edge case for `get_os_name` function
+- Service: Do not save downloaded error pages as valid files
+- Service: Improved `service data update` cleanup
+- Service: Improved cleanup for `core download` and `service data update` files if interrupted
+- Service: Improved hardening for custom data
+- Service: Improved logging and removed unsupported millisecond logging for BusyBox
+- Service: Improved some lookup performance in sections
+- Service: Refactored `dnsmasq` functions
+- Service: Refactored logging messages and various text messages
+- Service: Simplified some file operation logic
+- LuCI: Added support for multiple dashboards
+- LuCI: Added support for user defined `nameserver policy`
+- LuCI: Added `Enabled` flags for main sections
+- LuCI: Added `sticky-sessions` support for balance mode strategies
+- LuCI: Improved error handling for pages
+- LuCI: Improved text fields structure and naming consistency
+- LuCI: Improved overall code quality and page wording
+- Translation: Updated translations
+
+**This version requires:**
+- Browser cache must be cleaned up
+
 ## [0.8.4] - 21022026
 
 - LuCI: Fix `status` page possible parallel fetches in case of removed popup by blockers
