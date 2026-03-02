@@ -29,7 +29,8 @@ parse_sudoku_url() {
         type: "sudoku",
         server: .h,
         port: .p,
-        key: .k
+        key: .k,
+        udp: true
     }
 
     # aead-method (default: chacha20-poly1305)
@@ -78,7 +79,7 @@ parse_sudoku_url() {
         else {}
       end)
 
-    # http-mask-mode: legacy | stream | poll | auto
+    # http-mask-mode: legacy | stream | poll | auto | ws
     + (if (.hm? and (.hm | length > 0))
         then {"http-mask-mode": .hm}
         else {}
@@ -335,7 +336,7 @@ parse_vless_url() {
     # shellcheck disable=SC2249
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
-    local net="tcp" sec="" sni="" fp="" alpn="" flow="" penc=""
+    local net="tcp" sec="" sni="" fp="" alpn="" flow="" penc="" tfo=""
     local pbk="" sid="" spx="" sn="" enc="" ech=""
 
     local temp_query="$query_part"
@@ -357,6 +358,7 @@ parse_vless_url() {
             fp) fp="$v" ;;
             alpn) alpn="$(url_decode "$v")" ;;
             flow) flow="$v" ;;
+            tfo) tfo="$v" ;;
             pbk) pbk="$v" ;;
             sid) sid="$v" ;;
             spx|path)
@@ -375,6 +377,10 @@ parse_vless_url() {
 
     [ -n "$penc" ] && json="$json,\"packet-encoding\":\"$penc\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
+    case "$tfo" in
+        1|true|TRUE|True) json="$json,\"tfo\":true" ;;
+        *) ;;
+    esac
 
     if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
         json="$json,\"tls\":true"
