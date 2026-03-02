@@ -1733,7 +1733,7 @@ dns:
   listen: $(yaml_quote "127.0.0.1:$dns_listen_port")
   prefer-h3: false
   ipv6: false
-  use-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")
+  use-hosts: false
   use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")
   nameserver-policy: $nameserver_policy
   default-nameserver: $default_nameserver
