@@ -71,7 +71,6 @@ return view.extend({
         s = m.section(form.TypedSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
         s.anonymous = true;
         s.addremove = true;
-        s.sortable = true;
 
         tabname = "proxiesbasic_tab";
         s.tab(tabname, _("Basic"));
@@ -223,7 +222,6 @@ return view.extend({
         spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies."));
         spp.anonymous = true;
         spp.addremove = true;
-        spp.sortable = true;
 
         tabname = "proxyprovidersbasic_tab";
         spp.tab(tabname, _("Basic"));
@@ -391,7 +389,6 @@ return view.extend({
         s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing, URL test)."));
         s2.anonymous = true;
         s2.addremove = true;
-        s2.sortable = true;
 
         tabname = "proxygroupsbasic_tab";
         s2.tab(tabname, _("Basic"));
