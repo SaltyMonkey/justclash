@@ -902,7 +902,7 @@ msgid "Use with rules:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:135
-msgid "Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups."
+msgid "Predefined rule set lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:137 htdocs/luci-static/resources/view/justclash/routing.js:524 htdocs/luci-static/resources/view/justclash/routing.js:603
@@ -910,11 +910,11 @@ msgid "Use with custom domain list:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:138 htdocs/luci-static/resources/view/justclash/routing.js:147 htdocs/luci-static/resources/view/justclash/routing.js:525 htdocs/luci-static/resources/view/justclash/routing.js:534 htdocs/luci-static/resources/view/justclash/routing.js:604 htdocs/luci-static/resources/view/justclash/routing.js:613
-msgid "Each entry can be a web link or an absolute local path to an MRS rules file."
+msgid "Each entry can be a web link or an absolute local path to a binary MRS rules file."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:143 htdocs/luci-static/resources/view/justclash/routing.js:152 htdocs/luci-static/resources/view/justclash/routing.js:530 htdocs/luci-static/resources/view/justclash/routing.js:539 htdocs/luci-static/resources/view/justclash/routing.js:609 htdocs/luci-static/resources/view/justclash/routing.js:618
-msgid "MRS file is required."
+msgid "A binary MRS rules file is required."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:146 htdocs/luci-static/resources/view/justclash/routing.js:533 htdocs/luci-static/resources/view/justclash/routing.js:612
@@ -926,7 +926,7 @@ msgid "Get lists through proxy:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:156
-msgid "If selected, RULE-SET lists will be updated through proxy."
+msgid "If selected, rule set lists will be updated through the proxy."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:160 htdocs/luci-static/resources/view/justclash/routing.js:547 htdocs/luci-static/resources/view/justclash/routing.js:621
@@ -1010,7 +1010,7 @@ msgid "Get subscription with:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:253
-msgid "Use selected proxy to get subscription data from server."
+msgid "Use the selected proxy to get subscription data from the server."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:259 htdocs/luci-static/resources/view/justclash/routing.js:645 htdocs/luci-static/resources/view/justclash/routing.js:695 htdocs/luci-static/resources/view/justclash/routing.js:733 htdocs/luci-static/resources/view/justclash/routing.js:751
@@ -1178,15 +1178,15 @@ msgid "Run group health checks only when needed instead of probing on every inte
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:522
-msgid "Predefined RULE-SET lists, select those which you want to route through proxy-group."
+msgid "Predefined rule set lists. Select the ones you want to route through the proxy group."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:542
-msgid "Get lists through proxy-group:"
+msgid "Get lists through proxy group:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:543
-msgid "If selected, RULE-SET lists will be updated through proxy group."
+msgid "If selected, rule set lists will be updated through the proxy group."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:568

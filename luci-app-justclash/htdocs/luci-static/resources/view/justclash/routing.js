@@ -153,28 +153,28 @@ return view.extend({
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, item.name);
         });
-        o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy. Leave empty if you will use proxy with proxy-groups.");
+        o.description = _("Predefined rule set lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
 
         o = s.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
+        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
         };
 
         o = s.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
+        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/cidr-list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
         };
 
         o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
-        o.description = _("If selected, RULE-SET lists will be updated through proxy.");
+        o.description = _("If selected, rule set lists will be updated through the proxy.");
         o.optional = true;
         o.default = primitives.FALSE;
 
@@ -277,7 +277,7 @@ return view.extend({
         o.description = _("Time interval for subscription update check in seconds.");
 
         o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
-        o.description = _("Use selected proxy to get subscription data from server.");
+        o.description = _("Use the selected proxy to get subscription data from the server.");
         o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
@@ -558,28 +558,28 @@ return view.extend({
         result.rulesetsItems.forEach(item => {
             o.value(item.yamlName, item.name);
         });
-        o.description = _("Predefined RULE-SET lists, select those which you want to route through proxy-group.");
+        o.description = _("Predefined rule set lists. Select the ones you want to route through the proxy group.");
 
         o = s2.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
+        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
         };
 
         o = s2.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
+        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/cidr-list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
         };
 
-        o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy-group:"));
-        o.description = _("If selected, RULE-SET lists will be updated through proxy group.");
+        o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy group:"));
+        o.description = _("If selected, rule set lists will be updated through the proxy group.");
         o.optional = true;
         o.default = primitives.FALSE;
 
@@ -640,21 +640,21 @@ return view.extend({
         o.description = _("Ready-made lists for traffic that should bypass the proxy.");
 
         o = s3.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
+        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
         };
 
         o = s3.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to an MRS rules file.");
+        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
         o.optional = true;
         o.editable = true;
         o.placeholder = "/etc/justclash/cidr-list.mrs";
         o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("MRS file is required.");
+            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
         };
 
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
