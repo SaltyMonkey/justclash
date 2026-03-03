@@ -1,5 +1,12 @@
 ## [0.9.1] - 03032026
 
+- Service: Fixed regressions
+
+**This version requires:**
+- Browser cache must be cleaned up
+
+## [0.9.1] - 03032026
+
 - Config: Added predefined `nameserver policy` entries for special domains in default config
 - Config: Added additional special domains to `sniffer ignore` list
 - Build: Improved randomization for API password placeholders
