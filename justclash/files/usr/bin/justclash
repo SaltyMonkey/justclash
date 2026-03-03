@@ -227,10 +227,10 @@ start() {
     if [ $? -eq 1 ]; then
         log info "Generating YAML configuration..." "🐱"
         core_generate_yaml
-
-        log info "Validating YAML configuration..." "🐱"
-        core_validate_yaml || return 1
     fi
+
+    log info "Validating YAML configuration..." "🐱"
+    core_validate_yaml || return 1
 
     log info "Configuring tproxy routing and creating NFTables table" "🔑"
     nf_table_add
@@ -240,6 +240,13 @@ start() {
 
     log info "Starting Mihomo core" "🐱"
     start_core
+    local core_exit_code=$?
+
+    log warn "Mihomo core exited; restoring networking changes." "🔑"
+    dnsmasq_restore
+    nf_table_remove
+
+    return "$core_exit_code"
 }
 
 stop() {
@@ -258,6 +265,7 @@ stop() {
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
     local attempt=0
+    local exit_code=0
     log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries" "🐱"
 
     # shellcheck disable=SC2154
@@ -278,7 +286,7 @@ start_core() {
 
             if [ "$attempt" -ge "$DEFAULT_CORE_RESTART_RETRIES" ]; then
                 log error "Procd mode: failed to restart Mihomo after $DEFAULT_CORE_RESTART_RETRIES attempts; exiting" "❌"
-                exit "$exit_code"
+                return "$exit_code"
             fi
 
             sleep 2
@@ -289,9 +297,11 @@ start_core() {
         log warn "Manual mode: Mihomo exited with code $exit_code" "❌"
         if [ "$exit_code" -ne 0 ]; then
             log error "Manual mode: Mihomo crashed; exiting" "❌"
-            exit "$exit_code"
+            return "$exit_code"
         fi
     fi
+
+    return 0
 }
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
@@ -498,6 +508,7 @@ EOF
         save_dnsmasq_config "dhcp.@dnsmasq[0].noresolv" "dhcp.@dnsmasq[0].${PROGNAME}_noresolv"
         save_dnsmasq_config "dhcp.@dnsmasq[0].cachesize" "dhcp.@dnsmasq[0].${PROGNAME}_cachesize"
 
+        uci -q delete dhcp.@dnsmasq[0].server
         uci add_list dhcp.@dnsmasq[0].server="127.0.0.1#${dns_listen_port}"
         uci set dhcp.@dnsmasq[0].cachesize="0"
         uci set dhcp.@dnsmasq[0].noresolv="1"
@@ -524,8 +535,11 @@ dnsmasq_restore() {
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
         bak_cachesize=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize)
-        if [ -z "$bak_cachesize" ]; then
+        if [ "$bak_cachesize" = "unset" ]; then
             log warn "dnsmasq restore: backup cachesize is unset"
+            uci -q delete dhcp.@dnsmasq[0].cachesize
+        elif [ -z "$bak_cachesize" ]; then
+            log warn "dnsmasq restore: backup cachesize is missing"
         else
             uci set dhcp.@dnsmasq[0].cachesize="$bak_cachesize"
         fi
@@ -774,28 +788,28 @@ handle_proxy_section() {
 
         proxies="${proxies:+$proxies,}$proxy_obj"
 
-        config_get list "$section" enabled_list
+        config_get enabled_list "$section" enabled_list
         matched_rulesets=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
         local added_rulesets="|"
         while IFS= read -r line; do
             [ -z "$line" ] && continue
 
-            local ruleset r_name yaml behavior format url proxy rest
-            r_name="${line%%|*}"
-            rest="${line#*|}"
-            ruleset="${rest%%|*}"
-            rest="${rest#*|}"
-            yaml="${rest%%|*}"
-            rest="${rest#*|}"
-            behavior="${rest%%|*}"
-            rest="${rest#*|}"
-            format="${rest%%|*}"
-            url="${rest#*|}"
+            local ruleset behavior format url proxy rest
+            ruleset="${line#*|}"
+            ruleset="${ruleset%%|*}"
 
             # shellcheck disable=SC2249
             case "$added_rulesets" in
                 *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
             esac
+
+            rest="${line#*|}"
+            ruleset="${rest%%|*}"
+            rest="${rest#*|}"
+            behavior="${rest%%|*}"
+            rest="${rest#*|}"
+            format="${rest%%|*}"
+            url="${rest#*|}"
 
             local rule_str
             rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
@@ -988,22 +1002,22 @@ handle_proxy_group_section() {
         while IFS= read -r line; do
             [ -z "$line" ] && continue
 
-            local ruleset r_name yaml behavior format url proxy rest
-            r_name="${line%%|*}"
-            rest="${line#*|}"
-            ruleset="${rest%%|*}"
-            rest="${rest#*|}"
-            yaml="${rest%%|*}"
-            rest="${rest#*|}"
-            behavior="${rest%%|*}"
-            rest="${rest#*|}"
-            format="${rest%%|*}"
-            url="${rest#*|}"
+            local ruleset behavior format url proxy rest
+            ruleset="${line#*|}"
+            ruleset="${ruleset%%|*}"
 
             # shellcheck disable=SC2249
             case "$added_rulesets" in
                 *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
             esac
+
+            rest="${line#*|}"
+            ruleset="${rest%%|*}"
+            rest="${rest#*|}"
+            behavior="${rest%%|*}"
+            rest="${rest#*|}"
+            format="${rest%%|*}"
+            url="${rest#*|}"
 
             local rule_str
             rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
@@ -1217,22 +1231,23 @@ handle_block_rule_section() {
     while IFS= read -r line; do
         [ -z "$line" ] && continue
 
-        local val name yamlName behavior format url rest
-        name="${line%%|*}"
-        rest="${line#*|}"
-        val="${rest%%|*}"
-        rest="${rest#*|}"
-        yamlName="${rest%%|*}"
-        rest="${rest#*|}"
-        behavior="${rest%%|*}"
-        rest="${rest#*|}"
-        format="${rest%%|*}"
-        url="${rest#*|}"
+        local val behavior format url yamlName rest
+        val="${line#*|}"
+        val="${val%%|*}"
 
         # shellcheck disable=SC2249
         case "$added_blocklists" in
             *"|$val|"*) log warn "Skipping duplicated ruleset: $val"; continue ;;
         esac
+
+        rest="${line#*|}"
+        val="${rest%%|*}"
+        rest="${rest#*|}"
+        behavior="${rest%%|*}"
+        rest="${rest#*|}"
+        format="${rest%%|*}"
+        url="${rest#*|}"
+        yamlName="$val"
 
         if [ "$behavior" = "domain" ]; then
             list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}$yamlName"
@@ -1314,23 +1329,22 @@ handle_direct_rule_section() {
     while IFS= read -r line; do
         [ -z "$line" ] && continue
 
-        local ruleset r_name yaml behavior format url rest
-        r_name="${line%%|*}"
-        rest="${line#*|}"
-        ruleset="${rest%%|*}"
-        rest="${rest#*|}"
-        # shellcheck disable=SC2034
-        yaml="${rest%%|*}"
-        rest="${rest#*|}"
-        behavior="${rest%%|*}"
-        rest="${rest#*|}"
-        format="${rest%%|*}"
-        url="${rest#*|}"
+        local ruleset behavior format url rest
+        ruleset="${line#*|}"
+        ruleset="${ruleset%%|*}"
 
         # shellcheck disable=SC2249
         case "$added_rulesets" in
             *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
         esac
+
+        rest="${line#*|}"
+        ruleset="${rest%%|*}"
+        rest="${rest#*|}"
+        behavior="${rest%%|*}"
+        rest="${rest#*|}"
+        format="${rest%%|*}"
+        url="${rest#*|}"
 
         local rule_str
         rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
