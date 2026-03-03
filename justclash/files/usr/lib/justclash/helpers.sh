@@ -19,11 +19,11 @@ json_escape() {
 }
 
 yaml_quote() {
-    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C tr -d '[:space:][:cntrl:]' | sed 's/\\/\\\\/g; s/"/\\"/g')"
+    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C sed 's/[[:cntrl:]]//g; s/\\/\\\\/g; s/"/\\"/g')"
 }
 
 yaml_quote_soft() {
-    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C tr -d '[:cntrl:]' | sed 's/\\/\\\\/g; s/"/\\"/g')"
+    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C sed 's/[[:cntrl:]]//g; s/\\/\\\\/g; s/"/\\"/g')"
 }
 
 format_uci_bool_as_yaml() {
