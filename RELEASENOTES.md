@@ -1,4 +1,4 @@
-## [0.8.5] - 02032026
+## [0.9.1] - 03032026
 
 - Config: Added predefined `nameserver policy` entries for special domains in default config
 - Config: Added additional special domains to `sniffer ignore` list
