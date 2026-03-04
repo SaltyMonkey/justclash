@@ -142,6 +142,7 @@ return view.extend({
         o.value("yacd-meta", _("Yacd-meta"));
         o.default = "metacubexd";
         o.rmempty = false;
+        o.retain = true;
         o.depends("use_dashboard", primitives.TRUE);
 
         o = s.taboption(tabname, form.Value, "api_password", _("API password:"));

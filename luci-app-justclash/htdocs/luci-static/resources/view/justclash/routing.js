@@ -306,6 +306,7 @@ return view.extend({
             return (common.isValidHttpUrl(value)) ? true : _("Only http:// or https:// URLs are allowed.");
         };
         o.description = _("URL for node availability check (required for proxy provider functionality).");
+        o.retain = true;
         o.depends("health_check", primitives.TRUE);
 
         o = spp.taboption(tabname, form.Value, "health_check_expected_status", _("Check status:"));
@@ -315,6 +316,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultHealthCheckResultCode[1].value;
+        o.retain = true;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Required response status for node availability check (required for proxy provider functionality).");
 
@@ -324,6 +326,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultProxyProviderHealthCheckSec[3].value;
+        o.retain = true;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Time interval between health checks in seconds.");
 
@@ -333,6 +336,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultHealthCheckTimeoutMs[3].value;
+        o.retain = true;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Timeout for each individual health check in milliseconds.");
 
