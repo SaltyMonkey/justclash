@@ -8,8 +8,8 @@
 # --------------------------------------------
 
 parse_sudoku_url() {
-    local link="$1" dialer_proxy="$2"
-    local padding_min="${3:-5}" padding_max="${4:-15}"
+    local link="$1" dialer_proxy="$2" name="$3"
+    local padding_min="${4:-5}" padding_max="${5:-15}"
     local raw payload
 
     raw="$link"
@@ -21,11 +21,13 @@ parse_sudoku_url() {
     }
 
     echo "$payload" | jq -c \
+        --arg name "$name" \
         --arg dialer_proxy "$dialer_proxy" \
         --argjson padding_min "$padding_min" \
         --argjson padding_max "$padding_max" '
 
     {
+        name: $name,
         type: "sudoku",
         server: .h,
         port: .p,
@@ -118,7 +120,7 @@ parse_sudoku_url() {
 }
 
 parse_ss_url() {
-    local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
+    local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4"
 
     link="${link%%#*}"
 
@@ -171,14 +173,14 @@ parse_ss_url() {
     [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
     port=$(echo "$port" | tr -cd '0-9')
 
-    local json="\"type\":\"ss\",\"udp\":true,\"server\":\"$server\",\"port\":$port,\"cipher\":\"$method\",\"password\":\"$password\""
+    local json="\"name\":\"$name\",\"type\":\"ss\",\"udp\":true,\"server\":\"$server\",\"port\":$port,\"cipher\":\"$method\",\"password\":\"$password\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
 
     echo "{$json}"
 }
 
 parse_simple_proxy_url() {
-    local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3"
+    local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4"
     raw="$link"
     raw="${raw#https://}"
     raw="${raw#socks://}"
@@ -209,7 +211,7 @@ parse_simple_proxy_url() {
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
     # JSON
-    local json="\"type\":\"socks5\",\"udp\":true,\"server\":\"$server\",\"port\":$port"
+    local json="\"name\":\"$name\",\"type\":\"socks5\",\"udp\":true,\"server\":\"$server\",\"port\":$port"
     [ -n "$username" ] && json="$json,\"username\":\"$username\""
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
@@ -218,7 +220,7 @@ parse_simple_proxy_url() {
 }
 
 parse_trojan_url() {
-    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3"
+    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4"
 
     local raw="${url#trojan://}"
     raw="${url#trojan-go://}"
@@ -278,7 +280,7 @@ parse_trojan_url() {
         esac
     done
 
-    local json="\"type\":\"trojan\",\"server\":\"$server\",\"port\":$port,\"password\":\"$password\",\"udp\":true"
+    local json="\"name\":\"$name\",\"type\":\"trojan\",\"server\":\"$server\",\"port\":$port,\"password\":\"$password\",\"udp\":true"
 
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
     [ -n "$sni" ] && json="$json,\"sni\":\"$sni\""
@@ -320,7 +322,7 @@ parse_trojan_url() {
 }
 
 parse_vless_url() {
-    local link="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3"
+    local link="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4"
     local raw="${link#vless://}"
     raw="${raw%%#*}"
 
@@ -373,7 +375,7 @@ parse_vless_url() {
         esac
     done
 
-    local json="\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
+    local json="\"name\":\"$name\",\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
 
     [ -n "$penc" ] && json="$json,\"packet-encoding\":\"$penc\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
@@ -421,7 +423,7 @@ parse_vless_url() {
 }
 
 parse_hysteria2_url() {
-    local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3"
+    local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3" name="$4"
 
     local raw="${url#hysteria2://}"
     raw="${raw#hy2://}"
@@ -474,7 +476,7 @@ parse_hysteria2_url() {
         esac
     done
 
-    local json="\"type\":\"hysteria2\",\"server\":\"$server\",\"port\":$port,\"udp\":true"
+    local json="\"name\":\"$name\",\"type\":\"hysteria2\",\"server\":\"$server\",\"port\":$port,\"udp\":true"
 
     [ -n "$password" ] && json="$json,\"password\":\"$password\""
     [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
@@ -502,7 +504,7 @@ parse_hysteria2_url() {
 
 #Supports only one port/port-range + transport combination
 parse_mieru_url() {
-    local link="$1" dialer_proxy="$2"
+    local link="$1" dialer_proxy="$2" name="$3"
     local raw="${link#mierus://}"
     raw="${raw%%#*}"
 
@@ -561,7 +563,7 @@ parse_mieru_url() {
     done
 
     local json
-    json="\"type\":\"mieru\""
+    json="\"name\":\"$name\",\"type\":\"mieru\""
     json="$json,\"server\":\"$server\""
     json="$json,\"udp\":true"
     [ -n "$handshake_mode" ] && json="$json,\"handshake-mode\":\"$handshake_mode\""
