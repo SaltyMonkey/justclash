@@ -772,29 +772,27 @@ handle_proxy_section() {
             [ -z "$proxy_obj" ] && { log warn "Failed to process object for '$name'" "⚠️"; return; }
         else
             [ -z "$proxy_link_uri" ] && { log warn  "Skipping empty '$name'" "⚠️"; return; }
-            proxy_link_uri=$(echo "$proxy_link_uri" | trim)
+            proxy_link_uri=$(trim "$proxy_link_uri")
 
-            [ -n "$dialer_proxy" ] && dialer_proxy=$(echo "$dialer_proxy" | trim)
+            [ -n "$dialer_proxy" ] && dialer_proxy=$(trim "$dialer_proxy")
 
             case "$proxy_link_uri" in
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
-                https://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
-                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
-                socks4://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
-                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
-                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
-                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
-                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy") ;;
-                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy") ;;
-                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy") ;;
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
+                https://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
+                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
+                socks4://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
+                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
+                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
+                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
+                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
+                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name") ;;
+                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name") ;;
                 *) log warn "Unknown proxy link type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
             [ -z "$proxy_obj" ] && { log warn "Failed to parse proxy link: $proxy_link_uri" "⚠️"; return; }
-
-            proxy_obj=$(echo "$proxy_obj" | jq -c --arg name "$name" '. + {name: $name}')
         fi
 
         proxies="${proxies:+$proxies,}$proxy_obj"
@@ -837,7 +835,7 @@ EOF
         # Custom files/URLs are hashed to stable synthetic ruleset names so they can be referenced from rules and DNS policy.
         config_get domain_list "$section" custom_enabled_domain_list
         for custom_source in $domain_list; do
-            custom_source=$(echo "$custom_source" | trim)
+            custom_source=$(trim "$custom_source")
             if [ -n "$custom_source" ]; then
                 synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
                 case "$custom_source" in
@@ -866,7 +864,7 @@ EOF
 
         config_get cidr_list "$section" custom_enabled_cidr_list
         for custom_source in $cidr_list; do
-            custom_source=$(echo "$custom_source" | trim)
+            custom_source=$(trim "$custom_source")
             if [ -n "$custom_source" ]; then
                 synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
                 case "$custom_source" in
@@ -1050,7 +1048,7 @@ EOF
         # Custom files/URLs are hashed to stable synthetic ruleset names so they can be referenced from rules and DNS policy.
         config_get domain_list "$section" custom_enabled_domain_list
         for custom_source in $domain_list; do
-            custom_source=$(echo "$custom_source" | trim)
+            custom_source=$(trim "$custom_source")
             if [ -n "$custom_source" ]; then
                 synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
                 case "$custom_source" in
@@ -1079,7 +1077,7 @@ EOF
 
         config_get cidr_list "$section" custom_enabled_cidr_list
         for custom_source in $cidr_list; do
-            custom_source=$(echo "$custom_source" | trim)
+            custom_source=$(trim "$custom_source")
             if [ -n "$custom_source" ]; then
                 synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
                 case "$custom_source" in
@@ -1181,7 +1179,7 @@ handle_proxy_provider_section() {
         [ -n "$exclude_type" ] && provider_json="$provider_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
 
         if [ -n "$override_dialer_proxy" ]; then
-            provider_json="$provider_json,\"override\":{\"dialer-proxy\":\"$(echo "$override_dialer_proxy" | trim)\" }"
+            provider_json="$provider_json,\"override\":{\"dialer-proxy\":\"$(trim "$override_dialer_proxy")\" }"
         fi
 
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
@@ -1375,7 +1373,7 @@ EOF
     # Custom files/URLs are hashed to stable synthetic ruleset names so they can be referenced from rules and DNS policy.
     config_get domain_list direct_rules custom_enabled_domain_list
     for custom_source in $domain_list; do
-        custom_source=$(echo "$custom_source" | trim)
+        custom_source=$(trim "$custom_source")
         if [ -n "$custom_source" ]; then
             synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
             case "$custom_source" in
@@ -1401,7 +1399,7 @@ EOF
 
     config_get cidr_list direct_rules custom_enabled_cidr_list
     for custom_source in $cidr_list; do
-        custom_source=$(echo "$custom_source" | trim)
+        custom_source=$(trim "$custom_source")
         if [ -n "$custom_source" ]; then
             synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
             case "$custom_source" in
