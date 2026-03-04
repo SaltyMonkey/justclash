@@ -68,6 +68,14 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
+        o = s.taboption(tabname, form.Value, "pbr_priority", _("PBR priority:"));
+        o.description = _("Priority for the policy routing rule that sends marked traffic to the local TPROXY table. Lower numbers run earlier.");
+        o.datatype = datatypes.UINTEGER;
+        o.default = "169";
+        o.rmempty = false;
+        o.retain = true;
+        o.depends("nft_apply_changes", primitives.TRUE);
+
         o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Set router traffic rules at startup:"));
         o.description = _("Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too.");
         o.rmempty = false;
@@ -162,6 +170,7 @@ return view.extend({
         o.placeholder = "0 5 * * 0";
         o.default = "0 5 * * 0";
         o.rmempty = false;
+        o.retain = true;
         o.depends("mihomo_autorestart", primitives.TRUE);
         o.description = _("Use cron format to choose when Mihomo should restart automatically.");
         o.validate = function (section_id, value) {
