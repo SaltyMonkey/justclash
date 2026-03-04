@@ -102,6 +102,7 @@ DEFAULT_DOT_PORT=853
 DEFAULT_NTP_PORT=123
 
 DEFAULT_CORE_RESTART_RETRIES=3
+DEFAULT_PBR_PRIORITY=169
 
 DEFAULT_DIAG_RESOLVE_URL_YANDEX="ya.ru"
 DEFAULT_DIAG_IP_CHECK_PING_YANDEX="77.88.8.8"
@@ -194,7 +195,7 @@ core_validate_yaml() {
 }
 
 start() {
-    local skip_environment_checks
+    local skip_environment_checks core_exit_code
 
     log info "Initializing JustClash service..." "₍^. .^₎⟆"
 
@@ -240,7 +241,7 @@ start() {
 
     log info "Starting Mihomo core" "🐱"
     start_core
-    local core_exit_code=$?
+    core_exit_code=$?
 
     log warn "Mihomo core exited; restoring networking changes." "🔑"
     dnsmasq_restore
@@ -270,8 +271,6 @@ start_core() {
 
     # shellcheck disable=SC2154
     if [ "$JUSTCLASH_ENV" = "procd" ]; then
-        local attempt=0
-
         while [ "$attempt" -lt "$DEFAULT_CORE_RESTART_RETRIES" ]; do
             "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
             exit_code=$?
@@ -327,6 +326,7 @@ nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
+    local pbr_priority
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -341,6 +341,7 @@ nf_table_add() {
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_ntp_mode settings nft_ntp_mode
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
+    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
 
     [ -z "$tproxy_port" ] && panic "tproxy_port is not set"
     [ -z "$fake_ip_range" ] && panic "fake_ip_range is not set"
@@ -354,9 +355,6 @@ nf_table_add() {
 
     # Priority -150: prerouting from clients
     nft add chain inet "$NF_TABLE_NAME" prerouting '{ type filter hook prerouting priority -150; policy accept; }'
-
-    # Priority -100: proxy handling
-    nft add chain inet "$NF_TABLE_NAME" proxy '{ type filter hook prerouting priority -100; policy accept; }'
 
     # Priority -150: output
     nft add chain inet "$NF_TABLE_NAME" output '{ type route hook output priority -150; policy accept; }'
@@ -382,43 +380,45 @@ nf_table_add() {
         nft add element inet "$NF_TABLE_NAME" inbound_interfaces { "\"$iface\"" }
     done
 
-    # === PREROUTING chain (priority -150) - mark for user interfaces ===
-    nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces mark "$NF_TABLE_FWMARK_PROXY" return
-    nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip daddr @private_ips return
-    nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces ip6 daddr @private_ips6 return
+    # === PREROUTING chain (priority -150) - classify client traffic before TPROXY ===
+    # Fast exit for unrelated interfaces to avoid repeating the inbound interface lookup in every rule below.
+    nft add rule inet "$NF_TABLE_NAME" prerouting iifname != @inbound_interfaces return
+    # TPROXY is only relevant for TCP/UDP traffic.
+    nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto != { tcp, udp } return
+    nft add rule inet "$NF_TABLE_NAME" prerouting ip daddr @private_ips return
+    nft add rule inet "$NF_TABLE_NAME" prerouting ip6 daddr @private_ips6 return
 
     if [ "$nft_quic_mode" = "DROP" ]; then
         # shellcheck disable=SC2248
-        nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop
+        nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop
     fi
     if [ "$nft_dot_quic_mode" = "DROP" ]; then
         # shellcheck disable=SC2248
-        nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT } drop
+        nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT } drop
     fi
     if [ "$nft_dot_mode" = "DROP" ]; then
         # shellcheck disable=SC2248
-        nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop
+        nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop
     fi
 
     if [ "$nft_ntp_mode" = "DROP" ]; then
         # shellcheck disable=SC2248
-        nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
+        nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
     elif [ "$nft_ntp_mode" = "DIRECT" ]; then
         # shellcheck disable=SC2248
-        nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
+        nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
     fi
 
-    # Final mark
-    nft add rule inet "$NF_TABLE_NAME" prerouting iifname @inbound_interfaces meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
-
-    # === PROXY chain (priority -100) - tproxy link ===
-    nft add rule inet "$NF_TABLE_NAME" proxy meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto tcp tproxy ip to 127.0.0.1:"$tproxy_port"
-    nft add rule inet "$NF_TABLE_NAME" proxy meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto udp tproxy ip to 127.0.0.1:"$tproxy_port"
+    # Mark packets selected for interception, then pass them to the local TPROXY listener.
+    nft add rule inet "$NF_TABLE_NAME" prerouting meta mark set "$NF_TABLE_FWMARK_FINAL"
+    nft add rule inet "$NF_TABLE_NAME" prerouting meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto tcp tproxy ip to 127.0.0.1:"$tproxy_port"
+    nft add rule inet "$NF_TABLE_NAME" prerouting meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto udp tproxy ip to 127.0.0.1:"$tproxy_port"
 
     # === OUTPUT chain (priority -150) -router's traffic ===
     if [ "$nft_apply_changes_router" = "1" ]; then
  	    nft add rule inet "$NF_TABLE_NAME" output mark "$NF_TABLE_FWMARK_PROXY" return
         #nft add rule inet "$NF_TABLE_NAME" output meta oifname @vpn_interfaces return
+        nft add rule inet "$NF_TABLE_NAME" output meta l4proto != { tcp, udp } return
         nft add rule inet "$NF_TABLE_NAME" output ip daddr @private_ips return
         nft add rule inet "$NF_TABLE_NAME" output ip6 daddr @private_ips6 return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
@@ -437,15 +437,13 @@ nf_table_add() {
     cleanup_fwmark
 
     # PBR
-    if ! ip rule list | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup $NF_ROUTE_TABLE"; then
-        ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE"
-    fi
+    ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" priority "$pbr_priority"
 
     if ! ip route show table "$NF_ROUTE_TABLE" | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
         ip route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE"
     fi
 
-    log warn "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE" "🛠️"
+    log warn "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority" "🛠️"
 }
 
 
@@ -462,6 +460,8 @@ nf_table_remove() {
 save_dnsmasq_config() {
     local key="$1"
     local backup_key="$2"
+    local value
+
     value=$(uci get "$key" 2>/dev/null)
 
     if [ -z "$value" ]; then
@@ -473,13 +473,14 @@ save_dnsmasq_config() {
 
 dnsmasq_update() {
     local dns_listen_port dnsmasq_apply_changes
+    local server server_line server_lines
 
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
-        local server server_line server_lines
 
+        # Preserve the current upstream list before replacing it with the local Mihomo listener.
         server_lines=$(uci -q show dhcp.@dnsmasq[0].server 2>/dev/null)
         while IFS= read -r server_line; do
             [ -z "$server_line" ] && continue
@@ -524,16 +525,18 @@ EOF
 }
 
 dnsmasq_restore() {
-    local dns_listen_port
-    local dnsmasq_apply_changes
-    config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
+    local dns_listen_port dnsmasq_apply_changes
+    local bak_cachesize bak_noresolv
+    local server server_line
+    local current_server_lines backup_server_lines
+    local has_local_server=0
 
-    local bak_cachesize
-    local bak_noresolv
-    local server
+    config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
+
+        # Restore scalar options from the backup keys written during dnsmasq_update().
         bak_cachesize=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize)
         if [ "$bak_cachesize" = "unset" ]; then
             log warn "dnsmasq restore: backup cachesize is unset"
@@ -552,10 +555,9 @@ dnsmasq_restore() {
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
         fi
 
-        local current_server_lines backup_server_lines has_local_server server_line
+        # Only restore the saved upstream servers if dnsmasq still points at our local listener.
         current_server_lines=$(uci -q show dhcp.@dnsmasq[0].server 2>/dev/null)
         backup_server_lines=$(uci -q show dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null)
-        has_local_server=0
         while IFS= read -r server_line; do
             [ -z "$server_line" ] && continue
             server="${server_line#*=}"
@@ -663,11 +665,12 @@ check_for_conflicts() {
 }
 
 check_for_conflicts_warn() {
-    local external_nameservers
+    local external_nameservers resolvconf_res
+
     external_nameservers=$(
         awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" { print; found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
     )
-    local resolvconf_res=$?
+    resolvconf_res=$?
 
     if [ "$resolvconf_res" -eq 0 ]; then
         log warn "Warning: External DNS servers are listed in /etc/resolv.conf" "⚠️"
@@ -737,8 +740,17 @@ handle_proxy_section() {
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name enabled proxy_link_uri dialer_proxy list_update_interval mode proxy_link_object use_proxy_for_list_update list val
-        local domain_list cidr_list matched_rulesets
+        local name enabled proxy_link_uri dialer_proxy
+        local list_update_interval mode proxy_link_object use_proxy_for_list_update
+        # Source lists loaded from UCI for generated rules and custom rulesets.
+        local route_entries route_entry domain_list cidr_list matched_rulesets
+        local proxy_obj=""
+        # Scratch vars for parsing one index entry / one custom source at a time.
+        local matched_ruleset_line matched_ruleset_name matched_ruleset_behavior matched_ruleset_format
+        local matched_ruleset_url matched_ruleset_fields download_proxy generated_rule
+        local custom_source synthetic_ruleset_name escaped_path
+        # Ash has no native set type, so we track emitted rulesets via a delimiter-safe sentinel string.
+        local added_rulesets="|"
 
         config_get name "$section" name
         config_get_bool enabled "$section" enabled 1
@@ -752,7 +764,6 @@ handle_proxy_section() {
         [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy: $section" "⚠️"; return; }
         [ -z "$name" ] && { log warn "Skipping proxy without name: $section" "⚠️"; return; }
 
-        local proxy_obj=""
         if [ "$mode" = "object" ]; then
             [ -z "$proxy_link_object" ] && { log warn "Skipping empty proxy '$name'" "⚠️" ; return; }
 
@@ -790,119 +801,117 @@ handle_proxy_section() {
 
         config_get enabled_list "$section" enabled_list
         matched_rulesets=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
-        local added_rulesets="|"
-        while IFS= read -r line; do
-            [ -z "$line" ] && continue
+        while IFS= read -r matched_ruleset_line; do
+            [ -z "$matched_ruleset_line" ] && continue
 
-            local ruleset behavior format url proxy rest
-            ruleset="${line#*|}"
-            ruleset="${ruleset%%|*}"
+            matched_ruleset_name="${matched_ruleset_line#*|}"
+            matched_ruleset_name="${matched_ruleset_name%%|*}"
 
             # shellcheck disable=SC2249
             case "$added_rulesets" in
-                *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
+                *"|$matched_ruleset_name|"*) log warn "Skipping duplicated ruleset: $matched_ruleset_name"; continue ;;
             esac
 
-            rest="${line#*|}"
-            ruleset="${rest%%|*}"
-            rest="${rest#*|}"
-            behavior="${rest%%|*}"
-            rest="${rest#*|}"
-            format="${rest%%|*}"
-            url="${rest#*|}"
+            matched_ruleset_fields="${matched_ruleset_line#*|}"
+            matched_ruleset_name="${matched_ruleset_fields%%|*}"
+            matched_ruleset_fields="${matched_ruleset_fields#*|}"
+            matched_ruleset_behavior="${matched_ruleset_fields%%|*}"
+            matched_ruleset_fields="${matched_ruleset_fields#*|}"
+            matched_ruleset_format="${matched_ruleset_fields%%|*}"
+            matched_ruleset_url="${matched_ruleset_fields#*|}"
 
-            local rule_str
-            rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            generated_rule=$(printf 'RULE-SET,%s,%s' "$matched_ruleset_name" "$name")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
 
-            [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-            selectedRuleSets="${selectedRuleSets}\"$ruleset\":{\"url\":\"$url\",\"behavior\":\"$behavior\",\"format\":\"$format\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
-            added_rulesets="$added_rulesets$ruleset|"
+            [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+            selectedRuleSets="${selectedRuleSets}\"$matched_ruleset_name\":{\"url\":\"$matched_ruleset_url\",\"behavior\":\"$matched_ruleset_behavior\",\"format\":\"$matched_ruleset_format\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            added_rulesets="$added_rulesets$matched_ruleset_name|"
 
-            if [ "$behavior" = "domain" ]; then
-                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
+            if [ "$matched_ruleset_behavior" = "domain" ]; then
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$matched_ruleset_name\""
             fi
         done <<EOF
 $matched_rulesets
 EOF
 
+        # Custom files/URLs are hashed to stable synthetic ruleset names so they can be referenced from rules and DNS policy.
         config_get domain_list "$section" custom_enabled_domain_list
-        for line in $domain_list; do
-            local clean_line=$(echo "$line" | trim)
-            if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str)
-                case "$clean_line" in
+        for custom_source in $domain_list; do
+            custom_source=$(echo "$custom_source" | trim)
+            if [ -n "$custom_source" ]; then
+                synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
+                case "$custom_source" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$clean_line" ]; then
-                        local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$(dirname "$clean_line")"
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
+                    if [ -f "$custom_source" ]; then
+                        escaped_path=$(json_escape "$custom_source")
+                        safe_paths_add "$(dirname "$custom_source")"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Invalid path in custom domain list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom domain list: $custom_source" "⚠️"
                         continue
                     fi
                     ;;
                 esac
 
-                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
+                generated_rule=$(printf 'RULE-SET,%s,%s' "$synthetic_ruleset_name" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$synthetic_ruleset_name\""
             fi
         done
 
         config_get cidr_list "$section" custom_enabled_cidr_list
-        for line in $cidr_list; do
-            local clean_line=$(echo "$line" | trim)
-            if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str)
-                case "$clean_line" in
+        for custom_source in $cidr_list; do
+            custom_source=$(echo "$custom_source" | trim)
+            if [ -n "$custom_source" ]; then
+                synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
+                case "$custom_source" in
                     http://*|https://*)
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$clean_line" ]; then
-                        local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$(dirname "$clean_line")"
-                        [ "$use_proxy_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                    if [ -f "$custom_source" ]; then
+                        escaped_path=$(json_escape "$custom_source")
+                        safe_paths_add "$(dirname "$custom_source")"
+                        [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Invalid path in custom CIDR list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom CIDR list: $custom_source" "⚠️"
                         continue
                     fi
                     ;;
                 esac
 
-                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+                generated_rule=$(printf 'RULE-SET,%s,%s' "$synthetic_ruleset_name" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             fi
         done
 
-        config_get list "$section" additional_srcip_route
-        for val in $list; do
-            [ -n "$val" ] && {
-                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s,%s' "$val" "$name" "no-resolve")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+        config_get route_entries "$section" additional_srcip_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'SRC-IP-CIDR,%s,%s,%s' "$route_entry" "$name" "no-resolve")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             }
         done
-        config_get list "$section" additional_domain_route
-        for val in $list; do
-            [ -n "$val" ] && {
-                local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-                list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$val\""
+        config_get route_entries "$section" additional_domain_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'DOMAIN-SUFFIX,%s,%s' "$route_entry" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+                list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$route_entry\""
             }
         done
-        config_get list "$section" additional_destip_route
-        for val in $list; do
-            [ -n "$val" ] && {
-                local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+        config_get route_entries "$section" additional_destip_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'IP-CIDR,%s,%s' "$route_entry" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             }
         done
     }
@@ -941,8 +950,16 @@ handle_proxy_group_section() {
         local name enabled
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
         local filter exclude_filter exclude_type expected_status
-        local enabled_list list_update_interval use_proxy_group_for_list_update list val
+        # Source lists loaded from UCI for generated rules and custom rulesets.
+        local enabled_list list_update_interval use_proxy_group_for_list_update route_entries route_entry
         local domain_list cidr_list matched_rulesets
+        # Scratch vars for group JSON assembly and per-entry index parsing.
+        local escaped_proxies escaped_providers group_json
+        local matched_ruleset_line matched_ruleset_name matched_ruleset_behavior matched_ruleset_format
+        local matched_ruleset_url matched_ruleset_fields download_proxy generated_rule
+        local custom_source synthetic_ruleset_name escaped_path
+        # Ash has no native set type, so duplicate suppression uses a delimiter-safe sentinel string.
+        local added_rulesets="|"
 
         config_get name "$section" name
         config_get_bool enabled "$section" enabled 1
@@ -969,11 +986,10 @@ handle_proxy_group_section() {
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
         config_get_bool use_proxy_group_for_list_update "$section" use_proxy_group_for_list_update 0
 
-        local escaped_proxies escaped_providers
         [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | trim | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(echo "$providers_list" | trim | list_to_json_array)
 
-        local group_json="\"name\":\"$(json_escape "$name")\",\
+        group_json="\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
                         \"url\":\"$(json_escape "$check_url")\",\
                         \"expected-status\":$expected_status,\
@@ -998,121 +1014,119 @@ handle_proxy_group_section() {
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
 
         matched_rulesets=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
-        local added_rulesets="|"
-        while IFS= read -r line; do
-            [ -z "$line" ] && continue
+        while IFS= read -r matched_ruleset_line; do
+            [ -z "$matched_ruleset_line" ] && continue
 
-            local ruleset behavior format url proxy rest
-            ruleset="${line#*|}"
-            ruleset="${ruleset%%|*}"
+            matched_ruleset_name="${matched_ruleset_line#*|}"
+            matched_ruleset_name="${matched_ruleset_name%%|*}"
 
             # shellcheck disable=SC2249
             case "$added_rulesets" in
-                *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
+                *"|$matched_ruleset_name|"*) log warn "Skipping duplicated ruleset: $matched_ruleset_name"; continue ;;
             esac
 
-            rest="${line#*|}"
-            ruleset="${rest%%|*}"
-            rest="${rest#*|}"
-            behavior="${rest%%|*}"
-            rest="${rest#*|}"
-            format="${rest%%|*}"
-            url="${rest#*|}"
+            matched_ruleset_fields="${matched_ruleset_line#*|}"
+            matched_ruleset_name="${matched_ruleset_fields%%|*}"
+            matched_ruleset_fields="${matched_ruleset_fields#*|}"
+            matched_ruleset_behavior="${matched_ruleset_fields%%|*}"
+            matched_ruleset_fields="${matched_ruleset_fields#*|}"
+            matched_ruleset_format="${matched_ruleset_fields%%|*}"
+            matched_ruleset_url="${matched_ruleset_fields#*|}"
 
-            local rule_str
-            rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$name")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            generated_rule=$(printf 'RULE-SET,%s,%s' "$matched_ruleset_name" "$name")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
 
-            [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-            proxy_groups_rulesets="${proxy_groups_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
-            added_rulesets="$added_rulesets$ruleset|"
+            [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+            proxy_groups_rulesets="${proxy_groups_rulesets}\"$matched_ruleset_name\":{\"url\":\"$(json_escape "$matched_ruleset_url")\",\"behavior\":\"$(json_escape "$matched_ruleset_behavior")\",\"format\":\"$(json_escape "$matched_ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            added_rulesets="$added_rulesets$matched_ruleset_name|"
 
-            if [ "$behavior" = "domain" ]; then
-                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
+            if [ "$matched_ruleset_behavior" = "domain" ]; then
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$matched_ruleset_name\""
             fi
         done <<EOF
 $matched_rulesets
 EOF
 
+        # Custom files/URLs are hashed to stable synthetic ruleset names so they can be referenced from rules and DNS policy.
         config_get domain_list "$section" custom_enabled_domain_list
-        for line in $domain_list; do
-            local clean_line=$(echo "$line" | trim)
-            if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str)
-                case "$clean_line" in
+        for custom_source in $domain_list; do
+            custom_source=$(echo "$custom_source" | trim)
+            if [ -n "$custom_source" ]; then
+                synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
+                case "$custom_source" in
                     http://*|https://*)
-                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$clean_line" ]; then
-                        local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$(dirname "$clean_line")"
-                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
+                    if [ -f "$custom_source" ]; then
+                        escaped_path=$(json_escape "$custom_source")
+                        safe_paths_add "$(dirname "$custom_source")"
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Invalid path in custom domain list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom domain list: $custom_source" "⚠️"
                         continue
                     fi
                     ;;
                 esac
 
-                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
+                generated_rule=$(printf 'RULE-SET,%s,%s' "$synthetic_ruleset_name" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+                list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$synthetic_ruleset_name\""
             fi
         done
 
         config_get cidr_list "$section" custom_enabled_cidr_list
-        for line in $cidr_list; do
-            local clean_line=$(echo "$line" | trim)
-            if [ -n "$clean_line" ]; then
-                local rng_name=$(printf "%s" "$clean_line" | md5_str)
-                case "$clean_line" in
+        for custom_source in $cidr_list; do
+            custom_source=$(echo "$custom_source" | trim)
+            if [ -n "$custom_source" ]; then
+                synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
+                case "$custom_source" in
                     http://*|https://*)
-                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                     ;;
                 *)
-                    if [ -f "$clean_line" ]; then
-                        local escaped_path=$(json_escape "$clean_line")
-                        safe_paths_add "$(dirname "$clean_line")"
-                        [ "$use_proxy_group_for_list_update" -eq 1 ] && proxy="$name" || proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                    if [ -f "$custom_source" ]; then
+                        escaped_path=$(json_escape "$custom_source")
+                        safe_paths_add "$(dirname "$custom_source")"
+                        [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                     else
-                        log warn "Invalid path in custom CIDR list: $clean_line" "⚠️"
+                        log warn "Invalid path in custom CIDR list: $custom_source" "⚠️"
                         continue
                     fi
                     ;;
                 esac
 
-                local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+                generated_rule=$(printf 'RULE-SET,%s,%s' "$synthetic_ruleset_name" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             fi
         done
 
-        config_get list "$section" additional_srcip_route
-        for val in $list; do
-            [ -n "$val" ] && {
-                local rule_str=$(printf 'SRC-IP-CIDR,%s,%s,%s' "$val" "$name" "no-resolve")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+        config_get route_entries "$section" additional_srcip_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'SRC-IP-CIDR,%s,%s,%s' "$route_entry" "$name" "no-resolve")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             }
         done
 
-        config_get list "$section" additional_domain_route
-        for val in $list; do
-            [ -n "$val" ] && {
-                local rule_str=$(printf 'DOMAIN-SUFFIX,%s,%s' "$val" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-                list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$val\""
+        config_get route_entries "$section" additional_domain_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'DOMAIN-SUFFIX,%s,%s' "$route_entry" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+                list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$route_entry\""
             }
         done
 
-        config_get list "$section" additional_destip_route
-        for val in $list; do
-            [ -n "$val" ] && {
-                local rule_str=$(printf 'IP-CIDR,%s,%s' "$val" "$name")
-                rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+        config_get route_entries "$section" additional_destip_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'IP-CIDR,%s,%s' "$route_entry" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             }
         done
     }
@@ -1143,6 +1157,7 @@ handle_proxy_provider_section() {
         local section="$1"
         local name enabled url override_dialer_proxy subscription_hwid_support interval proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
+        local provider_json
 
         config_get name "$section" name
         config_get_bool enabled "$section" enabled 1
@@ -1160,18 +1175,18 @@ handle_proxy_provider_section() {
             return
         }
 
-        local entry="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"proxy\":\"$proxy\""
-        [ -n "$filter" ] && entry="$entry,\"filter\":\"$(json_escape "$filter")\""
-        [ -n "$exclude_filter" ] && entry="$entry,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
-        [ -n "$exclude_type" ] && entry="$entry,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+        provider_json="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"proxy\":\"$proxy\""
+        [ -n "$filter" ] && provider_json="$provider_json,\"filter\":\"$(json_escape "$filter")\""
+        [ -n "$exclude_filter" ] && provider_json="$provider_json,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
+        [ -n "$exclude_type" ] && provider_json="$provider_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
 
         if [ -n "$override_dialer_proxy" ]; then
-            entry="$entry,\"override\":{\"dialer-proxy\":\"$(echo "$override_dialer_proxy" | trim)\" }"
+            provider_json="$provider_json,\"override\":{\"dialer-proxy\":\"$(echo "$override_dialer_proxy" | trim)\" }"
         fi
 
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
         if [ "$subscription_hwid_support" -eq 1 ]; then
-            entry="$entry,\"header\":{\
+            provider_json="$provider_json,\"header\":{\
             \"x-hwid\": \"$(hwid_generate)\",\
             \"x-device-os\":\"$(get_os_name)\",\
             \"x-ver-os\":\"$(get_os_version)\",\
@@ -1187,7 +1202,7 @@ handle_proxy_provider_section() {
             config_get health_check_timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
             config_get health_check_lazy "$section" health_check_lazy 0
 
-            entry="$entry,\"health-check\":{\
+            provider_json="$provider_json,\"health-check\":{\
             \"enable\":true,\
             \"lazy\":$(format_uci_bool_as_yaml "$health_check_lazy"),\
             \"url\":\"$(json_escape "$health_check_url")\",\
@@ -1197,9 +1212,9 @@ handle_proxy_provider_section() {
             }"
         fi
 
-        entry="{$entry}"
+        provider_json="{$provider_json}"
 
-        result="$result\"$(json_escape "$name")\":$entry,"
+        result="$result\"$(json_escape "$name")\":$provider_json,"
     }
 
     config_foreach _handle_proxy_provider proxy_provider
@@ -1220,61 +1235,58 @@ handle_block_rule_section() {
     local list_rulesets_names=""
     local list_suffix_names=""
 
-    local enabled_blocklist
+    # Selected blocklists and generated manual block routes.
+    local enabled_blocklist proxy matched_rulesets
+    local added_blocklists="|"
+    # Scratch vars for parsing one blocklist index entry at a time.
+    local matched_blocklist_line matched_blocklist_key matched_blocklist_behavior matched_blocklist_format
+    local matched_blocklist_url matched_blocklist_name matched_blocklist_fields generated_rule
+    local additional_domain_blockroute additional_destip_blockroute
+    local domain_val ip_val
     config_get enabled_blocklist block_rules enabled_blocklist
     config_get proxy block_rules proxy "$DEFAULT_PROXY"
-
-    local matched_rulesets
     matched_rulesets=$(lookup_many_rulesets_full "$blocklist_content" "$enabled_blocklist")
+    while IFS= read -r matched_blocklist_line; do
+        [ -z "$matched_blocklist_line" ] && continue
 
-    local added_blocklists="|"
-    while IFS= read -r line; do
-        [ -z "$line" ] && continue
-
-        local val behavior format url yamlName rest
-        val="${line#*|}"
-        val="${val%%|*}"
+        matched_blocklist_key="${matched_blocklist_line#*|}"
+        matched_blocklist_key="${matched_blocklist_key%%|*}"
 
         # shellcheck disable=SC2249
         case "$added_blocklists" in
-            *"|$val|"*) log warn "Skipping duplicated ruleset: $val"; continue ;;
+            *"|$matched_blocklist_key|"*) log warn "Skipping duplicated ruleset: $matched_blocklist_key"; continue ;;
         esac
 
-        rest="${line#*|}"
-        val="${rest%%|*}"
-        rest="${rest#*|}"
-        behavior="${rest%%|*}"
-        rest="${rest#*|}"
-        format="${rest%%|*}"
-        url="${rest#*|}"
-        yamlName="$val"
+        matched_blocklist_fields="${matched_blocklist_line#*|}"
+        matched_blocklist_name="${matched_blocklist_fields%%|*}"
+        matched_blocklist_fields="${matched_blocklist_fields#*|}"
+        matched_blocklist_behavior="${matched_blocklist_fields%%|*}"
+        matched_blocklist_fields="${matched_blocklist_fields#*|}"
+        matched_blocklist_format="${matched_blocklist_fields%%|*}"
+        matched_blocklist_url="${matched_blocklist_fields#*|}"
+        matched_blocklist_key="$matched_blocklist_name"
 
-        if [ "$behavior" = "domain" ]; then
-            list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}$yamlName"
+        if [ "$matched_blocklist_behavior" = "domain" ]; then
+            list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}$matched_blocklist_name"
         else
-            local rule_str
-            rule_str=$(printf 'RULE-SET,%s,REJECT' "$yamlName")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            generated_rule=$(printf 'RULE-SET,%s,REJECT' "$matched_blocklist_name")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         fi
 
-        selected_rule_sets="${selected_rule_sets}\"$yamlName\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
-        added_blocklists="$added_blocklists$val|"
+        selected_rule_sets="${selected_rule_sets}\"$matched_blocklist_name\":{\"url\":\"$(json_escape "$matched_blocklist_url")\",\"behavior\":\"$(json_escape "$matched_blocklist_behavior")\",\"format\":\"$(json_escape "$matched_blocklist_format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
+        added_blocklists="$added_blocklists$matched_blocklist_key|"
     done <<EOF
 $matched_rulesets
 EOF
 
-    local val
-    for val in $enabled_blocklist; do
+    for matched_blocklist_key in $enabled_blocklist; do
         case "$added_blocklists" in
-            *"|$val|"*) ;;
-            *) log warn "Blocklist key '$val' was not found in block ruleset index." "⚠️" ;;
+            *"|$matched_blocklist_key|"*) ;;
+            *) log warn "Blocklist key '$matched_blocklist_key' was not found in block ruleset index." "⚠️" ;;
         esac
     done
 
-    local additional_domain_blockroute additional_destip_blockroute
-
     config_get additional_domain_blockroute block_rules additional_domain_blockroute
-    local domain_val
     for domain_val in $additional_domain_blockroute; do
         [ -n "$domain_val" ] && {
             list_suffix_names="${list_suffix_names:+$list_suffix_names,}+.$domain_val"
@@ -1282,11 +1294,10 @@ EOF
     done
 
     config_get additional_destip_blockroute block_rules additional_destip_blockroute
-    local ip_val
     for ip_val in $additional_destip_blockroute; do
         [ -n "$ip_val" ] && {
-            local rule_str=$(printf 'IP-CIDR,%s,REJECT' "$ip_val")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            generated_rule=$(printf 'IP-CIDR,%s,REJECT' "$ip_val")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         }
     done
 
@@ -1314,127 +1325,128 @@ handle_direct_rule_section() {
     local list_suffix_names=""
     local proxy additional_domain_direct
     local additional_srcip_direct additional_destip_direct
+    # Source lists loaded from UCI for generated DIRECT rules and custom rulesets.
     local list_update_interval enabled_list
-    local domain_list cidr_list
-
+    local domain_list cidr_list matched_rulesets
+    local added_rulesets="|"
+    # Scratch vars for parsing one index entry / one custom source at a time.
+    local matched_ruleset_line matched_ruleset_name matched_ruleset_behavior matched_ruleset_format
+    local matched_ruleset_url matched_ruleset_fields generated_rule
+    local custom_source synthetic_ruleset_name escaped_path
+    local route_entry
 
     config_get list_update_interval direct_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
     config_get enabled_list direct_rules enabled_list
     config_get proxy direct_rules proxy "$DEFAULT_PROXY"
 
-    local matched_rulesets
     matched_rulesets=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
+    while IFS= read -r matched_ruleset_line; do
+        [ -z "$matched_ruleset_line" ] && continue
 
-    local added_rulesets="|"
-    while IFS= read -r line; do
-        [ -z "$line" ] && continue
-
-        local ruleset behavior format url rest
-        ruleset="${line#*|}"
-        ruleset="${ruleset%%|*}"
+        matched_ruleset_name="${matched_ruleset_line#*|}"
+        matched_ruleset_name="${matched_ruleset_name%%|*}"
 
         # shellcheck disable=SC2249
         case "$added_rulesets" in
-            *"|$ruleset|"*) log warn "Skipping duplicated ruleset: $ruleset"; continue ;;
+            *"|$matched_ruleset_name|"*) log warn "Skipping duplicated ruleset: $matched_ruleset_name"; continue ;;
         esac
 
-        rest="${line#*|}"
-        ruleset="${rest%%|*}"
-        rest="${rest#*|}"
-        behavior="${rest%%|*}"
-        rest="${rest#*|}"
-        format="${rest%%|*}"
-        url="${rest#*|}"
+        matched_ruleset_fields="${matched_ruleset_line#*|}"
+        matched_ruleset_name="${matched_ruleset_fields%%|*}"
+        matched_ruleset_fields="${matched_ruleset_fields#*|}"
+        matched_ruleset_behavior="${matched_ruleset_fields%%|*}"
+        matched_ruleset_fields="${matched_ruleset_fields#*|}"
+        matched_ruleset_format="${matched_ruleset_fields%%|*}"
+        matched_ruleset_url="${matched_ruleset_fields#*|}"
 
-        local rule_str
-        rule_str=$(printf 'RULE-SET,%s,%s' "$ruleset" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
-        rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+        generated_rule=$(printf 'RULE-SET,%s,%s' "$matched_ruleset_name" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
+        rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
 
-        direct_rulesets="${direct_rulesets}\"$ruleset\":{\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
-        added_rulesets="$added_rulesets$ruleset|"
+        direct_rulesets="${direct_rulesets}\"$matched_ruleset_name\":{\"url\":\"$(json_escape "$matched_ruleset_url")\",\"behavior\":\"$(json_escape "$matched_ruleset_behavior")\",\"format\":\"$(json_escape "$matched_ruleset_format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+        added_rulesets="$added_rulesets$matched_ruleset_name|"
 
-        if [ "$behavior" = "domain" ]; then
-           list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$ruleset\""
+        if [ "$matched_ruleset_behavior" = "domain" ]; then
+           list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$matched_ruleset_name\""
         fi
     done <<EOF
 $matched_rulesets
 EOF
 
+    # Custom files/URLs are hashed to stable synthetic ruleset names so they can be referenced from rules and DNS policy.
     config_get domain_list direct_rules custom_enabled_domain_list
-    for line in $domain_list; do
-        local clean_line=$(echo "$line" | trim)
-        if [ -n "$clean_line" ]; then
-            local rng_name=$(printf "%s" "$clean_line" | md5_str)
-            case "$clean_line" in
+    for custom_source in $domain_list; do
+        custom_source=$(echo "$custom_source" | trim)
+        if [ -n "$custom_source" ]; then
+            synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
+            case "$custom_source" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 ;;
             *)
-                if [ -f "$clean_line" ]; then
-                    local escaped_path=$(json_escape "$clean_line")
-                    safe_paths_add "$(dirname "$clean_line")"
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
+                if [ -f "$custom_source" ]; then
+                    escaped_path=$(json_escape "$custom_source")
+                    safe_paths_add "$(dirname "$custom_source")"
+                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"path\":\"$escaped_path\",\"behavior\":\"domain\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
-                    log warn "Invalid path in custom domain list: $clean_line" "⚠️"
+                    log warn "Invalid path in custom domain list: $custom_source" "⚠️"
                     continue
                 fi
                 ;;
             esac
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-            list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$rng_name\""
+            generated_rule=$(printf 'RULE-SET,%s,%s' "$synthetic_ruleset_name" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+            list_rulesets_names="${list_rulesets_names:+$list_rulesets_names,}\"rule-set:$synthetic_ruleset_name\""
         fi
     done
 
     config_get cidr_list direct_rules custom_enabled_cidr_list
-    for line in $cidr_list; do
-        local clean_line=$(echo "$line" | trim)
-        if [ -n "$clean_line" ]; then
-            local rng_name=$(printf "%s" "$clean_line" | md5_str)
-            case "$clean_line" in
+    for custom_source in $cidr_list; do
+        custom_source=$(echo "$custom_source" | trim)
+        if [ -n "$custom_source" ]; then
+            synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
+            case "$custom_source" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"url\":\"$(json_escape "$clean_line")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
                 ;;
             *)
-                if [ -f "$clean_line" ]; then
-                    local escaped_path=$(json_escape "$clean_line")
-                    safe_paths_add "$(dirname "$clean_line")"
-                    direct_rulesets="${direct_rulesets}\"$rng_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
+                if [ -f "$custom_source" ]; then
+                    escaped_path=$(json_escape "$custom_source")
+                    safe_paths_add "$(dirname "$custom_source")"
+                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"path\":\"$escaped_path\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"type\":\"file\"},"
                 else
-                    log warn "Invalid path in custom CIDR list: $clean_line" "⚠️"
+                    log warn "Invalid path in custom CIDR list: $custom_source" "⚠️"
                     continue
                 fi
                 ;;
             esac
 
-            local rule_str=$(printf 'RULE-SET,%s,%s' "$rng_name" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+            generated_rule=$(printf 'RULE-SET,%s,%s' "$synthetic_ruleset_name" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         fi
     done
 
     config_get additional_domain_direct direct_rules additional_domain_direct
-    local val
-    for val in $additional_domain_direct; do
-        [ -n "$val" ] && {
-            local rule_str=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$val")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
-            list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$val\""
+    for route_entry in $additional_domain_direct; do
+        [ -n "$route_entry" ] && {
+            generated_rule=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$route_entry")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+            list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$route_entry\""
         }
     done
 
     config_get additional_srcip_direct direct_rules additional_srcip_direct
-    for val in $additional_srcip_direct; do
-        [ -n "$val" ] && {
-            local rule_str=$(printf 'SRC-IP-CIDR,%s,DIRECT,%s' "$val" "no-resolve")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+    for route_entry in $additional_srcip_direct; do
+        [ -n "$route_entry" ] && {
+            generated_rule=$(printf 'SRC-IP-CIDR,%s,DIRECT,%s' "$route_entry" "no-resolve")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         }
     done
 
     config_get additional_destip_direct direct_rules additional_destip_direct
-    for val in $additional_destip_direct; do
-        [ -n "$val" ] && {
-            local rule_str=$(printf 'IP-CIDR,%s,DIRECT' "$val")
-            rules_array="${rules_array:+$rules_array,}\"$rule_str\""
+    for route_entry in $additional_destip_direct; do
+        [ -n "$route_entry" ] && {
+            generated_rule=$(printf 'IP-CIDR,%s,DIRECT' "$route_entry")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         }
     done
 
@@ -1465,11 +1477,10 @@ handle_mixed_port_rules_section() {
 }
 
 handle_final_rule_section() {
-    local exit_rule
-    local rules
+    local exit_rule rule_str rules
     config_get exit_rule final_rules exit_rule
 
-    local rule_str=$(printf 'MATCH,%s' "${exit_rule:-$DEFAULT_PROXY}")
+    rule_str=$(printf 'MATCH,%s' "${exit_rule:-$DEFAULT_PROXY}")
 
     rules="[\"${rule_str:-}\"]"
 
@@ -2164,9 +2175,14 @@ diag_nft() {
 }
 
 diag_route() {
+    local pbr_priority
+
+    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
+
     clog info "Verifying existence of route rule..."
-    if ! ip rule list | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup $NF_ROUTE_TABLE"; then
-        clog error "Required route rule is missing: ip rule add fwmark $NF_TABLE_FWMARK_FINAL table $NF_ROUTE_TABLE" "❌"
+    if ! ip rule list | awk -v priority="${pbr_priority}:" -v mark="$NF_TABLE_FWMARK_FINAL" -v table="$NF_ROUTE_TABLE" \
+        '$1 == priority && $0 ~ ("fwmark " mark) && $0 ~ ("lookup " table "([[:space:]]|$)") { found=1 } END { exit !found }'; then
+        clog error "Required route rule is missing: ip rule add fwmark $NF_TABLE_FWMARK_FINAL table $NF_ROUTE_TABLE priority $pbr_priority" "❌"
     fi
     ip rule list
 
@@ -2177,21 +2193,21 @@ diag_route() {
 }
 
 diag_proxy_resolver() {
+    local target="$1"
+    local dns_listen_port
+    local ip_output exit_code ips
+
     if [ -z "$1" ]; then
         log warn "Usage: diag_proxy_resolver <domain>"
         return 1
     fi
-    local target="$1"
-    local dns_listen_port
     config_get dns_listen_port proxy dns_listen_port
 
     clog info "Testing Fake IP DNS resolution..."
 
-    local ip_output
     ip_output=$(nslookup -timeout="$NSLOOKUP_TIMEOUT" "$target" 127.0.0.1:"$dns_listen_port" 2>/dev/null)
-    local exit_code=$?
+    exit_code=$?
 
-    local ips
     ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
 
     if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
@@ -2233,15 +2249,16 @@ diag_external_resolver() {
 diag_icmp() {
     local target="${1}"
     local count="${2}"
+    local timeout=2
+    local ping_output exit_code
+
     if [ -z "$target" ] || [ -z "$count" ]; then
         clog warn "Usage: diag_icmp <target> <count>"
         return 1
     fi
-    local timeout=2
-    local ping_output
 
     ping_output=$(ping -c "$count" -W "$timeout" "$target" 2>&1)
-    local exit_code=$?
+    exit_code=$?
 
     if [ "$exit_code" -eq 0 ]; then
         clog info "Ping to ${target} is successful" "✅"
