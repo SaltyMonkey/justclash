@@ -7,6 +7,12 @@
 # External justclash service helpers file
 # --------------------------------------------------------
 
+JUSTCLASH_CACHE_OS_ARCH=""
+JUSTCLASH_CACHE_OS_NAME=""
+JUSTCLASH_CACHE_OS_VERSION=""
+JUSTCLASH_CACHE_HW_MODEL=""
+JUSTCLASH_CACHE_HWID=""
+
 url_decode() {
     # shellcheck disable=SC3060
     local data="${1//+/ }"
@@ -71,7 +77,12 @@ spaces_to_commas() {
 }
 
 trim() {
-    LC_ALL=C sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+    local value="$1"
+
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+
+    printf '%s' "$value"
 }
 
 list_to_json_array() {
@@ -111,15 +122,18 @@ safe_paths_clear() {
 }
 
 get_hw_model() {
-    cat /tmp/sysinfo/model
+    [ -n "$JUSTCLASH_CACHE_HW_MODEL" ] || JUSTCLASH_CACHE_HW_MODEL=$(cat /tmp/sysinfo/model)
+    printf '%s' "$JUSTCLASH_CACHE_HW_MODEL"
 }
 
 get_os_arch() {
-    grep OPENWRT_ARCH /etc/os-release | cut -d'"' -f2
+    [ -n "$JUSTCLASH_CACHE_OS_ARCH" ] || JUSTCLASH_CACHE_OS_ARCH=$(grep OPENWRT_ARCH /etc/os-release | cut -d'"' -f2)
+    printf '%s' "$JUSTCLASH_CACHE_OS_ARCH"
 }
 
 get_os_name() {
-    grep '^NAME=' /etc/os-release | cut -d'"' -f2
+    [ -n "$JUSTCLASH_CACHE_OS_NAME" ] || JUSTCLASH_CACHE_OS_NAME=$(grep '^NAME=' /etc/os-release | cut -d'"' -f2)
+    printf '%s' "$JUSTCLASH_CACHE_OS_NAME"
 }
 
 get_os_version_full() {
@@ -127,12 +141,18 @@ get_os_version_full() {
 }
 
 get_os_version() {
-    grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}'
+    [ -n "$JUSTCLASH_CACHE_OS_VERSION" ] || JUSTCLASH_CACHE_OS_VERSION=$(grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}')
+    printf '%s' "$JUSTCLASH_CACHE_OS_VERSION"
 }
 
 hwid_generate() {
     local interface mac_addr board_data arch_data hwid_str
     local no_mac_string="__COMPILED_DEFAULT_MAC_VARIABLE__"
+
+    if [ -n "$JUSTCLASH_CACHE_HWID" ]; then
+        printf '%s' "$JUSTCLASH_CACHE_HWID"
+        return 0
+    fi
 
     interface=$(ubus call network.interface dump | jq -r '.interface[] | select(.route[]?.target == "0.0.0.0") | .l3_device' | head -n1)
 
@@ -153,5 +173,6 @@ hwid_generate() {
 
     hwid_str=$(printf "hwid_%s%s%s" "$mac_addr" "$board_data" "$arch_data" | md5sum | cut -c1-14)
 
-    echo "$hwid_str"
+    JUSTCLASH_CACHE_HWID="$hwid_str"
+    printf '%s' "$JUSTCLASH_CACHE_HWID"
 }
