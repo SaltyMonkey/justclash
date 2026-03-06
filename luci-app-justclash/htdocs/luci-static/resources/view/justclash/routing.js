@@ -1,9 +1,11 @@
 "use strict";
 "require view";
 "require uci";
+"require ui";
 "require view.justclash.common as common";
 "require form";
 "require fs";
+"require tools.widgets as widgets";
 
 const NOTIFICATION_TIMEOUT = 3000;
 const JSON_OBJECT_ROWS = 10;
@@ -146,6 +148,16 @@ return view.extend({
         };
         o.depends("mode", "uri");
 
+        o = s.taboption(tabname, widgets.DeviceSelect, "interface_name", _("Bind to interface:"));
+        o.description = _("Bind this proxy to a specific network device. Leave empty to let the system choose the outgoing interface.");
+        o.optional = true;
+        o.noaliases = true;
+        o.nobridges = true;
+        o.noinactive = false;
+        o.multiple = false;
+        o.filter = common.filterOutboundDeviceSelect;
+        o.depends("mode", "uri");
+
         tabname = "proxieslists_tab";
         s.tab(tabname, _("Rules"));
 
@@ -262,6 +274,15 @@ return view.extend({
             }
             return (common.isValidSimpleName(value)) ? true : _("Invalid name.");
         };
+
+        o = spp.taboption(tabname, widgets.DeviceSelect, "override_interface_name", _("Bind to interface:"));
+        o.description = _("Bind provider downloads and checks to a specific network device. Leave empty to use the system-selected interface.");
+        o.optional = true;
+        o.noaliases = true;
+        o.nobridges = true;
+        o.noinactive = false;
+        o.multiple = false;
+        o.filter = common.filterOutboundDeviceSelect;
 
         o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
         o.default = primitives.FALSE;

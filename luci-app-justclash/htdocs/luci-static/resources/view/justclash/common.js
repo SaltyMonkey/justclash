@@ -155,6 +155,33 @@ return baseclass.extend({
         { value: "BY RULES", text: _("By rules") },
         { value: "REJECT", text: _("Reject") }
     ],
+    filterOutboundDeviceSelect: function (section_id, value) {
+        if (value === "lo") {
+            return false;
+        }
+
+        const device = (this.devices || []).find(function (dev) {
+            return dev.getName() === value;
+        });
+
+        return !device || device.getType() !== "loopback";
+    },
+    filterInboundDeviceSelect: function (section_id, value) {
+        if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
+            return false;
+        }
+
+        const device = (this.devices || []).find(function (dev) {
+            return dev.getName() === value;
+        });
+
+        if (!device) {
+            return true;
+        }
+
+        const type = device.getType();
+        return type !== "wifi" && type !== "wireless" && !type.includes("wlan");
+    },
     splitAndTrimString: function (value, delimiter = ",") {
 
         return value.split(delimiter)

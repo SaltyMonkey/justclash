@@ -91,22 +91,7 @@ return view.extend({
         o.noinactive = false;
         o.multiple = true;
         o.description = _("Select which network interface client traffic comes from. This is usually your LAN bridge; do not select WAN unless you know exactly why.");
-        o.filter = function (section_id, value) {
-            if (["wan", "phy0-ap0", "phy1-ap0", "pppoe-wan"].indexOf(value) !== -1) {
-                return false;
-            }
-
-            var device = this.devices.filter(function (dev) {
-                return dev.getName() === value;
-            })[0];
-
-            if (device) {
-                var type = device.getType();
-                return type !== "wifi" && type !== "wireless" && !type.includes("wlan");
-            }
-
-            return true;
-        };
+        o.filter = common.filterInboundDeviceSelect;
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
         o.description = _("Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
