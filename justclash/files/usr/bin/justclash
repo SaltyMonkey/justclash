@@ -326,7 +326,7 @@ nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
-    local pbr_priority
+    local pbr_priority iface
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -343,9 +343,15 @@ nf_table_add() {
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
 
-    [ -z "$tproxy_port" ] && panic "tproxy_port is not set"
-    [ -z "$fake_ip_range" ] && panic "fake_ip_range is not set"
-    [ -z "$tproxy_input_interfaces" ] && panic "tproxy_input_interfaces is not set"
+    [ -n "$tproxy_port" ] || panic "tproxy_port is not set"
+    is_port "$tproxy_port" || panic "tproxy_port is invalid: $tproxy_port"
+    [ -n "$fake_ip_range" ] || panic "fake_ip_range is not set"
+    [ -n "$tproxy_input_interfaces" ] || panic "tproxy_input_interfaces is not set"
+    is_uint "$pbr_priority" || panic "pbr_priority is invalid: $pbr_priority"
+
+    for iface in $tproxy_input_interfaces; do
+        is_ifname "$iface" || panic "tproxy_input_interfaces contains invalid interface name: $iface"
+    done
 
     if nft list table inet "$NF_TABLE_NAME" 2>/dev/null; then
         nft delete table inet "$NF_TABLE_NAME"
@@ -1528,7 +1534,11 @@ core_generate_yaml() {
     controller_enabled=1
     config_get controller_bind_interface proxy controller_bind_interface
     if [ -n "$controller_bind_interface" ]; then
-        if ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
+        if ! is_ifname "$controller_bind_interface"; then
+            controller_enabled=0
+            router_selected_ipaddr=""
+            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will be disabled."
+        elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
             controller_enabled=0
             router_selected_ipaddr=""
             log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will be disabled." "⚠️"
@@ -1572,6 +1582,7 @@ core_generate_yaml() {
     config_get fake_ip_ttl proxy fake_ip_ttl
     config_get_bool sniffer_enable proxy sniffer_enable
     config_get_bool sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
+
     dashboard_url=$(get_dashboard_url "$dashboard_repo")
     default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true")
     direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true")
@@ -2087,6 +2098,11 @@ core_update_cron_add() {
         return 1
     fi
 
+    if ! validate_cron_expr "$mihomo_cron_update_string"; then
+        log error "Cron schedule string is invalid! Cron job not added."
+        return 1
+    fi
+
     if core_update_cron_check > /dev/null; then
         log warn "Core autoupdate cron job already exists." "ℹ️"
         return 0
@@ -2135,6 +2151,11 @@ core_autorestart_cron_add() {
 
     if [ -z "$mihomo_cron_autorestart_string" ]; then
         log error "Cron schedule string is empty! Cron job not added." "❌"
+        return 1
+    fi
+
+    if ! validate_cron_expr "$mihomo_cron_autorestart_string"; then
+        log error "Cron schedule string is invalid! Cron job not added."
         return 1
     fi
 

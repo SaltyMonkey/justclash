@@ -94,6 +94,57 @@ list_to_json_array() {
     fi
 }
 
+validate_cron_expr() {
+    local expr="$1"
+    local field
+
+    # Split the expression into cron fields and reject extra tokens.
+    # shellcheck disable=SC2086
+    set -- $expr
+    [ "$#" -eq 5 ] || return 1
+
+    for field in "$@"; do
+        case "$field" in
+            ''|*[!0-9*/,-]*)
+                return 1
+                ;;
+            *) ;;
+        esac
+    done
+
+    return 0
+}
+
+is_uint() {
+    case "$1" in
+        ''|*[!0-9]*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+is_port() {
+    is_uint "$1" && [ "$1" -ge 1 ] && [ "$1" -le 65535 ]
+}
+
+is_ifname() {
+    case "$1" in
+        ''|*[!A-Za-z0-9_.:-]*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+is_choice() {
+    local value="$1"
+    shift
+    local item
+
+    for item in "$@"; do
+        [ "$value" = "$item" ] && return 0
+    done
+
+    return 1
+}
+
 safe_paths_add() {
     local new_value="$1"
     [ -z "$new_value" ] && return
