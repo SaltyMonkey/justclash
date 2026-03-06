@@ -740,7 +740,7 @@ handle_proxy_section() {
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name enabled proxy_link_uri dialer_proxy
+        local name enabled proxy_link_uri dialer_proxy interface_name
         local list_update_interval mode proxy_link_object use_proxy_for_list_update
         # Source lists loaded from UCI for generated rules and custom rulesets.
         local route_entries route_entry domain_list cidr_list matched_rulesets
@@ -756,6 +756,7 @@ handle_proxy_section() {
         config_get_bool enabled "$section" enabled 1
         config_get proxy_link_uri "$section" proxy_link_uri
         config_get dialer_proxy "$section" dialer_proxy
+        config_get interface_name "$section" interface_name
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
         config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
@@ -775,20 +776,21 @@ handle_proxy_section() {
             proxy_link_uri=$(trim "$proxy_link_uri")
 
             [ -n "$dialer_proxy" ] && dialer_proxy=$(trim "$dialer_proxy")
+            [ -n "$interface_name" ] && interface_name=$(trim "$interface_name")
 
             case "$proxy_link_uri" in
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
-                https://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
-                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
-                socks4://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
-                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
-                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
-                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
-                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name") ;;
-                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name") ;;
-                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name") ;;
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                https://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                socks4://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
+                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name") ;;
+                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name") ;;
                 *) log warn "Unknown proxy link type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
@@ -1153,9 +1155,9 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2329
     _handle_proxy_provider() {
         local section="$1"
-        local name enabled url override_dialer_proxy subscription_hwid_support interval proxy filter exclude_filter exclude_type
+        local name enabled url override_dialer_proxy override_interface_name subscription_hwid_support interval proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
-        local provider_json
+        local provider_json override_json
 
         config_get name "$section" name
         config_get_bool enabled "$section" enabled 1
@@ -1166,6 +1168,7 @@ handle_proxy_provider_section() {
         config_get exclude_type "$section" exclude_type
         config_get proxy "$section" proxy "$DEFAULT_PROXY"
         config_get override_dialer_proxy "$section" override_dialer_proxy
+        config_get override_interface_name "$section" override_interface_name
 
         [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy provider: $section" "⚠️"; return; }
         { [ -z "$name" ] || [ -z "$url" ]; } && {
@@ -1178,9 +1181,9 @@ handle_proxy_provider_section() {
         [ -n "$exclude_filter" ] && provider_json="$provider_json,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && provider_json="$provider_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
 
-        if [ -n "$override_dialer_proxy" ]; then
-            provider_json="$provider_json,\"override\":{\"dialer-proxy\":\"$(trim "$override_dialer_proxy")\" }"
-        fi
+        [ -n "$override_dialer_proxy" ] && override_json="\"dialer-proxy\":\"$(trim "$override_dialer_proxy")\""
+        [ -n "$override_interface_name" ] && override_json="${override_json:+$override_json,}\"interface-name\":\"$(trim "$override_interface_name")\""
+        [ -n "$override_json" ] && provider_json="$provider_json,\"override\":{$override_json}"
 
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
         if [ "$subscription_hwid_support" -eq 1 ]; then
