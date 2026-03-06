@@ -1506,7 +1506,7 @@ get_dashboard_url() {
 }
 
 core_generate_yaml() {
-    local router_selected_ipaddr
+    local router_selected_ipaddr controller_enabled
     local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level tproxy_port unified_delay
     local use_mixed_port mixed_port
     local tcp_concurrent global_client_fingerprint
@@ -1525,9 +1525,14 @@ core_generate_yaml() {
     local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
 
+    controller_enabled=1
     config_get controller_bind_interface proxy controller_bind_interface
     if [ -n "$controller_bind_interface" ]; then
-        network_get_ipaddr router_selected_ipaddr "$controller_bind_interface"
+        if ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
+            controller_enabled=0
+            router_selected_ipaddr=""
+            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will be disabled." "⚠️"
+        fi
     else
         router_selected_ipaddr="0.0.0.0"
     fi
@@ -1720,6 +1725,13 @@ external-ui-url: $(yaml_quote "$dashboard_url")
 EOF
     fi
 
+    if [ "$controller_enabled" -eq 1 ]; then
+        cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
+external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")
+secret: $(yaml_quote "$api_password")
+EOF
+    fi
+
     cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
 ipv6: false
@@ -1727,8 +1739,6 @@ log-level: $(yaml_quote "$log_level")
 tproxy-port: $tproxy_port
 unified-delay: $(format_uci_bool_as_yaml "$unified_delay")
 tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")
-external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")
-secret: $(yaml_quote "$api_password")
 routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")
 global-client-fingerprint: $(yaml_quote "$global_client_fingerprint")
 global-ua: $(yaml_quote_soft "$global_ua")
