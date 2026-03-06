@@ -124,12 +124,45 @@ parse_sudoku_url() {
     '
 }
 
+is_uint() {
+    case "$1" in
+        ''|*[!0-9]*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+require_uint() {
+    is_uint "$1" || {
+        echo "Error: expected unsigned integer, got '$1'" >&2
+        return 1
+    }
+}
+
+is_truthy() {
+    case "$1" in
+        1|true|TRUE|True|yes|YES|on|ON) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+json_array_from_csv() {
+    local value="$1"
+
+    if [ -z "$value" ]; then
+        echo '[]'
+        return 0
+    fi
+
+    printf '%s' "$value" | jq -Rc '
+        split(",")
+        | map(gsub("^\\s+|\\s+$"; ""))
+        | map(select(length > 0))
+    '
+}
+
 parse_ss_url() {
     local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
-
-    link="${link%%#*}"
-
-    local userinfo hostport method password server port decoded query_part
+    local userinfo hostport method password server port decoded query_part proxy_obj
     query_part=""
 
     # shellcheck disable=SC2249
@@ -173,26 +206,46 @@ parse_ss_url() {
         password="$(url_decode "${userinfo#*:}")"
     fi
 
-    server="${hostport%%:*}"
+    server="$(url_decode "${hostport%%:*}")"
     port="${hostport##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
     port=$(echo "$port" | tr -cd '0-9')
+    [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
-    local json="\"name\":\"$name\",\"type\":\"ss\",\"udp\":true,\"server\":\"$server\",\"port\":$port,\"cipher\":\"$method\",\"password\":\"$password\""
-    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-    [ -n "$interface_name" ] && json="$json,\"interface-name\":\"$interface_name\""
+    proxy_obj=$(
+        jq -nc \
+            --arg name "$name" \
+            --arg server "$server" \
+            --arg cipher "$method" \
+            --arg password "$password" \
+            --arg dialer_proxy "$dialer_proxy" \
+            --arg interface_name "$interface_name" \
+            --argjson port "$port" '
+            {
+                name: $name,
+                type: "ss",
+                udp: true,
+                server: $server,
+                port: $port,
+                cipher: $cipher,
+                password: $password
+            }
+            + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
+            + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+        '
+    ) || return 1
 
-    echo "{$json}"
+    printf '%s' "$proxy_obj"
 }
 
 parse_simple_proxy_url() {
     local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
-    raw="$link"
+    local raw="$link"
     raw="${raw#socks://}"
     raw="${raw#socks5://}"
 
     local server="" port="" username="" password=""
-    local userinfo="" hostport=""
+    local userinfo="" hostport="" proxy_obj
 
     if echo "$raw" | grep -q '@'; then
         userinfo="${raw%@*}"
@@ -213,15 +266,33 @@ parse_simple_proxy_url() {
 
     port="${hostport##*:}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
+    port=$(echo "$port" | tr -cd '0-9')
+    [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
-    # JSON
-    local json="\"name\":\"$name\",\"type\":\"socks5\",\"udp\":true,\"server\":\"$server\",\"port\":$port"
-    [ -n "$username" ] && json="$json,\"username\":\"$username\""
-    [ -n "$password" ] && json="$json,\"password\":\"$password\""
-    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-    [ -n "$interface_name" ] && json="$json,\"interface-name\":\"$interface_name\""
+    proxy_obj=$(
+        jq -nc \
+            --arg name "$name" \
+            --arg server "$server" \
+            --arg username "$username" \
+            --arg password "$password" \
+            --arg dialer_proxy "$dialer_proxy" \
+            --arg interface_name "$interface_name" \
+            --argjson port "$port" '
+            {
+                name: $name,
+                type: "socks5",
+                udp: true,
+                server: $server,
+                port: $port
+            }
+            + (if $username != "" then {username: $username} else {} end)
+            + (if $password != "" then {password: $password} else {} end)
+            + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
+            + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+        '
+    ) || return 1
 
-    echo "{$json}"
+    printf '%s' "$proxy_obj"
 }
 
 parse_trojan_url() {
@@ -236,10 +307,11 @@ parse_trojan_url() {
     local password="$(printf '%b' "$(echo "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
 
     local host="${hostport%%\?*}"
-    local server="${host%%:*}"
+    local server="$(url_decode "${host%%:*}")"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port="$DEFAULT_TLS_PORT"
     port=$(echo "$port" | tr -cd '0-9')
+    [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
 
     local query_part=""
     # shellcheck disable=SC2249
@@ -248,6 +320,7 @@ parse_trojan_url() {
     local sni="" insecure=0 net="tcp" fp="" alpn="" ws_path="" ws_host="" grpc_service=""
     local ss_enabled="" ss_method="" ss_password=""
     local security="" pbk="" sid="" spx="" ech=""
+    local alpn_json proxy_obj
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -285,46 +358,71 @@ parse_trojan_url() {
         esac
     done
 
-    local json="\"name\":\"$name\",\"type\":\"trojan\",\"server\":\"$server\",\"port\":$port,\"password\":\"$password\",\"udp\":true"
+    alpn_json=$(json_array_from_csv "$alpn") || return 1
 
-    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-    [ -n "$interface_name" ] && json="$json,\"interface-name\":\"$interface_name\""
-    [ -n "$sni" ] && json="$json,\"sni\":\"$sni\""
-    [ "$insecure" = "1" ] && json="$json,\"skip-cert-verify\":true"
-    json="$json,\"network\":\"$net\""
+    proxy_obj=$(
+        jq -nc \
+            --arg name "$name" \
+            --arg server "$server" \
+            --arg password "$password" \
+            --arg dialer_proxy "$dialer_proxy" \
+            --arg interface_name "$interface_name" \
+            --arg sni "$sni" \
+            --arg net "$net" \
+            --arg fp "$fp" \
+            --arg ws_path "${ws_path:-/}" \
+            --arg ws_host "$ws_host" \
+            --arg grpc_service "$grpc_service" \
+            --arg security "$security" \
+            --arg pbk "$pbk" \
+            --arg sid "$sid" \
+            --arg spx "$spx" \
+            --arg ech "$ech" \
+            --arg ss_method "$ss_method" \
+            --arg ss_password "$ss_password" \
+            --arg ss_enabled "$ss_enabled" \
+            --argjson port "$port" \
+            --argjson insecure "$insecure" \
+            --argjson alpn "$alpn_json" '
+            {
+                name: $name,
+                type: "trojan",
+                server: $server,
+                port: $port,
+                password: $password,
+                udp: true,
+                network: $net
+            }
+            + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
+            + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $sni != "" then {sni: $sni} else {} end)
+            + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
+            + (if $fp != "" then {"client-fingerprint": $fp} else {} end)
+            + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
+            + (if $net == "ws" then
+                    {"ws-opts": (
+                        {path: $ws_path}
+                        + (if $ws_host != "" then {headers: {Host: $ws_host}} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "grpc" and $grpc_service != "" then
+                    {"grpc-opts": {"grpc-service-name": $grpc_service}}
+                else {} end)
+            + (if $security == "reality" then
+                    {"reality-opts": (
+                        {"public-key": $pbk}
+                        + (if $sid != "" then {"short-id": $sid} else {} end)
+                        + (if $spx != "" then {"spider-x": $spx} else {} end)
+                    )}
+                else {} end)
+            + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
+            + (if $ss_enabled != "" and $ss_method != "" and $ss_password != "" then
+                    {"ss-opts": {enabled: true, method: $ss_method, password: $ss_password}}
+                else {} end)
+        '
+    ) || return 1
 
-    [ -n "$fp" ] && json="$json,\"client-fingerprint\":\"$fp\""
-    [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
-
-    if [ "$net" = "ws" ]; then
-        local wso="\"path\":\"${ws_path:-/}\""
-        [ -n "$ws_host" ] && wso="$wso,\"headers\":{\"Host\":\"$ws_host\"}"
-        json="$json,\"ws-opts\":{$wso}"
-    fi
-
-    if [ "$net" = "grpc" ]; then
-        local grpco="\"grpc-service-name\":\"$grpc_service\""
-        json="$json,\"grpc-opts\":{$grpco}"
-    fi
-
-    if [ "$security" = "reality" ]; then
-        local realo="\"public-key\":\"$pbk\""
-        [ -n "$sid" ] && realo="$realo,\"short-id\":\"$sid\""
-        [ -n "$spx" ] && realo="$realo,\"spider-x\":\"$spx\""
-        json="$json,\"reality-opts\":{$realo}"
-    fi
-
-    if [ -n "$ech" ]; then
-        local echo="\"enable\":true,\"config\":\"$ech\""
-        json="$json,\"ech-opts\":{$echo}"
-    fi
-
-    if [ -n "$ss_enabled" ] && [ -n "$ss_method" ] && [ -n "$ss_password" ]; then
-        local sso="\"enabled\":true,\"method\":\"$ss_method\",\"password\":\"$ss_password\""
-        json="$json,\"ss-opts\":{$sso}"
-    fi
-
-    echo "{$json}"
+    printf '%s' "$proxy_obj"
 }
 
 parse_vless_url() {
@@ -335,10 +433,11 @@ parse_vless_url() {
     local uuid="${raw%%@*}"
     local hostport="${raw#*@}"
     local host="${hostport%%\?*}"
-    local server="${host%%:*}"
+    local server="$(url_decode "${host%%:*}")"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
     port=$(echo "$port" | tr -cd '0-9')
+    [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
 
     local query_part=""
     # shellcheck disable=SC2249
@@ -346,6 +445,7 @@ parse_vless_url() {
 
     local net="tcp" sec="" sni="" fp="" alpn="" flow="" penc="" tfo=""
     local pbk="" sid="" spx="" sn="" enc="" ech=""
+    local tfo_value=0 alpn_json proxy_obj
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -381,52 +481,71 @@ parse_vless_url() {
         esac
     done
 
-    local json="\"name\":\"$name\",\"type\":\"vless\",\"uuid\":\"$uuid\",\"server\":\"$server\",\"port\":$port,\"encryption\":\"${enc:-none}\",\"network\":\"$net\",\"udp\":true"
+    is_truthy "$tfo" && tfo_value=1
+    alpn_json=$(json_array_from_csv "$alpn") || return 1
 
-    [ -n "$penc" ] && json="$json,\"packet-encoding\":\"$penc\""
-    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-    [ -n "$interface_name" ] && json="$json,\"interface-name\":\"$interface_name\""
-    case "$tfo" in
-        1|true|TRUE|True) json="$json,\"tfo\":true" ;;
-        *) ;;
-    esac
+    proxy_obj=$(
+        jq -nc \
+            --arg name "$name" \
+            --arg uuid "$uuid" \
+            --arg server "$server" \
+            --arg encryption "${enc:-none}" \
+            --arg net "$net" \
+            --arg penc "$penc" \
+            --arg dialer_proxy "$dialer_proxy" \
+            --arg interface_name "$interface_name" \
+            --arg sec "$sec" \
+            --arg sni "$sni" \
+            --arg fp "$fp" \
+            --arg pbk "$pbk" \
+            --arg sid "$sid" \
+            --arg spx "${spx:-/}" \
+            --arg ech "$ech" \
+            --arg flow "$flow" \
+            --arg sn "$sn" \
+            --argjson port "$port" \
+            --argjson tfo "$tfo_value" \
+            --argjson alpn "$alpn_json" '
+            {
+                name: $name,
+                type: "vless",
+                uuid: $uuid,
+                server: $server,
+                port: $port,
+                encryption: $encryption,
+                network: $net,
+                udp: true
+            }
+            + (if $penc != "" then {"packet-encoding": $penc} else {} end)
+            + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
+            + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $tfo == 1 then {tfo: true} else {} end)
+            + (if $sec == "tls" or $sec == "reality" then
+                    {tls: true}
+                    + (if $sni != "" then {servername: $sni} else {} end)
+                    + (if $fp != "" then {"client-fingerprint": $fp} else {} end)
+                    + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
+                else {} end)
+            + (if $sec == "reality" then
+                    {"reality-opts": (
+                        (if $pbk != "" then {"public-key": $pbk} else {} end)
+                        + (if $sid != "" then {"short-id": $sid} else {} end)
+                        + (if $spx != "" then {"spider-x": $spx} else {} end)
+                    )}
+                else {} end)
+            + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
+            + (if $net == "tcp" and $flow != "" then {flow: $flow} else {} end)
+            + (if $net == "ws" then
+                    {"ws-opts": (
+                        {path: $spx}
+                        + (if $sni != "" then {headers: {Host: $sni}} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "grpc" and $sn != "" then {"grpc-opts": {"service-name": $sn}} else {} end)
+        '
+    ) || return 1
 
-    if [ "$sec" = "tls" ] || [ "$sec" = "reality" ]; then
-        json="$json,\"tls\":true"
-        [ -n "$sni" ] && json="$json,\"servername\":\"$sni\""
-        [ -n "$fp" ] && json="$json,\"client-fingerprint\":\"$fp\""
-        [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
-    fi
-
-    if [ "$sec" = "reality" ]; then
-        local ro=""
-        [ -n "$pbk" ] && ro="$ro\"public-key\":\"$pbk\""
-        [ -n "$sid" ] && ro="${ro:+$ro,}\"short-id\":\"$sid\""
-        [ -n "$spx" ] && ro="${ro:+$ro,}\"spider-x\":\"$spx\""
-        json="$json,\"reality-opts\":{$ro}"
-    fi
-
-    if [ -n "$ech" ]; then
-        local echo="\"enable\":true,\"config\":\"$ech\""
-        json="$json,\"ech-opts\":{$echo}"
-    fi
-
-    if [ "$net" = "tcp" ] && [ -n "$flow" ]; then
-        json="$json,\"flow\":\"$flow\""
-    fi
-
-    if [ "$net" = "ws" ]; then
-        local wso="\"path\":\"${spx:-/}\""
-        [ -n "$sni" ] && wso="$wso,\"headers\":{\"Host\":\"$sni\"}"
-        json="$json,\"ws-opts\":{$wso}"
-    fi
-
-    if [ "$net" = "grpc" ] && [ -n "$sn" ]; then
-        local grpco="\"service-name\":\"$sn\""
-        json="$json,\"grpc-opts\":{$grpco}"
-    fi
-
-    echo "{$json}"
+    printf '%s' "$proxy_obj"
 }
 
 parse_hysteria2_url() {
@@ -455,8 +574,10 @@ parse_hysteria2_url() {
     port="${hostport##*:}"
     [ "$server" = "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
     port=$(echo "$port" | tr -cd '0-9')
+    [ -z "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
 
     local sni="" insecure=0 obfs="" obfs_password="" up="" down="" ports="" alpn="" fingerprint="" ech=""
+    local up_value="" down_value="" alpn_json proxy_obj
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -483,31 +604,60 @@ parse_hysteria2_url() {
         esac
     done
 
-    local json="\"name\":\"$name\",\"type\":\"hysteria2\",\"server\":\"$server\",\"port\":$port,\"udp\":true"
+    [ -n "$up" ] && {
+        up_value=$(echo "$up" | tr -cd '0-9')
+        require_uint "$up_value" || return 1
+    }
+    [ -n "$down" ] && {
+        down_value=$(echo "$down" | tr -cd '0-9')
+        require_uint "$down_value" || return 1
+    }
+    alpn_json=$(json_array_from_csv "$alpn") || return 1
 
-    [ -n "$password" ] && json="$json,\"password\":\"$password\""
-    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-    [ -n "$interface_name" ] && json="$json,\"interface-name\":\"$interface_name\""
-    [ -n "$sni" ] && json="$json,\"sni\":\"$sni\""
-    [ "$insecure" = "1" ] && json="$json,\"skip-cert-verify\":true"
+    proxy_obj=$(
+        jq -nc \
+            --arg name "$name" \
+            --arg server "$server" \
+            --arg password "$password" \
+            --arg dialer_proxy "$dialer_proxy" \
+            --arg interface_name "$interface_name" \
+            --arg sni "$sni" \
+            --arg obfs "$obfs" \
+            --arg obfs_password "$obfs_password" \
+            --arg ports "$ports" \
+            --arg fingerprint "$fingerprint" \
+            --arg ech "$ech" \
+            --argjson port "$port" \
+            --argjson insecure "$insecure" \
+            --argjson alpn "$alpn_json" \
+            --arg up "$up_value" \
+            --arg down "$down_value" '
+            {
+                name: $name,
+                type: "hysteria2",
+                server: $server,
+                port: $port,
+                udp: true
+            }
+            + (if $password != "" then {password: $password} else {} end)
+            + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
+            + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $sni != "" then {sni: $sni} else {} end)
+            + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
+            + (if $obfs != "" and $obfs != "none" then
+                    {obfs: $obfs}
+                    + (if $obfs_password != "" then {"obfs-password": $obfs_password} else {} end)
+                else {} end)
+            + (if $up != "" then {up: ($up | tonumber)} else {} end)
+            + (if $down != "" then {down: ($down | tonumber)} else {} end)
+            + (if $ports != "" then {ports: $ports} else {} end)
+            + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
+            + (if $fingerprint != "" then {fingerprint: $fingerprint} else {} end)
+            + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
+        '
+    ) || return 1
 
-    if [ -n "$obfs" ] && [ "$obfs" != "none" ]; then
-        json="$json,\"obfs\":\"$obfs\""
-        [ -n "$obfs_password" ] && json="$json,\"obfs-password\":\"$obfs_password\""
-    fi
-
-    [ -n "$up" ] && json="$json,\"up\":\"$up\""
-    [ -n "$down" ] && json="$json,\"down\":\"$down\""
-    [ -n "$ports" ] && json="$json,\"ports\":\"$ports\""
-    [ -n "$alpn" ] && json="$json,\"alpn\":[\"$(echo "$alpn" | tr ',' '","')\"]"
-    [ -n "$fingerprint" ] && json="$json,\"fingerprint\":\"$fingerprint\""
-
-    if [ -n "$ech" ]; then
-        local echo="\"enable\":true,\"config\":\"$ech\""
-        json="$json,\"ech-opts\":{$echo}"
-    fi
-
-    echo "{$json}"
+    printf '%s' "$proxy_obj"
 }
 
 #Supports only one port/port-range + transport combination
@@ -570,18 +720,41 @@ parse_mieru_url() {
         esac
     done
 
-    local json
-    json="\"name\":\"$name\",\"type\":\"mieru\""
-    json="$json,\"server\":\"$server\""
-    json="$json,\"udp\":true"
-    [ -n "$handshake_mode" ] && json="$json,\"handshake-mode\":\"$handshake_mode\""
-    [ -n "$transport" ] && json="$json,\"transport\":\"$transport\""
-    [ -n "$username" ] && json="$json,\"username\":\"$username\""
-    [ -n "$password" ] && json="$json,\"password\":\"$password\""
-    [ -n "$dialer_proxy" ] && json="$json,\"dialer-proxy\":\"$dialer_proxy\""
-    [ -n "$interface_name" ] && json="$json,\"interface-name\":\"$interface_name\""
-    [ -n "$multiplexing" ] && json="$json,\"multiplexing\":\"$multiplexing\""
-    [ -n  "$port" ] && json="$json,\"port\":\"$port\""
+    local proxy_obj
 
-    echo "{$json}"
+    if [ -n "$port" ]; then
+        port=$(echo "$port" | tr -cd '0-9')
+        [ -z "$port" ] && port=""
+    fi
+
+    proxy_obj=$(
+        jq -nc \
+            --arg name "$name" \
+            --arg server "$server" \
+            --arg handshake_mode "$handshake_mode" \
+            --arg transport "$transport" \
+            --arg username "$username" \
+            --arg password "$password" \
+            --arg dialer_proxy "$dialer_proxy" \
+            --arg interface_name "$interface_name" \
+            --arg multiplexing "$multiplexing" \
+            --arg port "$port" '
+            {
+                name: $name,
+                type: "mieru",
+                server: $server,
+                udp: true
+            }
+            + (if $handshake_mode != "" then {"handshake-mode": $handshake_mode} else {} end)
+            + (if $transport != "" then {transport: $transport} else {} end)
+            + (if $username != "" then {username: $username} else {} end)
+            + (if $password != "" then {password: $password} else {} end)
+            + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
+            + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $multiplexing != "" then {multiplexing: $multiplexing} else {} end)
+            + (if $port != "" then {port: ($port | tonumber)} else {} end)
+        '
+    ) || return 1
+
+    printf '%s' "$proxy_obj"
 }
