@@ -188,9 +188,7 @@ parse_ss_url() {
 parse_simple_proxy_url() {
     local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
     raw="$link"
-    raw="${raw#https://}"
     raw="${raw#socks://}"
-    raw="${raw#socks4://}"
     raw="${raw#socks5://}"
 
     local server="" port="" username="" password=""
