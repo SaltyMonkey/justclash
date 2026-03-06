@@ -889,6 +889,14 @@ msgstr ""
 msgid "Route connections through the specified proxy server, or connect directly if left empty."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/routing.js:149 htdocs/luci-static/resources/view/justclash/routing.js:276
+msgid "Bind to interface:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:150
+msgid "Bind this proxy to a specific network device. Leave empty to let the system choose the outgoing interface."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/routing.js:124 htdocs/luci-static/resources/view/justclash/routing.js:236
 msgid "Invalid name."
 msgstr ""
@@ -987,6 +995,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:226
 msgid "Your complete subscription URL with http:// or https://."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:277
+msgid "Bind provider downloads and checks to a specific network device. Leave empty to use the system-selected interface."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:239
@@ -1343,6 +1355,14 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:67
 msgid "Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:71
+msgid "PBR priority:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:72
+msgid "Priority for the policy routing rule that sends marked traffic to the local TPROXY table. Lower numbers run earlier."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:71
