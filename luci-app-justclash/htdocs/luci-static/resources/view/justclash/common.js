@@ -265,9 +265,7 @@ return baseclass.extend({
             "hysteria2://",
             "ss://",
             "socks5://",
-            "socks4://",
             "socks://",
-            "https://",
             "mierus://",
             "sudoku://"
         ];
