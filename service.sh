@@ -675,7 +675,7 @@ install_service() {
         diagnostic_mem
     fi
     diagnostic_conflicts_interactive
-    core_update "alpha"
+    core_update "stable"
     install_translation_interactive
     [ $? -eq 0 ] && install_ru=1
     packages_download "$install_ru"
@@ -721,7 +721,7 @@ run() {
                 ;;
             3)
                 echo "Updating the Mihomo core..."
-                core_update "alpha"
+                core_update "stable"
                 ;;
             4)
                 echo "Removing the Mihomo core..."
