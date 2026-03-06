@@ -120,6 +120,7 @@ RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
+REQUIRED_TOOLS="jq nft curl md5sum ntpd"
 
 ucibool_to_yesno() {
     case "$1" in
@@ -620,37 +621,21 @@ EOF
 }
 
 check_requirement() {
-    local ret=0
+    local cmd ret
 
-    if [ ! -f "$CORE_PATH" ]; then
+    ret=0
+
+    if [ ! -x "$CORE_PATH" ]; then
         log error "Requirement is missing: mihomo binary is not installed." "❌"
         ret=1
     fi
 
-    if ! command -v jq >/dev/null 2>&1; then
-        log error "Requirement is missing: jq package is not installed." "❌"
-        ret=1
-    fi
-
-    if ! command -v nft >/dev/null 2>&1; then
-        log error "Requirement is missing: nft package is not installed." "❌"
-        ret=1
-    fi
-
-    if ! command -v curl >/dev/null 2>&1; then
-        log error "Requirement is missing: curl package is not installed." "❌"
-        ret=1
-    fi
-
-    if ! command -v md5sum >/dev/null 2>&1; then
-        log error "Requirement is missing: md5sum package is not installed." "❌"
-        ret=1
-    fi
-
-    if ! command -v ntpd >/dev/null 2>&1; then
-        log error "Requirement is missing: ntpd is not installed." "❌"
-        ret=1
-    fi
+    for cmd in $REQUIRED_TOOLS; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            log error "Requirement is missing: $cmd is not installed." "❌"
+            ret=1
+        fi
+    done
 
     return "$ret"
 }
@@ -678,6 +663,7 @@ check_for_conflicts() {
 
 check_for_conflicts_warn() {
     local external_nameservers resolvconf_res
+    local service_path
 
     external_nameservers=$(
         awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" { print; found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
@@ -691,16 +677,12 @@ check_for_conflicts_warn() {
         log warn "If you intend to use a local DNS service, these entries should be removed." "⚠️"
     fi
 
-    if [ -f "$ZAPRETINITD_FILEPATH" ]; then
-        log warn "Warning: Zapret service detected by path $ZAPRETINITD_FILEPATH:" "⚠️"
-        log warn "This service can cause unexpected results if configured incorrectly." "⚠️"
-    fi
-
-    if [ -f "$BYEDPI_FILEPATH" ]; then
-        log warn "Warning: ByeDPI service detected by path $BYEDPI_FILEPATH:" "⚠️"
-        log warn "This service can cause unexpected results if configured incorrectly." "⚠️"
-    fi
-
+    for service_path in "$ZAPRETINITD_FILEPATH" "$BYEDPI_FILEPATH" "$YOUTUBEUNBLOCK_FILEPATH"; do
+        if [ -f "$service_path" ]; then
+            log warn "Warning: Service detected by path $service_path:" "⚠️"
+            log warn "This service can cause unexpected results if configured incorrectly." "⚠️"
+        fi
+    done
 }
 
 info_mihomo() {
