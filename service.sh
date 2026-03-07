@@ -381,40 +381,65 @@ detect_arch() {
     esac
 }
 
-get_latest_version_url() {
-    local check_url="$1" channel="${2:-stable}"
+get_latest_release_asset_info() {
+    local check_url="$1" channel="${2:-stable}" arch="$3"
     local api_url jq_filter
 
     if [ "$channel" = "alpha" ]; then
         api_url="${check_url%/latest}"
-        jq_filter='[.[] | select(.tag_name == "Prerelease-Alpha")][0].assets[] | select(.name == "version.txt") | .browser_download_url'
+        # shellcheck disable=SC2016
+        jq_filter='
+            [ .[] | select(.tag_name == "Prerelease-Alpha") ][0] as $release
+            | ($release.assets[] | select(.name | test("^mihomo-linux-" + $arch + "-.+\\.gz$")) | {name: .name, url: .browser_download_url, digest: (.digest // "")}) as $archive
+            | ($release.assets[] | select(.name == "version.txt") | .browser_download_url) as $version_url
+            | $archive + {version_url: ($version_url // "")}
+        '
     else
         api_url="$check_url"
-        jq_filter='.assets[] | select(.name == "version.txt") | .browser_download_url'
+        # shellcheck disable=SC2016
+        jq_filter='
+            . as $release
+            | ($release.assets[] | select(.name | test("^mihomo-linux-" + $arch + "-.+\\.gz$")) | {name: .name, url: .browser_download_url, digest: (.digest // "")}) as $archive
+            | ($release.assets[] | select(.name == "version.txt") | .browser_download_url) as $version_url
+            | $archive + {version_url: ($version_url // "")}
+        '
     fi
 
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
-        -sL "$api_url" | jq -r "$jq_filter"
+        -sL "$api_url" | jq -r --arg arch "$arch" "$jq_filter" | sed -n 1p
 }
 
 core_update() {
     local cur_ver latest_ver version_txt_url
-    local check_url channel
+    local check_url channel arch
+    local asset_info asset_name download_url digest expected_sha256
     channel=${1}
     check_url="$CORE_RELEASE_CHECK_URL"
 
     cur_ver=$(info_mihomo)
+    arch=$(detect_arch)
 
     echo " - Checking for Mihomo updates (channel: $channel)..."
 
-    version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
-        print_red "Failed to get the version.txt URL from the GitHub API."
+    asset_info=$(get_latest_release_asset_info "$check_url" "$channel" "$arch") || {
+        print_red "Failed to get the release asset from the GitHub API."
         return 1
     }
 
-    if [ -z "$version_txt_url" ]; then
+    if [ -z "$asset_info" ]; then
+        print_red "Release asset for architecture '$arch' was not found."
+        print_red "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
+        return 1
+    fi
+
+    asset_name=$(printf '%s' "$asset_info" | jq -r '.name')
+    download_url=$(printf '%s' "$asset_info" | jq -r '.url')
+    digest=$(printf '%s' "$asset_info" | jq -r '.digest')
+    version_txt_url=$(printf '%s' "$asset_info" | jq -r '.version_url')
+
+    if [ -z "$version_txt_url" ] || [ "$version_txt_url" = "null" ]; then
         print_red "Release asset version.txt was not found."
         print_red "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
         return 1
@@ -434,9 +459,24 @@ core_update() {
        return 1
     fi
 
+    case "$digest" in
+        sha256:*)
+            expected_sha256="${digest#sha256:}"
+            ;;
+        *)
+            print_red "Release asset digest is missing or unsupported: $asset_name"
+            return 1
+            ;;
+    esac
+
+    if ! printf '%s' "$expected_sha256" | grep -qiE '^[0-9a-f]{64}$'; then
+        print_red "Release asset sha256 digest is invalid: $asset_name"
+        return 1
+    fi
+
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         echo " - Mihomo is not installed. Installing version $latest_ver ($channel)."
-        core_download "$version_txt_url" "$latest_ver"
+        core_download "$download_url" "$latest_ver" "$expected_sha256"
         if [ $? -eq 1 ]; then
             print_red "Core update failed."
             return 1
@@ -456,7 +496,7 @@ core_update() {
         fi
 
         echo " - Updating Mihomo to version $latest_ver ($channel)"
-        core_download "$version_txt_url" "$latest_ver"
+        core_download "$download_url" "$latest_ver" "$expected_sha256"
         if [ $? -eq 1 ]; then
             print_red "Core update failed."
             return 1
@@ -469,17 +509,12 @@ core_update() {
 }
 
 core_download() {
-    local arch file_name base_url param_version version_txt_url download_url
-    version_txt_url="$1"
-    param_version="$2"
+    local download_url="$1"
+    local param_version="$2"
+    local expected_sha256="$3"
+    local actual_sha256
 
-    arch=$(detect_arch)
     mkdir -p "$TMP_DOWNLOAD_PATH"
-
-    file_name="mihomo-linux-${arch}-${param_version}.gz"
-
-    base_url="${version_txt_url%/*}"
-    download_url="${base_url}/${file_name}"
 
     echo  "- Downloading mihomo binary"
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
@@ -489,6 +524,13 @@ core_download() {
         print_red "Failed to download the Mihomo archive."
         return 1
     }
+
+    actual_sha256=$(sha256sum "${TMP_DOWNLOAD_PATH}/mihomo.gz" 2>/dev/null | awk '{print $1}')
+    if [ -z "$actual_sha256" ] || [ "$actual_sha256" != "$expected_sha256" ]; then
+        rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"
+        print_red "SHA256 verification failed for Mihomo archive version $param_version."
+        return 1
+    fi
 
     echo " - Extracting to $CORE_PATH" "⬇️"
     gunzip -c "${TMP_DOWNLOAD_PATH}/mihomo.gz" > "$CORE_PATH" || {
