@@ -57,23 +57,25 @@ CORE_WORKDIR_PATH="/tmp/${PROGNAME}"
 # Mihomo using directory 'rules' by default in workdir
 # if nothing selected in path fields for rules
 CORE_WORKDIR_RULES_PATH="${CORE_WORKDIR_PATH}/rules"
+CORE_WORKDIR_CACHE_DB_PATH="${CORE_WORKDIR_PATH}/cache.db"
 CORE_WORKDIR_UCI_HASH_PATH="${CORE_WORKDIR_PATH}/uci.hash"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}/config.yaml"
 
-ETC_DIR="/etc/${PROGNAME}"
+PROG_ETC_DIR="/etc/${PROGNAME}"
 RULESETS_BLOCKS_FILENAME="block.rulesets.txt"
 RULESETS_FILENAME="rulesets.txt"
-SYMLINKDIR_RULESETS="${ETC_DIR}/${PROGNAME}_rules"
-RULESETS_BLOCKS_FILE="${ETC_DIR}/${RULESETS_BLOCKS_FILENAME}"
-RULESETS_FILE="${ETC_DIR}/${RULESETS_FILENAME}"
+SYMLINKDIR_RULESETS="${PROG_ETC_DIR}/rules"
+SYMLINK_CACHE_DB_PATH="${PROG_ETC_DIR}/cache.db"
+RULESETS_BLOCKS_FILE="${PROG_ETC_DIR}/${RULESETS_BLOCKS_FILENAME}"
+RULESETS_FILE="${PROG_ETC_DIR}/${RULESETS_FILENAME}"
 
-DASHBOARD_PATH="${ETC_DIR}/dashboard"
+DASHBOARD_PATH="${PROG_ETC_DIR}/dashboard"
 DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
 DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
 DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
 
 ETC_CONFIG_DIR="/etc/config"
-DEFAULT_CONFIG_PATH="${ETC_DIR}/default.config"
+DEFAULT_CONFIG_PATH="${PROG_ETC_DIR}/default.config"
 CONFIG_PATH="${ETC_CONFIG_DIR}/${PROGNAME}"
 CONFIG_BAK_PATH="${ETC_CONFIG_DIR}/${PROGNAME}.bak"
 
@@ -327,7 +329,8 @@ nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
-    local pbr_priority iface
+    local pbr_priority iface dscp_values dscp_raw dscp_value dscp_set=""
+
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -342,6 +345,7 @@ nf_table_add() {
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_ntp_mode settings nft_ntp_mode
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
+    config_get dscp_values settings nft_dscp_exclude_router
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
 
     [ -n "$tproxy_port" ] || panic "tproxy_port is not set"
@@ -435,6 +439,22 @@ nf_table_add() {
         nft add rule inet "$NF_TABLE_NAME" output ip daddr @private_ips return
         nft add rule inet "$NF_TABLE_NAME" output ip6 daddr @private_ips6 return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
+        nft add rule inet "$NF_TABLE_NAME" output udp sport { 546, 547 } udp dport { 546, 547 } return
+
+        for dscp_raw in $dscp_values; do
+            dscp_value=$(trim "$dscp_raw")
+
+            if [ -n "$dscp_set" ]; then
+                dscp_set="$dscp_set, $dscp_value"
+            else
+                dscp_set="$dscp_value"
+            fi
+        done
+
+        if [ -n "$dscp_set" ]; then
+            nft add rule inet "$NF_TABLE_NAME" output ip dscp "{ $dscp_set }" return
+            nft add rule inet "$NF_TABLE_NAME" output ip6 dscp "{ $dscp_set }" return
+        fi
 
         if [ "$nft_ntp_mode_router" = "DROP" ]; then
             # shellcheck disable=SC2248
@@ -1807,7 +1827,7 @@ service_data_update() {
     local tmp_block_rulesets_file="${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}.tmp"
 
     mkdir -p "$CORE_WORKDIR_PATH"
-    mkdir -p "$ETC_DIR"
+    mkdir -p "$PROG_ETC_DIR"
     rm -f "$tmp_rulesets_file" "$tmp_block_rulesets_file"
 
     log info "Downloading ruleset list" "📥"
@@ -1837,7 +1857,10 @@ core_prepare_workdir() {
     local res=1
     local current_hash=""
     local saved_hash=""
-    local mihomo_persistent_temp_files
+    local mihomo_persistent_ext_rules mihomo_persistent_cache
+
+    config_get mihomo_persistent_ext_rules settings mihomo_persistent_ext_rules 0
+    config_get mihomo_persistent_cache settings mihomo_persistent_cache 0
 
     log info "Preparing workdir $CORE_WORKDIR_PATH" "📁"
 
@@ -1858,16 +1881,27 @@ core_prepare_workdir() {
         mkdir -p "$CORE_WORKDIR_PATH"
     fi
 
-    config_get mihomo_persistent_temp_files settings mihomo_persistent_temp_files 0
-    if [ "$mihomo_persistent_temp_files" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
+    if [ "$mihomo_persistent_ext_rules" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
         log info "Creating symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
+        mkdir -p "$PROG_ETC_DIR"
         [ ! -d "$SYMLINKDIR_RULESETS" ] &&  mkdir -p "$SYMLINKDIR_RULESETS"
         ln -sf "$SYMLINKDIR_RULESETS" "$CORE_WORKDIR_RULES_PATH"
-    elif  [ "$mihomo_persistent_temp_files" -eq 0 ] && [ -L "$CORE_WORKDIR_RULES_PATH" ]; then
+    elif  [ "$mihomo_persistent_ext_rules" -eq 0 ] && [ -L "$CORE_WORKDIR_RULES_PATH" ]; then
         log info "Removing old symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
         rm -rf "$SYMLINKDIR_RULESETS"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
+    fi
+
+    if [ "$mihomo_persistent_cache" -eq 1 ] && [ ! -L "$CORE_WORKDIR_CACHE_DB_PATH" ]; then
+        log info "Creating symlink $SYMLINK_CACHE_DB_PATH -> $CORE_WORKDIR_CACHE_DB_PATH"
+        rm -f "$CORE_WORKDIR_CACHE_DB_PATH"
+        mkdir -p "$PROG_ETC_DIR"
+        ln -sf "$SYMLINK_CACHE_DB_PATH" "$CORE_WORKDIR_CACHE_DB_PATH"
+    elif [ "$mihomo_persistent_cache" -eq 0 ] && [ -L "$CORE_WORKDIR_CACHE_DB_PATH" ]; then
+        log info "Removing old symlink $SYMLINK_CACHE_DB_PATH -> $CORE_WORKDIR_CACHE_DB_PATH"
+        rm -f "$SYMLINK_CACHE_DB_PATH"
+        rm -f "$CORE_WORKDIR_CACHE_DB_PATH"
     fi
 
     return "$res"
