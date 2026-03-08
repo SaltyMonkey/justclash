@@ -1313,26 +1313,34 @@ msgid "Skip some safety checks during startup. This can speed up startup, but it
 msgstr "Пропустить часть проверок безопасности при запуске. Это ускоряет старт, но может скрыть проблемы с файлами, правами доступа или настройками системы."
 
 #: htdocs/luci-static/resources/view/justclash/service.js:51
-msgid "Store downloaded lists in router memory:"
-msgstr "Хранить загруженные списки в памяти роутера:"
+msgid "Store Mihomo external rules persistently:"
+msgstr "Хранить внешние правила Mihomo в постоянном хранилище:"
 
 #: htdocs/luci-static/resources/view/justclash/service.js:52
-msgid "If enabled, downloaded rules stay in internal router storage after restart. Use this only if you need it, because frequent writes can wear out built-in flash memory faster."
-msgstr "Если включено, загруженные правила будут сохраняться во внутренней памяти роутера после перезапуска. Используйте это только при необходимости, потому что частые записи ускоряют износ встроенной памяти."
+msgid "Keep Mihomo external rule files in persistent router storage instead of temporary memory. Use this only if you need faster recovery after restart, because frequent writes can wear out built-in flash memory faster."
+msgstr "Хранить файлы внешних правил Mihomo в постоянном хранилище роутера вместо временной памяти. Используйте это только если вам нужно более быстрое восстановление после перезапуска, потому что частые записи ускоряют износ встроенной flash-памяти."
 
 #: htdocs/luci-static/resources/view/justclash/service.js:56
+msgid "Store Mihomo cache persistently:"
+msgstr "Хранить кэш Mihomo в постоянном хранилище:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:57
+msgid "Keep Mihomo cache data such as selected groups and fake-IP mappings in persistent router storage instead of temporary memory. Use this only if you need it, because frequent writes can wear out built-in flash memory faster."
+msgstr "Хранить данные кэша Mihomo, такие как выбранные группы и соответствия fake-IP, в постоянном хранилище роутера вместо временной памяти. Используйте это только при необходимости, потому что частые записи ускоряют износ встроенной flash-памяти."
+
+#: htdocs/luci-static/resources/view/justclash/service.js:61
 msgid "Start time sync service:"
 msgstr "Запускать службу синхронизации времени:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:57
+#: htdocs/luci-static/resources/view/justclash/service.js:62
 msgid "Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail."
 msgstr "Синхронизировать время, чтобы защищённые соединения работали корректно. При неверном времени могут не работать безопасные загрузки и API-подключения."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:61
+#: htdocs/luci-static/resources/view/justclash/service.js:66
 msgid "Change DNS settings at startup:"
 msgstr "Менять DNS при запуске:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:62
+#: htdocs/luci-static/resources/view/justclash/service.js:67
 msgid "Update DNS settings automatically when the service starts. Use this if you want JustClash to manage dnsmasq DNS settings for you."
 msgstr "Автоматически обновлять настройки DNS при запуске сервиса. Используйте это, если хотите, чтобы JustClash сам настраивал dnsmasq."
 
