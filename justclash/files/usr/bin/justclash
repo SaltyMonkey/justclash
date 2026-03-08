@@ -991,8 +991,8 @@ handle_proxy_group_section() {
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
         config_get_bool use_proxy_group_for_list_update "$section" use_proxy_group_for_list_update 0
 
-        [ -n "$proxies_list" ] && escaped_proxies=$(echo "$proxies_list" | trim | list_to_json_array)
-        [ -n "$providers_list" ] && escaped_providers=$(echo "$providers_list" | trim | list_to_json_array)
+        [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
+        [ -n "$providers_list" ] && escaped_providers=$(trim "$providers_list" | list_to_json_array)
 
         group_json="\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
