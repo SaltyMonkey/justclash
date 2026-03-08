@@ -32,7 +32,6 @@ start_service() {
 
 stop_service() {
     $PROG stop
-    sleep 1
 }
 
 reload_service() {
