@@ -48,8 +48,13 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.Flag, "mihomo_persistent_temp_files", _("Store downloaded lists in router memory:"));
-        o.description = _("If enabled, downloaded rules stay in internal router storage after restart. Use this only if you need it, because frequent writes can wear out built-in flash memory faster.");
+        o = s.taboption(tabname, form.Flag, "mihomo_persistent_ext_rules", _("Store Mihomo external rules persistently:"));
+        o.description = _("Keep Mihomo external rule files in persistent router storage instead of temporary memory. Use this only if you need faster recovery after restart, because frequent writes can wear out built-in flash memory faster.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
+
+        o = s.taboption(tabname, form.Flag, "mihomo_persistent_cache", _("Store Mihomo cache persistently:"));
+        o.description = _("Keep Mihomo cache data such as selected groups and fake-IP mappings in persistent router storage instead of temporary memory. Use this only if you need it, because frequent writes can wear out built-in flash memory faster.");
         o.rmempty = false;
         o.default = primitives.FALSE;
 
@@ -81,8 +86,14 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.FALSE;
 
+        o = s.taboption(tabname, form.DynamicList, "nft_dscp_exclude_router", _("Router DSCP exclusions:"));
+        o.description = _("DSCP values for router traffic that should bypass proxy redirection rules. Add one DSCP value per entry.");
+        o.placeholder = "cs1";
+        o.rmempty = false;
+        o.depends("nft_apply_changes_router", primitives.TRUE);
+
         // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interface:"), _("Select which network interface client traffic comes from."));
+        o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interfaces:"));
         o.default = "br-lan";
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
@@ -90,7 +101,7 @@ return view.extend({
         o.nobridges = false;
         o.noinactive = false;
         o.multiple = true;
-        o.description = _("Select which network interface client traffic comes from. This is usually your LAN bridge; do not select WAN unless you know exactly why.");
+        o.description = _("Select which interfaces receive client traffic that should be processed by JustClash. This is usually your LAN bridge; do not select WAN unless you know exactly why.");
         o.filter = common.filterInboundDeviceSelect;
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
