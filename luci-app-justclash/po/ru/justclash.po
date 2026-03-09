@@ -484,27 +484,43 @@ msgstr "Общий порт прокси:"
 msgid "Port used by the Mihomo mixed port listener for both HTTP(S) and SOCKS5 connections from apps and devices on your network."
 msgstr "Порт, который принимает и HTTP(S), и SOCKS5-подключения от приложений и устройств в вашей сети."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:60
+#: htdocs/luci-static/resources/view/justclash/proxy.js:61
+msgid "Mixed port authentication:"
+msgstr "Аутентификация mixed port:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:62
+msgid "Require username and password for access to the Mihomo mixed port. Add one entry per line in the format user:pass."
+msgstr "Требовать имя пользователя и пароль для доступа к mixed port Mihomo. Добавляйте по одной записи в формате user:pass."
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:67
+msgid "Only one : separator is allowed"
+msgstr "Допустим только один разделитель :"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:70
+msgid "Value must use the user:pass format"
+msgstr "Значение должно быть в формате user:pass"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:73
 msgid "Use one delay value:"
 msgstr "Использовать одну задержку:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:61
+#: htdocs/luci-static/resources/view/justclash/proxy.js:74
 msgid "Use the same delay value when checking response time, so test results stay more consistent."
 msgstr "Использовать одинаковое значение задержки при проверке отклика, чтобы результаты тестов были более стабильными."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:65
+#: htdocs/luci-static/resources/view/justclash/proxy.js:78
 msgid "Try TCP connections in parallel:"
 msgstr "Пробовать TCP-подключения параллельно:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:66
+#: htdocs/luci-static/resources/view/justclash/proxy.js:79
 msgid "Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts."
 msgstr "Пробовать несколько TCP-подключений одновременно. Это может помочь в нестабильной сети, но создаёт дополнительные попытки подключения."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:70
+#: htdocs/luci-static/resources/view/justclash/proxy.js:83
 msgid "Client profile for all connections:"
 msgstr "Профиль клиента для всех подключений:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:74
+#: htdocs/luci-static/resources/view/justclash/proxy.js:87
 msgid "How the client identifies itself for supported protocols. Leave the default unless your provider expects a specific profile."
 msgstr "Как сервис будет представляться в поддерживаемых протоколах. Оставьте значение по умолчанию, если провайдер не требует другой профиль."
 

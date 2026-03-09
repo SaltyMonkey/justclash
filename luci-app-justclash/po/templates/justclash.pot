@@ -497,27 +497,43 @@ msgstr ""
 msgid "Port used by the Mihomo mixed port listener for both HTTP(S) and SOCKS5 connections from apps and devices on your network."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:60
-msgid "Use one delay value:"
-msgstr ""
-
 #: htdocs/luci-static/resources/view/justclash/proxy.js:61
-msgid "Use the same delay value when checking response time, so test results stay more consistent."
+msgid "Mixed port authentication:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:65
-msgid "Try TCP connections in parallel:"
+#: htdocs/luci-static/resources/view/justclash/proxy.js:62
+msgid "Require username and password for access to the Mihomo mixed port. Add one entry per line in the format user:pass."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:66
-msgid "Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts."
+#: htdocs/luci-static/resources/view/justclash/proxy.js:67
+msgid "Only one : separator is allowed"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:70
+msgid "Value must use the user:pass format"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:73
+msgid "Use one delay value:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:71
+msgid "Use the same delay value when checking response time, so test results stay more consistent."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:75
+msgid "Try TCP connections in parallel:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:76
+msgid "Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:80
 msgid "Client profile for all connections:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:74
+#: htdocs/luci-static/resources/view/justclash/proxy.js:84
 msgid "How the client identifies itself for supported protocols. Leave the default unless your provider expects a specific profile."
 msgstr ""
 
