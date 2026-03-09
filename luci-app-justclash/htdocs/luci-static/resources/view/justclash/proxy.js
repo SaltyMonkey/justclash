@@ -58,6 +58,16 @@ return view.extend({
         o.default = "7892";
         o.rmempty = false;
 
+        o = s.taboption(tabname, form.DynamicList, "proxy_authentication", _("Mixed port authentication:"));
+        o.description = _("Require username and password for access to the Mihomo mixed port. Add one entry per line in the format user:pass.");
+        o.depends("use_mixed_port", primitives.TRUE);
+        o.placeholder = "user1:pass1";
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateProxyAuthenticationEntry(value);
+        };
+
         o = s.taboption(tabname, form.Flag, "unified_delay", _("Use one delay value:"));
         o.description = _("Use the same delay value when checking response time, so test results stay more consistent.");
         o.default = primitives.TRUE;
