@@ -89,7 +89,7 @@ return view.extend({
         o = s.taboption(tabname, form.DynamicList, "nft_dscp_exclude_router", _("Router DSCP exclusions:"));
         o.description = _("DSCP values for router traffic that should bypass proxy redirection rules. Add one DSCP value per entry.");
         o.placeholder = "cs1";
-        o.rmempty = false;
+        o.rmempty = true;
         o.depends("nft_apply_changes_router", primitives.TRUE);
 
         // copypasted from Podkop devs
