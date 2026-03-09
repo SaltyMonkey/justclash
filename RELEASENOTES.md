@@ -1,9 +1,34 @@
-## [0.9.1] - 03032026
+## [0.9.9] - 04032026
 
 - Service: Fixed regressions
+- Service: Added `pbr_priority` support for policy routing rules
+- Service: Added support for `nft_dscp_exclude_router`
+- Service: Added support for `interface-name` in proxy and provider logic
+- Service: Added support for mixed-port `proxy-authentication`
+- Service: Fixed proxy-group generation after `trim()` refactor
+- Service: Fixed dangerous controller IP handling
+- Service: Fixed dangerous cron injection and improved cron validation
+- Service: Fixed wrong `nf_tables_add` behavior in some cases
+- Service: Moved URI parsing to `jq` for safer parsing
+- Service: Removed incorrected `socks4` and `https` proxy schemes
+- Service: Switched Mihomo auto-update default channel to `stable`
+- Service: Added SHA256 verification for Mihomo core downloads
+- Service: Added cache for helper lookups
+- Service: Minor code refactors
+- Service: Minor codebase optimization
+- LuCI: Added `pbr_priority` setting
+- LuCI: Added bind-to-interface support for proxies and providers
+- LuCI: Added router DSCP exclusions setting
+- LuCI: Added separate Mihomo persistent settings for external rules and cache
+- LuCI: Added mixed-port authentication field with basic `user:pass` validation
+- LuCI: Removed unsupported schemes from proxy link validator
+- LuCI: Improved log coloring for `user.err`
+- Docs: Renamed `info/uci-routing` to `info/uci-structure` and updated example structure
+- Translation: Updated translations
 
 **This version requires:**
 - Browser cache must be cleaned up
+- Existing configs using `mihomo_persistent_temp_files` must be updated manually to `mihomo_persistent_ext_rules` and `mihomo_persistent_cache`
 
 ## [0.9.1] - 03032026
 
