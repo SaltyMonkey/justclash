@@ -12,7 +12,7 @@ let logsUpdating = false; // Защита от гонки
 let clipboardTextarea = false;
 
 const LOG_LEVEL_RULES = [
-    { suffix: " log-error", tokens: ["error", "level=error", "daemon.err"] },
+    { suffix: " log-error", tokens: ["error", "level=error", "daemon.err", "user.err"] },
     { suffix: " log-warn", tokens: ["warn", "level=warn", "warning", "daemon.warn"] },
     { suffix: " log-info", tokens: ["info", "level=info"] },
     { suffix: " log-debug", tokens: ["debug", "level=debug"] }
