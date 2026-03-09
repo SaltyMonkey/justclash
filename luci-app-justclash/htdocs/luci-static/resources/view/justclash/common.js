@@ -254,6 +254,24 @@ return baseclass.extend({
         const pattern = /^[a-zA-Z0-9_.><-]+$/;
         return pattern.test(val);
     },
+    validateProxyAuthenticationEntry: function (value) {
+        const val = value ? value.trim() : "";
+
+        if (!val) {
+            return true;
+        }
+
+        const parts = val.split(":");
+        if (parts.length > 2) {
+            return _("Only one : separator is allowed");
+        }
+
+        if (parts.length !== 2 || parts[0].length === 0 || parts[1].length === 0) {
+            return _("Value must use the user:pass format");
+        }
+
+        return true;
+    },
     isValidProxyLink: function (value) {
         const val = value ? value.trim() : "";
 
