@@ -604,6 +604,14 @@ msgstr "Выберите, какой web-дашборд Mihomo должен ск
 msgid "zashboard"
 msgstr "zashboard"
 
+#: htdocs/luci-static/resources/view/justclash/proxy.js:39
+msgid "Bind all outbound connections to interface:"
+msgstr "Привязать все исходящие подключения к интерфейсу:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:40
+msgid "Bind Mihomo outbound connections to a specific network device by default. Leave empty to let the system choose the outgoing interface. Per-proxy and per-provider interface settings should override this value when set."
+msgstr "По умолчанию привязать исходящие подключения Mihomo к выбранному сетевому устройству. Оставьте поле пустым, чтобы система сама выбрала исходящий интерфейс. Настройки интерфейса в отдельных прокси и провайдерах должны переопределять это значение."
+
 #: htdocs/luci-static/resources/view/justclash/proxy.js:135
 msgid "metacubexd"
 msgstr "metacubexd"

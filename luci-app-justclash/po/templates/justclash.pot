@@ -474,10 +474,18 @@ msgid "Choose how much information Mihomo writes to the log. Higher levels help 
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:39
-msgid "Transparent proxy port:"
+msgid "Bind all outbound connections to interface:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:40
+msgid "Bind Mihomo outbound connections to a specific network device by default. Leave empty to let the system choose the outgoing interface. Per-proxy and per-provider interface settings should override this value when set."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:48
+msgid "Transparent proxy port:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:49
 msgid "Port used for redirected TCP/UDP traffic. Change it only if this port is already used by another service."
 msgstr ""
 
