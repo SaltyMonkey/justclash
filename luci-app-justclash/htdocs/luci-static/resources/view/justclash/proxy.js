@@ -37,6 +37,15 @@ return view.extend({
         o.default = common.defaultLoggingLevels[0];
         o.rmempty = false;
 
+        o = s.taboption(tabname, widgets.DeviceSelect, "interface_name", _("Bind all outbound connections to interface:"));
+        o.description = _("Bind Mihomo outbound connections to a specific network device by default. Leave empty to let the system choose the outgoing interface. Per-proxy and per-provider interface settings should override this value when set.");
+        o.optional = true;
+        o.noaliases = true;
+        o.nobridges = true;
+        o.noinactive = false;
+        o.multiple = false;
+        o.filter = common.filterOutboundDeviceSelect;
+
         o = s.taboption(tabname, form.Value, "tproxy_port", _("Transparent proxy port:"));
         o.description = _("Port used for redirected TCP/UDP traffic. Change it only if this port is already used by another service.");
         o.datatype = datatypes.PORT;
