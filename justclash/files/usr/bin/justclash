@@ -82,6 +82,7 @@ CONFIG_BAK_PATH="${ETC_CONFIG_DIR}/${PROGNAME}.bak"
 # List of NTP server IP addresses:
 DEFAULT_NTP_IPS="194.190.168.1 89.109.251.22 89.109.251.23 216.239.35.4 216.239.35.8"
 
+DEFAULT_EXTERNAL_PANEL="metacubexd"
 DEFAULT_RULESET_PROXY_DIRECT_SECTION="DIRECT"
 DEFAULT_PROXY="DIRECT"
 DEFAULT_HEALTHCHECK_INTERVAL=360
@@ -1518,7 +1519,7 @@ get_dashboard_url() {
 
 core_generate_yaml() {
     local router_selected_ipaddr controller_enabled
-    local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level tproxy_port unified_delay
+    local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level interface_name tproxy_port unified_delay
     local use_mixed_port mixed_port proxy_authentication
     local tcp_concurrent global_client_fingerprint
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
@@ -1558,9 +1559,10 @@ core_generate_yaml() {
     else
         config_get_bool use_dashboard proxy use_zashboard 0
     fi
-    config_get dashboard_repo proxy dashboard_repo "metacubexd"
+    config_get dashboard_repo proxy dashboard_repo "$DEFAULT_EXTERNAL_PANEL"
     config_get api_password proxy api_password
     config_get log_level proxy log_level
+    config_get interface_name proxy interface_name
     config_get tproxy_port proxy tproxy_port
     config_get use_mixed_port proxy use_mixed_port
     config_get mixed_port proxy mixed_port
@@ -1587,6 +1589,12 @@ core_generate_yaml() {
     config_get fake_ip_ttl proxy fake_ip_ttl
     config_get_bool sniffer_enable proxy sniffer_enable
     config_get_bool sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
+
+    [ -n "$interface_name" ] && interface_name=$(trim "$interface_name")
+    if [ -n "$interface_name" ] && ! is_ifname "$interface_name"; then
+        log warn "Global interface_name '$interface_name' is invalid and will be ignored." "⚠️"
+        interface_name=""
+    fi
 
     dashboard_url=$(get_dashboard_url "$dashboard_repo")
     default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true")
@@ -1747,6 +1755,12 @@ EOF
         cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")
 secret: $(yaml_quote "$api_password")
+EOF
+    fi
+
+    if [ -n "$interface_name" ]; then
+        cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
+interface-name: $(yaml_quote "$interface_name")
 EOF
     fi
 
