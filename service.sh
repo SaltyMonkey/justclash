@@ -708,12 +708,16 @@ install_translation_interactive() {
     done
 }
 
-install_jq() {
+install_packages() {
     echo "  "
-    print_bold_green "Installing helper jq package..."
-
     pkg_list_update
-    pkg_install jq
+
+    print_bold_green "Installing required packages..."
+    echo " - Installing jq-full"
+    pkg_install jq-full
+
+    echo " - Installing curl"
+    pkg_install curl
 }
 
 install_service() {
@@ -747,20 +751,27 @@ diagnostic() {
     diagnostic_conflicts_interactive
 }
 
-run() {
-    clear_screen
-    banner
+print_menu_banner() {
     print_bold_yellow "JustClash Setup Menu"
     print_bold_yellow "1 - Install JustClash package"
     print_bold_yellow "2 - Uninstall JustClash package"
     print_bold_yellow "3 - Update or download the latest Mihomo core"
     print_bold_yellow "4 - Remove the Mihomo core if installed"
     print_bold_yellow "5 - Run diagnostics"
-    #print_bold_yellow "6 - Config DNSMasq local use flag"
     print_bold_yellow "6 - Exit"
+    printf "\n"
+}
+
+run() {
+    clear_screen
+    banner
     while true; do
+        print_menu_banner
         printf "Enter your choice [1-6]: "
-        read -r choice
+        if ! read -r choice; then
+            printf "\n"
+            exit 0
+        fi
         case "$choice" in
             1)
                 echo "Installing JustClash..."
@@ -790,6 +801,7 @@ run() {
                 echo "Invalid option. Please enter a number between 1 and 6."
                 ;;
         esac
+        printf "\n"
     done
 }
 
@@ -805,5 +817,5 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-install_jq
+install_packages
 run
