@@ -245,6 +245,40 @@ return baseclass.extend({
 
         return cronRegex.test(val);
     },
+    validateDscpRuleValue: function (value) {
+        const trimmed = String(value).trim();
+        const parsed = parseInt(trimmed, 10);
+
+        if (trimmed === "" || isNaN(parsed) || String(parsed) !== trimmed || parsed < 0 || parsed > 63) {
+            return _("Value must be an integer between 0 and 63.");
+        }
+
+        return true;
+    },
+    validateNftDscpValue: function (value) {
+        const trimmed = String(value).trim();
+        const lower = trimmed.toLowerCase();
+        const namedDscp = /^(cs[0-7]|af[1-4][1-3]|ef)$/;
+        const hexDscp = /^0x[0-9a-f]{1,2}$/;
+
+        if (namedDscp.test(lower)) {
+            return true;
+        }
+
+        if (hexDscp.test(lower)) {
+            const parsedHex = parseInt(lower, 16);
+            return parsedHex >= 0 && parsedHex <= 0x3f
+                ? true
+                : _("DSCP value must be a lowercase DSCP name (cs1, af41, ef) or a number from 0 to 63.");
+        }
+
+        const parsedInt = parseInt(trimmed, 10);
+        if (!isNaN(parsedInt) && String(parsedInt) === trimmed && parsedInt >= 0 && parsedInt <= 63) {
+            return true;
+        }
+
+        return _("DSCP value must be a lowercase DSCP name (cs1, af41, ef) or a number from 0 to 63.");
+    },
     compareArraysWithReturnedResult: function (arr1, arr2) {
         return arr1.filter(value => arr2.includes(value));
     },

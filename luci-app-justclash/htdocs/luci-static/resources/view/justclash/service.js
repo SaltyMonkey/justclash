@@ -91,6 +91,9 @@ return view.extend({
         o.placeholder = "cs1";
         o.rmempty = true;
         o.depends("nft_apply_changes_router", primitives.TRUE);
+        o.validate = function (section_id, value) {
+            return common.validateNftDscpValue(value);
+        };
 
         // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interfaces:"));

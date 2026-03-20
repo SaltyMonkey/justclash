@@ -190,6 +190,12 @@ return view.extend({
         o.optional = true;
         o.default = primitives.FALSE;
 
+        o = s.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
+        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.datatype = datatypes.UINTEGER;
+        o.default = "0";
+        o.optional = true;
+
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
@@ -230,6 +236,15 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
+
+        o = s.taboption(tabname, form.DynamicList, "additional_dscp_route", _("DSCP:"));
+        o.description = _("Traffic with this DSCP value will go through this proxy (example: 4).");
+        o.placeholder = "4";
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateDscpRuleValue(value);
+        };
 
         spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies."));
         spp.anonymous = true;
@@ -296,6 +311,12 @@ return view.extend({
         });
         o.default = common.defaultProxyProviderUpdateIntervalSec[1].value;
         o.description = _("Time interval for subscription update check in seconds.");
+
+        o = spp.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
+        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.datatype = datatypes.UINTEGER;
+        o.default = "0";
+        o.optional = true;
 
         o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
         o.description = _("Use the selected proxy to get subscription data from the server.");
@@ -609,6 +630,12 @@ return view.extend({
         o.optional = true;
         o.default = primitives.FALSE;
 
+        o = s2.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
+        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.datatype = datatypes.UINTEGER;
+        o.default = "0";
+        o.optional = true;
+
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
@@ -651,6 +678,15 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
+
+        o = s2.taboption(tabname, form.DynamicList, "additional_dscp_route", _("DSCP:"));
+        o.description = _("Traffic with this DSCP value will go through the selected proxy group (example: 4).");
+        o.placeholder = "4";
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateDscpRuleValue(value);
+        };
 
         s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Extra direct rules. These are applied before proxy rules, proxy groups, and block rules."));
         s3.addremove = false;
@@ -712,6 +748,12 @@ return view.extend({
             return true;
         };
 
+        o = s3.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
+        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.datatype = datatypes.UINTEGER;
+        o.default = "0";
+        o.optional = true;
+
         tabname = "directbasic_tab";
         s3.tab(tabname, _("Custom rules"));
 
@@ -738,6 +780,15 @@ return view.extend({
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
+        o = s3.taboption(tabname, form.DynamicList, "additional_dscp_direct", _("DSCP:"));
+        o.description = _("Traffic with this DSCP value will bypass the proxy (example: 4).");
+        o.placeholder = "4";
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateDscpRuleValue(value);
+        };
+
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("Block rules:"), _("Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."));
         s4.addremove = false;
 
@@ -762,6 +813,12 @@ return view.extend({
             return true;
         };
 
+        o = s4.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
+        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.datatype = datatypes.UINTEGER;
+        o.default = "0";
+        o.optional = true;
+
         tabname = "rejectmanualrules_tab";
         s4.tab(tabname, _("Custom rules"));
 
@@ -780,6 +837,15 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
+
+        o = s4.taboption(tabname, form.DynamicList, "additional_dscp_blockroute", _("DSCP:"));
+        o.description = _("Traffic with this DSCP value will be blocked (example: 4).");
+        o.placeholder = "4";
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateDscpRuleValue(value);
+        };
 
         smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mihomo mixed port rule:"), _("Extra settings for traffic that arrives through the Mihomo mixed port. Use this when that port should behave differently from the default route."));
         smp.addremove = false;
