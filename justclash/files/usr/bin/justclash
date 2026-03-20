@@ -70,9 +70,9 @@ RULESETS_BLOCKS_FILE="${PROG_ETC_DIR}/${RULESETS_BLOCKS_FILENAME}"
 RULESETS_FILE="${PROG_ETC_DIR}/${RULESETS_FILENAME}"
 
 DASHBOARD_PATH="${PROG_ETC_DIR}/dashboard"
-DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
-DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
-DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
+DASHBOARD_ZASHBOARD_URL="__DASHBOARD_ZASHBOARD_EXTERNAL_URL__"
+DASHBOARD_METACUBEXD_URL="__DASHBOARD_METACUBEX_EXTERNAL_URL__"
+DASHBOARD_YACD_META_URL="__DASHBOARD_YACD_EXTERNAL_URL__"
 
 ETC_CONFIG_DIR="/etc/config"
 DEFAULT_CONFIG_PATH="${PROG_ETC_DIR}/default.config"
@@ -998,6 +998,8 @@ handle_proxy_group_section() {
 
         [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(trim "$providers_list" | list_to_json_array)
+
+        [ "$group_type" = "load-balancer" ] && group_type="load-balance"
 
         group_json="\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
