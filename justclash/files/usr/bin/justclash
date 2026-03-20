@@ -753,7 +753,7 @@ handle_proxy_section() {
     _parse_single_proxy() {
         local section="$1"
         local name enabled proxy_link_uri dialer_proxy interface_name
-        local list_update_interval mode proxy_link_object use_proxy_for_list_update
+        local list_update_interval size_limit mode proxy_link_object use_proxy_for_list_update
         # Source lists loaded from UCI for generated rules and custom rulesets.
         local route_entries route_entry domain_list cidr_list matched_rulesets
         local proxy_obj=""
@@ -770,6 +770,7 @@ handle_proxy_section() {
         config_get dialer_proxy "$section" dialer_proxy
         config_get interface_name "$section" interface_name
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
+        config_get size_limit "$section" size_limit 0
         config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
@@ -834,7 +835,7 @@ handle_proxy_section() {
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
 
             [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
-            selectedRuleSets="${selectedRuleSets}\"$matched_ruleset_name\":{\"url\":\"$matched_ruleset_url\",\"behavior\":\"$matched_ruleset_behavior\",\"format\":\"$matched_ruleset_format\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            selectedRuleSets="${selectedRuleSets}\"$matched_ruleset_name\":{\"url\":\"$matched_ruleset_url\",\"behavior\":\"$matched_ruleset_behavior\",\"format\":\"$matched_ruleset_format\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
             added_rulesets="$added_rulesets$matched_ruleset_name|"
 
             if [ "$matched_ruleset_behavior" = "domain" ]; then
@@ -853,7 +854,7 @@ EOF
                 case "$custom_source" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$custom_source" ]; then
@@ -882,7 +883,7 @@ EOF
                 case "$custom_source" in
                     http://*|https://*)
                         [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
-                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        selectedRuleSets="${selectedRuleSets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$custom_source" ]; then
@@ -924,6 +925,14 @@ EOF
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             }
         done
+
+        config_get route_entries "$section" additional_dscp_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'DSCP,%s,%s' "$route_entry" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+            }
+        done
     }
 
     config_foreach _parse_single_proxy proxies
@@ -961,7 +970,7 @@ handle_proxy_group_section() {
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
         local filter exclude_filter exclude_type expected_status
         # Source lists loaded from UCI for generated rules and custom rulesets.
-        local enabled_list list_update_interval use_proxy_group_for_list_update route_entries route_entry
+        local enabled_list list_update_interval size_limit use_proxy_group_for_list_update route_entries route_entry
         local domain_list cidr_list matched_rulesets
         # Scratch vars for group JSON assembly and per-entry index parsing.
         local escaped_proxies escaped_providers group_json
@@ -994,6 +1003,7 @@ handle_proxy_group_section() {
         config_get exclude_type "$section" exclude_type
         config_get enabled_list "$section" enabled_list
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
+        config_get size_limit "$section" size_limit 0
         config_get_bool use_proxy_group_for_list_update "$section" use_proxy_group_for_list_update 0
 
         [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
@@ -1049,7 +1059,7 @@ handle_proxy_group_section() {
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
 
             [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
-            proxy_groups_rulesets="${proxy_groups_rulesets}\"$matched_ruleset_name\":{\"url\":\"$(json_escape "$matched_ruleset_url")\",\"behavior\":\"$(json_escape "$matched_ruleset_behavior")\",\"format\":\"$(json_escape "$matched_ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+            proxy_groups_rulesets="${proxy_groups_rulesets}\"$matched_ruleset_name\":{\"url\":\"$(json_escape "$matched_ruleset_url")\",\"behavior\":\"$(json_escape "$matched_ruleset_behavior")\",\"format\":\"$(json_escape "$matched_ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
             added_rulesets="$added_rulesets$matched_ruleset_name|"
 
             if [ "$matched_ruleset_behavior" = "domain" ]; then
@@ -1068,7 +1078,7 @@ EOF
                 case "$custom_source" in
                     http://*|https://*)
                         [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$custom_source" ]; then
@@ -1097,7 +1107,7 @@ EOF
                 case "$custom_source" in
                     http://*|https://*)
                         [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
-                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                        proxy_groups_rulesets="${proxy_groups_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
                     ;;
                 *)
                     if [ -f "$custom_source" ]; then
@@ -1141,6 +1151,14 @@ EOF
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             }
         done
+
+        config_get route_entries "$section" additional_dscp_route
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule=$(printf 'DSCP,%s,%s' "$route_entry" "$name")
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+            }
+        done
     }
 
     config_foreach _parse_proxy_group proxy_group
@@ -1167,7 +1185,7 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2329
     _handle_proxy_provider() {
         local section="$1"
-        local name enabled url override_dialer_proxy override_interface_name subscription_hwid_support interval proxy filter exclude_filter exclude_type
+        local name enabled url override_dialer_proxy override_interface_name subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
         local provider_json override_json
 
@@ -1175,6 +1193,7 @@ handle_proxy_provider_section() {
         config_get_bool enabled "$section" enabled 1
         config_get url "$section" subscription
         config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
+        config_get size_limit "$section" size_limit 0
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
         config_get exclude_type "$section" exclude_type
@@ -1188,7 +1207,7 @@ handle_proxy_provider_section() {
             return
         }
 
-        provider_json="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"proxy\":\"$proxy\""
+        provider_json="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
         [ -n "$filter" ] && provider_json="$provider_json,\"filter\":\"$(json_escape "$filter")\""
         [ -n "$exclude_filter" ] && provider_json="$provider_json,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
         [ -n "$exclude_type" ] && provider_json="$provider_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
@@ -1249,15 +1268,16 @@ handle_block_rule_section() {
     local list_suffix_names=""
 
     # Selected blocklists and generated manual block routes.
-    local enabled_blocklist proxy matched_rulesets
+    local enabled_blocklist proxy size_limit matched_rulesets
     local added_blocklists="|"
     # Scratch vars for parsing one blocklist index entry at a time.
     local matched_blocklist_line matched_blocklist_key matched_blocklist_behavior matched_blocklist_format
     local matched_blocklist_url matched_blocklist_name matched_blocklist_fields generated_rule
-    local additional_domain_blockroute additional_destip_blockroute
+    local additional_domain_blockroute additional_destip_blockroute additional_dscp_blockroute
     local domain_val ip_val
     config_get enabled_blocklist block_rules enabled_blocklist
     config_get proxy block_rules proxy "$DEFAULT_PROXY"
+    config_get size_limit block_rules size_limit 0
     matched_rulesets=$(lookup_many_rulesets_full "$blocklist_content" "$enabled_blocklist")
     while IFS= read -r matched_blocklist_line; do
         [ -z "$matched_blocklist_line" ] && continue
@@ -1286,7 +1306,7 @@ handle_block_rule_section() {
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         fi
 
-        selected_rule_sets="${selected_rule_sets}\"$matched_blocklist_name\":{\"url\":\"$(json_escape "$matched_blocklist_url")\",\"behavior\":\"$(json_escape "$matched_blocklist_behavior")\",\"format\":\"$(json_escape "$matched_blocklist_format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"type\":\"http\"},"
+        selected_rule_sets="${selected_rule_sets}\"$matched_blocklist_name\":{\"url\":\"$(json_escape "$matched_blocklist_url")\",\"behavior\":\"$(json_escape "$matched_blocklist_behavior")\",\"format\":\"$(json_escape "$matched_blocklist_format")\",\"proxy\":\"$proxy\",\"interval\":$DEFAULT_RULESET_INTERVAL,\"size-limit\":$size_limit,\"type\":\"http\"},"
         added_blocklists="$added_blocklists$matched_blocklist_key|"
     done <<EOF
 $matched_rulesets
@@ -1314,6 +1334,14 @@ EOF
         }
     done
 
+    config_get additional_dscp_blockroute block_rules additional_dscp_blockroute
+    for ip_val in $additional_dscp_blockroute; do
+        [ -n "$ip_val" ] && {
+            generated_rule=$(printf 'DSCP,%s,REJECT' "$ip_val")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+        }
+    done
+
     selected_rule_sets="{${selected_rule_sets%,}}"
     rules="[${rules_array:-}]"
 
@@ -1337,9 +1365,9 @@ handle_direct_rule_section() {
     local list_rulesets_names=""
     local list_suffix_names=""
     local proxy additional_domain_direct
-    local additional_srcip_direct additional_destip_direct
+    local additional_srcip_direct additional_destip_direct additional_dscp_direct
     # Source lists loaded from UCI for generated DIRECT rules and custom rulesets.
-    local list_update_interval enabled_list
+    local list_update_interval size_limit enabled_list
     local domain_list cidr_list matched_rulesets
     local added_rulesets="|"
     # Scratch vars for parsing one index entry / one custom source at a time.
@@ -1349,6 +1377,7 @@ handle_direct_rule_section() {
     local route_entry
 
     config_get list_update_interval direct_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
+    config_get size_limit direct_rules size_limit 0
     config_get enabled_list direct_rules enabled_list
     config_get proxy direct_rules proxy "$DEFAULT_PROXY"
 
@@ -1375,7 +1404,7 @@ handle_direct_rule_section() {
         generated_rule=$(printf 'RULE-SET,%s,%s' "$matched_ruleset_name" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION")
         rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
 
-        direct_rulesets="${direct_rulesets}\"$matched_ruleset_name\":{\"url\":\"$(json_escape "$matched_ruleset_url")\",\"behavior\":\"$(json_escape "$matched_ruleset_behavior")\",\"format\":\"$(json_escape "$matched_ruleset_format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+        direct_rulesets="${direct_rulesets}\"$matched_ruleset_name\":{\"url\":\"$(json_escape "$matched_ruleset_url")\",\"behavior\":\"$(json_escape "$matched_ruleset_behavior")\",\"format\":\"$(json_escape "$matched_ruleset_format")\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
         added_rulesets="$added_rulesets$matched_ruleset_name|"
 
         if [ "$matched_ruleset_behavior" = "domain" ]; then
@@ -1393,7 +1422,7 @@ EOF
             synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
             case "$custom_source" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"domain\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
                 ;;
             *)
                 if [ -f "$custom_source" ]; then
@@ -1419,7 +1448,7 @@ EOF
             synthetic_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
             case "$custom_source" in
                 http://*|https://*)
-                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"type\":\"http\"},"
+                    direct_rulesets="${direct_rulesets}\"$synthetic_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"ipcidr\",\"format\":\"mrs\",\"proxy\":\"$proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
                 ;;
             *)
                 if [ -f "$custom_source" ]; then
@@ -1459,6 +1488,14 @@ EOF
     for route_entry in $additional_destip_direct; do
         [ -n "$route_entry" ] && {
             generated_rule=$(printf 'IP-CIDR,%s,DIRECT' "$route_entry")
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+        }
+    done
+
+    config_get additional_dscp_direct direct_rules additional_dscp_direct
+    for route_entry in $additional_dscp_direct; do
+        [ -n "$route_entry" ] && {
+            generated_rule=$(printf 'DSCP,%s,DIRECT' "$route_entry")
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         }
     done
