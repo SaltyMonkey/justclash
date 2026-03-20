@@ -24,22 +24,6 @@ msgstr "Каждые 45 секунд"
 msgid "Every 1 minute"
 msgstr "Раз в минуту"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:27
-msgid "Every minute"
-msgstr "Каждую минуту"
-
-#: htdocs/luci-static/resources/view/justclash/common.js:28
-msgid "Every 5 minutes"
-msgstr "Каждые 5 минут"
-
-#: htdocs/luci-static/resources/view/justclash/common.js:29
-msgid "Every 10 minutes"
-msgstr "Каждые 10 минут"
-
-#: htdocs/luci-static/resources/view/justclash/common.js:30
-msgid "Every 20 minutes"
-msgstr "Каждые 20 минут"
-
 #: htdocs/luci-static/resources/view/justclash/common.js:31 htdocs/luci-static/resources/view/justclash/common.js:91
 msgid "Every hour"
 msgstr "Каждый час"
@@ -816,10 +800,6 @@ msgstr "Порт внешнего NTP-сервера."
 msgid "NTP check interval:"
 msgstr "Интервал проверки NTP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:306
-msgid "Interval to check time (in seconds)."
-msgstr "Интервал проверки времени (сек)."
-
 #: htdocs/luci-static/resources/view/justclash/proxy.js:314
 msgid "Write to system:"
 msgstr "Обновлять в системе:"
@@ -1153,8 +1133,8 @@ msgid "Group strategy:"
 msgstr "Стратегия группы:"
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:387
-msgid "Choose how the load-balancer group distributes traffic across available proxies."
-msgstr ""
+msgid "Choose how the load-balance group distributes traffic across available proxies."
+msgstr "Выберите, как группа load-balance будет распределять трафик между доступными прокси."
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:394
 msgid "Proxies:"
@@ -1643,6 +1623,22 @@ msgstr "Конфигурация сервиса"
 #: htdocs/luci-static/resources/view/justclash/status.js:301
 msgid "Do not share your service config with anyone."
 msgstr "Никому не показывайте и не передавайте конфигурацию сервиса."
+
+#: htdocs/luci-static/resources/view/justclash/common.js:27
+msgid "Every 60 minutes"
+msgstr "Каждые 60 минут"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:28
+msgid "Every 120 minutes"
+msgstr "Каждые 120 минут"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:29
+msgid "Every 180 minutes"
+msgstr "Каждые 180 минут"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:364
+msgid "Interval to check time (in minutes)."
+msgstr "Интервал проверки времени (мин)."
 
 #: htdocs/luci-static/resources/view/justclash/status.js:302 htdocs/luci-static/resources/view/justclash/status.js:302
 msgid "Update service data"
