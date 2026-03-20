@@ -31,6 +31,7 @@ config proxy 'proxy'
     option dashboard_repo                 'metacubexd'
     option api_password                   'changeme'
     option log_level                      'warning'
+    option interface_name                 'eth0'
     option tproxy_port                    '7893'
     option use_mixed_port                 '0'
     option mixed_port                     '7892'
@@ -109,6 +110,7 @@ config proxy_provider
 config proxy_group
     option enabled                        '1'
     option name                           'group1'
+    # allowed values: fallback | load-balance | url-test
     option group_type                     'fallback'
     option strategy                       'consistent-hashing'
     list   proxies                        'proxy1'
