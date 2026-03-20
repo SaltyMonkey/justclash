@@ -1,4 +1,4 @@
-msgid ""
+﻿msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-08 01:15+0300\n"
@@ -1643,3 +1643,39 @@ msgstr "Интервал проверки времени (мин)."
 #: htdocs/luci-static/resources/view/justclash/status.js:302 htdocs/luci-static/resources/view/justclash/status.js:302
 msgid "Update service data"
 msgstr "Обновить данные сервиса"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:212 htdocs/luci-static/resources/view/justclash/routing.js:306 htdocs/luci-static/resources/view/justclash/routing.js:634 htdocs/luci-static/resources/view/justclash/routing.js:715 htdocs/luci-static/resources/view/justclash/routing.js:771
+msgid "Size limit:"
+msgstr "Лимит размера:"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:213 htdocs/luci-static/resources/view/justclash/routing.js:307 htdocs/luci-static/resources/view/justclash/routing.js:635 htdocs/luci-static/resources/view/justclash/routing.js:716 htdocs/luci-static/resources/view/justclash/routing.js:772
+msgid "Maximum download size in bytes. Use 0 to disable the limit."
+msgstr "Максимальный размер загрузки в байтах. Значение 0 отключает ограничение."
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:769
+msgid "DSCP:"
+msgstr "DSCP:"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:770
+msgid "Traffic with this DSCP value will bypass the proxy (example: 4)."
+msgstr "Трафик с этим значением DSCP будет обходить прокси (пример: 4)."
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:777
+msgid "Value must be an integer between 0 and 63."
+msgstr "Значение должно быть целым числом от 0 до 63."
+
+#: htdocs/luci-static/resources/view/justclash/service.js:107 htdocs/luci-static/resources/view/justclash/service.js:119
+msgid "DSCP value must be a lowercase DSCP name (cs1, af41, ef) or a number from 0 to 63."
+msgstr "Значение DSCP должно быть именем в нижнем регистре (cs1, af41, ef) или числом от 0 до 63."
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:244
+msgid "Traffic with this DSCP value will go through this proxy (example: 4)."
+msgstr "Трафик с этим значением DSCP будет направляться через этот прокси (пример: 4)."
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:689
+msgid "Traffic with this DSCP value will go through the selected proxy group (example: 4)."
+msgstr "Трафик с этим значением DSCP будет направляться через выбранную группу прокси (пример: 4)."
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:843
+msgid "Traffic with this DSCP value will be blocked (example: 4)."
+msgstr "Трафик с этим значением DSCP будет блокироваться (пример: 4)."
