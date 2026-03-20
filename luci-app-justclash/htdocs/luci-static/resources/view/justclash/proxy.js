@@ -361,13 +361,13 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "core_ntp_interval", _("NTP check interval:"));
-        o.description = _("Interval to check time (in seconds).");
+        o.description = _("Interval to check time (in minutes).");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
-        common.defaultNtpTimeoutCheckValuesSec.forEach(item => {
+        common.defaultNtpIntervalValuesMin.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultNtpTimeoutCheckValuesSec[1].value;
+        o.default = common.defaultNtpIntervalValuesMin[1].value;
 
         o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
         o.description = _("Try to correct system time using the NTP server.");

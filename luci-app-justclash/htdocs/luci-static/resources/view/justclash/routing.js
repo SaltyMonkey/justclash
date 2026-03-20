@@ -193,10 +193,10 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
-        common.defaultRuleSetUpdateInterval.forEach(item => {
+        common.defaultRuleSetUpdateIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultRuleSetUpdateInterval[1].value;
+        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
         o.optional = true;
         o.validate = function (section_id, value) {
             if (value === "") return true;
@@ -449,8 +449,9 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultProxyGroupsBalanceModeStrategies[0].value;
+        o.depends("group_type", "load-balance");
         o.depends("group_type", "load-balancer");
-        o.description = _("Choose how the load-balancer group distributes traffic across available proxies.");
+        o.description = _("Choose how the load-balance group distributes traffic across available proxies.");
 
         o = s2.taboption(tabname, form.DynamicList, "proxies", _("Proxies:"));
         o.description = _("List proxy entries that belong to this group.");
@@ -611,10 +612,10 @@ return view.extend({
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
-        common.defaultRuleSetUpdateInterval.forEach(item => {
+        common.defaultRuleSetUpdateIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultRuleSetUpdateInterval[1].value;
+        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
         o.optional = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
@@ -686,10 +687,10 @@ return view.extend({
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
         o.optional = true;
-        common.defaultRuleSetUpdateInterval.forEach(item => {
+        common.defaultRuleSetUpdateIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultRuleSetUpdateInterval[1].value;
+        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
             let v = parseInt(value);

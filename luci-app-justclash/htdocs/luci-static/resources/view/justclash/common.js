@@ -23,12 +23,11 @@ return baseclass.extend({
         { value: "45", text: _("Every 45 seconds") },
         { value: "60", text: _("Every 1 minute") },
     ],
-    defaultNtpTimeoutCheckValuesSec: [
-        { value: "60", text: _("Every minute") },
-        { value: "300", text: _("Every 5 minutes") },
-        { value: "600", text: _("Every 10 minutes") },
-        { value: "1200", text: _("Every 20 minutes") },
-        { value: "3600", text: _("Every hour") }
+    defaultNtpIntervalValuesMin: [
+        { value: "30", text: _("Every 30 minutes") },
+        { value: "60", text: _("Every 60 minutes") },
+        { value: "120", text: _("Every 120 minutes") },
+        { value: "180", text: _("Every 180 minutes") }
     ],
     defaultBootDelayValuesSec: [
         { value: "5", text: _("5 seconds") },
@@ -48,7 +47,7 @@ return baseclass.extend({
         { value: "8192", text: _("8192 entries") },
         { value: "16384", text: _("16384 entries") },
     ],
-    defaultRuleSetUpdateInterval: [
+    defaultRuleSetUpdateIntervalSec: [
         { value: "86400", text: _("Every 24 hours") },
         { value: "43200", text: _("Every 12 hours") },
         { value: "172800", text: _("Every 48 hours") },
@@ -111,7 +110,7 @@ return baseclass.extend({
     ],
     defaultProxyGroupsTypes: [
         { value: "fallback", text: _("Fallback") },
-        { value: "load-balancer", text: _("Load balancer") },
+        { value: "load-balance", text: _("Load balancer") },
         { value: "url-test", text: _("URL Test") }
     ],
     defaultProxyGroupsBalanceModeStrategies: [
