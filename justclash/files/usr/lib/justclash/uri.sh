@@ -42,12 +42,30 @@ parse_sudoku_url() {
         else {"aead-method": "chacha20-poly1305"}
       end)
 
-    # table-type: decodeASCII
+    # table-type supports symmetric and directional upstream modes.
     + {
         "table-type": (
-          if (.a? and ((.a | ascii_downcase) == "ascii"))
-          then "prefer_ascii"
-          else "prefer_entropy"
+          if (.a? and (.a != null)) then
+            (
+              .a
+              | tostring
+              | ascii_downcase
+              | if . == "ascii" or . == "prefer_ascii" then
+                    "prefer_ascii"
+                elif . == "entropy" or . == "prefer_entropy" or . == "" then
+                    "prefer_entropy"
+                elif . == "up_ascii_down_entropy" or . == "up_entropy_down_ascii" then
+                    .
+                elif . == "up_prefer_ascii_down_prefer_entropy" then
+                    "up_ascii_down_entropy"
+                elif . == "up_prefer_entropy_down_prefer_ascii" then
+                    "up_entropy_down_ascii"
+                else
+                    .
+                end
+            )
+          else
+            "prefer_entropy"
           end
         )
       }
@@ -76,39 +94,17 @@ parse_sudoku_url() {
         else {"enable-pure-downlink": true}
       end)
 
-    # http-mask = NOT(DisableHTTPMask)
-    + (if (.hd? != null)
-        then {"http-mask": (.hd | not)}
-        else {}
-      end)
-
-    # http-mask-mode: legacy | stream | poll | auto | ws
-    + (if (.hm? and (.hm | length > 0))
-        then {"http-mask-mode": .hm}
-        else {}
-      end)
-
-    # http-mask-tls
-    + (if (.ht? != null)
-        then {"http-mask-tls": .ht}
-        else {}
-      end)
-
-    # http-mask-host
-    + (if (.hh? and (.hh | length > 0))
-        then {"http-mask-host": .hh}
-        else {}
-      end)
-
-    # http-mask-multiplex: off | auto | on
-    + (if (.hx? and (.hx | length > 0))
-        then {"http-mask-multiplex": .hx}
-        else {}
-      end)
-
-    # path-root
-    + (if (.hy? and (.hy | length > 0))
-        then {"path-root": .hy}
+    # httpmask object (upstream style)
+    + (if (.hd? != null) or (.hm? and (.hm | length > 0)) or (.ht? != null) or (.hh? and (.hh | length > 0)) or (.hx? and (.hx | length > 0)) or (.hy? and (.hy | length > 0))
+        then {"httpmask": (
+            {}
+            + (if (.hd? != null) then {disable: .hd} else {} end)
+            + (if (.hm? and (.hm | length > 0)) then {mode: .hm} else {} end)
+            + (if (.ht? != null) then {tls: .ht} else {} end)
+            + (if (.hh? and (.hh | length > 0)) then {host: .hh} else {} end)
+            + (if (.hy? and (.hy | length > 0)) then {"path-root": .hy} else {} end)
+            + (if (.hx? and (.hx | length > 0)) then {multiplex: .hx} else {} end)
+        )}
         else {}
       end)
 
