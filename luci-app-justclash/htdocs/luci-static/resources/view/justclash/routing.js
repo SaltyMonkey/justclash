@@ -243,6 +243,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
             return common.validateDscpRuleValue(value);
         };
 
@@ -685,6 +686,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
             return common.validateDscpRuleValue(value);
         };
 
@@ -786,6 +788,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
             return common.validateDscpRuleValue(value);
         };
 
@@ -844,6 +847,7 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
             return common.validateDscpRuleValue(value);
         };
 
@@ -892,6 +896,12 @@ return view.extend({
             }
             .cbi-value {
                 margin-bottom: 14px !important;
+            }
+            .cbi-value[data-name="enabled"] > .cbi-value-title,
+            .cbi-value[data-name="proxy_link_uri"] > .cbi-value-title,
+            .cbi-value[data-name="subscription"] > .cbi-value-title,
+            .cbi-value[data-name="group_type"] > .cbi-value-title {
+                color: var(--error-color-medium, #f44336) !important;
             }
             .cbi-section {
                 border: 0 !important;
