@@ -406,7 +406,7 @@ parse_trojan_url() {
                 else {} end)
             + (if $security == "reality" then
                     {"reality-opts": (
-                        {"public-key": $pbk}
+                        (if $pbk != "" then {"public-key": $pbk} else {} end)
                         + (if $sid != "" then {"short-id": $sid} else {} end)
                         + (if $spx != "" then {"spider-x": $spx} else {} end)
                     )}
@@ -439,9 +439,11 @@ parse_vless_url() {
     # shellcheck disable=SC2249
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
-    local net="tcp" sec="" sni="" fp="" alpn="" flow="" penc="" tfo=""
-    local pbk="" sid="" spx="" sn="" enc="" ech=""
-    local tfo_value=0 alpn_json proxy_obj
+    local net="tcp" sec="" sni="" fp="" alpn="" flow="" penc="" tfo="" insecure=0
+    local pbk="" sid="" spx="" sn="" grpc_ua="" enc="" ech=""
+    local ws_host="" xhttp_host="" xhttp_path="" xhttp_mode="" xhttp_extra=""
+    local tfo_value=0 alpn_json proxy_obj xhttp_extra_json='{}'
+    local tls_servername=""
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -458,27 +460,52 @@ parse_vless_url() {
             type) net="$v" ;;
             security) sec="$v" ;;
             encryption) enc="$v" ;;
-            sni|host) sni="$(url_decode "$v")" ;;
+            sni) sni="$(url_decode "$v")" ;;
+            host)
+                ws_host="$(url_decode "$v")"
+                xhttp_host="$ws_host" ;;
             fp) fp="$v" ;;
             alpn) alpn="$(url_decode "$v")" ;;
             flow) flow="$v" ;;
             tfo) tfo="$v" ;;
+            insecure|allowInsecure) [ "$v" = "1" ] && insecure=1 ;;
             pbk) pbk="$v" ;;
             sid) sid="$v" ;;
             spx|path)
                 if [ -n "$v" ]; then
                     spx="$(url_decode "$v")"
+                    xhttp_path="$spx"
                 else
                     spx="/"
+                    xhttp_path="/"
                 fi ;;
             serviceName) sn="$v" ;;
+            grpc-user-agent) grpc_ua="$(url_decode "$v")" ;;
             packetEncoding) penc="$v" ;;
             ech) ech="$(url_decode "$v")" ;;
+            mode) xhttp_mode="$(url_decode "$v")" ;;
+            extra) xhttp_extra="$(url_decode "$v")" ;;
         esac
     done
 
+    if [ -n "$xhttp_path" ]; then
+        case "$xhttp_path" in
+            /*) ;;
+            *) xhttp_path="/$xhttp_path" ;;
+        esac
+    fi
+
+    tls_servername="$sni"
+    if [ -z "$tls_servername" ] && [ "$net" = "ws" ] && [ -n "$ws_host" ]; then
+        tls_servername="$ws_host"
+    fi
+
     is_truthy "$tfo" && tfo_value=1
     alpn_json=$(json_array_from_csv "$alpn") || return 1
+    if [ -n "$xhttp_extra" ] && [ "$xhttp_extra" != "null" ]; then
+        xhttp_extra_json="$(printf '%s' "$xhttp_extra" | jq -c 'if type == "object" then . else {} end' 2>/dev/null)"
+        [ -n "$xhttp_extra_json" ] || xhttp_extra_json='{}'
+    fi
 
     proxy_obj=$(
         jq -nc \
@@ -491,7 +518,7 @@ parse_vless_url() {
             --arg dialer_proxy "$dialer_proxy" \
             --arg interface_name "$interface_name" \
             --arg sec "$sec" \
-            --arg sni "$sni" \
+            --arg sni "$tls_servername" \
             --arg fp "$fp" \
             --arg pbk "$pbk" \
             --arg sid "$sid" \
@@ -499,9 +526,16 @@ parse_vless_url() {
             --arg ech "$ech" \
             --arg flow "$flow" \
             --arg sn "$sn" \
+            --arg grpc_ua "$grpc_ua" \
+            --arg ws_host "$ws_host" \
+            --arg xhttp_host "$xhttp_host" \
+            --arg xhttp_path "${xhttp_path:-/}" \
+            --arg xhttp_mode "$xhttp_mode" \
             --argjson port "$port" \
             --argjson tfo "$tfo_value" \
-            --argjson alpn "$alpn_json" '
+            --argjson insecure "$insecure" \
+            --argjson alpn "$alpn_json" \
+            --argjson xhttp_extra "$xhttp_extra_json" '
             {
                 name: $name,
                 type: "vless",
@@ -519,6 +553,7 @@ parse_vless_url() {
             + (if $sec == "tls" or $sec == "reality" then
                     {tls: true}
                     + (if $sni != "" then {servername: $sni} else {} end)
+                    + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
                     + (if $fp != "" then {"client-fingerprint": $fp} else {} end)
                     + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
                 else {} end)
@@ -534,10 +569,128 @@ parse_vless_url() {
             + (if $net == "ws" then
                     {"ws-opts": (
                         {path: $spx}
-                        + (if $sni != "" then {headers: {Host: $sni}} else {} end)
+                        + (if $ws_host != "" then {headers: {Host: $ws_host}} else {} end)
                     )}
                 else {} end)
-            + (if $net == "grpc" and $sn != "" then {"grpc-opts": {"service-name": $sn}} else {} end)
+            + (if $net == "grpc" then
+                    {"grpc-opts": (
+                        (if $sn != "" then {"grpc-service-name": $sn} else {} end)
+                        + (if $grpc_ua != "" then {"grpc-user-agent": $grpc_ua} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "xhttp" then
+                    ($xhttp_extra | if type == "object" then . else {} end) as $xe
+                    | ($xe.xmux // $xe["reuse-settings"] // $xe.reuseSettings // {}) as $xmux
+                    | {"xhttp-opts": (
+                        {path: (
+                            if $xhttp_path != "" then
+                                $xhttp_path
+                            elif (($xe.path // "") | tostring) != "" then
+                                $xe.path
+                            else
+                                "/"
+                            end
+                        )}
+                        + (if $xhttp_host != "" then
+                                {host: $xhttp_host}
+                           elif (($xe.host // "") | tostring) != "" then
+                                {host: $xe.host}
+                           else {} end)
+                        + (if $xhttp_mode == "stream-one" or $xhttp_mode == "stream-up" or $xhttp_mode == "packet-up" then
+                                {mode: $xhttp_mode}
+                           elif $xhttp_mode == "auto" then
+                                (if ($xe.mode // "") == "stream-one" or ($xe.mode // "") == "stream-up" or ($xe.mode // "") == "packet-up" then
+                                        {mode: $xe.mode}
+                                 elif $sec == "tls" then
+                                        {mode: "stream-up"}
+                                 elif $sec == "reality" then
+                                        (if ($xe.downloadSettings // null) != null then {mode: "stream-up"} else {mode: "stream-one"} end)
+                                 else
+                                        {mode: "packet-up"}
+                                 else {} end)
+                           elif ($xe.mode // "") == "stream-one" or ($xe.mode // "") == "stream-up" or ($xe.mode // "") == "packet-up" then
+                                {mode: $xe.mode}
+                           else {} end)
+                        + (if ($xe.headers // null) != null then {headers: $xe.headers} else {} end)
+                        + (if ($xe.noGRPCHeader // null) != null then {"no-grpc-header": $xe.noGRPCHeader}
+                           elif ($xe["no-grpc-header"] // null) != null then {"no-grpc-header": $xe["no-grpc-header"]}
+                           else {} end)
+                        + (if (($xe.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $xe.xPaddingBytes}
+                           elif (($xe["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $xe["x-padding-bytes"]}
+                           else {} end)
+                        + (if ($xmux | type) == "object" and ($xmux | length) > 0 then
+                                {"reuse-settings": (
+                                    {}
+                                    + (if (($xmux.maxConnections // "") | tostring) != "" then {"max-connections": $xmux.maxConnections} else {} end)
+                                    + (if (($xmux.maxConcurrency // "") | tostring) != "" then {"max-concurrency": $xmux.maxConcurrency} else {} end)
+                                    + (if (($xmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": $xmux.cMaxReuseTimes} else {} end)
+                                    + (if (($xmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": $xmux.hMaxRequestTimes} else {} end)
+                                    + (if (($xmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": $xmux.hMaxReusableSecs} else {} end)
+                                )}
+                           else {} end)
+                        + (if ($xe.downloadSettings // null) != null and (($xe.downloadSettings | type) == "object") then
+                                ($xe.downloadSettings) as $ds
+                                | ($ds.xmux // $ds["reuse-settings"] // $ds.reuseSettings // {}) as $dsmux
+                                | {"download-settings": (
+                                    {}
+                                    + (if (($ds.path // "") | tostring) != "" then {path: $ds.path} else {} end)
+                                    + (if (($ds.host // "") | tostring) != "" then {host: $ds.host} else {} end)
+                                    + (if ($ds.headers // null) != null then {headers: $ds.headers} else {} end)
+                                    + (if ($ds.noGRPCHeader // null) != null then {"no-grpc-header": $ds.noGRPCHeader}
+                                       elif ($ds["no-grpc-header"] // null) != null then {"no-grpc-header": $ds["no-grpc-header"]}
+                                       else {} end)
+                                    + (if (($ds.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $ds.xPaddingBytes}
+                                       elif (($ds["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $ds["x-padding-bytes"]}
+                                       else {} end)
+                                    + (if ($dsmux | type) == "object" and ($dsmux | length) > 0 then
+                                            {"reuse-settings": (
+                                                {}
+                                                + (if (($dsmux.maxConnections // "") | tostring) != "" then {"max-connections": $dsmux.maxConnections} else {} end)
+                                                + (if (($dsmux.maxConcurrency // "") | tostring) != "" then {"max-concurrency": $dsmux.maxConcurrency} else {} end)
+                                                + (if (($dsmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": $dsmux.cMaxReuseTimes} else {} end)
+                                                + (if (($dsmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": $dsmux.hMaxRequestTimes} else {} end)
+                                                + (if (($dsmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": $dsmux.hMaxReusableSecs} else {} end)
+                                            )}
+                                       else {} end)
+                                    + (if (($ds.server // "") | tostring) != "" then {server: $ds.server} else {} end)
+                                    + (if (($ds.port // "") | tostring) != "" then {port: ($ds.port | tonumber)} else {} end)
+                                    + (if ($ds.tls // null) != null then {tls: $ds.tls} else {} end)
+                                    + (if ($ds.alpn // null) != null and (($ds.alpn | type) == "array") and (($ds.alpn | length) > 0) then {alpn: $ds.alpn} else {} end)
+                                    + (if ($ds["ech-opts"] // null) != null then {"ech-opts": $ds["ech-opts"]}
+                                       elif ($ds.echOpts // null) != null then {"ech-opts": $ds.echOpts}
+                                       else {} end)
+                                    + (if ($ds["reality-opts"] // null) != null then {"reality-opts": $ds["reality-opts"]}
+                                       elif (($ds.pbk // "") | tostring) != "" or (($ds.publicKey // "") | tostring) != "" or (($ds.sid // "") | tostring) != "" or (($ds.shortId // "") | tostring) != "" or (($ds.spx // "") | tostring) != "" or (($ds.spiderX // "") | tostring) != "" then
+                                            {"reality-opts": (
+                                                (if (($ds.pbk // "") | tostring) != "" then {"public-key": $ds.pbk}
+                                                 elif (($ds.publicKey // "") | tostring) != "" then {"public-key": $ds.publicKey}
+                                                 else {} end)
+                                                + (if (($ds.sid // "") | tostring) != "" then {"short-id": $ds.sid}
+                                                   elif (($ds.shortId // "") | tostring) != "" then {"short-id": $ds.shortId}
+                                                   else {} end)
+                                                + (if (($ds.spx // "") | tostring) != "" then {"spider-x": $ds.spx}
+                                                   elif (($ds.spiderX // "") | tostring) != "" then {"spider-x": $ds.spiderX}
+                                                   else {} end)
+                                            )}
+                                       else {} end)
+                                    + (if ($ds.skipCertVerify // null) != null then {"skip-cert-verify": $ds.skipCertVerify}
+                                       elif ($ds["skip-cert-verify"] // null) != null then {"skip-cert-verify": $ds["skip-cert-verify"]}
+                                       else {} end)
+                                    + (if (($ds.fingerprint // "") | tostring) != "" then {fingerprint: $ds.fingerprint} else {} end)
+                                    + (if (($ds.certificate // "") | tostring) != "" then {certificate: $ds.certificate} else {} end)
+                                    + (if (($ds.privateKey // "") | tostring) != "" then {"private-key": $ds.privateKey}
+                                       elif (($ds["private-key"] // "") | tostring) != "" then {"private-key": $ds["private-key"]}
+                                       else {} end)
+                                    + (if (($ds.servername // "") | tostring) != "" then {servername: $ds.servername} else {} end)
+                                    + (if (($ds.clientFingerprint // "") | tostring) != "" then {"client-fingerprint": $ds.clientFingerprint}
+                                       elif (($ds["client-fingerprint"] // "") | tostring) != "" then {"client-fingerprint": $ds["client-fingerprint"]}
+                                       else {} end)
+                                )}
+                           elif ($xe.downloadSettings // null) != null then
+                                {"download-settings": $xe.downloadSettings}
+                           else {} end)
+                    )}
+                else {} end)
         '
     ) || return 1
 
