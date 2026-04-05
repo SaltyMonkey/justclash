@@ -88,10 +88,13 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "nft_dscp_exclude_router", _("Router DSCP exclusions:"));
         o.description = _("DSCP values for router traffic that should bypass proxy redirection rules. Add one DSCP value per entry.");
-        o.placeholder = "cs1";
+        o.placeholder = "60";
         o.rmempty = true;
         o.depends("nft_apply_changes_router", primitives.TRUE);
         o.validate = function (section_id, value) {
+            if (!value || value.trim() === "")
+                return true;
+
             return common.validateNftDscpValue(value);
         };
 
