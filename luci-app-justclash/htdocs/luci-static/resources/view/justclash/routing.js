@@ -193,7 +193,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "0";
+        o.default = "10485760";
         o.optional = true;
 
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
@@ -316,7 +316,7 @@ return view.extend({
         o = spp.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "0";
+        o.default = "10485760";
         o.optional = true;
 
         o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
@@ -634,7 +634,7 @@ return view.extend({
         o = s2.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "0";
+        o.default = "10485760";
         o.optional = true;
 
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
@@ -753,7 +753,7 @@ return view.extend({
         o = s3.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "0";
+        o.default = "10485760";
         o.optional = true;
 
         tabname = "directbasic_tab";
@@ -819,7 +819,7 @@ return view.extend({
         o = s4.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "0";
+        o.default = "10485760";
         o.optional = true;
 
         tabname = "rejectmanualrules_tab";
