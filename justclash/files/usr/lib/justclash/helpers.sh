@@ -43,6 +43,7 @@ format_uci_list_as_json_array() {
     local section_name="$1"
     local list_name="$2"
     local add_custom="$3"
+    local indent="${4:-}"
     local result=""
     local values
 
@@ -58,9 +59,9 @@ format_uci_list_as_json_array() {
             val=$(printf '%s' "$val" | sed 's/"/\\"/g')
             [ -n "$add_custom" ] && val="${val}${add_custom}"
             if [ -n "$result" ]; then
-                result="${result},\n\"$val\""
+                result="${result},\n${indent}\"$val\""
             else
-                result="\"$val\""
+                result="${indent}\"$val\""
             fi
         }
     done
