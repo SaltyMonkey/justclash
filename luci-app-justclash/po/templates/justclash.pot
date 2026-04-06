@@ -205,6 +205,10 @@ msgstr ""
 msgid "Round robin"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/common.js:120
+msgid "Sticky sessions"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/common.js:122 htdocs/luci-static/resources/view/justclash/common.js:126 htdocs/luci-static/resources/view/justclash/common.js:154
 msgid "By rules"
 msgstr ""
@@ -313,10 +317,6 @@ msgstr ""
 msgid "Logs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:390
-msgid "Connections"
-msgstr ""
-
 #: htdocs/luci-static/resources/view/justclash/common.js:391
 msgid "Routing"
 msgstr ""
@@ -351,6 +351,14 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/statistic.js:136
 msgid "Statistics"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/statistic.js:185 htdocs/luci-static/resources/view/justclash/routing.js:31 htdocs/luci-static/resources/view/justclash/routing.js:48
+msgid "Failed to load rulesets"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/statistic.js:187
+msgid "Failed to load configuration"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/connections.js:108 htdocs/luci-static/resources/view/justclash/connections.js:130
@@ -389,12 +397,24 @@ msgstr ""
 msgid "No active connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:224
-msgid "Connection error"
+#: htdocs/luci-static/resources/view/justclash/statistic.js:211
+msgid "Upload speed"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:225
-msgid "Can't connect to proxy API"
+#: htdocs/luci-static/resources/view/justclash/statistic.js:212
+msgid "Download speed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/statistic.js:213
+msgid "Total Up"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/statistic.js:214
+msgid "Total Down"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/statistic.js:215
+msgid "Ram usage"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/logs.js:7
@@ -506,7 +526,7 @@ msgid "Value must use the user:pass format"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:73
-msgid "Use one delay value:"
+msgid "Unified delay:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:71
@@ -721,6 +741,22 @@ msgstr ""
 msgid "Nameservers used for all another traffic."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/proxy.js:219
+msgid "Nameserver policy:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:220
+msgid "Domain-specific DNS policy in the format domain/nameserver (example: +.arpa/10.0.0.1)."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:228
+msgid "Invalid policy format. Use domain/nameserver."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:234
+msgid "Domain matcher cannot be empty."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/proxy.js:230
 msgid "Use fake IP for domains:"
 msgstr ""
@@ -878,7 +914,7 @@ msgid "Invalid JSON format"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:106
-msgid "URL mode:"
+msgid "Link:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:107
@@ -1385,12 +1421,20 @@ msgstr ""
 msgid "Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:77
-msgid "Client traffic interface:"
+#: htdocs/luci-static/resources/view/justclash/service.js:89
+msgid "Router DSCP exclusions:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:77
-msgid "Select which network interface client traffic comes from. This is usually your LAN bridge; do not select WAN unless you know exactly why."
+#: htdocs/luci-static/resources/view/justclash/service.js:90
+msgid "DSCP values for router traffic that should bypass proxy redirection rules. Add one DSCP value per entry."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:102
+msgid "Client traffic interfaces:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:110
+msgid "Select which interfaces receive client traffic that should be processed by JustClash. This is usually your LAN bridge; do not select WAN unless you know exactly why."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:103
@@ -1533,6 +1577,10 @@ msgstr ""
 msgid "Mihomo core"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/status.js:235
+msgid "Outdated"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/status.js:176
 msgid "Please wait..."
 msgstr ""
@@ -1587,6 +1635,14 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:282
 msgid "Stop"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:408
+msgid "Run"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:413
+msgid "Cancel"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:286
@@ -1657,6 +1713,18 @@ msgstr ""
 msgid "Update service data"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/status.js:530
+msgid "Reset config"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:530
+msgid "Reset configuration"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:530
+msgid "This will reset the JustClash configuration. Use with care."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/routing.js:212 htdocs/luci-static/resources/view/justclash/routing.js:306 htdocs/luci-static/resources/view/justclash/routing.js:634 htdocs/luci-static/resources/view/justclash/routing.js:715 htdocs/luci-static/resources/view/justclash/routing.js:771
 msgid "Size limit:"
 msgstr ""
@@ -1691,4 +1759,8 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/routing.js:843
 msgid "Traffic with this DSCP value will be blocked (example: 4)."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:211 htdocs/luci-static/resources/view/justclash/routing.js:652 htdocs/luci-static/resources/view/justclash/routing.js:736
+msgid "Value must be above %s secs."
 msgstr ""
