@@ -313,7 +313,7 @@ parse_trojan_url() {
     # shellcheck disable=SC2249
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
-    local sni="" insecure=0 net="tcp" fp="" alpn="" ws_path="" ws_host="" grpc_service=""
+    local sni="" insecure=0 net="tcp" httpupgrade=0 fp="" alpn="" ws_path="" ws_host="" grpc_service="" grpc_ua="" grpc_ping_interval=""
     local ss_enabled="" ss_method="" ss_password=""
     local security="" pbk="" sid="" spx="" ech=""
     local alpn_json proxy_obj
@@ -331,8 +331,14 @@ parse_trojan_url() {
         # shellcheck disable=SC2249
         case "$k" in
             sni|peer) sni="$(url_decode "$v")" ;;
-            insecure|allowInsecure) [ "$v" = "1" ] && insecure=1 ;;
-            type) net="$v" ;;
+            insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
+            type)
+                if [ "$v" = "httpupgrade" ]; then
+                    net="ws"
+                    httpupgrade=1
+                else
+                    net="$v"
+                fi ;;
             security) security="$v" ;;
             pbk|public-key) pbk="$v" ;;
             sid|short-id) sid="$v" ;;
@@ -347,12 +353,18 @@ parse_trojan_url() {
                     ws_path="/"
                 fi ;;
             host) ws_host="$(url_decode "$v")" ;;
-            serviceName) grpc_service="$v" ;;
+            serviceName|service-name) grpc_service="$v" ;;
+            grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
+            ping-interval|pingInterval) grpc_ping_interval="$(echo "$v" | tr -cd '0-9')" ;;
             ss) ss_enabled="$v" ;;
             ss-method) ss_method="$v" ;;
             ss-password) ss_password="$v" ;;
         esac
     done
+
+    if [ "$net" = "grpc" ] && [ -z "$grpc_service" ]; then
+        grpc_service="/"
+    fi
 
     alpn_json=$(json_array_from_csv "$alpn") || return 1
 
@@ -369,6 +381,8 @@ parse_trojan_url() {
             --arg ws_path "${ws_path:-/}" \
             --arg ws_host "$ws_host" \
             --arg grpc_service "$grpc_service" \
+            --arg grpc_ua "$grpc_ua" \
+            --arg grpc_ping_interval "$grpc_ping_interval" \
             --arg security "$security" \
             --arg pbk "$pbk" \
             --arg sid "$sid" \
@@ -378,6 +392,7 @@ parse_trojan_url() {
             --arg ss_password "$ss_password" \
             --arg ss_enabled "$ss_enabled" \
             --argjson port "$port" \
+            --argjson httpupgrade "$httpupgrade" \
             --argjson insecure "$insecure" \
             --argjson alpn "$alpn_json" '
             {
@@ -399,10 +414,15 @@ parse_trojan_url() {
                     {"ws-opts": (
                         {path: $ws_path}
                         + (if $ws_host != "" then {headers: {Host: $ws_host}} else {} end)
+                        + (if $httpupgrade == 1 then {"v2ray-http-upgrade": true} else {} end)
                     )}
                 else {} end)
-            + (if $net == "grpc" and $grpc_service != "" then
-                    {"grpc-opts": {"grpc-service-name": $grpc_service}}
+            + (if $net == "grpc" then
+                    {"grpc-opts": (
+                        {"grpc-service-name": $grpc_service}
+                        + (if $grpc_ua != "" then {"grpc-user-agent": $grpc_ua} else {} end)
+                        + (if $grpc_ping_interval != "" then {"ping-interval": ($grpc_ping_interval | tonumber)} else {} end)
+                    )}
                 else {} end)
             + (if $security == "reality" then
                     {"reality-opts": (
@@ -439,9 +459,10 @@ parse_vless_url() {
     # shellcheck disable=SC2249
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
-    local net="tcp" sec="" sni="" fp="" alpn="" flow="" penc="" tfo="" insecure=0
-    local pbk="" sid="" spx="" sn="" grpc_ua="" enc="" ech=""
-    local ws_host="" xhttp_host="" xhttp_path="" xhttp_mode="" xhttp_extra=""
+    local net="tcp" httpupgrade=0 sec="" sni="" fp="" alpn="" flow="" penc="" insecure=0
+    local pbk="" sid="" spx="" sn="" grpc_ua="" enc="" ech="" path=""
+    local grpc_ping_interval=""
+    local transport_host="" xhttp_mode="" xhttp_extra=""
     local tfo_value=0 alpn_json proxy_obj xhttp_extra_json='{}'
     local tls_servername=""
 
@@ -457,50 +478,63 @@ parse_vless_url() {
 
         # shellcheck disable=SC2249
         case "$k" in
-            type) net="$v" ;;
+            type)
+                if [ "$v" = "httpupgrade" ]; then
+                    net="ws"
+                    httpupgrade=1
+                else
+                    net="$v"
+                fi ;;
             security) sec="$v" ;;
             encryption) enc="$v" ;;
             sni) sni="$(url_decode "$v")" ;;
             host)
-                ws_host="$(url_decode "$v")"
-                xhttp_host="$ws_host" ;;
-            fp) fp="$v" ;;
+                transport_host="$(url_decode "$v")" ;;
+            fp|client-fingerprint) fp="$v" ;;
             alpn) alpn="$(url_decode "$v")" ;;
             flow) flow="$v" ;;
-            tfo) tfo="$v" ;;
-            insecure|allowInsecure) [ "$v" = "1" ] && insecure=1 ;;
-            pbk) pbk="$v" ;;
-            sid) sid="$v" ;;
-            spx|path)
+            tfo) is_truthy "$v" && tfo_value=1 ;;
+            insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
+            pbk|public-key) pbk="$v" ;;
+            sid|short-id) sid="$v" ;;
+            spx)
                 if [ -n "$v" ]; then
                     spx="$(url_decode "$v")"
-                    xhttp_path="$spx"
                 else
                     spx="/"
-                    xhttp_path="/"
                 fi ;;
-            serviceName) sn="$v" ;;
-            grpc-user-agent) grpc_ua="$(url_decode "$v")" ;;
-            packetEncoding) penc="$v" ;;
+            path)
+                if [ -n "$v" ]; then
+                    path="$(url_decode "$v")"
+                else
+                    path="/"
+                fi ;;
+            serviceName|service-name) sn="$v" ;;
+            grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
+            ping-interval|pingInterval) grpc_ping_interval="$(echo "$v" | tr -cd '0-9')" ;;
+            packetEncoding|packet-encoding) penc="$v" ;;
             ech) ech="$(url_decode "$v")" ;;
             mode) xhttp_mode="$(url_decode "$v")" ;;
             extra) xhttp_extra="$(url_decode "$v")" ;;
         esac
     done
 
-    if [ -n "$xhttp_path" ]; then
-        case "$xhttp_path" in
+    if [ -n "$path" ]; then
+        case "$path" in
             /*) ;;
-            *) xhttp_path="/$xhttp_path" ;;
+            *) path="/$path" ;;
         esac
     fi
 
     tls_servername="$sni"
-    if [ -z "$tls_servername" ] && [ "$net" = "ws" ] && [ -n "$ws_host" ]; then
-        tls_servername="$ws_host"
+    if [ -z "$tls_servername" ] && [ "$net" = "ws" ] && [ -n "$transport_host" ]; then
+        tls_servername="$transport_host"
     fi
 
-    is_truthy "$tfo" && tfo_value=1
+    if [ "$net" = "grpc" ] && [ -z "$sn" ]; then
+        sn="/"
+    fi
+
     alpn_json=$(json_array_from_csv "$alpn") || return 1
     if [ -n "$xhttp_extra" ] && [ "$xhttp_extra" != "null" ]; then
         xhttp_extra_json="$(printf '%s' "$xhttp_extra" | jq -c 'if type == "object" then . else {} end' 2>/dev/null)"
@@ -523,16 +557,17 @@ parse_vless_url() {
             --arg pbk "$pbk" \
             --arg sid "$sid" \
             --arg spx "${spx:-/}" \
+            --arg path "${path:-/}" \
             --arg ech "$ech" \
             --arg flow "$flow" \
             --arg sn "$sn" \
             --arg grpc_ua "$grpc_ua" \
-            --arg ws_host "$ws_host" \
-            --arg xhttp_host "$xhttp_host" \
-            --arg xhttp_path "${xhttp_path:-/}" \
+            --arg grpc_ping_interval "$grpc_ping_interval" \
+            --arg transport_host "$transport_host" \
             --arg xhttp_mode "$xhttp_mode" \
             --argjson port "$port" \
             --argjson tfo "$tfo_value" \
+            --argjson httpupgrade "$httpupgrade" \
             --argjson insecure "$insecure" \
             --argjson alpn "$alpn_json" \
             --argjson xhttp_extra "$xhttp_extra_json" '
@@ -568,14 +603,16 @@ parse_vless_url() {
             + (if $net == "tcp" and $flow != "" then {flow: $flow} else {} end)
             + (if $net == "ws" then
                     {"ws-opts": (
-                        {path: $spx}
-                        + (if $ws_host != "" then {headers: {Host: $ws_host}} else {} end)
+                        {path: $path}
+                        + (if $transport_host != "" then {headers: {Host: $transport_host}} else {} end)
+                        + (if $httpupgrade == 1 then {"v2ray-http-upgrade": true} else {} end)
                     )}
                 else {} end)
             + (if $net == "grpc" then
                     {"grpc-opts": (
-                        (if $sn != "" then {"grpc-service-name": $sn} else {} end)
+                        {"grpc-service-name": $sn}
                         + (if $grpc_ua != "" then {"grpc-user-agent": $grpc_ua} else {} end)
+                        + (if $grpc_ping_interval != "" then {"ping-interval": ($grpc_ping_interval | tonumber)} else {} end)
                     )}
                 else {} end)
             + (if $net == "xhttp" then
@@ -583,16 +620,16 @@ parse_vless_url() {
                     | ($xe.xmux // $xe["reuse-settings"] // $xe.reuseSettings // {}) as $xmux
                     | {"xhttp-opts": (
                         {path: (
-                            if $xhttp_path != "" then
-                                $xhttp_path
+                            if $path != "" then
+                                $path
                             elif (($xe.path // "") | tostring) != "" then
                                 $xe.path
                             else
                                 "/"
                             end
                         )}
-                        + (if $xhttp_host != "" then
-                                {host: $xhttp_host}
+                        + (if $transport_host != "" then
+                                {host: $transport_host}
                            elif (($xe.host // "") | tostring) != "" then
                                 {host: $xe.host}
                            else {} end)
@@ -630,17 +667,29 @@ parse_vless_url() {
                            else {} end)
                         + (if ($xe.downloadSettings // null) != null and (($xe.downloadSettings | type) == "object") then
                                 ($xe.downloadSettings) as $ds
-                                | ($ds.xmux // $ds["reuse-settings"] // $ds.reuseSettings // {}) as $dsmux
+                                | ($ds.xhttpSettings // {}) as $dx
+                                | ($dx.extra // {}) as $dxe
+                                | ($ds.xmux // $ds["reuse-settings"] // $ds.reuseSettings // $dx.xmux // $dx["reuse-settings"] // $dx.reuseSettings // $dxe.xmux // $dxe["reuse-settings"] // $dxe.reuseSettings // {}) as $dsmux
                                 | {"download-settings": (
                                     {}
-                                    + (if (($ds.path // "") | tostring) != "" then {path: $ds.path} else {} end)
-                                    + (if (($ds.host // "") | tostring) != "" then {host: $ds.host} else {} end)
-                                    + (if ($ds.headers // null) != null then {headers: $ds.headers} else {} end)
+                                    + (if (($ds.path // "") | tostring) != "" then {path: $ds.path}
+                                       elif (($dx.path // "") | tostring) != "" then {path: $dx.path}
+                                       else {} end)
+                                    + (if (($ds.host // "") | tostring) != "" then {host: $ds.host}
+                                       elif (($dx.host // "") | tostring) != "" then {host: $dx.host}
+                                       else {} end)
+                                    + (if ($ds.headers // null) != null then {headers: $ds.headers}
+                                       elif ($dx.headers // null) != null then {headers: $dx.headers}
+                                       else {} end)
                                     + (if ($ds.noGRPCHeader // null) != null then {"no-grpc-header": $ds.noGRPCHeader}
                                        elif ($ds["no-grpc-header"] // null) != null then {"no-grpc-header": $ds["no-grpc-header"]}
+                                       elif ($dx.noGRPCHeader // null) != null then {"no-grpc-header": $dx.noGRPCHeader}
+                                       elif ($dx["no-grpc-header"] // null) != null then {"no-grpc-header": $dx["no-grpc-header"]}
                                        else {} end)
                                     + (if (($ds.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $ds.xPaddingBytes}
                                        elif (($ds["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $ds["x-padding-bytes"]}
+                                       elif (($dx.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $dx.xPaddingBytes}
+                                       elif (($dx["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $dx["x-padding-bytes"]}
                                        else {} end)
                                     + (if ($dsmux | type) == "object" and ($dsmux | length) > 0 then
                                             {"reuse-settings": (
@@ -741,7 +790,7 @@ parse_hysteria2_url() {
         # shellcheck disable=SC2249
         case "$k" in
             sni) sni="$(url_decode "$v")" ;;
-            insecure) [ "$v" = "1" ] && insecure=1 ;;
+            insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
             obfs) obfs="$(url_decode "$v")" ;;
             obfs-password|obfsPassword) obfs_password="$(url_decode "$v")" ;;
             up|upmbps) up="$v" ;;
