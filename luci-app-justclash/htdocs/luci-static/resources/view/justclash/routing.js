@@ -126,7 +126,7 @@ return view.extend({
             }
         };
 
-        o = s.taboption(tabname, form.Value, "proxy_link_uri", _("URL mode:"));
+        o = s.taboption(tabname, form.Value, "proxy_link_uri", _("Link:"));
         o.description = _("URI link with connection parameters.");
         //o.password = true;
         o.optional = true;
@@ -208,7 +208,7 @@ return view.extend({
             if (value === "") return true;
             let v = parseInt(value);
             if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
+                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
             }
             return true;
         };
@@ -649,7 +649,7 @@ return view.extend({
             if (!value || value.trim() === "") return true;
             let v = parseInt(value);
             if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
+                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
             }
             return true;
         };
@@ -733,7 +733,7 @@ return view.extend({
             if (!value || value.trim() === "") return true;
             let v = parseInt(value);
             if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _(`Value must be above ${common.minimalRuleSetUpdateInterval}secs.`);
+                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
             }
             return true;
         };

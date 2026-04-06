@@ -232,7 +232,7 @@ const createCard = (label, valueContent, extraContent, iconKey, extraMode) => {
 const createUpdateBadge = () => E("span", {
     class: "jc-badge jc-badge-warning",
     style: "display:none;"
-}, _("Update required"));
+}, _("Outdated"));
 
 const createStatusGrid = (results, dynamicElements) => {
     return E("div", {}, [

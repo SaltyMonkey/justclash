@@ -184,7 +184,7 @@ return view.extend({
             console.error("Failed to load justclash config", e);
             ui.addNotification(
                 _("Error"),
-                E("p", _("Failed to load rulesets") + ": " + (e.message || e)),
+                E("p", _("Failed to load configuration") + ": " + (e.message || e)),
                 "danger"
             );
             return { token: "", configLoadFailed: true };

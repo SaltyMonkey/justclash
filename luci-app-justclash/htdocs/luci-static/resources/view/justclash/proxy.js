@@ -77,7 +77,7 @@ return view.extend({
             return common.validateProxyAuthenticationEntry(value);
         };
 
-        o = s.taboption(tabname, form.Flag, "unified_delay", _("Use one delay value:"));
+        o = s.taboption(tabname, form.Flag, "unified_delay", _("Unified delay:"));
         o.description = _("Use the same delay value when checking response time, so test results stay more consistent.");
         o.default = primitives.TRUE;
         o.rmempty = false;
