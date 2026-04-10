@@ -2,12 +2,11 @@
 "require view";
 "require uci";
 "require ui";
-"require view.justclash.common as common";
+"require view.justclash.helper_common as common";
 "require form";
 "require fs";
 "require tools.widgets as widgets";
 
-const NOTIFICATION_TIMEOUT = 3000;
 const JSON_OBJECT_ROWS = 10;
 
 return view.extend({
@@ -45,7 +44,7 @@ return view.extend({
                     .filter(item => item.name && item.yamlName);
             }
         } catch (e) {
-            ui.addTimeLimitedNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), NOTIFICATION_TIMEOUT, "error");
+            ui.addTimeLimitedNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), common.notificationTimeout, "error");
             console.error("Error loading rulesets:", e);
         }
 
@@ -96,7 +95,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.ListValue, "mode", _("Mode:"));
-        o.description = _("If selected, allow to define proxy as JSON object.");
+        o.description = _("Choose whether this proxy is defined as a URL or a JSON object.");
         common.defaultProxiesModes.forEach(item => {
             o.value(item.value, item.text);
         });
@@ -137,7 +136,7 @@ return view.extend({
         o.depends("mode", "uri");
 
         o = s.taboption(tabname, form.Value, "dialer_proxy", _("Connect through:"));
-        o.description = _("Route connections through the specified proxy server, or connect directly if left empty.");
+        o.description = _("Route this proxy through the specified proxy server, or connect directly if left empty.");
         o.optional = true;
         o.placeholder = "proxyname_";
         o.validate = function (section_id, value) {
@@ -159,7 +158,7 @@ return view.extend({
         o.depends("mode", "uri");
 
         tabname = "proxieslists_tab";
-        s.tab(tabname, _("Rules"));
+        s.tab(tabname, _("Lists"));
 
         o = s.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
@@ -190,12 +189,6 @@ return view.extend({
         o.optional = true;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
-        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
-        o.datatype = datatypes.UINTEGER;
-        o.default = "10485760";
-        o.optional = true;
-
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
@@ -213,8 +206,17 @@ return view.extend({
             return true;
         };
 
+        o = s.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
+        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.datatype = datatypes.UINTEGER;
+        common.defaultDownloadSizeLimits.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultDownloadSizeLimits[5].value;
+        o.optional = true;
+
         tabname = "proxiesmanualrules_tab";
-        s.tab(tabname, _("Custom rules"));
+        s.tab(tabname, _("Manual rules"));
 
         o = s.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
         o.description = _("Traffic to domains matching this suffix will go through this proxy (example: google.com).");
@@ -236,16 +238,6 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
-
-        o = s.taboption(tabname, form.DynamicList, "additional_dscp_route", _("DSCP:"));
-        o.description = _("Traffic with this DSCP value will go through this proxy (example: 4).");
-        o.placeholder = "4";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDscpRuleValue(value);
-        };
 
         spp = m.section(form.TypedSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies."));
         spp.anonymous = true;
@@ -281,7 +273,7 @@ return view.extend({
         o.description = _("Your complete subscription URL with http:// or https://.");
 
         o = spp.taboption(tabname, form.Value, "override_dialer_proxy", _("Connect through:"));
-        o.description = _("Route connections through the specified proxy server, or connect directly if left empty.");
+        o.description = _("Apply this dialer-proxy to nodes loaded from this provider. Leave empty to connect directly.");
         o.optional = true;
         o.placeholder = "proxyname_";
         o.validate = function (section_id, value) {
@@ -292,7 +284,7 @@ return view.extend({
         };
 
         o = spp.taboption(tabname, widgets.DeviceSelect, "override_interface_name", _("Bind to interface:"));
-        o.description = _("Bind provider downloads and checks to a specific network device. Leave empty to use the system-selected interface.");
+        o.description = _("Apply this interface binding to nodes loaded from this provider. Leave empty to use the system-selected interface.");
         o.optional = true;
         o.noaliases = true;
         o.nobridges = true;
@@ -316,7 +308,10 @@ return view.extend({
         o = spp.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "10485760";
+        common.defaultDownloadSizeLimits.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultDownloadSizeLimits[5].value;
         o.optional = true;
 
         o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
@@ -409,7 +404,7 @@ return view.extend({
         };
 
         o = spp.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
-        o.description = _("Exclude type filter.");
+        o.description = _("Exclude nodes by proxy type.");
         o.placeholder = "vless|vmess|ss|mieru";
         o.optional = true;
         o.rmempty = true;
@@ -545,8 +540,11 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Value, "max_failed_times", _("Max failed times:"));
         o.datatype = datatypes.UINTEGER;
-        o.default = '5';
-        o.placeholder = '5';
+        common.defaultMaxFailedTimes.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultMaxFailedTimes[4].value;
+        o.placeholder = common.defaultMaxFailedTimes[4].value;
         o.description = _("How many failed health checks are allowed before the node is treated as unavailable.");
 
         o = s2.taboption(tabname, form.Flag, "lazy", _("Lazy:"));
@@ -575,7 +573,7 @@ return view.extend({
         };
 
         o = s2.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
-        o.description = _("Exclude type filter.");
+        o.description = _("Exclude nodes by proxy type.");
         o.placeholder = "vless|vmess|ss|mieru";
         o.optional = true;
         o.rmempty = true;
@@ -600,7 +598,7 @@ return view.extend({
         };
 
         tabname = "proxiesgrouplist_tab";
-        s2.tab(tabname, _("Rules"));
+        s2.tab(tabname, _("Lists"));
 
         o = s2.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
@@ -631,12 +629,6 @@ return view.extend({
         o.optional = true;
         o.default = primitives.FALSE;
 
-        o = s2.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
-        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
-        o.datatype = datatypes.UINTEGER;
-        o.default = "10485760";
-        o.optional = true;
-
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
@@ -654,8 +646,17 @@ return view.extend({
             return true;
         };
 
+        o = s2.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
+        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.datatype = datatypes.UINTEGER;
+        common.defaultDownloadSizeLimits.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultDownloadSizeLimits[5].value;
+        o.optional = true;
+
         tabname = "proxiesgroupmanualrules_tab";
-        s2.tab(tabname, _("Custom rules"));
+        s2.tab(tabname, _("Manual rules"));
 
         o = s2.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
         o.description = _("Traffic to domains matching this suffix will go through the selected proxy group (example: google.com).");
@@ -680,21 +681,11 @@ return view.extend({
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
-        o = s2.taboption(tabname, form.DynamicList, "additional_dscp_route", _("DSCP:"));
-        o.description = _("Traffic with this DSCP value will go through the selected proxy group (example: 4).");
-        o.placeholder = "4";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDscpRuleValue(value);
-        };
-
         s3 = m.section(form.NamedSection, "direct_rules", "direct_rules", _("DIRECT rules:"), _("Extra direct rules. These are applied before proxy rules, proxy groups, and block rules."));
         s3.addremove = false;
 
         tabname = "directruleslist_tab";
-        s3.tab(tabname, _("Rules"));
+        s3.tab(tabname, _("Lists"));
 
         o = s3.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         o.optional = true;
@@ -721,6 +712,18 @@ return view.extend({
             return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
         };
 
+        o = s3.taboption(tabname, form.Value, "proxy", _("Download lists through:"));
+        o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");
+        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
+        o.default = common.endRuleOptions[0].value;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") {
+                return _("This field cannot be empty");
+            }
+            return true;
+        };
+
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds.");
         o.datatype = datatypes.UINTEGER;
@@ -738,26 +741,17 @@ return view.extend({
             return true;
         };
 
-        o = s3.taboption(tabname, form.Value, "proxy", _("Download lists through:"));
-        o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");
-        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
-        o.default = common.endRuleOptions[0].value;
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") {
-                return _("This field cannot be empty");
-            }
-            return true;
-        };
-
         o = s3.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "10485760";
+        common.defaultDownloadSizeLimits.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultDownloadSizeLimits[5].value;
         o.optional = true;
 
         tabname = "directbasic_tab";
-        s3.tab(tabname, _("Custom rules"));
+        s3.tab(tabname, _("Manual rules"));
 
         o = s3.taboption(tabname, form.DynamicList, "additional_domain_direct", _("Domain suffix:"));
         o.description = _("Traffic to domains matching this suffix will bypass the proxy (example: google.com).");
@@ -782,21 +776,11 @@ return view.extend({
         o.editable = true;
         o.datatype = datatypes.CIDR4;
 
-        o = s3.taboption(tabname, form.DynamicList, "additional_dscp_direct", _("DSCP:"));
-        o.description = _("Traffic with this DSCP value will bypass the proxy (example: 4).");
-        o.placeholder = "4";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDscpRuleValue(value);
-        };
-
         s4 = m.section(form.NamedSection, "block_rules", "block_rules", _("Block rules:"), _("Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."));
         s4.addremove = false;
 
         tabname = "rejectrules_tab";
-        s4.tab(tabname, _("Rules"));
+        s4.tab(tabname, _("Lists"));
 
         o = s4.taboption(tabname, form.DynamicList, "enabled_blocklist", _("Use with rules:"));
         result.blockRulesetsItems.forEach(item => {
@@ -816,14 +800,34 @@ return view.extend({
             return true;
         };
 
+        o = s4.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
+        o.description = _("How often remote lists should be checked for updates, in seconds.");
+        o.datatype = datatypes.UINTEGER;
+        o.optional = true;
+        common.defaultRuleSetUpdateIntervalSec.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
+            let v = parseInt(value);
+            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
+                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
+            }
+            return true;
+        };
+
         o = s4.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
         o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
-        o.default = "10485760";
+        common.defaultDownloadSizeLimits.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultDownloadSizeLimits[5].value;
         o.optional = true;
 
         tabname = "rejectmanualrules_tab";
-        s4.tab(tabname, _("Custom rules"));
+        s4.tab(tabname, _("Manual rules"));
 
         o = s4.taboption(tabname, form.DynamicList, "additional_domain_blockroute", _("Domain suffix:"));
         o.description = _("Traffic to domains matching this suffix will be blocked (example: google.com).");
@@ -840,16 +844,6 @@ return view.extend({
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;
-
-        o = s4.taboption(tabname, form.DynamicList, "additional_dscp_blockroute", _("DSCP:"));
-        o.description = _("Traffic with this DSCP value will be blocked (example: 4).");
-        o.placeholder = "4";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDscpRuleValue(value);
-        };
 
         smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mihomo mixed port rule:"), _("Extra settings for traffic that arrives through the Mihomo mixed port. Use this when that port should behave differently from the default route."));
         smp.addremove = false;
@@ -891,6 +885,19 @@ return view.extend({
         };
 
         const style = E("style", {}, `
+            .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node {
+                max-height: 395px;
+                min-height: 395px;
+                overflow-y: auto;
+            }
+
+            @media (max-width: 768px) {
+                .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node {
+                    max-height: none;
+                    min-height: 0;
+                    overflow-y: visible;
+                }
+            }
             ul.dropdown {
                 max-height: 320px !important;
             }
@@ -913,11 +920,6 @@ return view.extend({
             }
         `);
 
-        return m.render().then(formEl => {
-            return E("div", {}, [
-                style,
-                formEl
-            ]);
-        });
+        return m.render().then(formEl => E("div", {}, [style, formEl]));
     }
 });

@@ -31,28 +31,12 @@
             }
         }
     },
-    "admin/services/justclash/logs": {
-        "title": "Logs",
-        "order": 30,
+    "admin/services/justclash/nodes": {
+        "title": "Nodes",
+        "order": 20,
         "action": {
             "type": "view",
-            "path": "justclash/logs"
-        },
-        "depends": {
-            "acl": [
-                "luci-app-justclash"
-            ],
-            "uci": {
-                "justclash": true
-            }
-        }
-    },
-    "admin/services/justclash/statistic": {
-        "title": "Statistics",
-        "order": 40,
-        "action": {
-            "type": "view",
-            "path": "justclash/statistic"
+            "path": "justclash/nodes"
         },
         "depends": {
             "acl": [
@@ -65,7 +49,7 @@
     },
     "admin/services/justclash/routes": {
         "title": "Routing",
-        "order": 50,
+        "order": 30,
         "action": {
             "type": "view",
             "path": "justclash/routing"
@@ -81,7 +65,7 @@
     },
     "admin/services/justclash/service": {
         "title": "Service",
-        "order": 60,
+        "order": 40,
         "action": {
             "type": "view",
             "path": "justclash/service"
@@ -97,10 +81,58 @@
     },
     "admin/services/justclash/proxy": {
         "title": "Proxy",
-        "order": 70,
+        "order": 50,
         "action": {
             "type": "view",
             "path": "justclash/proxy"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
+    "admin/services/justclash/system_logs": {
+        "title": "System logs",
+        "order": 60,
+        "action": {
+            "type": "view",
+            "path": "justclash/system_logs"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
+    "admin/services/justclash/realtime_logs": {
+        "title": "Realtime logs",
+        "order": 70,
+        "action": {
+            "type": "view",
+            "path": "justclash/realtime_logs"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
+    "admin/services/justclash/connections": {
+        "title": "Connections",
+        "order": 80,
+        "action": {
+            "type": "view",
+            "path": "justclash/connections"
         },
         "depends": {
             "acl": [

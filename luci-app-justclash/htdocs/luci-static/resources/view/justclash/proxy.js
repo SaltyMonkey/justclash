@@ -2,7 +2,7 @@
 "require uci";
 "require form";
 "require view";
-"require view.justclash.common as common";
+"require view.justclash.helper_common as common";
 "require tools.widgets as widgets";
 
 return view.extend({
@@ -173,19 +173,19 @@ return view.extend({
         s.tab(tabname, _("DNS settings"));
 
         o = s.taboption(tabname, form.Value, "dns_listen_port", _("DNS listen port:"));
-        o.description = _("Proxy DNS server listen port.");
+        o.description = _("Port where Mihomo built-in DNS server listens.");
         o.datatype = datatypes.PORT;
         o.placeholder = "7894";
         o.default = "7894";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
-        o.description = _("Load DNS entries from system if possible.");
+        o.description = _("Load DNS entries from the system hosts file when possible.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
-        o.description = _("IP DNS cache size.");
+        o.description = _("Maximum number of DNS cache entries kept by Mihomo.");
         o.default = common.defaultIPDnsCache[0].value;
         common.defaultIPDnsCache.forEach(item => {
             o.value(item.value, item.text);
@@ -196,19 +196,19 @@ return view.extend({
         o = s.taboption(tabname, form.ListValue, "fake_ip_filter_mode", _("Fake IP filter:"));
         o.value("blacklist", _(`blacklist`));
         o.value("whitelist", _(`whitelist`));
-        o.description = _("Fake IP working mode.");
+        o.description = _("Choose how fake-IP domain lists are interpreted.");
         o.default = "whitelist";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
-        o.description = _("CIDR for fake IP.");
+        o.description = _("IPv4 CIDR range used for fake-IP responses.");
         o.default = "198.18.0.1/22";
         o.rmempty = false;
         o.readonly = true;
         o.datatype = "cidr4";
 
         o = s.taboption(tabname, form.Value, "fake_ip_ttl", _("Fake IP TTL:"));
-        o.description = _("Time to live time for DNS records from fake IP.");
+        o.description = _("TTL for fake-IP DNS responses.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         common.defaultFakeIPTtlValues.forEach(item => {
@@ -262,7 +262,7 @@ return view.extend({
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "proxy_server_nameserver", _("Proxy nameservers:"));
-        o.description = _("Nameservers used for proxy servers resolving.");
+        o.description = _("Nameservers used to resolve proxy server hostnames.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -274,7 +274,7 @@ return view.extend({
             return true;
         };
         o = s.taboption(tabname, form.DynamicList, "nameserver", _("Nameservers:"));
-        o.description = _("Nameservers used for all another traffic.");
+        o.description = _("Main nameservers used for regular DNS queries.");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -305,7 +305,7 @@ return view.extend({
         s.tab(tabname, _("Sniffer settings"));
 
         o = s.taboption(tabname, form.Flag, "sniffer_enable", _("Enable sniffer:"));
-        o.description = _("Enable sniffer in proxy.");
+        o.description = _("Enable Mihomo traffic sniffing.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
@@ -327,13 +327,13 @@ return view.extend({
         o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_skip_src_address", _("Exclude from sniffer SRC CIDR traffic:"));
-        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o.description = _("Source address ranges excluded from sniffing.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_skip_dst_address", _("Exclude from sniffer DST CIDR traffic:"));
-        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o.description = _("Destination address ranges excluded from sniffing.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
@@ -342,12 +342,12 @@ return view.extend({
         s.tab(tabname, _("NTP settings"));
 
         o = s.taboption(tabname, form.Flag, "core_ntp_enabled", _("Enable NTP client:"));
-        o.description = _("Enable built-in NTP client in proxy.");
+        o.description = _("Enable the built-in Mihomo NTP client.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "core_ntp_server", _("Endpoint NTP server:"));
-        o.description = _("External NTP server for time syncing.");
+        o.description = _("Upstream NTP server used by Mihomo.");
         o.datatype = datatypes.IPADDR;
         common.defaultNtpServers.forEach(item => {
             o.value(item.value, item.text);
@@ -356,12 +356,12 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "core_ntp_port", _("NTP port:"));
-        o.description = _("External NTP server port.");
+        o.description = _("Upstream NTP server port.");
         o.datatype = datatypes.PORT;
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "core_ntp_interval", _("NTP check interval:"));
-        o.description = _("Interval to check time (in minutes).");
+        o.description = _("How often Mihomo should sync time, in minutes.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         common.defaultNtpIntervalValuesMin.forEach(item => {
@@ -370,7 +370,7 @@ return view.extend({
         o.default = common.defaultNtpIntervalValuesMin[1].value;
 
         o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
-        o.description = _("Try to correct system time using the NTP server.");
+        o.description = _("Allow Mihomo to write corrected time to the system clock.");
         o.default = primitives.FALSE;
         o.rmempty = false;
 

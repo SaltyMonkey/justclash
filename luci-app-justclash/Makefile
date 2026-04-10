@@ -39,8 +39,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/
 	$(CP) $(PKG_BUILD_DIR)/root/* $(1)/
 
-	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/common.js || true
-	sed -i -e 's|__ONLINE_VERSION_CHECK_URL__|https://api.github.com/repos/saltymonkey/justclash/releases/latest|g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/common.js || true
+	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/helper_common.js || true
 endef
 
 # call BuildPackage - OpenWrt buildroot signature

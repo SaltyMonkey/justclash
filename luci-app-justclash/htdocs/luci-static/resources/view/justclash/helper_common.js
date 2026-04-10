@@ -1,14 +1,16 @@
 "require baseclass";
 
 return baseclass.extend({
+    // Project constants
     justclashLuciVersion: "__COMPILED_VERSION_VARIABLE__",
-    justclashOnlineVersionUrl: "__ONLINE_VERSION_CHECK_URL__",
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
     binPath: "/usr/bin/justclash",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
     logsCount: "400",
+
+    // Default option values
     defaultNtpServers: [
         { value: "194.190.168.1", text: "ntp.msk-ix.ru" },
         { value: "89.109.251.22", text: "ntp2.vniiftri.ru" },
@@ -78,6 +80,14 @@ return baseclass.extend({
         { value: "5000", text: _("5 seconds") },
         { value: "10000", text: _("10 seconds") },
     ],
+    defaultMaxFailedTimes: [
+        { value: "1", text: "1" },
+        { value: "2", text: "2" },
+        { value: "3", text: "3" },
+        { value: "4", text: "4" },
+        { value: "5", text: "5" },
+        { value: "10", text: "10" },
+    ],
     defaultProxyProviderHealthCheckSec: [
         { value: "60", text: _("Every 1 minute") },
         { value: "120", text: _("Every 2 minutes") },
@@ -89,6 +99,15 @@ return baseclass.extend({
         { value: "1800", text: _("Every 30 minutes") },
         { value: "3600", text: _("Every hour") },
         { value: "10800", text: _("Every 3 hour") }
+    ],
+    defaultDownloadSizeLimits: [
+        { value: "0", text: "0 MiB" },
+        { value: "1048576", text: "1 MiB" },
+        { value: "2097152", text: "2 MiB" },
+        { value: "3145728", text: "3 MiB" },
+        { value: "5242880", text: "5 MiB" },
+        { value: "10485760", text: "10 MiB" },
+        { value: "26214400", text: "25 MiB" }
     ],
     defaultProxiesModes: [
         { value: "object", text: _("Object") },
@@ -147,13 +166,20 @@ return baseclass.extend({
         { value: "stable", text: _("Stable") },
         { value: "alpha", text: _("Alpha") }
     ],
+
+    // Shared timing values
+    notificationTimeout: 3000,
     defaultTimeoutForWSReconnect: 10000,
     minimalRuleSetUpdateInterval: 21600,
+
+    // Common option sets
     endRuleOptions: [
         { value: "DIRECT", text: _("Direct") },
         { value: "BY RULES", text: _("By rules") },
         { value: "REJECT", text: _("Reject") }
     ],
+
+    // Form helpers and validators
     filterOutboundDeviceSelect: function (section_id, value) {
         if (value === "lo") {
             return false;
@@ -180,31 +206,6 @@ return baseclass.extend({
 
         const type = device.getType();
         return type !== "wifi" && type !== "wireless" && !type.includes("wlan");
-    },
-    splitAndTrimString: function (value, delimiter = ",") {
-
-        return value.split(delimiter)
-            .map(item => item.trim())
-            .filter(item => item.length > 0);
-    },
-    valueToArray: function (value) {
-        // Already an array
-        if (Array.isArray(value)) {
-            return value;
-        }
-
-        // String value
-        if (typeof value === "string") {
-            return value.length > 0 ? [value] : [];
-        }
-
-        // Number or other primitive types
-        if (value !== null && value !== undefined) {
-            return [value];
-        }
-
-        // Null or undefined
-        return [];
     },
     isValidHttpUrl: function (value) {
         try {
@@ -244,43 +245,6 @@ return baseclass.extend({
         const cronRegex = /^(\*|([0-5]?\d)) (\*|([01]?\d|2[0-3])) (\*|([012]?\d|3[01])) (\*|([0]?\d|1[0-2])) (\*|[0-6])$/;
 
         return cronRegex.test(val);
-    },
-    validateDscpRuleValue: function (value) {
-        const trimmed = String(value).trim();
-        const parsed = parseInt(trimmed, 10);
-
-        if (trimmed === "" || isNaN(parsed) || String(parsed) !== trimmed || parsed < 0 || parsed > 63) {
-            return _("Value must be an integer between 0 and 63.");
-        }
-
-        return true;
-    },
-    validateNftDscpValue: function (value) {
-        const trimmed = String(value).trim();
-        const lower = trimmed.toLowerCase();
-        const namedDscp = /^(cs[0-7]|af[1-4][1-3]|ef)$/;
-        const hexDscp = /^0x[0-9a-f]{1,2}$/;
-
-        if (namedDscp.test(lower)) {
-            return true;
-        }
-
-        if (hexDscp.test(lower)) {
-            const parsedHex = parseInt(lower, 16);
-            return parsedHex >= 0 && parsedHex <= 0x3f
-                ? true
-                : _("DSCP value must be a lowercase DSCP name (cs1, af41, ef) or a number from 0 to 63.");
-        }
-
-        const parsedInt = parseInt(trimmed, 10);
-        if (!isNaN(parsedInt) && String(parsedInt) === trimmed && parsedInt >= 0 && parsedInt <= 63) {
-            return true;
-        }
-
-        return _("DSCP value must be a lowercase DSCP name (cs1, af41, ef) or a number from 0 to 63.");
-    },
-    compareArraysWithReturnedResult: function (arr1, arr2) {
-        return arr1.filter(value => arr2.includes(value));
     },
     isValidSimpleName: function (value) {
         const val = value.trim();
@@ -364,38 +328,6 @@ return baseclass.extend({
 
         return true;
     },
-    isValidDomainKeyword: function (value) {
-        value = value.trim();
-
-        if (!value || value.trim() === "") return true;
-
-        if (/\s/.test(value))
-            return _("Keyword must not contain spaces");
-
-        if (/,/.test(value))
-            return _("Only one keyword per field is allowed");
-
-        if (value.length < 2)
-            return _("Keyword should be at least 2 characters long");
-
-        return true;
-    },
-    isValidDomainRegexp: function (value) {
-        if (!value || value.trim() === "") return true;
-
-        value = value.trim();
-
-        if (/^\s|\s$/.test(value))
-            return _("Regexp must not start or end with a space");
-
-        try {
-            new RegExp(value);
-        } catch (e) {
-            return _("Invalid regular expression: ") + (e.message || e);
-        }
-
-        return true;
-    },
     isValidKeywordOrRegexList: function (value, ctxLabel) {
         if (!value || value.trim() === "") return true;
 
@@ -461,11 +393,9 @@ return baseclass.extend({
     generateRandomName: function (arrAdj, arrNoun) {
         return `${this._pickFromArrRandomly(arrAdj)}_${this._pickFromArrRandomly(arrNoun)}_${Math.random().toString(16).substr(2, 8)}`;
     },
-    //for autogeneration, titles luci-app-justclash.json
-    stub_status_tab: _("Status"),
-    stub_logs_tab: _("Logs"),
-    stub_statistic_tab: _("Statistics"),
+    // Keep menu-only titles translatable for luci-app-justclash.json.
+    stub_nodes_tab: _("Nodes"),
+    stub_connections_tab: _("Connections"),
     stub_routing_tab: _("Routing"),
-    stub_service_tab: _("Service"),
     stub_proxy_tab: _("Proxy")
 });

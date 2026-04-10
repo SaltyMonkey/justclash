@@ -1,7 +1,7 @@
 "use strict";
 "require form";
 "require view";
-"require view.justclash.common as common";
+"require view.justclash.helper_common as common";
 "require tools.widgets as widgets";
 
 return view.extend({
@@ -23,8 +23,8 @@ return view.extend({
         m = new form.Map(common.binName);
         s = m.section(form.NamedSection, "settings", "main", _("Service settings:"), _("Main service settings and scheduled tasks."));
 
-        tabname = "servicebasic_tab";
-        s.tab(tabname, _("Basic settings"));
+        tabname = "servicestartup_tab";
+        s.tab(tabname, _("Startup"));
 
         o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delay startup after boot:"));
         o.description = _("Start the service a little later after the router boots. Useful if the router needs extra time to bring up storage, WAN, or other services.");
@@ -48,6 +48,14 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.FALSE;
 
+        o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start time sync service:"));
+        o.description = _("Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
+        o.rmempty = false;
+        o.default = primitives.TRUE;
+
+        tabname = "servicestorage_tab";
+        s.tab(tabname, _("Storage"));
+
         o = s.taboption(tabname, form.Flag, "mihomo_persistent_ext_rules", _("Store Mihomo external rules persistently:"));
         o.description = _("Keep Mihomo external rule files in persistent router storage instead of temporary memory. Use this only if you need faster recovery after restart, because frequent writes can wear out built-in flash memory faster.");
         o.rmempty = false;
@@ -58,10 +66,8 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start time sync service:"));
-        o.description = _("Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
-        o.rmempty = false;
-        o.default = primitives.TRUE;
+        tabname = "servicetraffic_tab";
+        s.tab(tabname, _("Traffic rules"));
 
         o = s.taboption(tabname, form.Flag, "dnsmasq_apply_changes", _("Change DNS settings at startup:"));
         o.description = _("Update DNS settings automatically when the service starts. Use this if you want JustClash to manage dnsmasq DNS settings for you.");
@@ -86,16 +92,22 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.DynamicList, "nft_dscp_exclude_router", _("Router DSCP exclusions:"));
-        o.description = _("DSCP values for router traffic that should bypass proxy redirection rules. Add one DSCP value per entry.");
-        o.placeholder = "60";
+        o = s.taboption(tabname, form.DynamicList, "nft_skuid_exclude_router", _("Router socket owner exclusions:"));
+        o.description = _("User names or numeric UIDs for router-originated sockets that should bypass proxy redirection rules. Useful for services like byedpi or https-dns-proxy that must reach the internet directly.");
+        o.placeholder = "byedpi";
         o.rmempty = true;
         o.depends("nft_apply_changes_router", primitives.TRUE);
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "")
                 return true;
 
-            return common.validateNftDscpValue(value);
+            const trimmedValue = value.trim();
+            if (/^\d+$/.test(trimmedValue))
+                return true;
+
+            return /^[A-Za-z_][A-Za-z0-9_-]*[$]?$/.test(trimmedValue)
+                ? true
+                : _("Use a user name or numeric UID");
         };
 
         // copypasted from Podkop devs
@@ -209,6 +221,7 @@ return view.extend({
                 margin-bottom: 14px !important;
             }
             .cbi-value[data-name="ntpd_start"] > .cbi-value-title,
+            .cbi-value[data-name="nft_apply_changes_router"] > .cbi-value-title,
             .cbi-value[data-name="dnsmasq_apply_changes"] > .cbi-value-title,
             .cbi-value[data-name="nft_apply_changes"] > .cbi-value-title,
             .cbi-value[data-name="tproxy_input_interfaces"] > .cbi-value-title,
