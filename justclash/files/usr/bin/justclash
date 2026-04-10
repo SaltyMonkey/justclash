@@ -35,7 +35,6 @@ import /lib/functions/network.sh
 import /lib/functions.sh
 import /lib/config/uci.sh
 import /usr/lib/justclash/logging.sh
-import /usr/lib/justclash/migration.sh
 import /usr/lib/justclash/compat.sh
 import /usr/lib/justclash/uri.sh
 import /usr/lib/justclash/helpers.sh
@@ -218,9 +217,6 @@ start() {
         compat_fixes
     fi
 
-    log info "Applying migration if required..." "⏳"
-    migration
-
     log info "Synchronizing system time" "🕒"
     ntp_force_sync
 
@@ -326,11 +322,35 @@ cleanup_fwmark() {
     done
 }
 
+build_nft_skuid_exclusions() {
+    local skuid_values="$1"
+    local skuid_raw skuid_value skuid_resolved skuid_list=""
+
+    for skuid_raw in $skuid_values; do
+        skuid_value=$(trim "$skuid_raw")
+        [ -n "$skuid_value" ] || continue
+
+        if is_uint "$skuid_value"; then
+            skuid_resolved="$skuid_value"
+        else
+            skuid_resolved=$(id -u "$skuid_value" 2>/dev/null)
+        fi
+
+        if [ -n "$skuid_resolved" ] && is_uint "$skuid_resolved"; then
+            skuid_list="${skuid_list:+$skuid_list }$skuid_resolved"
+        else
+            log warn "Skipping router socket owner exclusion with unresolved user/UID: $skuid_value" "⚠️"
+        fi
+    done
+
+    printf '%s' "$skuid_list"
+}
+
 nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
-    local pbr_priority iface dscp_values dscp_raw dscp_value dscp_set=""
+    local pbr_priority iface skuid_values skuid_list skuid_resolved
 
 
     config_get nft_apply_changes settings nft_apply_changes 0
@@ -346,7 +366,7 @@ nf_table_add() {
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_ntp_mode settings nft_ntp_mode
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
-    config_get dscp_values settings nft_dscp_exclude_router
+    config_get skuid_values settings nft_skuid_exclude_router
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
 
     [ -n "$tproxy_port" ] || panic "tproxy_port is not set"
@@ -446,19 +466,11 @@ nf_table_add() {
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 546, 547 } udp dport { 546, 547 } return
 
-        for dscp_raw in $dscp_values; do
-            dscp_value=$(trim "$dscp_raw")
-
-            if [ -n "$dscp_set" ]; then
-                dscp_set="$dscp_set, $dscp_value"
-            else
-                dscp_set="$dscp_value"
-            fi
-        done
-
-        if [ -n "$dscp_set" ]; then
-            nft add rule inet "$NF_TABLE_NAME" output ip dscp "{ $dscp_set }" return
-            nft add rule inet "$NF_TABLE_NAME" output ip6 dscp "{ $dscp_set }" return
+        if [ -n "$skuid_values" ]; then
+            skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
+            for skuid_resolved in $skuid_list; do
+                nft add rule inet "$NF_TABLE_NAME" output meta skuid "$skuid_resolved" return
+            done
         fi
 
         if [ "$nft_ntp_mode_router" = "DROP" ]; then
@@ -736,6 +748,21 @@ lookup_many_rulesets_full() {
     '
 }
 
+build_hwid_header_fragment() {
+    jq -nc \
+        --arg hwid "$(hwid_generate)" \
+        --arg device_os "$(get_os_name)" \
+        --arg version_os "$(get_os_version)" \
+        --arg device_model "$(get_hw_model)" '
+        "\"header\":" + ({
+            "x-hwid": $hwid,
+            "x-device-os": $device_os,
+            "x-ver-os": $version_os,
+            "x-device-model": $device_model
+        } | tojson)
+    '
+}
+
 build_manual_rules_array() {
     local route_entries="$1"
     local rule_prefix="$2"
@@ -747,9 +774,9 @@ build_manual_rules_array() {
         [ -n "$route_entry" ] || continue
 
         if [ -n "$extra_suffix" ]; then
-            generated_rule=$(printf '%s,%s,%s,%s' "$rule_prefix" "$route_entry" "$target_name" "$extra_suffix")
+            generated_rule="$rule_prefix,$route_entry,$target_name,$extra_suffix"
         else
-            generated_rule=$(printf '%s,%s,%s' "$rule_prefix" "$route_entry" "$target_name")
+            generated_rule="$rule_prefix,$route_entry,$target_name"
         fi
 
         rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
@@ -790,7 +817,7 @@ build_builtin_rules_bundle() {
         ruleset_format="${ruleset_fields%%|*}"
         ruleset_url="${ruleset_fields#*|}"
 
-        generated_rule=$(printf 'RULE-SET,%s,%s' "$ruleset_name" "$target_name")
+        generated_rule="RULE-SET,$ruleset_name,$target_name"
         rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
         added_rulesets="$added_rulesets$ruleset_name|"
 
@@ -855,7 +882,7 @@ build_custom_rules_bundle() {
             ;;
         esac
 
-        generated_rule=$(printf 'RULE-SET,%s,%s' "$hashed_ruleset_name" "$target_name")
+        generated_rule="RULE-SET,$hashed_ruleset_name,$target_name"
         rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
 
         if [ "$emit_names" -eq 1 ]; then
@@ -909,7 +936,7 @@ handle_proxy_section() {
         if [ "$mode" = "object" ]; then
             [ -z "$proxy_link_object" ] && { log warn "Skipping empty proxy '$name'" "⚠️" ; return; }
 
-            proxy_obj=$(echo "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
+            proxy_obj=$(printf '%s' "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
 
             [ -z "$proxy_obj" ] && { log warn "Failed to process object for '$name'" "⚠️"; return; }
         else
@@ -972,7 +999,7 @@ handle_proxy_section() {
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
             [ -n "$route_entry" ] && {
-                generated_rule=$(printf 'DOMAIN-SUFFIX,%s,%s' "$route_entry" "$name")
+                generated_rule="DOMAIN-SUFFIX,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
                 list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$route_entry\""
             }
@@ -982,9 +1009,6 @@ handle_proxy_section() {
         rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
-        config_get route_entries "$section" additional_dscp_route
-        rules_fragment=$(build_manual_rules_array "$route_entries" "DSCP" "$name" "")
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
     }
 
     config_foreach _parse_single_proxy proxies
@@ -1116,7 +1140,7 @@ handle_proxy_group_section() {
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
             [ -n "$route_entry" ] && {
-                generated_rule=$(printf 'DOMAIN-SUFFIX,%s,%s' "$route_entry" "$name")
+                generated_rule="DOMAIN-SUFFIX,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
                 list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$route_entry\""
             }
@@ -1126,9 +1150,6 @@ handle_proxy_group_section() {
         rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
-        config_get route_entries "$section" additional_dscp_route
-        rules_fragment=$(build_manual_rules_array "$route_entries" "DSCP" "$name" "")
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
     }
 
     config_foreach _parse_proxy_group proxy_group
@@ -1188,12 +1209,7 @@ handle_proxy_provider_section() {
 
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
         if [ "$subscription_hwid_support" -eq 1 ]; then
-            provider_json="$provider_json,\"header\":{\
-            \"x-hwid\": \"$(hwid_generate)\",\
-            \"x-device-os\":\"$(get_os_name)\",\
-            \"x-ver-os\":\"$(get_os_version)\",\
-            \"x-device-model\":\"$(get_hw_model)\"\
-            }"
+            provider_json="$provider_json,$(build_hwid_header_fragment)"
         fi
 
         config_get_bool health_check "$section" health_check 0
@@ -1238,15 +1254,16 @@ handle_block_rule_section() {
     local list_suffix_names=""
 
     # Selected blocklists and generated manual block routes.
-    local enabled_blocklist proxy size_limit rules_fragment rulesets_fragment names_fragment bundle
+    local enabled_blocklist proxy list_update_interval size_limit rules_fragment rulesets_fragment names_fragment bundle
     # Scratch vars for generated manual block routes.
     local generated_rule
-    local additional_domain_blockroute additional_destip_blockroute additional_dscp_blockroute
+    local additional_domain_blockroute additional_destip_blockroute
     local domain_val ip_val
     config_get enabled_blocklist block_rules enabled_blocklist
     config_get proxy block_rules proxy "$DEFAULT_PROXY"
+    config_get list_update_interval block_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
     config_get size_limit block_rules size_limit 0
-    bundle=$(build_builtin_rules_bundle "$blocklist_content" "$enabled_blocklist" "REJECT" "$proxy" "$DEFAULT_RULESET_INTERVAL" "$size_limit" "non-domain-only")
+    bundle=$(build_builtin_rules_bundle "$blocklist_content" "$enabled_blocklist" "REJECT" "$proxy" "$list_update_interval" "$size_limit" "non-domain-only")
     rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
     rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
     names_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^NAMES://p')
@@ -1265,15 +1282,7 @@ handle_block_rule_section() {
     config_get additional_destip_blockroute block_rules additional_destip_blockroute
     for ip_val in $additional_destip_blockroute; do
         [ -n "$ip_val" ] && {
-            generated_rule=$(printf 'IP-CIDR,%s,REJECT' "$ip_val")
-            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-        }
-    done
-
-    config_get additional_dscp_blockroute block_rules additional_dscp_blockroute
-    for ip_val in $additional_dscp_blockroute; do
-        [ -n "$ip_val" ] && {
-            generated_rule=$(printf 'DSCP,%s,REJECT' "$ip_val")
+            generated_rule="IP-CIDR,$ip_val,REJECT"
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
         }
     done
@@ -1299,7 +1308,7 @@ handle_direct_rule_section() {
     local list_rulesets_names=""
     local list_suffix_names=""
     local proxy additional_domain_direct
-    local additional_srcip_direct additional_destip_direct additional_dscp_direct
+    local additional_srcip_direct additional_destip_direct
     # Source lists loaded from UCI for generated DIRECT rules and custom rulesets.
     local list_update_interval size_limit enabled_list
     local domain_list cidr_list rules_fragment rulesets_fragment names_fragment bundle
@@ -1339,7 +1348,7 @@ handle_direct_rule_section() {
     config_get additional_domain_direct direct_rules additional_domain_direct
     for route_entry in $additional_domain_direct; do
         [ -n "$route_entry" ] && {
-            generated_rule=$(printf 'DOMAIN-SUFFIX,%s,DIRECT' "$route_entry")
+            generated_rule="DOMAIN-SUFFIX,$route_entry,DIRECT"
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
             list_suffix_names="${list_suffix_names:+$list_suffix_names,}\"+.$route_entry\""
         }
@@ -1351,10 +1360,6 @@ handle_direct_rule_section() {
 
     config_get additional_destip_direct direct_rules additional_destip_direct
     rules_fragment=$(build_manual_rules_array "$additional_destip_direct" "IP-CIDR" "DIRECT" "")
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-
-    config_get additional_dscp_direct direct_rules additional_dscp_direct
-    rules_fragment=$(build_manual_rules_array "$additional_dscp_direct" "DSCP" "DIRECT" "")
     [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
     direct_rulesets="{${direct_rulesets%,}}"
