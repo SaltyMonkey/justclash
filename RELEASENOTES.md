@@ -1,3 +1,44 @@
+## [0.10.0] - 12042026
+
+- Service: Added logic for `size_limit`
+- Service: Added global `interface_name` bind logic
+- Service: Improved script usability and fixed `curl not found` handling
+- Service: Fixed incorrect proxy group type handling for `load-balancer`
+- Service: Big refactor, removed duplicate code and cleaned up implementation details
+- Service: Optimize routing rules generation
+- Service: Updated service internals and related shell helpers
+- Service: Updated runtime `jq` checks to use `jq-full`
+- Service: Removed unused `migration.sh`
+- UCI: Added and updated settings for `size_limit` and global `interface_name`
+- UCI: Improved default settings
+- UCI: Changed default mixed port configuration to `1080`
+- UCI: Updated config/default config layout and values
+- LuCI: Added global `interface_name` control
+- LuCI: Added `size_limit` controls
+- LuCI: Set default `size_limit` to `10MB`
+- LuCI: Fixed minor NTP interval issues
+- LuCI: Added new `connections` page with live updates, filters and connection details popup
+- LuCI: Added new `realtime logs` tab with Mihomo API stream output
+- LuCI: Added new `system logs` page with local log rendering, refresh and copy controls
+- LuCI: Added new `nodes` controller tab for Mihomo mode, groups, providers and delay checks
+- LuCI: Refactored log page structure and split old logs UI into dedicated views
+- LuCI: Reworked `status` page structure, styling and live update logic
+- LuCI: Removed old `logs` page in favor of dedicated realtime/system log views
+- LuCI: Removed old `statistic` page
+- LuCI: Added shared helper modules for Mihomo API, clipboard, section names and LuCI session checks
+- LuCI: Improved frontend lifecycle handling for websockets, hidden tabs and browser page cleanup, memory leaks
+- LuCI: Updated visuals, highlighted main fields, fixed regressions and refreshed wording across pages
+- URI: Updated `sudoku` parser for newer alpha builds
+- URI: Added support for newer `xhttp` transport options
+- URI: Updated parsers, fixed incorrect `path` / `spider-x`, and improved `grpc` / `httpupgrade` handling
+- Build: Switched package dependency usage from `jq` to `jq-full`
+- Build: Moved related URLs to Makefile variables
+- Docs: Updated `info/uci-structure` and related structure notes
+- Translation: Updated translations
+
+**This version requires:**
+- Browser cache must be cleaned up
+
 ## [0.9.9] - 04032026
 
 - Service: Fixed regressions
