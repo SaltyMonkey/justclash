@@ -122,7 +122,7 @@ RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
-REQUIRED_TOOLS="jq-full nft curl md5sum ntpd"
+REQUIRED_TOOLS="jq nft curl md5sum ntpd"
 
 ucibool_to_yesno() {
     case "$1" in
