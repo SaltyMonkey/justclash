@@ -48,6 +48,10 @@ msgstr "Все активные соединения закрыты"
 msgid "Interval:"
 msgstr "Интервал:"
 
+#: htdocs/luci-static/resources/view/justclash/connections.js:187 htdocs/luci-static/resources/view/justclash/connections.js:371
+msgid "Apply"
+msgstr "Применить"
+
 #: htdocs/luci-static/resources/view/justclash/connections.js:226
 msgid "Source"
 msgstr "Источник"
@@ -64,13 +68,9 @@ msgstr "Закрыть соединение"
 msgid "Connection closed"
 msgstr "Соединение закрыто"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:327
-msgid "No active connections"
-msgstr "Нет активных соединений"
-
-#: htdocs/luci-static/resources/view/justclash/connections.js:327
-msgid "No matching connections"
-msgstr "Нет совпадающих соединений"
+#: htdocs/luci-static/resources/view/justclash/connections.js:371
+msgid "Reset"
+msgstr "Сбросить"
 
 #: htdocs/luci-static/resources/view/justclash/connections.js:46
 msgid "Close all connections"
@@ -1344,6 +1344,10 @@ msgstr "Неизвестно"
 msgid "Current"
 msgstr "Текущий"
 
+#: htdocs/luci-static/resources/view/justclash/nodes.js:184 htdocs/luci-static/resources/view/justclash/nodes.js:364
+msgid "Timeout"
+msgstr "Таймаут"
+
 #: htdocs/luci-static/resources/view/justclash/nodes.js:179
 msgid "Applying..."
 msgstr "Применение..."
@@ -1355,6 +1359,10 @@ msgstr "Авто"
 #: htdocs/luci-static/resources/view/justclash/nodes.js:217
 msgid "Global"
 msgstr "Global"
+
+#: htdocs/luci-static/resources/view/justclash/nodes.js:507
+msgid "Mode"
+msgstr "Режим"
 
 #: htdocs/luci-static/resources/view/justclash/nodes.js:422
 msgid "Failed to load proxy groups"
@@ -1832,3 +1840,10 @@ msgstr "Системные логи"
 msgid "Last updated: "
 msgstr "Последнее обновление: "
 
+#: htdocs/luci-static/resources/view/justclash/nodes.js:290 htdocs/luci-static/resources/view/justclash/nodes.js:385
+msgid "Test delay"
+msgstr "Проверить задержку"
+
+#: htdocs/luci-static/resources/view/justclash/nodes.js:297 htdocs/luci-static/resources/view/justclash/nodes.js:392
+msgid "Testing..."
+msgstr "Проверка..."

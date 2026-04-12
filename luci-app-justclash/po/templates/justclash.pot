@@ -60,6 +60,10 @@ msgstr ""
 msgid "Interval:"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/connections.js:187 htdocs/luci-static/resources/view/justclash/connections.js:371
+msgid "Apply"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/connections.js:226
 msgid "Source"
 msgstr ""
@@ -76,12 +80,8 @@ msgstr ""
 msgid "Connection closed"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:327
-msgid "No active connections"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/connections.js:327
-msgid "No matching connections"
+#: htdocs/luci-static/resources/view/justclash/connections.js:371
+msgid "Reset"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/connections.js:46
@@ -1356,6 +1356,10 @@ msgstr ""
 msgid "Current"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/nodes.js:184 htdocs/luci-static/resources/view/justclash/nodes.js:364
+msgid "Timeout"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/nodes.js:179
 msgid "Applying..."
 msgstr ""
@@ -1366,6 +1370,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/nodes.js:217
 msgid "Global"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/nodes.js:507
+msgid "Mode"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/nodes.js:422
@@ -1851,4 +1859,3 @@ msgstr ""
 #: htdocs/luci-static/resources/view/justclash/nodes.js:220
 msgid "Testing..."
 msgstr ""
-
