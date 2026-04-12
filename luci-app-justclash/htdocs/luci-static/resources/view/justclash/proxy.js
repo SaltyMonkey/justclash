@@ -375,16 +375,14 @@ return view.extend({
         o.rmempty = false;
 
         const style = E("style", {}, `
-            .cbi-value {
-                margin-bottom: 14px !important;
-            }
+            .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="tproxy_port"] > .cbi-value-title,
             .cbi-value[data-name="use_mixed_port"] > .cbi-value-title,
             .cbi-value[data-name="mixed_port"] > .cbi-value-title,
             .cbi-value[data-name="controller_bind_interface"] > .cbi-value-title,
             .cbi-value[data-name="api_password"] > .cbi-value-title,
             .cbi-value[data-name="dns_listen_port"] > .cbi-value-title {
-                color: var(--error-color-medium, #f44336) !important;
+                color:var(--error-color-medium, #f44336) !important;
             }
         `);
 

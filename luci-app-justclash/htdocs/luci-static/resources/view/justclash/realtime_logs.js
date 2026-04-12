@@ -3,68 +3,132 @@
 "require ui";
 "require uci";
 "require view.justclash.helper_clipboard as clipboard";
+"require view.justclash.helper_luci_session as luciSession";
 "require view.justclash.helper_common as common";
 "require view.justclash.helper_mihomo_api as mihomoApi";
 
 const NO_LOGS = _("No log entries");
 const MAX_LOG_ENTRIES = parseInt(common.logsCount, 10);
+const LOG_BADGE_TYPES = new Set(common.defaultLoggingLevels.filter((level) => level !== "silent"));
 
 let wsCleanup = null;
 let logEntries = [];
+let visibilityChangeHandler = null;
+let beforeUnloadHandler = null;
 
 const normalizeLogMessage = (rawMessage) => {
     const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
 
     if (!message)
-        return "";
+        return null;
 
     try {
         const parsed = JSON.parse(message);
 
         if (parsed && typeof parsed === "object" && parsed.payload !== undefined && parsed.payload !== null) {
-            return typeof parsed.payload === "string"
+            const text = typeof parsed.payload === "string"
                 ? parsed.payload.trim()
                 : JSON.stringify(parsed.payload);
+
+            if (!text)
+                return null;
+
+            return {
+                text,
+                type: normalizeLogType(parsed.type),
+                raw: message
+            };
         }
     } catch (e) {}
 
-    return message;
+    return {
+        text: message,
+        type: "",
+        raw: message
+    };
 };
 
-const appendLogEntry = (container, line) => {
+const normalizeLogType = (value) => {
+    const type = typeof value === "string" ? value.trim().toLowerCase() : "";
+
+    if (!type)
+        return "";
+
+    if (type === "warn")
+        return "warning";
+
+    return LOG_BADGE_TYPES.has(type) ? type : "";
+};
+
+const appendLogEntry = (container, entry) => {
     if (container.childNodes.length === 1 && container.firstChild?.nodeType === Node.TEXT_NODE)
         container.replaceChildren();
 
-    container.appendChild(E("div", { class: "log-line" }, line));
+    const type = entry?.type || "";
+    const lineClass = `log-line${type ? ` log-line-${type}` : ""}`;
+    const children = [];
+
+    if (type)
+        children.push(E("span", { class: `log-type-badge log-type-badge-${type}` }, type.toUpperCase()));
+
+    children.push(E("span", { class: "log-message" }, entry?.text || ""));
+
+    container.appendChild(E("div", { class: lineClass }, children));
 
     while (container.childNodes.length > MAX_LOG_ENTRIES)
         container.removeChild(container.firstChild);
 };
 
-const connectLogsStream = (container, token, level) => {
+const resetLogEntries = (container) => {
+    logEntries = [];
+    container.replaceChildren(document.createTextNode(NO_LOGS));
+};
+
+const cleanup = () => {
+    if (visibilityChangeHandler) {
+        document.removeEventListener("visibilitychange", visibilityChangeHandler);
+        visibilityChangeHandler = null;
+    }
+    if (beforeUnloadHandler) {
+        window.removeEventListener("beforeunload", beforeUnloadHandler);
+        beforeUnloadHandler = null;
+    }
+    if (wsCleanup) {
+        wsCleanup();
+        wsCleanup = null;
+    }
+};
+
+const connectLogsStream = async (container, token, level, resetState = true) => {
     if (wsCleanup) {
         wsCleanup();
         wsCleanup = null;
     }
 
-    logEntries = [];
-    container.replaceChildren(document.createTextNode(NO_LOGS));
+    if (resetState)
+        resetLogEntries(container);
+
+    if (document.hidden)
+        return;
+
+    if (!await luciSession.isSessionAlive())
+        return;
 
     wsCleanup = mihomoApi.createLogsWebSocket({
         token,
         level,
         containerCheck: () => document.body.contains(container),
         onMessage: (event) => {
-            const message = normalizeLogMessage(event.data);
+            const entry = normalizeLogMessage(event.data);
 
-            if (!message)
+            if (!entry)
                 return;
 
-            logEntries.push(message);
+            logEntries.push(entry.raw || entry.text);
             if (logEntries.length > MAX_LOG_ENTRIES)
                 logEntries.shift();
 
-            appendLogEntry(container, message);
+            appendLogEntry(container, entry);
         }
     });
 };
@@ -89,7 +153,12 @@ return view.extend({
         const logContainer = E("div", { class: "jc-logs-terminal", id: "realtimeLogContainer" }, [NO_LOGS]);
         const levelSelect = E("select", {
             class: "cbi-input-select jc-level-select",
-            change: () => connectLogsStream(logContainer, results.apiToken, levelSelect.value)
+            change: () => {
+                if (!document.hidden)
+                    connectLogsStream(logContainer, results.apiToken, levelSelect.value);
+                else
+                    resetLogEntries(logContainer);
+            }
         }, common.defaultLoggingLevels
             .slice(0, -1)
             .map((level) => E("option", { value: level }, level)));
@@ -135,71 +204,63 @@ return view.extend({
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [topBtn])
         ]);
 
-        requestAnimationFrame(() => connectLogsStream(logContainer, results.apiToken, levelSelect.value));
+        requestAnimationFrame(() => {
+            if (!document.hidden)
+                connectLogsStream(logContainer, results.apiToken, levelSelect.value);
+        });
+
+        if (visibilityChangeHandler) {
+            document.removeEventListener("visibilitychange", visibilityChangeHandler);
+        }
+
+        visibilityChangeHandler = () => {
+            console.debug(`[realtime_logs] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
+            if (document.hidden) {
+                if (wsCleanup) {
+                    wsCleanup();
+                    wsCleanup = null;
+                }
+            } else {
+                connectLogsStream(logContainer, results.apiToken, levelSelect.value, false);
+            }
+        };
+
+        document.addEventListener("visibilitychange", visibilityChangeHandler);
+
+        if (beforeUnloadHandler)
+            window.removeEventListener("beforeunload", beforeUnloadHandler);
+
+        beforeUnloadHandler = () => {
+            console.debug("[realtime_logs] beforeunload: cleanup");
+            cleanup();
+        };
+
+        window.addEventListener("beforeunload", beforeUnloadHandler);
 
         const style = E("style", {}, `
-            .jc-ml { margin-left: 0.5em !important; }
-            .jc-level-control {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.75em;
-                flex-wrap: nowrap;
-            }
-            .jc-level-label {
-                margin: 0;
-                white-space: nowrap;
-            }
-            .jc-level-select {
-                width: auto !important;
-                min-width: 220px;
-                margin: 0 !important;
-                flex: 0 0 auto;
-            }
-
-            .jc-logs-terminal {
-                width: 100%;
-                font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
-                font-size: 12px;
-                line-height: 1.4;
-                white-space: pre-wrap;
-                word-break: break-all;
-                overflow-y: auto;
-                overflow-x: hidden;
-                background-color: #1e1e1e;
-                color: #d4d4d4;
-                border: 1px solid #3c3c3c;
-                border-radius: 6px;
-                padding: 10px;
-                margin-bottom: 10px !important;
-                height: 500px;
-                resize: vertical;
-            }
-            .log-line { padding: 1px 0; border-bottom: 1px solid transparent; }
-            .log-line:hover { background-color: #2a2d2e; }
-
-            .cbi-section-actions + .cbi-section-actions { margin-top: 8px; }
-            .jc-actions-wrap {
-                padding: 0.7em 0.8em;
-                margin-bottom: 10px;
-                border: 1px solid var(--border-color-medium, #d9d9d9);
-                border-radius: 6px;
-                background: var(--background-color-medium, #f6f6f6);
-            }
-            .jc-primary-actions {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 0.65em;
-                margin: 0;
-            }
-            .jc-primary-actions .cbi-button { margin: 0 !important; }
-            .jc-settings-actions {
-                justify-content: flex-start;
-            }
-            [data-theme="dark"] .jc-actions-wrap {
-                border-color: rgba(255,255,255,0.08);
-                background: rgba(255,255,255,0.04);
-            }
+            .jc-ml{margin-left:.5em !important;}
+            .jc-level-control,.jc-primary-actions{align-items:center;}
+            .jc-level-control{display:inline-flex;gap:.75em;flex-wrap:nowrap;}
+            .jc-level-label{margin:0;white-space:nowrap;}
+            .jc-level-select{width:auto !important;min-width:220px;margin:0 !important;flex:0 0 auto;}
+            .jc-logs-terminal{width:100%;font-family:'Menlo', 'Consolas', 'Monaco', monospace;font-size:12px;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-y:auto;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;padding:10px;margin-bottom:10px !important;height:500px;resize:vertical;}
+            .log-line{padding:1px 0;border-bottom:1px solid transparent;}
+            .log-line:hover{background-color:#2a2d2e;}
+            .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:.1em .55em;border:1px solid transparent;border-radius:999px;font-size:.82em;font-weight:700;line-height:1.25;vertical-align:middle;}
+            .log-type-badge-error{color:#ff7b72;border-color:rgba(255,123,114,.35);background:rgba(255,123,114,.12);}
+            .log-type-badge-warning{color:#f2cc60;border-color:rgba(242,204,96,.35);background:rgba(242,204,96,.12);}
+            .log-type-badge-info{color:#7ee787;border-color:rgba(126,231,135,.35);background:rgba(126,231,135,.12);}
+            .log-type-badge-debug{color:#79c0ff;border-color:rgba(121,192,255,.35);background:rgba(121,192,255,.12);}
+            .log-line-error .log-message{color:#ffb4ab;}
+            .log-line-warning .log-message{color:#f6d98b;}
+            .log-line-info .log-message{color:#9dd9a6;}
+            .log-line-debug .log-message{color:#9ecbff;}
+            .cbi-section-actions + .cbi-section-actions{margin-top:8px;}
+            .jc-actions-wrap{padding:.7em .8em;margin-bottom:10px;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;background:var(--background-color-medium, #f6f6f6);}
+            .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
+            .jc-primary-actions .cbi-button{margin:0 !important;}
+            .jc-settings-actions{justify-content:flex-start;}
+            [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
         `);
 
         return E("div", { class: "cbi-section fade-in" }, [
@@ -210,12 +271,5 @@ return view.extend({
             logContainer,
             buttonBottomBar
         ]);
-    },
-
-    leave() {
-        if (wsCleanup) {
-            wsCleanup();
-            wsCleanup = null;
-        }
     }
 });

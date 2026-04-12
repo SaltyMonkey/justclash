@@ -2,6 +2,7 @@
 "require view";
 "require ui";
 "require view.justclash.helper_clipboard as clipboard";
+"require view.justclash.helper_luci_session as luciSession";
 "require view.justclash.helper_common as common";
 "require view.justclash.helper_mihomo_api as mihomoApi";
 "require uci";
@@ -12,6 +13,8 @@ const CONNECTIONS_INTERVAL_OPTIONS = [250, 500, 1000, 2000, 5000];
 
 let wsCleanups = [];
 let noConnectionsMsg = null;
+let visibilityChangeHandler = null;
+let beforeUnloadHandler = null;
 
 const connectionsData = new Map();
 
@@ -25,11 +28,33 @@ const formatConnection = (conn) => ({
 const cleanup = () => {
     wsCleanups.forEach(fn => fn());
     wsCleanups = [];
+    if (visibilityChangeHandler) {
+        document.removeEventListener("visibilitychange", visibilityChangeHandler);
+        visibilityChangeHandler = null;
+    }
+    if (beforeUnloadHandler) {
+        window.removeEventListener("beforeunload", beforeUnloadHandler);
+        beforeUnloadHandler = null;
+    }
     noConnectionsMsg = null;
     connectionsData.clear();
 };
 
 const normalizeFilterValue = (value) => String(value || "").trim().toLowerCase();
+const buildNormalizedConnection = (conn) => {
+    const metadata = conn?.metadata || {};
+    const host = normalizeFilterValue(metadata.host);
+    const sniffHost = normalizeFilterValue(metadata.sniffHost);
+    const sourceIP = normalizeFilterValue(metadata.sourceIP);
+    const endpointIP = normalizeFilterValue(metadata.destinationIP || metadata.remoteDestination);
+
+    return {
+        hostSniff: [host, sniffHost].filter(Boolean).join(" "),
+        sourceEndpointIP: [sourceIP, endpointIP].filter(Boolean).join(" "),
+        chains: normalizeFilterValue((conn?.chains || []).join(", ")),
+        rule: normalizeFilterValue(conn?.rulePayload || conn?.rule)
+    };
+};
 
 const renderIntervalOptionLabel = (interval) => interval >= 1000
     ? `${interval / 1000} s`
@@ -63,9 +88,9 @@ const showCloseAllConnectionsModal = (onConfirm) => {
 };
 
 const showConnectionDetails = (connId) => {
-    const conn = connectionsData.get(connId);
-    if (!conn) return;
-    const jsonString = JSON.stringify(conn, null, 2);
+    const connData = connectionsData.get(connId);
+    if (!connData) return;
+    const jsonString = JSON.stringify(connData.raw, null, 2);
 
     ui.showModal(_("Connection details"), [
         E("div", { class: "json-viewer-container" }, [
@@ -124,6 +149,12 @@ return view.extend({
         let currentInterval = DEFAULT_CONNECTIONS_INTERVAL;
         let connectionsWsCleanup = null;
         const rowMap = new Map();
+        const appliedFilters = {
+            hostSniff: "",
+            sourceEndpointIP: "",
+            chains: "",
+            rule: ""
+        };
 
         const table = E("div", { class: "jc-table compact-table" });
 
@@ -156,6 +187,10 @@ return view.extend({
             type: "text",
             placeholder: _("Rule")
         });
+        const filterActionBtn = E("button", {
+            class: "cbi-button cbi-button-action",
+            disabled: true
+        }, _("Apply"));
 
         const intervalSelect = E("select", {
             class: "cbi-input-select jc-interval-select",
@@ -201,10 +236,11 @@ return view.extend({
 
         const filterBar = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions jc-connections-filters" }, [
-                hostSniffFilterInput,
                 sourceEndpointIpFilterInput,
+                hostSniffFilterInput,
                 chainsFilterInput,
-                ruleFilterInput
+                ruleFilterInput,
+                filterActionBtn
             ])
         ]);
 
@@ -259,7 +295,10 @@ return view.extend({
 
         function updateRow(conn) {
             const key = conn.id;
-            connectionsData.set(key, conn);
+            connectionsData.set(key, {
+                raw: conn,
+                normalized: buildNormalizedConnection(conn)
+            });
             let row = rowMap.get(key);
             let isNew = false;
 
@@ -291,47 +330,23 @@ return view.extend({
             if (isNew) highlightNewRow(row);
         }
 
-        // TODO: Precompute normalized filter fields per connection on updateRow()
-        // instead of rebuilding them on every applyFilters() call.
-        const matchesFilters = (conn) => {
-            const hostSniffFilter = normalizeFilterValue(hostSniffFilterInput.value);
-            const sourceEndpointIpFilter = normalizeFilterValue(sourceEndpointIpFilterInput.value);
-            const chainsFilter = normalizeFilterValue(chainsFilterInput.value);
-            const ruleFilter = normalizeFilterValue(ruleFilterInput.value);
+        const matchesFilters = (connData) => {
+            const normalized = connData?.normalized || {};
 
-            const metadata = conn?.metadata || {};
-            const host = normalizeFilterValue(metadata.host);
-            const sniffHost = normalizeFilterValue(metadata.sniffHost);
-            const sourceIP = normalizeFilterValue(metadata.sourceIP);
-            const endpointIP = normalizeFilterValue(metadata.destinationIP || metadata.remoteDestination);
-            const hostSniff = [host, sniffHost].filter(Boolean).join(" ");
-            const sourceEndpointIP = [sourceIP, endpointIP].filter(Boolean).join(" ");
-            const chains = normalizeFilterValue((conn?.chains || []).join(", "));
-            const rule = normalizeFilterValue(conn?.rulePayload || conn?.rule);
-
-            if (hostSniffFilter && !hostSniff.includes(hostSniffFilter))
+            if (appliedFilters.hostSniff && !normalized.hostSniff?.includes(appliedFilters.hostSniff))
                 return false;
-            if (sourceEndpointIpFilter && !sourceEndpointIP.includes(sourceEndpointIpFilter))
+            if (appliedFilters.sourceEndpointIP && !normalized.sourceEndpointIP?.includes(appliedFilters.sourceEndpointIP))
                 return false;
-            if (chainsFilter && !chains.includes(chainsFilter))
+            if (appliedFilters.chains && !normalized.chains?.includes(appliedFilters.chains))
                 return false;
-            if (ruleFilter && !rule.includes(ruleFilter))
+            if (appliedFilters.rule && !normalized.rule?.includes(appliedFilters.rule))
                 return false;
 
             return true;
         };
 
         const updateEmptyState = () => {
-            const hasConnections = rowMap.size > 0;
-            const visibleRows = [...rowMap.values()].filter((row) => !row.classList.contains("jc-hidden-row")).length;
-            const message = hasConnections ? _("No matching connections") : _("No active connections");
-
-            if (visibleRows === 0 && !noConnectionsMsg) {
-                noConnectionsMsg = E("div", { class: "flex-row no-data" }, [E("div", {}, message)]);
-                table.appendChild(noConnectionsMsg);
-            } else if (visibleRows === 0 && noConnectionsMsg) {
-                noConnectionsMsg.firstChild.textContent = message;
-            } else if (noConnectionsMsg) {
+            if (noConnectionsMsg) {
                 noConnectionsMsg.parentNode?.removeChild(noConnectionsMsg);
                 noConnectionsMsg = null;
             }
@@ -339,11 +354,57 @@ return view.extend({
 
         const applyFilters = () => {
             for (const [key, row] of rowMap.entries()) {
-                const conn = connectionsData.get(key);
-                row.classList.toggle("jc-hidden-row", !matchesFilters(conn));
+                const connData = connectionsData.get(key);
+                row.classList.toggle("jc-hidden-row", !matchesFilters(connData));
             }
 
             updateEmptyState();
+        };
+
+        const getDraftFilters = () => ({
+            hostSniff: normalizeFilterValue(hostSniffFilterInput.value),
+            sourceEndpointIP: normalizeFilterValue(sourceEndpointIpFilterInput.value),
+            chains: normalizeFilterValue(chainsFilterInput.value),
+            rule: normalizeFilterValue(ruleFilterInput.value)
+        });
+
+        const syncFilterButtons = () => {
+            const draftFilters = getDraftFilters();
+            const hasPendingChanges = Object.keys(appliedFilters).some((key) => draftFilters[key] !== appliedFilters[key]);
+            const hasAppliedFilters = Object.values(appliedFilters).some(Boolean);
+
+            filterActionBtn.disabled = !hasPendingChanges && !hasAppliedFilters;
+            filterActionBtn.textContent = hasPendingChanges ? _("Apply") : _("Reset");
+            filterActionBtn.className = `cbi-button ${hasPendingChanges ? "cbi-button-action" : "cbi-button-neutral"}`;
+        };
+
+        const applyDraftFilters = () => {
+            const draftFilters = getDraftFilters();
+            Object.assign(appliedFilters, draftFilters);
+            applyFilters();
+            syncFilterButtons();
+        };
+
+        const resetFilters = () => {
+            hostSniffFilterInput.value = "";
+            sourceEndpointIpFilterInput.value = "";
+            chainsFilterInput.value = "";
+            ruleFilterInput.value = "";
+            Object.keys(appliedFilters).forEach((key) => {
+                appliedFilters[key] = "";
+            });
+            applyFilters();
+            syncFilterButtons();
+        };
+
+        const handleFilterAction = () => {
+            const draftFilters = getDraftFilters();
+            const hasPendingChanges = Object.keys(appliedFilters).some((key) => draftFilters[key] !== appliedFilters[key]);
+
+            if (hasPendingChanges)
+                applyDraftFilters();
+            else
+                resetFilters();
         };
 
         const handleConnectionsMessage = (event) => {
@@ -372,9 +433,15 @@ return view.extend({
             }
         };
 
-        const reconnectConnectionsSocket = () => {
+        const reconnectConnectionsSocket = async () => {
             if (connectionsWsCleanup)
                 connectionsWsCleanup();
+
+            if (document.hidden)
+                return;
+
+            if (!await luciSession.isSessionAlive())
+                return;
 
             connectionsWsCleanup = mihomoApi.createConnectionsWebSocket({
                 token: result.token,
@@ -382,6 +449,13 @@ return view.extend({
                 containerCheck: () => document.body.contains(table),
                 onMessage: handleConnectionsMessage
             });
+        };
+
+        const stopConnectionsSocket = () => {
+            if (connectionsWsCleanup) {
+                connectionsWsCleanup();
+                connectionsWsCleanup = null;
+            }
         };
 
         intervalSelect.addEventListener("change", () => {
@@ -397,79 +471,81 @@ return view.extend({
         });
 
         [hostSniffFilterInput, sourceEndpointIpFilterInput, chainsFilterInput, ruleFilterInput].forEach((input) => {
-            input.addEventListener("input", applyFilters);
+            input.addEventListener("input", syncFilterButtons);
+            input.addEventListener("keydown", (ev) => {
+                if (ev.key === "Enter" && !filterActionBtn.disabled)
+                    handleFilterAction();
+            });
         });
+        filterActionBtn.addEventListener("click", handleFilterAction);
+        syncFilterButtons();
 
         if (!result.configLoadFailed) {
-            reconnectConnectionsSocket();
+            if (!document.hidden)
+                reconnectConnectionsSocket();
+
+            if (visibilityChangeHandler) {
+                document.removeEventListener("visibilitychange", visibilityChangeHandler);
+            }
+
+            visibilityChangeHandler = () => {
+                console.debug(`[connections] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
+                if (document.hidden)
+                    stopConnectionsSocket();
+                else
+                    reconnectConnectionsSocket();
+            };
+
+            document.addEventListener("visibilitychange", visibilityChangeHandler);
+
+            if (beforeUnloadHandler)
+                window.removeEventListener("beforeunload", beforeUnloadHandler);
+
+            beforeUnloadHandler = () => {
+                console.debug("[connections] beforeunload: cleanup");
+                cleanup();
+            };
+
+            window.addEventListener("beforeunload", beforeUnloadHandler);
             wsCleanups.push(() => {
-                if (connectionsWsCleanup)
-                    connectionsWsCleanup();
+                stopConnectionsSocket();
             });
         }
 
         const style = E("style", {}, `
-            .jc-table { display:flex; flex-direction:column; width:100%; font-family:monospace; font-size:11px; }
-            .flex-header { border-bottom:1px solid #e0e0e0; font-weight:bold; background-color:var(--background-color-medium, #f0f0f0); padding:4px 0; display:flex; line-height:1.2; align-items:center; }
-            .flex-row { display:flex; padding:3px 0; border-bottom:1px solid transparent; align-items:center; }
-            .flex-row:nth-child(even) { background:var(--background-color-medium, #fafafa); }
-            .flex-row.clickable:hover { background-color:rgba(180,180,180,0.2); cursor:pointer; }
-            [data-theme="dark"] .flex-row.clickable:hover { background-color:rgba(100,100,100,0.2); }
-            .jc-actions-wrap { padding:0.7em 0.8em; border:1px solid var(--border-color-medium, #d9d9d9); border-radius:6px; background:var(--background-color-medium, #f6f6f6); margin-bottom:12px; }
-            .jc-primary-actions { display:flex; flex-wrap:wrap; gap:0.65em; margin:0; }
-            .jc-primary-actions .cbi-button { margin:0 !important; }
-            .jc-connections-actions { align-items:center; justify-content:space-between; }
-            .jc-connections-filters { align-items:center; }
-            .jc-interval-control { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-            .jc-interval-select { width:auto; min-width:180px; margin:0; }
-            .jc-filter-input { flex:1 1 180px; min-width:160px; margin:0; }
-            .c-proto { flex:0 0 60px; max-width:70px; }
-            .c-conn { flex:2 1 200px; }
-            .c-host { flex:2 1 150px; }
-            .c-chains { flex:0 0 140px; }
-            .c-rule { flex:0 0 110px; }
-            .c-action { flex:0 0 44px; display:flex; justify-content:flex-end; }
-            .c-action-cell { padding-right:4px; }
-            .jc-connection-close {
-                min-width:20px;
-                width:20px;
-                height:20px;
-                padding:0;
-                display:inline-flex;
-                align-items:center;
-                justify-content:center;
-                font-weight:700;
-                line-height:1;
-            }
-            .show-mobile { display:none; }
-            .jc-hidden-row { display:none !important; }
-            .no-data { justify-content:center; padding:20px; font-style:italic; color:#888; }
-            .jc-json-terminal { width:100%; font-family:'Menlo','Consolas','Monaco',monospace; font-size:12px; line-height:1.4; white-space:pre-wrap; word-break:break-all; overflow-y:auto; background-color:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:6px; padding:10px; margin:0; max-height:500px; }
-            .jc-new-row { animation:jcFadeHighlight 2s ease; background-color:rgba(0, 200, 0, 0.15) !important; }
-            @keyframes jcFadeHighlight { 0% { background-color:rgba(0, 200, 0, 0.35); } 100% { background-color:transparent; } }
-            [data-theme="dark"] .jc-actions-wrap { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.04); }
-            @media (max-width:900px) {
-                .flex-header { display:none; }
-                .flex-row { flex-direction:column; align-items:flex-start; border:1px solid #ccc; border-radius:4px; margin-bottom:10px; padding:8px; background:var(--background-color-medium, #fff); }
-                .flex-row > div { display:flex; width:100%; max-width:none; flex:1 1 auto; white-space:normal; padding:2px 0; }
-                .jc-connections-actions { justify-content:flex-start; }
-                .jc-connections-filters { justify-content:stretch; }
-                .hide-mobile { display:none !important; }
-                .show-mobile { display:flex !important; }
-                .flex-row > div::before { content:attr(data-label) ": "; font-weight:bold; color:#555; min-width:110px; display:inline-block; flex-shrink:0; }
-                .c-proto, .c-host, .c-chains, .c-rule, .c-action { flex:auto; max-width:none; }
-                .c-action { justify-content:flex-start; }
-                .c-action-cell { padding-right:0; }
-                .jc-connection-close { margin-top:4px; }
-                .jc-filter-input { min-width:100%; }
-            }
+            .jc-table{display:flex;flex-direction:column;width:100%;font-family:monospace;font-size:11px;}
+            .flex-header,.flex-row,.jc-connections-actions,.jc-connections-filters,.jc-interval-control,.c-action{display:flex;align-items:center;}
+            .flex-header{border-bottom:1px solid #e0e0e0;font-weight:bold;background-color:var(--background-color-medium, #f0f0f0);padding:4px 0;line-height:1.2;}
+            .flex-row{padding:3px 0;border-bottom:1px solid transparent;}
+            .flex-row:nth-child(even){background:var(--background-color-medium, #fafafa);}
+            .flex-row.clickable:hover{background-color:rgba(180,180,180,.2);cursor:pointer;}
+            [data-theme="dark"] .flex-row.clickable:hover{background-color:rgba(100,100,100,.2);}
+            .jc-actions-wrap{padding:.7em .8em;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;background:var(--background-color-medium, #f6f6f6);margin-bottom:12px;}
+            .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
+            .jc-primary-actions .cbi-button{margin:0 !important;}
+            .jc-connections-actions{justify-content:space-between;}
+            .jc-interval-control{gap:10px;flex-wrap:wrap;}
+            .jc-interval-select{width:auto;min-width:180px;margin:0;}
+            .jc-filter-input{flex:1 1 180px;min-width:160px;margin:0;}
+            .c-proto{flex:0 0 60px;max-width:70px;}
+            .c-conn{flex:2 1 200px;}
+            .c-host{flex:2 1 150px;}
+            .c-chains{flex:0 0 140px;}
+            .c-rule{flex:0 0 110px;}
+            .c-action{flex:0 0 44px;justify-content:flex-end;}
+            .c-action-cell{padding-right:4px;}
+            .jc-connection-close{min-width:20px;width:20px;height:20px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-weight:700;line-height:1;}
+            .show-mobile{display:none;}
+            .jc-hidden-row{display:none !important;}
+            .no-data{justify-content:center;padding:20px;font-style:italic;color:#888;}
+            .jc-json-terminal{width:100%;font-family:'Menlo','Consolas','Monaco',monospace;font-size:12px;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-y:auto;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;padding:10px;margin:0;max-height:500px;}
+            .jc-new-row{animation:jcFadeHighlight 2s ease;background-color:rgba(126, 231, 135, .12) !important;}
+            @keyframes jcFadeHighlight{0%{background-color:rgba(126, 231, 135, .24);}100%{background-color:transparent;}}
+            [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
+            @media (max-width:900px){.flex-header{display:none;}.flex-row{flex-direction:column;align-items:flex-start;border:1px solid #ccc;border-radius:4px;margin-bottom:10px;padding:8px;background:var(--background-color-medium, #fff);}.flex-row > div{display:flex;width:100%;max-width:none;flex:1 1 auto;white-space:normal;padding:2px 0;}.jc-connections-actions{justify-content:flex-start;}.jc-connections-filters{justify-content:stretch;}.hide-mobile{display:none !important;}.show-mobile{display:flex !important;}.flex-row > div::before{content:attr(data-label) ": ";font-weight:bold;color:#555;min-width:110px;display:inline-block;flex-shrink:0;}.c-proto,.c-host,.c-chains,.c-rule,.c-action{flex:auto;max-width:none;}.c-action{justify-content:flex-start;}.c-action-cell{padding-right:0;}.jc-connection-close{margin-top:4px;}.jc-filter-input{min-width:100%;}}
         `);
 
         container.appendChild(style);
         return container;
-    },
-
-    leave: function () {
-        cleanup();
     }
 });

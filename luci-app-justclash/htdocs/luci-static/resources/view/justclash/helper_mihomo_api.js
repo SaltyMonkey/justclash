@@ -77,8 +77,32 @@ return baseclass.extend({
     createWebSocket({ path, token, searchParams, onMessage, onOpen, onClose, containerCheck }) {
         let ws = null;
         let reconnectTimer = null;
+        let disposed = false;
+
+        const clearReconnectTimer = () => {
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+        };
+
+        const scheduleReconnect = () => {
+            clearReconnectTimer();
+
+            if (disposed)
+                return;
+
+            reconnectTimer = setTimeout(() => {
+                reconnectTimer = null;
+                if (!disposed && containerCheck())
+                    connect();
+            }, common.defaultTimeoutForWSReconnect);
+        };
 
         const connect = () => {
+            if (disposed || ws || !containerCheck())
+                return;
+
             ws = new WebSocket(this.getWsUrl(path, token, searchParams));
 
             ws.onopen = () => {
@@ -88,26 +112,32 @@ return baseclass.extend({
             };
             ws.onmessage = onMessage;
             ws.onerror = (err) => console.warn(`[WS ${path}] Error:`, err);
-            ws.onclose = () => {
+            ws.onclose = (event) => {
+                const reason = event && event.reason ? `, reason: ${event.reason}` : "";
+                const code = event && typeof event.code === "number" ? event.code : "unknown";
+                console.log(`[WS ${path}] Disconnected (code: ${code}${reason})`);
                 ws = null;
                 if (onClose)
                     onClose();
-                reconnectTimer = setTimeout(() => {
-                    if (containerCheck())
-                        connect();
-                }, common.defaultTimeoutForWSReconnect);
+
+                if (disposed) {
+                    clearReconnectTimer();
+                    return;
+                }
+
+                scheduleReconnect();
             };
         };
-
         connect();
 
         return () => {
+            disposed = true;
+            clearReconnectTimer();
             if (ws) {
                 ws.onclose = ws.onerror = ws.onmessage = null;
                 ws.close();
+                ws = null;
             }
-            if (reconnectTimer)
-                clearTimeout(reconnectTimer);
         };
     },
 

@@ -4,6 +4,7 @@
 "require fs";
 "require uci";
 "require view.justclash.helper_clipboard as clipboard";
+"require view.justclash.helper_luci_session as luciSession";
 "require view.justclash.helper_common as common";
 "require view.justclash.helper_mihomo_api as mihomoApi";
 "require rpc";
@@ -15,6 +16,7 @@ let pollInterval = null;
 let pollingInProgress = false;
 let actionInProgress = false;
 let visibilityChangeHandler = null;
+let beforeUnloadHandler = null;
 let wsCleanups = [];
 
 const buttonsIDs = {
@@ -186,6 +188,19 @@ const cleanupWs = () => {
     wsCleanups = [];
 };
 
+const cleanup = () => {
+    stopPolling();
+    cleanupWs();
+    if (visibilityChangeHandler) {
+        document.removeEventListener("visibilitychange", visibilityChangeHandler);
+        visibilityChangeHandler = null;
+    }
+    if (beforeUnloadHandler) {
+        window.removeEventListener("beforeunload", beforeUnloadHandler);
+        beforeUnloadHandler = null;
+    }
+};
+
 const createSummaryRow = (label, valueNode, extraNode) => {
     const valueChildren = [valueNode];
     if (extraNode)
@@ -239,17 +254,23 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
 ]);
 
 const updateUI = (dynamicElements, isAutostarting, isRunning) => {
-    if (dynamicElements.serviceBadge) {
+    const runningChanged = dynamicElements.lastRunning !== isRunning;
+    const autostartChanged = dynamicElements.lastAutostarting !== isAutostarting;
+
+    dynamicElements.currentRunning = isRunning;
+    dynamicElements.currentAutostarting = isAutostarting;
+
+    if (runningChanged && dynamicElements.serviceBadge) {
         dynamicElements.serviceBadge.textContent = boolToWordRunning(isRunning);
         dynamicElements.serviceBadge.className = `jc-status-text ${isRunning ? "jc-status-text-active" : "jc-status-text-inactive"}`;
     }
 
-    if (dynamicElements.autoBadge) {
+    if (autostartChanged && dynamicElements.autoBadge) {
         dynamicElements.autoBadge.textContent = boolToWordAutostart(isAutostarting);
         dynamicElements.autoBadge.className = `jc-status-text ${isAutostarting ? "jc-status-text-active" : "jc-status-text-inactive"}`;
     }
 
-    if (dynamicElements.btnToggle) {
+    if (runningChanged && dynamicElements.btnToggle) {
         const label = isRunning ? _("Stop") : _("Start");
         const toggleIcon = dynamicElements.btnToggle.querySelector(".jc-button-icon");
         const text = dynamicElements.btnToggle.querySelector(".jc-button-label");
@@ -264,7 +285,7 @@ const updateUI = (dynamicElements, isAutostarting, isRunning) => {
         dynamicElements.btnToggle.setAttribute("aria-label", label);
     }
 
-    if (dynamicElements.btnAutoToggle) {
+    if (autostartChanged && dynamicElements.btnAutoToggle) {
         const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
         const autoIcon = dynamicElements.btnAutoToggle.querySelector(".jc-button-icon");
         const text = dynamicElements.btnAutoToggle.querySelector(".jc-button-label");
@@ -276,6 +297,9 @@ const updateUI = (dynamicElements, isAutostarting, isRunning) => {
         dynamicElements.btnAutoToggle.title = label;
         dynamicElements.btnAutoToggle.setAttribute("aria-label", label);
     }
+
+    dynamicElements.lastRunning = isRunning;
+    dynamicElements.lastAutostarting = isAutostarting;
 };
 
 const updateServiceStatus = async (dynamicElements) => {
@@ -283,6 +307,12 @@ const updateServiceStatus = async (dynamicElements) => {
     pollingInProgress = true;
 
     try {
+        if (!await luciSession.isSessionAlive()) {
+            stopPolling();
+            cleanupWs();
+            return;
+        }
+
         const [isRunning, isAutostarting] = await Promise.all([
             isServiceRunning().catch(() => false),
             isServiceAutoStartEnabled().catch(() => false)
@@ -295,31 +325,25 @@ const updateServiceStatus = async (dynamicElements) => {
 
 const stopPolling = () => {
     if (pollInterval) {
-        clearInterval(pollInterval);
+        clearTimeout(pollInterval);
         pollInterval = null;
     }
 };
 
+const scheduleNextPoll = (dynamicElements) => {
+    if (pollInterval || document.hidden)
+        return;
+
+    pollInterval = setTimeout(async () => {
+        pollInterval = null;
+        await updateServiceStatus(dynamicElements);
+        scheduleNextPoll(dynamicElements);
+    }, POLL_TIMEOUT);
+};
+
 const startPolling = (dynamicElements) => {
     stopPolling();
-    pollInterval = setInterval(() => updateServiceStatus(dynamicElements), POLL_TIMEOUT);
-
-    if (visibilityChangeHandler) {
-        document.removeEventListener("visibilitychange", visibilityChangeHandler);
-    }
-
-    visibilityChangeHandler = () => {
-        if (document.hidden) {
-            stopPolling();
-        } else {
-            updateServiceStatus(dynamicElements);
-            if (!pollInterval) {
-                pollInterval = setInterval(() => updateServiceStatus(dynamicElements), POLL_TIMEOUT);
-            }
-        }
-    };
-
-    document.addEventListener("visibilitychange", visibilityChangeHandler);
+    scheduleNextPoll(dynamicElements);
 };
 
 const showErrorModal = (message) => {
@@ -528,12 +552,12 @@ return view.extend({
         };
 
         const toggleHandler = async () => {
-            const running = await isServiceRunning().catch(() => false);
+            const running = !!dynamicElements.currentRunning;
             return actionHandler(running ? "stop" : "start", running ? 0 : ACTION_DELAY_TIMEOUT)();
         };
 
         const autoToggleHandler = async () => {
-            const enabled = await isServiceAutoStartEnabled().catch(() => false);
+            const enabled = !!dynamicElements.currentAutostarting;
             return actionHandler(enabled ? "disable" : "enable")();
         };
 
@@ -551,7 +575,11 @@ return view.extend({
             downTotalValue,
             ramValue,
             btnToggle,
-            btnAutoToggle
+            btnAutoToggle,
+            currentRunning: !!results.infoIsRunning,
+            currentAutostarting: !!results.infoIsAutostarting,
+            lastRunning: null,
+            lastAutostarting: null
         };
 
         const statusGrid = createStatusGrid(results, dynamicElements);
@@ -614,54 +642,68 @@ return view.extend({
             configActionContainer
         ]);
 
-        wsCleanups.push(mihomoApi.createTrafficWebSocket({
-            token: results.apiToken,
-            containerCheck: () => document.body.contains(statusContainer),
-            onMessage: (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    dynamicElements.upValue.textContent = formatSpeed(data.up);
-                    dynamicElements.downValue.textContent = formatSpeed(data.down);
-                    dynamicElements.upTotalValue.textContent = formatBytes(data.upTotal);
-                    dynamicElements.downTotalValue.textContent = formatBytes(data.downTotal);
-                } catch (e) {}
-            }
-        }));
+        const connectStatusSockets = async () => {
+            if (document.hidden)
+                return;
 
-        wsCleanups.push(mihomoApi.createMemoryWebSocket({
-            token: results.apiToken,
-            containerCheck: () => document.body.contains(statusContainer),
-            onMessage: (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    dynamicElements.ramValue.textContent = formatBytes(data.inuse);
-                } catch (e) {}
-            }
-        }));
+            cleanupWs();
+            if (!await luciSession.isSessionAlive())
+                return;
+
+            wsCleanups.push(mihomoApi.createTrafficWebSocket({
+                token: results.apiToken,
+                containerCheck: () => document.body.contains(statusContainer),
+                onMessage: (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        dynamicElements.upValue.textContent = formatSpeed(data.up);
+                        dynamicElements.downValue.textContent = formatSpeed(data.down);
+                        dynamicElements.upTotalValue.textContent = formatBytes(data.upTotal);
+                        dynamicElements.downTotalValue.textContent = formatBytes(data.downTotal);
+                    } catch (e) {}
+                }
+            }));
+
+            wsCleanups.push(mihomoApi.createMemoryWebSocket({
+                token: results.apiToken,
+                containerCheck: () => document.body.contains(statusContainer),
+                onMessage: (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        dynamicElements.ramValue.textContent = formatBytes(data.inuse);
+                    } catch (e) {}
+                }
+            }));
+        };
 
         const style = E("style", {}, `
-            .jc-status-text { display:inline-flex; align-items:center; color:var(--text-color-high, inherit); font-weight:700; line-height:1.3; }
+            .jc-status-text { color:var(--text-color-high, inherit); font-weight:700; line-height:1.3; }
             .jc-status-text-active { color:var(--success-color-medium, #4caf50); }
             .jc-status-text-inactive { color:var(--error-color-medium, #f44336); }
             .jc-summary-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:15px; margin-bottom:20px; align-items:start; }
-            .jc-card { display:flex; flex-direction:column; padding:0.75em; border:1px solid var(--border-color-medium, #bfbfbf); border-radius:4px; box-sizing:border-box; }
-            .jc-card-header { display:inline-flex; align-items:center; align-self:flex-start; gap:0.45em; margin-bottom:0.7em; padding:0.2em 0.45em; border:1px solid var(--border-color-medium, #d9d9d9); border-radius:6px; background:var(--background-color-medium, #f6f6f6); font-size:0.96em; color:var(--text-color, inherit); opacity:0.88; }
-            .jc-card-icon { display:inline-flex; align-items:center; justify-content:center; width:1.75em; height:1.75em; flex:0 0 1.75em; }
+            .jc-card, .jc-summary-body, .jc-summary-row, .jc-primary-actions { display:flex; }
+            .jc-card, .jc-summary-body, .jc-summary-row { flex-direction:column; }
+            .jc-card { padding:0.75em; border:1px solid var(--border-color-medium, #bfbfbf); border-radius:4px; box-sizing:border-box; }
+            .jc-card-header, .jc-status-text, .jc-summary-value, .jc-button-content, .jc-card-icon, .jc-button-icon { display:inline-flex; align-items:center; }
+            .jc-card-header, .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:6px; background:var(--background-color-medium, #f6f6f6); }
+            .jc-card-header { align-self:flex-start; gap:0.45em; margin-bottom:0.7em; padding:0.2em 0.45em; font-size:0.96em; color:var(--text-color, inherit); opacity:0.88; }
+            .jc-card-icon, .jc-button-icon { justify-content:center; width:1.75em; height:1.75em; }
+            .jc-card-icon { flex:0 0 1.75em; }
             .jc-card-icon-svg, .jc-button-icon-svg { width:100%; height:100%; stroke:currentColor; stroke-width:1; stroke-linecap:round; stroke-linejoin:round; }
-            .jc-summary-body { display:flex; flex-direction:column; gap:0.45em; }
-            .jc-summary-row { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:0.18em; min-width:0; }
+            .jc-summary-body { gap:0.45em; }
+            .jc-summary-row { gap:0.18em; min-width:0; }
             .jc-summary-key { font-size:0.88em; color:var(--text-color, inherit); opacity:0.78; }
-            .jc-summary-value { display:inline-flex; align-items:center; gap:0.45em; min-width:0; font-size:0.96em; font-weight:600; text-align:left; white-space:nowrap; }
+            .jc-summary-value { gap:0.45em; min-width:0; font-size:0.96em; font-weight:600; text-align:left; white-space:nowrap; }
             .cbi-section-actions + .cbi-section-actions { margin-top:8px; }
-            .jc-actions-wrap { padding:0.7em 0.8em; border:1px solid var(--border-color-medium, #d9d9d9); border-radius:6px; background:var(--background-color-medium, #f6f6f6); }
-            .jc-primary-actions { display:flex; flex-wrap:wrap; gap:0.65em; margin:0; }
+            .jc-actions-wrap { padding:0.7em 0.8em; }
+            .jc-primary-actions { flex-wrap:wrap; gap:0.65em; margin:0; }
             .jc-primary-actions .cbi-button { margin:0 !important; }
-            .jc-button-content { display:inline-flex; align-items:center; justify-content:center; gap:0.45em; vertical-align:middle; }
-            .jc-button-icon { display:inline-flex; align-items:center; justify-content:center; width:1.75em; height:1.75em; line-height:1; }
-            .jc-modal-warning { color: var(--error-color-medium); }
-            .jc-modal-warning-text { margin-top: 1em; color: var(--error-color-medium); }
-            .jc-modal-pre { max-height: 460px; overflow: auto; }
-            .jc-modal-actions { text-align: right; margin-top: 1em; }
+            .jc-button-content { justify-content:center; gap:0.45em; vertical-align:middle; }
+            .jc-button-icon { line-height:1; }
+            .jc-modal-warning, .jc-modal-warning-text { color:var(--error-color-medium); }
+            .jc-modal-warning-text, .jc-modal-actions { margin-top:1em; }
+            .jc-modal-pre { max-height:460px; overflow:auto; }
+            .jc-modal-actions { text-align:right; }
             [data-theme="dark"] .jc-card-header,
             [data-theme="dark"] .jc-actions-wrap { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.04); }
             @media (max-width:1000px) { .jc-summary-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
@@ -669,6 +711,34 @@ return view.extend({
         `);
 
         startPolling(dynamicElements);
+        connectStatusSockets();
+
+        if (visibilityChangeHandler) {
+            document.removeEventListener("visibilitychange", visibilityChangeHandler);
+        }
+
+        visibilityChangeHandler = () => {
+            console.debug(`[status] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
+            if (document.hidden) {
+                stopPolling();
+                cleanupWs();
+            } else {
+                connectStatusSockets();
+                updateServiceStatus(dynamicElements).finally(() => scheduleNextPoll(dynamicElements));
+            }
+        };
+
+        document.addEventListener("visibilitychange", visibilityChangeHandler);
+
+        if (beforeUnloadHandler)
+            window.removeEventListener("beforeunload", beforeUnloadHandler);
+
+        beforeUnloadHandler = () => {
+            console.debug("[status] beforeunload");
+            cleanup();
+        };
+
+        window.addEventListener("beforeunload", beforeUnloadHandler);
 
         requestAnimationFrame(() => {
             updateUI(dynamicElements, results.infoIsAutostarting, results.infoIsRunning);
@@ -683,14 +753,5 @@ return view.extend({
                 configActionSection
             ])
         ]);
-    },
-
-    leave() {
-        stopPolling();
-        cleanupWs();
-        if (visibilityChangeHandler) {
-            document.removeEventListener("visibilitychange", visibilityChangeHandler);
-            visibilityChangeHandler = null;
-        }
     }
 });

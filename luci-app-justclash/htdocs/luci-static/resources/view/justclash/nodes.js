@@ -136,6 +136,8 @@ return view.extend({
         const container = E("div", { class: "cbi-section fade-in" });
         const modeWrap = E("div", { class: "jc-actions-wrap" });
         const content = E("div", { class: "jc-nodes-layout" });
+        const groupSections = new Map();
+        const providerSections = new Map();
 
         const state = {
             token: result.token || "",
@@ -246,14 +248,14 @@ return view.extend({
             state.delayLoadingGroup = group.name;
             state.groupDelays[group.name] = Object.create(null);
             syncModeSelect();
-            renderNodes();
+            rerenderGroupSection(group.name);
 
             try {
                 await runProxyDelayTests(group.options.filter(canTestProxyDelay), state.groupDelays[group.name]);
             } finally {
                 state.delayLoadingGroup = "";
                 syncModeSelect();
-                renderNodes();
+                rerenderGroupSection(group.name);
             }
         };
 
@@ -264,7 +266,7 @@ return view.extend({
             state.delayLoadingProvider = provider.name;
             state.providerDelays[provider.name] = Object.create(null);
             syncModeSelect();
-            renderNodes();
+            rerenderProviderSection(provider.name);
 
             try {
                 const candidates = (provider.proxies || [])
@@ -275,7 +277,7 @@ return view.extend({
             } finally {
                 state.delayLoadingProvider = "";
                 syncModeSelect();
-                renderNodes();
+                rerenderProviderSection(provider.name);
             }
         };
 
@@ -391,7 +393,7 @@ return view.extend({
 
             delayButton.disabled = !!state.loading || !!state.delayLoadingGroup || !!state.delayLoadingProvider;
 
-            return E("section", { class: "jc-group-section" }, [
+            return E("section", { class: "jc-group-section jc-provider-section" }, [
                 E("div", { class: "jc-group-header" }, [
                     E("h4", { class: "jc-group-title" }, provider.name),
                     E("div", { class: "jc-group-header-actions" }, [
@@ -407,8 +409,50 @@ return view.extend({
             ]);
         };
 
+        const mountGroupSection = (group) => {
+            const section = createGroupSection(group);
+            groupSections.set(group.name, section);
+            return section;
+        };
+
+        const mountProviderSection = (provider) => {
+            const section = createProviderSection(provider);
+            providerSections.set(provider.name, section);
+            return section;
+        };
+
+        const rerenderGroupSection = (groupName) => {
+            const oldNode = groupSections.get(groupName);
+            const group = state.nodesState.groups.find((entry) => entry.name === groupName);
+
+            if (!oldNode || !oldNode.parentNode || !group) {
+                renderNodes();
+                return;
+            }
+
+            const nextNode = createGroupSection(group);
+            oldNode.replaceWith(nextNode);
+            groupSections.set(groupName, nextNode);
+        };
+
+        const rerenderProviderSection = (providerName) => {
+            const oldNode = providerSections.get(providerName);
+            const provider = state.providersState.find((entry) => entry.name === providerName);
+
+            if (!oldNode || !oldNode.parentNode || !provider) {
+                renderNodes();
+                return;
+            }
+
+            const nextNode = createProviderSection(provider);
+            oldNode.replaceWith(nextNode);
+            providerSections.set(providerName, nextNode);
+        };
+
         const renderNodes = () => {
             content.replaceChildren();
+            groupSections.clear();
+            providerSections.clear();
 
             if (result.configLoadFailed) {
                 content.appendChild(E("div", { class: "jc-card jc-empty-card" }, [
@@ -434,14 +478,14 @@ return view.extend({
             const otherGroups = state.nodesState.groups.filter((group) => group.name !== "GLOBAL");
 
             if (globalGroup)
-                content.appendChild(createGroupSection(globalGroup));
+                content.appendChild(mountGroupSection(globalGroup));
 
             otherGroups.forEach((group) => {
-                content.appendChild(createGroupSection(group));
+                content.appendChild(mountGroupSection(group));
             });
 
             state.providersState.forEach((provider) => {
-                content.appendChild(createProviderSection(provider));
+                content.appendChild(mountProviderSection(provider));
             });
         };
 
@@ -493,7 +537,6 @@ return view.extend({
             } finally {
                 state.modeLoading = false;
                 syncModeSelect();
-                renderNodes();
             }
         };
 
@@ -520,10 +563,15 @@ return view.extend({
             } catch (e) {
                 console.error(`Failed to update selector ${group.name}`, e);
             } finally {
+                const groupExists = state.nodesState.groups.some((entry) => entry.name === group.name);
                 state.pendingKey = "";
                 state.loading = false;
                 syncModeSelect();
-                renderNodes();
+
+                if (groupExists)
+                    rerenderGroupSection(group.name);
+                else
+                    renderNodes();
             }
         };
 
@@ -538,299 +586,51 @@ return view.extend({
         renderNodes();
 
         const style = E("style", {}, `
-            .jc-actions-wrap {
-                margin-bottom: 16px;
-                padding: 0.7em 0.8em;
-                border: 1px solid var(--border-color-medium, #d9d9d9);
-                border-radius: 6px;
-                background: var(--background-color-medium, #f6f6f6);
-            }
-
-            .jc-primary-actions {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 0.65em;
-                margin: 0;
-            }
-
-            .jc-primary-actions .cbi-button {
-                margin: 0 !important;
-            }
-
-            .jc-mode-wrap {
-                display: inline-flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 0.55em;
-            }
-
-            .jc-mode-label {
-                font-weight: 600;
-            }
-
-            .jc-mode-select {
-                min-width: 130px;
-                margin: 0 !important;
-            }
-
-            .jc-nodes-layout {
-                display: flex;
-                flex-direction: column;
-                gap: 18px;
-            }
-
-            .jc-group-section {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .jc-group-header {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-            }
-
-            .jc-group-title {
-                margin: 0;
-                font-size: 1.05rem;
-                font-weight: 600;
-            }
-
-            .jc-group-header-actions {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                justify-content: flex-end;
-                gap: 8px;
-            }
-
-            .jc-group-badges {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .jc-group-badge,
-            .jc-group-delay-button {
-                display: inline-flex;
-                align-items: center;
-                padding: 0.2em 0.55em;
-                border: 1px solid var(--border-color-medium, #d9d9d9);
-                border-radius: 999px;
-                background: var(--background-color-medium, #f6f6f6);
-                font-size: 0.88em;
-                line-height: 1.2;
-            }
-
-            .jc-group-badge {
-                opacity: 0.88;
-            }
-
-            .jc-group-badge-current {
-                font-weight: 600;
-            }
-
-            .jc-group-delay-button {
-                margin: 0 !important;
-                min-width: 0;
-                color: var(--text-color, inherit);
-                font-weight: 500;
-                opacity: 0.88;
-                transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
-            }
-
-            .jc-group-delay-button:hover:not(:disabled),
-            .jc-group-delay-button:focus-visible:not(:disabled) {
-                border-color: var(--primary-color-medium, #4f8cff);
-                background: rgba(79, 140, 255, 0.06);
-                transform: translateY(-1px);
-            }
-
-            .jc-group-delay-button:disabled {
-                opacity: 0.7;
-                transform: none;
-            }
-
-            .jc-option-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
-                gap: 12px;
-            }
-
-            .jc-card {
-                display: flex;
-                flex-direction: column;
-                padding: 0.75em;
-                border: 1px solid var(--border-color-medium, #bfbfbf);
-                border-radius: 4px;
-                box-sizing: border-box;
-                color: var(--text-color, inherit);
-            }
-
-            .jc-card-header {
-                display: inline-flex;
-                align-items: center;
-                align-self: flex-start;
-                margin-bottom: 0.7em;
-                padding: 0.2em 0.45em;
-                border: 1px solid var(--border-color-medium, #d9d9d9);
-                border-radius: 6px;
-                background: var(--background-color-medium, #f6f6f6);
-                font-size: 0.96em;
-                color: var(--text-color, inherit);
-                opacity: 0.88;
-            }
-
-            .jc-provider-card {
-                cursor: default;
-                background: transparent;
-                transform: none !important;
-            }
-
-            .jc-option-card {
-                width: 100%;
-                align-items: flex-start;
-                gap: 0.35em;
-                text-align: left;
-                cursor: pointer;
-                background: transparent;
-                color: inherit;
-                font: inherit;
-                transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
-            }
-
-            .jc-option-card:hover:not(:disabled),
-            .jc-option-card:focus-visible:not(:disabled) {
-                border-color: var(--primary-color-medium, #4f8cff);
-                background: rgba(79, 140, 255, 0.06);
-                transform: translateY(-1px);
-            }
-
-            .jc-option-card:disabled {
-                cursor: default;
-                opacity: 0.7;
-            }
-
-            .jc-option-card-active {
-                border-color: var(--primary-color-medium, #4f8cff);
-                background: rgba(79, 140, 255, 0.08);
-            }
-
-            .jc-option-card-top,
-            .jc-option-card-bottom {
-                width: 100%;
-                display: flex;
-                align-items: flex-start;
-                justify-content: space-between;
-            }
-
-            .jc-option-card-top {
-                gap: 8px;
-            }
-
-            .jc-option-card-bottom {
-                gap: 12px;
-            }
-
-            .jc-option-name {
-                font-weight: 600;
-                white-space: normal;
-                overflow-wrap: anywhere;
-            }
-
-            .jc-option-current-badge {
-                display: inline-flex;
-                flex: 0 0 auto;
-                align-items: center;
-                padding: 0.15em 0.45em;
-                border-radius: 999px;
-                background: rgba(79, 140, 255, 0.14);
-                color: var(--primary-color-medium, #356fd9);
-                font-size: 0.78em;
-                font-weight: 600;
-            }
-
-            .jc-option-type,
-            .jc-option-meta {
-                min-width: 0;
-                line-height: 1.25;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .jc-option-type {
-                flex: 1 1 auto;
-                font-size: 0.9em;
-                opacity: 0.8;
-            }
-
-            .jc-option-meta {
-                flex: 0 1 auto;
-                text-align: right;
-                font-size: 0.82em;
-                opacity: 0.72;
-            }
-
-            .jc-option-meta-delay {
-                color: var(--success-color-medium, #2f9e44);
-                opacity: 1;
-                font-weight: 600;
-            }
-
-            .jc-option-meta-timeout {
-                color: var(--error-color-medium, #d9485f);
-                opacity: 1;
-                font-weight: 600;
-            }
-
-            .jc-empty-card {
-                min-height: 180px;
-            }
-
-            .jc-empty-text {
-                margin: 0;
-                color: var(--text-color, inherit);
-                opacity: 0.82;
-                white-space: normal;
-            }
-
-            [data-theme="dark"] .jc-card-header,
-            [data-theme="dark"] .jc-actions-wrap,
-            [data-theme="dark"] .jc-group-badge,
-            [data-theme="dark"] .jc-group-delay-button {
-                border-color: rgba(255,255,255,0.08);
-                background: rgba(255,255,255,0.04);
-            }
-
-            [data-theme="dark"] .jc-option-card:hover:not(:disabled),
-            [data-theme="dark"] .jc-option-card:focus-visible:not(:disabled) {
-                background: rgba(79, 140, 255, 0.12);
-            }
-
-            [data-theme="dark"] .jc-option-card-active {
-                background: rgba(79, 140, 255, 0.14);
-            }
-
-            @media (max-width:700px) {
-                .jc-group-header {
-                    align-items: flex-start;
-                }
-
-                .jc-option-grid {
-                    grid-template-columns: 1fr 1fr;
-                }
-            }
-
-            @media (max-width:520px) {
-                .jc-option-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
+            .jc-actions-wrap,.jc-card-header,.jc-group-badge,.jc-group-delay-button{border:1px solid var(--border-color-medium, #d9d9d9);background:var(--background-color-medium, #f6f6f6);}
+            .jc-actions-wrap{margin-bottom:16px;padding:.7em .8em;border-radius:6px;}
+            .jc-primary-actions,.jc-group-header,.jc-group-header-actions,.jc-group-badges{display:flex;flex-wrap:wrap;align-items:center;}
+            .jc-primary-actions{gap:.65em;margin:0;}
+            .jc-primary-actions .cbi-button{margin:0 !important;}
+            .jc-mode-wrap,.jc-card-header,.jc-group-badge,.jc-group-delay-button,.jc-option-current-badge{display:inline-flex;align-items:center;}
+            .jc-mode-wrap{flex-wrap:wrap;gap:.55em;}
+            .jc-mode-label,.jc-group-title,.jc-group-badge-current,.jc-option-name,.jc-option-current-badge,.jc-option-meta-delay,.jc-option-meta-timeout{font-weight:600;}
+            .jc-mode-select{min-width:130px;margin:0 !important;}
+            .jc-nodes-layout,.jc-group-section,.jc-card{display:flex;flex-direction:column;}
+            .jc-nodes-layout{gap:18px;}
+            .jc-group-section{gap:10px;}
+            .jc-group-header{justify-content:space-between;gap:10px;}
+            .jc-group-title{margin:0;font-size:1.05rem;}
+            .jc-provider-section .jc-group-title{font-weight:500;opacity:.82;}
+            .jc-group-header-actions{justify-content:flex-end;gap:8px;}
+            .jc-group-badges{gap:8px;}
+            .jc-group-badge,.jc-group-delay-button{padding:.2em .55em;border-radius:999px;font-size:.88em;line-height:1.2;opacity:.88;}
+            .jc-group-delay-button{margin:0 !important;min-width:0;color:var(--text-color, inherit);font-weight:500;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
+            .jc-group-delay-button:hover:not(:disabled),.jc-group-delay-button:focus-visible:not(:disabled),.jc-option-card:hover:not(:disabled),.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:rgba(79, 140, 255, .06);transform:translateY(-1px);}
+            .jc-group-delay-button:disabled,.jc-option-card:disabled{opacity:.7;transform:none;}
+            .jc-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(165px, 1fr));gap:12px;}
+            .jc-card{padding:.75em;border:1px solid var(--border-color-medium, #bfbfbf);border-radius:4px;box-sizing:border-box;color:var(--text-color, inherit);}
+            .jc-card-header{align-self:flex-start;margin-bottom:.7em;padding:.2em .45em;border-radius:6px;font-size:.96em;color:var(--text-color, inherit);opacity:.88;}
+            .jc-provider-card{cursor:default;background:rgba(240, 140, 0, .08);transform:none !important;border:1px solid rgba(240, 140, 0, .35) !important;transition:none !important;}
+            .jc-option-card{width:100%;align-items:flex-start;gap:.35em;text-align:left;cursor:pointer;background:transparent;color:inherit;font:inherit;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
+            .jc-option-card:disabled{cursor:default;}
+            .jc-option-card-active{border-color:var(--primary-color-medium, #4f8cff);background:rgba(79, 140, 255, .08);}
+            .jc-option-card-top,.jc-option-card-bottom{width:100%;display:flex;align-items:flex-start;justify-content:space-between;}
+            .jc-option-card-top{gap:8px;}
+            .jc-option-card-bottom{gap:12px;}
+            .jc-option-name{white-space:normal;overflow-wrap:anywhere;}
+            .jc-option-current-badge{flex:0 0 auto;padding:.15em .45em;border-radius:999px;background:rgba(79, 140, 255, .14);color:var(--primary-color-medium, #356fd9);font-size:.78em;}
+            .jc-option-type,.jc-option-meta{min-width:0;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+            .jc-option-type{flex:1 1 auto;font-size:.9em;opacity:.8;}
+            .jc-option-meta{flex:0 1 auto;text-align:right;font-size:.82em;opacity:.72;}
+            .jc-option-meta-delay{color:var(--success-color-medium, #2f9e44);}
+            .jc-option-meta-timeout{color:var(--error-color-medium, #d9485f);}
+            .jc-empty-card{min-height:180px;}
+            .jc-empty-text{margin:0;color:var(--text-color, inherit);opacity:.82;white-space:normal;}
+            [data-theme="dark"] .jc-card-header,[data-theme="dark"] .jc-actions-wrap,[data-theme="dark"] .jc-group-badge,[data-theme="dark"] .jc-group-delay-button{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
+            [data-theme="dark"] .jc-option-card:hover:not(:disabled),[data-theme="dark"] .jc-option-card:focus-visible:not(:disabled){background:rgba(79, 140, 255, .12);}
+            [data-theme="dark"] .jc-option-card-active{background:rgba(79, 140, 255, .14);}
+            @media (max-width:700px){.jc-group-header{align-items:flex-start;}.jc-option-grid{grid-template-columns:1fr 1fr;}}
+            @media (max-width:520px){.jc-option-grid{grid-template-columns:1fr;}}
         `);
 
         container.appendChild(E("h3", { class: "cbi-section-title" }, _("Nodes")));

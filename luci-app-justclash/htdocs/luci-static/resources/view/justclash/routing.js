@@ -3,6 +3,7 @@
 "require uci";
 "require ui";
 "require view.justclash.helper_common as common";
+"require view.justclash.helper_names as names";
 "require form";
 "require fs";
 "require tools.widgets as widgets";
@@ -88,7 +89,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName(common.adjectives, common.nouns);
+            return names.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
@@ -258,7 +259,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName(common.adjectives, common.nouns);
+            return names.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
@@ -447,7 +448,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName(common.adjectives, common.nouns);
+            return names.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
@@ -885,39 +886,21 @@ return view.extend({
         };
 
         const style = E("style", {}, `
-            .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node {
-                max-height: 395px;
-                min-height: 395px;
-                overflow-y: auto;
-            }
+            .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:395px; min-height:395px; overflow-y:auto; }
 
             @media (max-width: 768px) {
-                .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node {
-                    max-height: none;
-                    min-height: 0;
-                    overflow-y: visible;
-                }
+                .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:none; min-height:0; overflow-y:visible; }
             }
-            ul.dropdown {
-                max-height: 320px !important;
-            }
-            .cbi-value {
-                margin-bottom: 14px !important;
-            }
+            ul.dropdown { max-height:320px !important; }
+            .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="enabled"] > .cbi-value-title,
             .cbi-value[data-name="proxy_link_uri"] > .cbi-value-title,
             .cbi-value[data-name="subscription"] > .cbi-value-title,
             .cbi-value[data-name="group_type"] > .cbi-value-title {
-                color: var(--error-color-medium, #f44336) !important;
+                color:var(--error-color-medium, #f44336) !important;
             }
-            .cbi-section {
-                border: 0 !important;
-                border-bottom: 1px solid #595959 !important;
-            }
-            .cbi-section-create {
-                width: 100% !important;
-                padding: 10px 0 10px 0 !important;
-            }
+            .cbi-section { border:0 !important; border-bottom:1px solid #595959 !important; }
+            .cbi-section-create { width:100% !important; padding:10px 0 !important; }
         `);
 
         return m.render().then(formEl => E("div", {}, [style, formEl]));

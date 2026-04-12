@@ -9,10 +9,10 @@ const NO_LOGS = _("No log entries");
 
 let logsUpdating = false;
 const LOG_LEVEL_RULES = [
-    { suffix: " log-error", tokens: ["error", "level=error", "daemon.err", "user.err"] },
-    { suffix: " log-warn", tokens: ["warn", "level=warn", "warning", "daemon.warn"] },
-    { suffix: " log-info", tokens: ["info", "level=info"] },
-    { suffix: " log-debug", tokens: ["debug", "level=debug"] }
+    { type: "error", tokens: ["error", "level=error", "daemon.err", "user.err"] },
+    { type: "warning", tokens: ["warn", "level=warn", "warning", "daemon.warn"] },
+    { type: "info", tokens: ["info", "level=info"] },
+    { type: "debug", tokens: ["debug", "level=debug"] }
 ];
 
 const classifyLogLine = (lowerLine) => {
@@ -20,7 +20,7 @@ const classifyLogLine = (lowerLine) => {
         rule.tokens.some(token => lowerLine.includes(token))
     );
 
-    return matchedRule ? `log-line${matchedRule.suffix}` : "log-line";
+    return matchedRule ? matchedRule.type : "";
 };
 
 const renderLogLines = (container, rawText, isReversed) => {
@@ -36,9 +36,16 @@ const renderLogLines = (container, rawText, isReversed) => {
 
     lines.forEach(line => {
         const lowerLine = line.toLowerCase();
-        const className = classifyLogLine(lowerLine);
+        const type = classifyLogLine(lowerLine);
+        const lineClass = `log-line${type ? ` log-line-${type}` : ""}`;
+        const children = [];
 
-        fragment.appendChild(E("div", { class: className }, line));
+        if (type)
+            children.push(E("span", { class: `log-type-badge log-type-badge-${type}` }, type.toUpperCase()));
+
+        children.push(E("span", { class: "log-message" }, line));
+
+        fragment.appendChild(E("div", { class: lineClass }, children));
     });
 
     container.replaceChildren(fragment);
@@ -146,60 +153,27 @@ return view.extend({
         requestAnimationFrame(() => updateLogs(logContainer, refreshBtn, reverseCheckbox, (value) => { rawLogs = value; }, lastFetchLabel));
 
         const style = E("style", {}, `
-            .jc-ml { margin-left: 0.5em !important; }
-            .jc-log-fetch-label { color: #999; font-size: 0.9em; display: flex; align-items: center; }
-
-            .jc-logs-terminal {
-                width: 100%;
-                font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
-                font-size: 12px;
-                line-height: 1.4;
-                white-space: pre-wrap;
-                word-break: break-all;
-                overflow-y: auto;
-                overflow-x: hidden;
-                background-color: #1e1e1e;
-                color: #d4d4d4;
-                border: 1px solid #3c3c3c;
-                border-radius: 6px;
-                padding: 10px;
-                margin-bottom: 10px !important;
-                height: 500px;
-                resize: vertical;
-            }
-
-            .log-line { padding: 1px 0; border-bottom: 1px solid transparent; }
-            .log-line:hover { background-color: #2a2d2e; }
-            .log-error { color: #f48771; }
-            .log-warn  { color: #cca700; }
-            .log-info  { color: #75beff; }
-            .log-debug { color: #8b949e; }
-
-            .cbi-section-actions + .cbi-section-actions { margin-top: 8px; }
-            .jc-actions-wrap {
-                padding: 0.7em 0.8em;
-                margin-bottom: 10px;
-                border: 1px solid var(--border-color-medium, #d9d9d9);
-                border-radius: 6px;
-                background: var(--background-color-medium, #f6f6f6);
-            }
-            .jc-primary-actions {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 0.65em;
-                margin: 0;
-            }
-            .jc-primary-actions .cbi-button { margin: 0 !important; }
-            .jc-settings-actions .cbi-checkbox-label {
-                margin: 0;
-                display: inline-flex;
-                align-items: center;
-            }
-            [data-theme="dark"] .jc-actions-wrap {
-                border-color: rgba(255,255,255,0.08);
-                background: rgba(255,255,255,0.04);
-            }
+            .jc-ml{margin-left:.5em !important;}
+            .jc-log-fetch-label,.jc-settings-actions .cbi-checkbox-label,.jc-primary-actions{align-items:center;}
+            .jc-log-fetch-label{color:#999;font-size:.9em;}
+            .jc-logs-terminal{width:100%;font-family:'Menlo', 'Consolas', 'Monaco', monospace;font-size:12px;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-y:auto;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;padding:10px;margin-bottom:10px !important;height:500px;resize:vertical;}
+            .log-line{padding:1px 0;border-bottom:1px solid transparent;}
+            .log-line:hover{background-color:#2a2d2e;}
+            .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:.1em .55em;border:1px solid transparent;border-radius:999px;font-size:.82em;font-weight:700;line-height:1.25;vertical-align:middle;}
+            .log-type-badge-error{color:#ff7b72;border-color:rgba(255,123,114,.35);background:rgba(255,123,114,.12);}
+            .log-type-badge-warning{color:#f2cc60;border-color:rgba(242,204,96,.35);background:rgba(242,204,96,.12);}
+            .log-type-badge-info{color:#7ee787;border-color:rgba(126,231,135,.35);background:rgba(126,231,135,.12);}
+            .log-type-badge-debug{color:#79c0ff;border-color:rgba(121,192,255,.35);background:rgba(121,192,255,.12);}
+            .log-line-error .log-message{color:#ffb4ab;}
+            .log-line-warning .log-message{color:#f6d98b;}
+            .log-line-info .log-message{color:#9dd9a6;}
+            .log-line-debug .log-message{color:#9ecbff;}
+            .cbi-section-actions + .cbi-section-actions{margin-top:8px;}
+            .jc-actions-wrap{padding:.7em .8em;margin-bottom:10px;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;background:var(--background-color-medium, #f6f6f6);}
+            .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
+            .jc-primary-actions .cbi-button{margin:0 !important;}
+            .jc-settings-actions .cbi-checkbox-label{margin:0;display:inline-flex;}
+            [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
         `);
 
         return E("div", { class: "cbi-section fade-in" }, [

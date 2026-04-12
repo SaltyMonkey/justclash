@@ -217,9 +217,7 @@ return view.extend({
         };
 
         const style = E("style", {}, `
-            .cbi-value {
-                margin-bottom: 14px !important;
-            }
+            .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="ntpd_start"] > .cbi-value-title,
             .cbi-value[data-name="nft_apply_changes_router"] > .cbi-value-title,
             .cbi-value[data-name="dnsmasq_apply_changes"] > .cbi-value-title,
@@ -227,15 +225,11 @@ return view.extend({
             .cbi-value[data-name="tproxy_input_interfaces"] > .cbi-value-title,
             .cbi-value[data-name="mihomo_autoupdate_channel"] > .cbi-value-title,
             .cbi-value[data-name="delayed_boot"] > .cbi-value-title {
-                color: var(--error-color-medium, #f44336) !important;
+                color:var(--error-color-medium, #f44336) !important;
             }
         `);
 
-        return m.render().then(formEl => {
-            return E("div", {}, [
-                style,
-                formEl
-            ]);
+        return m.render().then(formEl => { return E("div", {}, [ style, formEl ]);
         });
     }
 });
