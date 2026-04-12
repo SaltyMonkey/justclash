@@ -10,6 +10,8 @@
 const NO_LOGS = _("No log entries");
 const MAX_LOG_ENTRIES = parseInt(common.logsCount, 10);
 const LOG_BADGE_TYPES = new Set(common.defaultLoggingLevels.filter((level) => level !== "silent"));
+const LOG_LEVEL_OPTIONS = common.defaultLoggingLevels.slice(0, -1);
+const DEFAULT_LOG_LEVEL = "warning";
 
 let wsCleanup = null;
 let logEntries = [];
@@ -140,13 +142,18 @@ return view.extend({
 
     async load() {
         let apiToken = "";
+        let logLevel = DEFAULT_LOG_LEVEL;
 
         try {
             await uci.load(common.binName);
             apiToken = uci.get(common.binName, "proxy", "api_password") || "";
+            logLevel = uci.get(common.binName, "proxy", "log_level") || DEFAULT_LOG_LEVEL;
         } catch (e) {}
 
-        return { apiToken };
+        if (!LOG_LEVEL_OPTIONS.includes(logLevel))
+            logLevel = DEFAULT_LOG_LEVEL;
+
+        return { apiToken, logLevel };
     },
 
     render(results) {
@@ -159,9 +166,7 @@ return view.extend({
                 else
                     resetLogEntries(logContainer);
             }
-        }, common.defaultLoggingLevels
-            .slice(0, -1)
-            .map((level) => E("option", { value: level }, level)));
+        }, LOG_LEVEL_OPTIONS.map((level) => E("option", { value: level }, level)));
 
         const tailBtn = E("button", {
             class: "cbi-button cbi-button-neutral",
@@ -189,6 +194,7 @@ return view.extend({
 
         const levelLabel = E("label", { class: "jc-level-label", for: "jcRealtimeLogLevel" }, [_("Level:")]);
         levelSelect.id = "jcRealtimeLogLevel";
+        levelSelect.value = results.logLevel || DEFAULT_LOG_LEVEL;
 
         const levelControl = E("div", { class: "jc-level-control" }, [levelLabel, levelSelect]);
         const settingsBar = E("div", { class: "jc-actions-wrap" }, [
