@@ -644,7 +644,7 @@ parse_vless_url() {
                                         (if ($xe.downloadSettings // null) != null then {mode: "stream-up"} else {mode: "stream-one"} end)
                                  else
                                         {mode: "packet-up"}
-                                 else {} end)
+                                 end)
                            elif ($xe.mode // "") == "stream-one" or ($xe.mode // "") == "stream-up" or ($xe.mode // "") == "packet-up" then
                                 {mode: $xe.mode}
                            else {} end)
