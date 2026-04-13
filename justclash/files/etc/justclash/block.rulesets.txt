@@ -6,6 +6,7 @@ Category ecommerce RU ADS|category-ecommerce-ru-ads|domain|mrs|https://cdn.jsdel
 Category RU ADS|category-ru-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/category-ru-ads.mrs
 Google ADS|google-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/google-ads.mrs
 Hagezi light ADS|hagezi-light-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-light-ads.mrs
+Hagezi popups ADS|hagezi-popups-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-popups-ads.mrs
 Hagezi pro ADS|hagezi-pro-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-ads.mrs
 Hagezi pro mini ADS|hagezi-pro-mini-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-mini-ads.mrs
 Hagezi pro plus mini ADS|hagezi-pro-plus-mini-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-plus-mini-ads.mrs
@@ -22,8 +23,13 @@ Spotify ADS|spotify-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-p
 Wildberries ADS|wildberries-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/wildberries-ads.mrs
 X ADS|x-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/x-ads.mrs
 X5 ADS|x5-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/x5-ads.mrs
+Hagezi antipiracy|hagezi-antipiracy|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-antipiracy.mrs
 Hagezi badware hosters|hagezi-badware-hosters|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-badware-hosters.mrs
 Hagezi dyndns|hagezi-dyndns|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-dyndns.mrs
+Hagezi fakes scam trap|hagezi-fakes-scam-trap|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-fakes-scam-trap.mrs
+Hagezi gambling medium|hagezi-gambling-medium|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-gambling-medium.mrs
+Hagezi gambling mini|hagezi-gambling-mini|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-gambling-mini.mrs
+Hagezi social network|hagezi-social-network|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-social-network.mrs
 Hagezi spy amazon|hagezi-spy-amazon|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-amazon.mrs
 Hagezi spy apple|hagezi-spy-apple|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-apple.mrs
 Hagezi spy huawei|hagezi-spy-huawei|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-huawei.mrs
@@ -34,3 +40,5 @@ Hagezi spy tiktok|hagezi-spy-tiktok|domain|mrs|https://cdn.jsdelivr.net/gh/salty
 Hagezi spy vivo|hagezi-spy-vivo|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-vivo.mrs
 Hagezi spy winoffice|hagezi-spy-winoffice|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-winoffice.mrs
 Hagezi spy xiaomi|hagezi-spy-xiaomi|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-xiaomi.mrs
+Hagezi tif mini|hagezi-tif-mini|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-tif-mini.mrs
+Hagezi url shorteners|hagezi-url-shorteners|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-url-shorteners.mrs
