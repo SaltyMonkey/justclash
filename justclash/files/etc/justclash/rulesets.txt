@@ -1,22 +1,29 @@
 Antifilter community|antifilter-community|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/antifilter-community.mrs
 Category ai|category-ai|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-ai.mrs
 Category anticensorship|category-anticensorship|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-anticensorship.mrs
+Category bank RU|category-bank-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-bank-ru.mrs
+Category cdn|category-cdn|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-cdn.mrs
 Category container|category-container|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-container.mrs
 Category dev|category-dev|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-dev.mrs
+Category ecommerce RU|category-ecommerce-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-ecommerce-ru.mrs
 Category gov RU|category-gov-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-gov-ru.mrs
+Category ip geo detect|category-ip-geo-detect|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-ip-geo-detect.mrs
+Category password management|category-password-management|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-password-management.mrs
 Category remote control|category-remote-control|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-remote-control.mrs
+Category retail RU|category-retail-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-retail-ru.mrs
 Category RU|category-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-ru.mrs
 Category speedtest|category-speedtest|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-speedtest.mrs
-Drweb|drweb|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/drweb.mrs
+Category tldr RU|category-tldr-ru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/category-tldr-ru.mrs
+Itdog geoblock|itdog-geoblock|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/itdog-geoblock.mrs
 Itdog Russia inside|itdog-russia-inside|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/itdog-russia-inside.mrs
 Just domains|just-domains|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/just-domains.mrs
-Kaspersky|kaspersky|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/kaspersky.mrs
-Mailru|mailru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/mailru.mrs
 No Russia hosts|no-russia-hosts|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/no-russia-hosts.mrs
+Yandex|yandex|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/block/yandex.mrs
 Akamai|akamai|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/akamai.mrs
 Alibaba|alibaba|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/alibaba.mrs
 Amazon|amazon|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/amazon.mrs
 AMD|amd|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/amd.mrs
+Anthropic|anthropic|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/anthropic.mrs
 Anydesk|anydesk|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/anydesk.mrs
 Apple|apple|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/apple.mrs
 Archive|archive|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/archive.mrs
@@ -28,30 +35,25 @@ Broadcom|broadcom|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-
 Bunny|bunny|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/bunny.mrs
 Canon|canon|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/canon.mrs
 Cdn77|cdn77|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/cdn77.mrs
-Chatgpt|chatgpt|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/chatgpt.mrs
 Cisco|cisco|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/cisco.mrs
-Claudeai|claudeai|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/claudeai.mrs
 Cloudflare|cloudflare|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/cloudflare.mrs
 Connectivity check|connectivity-check|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/connectivity-check.mrs
 Copilot|copilot|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/copilot.mrs
 Corel|corel|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/corel.mrs
-Daramalivelife|daramalivelife|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/daramalivelife.mrs
-Deepl|deepl|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/deepl.mrs
 Digitalocean|digitalocean|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/digitalocean.mrs
 Discord|discord|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/discord.mrs
 DNS test|dns-test|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/dns-test.mrs
 Docker|docker|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/docker.mrs
-Doramyclub|doramyclub|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/doramyclub.mrs
 Drweb|drweb|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/drweb.mrs
 Ea|ea|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/ea.mrs
+F droid|f-droid|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/f-droid.mrs
 Fastly|fastly|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/fastly.mrs
-Filmix|filmix|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/filmix.mrs
 Flibusta|flibusta|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/flibusta.mrs
 Gcore|gcore|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/gcore.mrs
 Gemini|gemini|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/gemini.mrs
+Github|github|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/github.mrs
 Google play|google-play|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/google-play.mrs
 Google|google|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/google.mrs
-Grok|grok|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/grok.mrs
 Hdrezka|hdrezka|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/hdrezka.mrs
 Hetzner|hetzner|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/hetzner.mrs
 Hewlett packard|hewlett-packard|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/hewlett-packard.mrs
@@ -61,24 +63,22 @@ Intel|intel|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/s
 Jsdelivr|jsdelivr|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/jsdelivr.mrs
 Kaspersky|kaspersky|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kaspersky.mrs
 Kinopub|kinopub|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kinopub.mrs
-Kinozal|kinozal|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kinozal.mrs
 Kubernetes|kubernetes|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/kubernetes.mrs
 Lenovo|lenovo|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/lenovo.mrs
 Linkedin|linkedin|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/linkedin.mrs
-Lostfilm|lostfilm|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/lostfilm.mrs
 Mailru|mailru|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/mailru.mrs
-Medium|medium|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/medium.mrs
 Mega|mega|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/mega.mrs
 Meta|meta|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/meta.mrs
+Microsoft|microsoft|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/microsoft.mrs
 Mongodb|mongodb|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/mongodb.mrs
 Netflix|netflix|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/netflix.mrs
 Netlify|netlify|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/netlify.mrs
 Nintendo|nintendo|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/nintendo.mrs
 Nix|nix|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/nix.mrs
-Nnmclub|nnmclub|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/nnmclub.mrs
-Notebooklm|notebooklm|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/notebooklm.mrs
 Npmjs|npmjs|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/npmjs.mrs
 Nvidia|nvidia|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/nvidia.mrs
+Openai|openai|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/openai.mrs
+Openstreetmap|openstreetmap|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/openstreetmap.mrs
 Openwrt|openwrt|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/openwrt.mrs
 Oracle|oracle|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/oracle.mrs
 OVH|ovh|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/ovh.mrs
@@ -95,6 +95,7 @@ Steam|steam|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/s
 Tailscale|tailscale|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/tailscale.mrs
 Telegram|telegram|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/telegram.mrs
 Tencent|tencent|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/tencent.mrs
+Tiktok|tiktok|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/tiktok.mrs
 Twitch fix|twitch-fix|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/twitch-fix.mrs
 Twitch|twitch|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/twitch.mrs
 Vercel|vercel|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/vercel.mrs
@@ -102,11 +103,14 @@ Whatsapp|whatsapp|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-
 X|x|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/x.mrs
 Xbox|xbox|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/xbox.mrs
 Youtube|youtube|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/services/youtube.mrs
+Akamai CIDR|akamai-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/akamai.mrs
 Antifilter community CIDR|antifilter-community-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/antifilter-community.mrs
 Apple CIDR|apple-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/apple.mrs
 Bunny CIDR|bunny-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/bunny.mrs
+Cdn77 CIDR|cdn77-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/cdn77.mrs
 Cloudflare CIDR|cloudflare-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/cloudflare.mrs
 Cloudfront CIDR|cloudfront-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/cloudfront.mrs
+Contabo CIDR|contabo-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/contabo.mrs
 Datacamp CIDR|datacamp-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/datacamp.mrs
 Digitalocean CIDR|digitalocean-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/digitalocean.mrs
 Discord voice CIDR|discord-voice-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/discord-voice.mrs
@@ -115,4 +119,7 @@ Gcore CIDR|gcore-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-p
 Hetzner CIDR|hetzner-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/hetzner.mrs
 Meta CIDR|meta-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/meta.mrs
 OVH CIDR|ovh-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/ovh.mrs
+Roblox CIDR|roblox-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/roblox.mrs
+Scalaxy CIDR|scalaxy-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/scalaxy.mrs
+Scaleway CIDR|scaleway-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/scaleway.mrs
 Telegram CIDR|telegram-ipcidr|ipcidr|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/subnets/ipv4/telegram.mrs

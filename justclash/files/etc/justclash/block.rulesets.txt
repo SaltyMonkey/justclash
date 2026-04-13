@@ -1,20 +1,36 @@
+Amazon ADS|amazon-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/amazon-ads.mrs
+Apple ADS|apple-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/apple-ads.mrs
 Category ADS all|category-ads-all|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/category-ads-all.mrs
+Category bank RU ADS|category-bank-ru-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/category-bank-ru-ads.mrs
+Category ecommerce RU ADS|category-ecommerce-ru-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/category-ecommerce-ru-ads.mrs
+Category RU ADS|category-ru-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/category-ru-ads.mrs
 Google ADS|google-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/google-ads.mrs
 Hagezi light ADS|hagezi-light-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-light-ads.mrs
 Hagezi pro ADS|hagezi-pro-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-ads.mrs
 Hagezi pro mini ADS|hagezi-pro-mini-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-mini-ads.mrs
 Hagezi pro plus mini ADS|hagezi-pro-plus-mini-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-pro-plus-mini-ads.mrs
+Hagezi ultimate mini ADS|hagezi-ultimate-mini-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/hagezi-ultimate-mini-ads.mrs
+Meta ADS|meta-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/meta-ads.mrs
+Microsoft ADS|microsoft-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/microsoft-ads.mrs
 Oisd big|oisd-big|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-big.mrs
 Oisd NSFW small|oisd-nsfw-small|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-nsfw-small.mrs
 Oisd NSFW|oisd-nsfw|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-nsfw.mrs
 Oisd small|oisd-small|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/oisd-small.mrs
+Ozon ADS|ozon-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/ozon-ads.mrs
+Sber ADS|sber-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/sber-ads.mrs
+Spotify ADS|spotify-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/spotify-ads.mrs
+Wildberries ADS|wildberries-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/wildberries-ads.mrs
+X ADS|x-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/x-ads.mrs
+X5 ADS|x5-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/x5-ads.mrs
 Hagezi badware hosters|hagezi-badware-hosters|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-badware-hosters.mrs
 Hagezi dyndns|hagezi-dyndns|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-dyndns.mrs
+Hagezi spy amazon|hagezi-spy-amazon|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-amazon.mrs
 Hagezi spy apple|hagezi-spy-apple|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-apple.mrs
 Hagezi spy huawei|hagezi-spy-huawei|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-huawei.mrs
 Hagezi spy lgwebos|hagezi-spy-lgwebos|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-lgwebos.mrs
 Hagezi spy opporealme|hagezi-spy-opporealme|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-opporealme.mrs
 Hagezi spy samsung|hagezi-spy-samsung|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-samsung.mrs
+Hagezi spy tiktok|hagezi-spy-tiktok|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-tiktok.mrs
 Hagezi spy vivo|hagezi-spy-vivo|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-vivo.mrs
 Hagezi spy winoffice|hagezi-spy-winoffice|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-winoffice.mrs
 Hagezi spy xiaomi|hagezi-spy-xiaomi|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-spy-xiaomi.mrs
