@@ -23,6 +23,7 @@ Spotify ADS|spotify-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-p
 Wildberries ADS|wildberries-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/wildberries-ads.mrs
 X ADS|x-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/x-ads.mrs
 X5 ADS|x5-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/x5-ads.mrs
+Yandex ADS|yandex-ads|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/ads/yandex-ads.mrs
 Hagezi antipiracy|hagezi-antipiracy|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-antipiracy.mrs
 Hagezi badware hosters|hagezi-badware-hosters|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-badware-hosters.mrs
 Hagezi dyndns|hagezi-dyndns|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data/badware/hagezi-dyndns.mrs
