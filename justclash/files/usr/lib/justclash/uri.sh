@@ -655,6 +655,12 @@ parse_vless_url() {
                         + (if (($xe.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $xe.xPaddingBytes}
                            elif (($xe["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $xe["x-padding-bytes"]}
                            else {} end)
+                        + (if (($xe.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $xe.scMaxEachPostBytes}
+                           elif (($xe["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $xe["sc-max-each-post-bytes"]}
+                           else {} end)
+                        + (if (($xe.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $xe.scMinPostsIntervalMs}
+                           elif (($xe["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $xe["sc-min-posts-interval-ms"]}
+                           else {} end)
                         + (if ($xmux | type) == "object" and ($xmux | length) > 0 then
                                 {"reuse-settings": (
                                     {}
@@ -663,6 +669,9 @@ parse_vless_url() {
                                     + (if (($xmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": $xmux.cMaxReuseTimes} else {} end)
                                     + (if (($xmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": $xmux.hMaxRequestTimes} else {} end)
                                     + (if (($xmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": $xmux.hMaxReusableSecs} else {} end)
+                                    + (if (($xmux.hKeepAlivePeriod // "") | tostring) != "" then {"h-keep-alive-period": ($xmux.hKeepAlivePeriod | tonumber)}
+                                       elif (($xmux["h-keep-alive-period"] // "") | tostring) != "" then {"h-keep-alive-period": ($xmux["h-keep-alive-period"] | tonumber)}
+                                       else {} end)
                                 )}
                            else {} end)
                         + (if ($xe.downloadSettings // null) != null and (($xe.downloadSettings | type) == "object") then
@@ -691,6 +700,16 @@ parse_vless_url() {
                                        elif (($dx.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $dx.xPaddingBytes}
                                        elif (($dx["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $dx["x-padding-bytes"]}
                                        else {} end)
+                                    + (if (($ds.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds.scMaxEachPostBytes}
+                                       elif (($ds["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds["sc-max-each-post-bytes"]}
+                                       elif (($dx.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $dx.scMaxEachPostBytes}
+                                       elif (($dx["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $dx["sc-max-each-post-bytes"]}
+                                       else {} end)
+                                    + (if (($ds.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds.scMinPostsIntervalMs}
+                                       elif (($ds["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds["sc-min-posts-interval-ms"]}
+                                       elif (($dx.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $dx.scMinPostsIntervalMs}
+                                       elif (($dx["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $dx["sc-min-posts-interval-ms"]}
+                                       else {} end)
                                     + (if ($dsmux | type) == "object" and ($dsmux | length) > 0 then
                                             {"reuse-settings": (
                                                 {}
@@ -699,6 +718,9 @@ parse_vless_url() {
                                                 + (if (($dsmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": $dsmux.cMaxReuseTimes} else {} end)
                                                 + (if (($dsmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": $dsmux.hMaxRequestTimes} else {} end)
                                                 + (if (($dsmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": $dsmux.hMaxReusableSecs} else {} end)
+                                                + (if (($dsmux.hKeepAlivePeriod // "") | tostring) != "" then {"h-keep-alive-period": ($dsmux.hKeepAlivePeriod | tonumber)}
+                                                   elif (($dsmux["h-keep-alive-period"] // "") | tostring) != "" then {"h-keep-alive-period": ($dsmux["h-keep-alive-period"] | tonumber)}
+                                                   else {} end)
                                             )}
                                        else {} end)
                                     + (if (($ds.server // "") | tostring) != "" then {server: $ds.server} else {} end)
