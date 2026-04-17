@@ -1,11 +1,10 @@
 "use strict";
 "require view";
 "require uci";
-"require ui";
 "require view.justclash.helper_common as common";
+"require view.justclash.helper_fs_api as fsApi";
 "require view.justclash.helper_names as names";
 "require form";
-"require fs";
 "require tools.widgets as widgets";
 
 const JSON_OBJECT_ROWS = 10;
@@ -16,38 +15,9 @@ return view.extend({
         let blockRulesetsItems = [];
 
         try {
-            const rulesetsFile = await fs.read(common.rulesetsFilePath);
-            if (rulesetsFile) {
-                const rulesetsLines = rulesetsFile.split('\n');
-                rulesetsItems = rulesetsLines
-                    .filter(line => line.trim() && !line.trim().startsWith('#'))
-                    .map(line => {
-                        const [name, yamlName] = line.split('|');
-                        return { name: name ? name.trim() : null, yamlName: yamlName ? yamlName.trim() : null };
-                    })
-                    .filter(item => item.name && item.yamlName);
-            }
-        } catch (e) {
-            ui.addNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), "error");
-            console.error("Error loading rulesets:", e);
-        }
-
-        try {
-            const blockRulesetsFile = await fs.read(common.blockRulesetsFilePath);
-            if (blockRulesetsFile) {
-                const blockRulesetsLines = blockRulesetsFile.split('\n');
-                blockRulesetsItems = blockRulesetsLines
-                    .filter(line => line.trim() && !line.trim().startsWith('#'))
-                    .map(line => {
-                        const [name, yamlName] = line.split('|');
-                        return { name: name ? name.trim() : null, yamlName: yamlName ? yamlName.trim() : null };
-                    })
-                    .filter(item => item.name && item.yamlName);
-            }
-        } catch (e) {
-            ui.addTimeLimitedNotification(null, E("p", _("Failed to load rulesets") + ": " + (e.message || e)), common.notificationTimeout, "error");
-            console.error("Error loading rulesets:", e);
-        }
+            rulesetsItems = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
+            blockRulesetsItems = await fsApi.readNameYamlEntries(common.blockRulesetsFilePath);
+        } catch (e) {}
 
         return {
             rulesetsItems,

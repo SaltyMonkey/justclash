@@ -6,6 +6,7 @@
 "require view.justclash.helper_clipboard as clipboard";
 "require view.justclash.helper_luci_session as luciSession";
 "require view.justclash.helper_common as common";
+"require view.justclash.helper_fs_api as fsApi";
 "require view.justclash.helper_mihomo_api as mihomoApi";
 "require rpc";
 
@@ -148,16 +149,6 @@ const asyncTimeout = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const boolToWordAutostart = (val) => val ? _("Enabled") : _("Disabled");
 const boolToWordRunning = (val) => val ? _("Running") : _("Stopped");
-
-const isServiceAutoStartEnabled = async () => {
-    const res = await fs.exec(common.initdPath, ["enabled"]);
-    return res.code === 0;
-};
-
-const isServiceRunning = async () => {
-    const res = await fs.exec(common.initdPath, ["running"]);
-    return res.code === 0;
-};
 
 const createActionButton = (action, cssClass, label, handler, iconKey) =>
     E("button", {
@@ -314,8 +305,8 @@ const updateServiceStatus = async (dynamicElements) => {
         }
 
         const [isRunning, isAutostarting] = await Promise.all([
-            isServiceRunning().catch(() => false),
-            isServiceAutoStartEnabled().catch(() => false)
+            fsApi.isServiceRunning().catch(() => false),
+            fsApi.isServiceAutoStartEnabled().catch(() => false)
         ]);
         requestAnimationFrame(() => updateUI(dynamicElements, isAutostarting, isRunning));
     } finally {
@@ -500,8 +491,8 @@ return view.extend({
             .catch(() => null);
 
         const statusPromise = Promise.all([
-            isServiceRunning().catch(() => false),
-            isServiceAutoStartEnabled().catch(() => false)
+            fsApi.isServiceRunning().catch(() => false),
+            fsApi.isServiceAutoStartEnabled().catch(() => false)
         ]);
 
         const [
