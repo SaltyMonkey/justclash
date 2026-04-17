@@ -272,7 +272,10 @@ start_core() {
     # shellcheck disable=SC2154
     if [ "$JUSTCLASH_ENV" = "procd" ]; then
         while [ "$attempt" -lt "$DEFAULT_CORE_RESTART_RETRIES" ]; do
-            "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
+            (
+                set -o pipefail
+                "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
+            )
             exit_code=$?
             log warn "Procd mode: Mihomo exited with code $exit_code" "❌"
 
@@ -1876,10 +1879,13 @@ get_latest_version_url() {
         jq_filter='.assets[] | select(.name == "version.txt") | .browser_download_url'
     fi
 
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
-        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$api_url" | jq -r "$jq_filter"
+    (
+        set -o pipefail
+        curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+            --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+            --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
+            -sL "$api_url" | jq -r "$jq_filter"
+    )
 }
 
 get_release_asset_digest() {
@@ -1896,10 +1902,13 @@ get_release_asset_digest() {
         jq_filter='.assets[] | select(.name == $name) | (.digest // "")'
     fi
 
-    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
-        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$api_url" | jq -r --arg name "$asset_name" "$jq_filter" | sed -n '1p'
+    (
+        set -o pipefail
+        curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+            --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+            --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
+            -sL "$api_url" | jq -r --arg name "$asset_name" "$jq_filter" | sed -n '1p'
+    )
 }
 
 core_update() {
