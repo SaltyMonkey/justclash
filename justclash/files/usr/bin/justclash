@@ -1935,10 +1935,13 @@ core_update() {
         return 1
     fi
 
-    latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+    latest_ver=$(
+        set -o pipefail
+        curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p) || {
+        -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p
+    ) || {
         log error "Failed to download version.txt." "❌"
         return 1
     }
