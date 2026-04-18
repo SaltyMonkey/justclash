@@ -695,17 +695,14 @@ check_for_conflicts() {
 }
 
 check_for_conflicts_warn() {
-    local external_nameservers resolvconf_res
+    local resolvconf_res
     local service_path
 
-    external_nameservers=$(
-        awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" { print; found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
-    )
+    awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" { found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
     resolvconf_res=$?
 
     if [ "$resolvconf_res" -eq 0 ]; then
         log warn "Warning: External DNS servers are listed in /etc/resolv.conf" "⚠️"
-        log warn "Found: $external_nameservers" "⚠️"
         log warn "This may bypass local DNS rules and cause unexpected query results." "⚠️"
         log warn "If you intend to use a local DNS service, these entries should be removed." "⚠️"
     fi
@@ -2271,7 +2268,6 @@ diag_external_resolver() {
         clog error "External DNS query failed" "❌"
         return 1
     else
-        clog info "Resolved addresses: $ips"
         clog info "External DNS query successful" "✅"
         return 0
     fi
