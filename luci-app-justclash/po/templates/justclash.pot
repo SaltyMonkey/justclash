@@ -1792,8 +1792,16 @@ msgstr ""
 msgid "Update Mihomo core"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/status.js:595 htdocs/luci-static/resources/view/justclash/status.js:595
+#: htdocs/luci-static/resources/view/justclash/status.js:598
+msgid "Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:614 htdocs/luci-static/resources/view/justclash/status.js:614
 msgid "Update service data"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/status.js:614
+msgid "This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:600

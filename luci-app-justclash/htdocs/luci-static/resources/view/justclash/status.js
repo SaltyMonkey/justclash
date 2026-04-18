@@ -595,7 +595,7 @@ return view.extend({
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), _("Diagnostic output may include sensitive configuration and connection details."), common.binPath, ["diag_report"]), "diagnostic"),
-                createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showExecModalHandler(_("Update Mihomo core"), false, common.binPath, ["core_update"], async () => {
+                createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showConfirmExecModalHandler(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), common.binPath, ["core_update"], async () => {
                     const res = await fs.exec(common.binPath, ["_luci_call"]);
                     const [infoPackage, fallbackCoreVersion] = cleanStdout(res).split(",");
                     let infoCore = fallbackCoreVersion;
@@ -611,7 +611,7 @@ return view.extend({
                         dynamicElements.coreValue.textContent = infoCore || _("Error");
                 }), "update"),
                 createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.NEUTRAL, _("Update rulesets"), showUpdateRulesetsModalHandler(results.apiToken), "update"),
-                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showExecModalHandler(_("Update service data"), false, common.binPath, ["service_data_update"]), "serviceData")
+                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showConfirmExecModalHandler(_("Update service data"), _("This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), common.binPath, ["service_data_update"]), "serviceData")
             ])
         ]);
 
