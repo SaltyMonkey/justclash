@@ -532,27 +532,19 @@ msgstr "Кэш DNS:"
 msgid "Maximum number of DNS cache entries kept by Mihomo."
 msgstr "Максимальное количество DNS-записей, которое Mihomo хранит в кэше."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:196
-msgid "Fake IP filter:"
-msgstr "Фильтр Fake IP:"
-
-#: htdocs/luci-static/resources/view/justclash/proxy.js:199
-msgid "Choose how fake-IP domain lists are interpreted."
-msgstr "Выберите, как интерпретируются списки доменов для fake-IP."
-
-#: htdocs/luci-static/resources/view/justclash/proxy.js:203
+#: htdocs/luci-static/resources/view/justclash/proxy.js:202
 msgid "Fake IP range:"
 msgstr "Диапазон Fake IP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:204
+#: htdocs/luci-static/resources/view/justclash/proxy.js:203
 msgid "IPv4 CIDR range used for fake-IP responses."
 msgstr "Диапазон IPv4 CIDR, который используется для fake-IP ответов."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:210
+#: htdocs/luci-static/resources/view/justclash/proxy.js:209
 msgid "Fake IP TTL:"
 msgstr "TTL Fake IP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:211
+#: htdocs/luci-static/resources/view/justclash/proxy.js:210
 msgid "TTL for fake-IP DNS responses."
 msgstr "TTL для DNS-ответов с fake-IP."
 
@@ -616,43 +608,59 @@ msgstr "DNS-серверы:"
 msgid "Main nameservers used for regular DNS queries."
 msgstr "Основные DNS-серверы, используемые для обычных DNS-запросов."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:288
-msgid "Use fake IP for domains:"
-msgstr "Fake IP для доменов:"
-
-#: htdocs/luci-static/resources/view/justclash/proxy.js:289
-msgid "Include selected domains for the Fake IP cache."
-msgstr "Включить выбранные домены в кэш Fake IP."
-
-#: htdocs/luci-static/resources/view/justclash/proxy.js:296
-msgid "Skip fake IP for domains:"
-msgstr "Домены без Fake IP:"
+#: htdocs/luci-static/resources/view/justclash/proxy.js:293
+msgid "Force fake IP rulesets:"
+msgstr "Принудительные ruleset'ы для fake IP:"
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:297
-msgid "Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps."
-msgstr "Исключить выбранные домены из кэша Fake IP. Иногда это помогает избежать ошибок в приложениях."
+msgid "Ruleset names that should resolve through fake IP. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list."
+msgstr "Имена ruleset'ов, которые должны резолвиться через fake IP. Значения трактуются как селекторы RULE-SET, например youtube или custom_domain_list."
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:303
+msgid "Force real IP rulesets:"
+msgstr "Принудительные ruleset'ы для real IP:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:307
+msgid "Ruleset names that should resolve through real IP before fake-IP matches are applied. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list."
+msgstr "Имена ruleset'ов, которые должны резолвиться через real IP до применения fake-IP совпадений. Значения трактуются как селекторы RULE-SET, например youtube или custom_domain_list."
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:313
+msgid "Force fake IP rules:"
+msgstr "Принудительные правила fake IP:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:314
+msgid "Entries that should resolve through fake IP; use plain suffixes like example.com."
+msgstr "Записи, которые должны резолвиться через fake IP; используйте обычные суффиксы вроде example.com."
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:320
+msgid "Force real IP rules:"
+msgstr "Принудительные правила real IP:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:321
+msgid "Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com."
+msgstr "Записи, которые должны резолвиться через real IP до применения fake-IP совпадений; используйте обычные суффиксы вроде example.com."
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:30
 msgid "Basic settings"
 msgstr "Базовые настройки"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:305
+#: htdocs/luci-static/resources/view/justclash/proxy.js:328
 msgid "Sniffer settings"
 msgstr "Настройки анализатора"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:307
+#: htdocs/luci-static/resources/view/justclash/proxy.js:330
 msgid "Enable sniffer:"
 msgstr "Включить sniffer:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:308
+#: htdocs/luci-static/resources/view/justclash/proxy.js:331
 msgid "Enable Mihomo traffic sniffing."
 msgstr "Включить анализ трафика Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:312
+#: htdocs/luci-static/resources/view/justclash/proxy.js:335
 msgid "Parse pure IP:"
 msgstr "Анализ IP без домена:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:313
+#: htdocs/luci-static/resources/view/justclash/proxy.js:336
 msgid "Force domain detection for traffic without resolved domain names."
 msgstr "Принудительно определять домен для трафика без доменного имени."
 
