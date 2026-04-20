@@ -1,3 +1,32 @@
+## [0.11.0] - 20042026
+
+- Service: Added proper `pipefail` handling for Mihomo startup and release metadata/version fetch pipelines
+- Service: Reworked fake-IP generation around Mihomo `fake-ip-filter-mode: rule` instead of the old include/exclude mode split
+- Service: Added manual fake/real IP override support for `RULE-SET` and `DOMAIN-SUFFIX` entries via `fake_ip_include_*` and `fake_ip_exclude_*`
+- Service: Auto-generates fake-IP rules from `direct`, `proxy_groups` and `proxies`, while leaving block-policy lists for `nameserver-policy`
+- Service: Simplified the related shell generation flow and removed duplicate fake-IP assembly logic
+- Service: Reduced noisy conflict logging for external DNS warnings
+- Parser: Updated `vless`/`xhttp` URI parsing with additional `sc-*` and `h-keep-alive-period` fields in main and download settings
+- Config: Updated default `global_ua` to a realistic current Chrome-on-Linux User-Agent
+- UCI: Removed obsolete `fake_ip_filter_mode` option from shipped config and structure docs
+- UCI: Added `fake_ip_include_rulesets` and `fake_ip_exclude_rulesets` examples to `info/uci-structure`
+- Docs: Updated shipped config examples and `info/uci-structure` for the new fake-IP layout and default UA value
+- Data: Expanded bundled `rulesets.txt` and `block.rulesets.txt` catalogs with many new domain and CIDR lists
+- LuCI: Added shared `helper_fs_api.js` for safe file reads, ruleset list parsing and service status helpers
+- LuCI: Reworked fake-IP controls around rule-based fake/real IP overrides
+- LuCI: Added ruleset suggestions for fake-IP ruleset override fields from `rulesets.txt`
+- LuCI: Simplified fake-IP field wording to match actual `DOMAIN-SUFFIX` behavior instead of the previous interpretive dance
+- LuCI: Removed the old fake-IP filter mode selector and replaced it with explicit fake/real IP override fields
+- LuCI: Refactored `routing.js` and `status.js` to use shared filesystem/service helpers instead of duplicating parsing and init.d status logic
+- LuCI: Added confirmation dialogs for `Update core` and `Update service data` actions
+- LuCI: Refreshed bundled screenshots/assets for the current page set and removed the old `logs` image
+- LuCI: Updated the default `global_ua`
+- Translation: Updated `pot` and `ru.po` entries for the new fake-IP UI and current LuCI wording
+- Build: Removed tracked `wiki` submodule from git metadata and ignored local `wiki/`
+
+**This version requires:**
+- Browser cache should be cleaned up after LuCI update
+
 ## [0.10.0] - 12042026
 
 - Service: Added logic for `size_limit`
