@@ -147,7 +147,7 @@ return baseclass.extend({
         { value: "DROP", text: _("Drop") },
         { value: "DIRECT", text: _("Direct") }
     ],
-    defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.2.6172.169 Safari/537.36",
+    defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.101 Safari/537.36",
     defaultFingerprints: [
         "chrome",
         "firefox",
