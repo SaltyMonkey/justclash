@@ -3,11 +3,23 @@
 "require form";
 "require view";
 "require view.justclash.helper_common as common";
+"require view.justclash.helper_fs_api as fsApi";
 "require tools.widgets as widgets";
 
 return view.extend({
+    async load() {
+        let rulesetsItems = [];
 
-    render: function () {
+        try {
+            rulesetsItems = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
+        } catch (e) {}
+
+        return {
+            rulesetsItems
+        };
+    },
+
+    render: function (result) {
         let m, s, o, tabname;
 
         const primitives = {
@@ -193,13 +205,6 @@ return view.extend({
         o.rmempty = false;
         o.datatype = "integer";
 
-        o = s.taboption(tabname, form.ListValue, "fake_ip_filter_mode", _("Fake IP filter:"));
-        o.value("blacklist", _(`blacklist`));
-        o.value("whitelist", _(`whitelist`));
-        o.description = _("Choose how fake-IP domain lists are interpreted.");
-        o.default = "whitelist";
-        o.rmempty = false;
-
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
         o.description = _("IPv4 CIDR range used for fake-IP responses.");
         o.default = "198.18.0.1/22";
@@ -285,21 +290,39 @@ return view.extend({
             return true;
         };
 
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_include_domains", _("Use fake IP for domains:"));
-        o.description = _("Include selected domains for the Fake IP cache.");
-        o.rmempty = false;
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_include_rulesets", _("Force fake IP rulesets:"));
+        result.rulesetsItems.forEach(item => {
+            o.value(item.yamlName, item.name);
+        });
+        o.description = _("Ruleset names that should resolve through fake IP. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list.");
+        o.rmempty = true;
         o.retain = true;
         o.editable = true;
         o.optional = true;
-        o.depends("fake_ip_filter_mode", "whitelist");
 
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Skip fake IP for domains:"));
-        o.description = _("Exclude selected domains from the Fake IP cache. This can sometimes help with bugs in apps.");
-        o.rmempty = false;
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_rulesets", _("Force real IP rulesets:"));
+        result.rulesetsItems.forEach(item => {
+            o.value(item.yamlName, item.name);
+        });
+        o.description = _("Ruleset names that should resolve through real IP before fake-IP matches are applied. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list.");
+        o.rmempty = true;
         o.retain = true;
         o.editable = true;
         o.optional = true;
-        o.depends("fake_ip_filter_mode", "blacklist");
+
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_include_domains", _("Force fake IP rules:"));
+        o.description = _("Entries that should resolve through fake IP; use plain suffixes like example.com.");
+        o.rmempty = true;
+        o.retain = true;
+        o.editable = true;
+        o.optional = true;
+
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Force real IP rules:"));
+        o.description = _("Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com.");
+        o.rmempty = true;
+        o.retain = true;
+        o.editable = true;
+        o.optional = true;
 
         tabname = "sniffersettings_tab";
         s.tab(tabname, _("Sniffer settings"));
