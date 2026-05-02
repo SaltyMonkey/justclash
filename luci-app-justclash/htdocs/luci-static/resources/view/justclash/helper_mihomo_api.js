@@ -24,6 +24,15 @@ return baseclass.extend({
     },
 
     // URL builders
+    addSearchParams(url, searchParams = null) {
+        if (!searchParams)
+            return;
+
+        Object.entries(searchParams).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "")
+                url.searchParams.set(key, value);
+        });
+    },
     buildUrl(path, protocol, searchParams = null) {
         const url = new URL(window.location.href);
         url.protocol = protocol;
@@ -32,17 +41,18 @@ return baseclass.extend({
         url.search = "";
         url.hash = "";
 
-        if (searchParams) {
-            Object.entries(searchParams).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && value !== "")
-                    url.searchParams.set(key, value);
-            });
-        }
+        this.addSearchParams(url, searchParams);
 
         return url.toString();
     },
+    getHttpProtocol() {
+        return window.location.protocol === "https:" ? "https:" : "http:";
+    },
+    getWsProtocol() {
+        return window.location.protocol === "https:" ? "wss:" : "ws:";
+    },
     getHttpUrl(path, searchParams = null) {
-        return this.buildUrl(path, "http:", searchParams);
+        return this.buildUrl(path, this.getHttpProtocol(), searchParams);
     },
     getWsUrl(path, token, searchParams = null) {
         const params = Object.assign({}, searchParams || {});
@@ -51,7 +61,7 @@ return baseclass.extend({
         if (token)
             params.token = token;
 
-        return this.buildUrl(path, "ws:", params);
+        return this.buildUrl(path, this.getWsProtocol(), params);
     },
 
     // Generic HTTP helpers
