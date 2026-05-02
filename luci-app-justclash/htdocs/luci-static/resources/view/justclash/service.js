@@ -86,6 +86,9 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("nft_apply_changes", primitives.TRUE);
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 1, 32766);
+        };
 
         o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Set router traffic rules at startup:"));
         o.description = _("Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too.");
@@ -98,16 +101,7 @@ return view.extend({
         o.rmempty = true;
         o.depends("nft_apply_changes_router", primitives.TRUE);
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "")
-                return true;
-
-            const trimmedValue = value.trim();
-            if (/^\d+$/.test(trimmedValue))
-                return true;
-
-            return /^[A-Za-z_][A-Za-z0-9_-]*[$]?$/.test(trimmedValue)
-                ? true
-                : _("Use a user name or numeric UID");
+            return common.validateUsernameOrUid(value);
         };
 
         // copypasted from Podkop devs

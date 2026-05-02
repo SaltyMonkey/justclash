@@ -62,7 +62,7 @@ return view.extend({
             return names.generateRandomName();
         };
         o.validate = function (section_id, value) {
-            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+            return common.validateSimpleName(value);
         };
 
         o = s.taboption(tabname, form.ListValue, "mode", _("Mode:"));
@@ -79,21 +79,7 @@ return view.extend({
         o.optional = true;
         o.depends("mode", "object");
         o.validate = function (section_id, value) {
-            //if (!value || value.length === 0) return true;
-            try {
-                const parsed = JSON.parse(value);
-                if (parsed.name)
-                    return _('Name field must not be defined in object.');
-                if (parsed.type == "direct" && (parsed.server || parsed.port))
-                    return _('DIRECT proxy type must be defined without server or port fields.');
-                if (parsed.type == "direct") return true;
-
-                if (!parsed.type || !parsed.server || !parsed.port)
-                    return _('JSON must contain at least type, server and server fields.');
-                return true;
-            } catch {
-                return _('Invalid JSON format');
-            }
+            return common.validateProxyJsonObject(value);
         };
 
         o = s.taboption(tabname, form.Value, "proxy_link_uri", _("Link:"));
@@ -114,7 +100,7 @@ return view.extend({
             if (value === "" || value === undefined || value === null) {
                 return true;
             }
-            return (common.isValidSimpleName(value)) ? true : _("Invalid name.");
+            return common.validateSimpleName(value);
         };
         o.depends("mode", "uri");
 
@@ -169,12 +155,7 @@ return view.extend({
         o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
         o.optional = true;
         o.validate = function (section_id, value) {
-            if (value === "") return true;
-            let v = parseInt(value);
-            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
-            }
-            return true;
+            return common.validateListUpdateInterval(value);
         };
 
         o = s.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
@@ -232,7 +213,7 @@ return view.extend({
             return names.generateRandomName();
         };
         o.validate = function (section_id, value) {
-            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+            return common.validateSimpleName(value);
         };
 
         o = spp.taboption(tabname, form.Value, "subscription", _("Subscription URL:"));
@@ -251,7 +232,7 @@ return view.extend({
             if (value === "" || value === undefined || value === null) {
                 return true;
             }
-            return (common.isValidSimpleName(value)) ? true : _("Invalid name.");
+            return common.validateSimpleName(value);
         };
 
         o = spp.taboption(tabname, widgets.DeviceSelect, "override_interface_name", _("Bind to interface:"));
@@ -291,10 +272,7 @@ return view.extend({
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") {
-                return _("This field cannot be empty");
-            }
-            return true;
+            return common.validateExitRule(value);
         };
 
         tabname = "proxyproviderhelthchk_tab";
@@ -328,6 +306,9 @@ return view.extend({
         o.retain = true;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Required response status for node availability check (required for proxy provider functionality).");
+        o.validate = function (section_id, value) {
+            return common.validateHttpStatus(value);
+        };
 
         o = spp.taboption(tabname, form.Value, "health_check_interval", _("Check interval:"));
         o.datatype = datatypes.UINTEGER;
@@ -338,6 +319,9 @@ return view.extend({
         o.retain = true;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Time interval between health checks in seconds.");
+        o.validate = function (section_id, value) {
+            return common.validateSecondsInterval(value);
+        };
 
         o = spp.taboption(tabname, form.Value, "health_check_timeout", _("Check timeout:"));
         o.datatype = datatypes.UINTEGER;
@@ -348,6 +332,9 @@ return view.extend({
         o.retain = true;
         o.depends("health_check", primitives.TRUE);
         o.description = _("Timeout for each individual health check in milliseconds.");
+        o.validate = function (section_id, value) {
+            return common.validateMillisecondsTimeout(value);
+        };
 
         o = spp.taboption(tabname, form.Flag, "health_check_lazy", _("Lazy:"));
         o.default = primitives.TRUE;
@@ -380,23 +367,7 @@ return view.extend({
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            const regex = /^[a-z0-9|]+$/;
-            if (!regex.test(value)) {
-                return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
-            }
-
-            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5", "mieru"];
-            const types = value.split("|");
-
-            for (let i = 0; i < types.length; i++) {
-                const type = types[i].trim();
-                if (type && !allowedTypes.includes(type)) {
-                    return _("Unsupported type: ") + type;
-                }
-            }
-
-            return true;
+            return common.validateProxyTypeFilter(value);
         };
 
         s2 = m.section(form.TypedSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing, URL test)."));
@@ -421,7 +392,7 @@ return view.extend({
             return names.generateRandomName();
         };
         o.validate = function (section_id, value) {
-            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+            return common.validateSimpleName(value);
         };
 
         o = s2.taboption(tabname, form.ListValue, "group_type", _("Group type:"));
@@ -448,7 +419,7 @@ return view.extend({
         o.editable = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
-            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+            return common.validateSimpleName(value);
         };
 
         o = s2.taboption(tabname, form.DynamicList, "providers", _("Providers:"));
@@ -458,7 +429,7 @@ return view.extend({
         o.editable = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
-            return (common.isValidSimpleName(value)) ? true : _("Name must contain only lowercase letters, digits, and underscores");
+            return common.validateSimpleName(value);
         };
 
         tabname = "proxygrouphelthchk_tab";
@@ -483,6 +454,9 @@ return view.extend({
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         o.description = _("Required response status for node availability check (required for proxy group functionality).");
+        o.validate = function (section_id, value) {
+            return common.validateHttpStatus(value);
+        };
 
         o = s2.taboption(tabname, form.Value, "check_interval", _("Check interval:"));
         o.datatype = datatypes.UINTEGER;
@@ -491,6 +465,9 @@ return view.extend({
         });
         o.default = common.defaultProxyGroupIntervalSec[2].value;
         o.description = _("Time interval between health checks in seconds.");
+        o.validate = function (section_id, value) {
+            return common.validateSecondsInterval(value);
+        };
 
         o = s2.taboption(tabname, form.Value, "tolerance", _("Tolerance:"));
         o.datatype = datatypes.UINTEGER;
@@ -500,6 +477,9 @@ return view.extend({
         o.default = common.defaultUrlTestToleranceMs[4].value;
         o.description = _("Proxies switch tolerance, measured in milliseconds (ms).");
         o.depends("group_type", "url-test");
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 0, 10000);
+        };
 
         o = s2.taboption(tabname, form.Value, "check_timeout", _("Check timeout:"));
         o.datatype = datatypes.UINTEGER;
@@ -508,6 +488,9 @@ return view.extend({
         });
         o.default = common.defaultHealthCheckTimeoutMs[3].value;
         o.description = _("Timeout for each individual health check in milliseconds.");
+        o.validate = function (section_id, value) {
+            return common.validateMillisecondsTimeout(value);
+        };
 
         o = s2.taboption(tabname, form.Value, "max_failed_times", _("Max failed times:"));
         o.datatype = datatypes.UINTEGER;
@@ -517,6 +500,9 @@ return view.extend({
         o.default = common.defaultMaxFailedTimes[4].value;
         o.placeholder = common.defaultMaxFailedTimes[4].value;
         o.description = _("How many failed health checks are allowed before the node is treated as unavailable.");
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 1, 100);
+        };
 
         o = s2.taboption(tabname, form.Flag, "lazy", _("Lazy:"));
         o.default = primitives.TRUE;
@@ -549,23 +535,7 @@ return view.extend({
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            const regex = /^[a-z0-9|]+$/;
-            if (!regex.test(value)) {
-                return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
-            }
-
-            const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5", "mieru"];
-            const types = value.split("|");
-
-            for (let i = 0; i < types.length; i++) {
-                const type = types[i].trim();
-                if (type && !allowedTypes.includes(type)) {
-                    return _("Unsupported type: ") + type;
-                }
-            }
-
-            return true;
+            return common.validateProxyTypeFilter(value);
         };
 
         tabname = "proxiesgrouplist_tab";
@@ -609,12 +579,7 @@ return view.extend({
         o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
         o.optional = true;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            let v = parseInt(value);
-            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
-            }
-            return true;
+            return common.validateListUpdateInterval(value);
         };
 
         o = s2.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
@@ -689,10 +654,7 @@ return view.extend({
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") {
-                return _("This field cannot be empty");
-            }
-            return true;
+            return common.validateExitRule(value);
         };
 
         o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
@@ -704,12 +666,7 @@ return view.extend({
         });
         o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            let v = parseInt(value);
-            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
-            }
-            return true;
+            return common.validateListUpdateInterval(value);
         };
 
         o = s3.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
@@ -765,10 +722,7 @@ return view.extend({
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") {
-                return _("This field cannot be empty");
-            }
-            return true;
+            return common.validateExitRule(value);
         };
 
         o = s4.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
@@ -780,12 +734,7 @@ return view.extend({
         });
         o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            let v = parseInt(value);
-            if (isNaN(v) || v < common.minimalRuleSetUpdateInterval) {
-                return _("Value must be above %s secs.").replace("%s", common.minimalRuleSetUpdateInterval);
-            }
-            return true;
+            return common.validateListUpdateInterval(value);
         };
 
         o = s4.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
@@ -830,10 +779,7 @@ return view.extend({
         o.rmempty = false;
         o.description = _("Choose which proxy, group, or action handles traffic that comes in through the Mihomo mixed port.");
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") {
-                return _("This field cannot be empty");
-            }
-            return true;
+            return common.validateExitRule(value);
         };
 
         s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Default rule:"), _("Used when no other rule matches. This is the fallback action for the remaining traffic."));
@@ -849,10 +795,7 @@ return view.extend({
         optionFinal.rmempty = false;
         optionFinal.description = _("Choose the fallback action for traffic that does not match any earlier rule.");
         optionFinal.validate = function (section_id, value) {
-            if (!value || value.trim() === "") {
-                return _("This field cannot be empty");
-            }
-            return true;
+            return common.validateExitRule(value);
         };
 
         const style = E("style", {}, `

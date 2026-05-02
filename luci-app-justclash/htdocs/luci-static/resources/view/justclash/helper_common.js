@@ -181,6 +181,36 @@ return baseclass.extend({
     ],
 
     // Form helpers and validators
+    hasControlChars: function (value) {
+        return /[\x00-\x1F\x7F]/.test(String(value || ""));
+    },
+    validateIntegerRange: function (value, min, max) {
+        const val = String(value || "").trim();
+
+        if (!/^\d+$/.test(val))
+            return _("Use a non-negative integer");
+
+        const number = Number(val);
+        if (!Number.isSafeInteger(number))
+            return _("Number is too large");
+
+        if (min !== null && number < min)
+            return _("Value must be at least %s").replace("%s", min);
+
+        if (max !== null && number > max)
+            return _("Value must not exceed %s").replace("%s", max);
+
+        return true;
+    },
+    validateHttpStatus: function (value) {
+        return this.validateIntegerRange(value, 100, 599);
+    },
+    validateSecondsInterval: function (value) {
+        return this.validateIntegerRange(value, 1, 31536000);
+    },
+    validateMillisecondsTimeout: function (value) {
+        return this.validateIntegerRange(value, 100, 60000);
+    },
     filterOutboundDeviceSelect: function (section_id, value) {
         if (value === "lo") {
             return false;
@@ -209,48 +239,117 @@ return baseclass.extend({
         return type !== "wifi" && type !== "wireless" && !type.includes("wlan");
     },
     isValidHttpUrl: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val || /\s/.test(val) || this.hasControlChars(val))
+            return false;
+
         try {
-            const url = new URL(value);
-            return ["http:", "https:"].includes(url.protocol);
+            const url = new URL(val);
+            return ["http:", "https:"].includes(url.protocol)
+                && !!url.hostname
+                && !url.username
+                && !url.password;
         } catch {
             return false;
         }
     },
     isValidResourceFilePath: function (value) {
-        if (value === "") return true;
-        if ((value.startsWith("http://")
-            || value.startsWith("https://")
-            || value.startsWith("/"))
-            && value.endsWith(".mrs"))
+        const val = String(value || "").trim();
+
+        if (val === "") return true;
+
+        if (val.startsWith("http://") || val.startsWith("https://")) {
+            if (!this.isValidHttpUrl(val))
+                return false;
+
+            try {
+                const url = new URL(val);
+                return url.pathname.toLowerCase().endsWith(".mrs");
+            } catch {
+                return false;
+            }
+        }
+
+        // Local paths are consumed later by shell/YAML glue. Feeding it metacharacters would be bold, and not in a good way.
+        if (val.startsWith("/")
+            && val.toLowerCase().endsWith(".mrs")
+            && !val.includes("..")
+            && !/[\s"'`$;&|<>\\]/.test(val)
+            && !this.hasControlChars(val))
             return true;
+
         return false;
     },
-    isValidDomainProto: function (value) {
-        const val = value.trim();
-        if (val.startsWith("https://") ||
-            val.startsWith("tls://") ||
-            val.startsWith("udp://") ||
-            val.startsWith("quic://")) {
+    isValidDnsServer: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val || /\s/.test(val) || this.hasControlChars(val))
+            return false;
+
+        if (this.isValidIpv4(val))
             return true;
-        } else {
+
+        try {
+            const url = new URL(val);
+            const allowedProtocols = ["https:", "tls:", "udp:", "quic:"];
+
+            if (!allowedProtocols.includes(url.protocol)
+                || !url.hostname
+                || url.username
+                || url.password
+                || url.hash)
+                return false;
+
+            if (url.port) {
+                const port = Number(url.port);
+                if (!Number.isInteger(port) || port < 1 || port > 65535)
+                    return false;
+            }
+
+            return true;
+        } catch {
             return false;
         }
     },
+    validateDnsServer: function (value) {
+        return this.isValidDnsServer(value)
+            ? true
+            : _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
+    },
     isValidIpv4: function (value) {
-        const val = value.trim();
+        const val = String(value || "").trim();
         const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
         return ipv4Regex.test(val);
     },
     isValidCronString: function (value) {
-        const val = value.trim();
+        const val = String(value || "").trim();
         const cronRegex = /^(\*|([0-5]?\d)) (\*|([01]?\d|2[0-3])) (\*|([012]?\d|3[01])) (\*|([0]?\d|1[0-2])) (\*|[0-6])$/;
 
         return cronRegex.test(val);
     },
     isValidSimpleName: function (value) {
-        const val = value.trim();
-        const pattern = /^[a-zA-Z0-9_.><-]+$/;
-        return pattern.test(val);
+        const val = String(value || "").trim();
+        const pattern = /^[a-z0-9_]+$/;
+        return val.length <= 64 && pattern.test(val);
+    },
+    validateSimpleName: function (value) {
+        return this.isValidSimpleName(value)
+            ? true
+            : _("Name must contain 1-64 lowercase letters, digits, and underscores");
+    },
+    validateUsernameOrUid: function (value) {
+        const trimmedValue = String(value || "").trim();
+
+        if (!trimmedValue)
+            return true;
+
+        if (/^\d+$/.test(trimmedValue))
+            return this.validateIntegerRange(trimmedValue, 0, 65535);
+
+        return /^[A-Za-z_][A-Za-z0-9_-]*[$]?$/.test(trimmedValue)
+            ? true
+            : _("Use a user name or numeric UID");
     },
     validateProxyAuthenticationEntry: function (value) {
         const val = value ? value.trim() : "";
@@ -258,6 +357,9 @@ return baseclass.extend({
         if (!val) {
             return true;
         }
+
+        if (/\s/.test(val) || this.hasControlChars(val))
+            return _("Value must not contain whitespace or control characters");
 
         const parts = val.split(":");
         if (parts.length > 2) {
@@ -267,6 +369,20 @@ return baseclass.extend({
         if (parts.length !== 2 || parts[0].length === 0 || parts[1].length === 0) {
             return _("Value must use the user:pass format");
         }
+
+        return true;
+    },
+    validateApiSecret: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val)
+            return _("API password cannot be empty");
+
+        if (val.length < 8)
+            return _("Use at least 8 characters");
+
+        if (/\s/.test(val) || this.hasControlChars(val))
+            return _("Value must not contain whitespace or control characters");
 
         return true;
     },
@@ -288,7 +404,11 @@ return baseclass.extend({
 
         if (!val || val === "") return _("Proxy link cannot be empty!");
 
-        const prefix = allowedPrefixes.find(p => val.startsWith(p));
+        if (val.length > 8192) return _("Proxy link is too long");
+
+        if (this.hasControlChars(val)) return _("Proxy link contains control characters!");
+
+        const prefix = allowedPrefixes.find(p => val.toLowerCase().startsWith(p));
         if (!prefix) return _("Input is not supported or incorrect!");
 
         if (/\s/.test(val)) return _("Proxy link contains not encoded whitespace!");
@@ -303,12 +423,12 @@ return baseclass.extend({
         }
     },
     isValidDomainSuffix: function (value) {
-        if (!value || value.trim() === "") return true;
+        if (!value || String(value).trim() === "") return true;
 
-        value = value.trim();
+        value = String(value).trim().toLowerCase();
 
-        if (/\s/.test(value))
-            return _("Domain must not contain spaces");
+        if (/\s/.test(value) || this.hasControlChars(value))
+            return _("Domain must not contain spaces or control characters");
 
         if (!value.includes("."))
             return _("Domain must contain at least one dot");
@@ -316,18 +436,135 @@ return baseclass.extend({
         if (/^[.-]/.test(value) || /[.-]$/.test(value))
             return _("Suffix must not start or end with a dot or hyphen");
 
-        if (/\.\.|--/.test(value))
-            return _("Double dots or double hyphens are not allowed");
+        if (/\.\./.test(value))
+            return _("Double dots are not allowed");
 
-        if (value.split(".").some(part => part.length === 0))
+        const parts = value.split(".");
+
+        if (parts.some(part => part.length === 0))
             return _("There must be no empty segments between dots");
 
-        if (value.split(".").some(part => part.length > 63))
+        if (parts.some(part => part.length > 63))
             return _("Each domain segment must not exceed 63 characters");
+
+        if (parts.some(part => !/^[a-z0-9-]+$/.test(part)))
+            return _("Domain segments may contain only letters, digits, and hyphens");
+
+        if (parts.some(part => part.startsWith("-") || part.endsWith("-")))
+            return _("Domain segments must not start or end with a hyphen");
+
         if (value.length > 253)
             return _("Suffix length must not exceed 253 characters");
 
         return true;
+    },
+    isValidDomainMatcher: function (value) {
+        let val = String(value || "").trim();
+
+        if (!val)
+            return true;
+
+        if (val === "*")
+            return true;
+
+        if (val.startsWith("+.") || val.startsWith("*."))
+            val = val.slice(2);
+
+        return this.isValidDomainSuffix(val);
+    },
+    validateNameserverPolicy: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val)
+            return true;
+
+        const separatorIndex = val.indexOf("/");
+        if (separatorIndex <= 0 || separatorIndex === val.length - 1)
+            return _("Invalid policy format. Use domain/nameserver.");
+
+        const matcher = val.slice(0, separatorIndex).trim();
+        const nameserver = val.slice(separatorIndex + 1).trim();
+        const matcherValidation = this.isValidDomainMatcher(matcher);
+
+        if (matcherValidation !== true)
+            return matcherValidation;
+
+        return this.validateDnsServer(nameserver);
+    },
+    validateProxyJsonObject: function (value) {
+        let parsed;
+
+        if (!value || String(value).trim() === "")
+            return _("JSON object cannot be empty");
+
+        try {
+            parsed = JSON.parse(value);
+        } catch {
+            return _("Invalid JSON format");
+        }
+
+        if (Object.prototype.toString.call(parsed) !== "[object Object]" || Array.isArray(parsed))
+            return _("JSON must be an object");
+
+        if (parsed.name)
+            return _("Name field must not be defined in object.");
+
+        if (parsed.type === "direct" && (parsed.server || parsed.port))
+            return _("DIRECT proxy type must be defined without server or port fields.");
+
+        if (parsed.type === "direct")
+            return true;
+
+        if (!parsed.type || !parsed.server || parsed.port === undefined || parsed.port === null)
+            return _("JSON must contain at least type, server and port fields.");
+
+        if (typeof parsed.type !== "string" || !/^[a-z0-9-]+$/.test(parsed.type))
+            return _("Proxy type contains unsupported characters");
+
+        if (typeof parsed.server !== "string" || !parsed.server.trim() || /\s/.test(parsed.server) || this.hasControlChars(parsed.server))
+            return _("Server must be a non-empty host without whitespace");
+
+        return this.validateIntegerRange(String(parsed.port), 1, 65535);
+    },
+    validateProxyTypeFilter: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val) return true;
+
+        if (!/^[a-z0-9|]+$/.test(val))
+            return _("Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols.");
+
+        if (val.startsWith("|") || val.endsWith("|") || val.includes("||"))
+            return _("Empty proxy types are not allowed");
+
+        const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5", "mieru"];
+        const types = val.split("|");
+
+        for (let i = 0; i < types.length; i++) {
+            if (!allowedTypes.includes(types[i]))
+                return _("Unsupported type: ") + types[i];
+        }
+
+        return true;
+    },
+    validateExitRule: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val)
+            return _("This field cannot be empty");
+
+        if (this.endRuleOptions.some(item => item.value === val))
+            return true;
+
+        return this.isValidSimpleName(val)
+            ? true
+            : _("Use a proxy/group name or supported action");
+    },
+    validateListUpdateInterval: function (value) {
+        if (!value || String(value).trim() === "")
+            return true;
+
+        return this.validateIntegerRange(value, this.minimalRuleSetUpdateInterval, 31536000);
     },
     isValidKeywordOrRegexList: function (value, ctxLabel) {
         if (!value || value.trim() === "") return true;

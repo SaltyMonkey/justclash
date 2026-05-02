@@ -125,6 +125,9 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultKeepAliveSec[0].value;
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 1, 3600);
+        };
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Connection check interval:"));
         o.description = _("How often to repeat that check after the connection becomes idle.");
@@ -134,6 +137,9 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultKeepAliveSec[0].value;
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 1, 3600);
+        };
 
         o = s.taboption(tabname, form.Flag, "profile_store_selected", _("Save profile data:"));
         o.description = _("Keep profile data when possible, so selected items can be restored after a restart.");
@@ -180,6 +186,9 @@ return view.extend({
         o.password = true;
         o.description = _("Password or token required to access the API controller.");
         o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return common.validateApiSecret(value);
+        };
 
         tabname = "dnssettings_tab";
         s.tab(tabname, _("DNS settings"));
@@ -204,6 +213,9 @@ return view.extend({
         });
         o.rmempty = false;
         o.datatype = "integer";
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 1, 1048576);
+        };
 
         o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
         o.description = _("IPv4 CIDR range used for fake-IP responses.");
@@ -220,28 +232,16 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultFakeIPTtlValues[0].value;
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 1, 1440);
+        };
 
         o = s.taboption(tabname, form.DynamicList, "nameserver_policy", _("Nameserver policy:"));
         o.description = _("Domain-specific DNS policy in the format domain/nameserver (example: +.arpa/10.0.0.1).");
         o.rmempty = false;
         o.editable = true;
         o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-
-            const separatorIndex = value.indexOf("/");
-            if (separatorIndex <= 0 || separatorIndex === value.length - 1)
-                return _("Invalid policy format. Use domain/nameserver.");
-
-            const matcher = value.slice(0, separatorIndex).trim();
-            const nameserver = value.slice(separatorIndex + 1).trim();
-
-            if (!matcher)
-                return _("Domain matcher cannot be empty.");
-
-            if ((!common.isValidIpv4(nameserver)) && (!common.isValidDomainProto(nameserver)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
-
-            return true;
+            return common.validateNameserverPolicy(value);
         };
 
         o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
@@ -250,10 +250,7 @@ return view.extend({
         o.editable = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
-            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
-
-            return true;
+            return common.validateDnsServer(value);
         };
         o = s.taboption(tabname, form.DynamicList, "direct_nameserver", _("Direct nameservers:"));
         o.description = _("Direct nameservers used for DIRECT rules.");
@@ -261,10 +258,7 @@ return view.extend({
         o.editable = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
-            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
-
-            return true;
+            return common.validateDnsServer(value);
         };
         o = s.taboption(tabname, form.DynamicList, "proxy_server_nameserver", _("Proxy nameservers:"));
         o.description = _("Nameservers used to resolve proxy server hostnames.");
@@ -273,10 +267,7 @@ return view.extend({
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
 
-            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
-
-            return true;
+            return common.validateDnsServer(value);
         };
         o = s.taboption(tabname, form.DynamicList, "nameserver", _("Nameservers:"));
         o.description = _("Main nameservers used for regular DNS queries.");
@@ -284,10 +275,7 @@ return view.extend({
         o.editable = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") return true;
-            if ((!common.isValidIpv4(value)) && (!common.isValidDomainProto(value)))
-                return _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
-
-            return true;
+            return common.validateDnsServer(value);
         };
 
         o = s.taboption(tabname, form.DynamicList, "fake_ip_include_rulesets", _("Force fake IP rulesets:"));
@@ -316,6 +304,9 @@ return view.extend({
         o.retain = true;
         o.editable = true;
         o.optional = true;
+        o.validate = function (section_id, value) {
+            return common.isValidDomainMatcher(value);
+        };
 
         o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Force real IP rules:"));
         o.description = _("Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com.");
@@ -323,6 +314,9 @@ return view.extend({
         o.retain = true;
         o.editable = true;
         o.optional = true;
+        o.validate = function (section_id, value) {
+            return common.isValidDomainMatcher(value);
+        };
 
         tabname = "sniffersettings_tab";
         s.tab(tabname, _("Sniffer settings"));
@@ -342,24 +336,32 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
+        o.validate = function (section_id, value) {
+            return common.isValidDomainMatcher(value);
+        };
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_force_domain", _("Forcefully sniff domains:"));
         o.description = _("Domains included for detailed analysis when possible. Sometimes this can help with errors in apps.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
+        o.validate = function (section_id, value) {
+            return common.isValidDomainMatcher(value);
+        };
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_skip_src_address", _("Exclude from sniffer SRC CIDR traffic:"));
         o.description = _("Source address ranges excluded from sniffing.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
+        o.datatype = datatypes.CIDR4;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_skip_dst_address", _("Exclude from sniffer DST CIDR traffic:"));
         o.description = _("Destination address ranges excluded from sniffing.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
+        o.datatype = datatypes.CIDR4;
 
         tabname = "ntpsettings_tab";
         s.tab(tabname, _("NTP settings"));
@@ -391,6 +393,9 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultNtpIntervalValuesMin[1].value;
+        o.validate = function (section_id, value) {
+            return common.validateIntegerRange(value, 1, 1440);
+        };
 
         o = s.taboption(tabname, form.Flag, "core_ntp_write_system", _("Write to system:"));
         o.description = _("Allow Mihomo to write corrected time to the system clock.");
