@@ -41,10 +41,8 @@ return baseclass.extend({
 
         return url.toString();
     },
-    // TODO: HTTPS/WSS is not fully working yet. Mihomo TLS controller needs a
-    // browser-trusted certificate and a compatible reachable endpoint/port.
     getHttpUrl(path, searchParams = null) {
-        return this.buildUrl(path, location.protocol === "https:" ? "https:" : "http:", searchParams);
+        return this.buildUrl(path, "http:", searchParams);
     },
     getWsUrl(path, token, searchParams = null) {
         const params = Object.assign({}, searchParams || {});
@@ -53,7 +51,7 @@ return baseclass.extend({
         if (token)
             params.token = token;
 
-        return this.buildUrl(path, location.protocol === "https:" ? "wss:" : "ws:", params);
+        return this.buildUrl(path, "ws:", params);
     },
 
     // Generic HTTP helpers
