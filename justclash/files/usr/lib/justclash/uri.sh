@@ -690,26 +690,6 @@ parse_vless_url() {
                                     + (if ($ds.headers // null) != null then {headers: $ds.headers}
                                        elif ($dx.headers // null) != null then {headers: $dx.headers}
                                        else {} end)
-                                    + (if ($ds.noGRPCHeader // null) != null then {"no-grpc-header": $ds.noGRPCHeader}
-                                       elif ($ds["no-grpc-header"] // null) != null then {"no-grpc-header": $ds["no-grpc-header"]}
-                                       elif ($dx.noGRPCHeader // null) != null then {"no-grpc-header": $dx.noGRPCHeader}
-                                       elif ($dx["no-grpc-header"] // null) != null then {"no-grpc-header": $dx["no-grpc-header"]}
-                                       else {} end)
-                                    + (if (($ds.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $ds.xPaddingBytes}
-                                       elif (($ds["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $ds["x-padding-bytes"]}
-                                       elif (($dx.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $dx.xPaddingBytes}
-                                       elif (($dx["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $dx["x-padding-bytes"]}
-                                       else {} end)
-                                    + (if (($ds.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds.scMaxEachPostBytes}
-                                       elif (($ds["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds["sc-max-each-post-bytes"]}
-                                       elif (($dx.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $dx.scMaxEachPostBytes}
-                                       elif (($dx["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $dx["sc-max-each-post-bytes"]}
-                                       else {} end)
-                                    + (if (($ds.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds.scMinPostsIntervalMs}
-                                       elif (($ds["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds["sc-min-posts-interval-ms"]}
-                                       elif (($dx.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $dx.scMinPostsIntervalMs}
-                                       elif (($dx["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $dx["sc-min-posts-interval-ms"]}
-                                       else {} end)
                                     + (if ($dsmux | type) == "object" and ($dsmux | length) > 0 then
                                             {"reuse-settings": (
                                                 {}
@@ -757,8 +737,6 @@ parse_vless_url() {
                                        elif (($ds["client-fingerprint"] // "") | tostring) != "" then {"client-fingerprint": $ds["client-fingerprint"]}
                                        else {} end)
                                 )}
-                           elif ($xe.downloadSettings // null) != null then
-                                {"download-settings": $xe.downloadSettings}
                            else {} end)
                     )}
                 else {} end)
