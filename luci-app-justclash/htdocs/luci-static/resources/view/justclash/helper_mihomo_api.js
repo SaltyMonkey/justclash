@@ -24,7 +24,7 @@ return baseclass.extend({
     },
 
     // URL builders
-    buildUrl(path, protocol, token, searchParams = null) {
+    buildUrl(path, protocol, searchParams = null) {
         const url = new URL(window.location.href);
         url.protocol = protocol;
         url.port = String(this.port);
@@ -32,8 +32,6 @@ return baseclass.extend({
         url.search = "";
         url.hash = "";
 
-        if (token)
-            url.searchParams.set("token", token);
         if (searchParams) {
             Object.entries(searchParams).forEach(([key, value]) => {
                 if (value !== undefined && value !== null && value !== "")
@@ -45,11 +43,17 @@ return baseclass.extend({
     },
     // TODO: HTTPS/WSS is not fully working yet. Mihomo TLS controller needs a
     // browser-trusted certificate and a compatible reachable endpoint/port.
-    getHttpUrl(path, token = null, searchParams = null) {
-        return this.buildUrl(path, location.protocol === "https:" ? "https:" : "http:", token, searchParams);
+    getHttpUrl(path, searchParams = null) {
+        return this.buildUrl(path, location.protocol === "https:" ? "https:" : "http:", searchParams);
     },
     getWsUrl(path, token, searchParams = null) {
-        return this.buildUrl(path, location.protocol === "https:" ? "wss:" : "ws:", token, searchParams);
+        const params = Object.assign({}, searchParams || {});
+
+        // Browser WebSocket cannot set Authorization headers. Query token is the least bad direct option.
+        if (token)
+            params.token = token;
+
+        return this.buildUrl(path, location.protocol === "https:" ? "wss:" : "ws:", params);
     },
 
     // Generic HTTP helpers
@@ -59,7 +63,7 @@ return baseclass.extend({
         const headers = Object.assign({}, options.headers || {}, token ? { "Authorization": `Bearer ${token}` } : {});
 
         try {
-            return await fetch(this.getHttpUrl(path, token, searchParams), {
+            return await fetch(this.getHttpUrl(path, searchParams), {
                 ...options,
                 headers,
                 signal: controller.signal
