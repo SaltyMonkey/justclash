@@ -1407,7 +1407,7 @@ get_dashboard_url() {
 }
 
 core_generate_yaml() {
-    local router_selected_ipaddr controller_enabled
+    local router_selected_ipaddr
     local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level interface_name tproxy_port unified_delay
     local use_mixed_port mixed_port proxy_authentication
     local tcp_concurrent global_client_fingerprint
@@ -1430,17 +1430,14 @@ core_generate_yaml() {
     local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
 
-    controller_enabled=1
     config_get controller_bind_interface proxy controller_bind_interface
     if [ -n "$controller_bind_interface" ]; then
         if ! is_ifname "$controller_bind_interface"; then
-            controller_enabled=0
-            router_selected_ipaddr=""
-            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will be disabled."
+            router_selected_ipaddr="0.0.0.0"
+            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will listen on all interfaces." "⚠️"
         elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
-            controller_enabled=0
-            router_selected_ipaddr=""
-            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will be disabled." "⚠️"
+            router_selected_ipaddr="0.0.0.0"
+            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will listen on all interfaces." "⚠️"
         fi
     else
         router_selected_ipaddr="0.0.0.0"
@@ -1653,13 +1650,6 @@ external-ui-url: $(yaml_quote "$dashboard_url")
 EOF
     fi
 
-    if [ "$controller_enabled" -eq 1 ]; then
-        cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")
-secret: $(yaml_quote "$api_password")
-EOF
-    fi
-
     if [ -n "$interface_name" ]; then
         cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 interface-name: $(yaml_quote "$interface_name")
@@ -1669,6 +1659,8 @@ EOF
     cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
 mode: rule
 ipv6: false
+external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")
+secret: $(yaml_quote "$api_password")
 log-level: $(yaml_quote "$log_level")
 tproxy-port: $tproxy_port
 unified-delay: $(format_uci_bool_as_yaml "$unified_delay")
