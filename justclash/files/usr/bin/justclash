@@ -992,6 +992,7 @@ handle_proxy_section() {
             [ -n "$interface_name" ] && interface_name=$(trim "$interface_name")
 
             case "$proxy_link_uri" in
+                direct://*) proxy_obj=$(parse_direct_url "$name" "$interface_name" "$routing_mark") ;;
                 ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
                 socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
                 socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;

@@ -7,6 +7,59 @@
 # External justclash parsers/generators part
 # --------------------------------------------
 
+is_uint() {
+    case "$1" in
+        ''|*[!0-9]*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+require_uint() {
+    is_uint "$1" || {
+        echo "Error: expected unsigned integer, got '$1'" >&2
+        return 1
+    }
+}
+
+is_truthy() {
+    case "$1" in
+        1|true|TRUE|True|yes|YES|on|ON) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+json_array_from_csv() {
+    local value="$1"
+
+    if [ -z "$value" ]; then
+        echo '[]'
+        return 0
+    fi
+
+    printf '%s' "$value" | jq -Rc '
+        split(",")
+        | map(gsub("^\\s+|\\s+$"; ""))
+        | map(select(length > 0))
+    '
+}
+
+parse_direct_url() {
+    local name="$1" interface_name="$2" routing_mark="$3"
+
+    jq -nc \
+        --arg name "$name" \
+        --arg interface_name "$interface_name" \
+        --arg routing_mark "$routing_mark" '
+        {
+            name: $name,
+            type: "direct",
+            udp: true
+        }
+        + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+        + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
+    '
+}
+
 parse_sudoku_url() {
     local link="$1" dialer_proxy="$2" name="$3" interface_name="$4" routing_mark="$5"
     local padding_min="${6:-5}" padding_max="${7:-15}"
@@ -122,42 +175,6 @@ parse_sudoku_url() {
         then {"routing-mark": ($routing_mark | tonumber)}
         else {}
       end)
-    '
-}
-
-is_uint() {
-    case "$1" in
-        ''|*[!0-9]*) return 1 ;;
-        *) return 0 ;;
-    esac
-}
-
-require_uint() {
-    is_uint "$1" || {
-        echo "Error: expected unsigned integer, got '$1'" >&2
-        return 1
-    }
-}
-
-is_truthy() {
-    case "$1" in
-        1|true|TRUE|True|yes|YES|on|ON) return 0 ;;
-        *) return 1 ;;
-    esac
-}
-
-json_array_from_csv() {
-    local value="$1"
-
-    if [ -z "$value" ]; then
-        echo '[]'
-        return 0
-    fi
-
-    printf '%s' "$value" | jq -Rc '
-        split(",")
-        | map(gsub("^\\s+|\\s+$"; ""))
-        | map(select(length > 0))
     '
 }
 
