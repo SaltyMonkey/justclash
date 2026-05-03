@@ -349,6 +349,26 @@ build_nft_skuid_exclusions() {
     printf '%s' "$skuid_list"
 }
 
+print_proxy_routing_mark() {
+    local section="$1"
+    local routing_mark
+
+    config_get routing_mark "$section" routing_mark
+    [ -n "$routing_mark" ] || return 0
+
+    printf '%s\n' "$routing_mark"
+}
+
+print_proxy_provider_routing_mark() {
+    local section="$1"
+    local override_routing_mark
+
+    config_get override_routing_mark "$section" override_routing_mark
+    [ -n "$override_routing_mark" ] || return 0
+
+    printf '%s\n' "$override_routing_mark"
+}
+
 build_fake_ip_rule_array() {
     local entries="$1"
     local rule_type="$2"
@@ -368,7 +388,7 @@ nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
-    local pbr_priority iface skuid_values skuid_list skuid_resolved
+    local pbr_priority iface skuid_values skuid_list skuid_resolved routing_mark_values routing_mark_value
 
 
     config_get nft_apply_changes settings nft_apply_changes 0
@@ -386,6 +406,10 @@ nf_table_add() {
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
     config_get skuid_values settings nft_skuid_exclude_router
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
+    routing_mark_values=$(
+        config_foreach print_proxy_routing_mark proxies
+        config_foreach print_proxy_provider_routing_mark proxy_provider
+    )
 
     [ -n "$tproxy_port" ] || panic "tproxy_port is not set"
     is_port "$tproxy_port" || panic "tproxy_port is invalid: $tproxy_port"
@@ -477,6 +501,9 @@ nf_table_add() {
         nft add chain inet "$NF_TABLE_NAME" output '{ type route hook output priority -150; policy accept; }'
 
  	    nft add rule inet "$NF_TABLE_NAME" output mark "$NF_TABLE_FWMARK_PROXY" return
+        for routing_mark_value in $routing_mark_values; do
+            nft add rule inet "$NF_TABLE_NAME" output meta mark "$routing_mark_value" return
+        done
         #nft add rule inet "$NF_TABLE_NAME" output meta oifname @vpn_interfaces return
         nft add rule inet "$NF_TABLE_NAME" output meta l4proto != { tcp, udp } return
         nft add rule inet "$NF_TABLE_NAME" output ip daddr @private_ips return
@@ -928,7 +955,7 @@ handle_proxy_section() {
     # shellcheck disable=SC2317
     _parse_single_proxy() {
         local section="$1"
-        local name enabled proxy_link_uri dialer_proxy interface_name
+        local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
         local list_update_interval size_limit mode proxy_link_object use_proxy_for_list_update
         # Source lists loaded from UCI for generated rules and custom rulesets.
         local route_entries route_entry domain_list cidr_list rules_fragment rulesets_fragment fake_ip_fragment bundle
@@ -941,6 +968,7 @@ handle_proxy_section() {
         config_get proxy_link_uri "$section" proxy_link_uri
         config_get dialer_proxy "$section" dialer_proxy
         config_get interface_name "$section" interface_name
+        config_get routing_mark "$section" routing_mark
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
         config_get size_limit "$section" size_limit 0
         config_get mode "$section" mode "uri"
@@ -964,16 +992,16 @@ handle_proxy_section() {
             [ -n "$interface_name" ] && interface_name=$(trim "$interface_name")
 
             case "$proxy_link_uri" in
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name") ;;
-                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name") ;;
-                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name") ;;
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
                 *) log warn "Unknown proxy link type: $proxy_link_uri" "⚠️"; return ;;
             esac
 
@@ -1175,9 +1203,9 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2329
     _handle_proxy_provider() {
         local section="$1"
-        local name enabled url override_dialer_proxy override_interface_name subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
+        local name enabled url override_dialer_proxy override_interface_name override_routing_mark subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
-        local provider_json override_json
+        local provider_json override_json=""
 
         config_get name "$section" name
         config_get_bool enabled "$section" enabled 1
@@ -1190,6 +1218,7 @@ handle_proxy_provider_section() {
         config_get proxy "$section" proxy "$DEFAULT_PROXY"
         config_get override_dialer_proxy "$section" override_dialer_proxy
         config_get override_interface_name "$section" override_interface_name
+        config_get override_routing_mark "$section" override_routing_mark
 
         [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy provider: $section" "⚠️"; return; }
         { [ -z "$name" ] || [ -z "$url" ]; } && {
@@ -1204,6 +1233,9 @@ handle_proxy_provider_section() {
 
         [ -n "$override_dialer_proxy" ] && override_json="\"dialer-proxy\":\"$(trim "$override_dialer_proxy")\""
         [ -n "$override_interface_name" ] && override_json="${override_json:+$override_json,}\"interface-name\":\"$(trim "$override_interface_name")\""
+        if [ -n "$override_routing_mark" ]; then
+            override_json="${override_json:+$override_json,}\"routing-mark\":$override_routing_mark"
+        fi
         [ -n "$override_json" ] && provider_json="$provider_json,\"override\":{$override_json}"
 
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0

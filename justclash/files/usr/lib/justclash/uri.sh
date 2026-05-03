@@ -8,8 +8,8 @@
 # --------------------------------------------
 
 parse_sudoku_url() {
-    local link="$1" dialer_proxy="$2" name="$3" interface_name="$4"
-    local padding_min="${5:-5}" padding_max="${6:-15}"
+    local link="$1" dialer_proxy="$2" name="$3" interface_name="$4" routing_mark="$5"
+    local padding_min="${6:-5}" padding_max="${7:-15}"
     local raw payload
 
     raw="$link"
@@ -24,6 +24,7 @@ parse_sudoku_url() {
         --arg name "$name" \
         --arg dialer_proxy "$dialer_proxy" \
         --arg interface_name "$interface_name" \
+        --arg routing_mark "$routing_mark" \
         --argjson padding_min "$padding_min" \
         --argjson padding_max "$padding_max" '
 
@@ -117,6 +118,10 @@ parse_sudoku_url() {
         then {"interface-name": $interface_name}
         else {}
       end)
+    + (if ($routing_mark | length > 0)
+        then {"routing-mark": ($routing_mark | tonumber)}
+        else {}
+      end)
     '
 }
 
@@ -157,7 +162,7 @@ json_array_from_csv() {
 }
 
 parse_ss_url() {
-    local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
+    local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6"
     local userinfo hostport method password server port decoded query_part proxy_obj
     query_part=""
 
@@ -216,6 +221,7 @@ parse_ss_url() {
             --arg password "$password" \
             --arg dialer_proxy "$dialer_proxy" \
             --arg interface_name "$interface_name" \
+            --arg routing_mark "$routing_mark" \
             --argjson port "$port" '
             {
                 name: $name,
@@ -228,6 +234,7 @@ parse_ss_url() {
             }
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
         '
     ) || return 1
 
@@ -235,7 +242,7 @@ parse_ss_url() {
 }
 
 parse_simple_proxy_url() {
-    local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
+    local link="$1" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6"
     local raw="$link"
     raw="${raw#socks://}"
     raw="${raw#socks5://}"
@@ -273,6 +280,7 @@ parse_simple_proxy_url() {
             --arg password "$password" \
             --arg dialer_proxy "$dialer_proxy" \
             --arg interface_name "$interface_name" \
+            --arg routing_mark "$routing_mark" \
             --argjson port "$port" '
             {
                 name: $name,
@@ -285,6 +293,7 @@ parse_simple_proxy_url() {
             + (if $password != "" then {password: $password} else {} end)
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
         '
     ) || return 1
 
@@ -292,7 +301,7 @@ parse_simple_proxy_url() {
 }
 
 parse_trojan_url() {
-    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
+    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6"
 
     local raw="${url#trojan://}"
     raw="${raw#trojan-go://}"
@@ -375,6 +384,7 @@ parse_trojan_url() {
             --arg password "$password" \
             --arg dialer_proxy "$dialer_proxy" \
             --arg interface_name "$interface_name" \
+            --arg routing_mark "$routing_mark" \
             --arg sni "$sni" \
             --arg net "$net" \
             --arg fp "$fp" \
@@ -406,6 +416,7 @@ parse_trojan_url() {
             }
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $sni != "" then {sni: $sni} else {} end)
             + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
             + (if $fp != "" then {"client-fingerprint": $fp} else {} end)
@@ -442,7 +453,7 @@ parse_trojan_url() {
 }
 
 parse_vless_url() {
-    local link="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
+    local link="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6"
     local raw="${link#vless://}"
     raw="${raw%%#*}"
 
@@ -551,6 +562,7 @@ parse_vless_url() {
             --arg penc "$penc" \
             --arg dialer_proxy "$dialer_proxy" \
             --arg interface_name "$interface_name" \
+            --arg routing_mark "$routing_mark" \
             --arg sec "$sec" \
             --arg sni "$tls_servername" \
             --arg fp "$fp" \
@@ -584,6 +596,7 @@ parse_vless_url() {
             + (if $penc != "" then {"packet-encoding": $penc} else {} end)
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $tfo == 1 then {tfo: true} else {} end)
             + (if $sec == "tls" or $sec == "reality" then
                     {tls: true}
@@ -747,7 +760,7 @@ parse_vless_url() {
 }
 
 parse_hysteria2_url() {
-    local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5"
+    local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6"
 
     local raw="${url#hysteria2://}"
     raw="${raw#hy2://}"
@@ -819,6 +832,7 @@ parse_hysteria2_url() {
             --arg password "$password" \
             --arg dialer_proxy "$dialer_proxy" \
             --arg interface_name "$interface_name" \
+            --arg routing_mark "$routing_mark" \
             --arg sni "$sni" \
             --arg obfs "$obfs" \
             --arg obfs_password "$obfs_password" \
@@ -840,6 +854,7 @@ parse_hysteria2_url() {
             + (if $password != "" then {password: $password} else {} end)
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $sni != "" then {sni: $sni} else {} end)
             + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
             + (if $obfs != "" and $obfs != "none" then
@@ -860,7 +875,7 @@ parse_hysteria2_url() {
 
 #Supports only one port/port-range + transport combination
 parse_mieru_url() {
-    local link="$1" dialer_proxy="$2" name="$3" interface_name="$4"
+    local link="$1" dialer_proxy="$2" name="$3" interface_name="$4" routing_mark="$5"
     local raw="${link#mierus://}"
     raw="${raw%%#*}"
 
@@ -935,6 +950,7 @@ parse_mieru_url() {
             --arg password "$password" \
             --arg dialer_proxy "$dialer_proxy" \
             --arg interface_name "$interface_name" \
+            --arg routing_mark "$routing_mark" \
             --arg multiplexing "$multiplexing" \
             --arg port "$port" '
             {
@@ -949,6 +965,7 @@ parse_mieru_url() {
             + (if $password != "" then {password: $password} else {} end)
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $multiplexing != "" then {multiplexing: $multiplexing} else {} end)
             + (if $port != "" then {port: ($port | tonumber)} else {} end)
         '
