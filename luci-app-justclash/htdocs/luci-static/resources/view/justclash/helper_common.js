@@ -351,6 +351,30 @@ return baseclass.extend({
             ? true
             : _("Use a user name or numeric UID");
     },
+    validateRoutingMark: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val)
+            return true;
+
+        if (this.hasControlChars(val) || /\s/.test(val))
+            return _("Routing mark must not contain whitespace or control characters");
+
+        if (!/^\d+$/.test(val))
+            return _("Use a decimal number, for example 268435456");
+
+        const mark = Number(val);
+        if (!Number.isSafeInteger(mark))
+            return _("Routing mark is too large");
+
+        if (mark < 1 || mark > 2147483647)
+            return _("Routing mark must be between 1 and 2147483647");
+
+        if (mark === 3 || mark === 255)
+            return _("Routing mark 0x3 and 0xff are reserved by JustClash");
+
+        return true;
+    },
     validateProxyAuthenticationEntry: function (value) {
         const val = value ? value.trim() : "";
 
@@ -511,6 +535,12 @@ return baseclass.extend({
 
         if (parsed.type === "direct" && (parsed.server || parsed.port))
             return _("DIRECT proxy type must be defined without server or port fields.");
+
+        if (parsed["routing-mark"] !== undefined) {
+            const markValidation = this.validateRoutingMark(parsed["routing-mark"]);
+            if (markValidation !== true)
+                return markValidation;
+        }
 
         if (parsed.type === "direct")
             return true;

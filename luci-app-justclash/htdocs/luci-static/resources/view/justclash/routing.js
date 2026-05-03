@@ -114,6 +114,16 @@ return view.extend({
         o.filter = common.filterOutboundDeviceSelect;
         o.depends("mode", "uri");
 
+        o = s.taboption(tabname, form.Value, "routing_mark", _("Routing mark:"));
+        o.description = _("Optional Linux fwmark applied by Mihomo to outbound connections of this proxy. Leave empty to use the global mark.");
+        o.optional = true;
+        o.rmempty = true;
+        o.placeholder = "268435456";
+        o.depends("mode", "uri");
+        o.validate = function (section_id, value) {
+            return common.validateRoutingMark(value);
+        };
+
         tabname = "proxieslists_tab";
         s.tab(tabname, _("Lists"));
 
@@ -243,6 +253,15 @@ return view.extend({
         o.noinactive = false;
         o.multiple = false;
         o.filter = common.filterOutboundDeviceSelect;
+
+        o = spp.taboption(tabname, form.Value, "override_routing_mark", _("Routing mark:"));
+        o.description = _("Optional Linux fwmark applied to nodes loaded from this provider through Mihomo provider override. Leave empty to use node or global settings.");
+        o.optional = true;
+        o.rmempty = true;
+        o.placeholder = "268435456";
+        o.validate = function (section_id, value) {
+            return common.validateRoutingMark(value);
+        };
 
         o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
         o.default = primitives.FALSE;
