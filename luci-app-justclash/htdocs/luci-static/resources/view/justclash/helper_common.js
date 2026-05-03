@@ -414,6 +414,7 @@ return baseclass.extend({
         const val = value ? value.trim() : "";
 
         const allowedPrefixes = [
+            "direct://",
             "vless://",
             "trojan://",
             "trojan-go://",
@@ -436,6 +437,11 @@ return baseclass.extend({
         if (!prefix) return _("Input is not supported or incorrect!");
 
         if (/\s/.test(val)) return _("Proxy link contains not encoded whitespace!");
+
+        if (prefix === "direct://")
+            return val === "direct://"
+                ? true
+                : _("DIRECT link must be exactly direct://");
 
         try {
             new URL(val);
