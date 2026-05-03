@@ -336,7 +336,6 @@ diagnostic_conflicts_interactive() {
     echo "  "
     print_bold_green "Checking conflicting packages..."
 
-    diagnostic_conflict "https-dns-proxy"
     diagnostic_conflict "podkop"
     diagnostic_conflict "luci-app-ssclash"
     diagnostic_conflict "mihomo"
@@ -731,8 +730,9 @@ install_service() {
     fi
     diagnostic_conflicts_interactive
     core_update "stable"
-    install_translation_interactive
-    [ $? -eq 0 ] && install_ru=1
+    if install_translation_interactive; then
+        install_ru=1
+    fi
     packages_download "$install_ru"
     if [ $? -ne 1 ]; then
         packages_install

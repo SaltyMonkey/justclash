@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	TITLE:=$(PKG_NAME)
 	DEPENDS:=+nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy
-	CONFLICTS:=banip mihomo nextdns sing-box podkop https-dns-proxy luci-app-passwall luci-app-passwall2 dns-failsafe-proxy
+	CONFLICTS:=banip mihomo podkop sing-box luci-app-passwall luci-app-passwall2 dns-failsafe-proxy
 	PKGARCH:=all
 endef
 

@@ -116,8 +116,8 @@ NF_TABLE_FWMARK_FINAL=0x3
 NF_TABLE_FWMARK_PROXY=0xff
 NF_ROUTE_TABLE=100
 
-CONFLICTED_PATTERNS_DHCP_CONFIG="podkop_server podkop_noresolv podkop_cachesize doh_backup_noresolv doh_backup_server doh_server"
-CONFLICTED_PATTERNS_FILEPATH="/etc/config/dhcp"
+WARN_PATTERNS_DHCP_CONFIG="podkop_server podkop_noresolv podkop_cachesize doh_backup_noresolv doh_backup_server doh_server"
+DHCP_CONFIG_FILEPATH="/etc/config/dhcp"
 RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
@@ -206,9 +206,6 @@ start() {
 
     config_get_bool skip_environment_checks settings skip_environment_checks 0
     if [ "$skip_environment_checks" -eq 0 ]; then
-
-        log info "Checking for conflicts" "⏳"
-        check_for_conflicts || return 1
 
         log info "Checking for non-critical conflicts" "⏳"
         check_for_conflicts_warn
@@ -715,30 +712,21 @@ check_requirement() {
     return "$ret"
 }
 
-check_for_conflicts() {
-    local found_patterns pattern ret
-
-    # For $CONFLICTED_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string
-    # shellcheck disable=SC2086
-    found_patterns=$(is_pattern_in_file "$CONFLICTED_PATTERNS_FILEPATH" $CONFLICTED_PATTERNS_DHCP_CONFIG)
-    if [ -n "$found_patterns" ]; then
-        for pattern in $found_patterns; do
-            log warn "Conflict detected: pattern '$pattern' found in /etc/config/dhcp." "⚠️"
-            log warn "This pattern may indicate a configuration clash with the current service." "⚠️"
-            log warn "Please review and edit your DHCP configuration to resolve this issue." "⚠️"
-        done
-        log error "Conflicting DHCP configuration patterns detected."
-        ret=1
-    else
-        ret=0
-    fi
-
-    return "$ret"
-}
-
 check_for_conflicts_warn() {
     local resolvconf_res
+    local found_patterns pattern
     local service_path
+
+    # For $WARN_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string.
+    # shellcheck disable=SC2086
+    found_patterns=$(is_pattern_in_file "$DHCP_CONFIG_FILEPATH" $WARN_PATTERNS_DHCP_CONFIG)
+    if [ -n "$found_patterns" ]; then
+        for pattern in $found_patterns; do
+            log warn "Warning: pattern '$pattern' found in /etc/config/dhcp." "⚠️"
+            log warn "This may be a leftover from another DNS/proxy service." "⚠️"
+            log warn "JustClash will continue startup; review DHCP settings if DNS behaves strangely." "⚠️"
+        done
+    fi
 
     awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" { found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
     resolvconf_res=$?
