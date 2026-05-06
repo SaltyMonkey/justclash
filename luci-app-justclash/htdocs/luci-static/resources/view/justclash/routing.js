@@ -817,12 +817,12 @@ return view.extend({
             return common.validateExitRule(value);
         };
 
+        //            .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:395px; min-height:395px; overflow-y:auto; }
+        //
+        //@media (max-width: 768px) {
+        //    .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:none; min-height:0; overflow-y:visible; }
+        //}
         const style = E("style", {}, `
-            .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:395px; min-height:395px; overflow-y:auto; }
-
-            @media (max-width: 768px) {
-                .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:none; min-height:0; overflow-y:visible; }
-            }
             ul.dropdown { max-height:320px !important; }
             .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="enabled"] > .cbi-value-title,
