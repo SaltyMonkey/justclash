@@ -403,6 +403,7 @@ return view.extend({
         o.rmempty = false;
 
         const style = E("style", {}, `
+             ul.dropdown { max-height:320px !important; }
             .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="tproxy_port"] > .cbi-value-title,
             .cbi-value[data-name="use_mixed_port"] > .cbi-value-title,
