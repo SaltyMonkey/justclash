@@ -19,10 +19,7 @@ MIN_SPACE=34768
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
-TMP_DOWNLOAD_PATH="/tmp/justclash/downloads"
-
-rm -rf "$TMP_DOWNLOAD_PATH"
-mkdir -p "$TMP_DOWNLOAD_PATH"
+TMP_DOWNLOAD_PATH=$(mktemp -d "/tmp/justclash.downloads.XXXXXX")
 
 print_bold_yellow() {
     local text="$1"
@@ -721,6 +718,8 @@ install_packages() {
 
     echo " - Installing curl"
     pkg_install curl
+
+    rm -rf "$TMP_DOWNLOAD_PATH"
 }
 
 install_service() {

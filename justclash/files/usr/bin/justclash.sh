@@ -1731,14 +1731,13 @@ EOF
 
 service_data_update() {
     local complete_url
-    local tmp_rulesets_file="${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}.tmp"
-    local tmp_block_rulesets_file="${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}.tmp"
+    local tmp_rulesets_file tmp_block_rulesets_file
 
     mkdir -p "$CORE_WORKDIR_PATH"
     mkdir -p "$PROG_ETC_DIR"
-    rm -f "$tmp_rulesets_file" "$tmp_block_rulesets_file"
 
     log info "Downloading ruleset list" "📥"
+    tmp_rulesets_file=$(mktemp "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}.XXXXXX")
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_rulesets_file" "$complete_url" || {
         log error "Failed to download the ruleset list." "❌"
@@ -1749,6 +1748,7 @@ service_data_update() {
     log info "Ruleset list updated." "✅"
 
     log info "Downloading block ruleset list" "📥"
+    tmp_block_rulesets_file=$(mktemp "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}.XXXXXX")
     complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_BLOCKS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_block_rulesets_file" "$complete_url" || {
         log error "Failed to download the block ruleset list." "❌"
