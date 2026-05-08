@@ -16,7 +16,7 @@ JUSTCLASH_CACHE_HWID=""
 url_decode() {
     # shellcheck disable=SC3060
     local data="${1//+/ }"
-    echo -n "$data" | sed 's/%/\\x/g' | xargs -0 printf '%b'
+    echo -n "$data" | sed 's/\\/\\\\/g; s/%/\\x/g' | xargs -0 printf '%b'
 }
 
 json_escape() {
@@ -45,26 +45,23 @@ format_uci_list_as_json_array() {
     local add_custom="$3"
     local indent="${4:-}"
     local result=""
-    local values
 
-    config_get values "$section_name" "$list_name"
+    # shellcheck disable=SC2329
+    _append_json_array_element() {
+        local val="$1"
+        [ -n "$val" ] || return 0
 
-    [ -z "$values" ] && {
-        echo "[]"
-        return
+        val=$(printf '%s' "$val" | sed 's/"/\\"/g')
+        [ -n "$add_custom" ] && val="${val}${add_custom}"
+
+        if [ -n "$result" ]; then
+            result="${result},\n${indent}\"$val\""
+        else
+            result="${indent}\"$val\""
+        fi
     }
 
-    for val in $values; do
-        [ -n "$val" ] && {
-            val=$(printf '%s' "$val" | sed 's/"/\\"/g')
-            [ -n "$add_custom" ] && val="${val}${add_custom}"
-            if [ -n "$result" ]; then
-                result="${result},\n${indent}\"$val\""
-            else
-                result="${indent}\"$val\""
-            fi
-        }
-    done
+    config_list_foreach "$section_name" "$list_name" _append_json_array_element
 
     [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
 }

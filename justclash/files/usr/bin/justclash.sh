@@ -59,6 +59,7 @@ CORE_WORKDIR_RULES_PATH="${CORE_WORKDIR_PATH}/rules"
 CORE_WORKDIR_CACHE_DB_PATH="${CORE_WORKDIR_PATH}/cache.db"
 CORE_WORKDIR_UCI_HASH_PATH="${CORE_WORKDIR_PATH}/uci.hash"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}/config.yaml"
+TMP_ARCHIVE_PATH="${CORE_WORKDIR_PATH}/mihomo.gz"
 
 PROG_ETC_DIR="/etc/${PROGNAME}"
 RULESETS_BLOCKS_FILENAME="block.rulesets.txt"
@@ -564,36 +565,24 @@ save_dnsmasq_config() {
 
 dnsmasq_update() {
     local dns_listen_port dnsmasq_apply_changes
-    local server server_line server_lines
+    local server current_servers
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port
 
-        server_lines=$(uci -q show dhcp.@dnsmasq[0].server 2>/dev/null)
-        while IFS= read -r server_line; do
-            [ -z "$server_line" ] && continue
-            server="${server_line#*=}"
-            server="${server#\'}"
-            server="${server%\'}"
+        current_servers=$(uci -q get dhcp.@dnsmasq[0].server 2>/dev/null)
+        for server in $current_servers; do
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
                 log warn "dnsmasq already uses 127.0.0.1#${dns_listen_port}; skipping dnsmasq changes."
                 return 1
             fi
-        done <<EOF
-$server_lines
-EOF
+        done
 
         uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
-        while IFS= read -r server_line; do
-            [ -z "$server_line" ] && continue
-            server="${server_line#*=}"
-            server="${server#\'}"
-            server="${server%\'}"
+        for server in $current_servers; do
             [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0]."${PROGNAME}"_server="$server"
-        done <<EOF
-$server_lines
-EOF
+        done
 
         save_dnsmasq_config "dhcp.@dnsmasq[0].noresolv" "dhcp.@dnsmasq[0].${PROGNAME}_noresolv"
         save_dnsmasq_config "dhcp.@dnsmasq[0].cachesize" "dhcp.@dnsmasq[0].${PROGNAME}_cachesize"
@@ -616,8 +605,7 @@ EOF
 dnsmasq_restore() {
     local dns_listen_port dnsmasq_apply_changes
     local bak_cachesize bak_noresolv
-    local server server_line
-    local current_server_lines backup_server_lines
+    local server current_servers backup_servers
     local has_local_server=0
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
@@ -641,44 +629,26 @@ dnsmasq_restore() {
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
         fi
 
-        current_server_lines=$(uci -q show dhcp.@dnsmasq[0].server 2>/dev/null)
-        backup_server_lines=$(uci -q show dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null)
-        while IFS= read -r server_line; do
-            [ -z "$server_line" ] && continue
-            server="${server_line#*=}"
-            server="${server#\'}"
-            server="${server%\'}"
+        current_servers=$(uci -q get dhcp.@dnsmasq[0].server 2>/dev/null)
+        backup_servers=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_server 2>/dev/null)
+        for server in $current_servers; do
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
                 has_local_server=1
                 break
             fi
-        done <<EOF
-$current_server_lines
-EOF
+        done
 
         if [ "$has_local_server" -eq 1 ]; then
             uci -q delete dhcp.@dnsmasq[0].server
-            if [ -n "$backup_server_lines" ]; then
-                while IFS= read -r server_line; do
-                    [ -z "$server_line" ] && continue
-                    server="${server_line#*=}"
-                    server="${server#\'}"
-                    server="${server%\'}"
+            if [ -n "$backup_servers" ]; then
+                for server in $backup_servers; do
                     [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
-                done <<EOF
-$backup_server_lines
-EOF
+                done
             else
-                while IFS= read -r server_line; do
-                    [ -z "$server_line" ] && continue
-                    server="${server_line#*=}"
-                    server="${server#\'}"
-                    server="${server%\'}"
+                for server in $current_servers; do
                     [ "$server" = "127.0.0.1#${dns_listen_port}" ] && continue
                     [ -n "$server" ] && uci add_list dhcp.@dnsmasq[0].server="$server"
-                done <<EOF
-$current_server_lines
-EOF
+                done
             fi
             uci -q delete dhcp.@dnsmasq[0]."${PROGNAME}"_server
         fi
@@ -1655,6 +1625,7 @@ core_generate_yaml() {
     )
 
     : > "$OUTPUT_YAML_CONFIG_PATH"
+    chmod 600 "$OUTPUT_YAML_CONFIG_PATH"
 
     # Support for mixed port
     # Make sure call for this function handled after 'core_prepare_workdir' since file must be removed
@@ -1817,6 +1788,7 @@ core_prepare_workdir() {
         fi
     else
         mkdir -p "$CORE_WORKDIR_PATH"
+        chmod 700 "$CORE_WORKDIR_PATH"
     fi
 
     if [ "$mihomo_persistent_ext_rules" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
@@ -2021,12 +1993,11 @@ core_download() {
     version_txt_url="$1"
     local param_version="$2"
     local expected_sha256="$3"
-    local tmp_archive_path actual_sha256
-    tmp_archive_path="${CORE_WORKDIR_PATH}/mihomo.gz"
+    local actual_sha256
 
     arch=$(detect_arch)
     mkdir -p "$CORE_WORKDIR_PATH"
-    rm -f "$tmp_archive_path"
+    rm -f "$TMP_ARCHIVE_PATH"
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
     base_url="${version_txt_url%/*}"
@@ -2036,15 +2007,15 @@ core_download() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        --progress-bar -L -o "$tmp_archive_path" "$download_url" || {
-        rm -f "$tmp_archive_path"
+        --progress-bar -L -o "$TMP_ARCHIVE_PATH" "$download_url" || {
+        rm -f "$TMP_ARCHIVE_PATH"
         log error "Failed to download the Mihomo archive." "❌"
         return 1
     }
 
-    actual_sha256=$(sha256sum "$tmp_archive_path" 2>/dev/null | awk '{print $1}')
+    actual_sha256=$(sha256sum "$TMP_ARCHIVE_PATH" 2>/dev/null | awk '{print $1}')
     if [ -z "$actual_sha256" ] || [ "$actual_sha256" != "$expected_sha256" ]; then
-        rm -f "$tmp_archive_path"
+        rm -f "$TMP_ARCHIVE_PATH"
         log error "SHA256 verification failed for Mihomo archive version $param_version." "❌"
         return 1
     fi
@@ -2052,8 +2023,8 @@ core_download() {
     log info "SHA256 verification passed for Mihomo archive version $param_version." "🔐"
 
     log info "Extracting to $CORE_PATH" "⬇️"
-    gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
-        rm -f "$tmp_archive_path"
+    gunzip -c "$TMP_ARCHIVE_PATH" > "$CORE_PATH" || {
+        rm -f "$TMP_ARCHIVE_PATH"
         log error "Failed to extract the Mihomo archive." "❌"
         return 1
     }
@@ -2065,8 +2036,8 @@ core_download() {
     fi
 
     log info "Cleaning up temporary files" "🧹"
-    if ! rm -f "$tmp_archive_path"; then
-        log error "Failed to clean up temporary file: $tmp_archive_path" "❌"
+    if ! rm -f "$TMP_ARCHIVE_PATH"; then
+        log error "Failed to clean up temporary file: $TMP_ARCHIVE_PATH" "❌"
     fi
 }
 
