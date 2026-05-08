@@ -6,7 +6,7 @@ return baseclass.extend({
     justclashLuciVersion: "__COMPILED_VERSION_VARIABLE__",
     binName: "justclash",
     initdPath: "/etc/init.d/justclash",
-    binPath: "/usr/bin/justclash",
+    binPath: "/usr/bin/justclash.sh",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
     logsCount: "400",
