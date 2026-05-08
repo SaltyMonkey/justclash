@@ -423,120 +423,95 @@ nf_table_add() {
         done
     fi
 
-    if nft list table inet "$NF_TABLE_NAME" 2>/dev/null; then
-        nft delete table inet "$NF_TABLE_NAME"
+    local table_exists=0
+    if nft list table inet "$NF_TABLE_NAME" >/dev/null 2>&1; then
+        table_exists=1
     fi
 
-    nft add table inet "$NF_TABLE_NAME"
-
-
-    # Создаём sets
-    nft add set inet "$NF_TABLE_NAME" private_ips '{ type ipv4_addr; flags interval; }'
-    nft add set inet "$NF_TABLE_NAME" private_ips6 '{ type ipv6_addr; flags interval; }'
-    nft add element inet "$NF_TABLE_NAME" private_ips { \
-        0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, \
-        169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
-        192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, \
-        224.0.0.0/4, 240.0.0.0/4 }
-    nft add element inet "$NF_TABLE_NAME" private_ips6 { ::/128, ::1/128, fe80::/10, fc00::/7, ff00::/8 }
-    #nft add set inet "$NF_TABLE_NAME" vpn_interfaces '{ type ifname; }'
-    #nft add set inet "$NF_TABLE_NAME" vpn_interfaces { type ifname; elements = { "tun*", "tap*", "awg*", "wg*", "ovpn*", "openvpn*", "l2tp*", "pptp*", "sstp*", "ikev2*", "ipsec*" } }
-
-    if [ "$nft_apply_changes" = "1" ]; then
-        # Priority -150: prerouting from clients
-        nft add chain inet "$NF_TABLE_NAME" prerouting '{ type filter hook prerouting priority -150; policy accept; }'
-        # Priority -100: proxy handling for packets already marked for local interception.
-        nft add chain inet "$NF_TABLE_NAME" proxy '{ type filter hook prerouting priority -100; policy accept; }'
-
-        nft add set inet "$NF_TABLE_NAME" fake_ips '{ type ipv4_addr; flags interval; }'
-        # shellcheck disable=SC2086
-        nft add element inet "$NF_TABLE_NAME" fake_ips { $fake_ip_range }
-
-        nft add set inet "$NF_TABLE_NAME" inbound_interfaces '{ type ifname; }'
-        for iface in $tproxy_input_interfaces; do
-            nft add element inet "$NF_TABLE_NAME" inbound_interfaces { "\"$iface\"" }
-        done
-
-        # === PREROUTING chain (priority -150) - classify client traffic before TPROXY ===
-        # Fast exit for unrelated interfaces to avoid repeating the inbound interface lookup in every rule below.
-        nft add rule inet "$NF_TABLE_NAME" prerouting iifname != @inbound_interfaces return
-        # TPROXY is only relevant for TCP/UDP traffic.
-        nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto != { tcp, udp } return
-        nft add rule inet "$NF_TABLE_NAME" prerouting ip daddr @private_ips return
-        nft add rule inet "$NF_TABLE_NAME" prerouting ip6 daddr @private_ips6 return
-
-        if [ -n "$nft_exclude_ports" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_exclude_ports" | spaces_to_commas) } return
+    {
+        if [ "$table_exists" -eq 1 ]; then
+            echo "delete table inet $NF_TABLE_NAME"
         fi
 
-        if [ "$nft_quic_mode" = "DROP" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop
-        fi
-        if [ "$nft_dot_quic_mode" = "DROP" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT } drop
-        fi
-        if [ "$nft_dot_mode" = "DROP" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop
-        fi
+        echo "add table inet $NF_TABLE_NAME"
+        echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
+        echo "add set inet $NF_TABLE_NAME private_ips6 { type ipv6_addr; flags interval; }"
+        echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
+        echo "add element inet $NF_TABLE_NAME private_ips6 { ::/128, ::1/128, fe80::/10, fc00::/7, ff00::/8 }"
 
-        if [ "$nft_ntp_mode" = "DROP" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
-        elif [ "$nft_ntp_mode" = "DIRECT" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
-        fi
-
-        # Mark client packets selected for interception.
-        nft add rule inet "$NF_TABLE_NAME" prerouting meta mark set "$NF_TABLE_FWMARK_FINAL"
-
-        # Intercept all packets that were already marked by prerouting/output classification.
-        nft add rule inet "$NF_TABLE_NAME" proxy meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto tcp tproxy ip to 127.0.0.1:"$tproxy_port"
-        nft add rule inet "$NF_TABLE_NAME" proxy meta mark "$NF_TABLE_FWMARK_FINAL" meta l4proto udp tproxy ip to 127.0.0.1:"$tproxy_port"
-    fi
-
-    # === OUTPUT chain (priority -150) -router's traffic ===
-    if [ "$nft_apply_changes_router" = "1" ]; then
-        # Priority -150: output
-        nft add chain inet "$NF_TABLE_NAME" output '{ type route hook output priority -150; policy accept; }'
-
- 	    nft add rule inet "$NF_TABLE_NAME" output mark "$NF_TABLE_FWMARK_PROXY" return
-        for routing_mark_value in $routing_mark_values; do
-            nft add rule inet "$NF_TABLE_NAME" output meta mark "$routing_mark_value" return
-        done
-        #nft add rule inet "$NF_TABLE_NAME" output meta oifname @vpn_interfaces return
-        nft add rule inet "$NF_TABLE_NAME" output meta l4proto != { tcp, udp } return
-        nft add rule inet "$NF_TABLE_NAME" output ip daddr @private_ips return
-        nft add rule inet "$NF_TABLE_NAME" output ip6 daddr @private_ips6 return
-        nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
-        nft add rule inet "$NF_TABLE_NAME" output udp sport { 546, 547 } udp dport { 546, 547 } return
-
-        if [ -n "$nft_ports_exclude_router" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return
-        fi
-
-        if [ -n "$skuid_values" ]; then
-            skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
-            for skuid_resolved in $skuid_list; do
-                nft add rule inet "$NF_TABLE_NAME" output meta skuid "$skuid_resolved" return
+        if [ "$nft_apply_changes" = "1" ]; then
+            echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority -150; policy accept; }"
+            echo "add chain inet $NF_TABLE_NAME proxy { type filter hook prerouting priority -100; policy accept; }"
+            echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
+            echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
+            echo "add set inet $NF_TABLE_NAME inbound_interfaces { type ifname; }"
+            for iface in $tproxy_input_interfaces; do
+                echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
             done
+
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return"
+            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return"
+            echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return"
+            echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ips6 return"
+
+            if [ -n "$nft_exclude_ports" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_exclude_ports" | spaces_to_commas) } return"
+            fi
+
+            if [ "$nft_quic_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop"
+            fi
+            if [ "$nft_dot_quic_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT } drop"
+            fi
+            if [ "$nft_dot_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop"
+            fi
+
+            if [ "$nft_ntp_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop"
+            elif [ "$nft_ntp_mode" = "DIRECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return"
+            fi
+
+            echo "add rule inet $NF_TABLE_NAME prerouting meta mark set $NF_TABLE_FWMARK_FINAL"
+            echo "add rule inet $NF_TABLE_NAME proxy meta mark $NF_TABLE_FWMARK_FINAL meta l4proto tcp tproxy ip to 127.0.0.1:$tproxy_port"
+            echo "add rule inet $NF_TABLE_NAME proxy meta mark $NF_TABLE_FWMARK_FINAL meta l4proto udp tproxy ip to 127.0.0.1:$tproxy_port"
         fi
 
-        if [ "$nft_ntp_mode_router" = "DROP" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop
-        elif [ "$nft_ntp_mode_router" = "DIRECT" ]; then
-            # shellcheck disable=SC2248
-            nft add rule inet "$NF_TABLE_NAME" output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return
-        fi
+        if [ "$nft_apply_changes_router" = "1" ]; then
+            echo "add chain inet $NF_TABLE_NAME output { type route hook output priority -150; policy accept; }"
+            echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return"
+            for routing_mark_value in $routing_mark_values; do
+                echo "add rule inet $NF_TABLE_NAME output meta mark $routing_mark_value return"
+            done
 
-        nft add rule inet "$NF_TABLE_NAME" output meta l4proto { tcp, udp } meta mark set "$NF_TABLE_FWMARK_FINAL"
-    fi
+            echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return"
+            echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return"
+            echo "add rule inet $NF_TABLE_NAME output ip6 daddr @private_ips6 return"
+            echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return"
+            echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return"
+
+            if [ -n "$nft_ports_exclude_router" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return"
+            fi
+
+            if [ -n "$skuid_values" ]; then
+                skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
+                for skuid_resolved in $skuid_list; do
+                    echo "add rule inet $NF_TABLE_NAME output meta skuid $skuid_resolved return"
+                done
+            fi
+
+            if [ "$nft_ntp_mode_router" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop"
+            elif [ "$nft_ntp_mode_router" = "DIRECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return"
+            fi
+
+            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL"
+        fi
+    } | nft -f -
 
     cleanup_fwmark
 
@@ -812,56 +787,56 @@ build_builtin_rules_bundle() {
     local added_rulesets="|"
 
     ruleset_lines=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
-    while IFS= read -r ruleset_line; do
-        [ -z "$ruleset_line" ] && continue
+    printf '%s\n' "$ruleset_lines" | {
+        while IFS= read -r ruleset_line; do
+            [ -z "$ruleset_line" ] && continue
 
-        ruleset_name="${ruleset_line#*|}"
-        ruleset_name="${ruleset_name%%|*}"
+            ruleset_name="${ruleset_line#*|}"
+            ruleset_name="${ruleset_name%%|*}"
 
-        # shellcheck disable=SC2249
-        case "$added_rulesets" in
-            *"|$ruleset_name|"*) log warn "Skipping duplicated ruleset: $ruleset_name"; continue ;;
-        esac
+            # shellcheck disable=SC2249
+            case "$added_rulesets" in
+                *"|$ruleset_name|"*) log warn "Skipping duplicated ruleset: $ruleset_name"; continue ;;
+            esac
 
-        ruleset_fields="${ruleset_line#*|}"
-        ruleset_name="${ruleset_fields%%|*}"
-        ruleset_fields="${ruleset_fields#*|}"
-        ruleset_behavior="${ruleset_fields%%|*}"
-        ruleset_fields="${ruleset_fields#*|}"
-        ruleset_format="${ruleset_fields%%|*}"
-        ruleset_url="${ruleset_fields#*|}"
+            ruleset_fields="${ruleset_line#*|}"
+            ruleset_name="${ruleset_fields%%|*}"
+            ruleset_fields="${ruleset_fields#*|}"
+            ruleset_behavior="${ruleset_fields%%|*}"
+            ruleset_fields="${ruleset_fields#*|}"
+            ruleset_format="${ruleset_fields%%|*}"
+            ruleset_url="${ruleset_fields#*|}"
 
-        generated_rule="RULE-SET,$ruleset_name,$target_name"
-        rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
-        added_rulesets="$added_rulesets$ruleset_name|"
+            generated_rule="RULE-SET,$ruleset_name,$target_name"
+            rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
+            added_rulesets="$added_rulesets$ruleset_name|"
 
-        case "$rule_mode" in
-            all)
-                rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
-            ;;
-            non-domain-only)
-                if [ "$ruleset_behavior" != "domain" ]; then
+            case "$rule_mode" in
+                all)
                     rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
-                fi
-            ;;
-            *)
-                log error "Unsupported builtin rules bundle mode: $rule_mode"
-                return 1
-            ;;
-        esac
+                ;;
+                non-domain-only)
+                    if [ "$ruleset_behavior" != "domain" ]; then
+                        rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
+                    fi
+                ;;
+                *)
+                    log error "Unsupported builtin rules bundle mode: $rule_mode"
+                    return 1
+                ;;
+            esac
 
-        if [ "$ruleset_behavior" = "domain" ]; then
-            names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$ruleset_name\""
-            fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\""
-        fi
-    done <<EOF
-$ruleset_lines
-EOF
+            if [ "$ruleset_behavior" = "domain" ]; then
+                names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$ruleset_name\""
+                fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\""
+            fi
+        done
 
-    printf 'RULES:%s\n' "$rules_fragment"
-    printf 'RULESETS:%s\n' "$rulesets_fragment"
-    printf 'NAMES:%s\n' "$names_fragment"
-    printf 'FAKEIPRULES:%s\n' "$fake_ip_rules_fragment"
+        printf 'RULES:%s\n' "$rules_fragment"
+        printf 'RULESETS:%s\n' "$rulesets_fragment"
+        printf 'NAMES:%s\n' "$names_fragment"
+        printf 'FAKEIPRULES:%s\n' "$fake_ip_rules_fragment"
+    }
 }
 
 build_custom_rules_bundle() {
@@ -1638,105 +1613,98 @@ core_generate_yaml() {
     : > "$OUTPUT_YAML_CONFIG_PATH"
     chmod 600 "$OUTPUT_YAML_CONFIG_PATH"
 
-    # Support for mixed port
-    # Make sure call for this function handled after 'core_prepare_workdir' since file must be removed
-    if [ "$use_mixed_port" -eq 1 ]; then
-        cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-allow-lan: true
-mixed-port: $mixed_port
-authentication: $proxy_authentication
+    {
+        # Support for mixed port
+        # Make sure call for this function handled after 'core_prepare_workdir' since file must be removed
+        if [ "$use_mixed_port" -eq 1 ]; then
+            echo "allow-lan: true"
+            echo "mixed-port: $mixed_port"
+            printf '%s\n' "authentication: $proxy_authentication"
+            echo ""
+        fi
 
-EOF
-    fi
+        if [ "$use_dashboard" -eq 1 ]; then
+            echo "external-ui: $(yaml_quote "$DASHBOARD_PATH")"
+            echo "external-ui-url: $(yaml_quote "$dashboard_url")"
+        fi
 
-    if [ "$use_dashboard" -eq 1 ]; then
-        cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-external-ui: $(yaml_quote "$DASHBOARD_PATH")
-external-ui-url: $(yaml_quote "$dashboard_url")
-EOF
-    fi
+        if [ -n "$interface_name" ]; then
+            echo "interface-name: $(yaml_quote "$interface_name")"
+        fi
 
-    if [ -n "$interface_name" ]; then
-        cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-interface-name: $(yaml_quote "$interface_name")
-EOF
-    fi
-
-    cat <<EOF >> "$OUTPUT_YAML_CONFIG_PATH"
-mode: rule
-ipv6: false
-external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")
-secret: $(yaml_quote "$api_password")
-log-level: $(yaml_quote "$log_level")
-tproxy-port: $tproxy_port
-unified-delay: $(format_uci_bool_as_yaml "$unified_delay")
-tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")
-routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")
-global-client-fingerprint: $(yaml_quote "$global_client_fingerprint")
-global-ua: $(yaml_quote_soft "$global_ua")
-find-process-mode: off
-geodata-mode: false
-etag-support: $(format_uci_bool_as_yaml "$etag_support")
-
-keep-alive-idle: $keep_alive_idle
-keep-alive-interval: $keep_alive_interval
-
-profile:
-  store-selected: $(format_uci_bool_as_yaml "$profile_store_selected")
-  store-fake-ip: $(format_uci_bool_as_yaml "$profile_store_fake_ip")
-
-ntp:
-  enable: $(format_uci_bool_as_yaml "$core_ntp_enabled")
-  write-to-system: $(format_uci_bool_as_yaml "$core_ntp_write_system")
-  server: $(yaml_quote "$core_ntp_server")
-  port: $core_ntp_port
-  interval: $core_ntp_interval
-
-dns:
-  enable: true
-  cache-algorithm: arc
-  cache-max-size: $dns_cache_max_size
-  listen: $(yaml_quote "127.0.0.1:$dns_listen_port")
-  prefer-h3: false
-  ipv6: false
-  use-hosts: false
-  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")
-  nameserver-policy: $nameserver_policy
-  default-nameserver: $default_nameserver
-  nameserver: $nameserver
-  proxy-server-nameserver: $proxy_server_nameserver
-  direct-nameserver: $direct_nameserver
-  direct-nameserver-follow-policy: true
-  respect-rules: true
-  enhanced-mode: fake-ip
-  fake-ip-range: $fake_ip_range
-  fake-ip-filter-mode: rule
-  fake-ip-filter: $fake_ip_filter_data
-  fake-ip-ttl: $fake_ip_ttl
-
-sniffer:
-  enable: $(format_uci_bool_as_yaml "$sniffer_enable")
-  parse-pure-ip: $(format_uci_bool_as_yaml "$sniffer_parse_pure_ip")
-  sniff:
-    HTTP:
-      ports: [$DEFAULT_HTTP_PORT, $DEFAULT_SECONDARY_HTTP_PORT_RANGE-$DEFAULT_SECONDARY_HTTP_PORT_RANGE_END]
-      override-destination: true
-    TLS:
-      ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]
-    QUIC:
-      ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]
-  skip-domain: $sniffer_exclude_domain
-  force-domain: $sniffer_force_domain
-  skip-src-address: $sniffer_skip_src_address
-  skip-dst-address: $sniffer_skip_dst_address
-
-proxies: $proxies
-proxy-groups: $proxy_groups
-rule-providers: $rule_providers
-proxy-providers: $proxy_providers
-rules: $rules
-
-EOF
+        echo "mode: rule"
+        echo "ipv6: false"
+        echo "external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")"
+        echo "secret: $(yaml_quote "$api_password")"
+        echo "log-level: $(yaml_quote "$log_level")"
+        echo "tproxy-port: $tproxy_port"
+        echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
+        echo "tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")"
+        echo "routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")"
+        echo "global-client-fingerprint: $(yaml_quote "$global_client_fingerprint")"
+        echo "global-ua: $(yaml_quote_soft "$global_ua")"
+        echo "find-process-mode: off"
+        echo "geodata-mode: false"
+        echo "etag-support: $(format_uci_bool_as_yaml "$etag_support")"
+        echo ""
+        echo "keep-alive-idle: $keep_alive_idle"
+        echo "keep-alive-interval: $keep_alive_interval"
+        echo ""
+        echo "profile:"
+        echo "  store-selected: $(format_uci_bool_as_yaml "$profile_store_selected")"
+        echo "  store-fake-ip: $(format_uci_bool_as_yaml "$profile_store_fake_ip")"
+        echo ""
+        echo "ntp:"
+        echo "  enable: $(format_uci_bool_as_yaml "$core_ntp_enabled")"
+        echo "  write-to-system: $(format_uci_bool_as_yaml "$core_ntp_write_system")"
+        echo "  server: $(yaml_quote "$core_ntp_server")"
+        echo "  port: $core_ntp_port"
+        echo "  interval: $core_ntp_interval"
+        echo ""
+        echo "dns:"
+        echo "  enable: true"
+        echo "  cache-algorithm: arc"
+        echo "  cache-max-size: $dns_cache_max_size"
+        echo "  listen: $(yaml_quote "127.0.0.1:$dns_listen_port")"
+        echo "  prefer-h3: false"
+        echo "  ipv6: false"
+        echo "  use-hosts: false"
+        echo "  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")"
+        printf '%s\n' "  nameserver-policy: $nameserver_policy"
+        printf '%s\n' "  default-nameserver: $default_nameserver"
+        printf '%s\n' "  nameserver: $nameserver"
+        printf '%s\n' "  proxy-server-nameserver: $proxy_server_nameserver"
+        printf '%s\n' "  direct-nameserver: $direct_nameserver"
+        echo "  direct-nameserver-follow-policy: true"
+        echo "  respect-rules: true"
+        echo "  enhanced-mode: fake-ip"
+        echo "  fake-ip-range: $fake_ip_range"
+        echo "  fake-ip-filter-mode: rule"
+        printf '%s\n' "  fake-ip-filter: $fake_ip_filter_data"
+        echo "  fake-ip-ttl: $fake_ip_ttl"
+        echo ""
+        echo "sniffer:"
+        echo "  enable: $(format_uci_bool_as_yaml "$sniffer_enable")"
+        echo "  parse-pure-ip: $(format_uci_bool_as_yaml "$sniffer_parse_pure_ip")"
+        echo "  sniff:"
+        echo "    HTTP:"
+        echo "      ports: [$DEFAULT_HTTP_PORT, $DEFAULT_SECONDARY_HTTP_PORT_RANGE-$DEFAULT_SECONDARY_HTTP_PORT_RANGE_END]"
+        echo "      override-destination: true"
+        echo "    TLS:"
+        echo "      ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]"
+        echo "    QUIC:"
+        echo "      ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]"
+        printf '%s\n' "  skip-domain: $sniffer_exclude_domain"
+        printf '%s\n' "  force-domain: $sniffer_force_domain"
+        printf '%s\n' "  skip-src-address: $sniffer_skip_src_address"
+        printf '%s\n' "  skip-dst-address: $sniffer_skip_dst_address"
+        echo ""
+        printf '%s\n' "proxies: $proxies"
+        printf '%s\n' "proxy-groups: $proxy_groups"
+        printf '%s\n' "rule-providers: $rule_providers"
+        printf '%s\n' "proxy-providers: $proxy_providers"
+        printf '%s\n' "rules: $rules"
+    } > "$OUTPUT_YAML_CONFIG_PATH"
 
     return 0;
 }
@@ -2312,74 +2280,74 @@ diag_service_config() {
 }
 
 diag_report() {
-    local running autoload
+    local running autoload hw_model os_ver
     service "$PROGNAME" running && running="✅" || running="❌"
     service "$PROGNAME" enabled && autoload="✅" || autoload="❌"
 
-cat <<EOF
-
-₍^. .^₎⟆ $PROGNAME diagnostic:
-
-❯❯❯❯ Basic:
-Device:  $(get_hw_model || echo "$NO_DATA_STRING")
-OpenWRT: $(get_os_version || echo "$NO_DATA_STRING")
-Service: $JUSTCLASH_VERSION
-Mihomo:  $(info_mihomo)
-
-❯❯❯❯ Status:
-Active:  $running
-Load:  $autoload
-
-❯❯❯❯ NFT Tables:
-$(diag_nft)
-
-❯❯❯❯ Routes:
-$(diag_route)
-
-❯❯❯❯ ICMP $DEFAULT_DIAG_IP_CHECK_PING_YANDEX :
-$(diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2)
-
-❯❯❯❯ ICMP $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE :
-$(diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2)
-
-❯❯❯❯ ICMP $DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB :
-$(diag_icmp "$DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB" 2)
-
-❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with proxy:
-$(diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX")
-
-❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with $DEFAULT_DIAG_IP_CHECK_PING_YANDEX:
-$(diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX")
-
-❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE:
-$(diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE")
-
-❯❯❯❯ Zapret:
-$(if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "⚠️ Zapret installed."; else echo "✅ No zapret installed."; fi)
-
-❯❯❯❯ ByeDPI:
-$(if [ -f "$BYEDPI_FILEPATH" ]; then echo "⚠️ ByeDPI installed."; else echo "✅ No ByeDPI installed."; fi)
-
-❯❯❯❯ YoutubeUnblock:
-$(if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "⚠️ YoutubeUnblock installed."; else echo "✅ No YoutubeUnblock installed."; fi)
-
-❯❯❯❯ /etc/resolv.conf:
-$(cat /etc/resolv.conf)
-
-❯❯❯❯ Network config:
-$(uci show network | sed -E "s/(\.(password|key|private_key|preshared_key|secret|passphrase))=('.*'|[^ ]*)/\1='***REDACTED***'/gI")
-
-❯❯❯❯ DHCP config:
-$(uci show dhcp)
-
-❯❯❯❯ Service config:
-$(diag_service_config)
-
-❯❯❯❯ Mihomo config:
-$(diag_mihomo_config)
-
-EOF
-
+    echo ""
+    echo "₍^. .^₎⟆ $PROGNAME diagnostic:"
+    echo ""
+    echo "❯❯❯❯ Basic:"
+    hw_model=$(get_hw_model)
+    echo "Device:  ${hw_model:-$NO_DATA_STRING}"
+    os_ver=$(get_os_version)
+    echo "OpenWRT: ${os_ver:-$NO_DATA_STRING}"
+    echo "Service: $JUSTCLASH_VERSION"
+    printf "Mihomo:  "
+    info_mihomo
+    echo ""
+    echo "❯❯❯❯ Status:"
+    echo "Active:  $running"
+    echo "Load:  $autoload"
+    echo ""
+    echo "❯❯❯❯ NFT Tables:"
+    diag_nft
+    echo ""
+    echo "❯❯❯❯ Routes:"
+    diag_route
+    echo ""
+    echo "❯❯❯❯ ICMP $DEFAULT_DIAG_IP_CHECK_PING_YANDEX :"
+    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2
+    echo ""
+    echo "❯❯❯❯ ICMP $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE :"
+    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2
+    echo ""
+    echo "❯❯❯❯ ICMP $DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB :"
+    diag_icmp "$DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB" 2
+    echo ""
+    echo "❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with proxy:"
+    diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX"
+    echo ""
+    echo "❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with $DEFAULT_DIAG_IP_CHECK_PING_YANDEX:"
+    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX"
+    echo ""
+    echo "❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE:"
+    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE"
+    echo ""
+    echo "❯❯❯❯ Zapret:"
+    if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "⚠️ Zapret installed."; else echo "✅ No zapret installed."; fi
+    echo ""
+    echo "❯❯❯❯ ByeDPI:"
+    if [ -f "$BYEDPI_FILEPATH" ]; then echo "⚠️ ByeDPI installed."; else echo "✅ No ByeDPI installed."; fi
+    echo ""
+    echo "❯❯❯❯ YoutubeUnblock:"
+    if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "⚠️ YoutubeUnblock installed."; else echo "✅ No YoutubeUnblock installed."; fi
+    echo ""
+    echo "❯❯❯❯ /etc/resolv.conf:"
+    cat /etc/resolv.conf
+    echo ""
+    echo "❯❯❯❯ Network config:"
+    uci show network | sed -E "s/(\.(password|key|private_key|preshared_key|secret|passphrase))=('.*'|[^ ]*)/\1='***REDACTED***'/gI"
+    echo ""
+    echo "❯❯❯❯ DHCP config:"
+    uci show dhcp
+    echo ""
+    echo "❯❯❯❯ Service config:"
+    diag_service_config
+    echo ""
+    echo "❯❯❯❯ Mihomo config:"
+    diag_mihomo_config
+    echo ""
 }
 
 config_show() {
@@ -2417,47 +2385,45 @@ config_reset() {
 }
 
 help() {
-    cat << EOF
-Usage: justclash.sh <command> [args]
-
-Service Management:
-  start|run               Start the service
-  stop                    Stop the service
-  config_show             Show configuration in console
-  config_reset            Reset configuration
-  info_core|version_core  Show Mihomo core version
-  info_package|version    Show service version
-  service_data_update     Update service files from repository
-
-Mihomo management Commands:
-  core_update [alpha|stable]      Check current version and update Mihomo if a newer version is available
-  core_remove                     Remove the currently installed Mihomo binary
-
-  core_update_cron_check          Check if a scheduled Mihomo core auto-update task exists
-  core_update_cron_add            Add a scheduled task to periodically check and update Mihomo core
-  core_update_cron_remove         Remove the scheduled Mihomo core auto-update task
-
-  core_autorestart_cron_check     Check if a scheduled Mihomo auto-restart task exists
-  core_autorestart_cron_add       Add a scheduled task to automatically restart Mihomo periodically
-  core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task
-
-Diagnostics:
-  diag_report             Run diagnostic
-  diag_nft                Run nftables diagnostic
-  diag_route              Run route tables diagnostic
-  diag_icmp               Run internet check with ICMP
-  diag_proxy_resolver     Run Internal DNS diagnostic
-  diag_external_resolver  Run Default DNS diagnostic
-  diag_mihomo_config      Show generated mihomo config
-  diag_service_config     Show service config
-
-Logs:
-  logs|systemlogs [N]     Show last N lines of system logs (default 40)
-
-Help:
-  help|?|command          Show this help message
-
-EOF
+    echo "Usage: justclash.sh <command> [args]"
+    echo ""
+    echo "Service Management:"
+    echo "  start|run               Start the service"
+    echo "  stop                    Stop the service"
+    echo "  config_show             Show configuration in console"
+    echo "  config_reset            Reset configuration"
+    echo "  info_core|version_core  Show Mihomo core version"
+    echo "  info_package|version    Show service version"
+    echo "  service_data_update     Update service files from repository"
+    echo ""
+    echo "Mihomo management Commands:"
+    echo "  core_update [alpha|stable]      Check current version and update Mihomo if a newer version is available"
+    echo "  core_remove                     Remove the currently installed Mihomo binary"
+    echo ""
+    echo "  core_update_cron_check          Check if a scheduled Mihomo core auto-update task exists"
+    echo "  core_update_cron_add            Add a scheduled task to periodically check and update Mihomo core"
+    echo "  core_update_cron_remove         Remove the scheduled Mihomo core auto-update task"
+    echo ""
+    echo "  core_autorestart_cron_check     Check if a scheduled Mihomo auto-restart task exists"
+    echo "  core_autorestart_cron_add       Add a scheduled task to automatically restart Mihomo periodically"
+    echo "  core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task"
+    echo ""
+    echo "Diagnostics:"
+    echo "  diag_report             Run diagnostic"
+    echo "  diag_nft                Run nftables diagnostic"
+    echo "  diag_route              Run route tables diagnostic"
+    echo "  diag_icmp               Run internet check with ICMP"
+    echo "  diag_proxy_resolver     Run Internal DNS diagnostic"
+    echo "  diag_external_resolver  Run Default DNS diagnostic"
+    echo "  diag_mihomo_config      Show generated mihomo config"
+    echo "  diag_service_config     Show service config"
+    echo ""
+    echo "Logs:"
+    echo "  logs|systemlogs [N]     Show last N lines of system logs (default 40)"
+    echo ""
+    echo "Help:"
+    echo "  help|?|command          Show this help message"
+    echo ""
 }
 
 case "$1" in
