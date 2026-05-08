@@ -594,7 +594,7 @@ return view.extend({
 
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), _("Diagnostic output may include sensitive configuration and connection details."), common.binPath, ["diag_report"]), "diagnostic"),
+                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), false, common.binPath, ["diag_report"]), "diagnostic"),
                 createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showConfirmExecModalHandler(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), common.binPath, ["core_update"], async () => {
                     const res = await fs.exec(common.binPath, ["_luci_call"]);
                     const [infoPackage, fallbackCoreVersion] = cleanStdout(res).split(",");
@@ -622,8 +622,8 @@ return view.extend({
 
         const configActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), _("Do not share your Mihomo config with anyone."), common.binPath, ["diag_mihomo_config"]), "config"),
-                createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Show service config"), showExecModalHandler(_("Service config"), _("Do not share your service config with anyone."), common.binPath, ["diag_service_config"]), "config"),
+                createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), false, common.binPath, ["diag_mihomo_config"]), "config"),
+                createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Show service config"), showExecModalHandler(_("Service config"), false, common.binPath, ["diag_service_config"]), "config"),
                 createActionButton(buttonsIDs.CONFIG_RESET, buttons.NEGATIVE, _("Reset config"), showConfirmExecModalHandler(_("Reset configuration"), _("This will reset the JustClash configuration. Use with care."), common.binPath, ["config_reset"]), "reset")
             ])
         ]);
