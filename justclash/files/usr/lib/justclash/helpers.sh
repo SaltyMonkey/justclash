@@ -67,7 +67,9 @@ format_uci_list_as_json_array() {
 }
 
 md5_str() {
-    md5sum | awk '{print $1}'
+    local res
+    res=$(md5sum)
+    echo "${res%% *}"
 }
 
 spaces_to_commas() {
