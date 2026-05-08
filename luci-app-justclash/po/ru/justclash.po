@@ -1,4 +1,4 @@
-﻿msgid ""
+msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-10 06:35+0000\n"
@@ -1879,3 +1879,19 @@ msgstr "Пустые типы прокси не допускаются"
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:463
 msgid "Use a proxy/group name or supported action"
 msgstr "Используйте имя прокси/группы или поддерживаемое действие"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:83
+msgid "Router bypassed ports:"
+msgstr "Исключенные порты роутера:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:84
+msgid "Destination ports (e.g., 22 or 80) for router traffic to bypass the proxy."
+msgstr "Порты назначения (например, 22 или 80) для трафика роутера, которые будут идти в обход прокси."
+
+#: htdocs/luci-static/resources/view/justclash/service.js:101
+msgid "Client bypassed ports:"
+msgstr "Исключенные порты клиентов:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:102
+msgid "Destination ports (e.g., 22 or 80) for client traffic to bypass the proxy."
+msgstr "Порты назначения (например, 22 или 80) для трафика клиентов, которые будут идти в обход прокси."

@@ -1891,3 +1891,19 @@ msgstr ""
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:463
 msgid "Use a proxy/group name or supported action"
 msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:83
+msgid "Router bypassed ports:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:84
+msgid "Destination ports (e.g., 22 or 80) for router traffic to bypass the proxy."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:101
+msgid "Client bypassed ports:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:102
+msgid "Destination ports (e.g., 22 or 80) for client traffic to bypass the proxy."
+msgstr ""
