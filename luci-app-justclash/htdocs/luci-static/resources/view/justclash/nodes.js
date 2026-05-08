@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 "require view";
 "require uci";
 "require view.justclash.helper_common as common";
@@ -93,8 +93,8 @@ return view.extend({
         let configLoadFailed = false;
 
         try {
-            await uci.load("justclash");
-            token = uci.get("justclash", "proxy", "api_password") || "";
+            await uci.load(common.binName);
+            token = uci.get(common.binName, "proxy", "api_password") || "";
         } catch (e) {
             configLoadFailed = true;
             console.error("Failed to load justclash config", e);

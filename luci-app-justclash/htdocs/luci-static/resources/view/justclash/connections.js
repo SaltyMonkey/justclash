@@ -126,8 +126,8 @@ return view.extend({
 
     load: async function () {
         try {
-            await uci.load("justclash");
-            const token = uci.get("justclash", "proxy", "api_password") || "";
+            await uci.load(common.binName);
+            const token = uci.get(common.binName, "proxy", "api_password") || "";
             return { token, configLoadFailed: false };
         } catch (e) {
             console.error("Failed to load justclash config", e);
