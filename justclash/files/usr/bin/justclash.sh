@@ -386,7 +386,7 @@ nf_table_add() {
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
     local pbr_priority iface skuid_values skuid_list skuid_resolved routing_mark_values routing_mark_value
-
+    local nft_exclude_ports nft_ports_exclude_router
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -401,6 +401,8 @@ nf_table_add() {
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_ntp_mode settings nft_ntp_mode
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
+    config_get nft_exclude_ports settings nft_exclude_ports
+    config_get nft_ports_exclude_router settings nft_ports_exclude_router
     config_get skuid_values settings nft_skuid_exclude_router
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
     routing_mark_values=$(
@@ -463,6 +465,11 @@ nf_table_add() {
         nft add rule inet "$NF_TABLE_NAME" prerouting ip daddr @private_ips return
         nft add rule inet "$NF_TABLE_NAME" prerouting ip6 daddr @private_ips6 return
 
+        if [ -n "$nft_exclude_ports" ]; then
+            # shellcheck disable=SC2248
+            nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_exclude_ports" | spaces_to_commas) } return
+        fi
+
         if [ "$nft_quic_mode" = "DROP" ]; then
             # shellcheck disable=SC2248
             nft add rule inet "$NF_TABLE_NAME" prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop
@@ -507,6 +514,11 @@ nf_table_add() {
         nft add rule inet "$NF_TABLE_NAME" output ip6 daddr @private_ips6 return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 67, 68 } udp dport { 67, 68 } return
         nft add rule inet "$NF_TABLE_NAME" output udp sport { 546, 547 } udp dport { 546, 547 } return
+
+        if [ -n "$nft_ports_exclude_router" ]; then
+            # shellcheck disable=SC2248
+            nft add rule inet "$NF_TABLE_NAME" output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return
+        fi
 
         if [ -n "$skuid_values" ]; then
             skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
