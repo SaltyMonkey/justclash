@@ -6,7 +6,7 @@
                 "/etc/init.d/justclash": [
                     "exec"
                 ],
-                "/usr/bin/justclash": [
+                "/usr/bin/justclash.sh": [
                     "exec"
                 ],
                 "/etc/justclash/default.config": [
