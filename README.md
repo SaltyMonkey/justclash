@@ -130,7 +130,7 @@ docker compose -f 'Docker-compose.yml' up -d --build 'apk-builder'
 4. Use diagnostic commands for DNS, ICMP, and routing tests and etc. Check command below for more information.
 
     ```
-    /usr/bin/justclash help
+    /usr/bin/justclash.sh help
     ```
 
 ## Limitations
