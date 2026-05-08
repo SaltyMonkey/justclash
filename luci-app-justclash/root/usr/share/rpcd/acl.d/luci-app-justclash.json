@@ -17,9 +17,6 @@
                 ],
                 "/etc/justclash/block.rulesets.txt": [
                     "read"
-                ],
-                "/etc/crontabs/root": [
-                    "read"
                 ]
             },
             "uci": [
@@ -34,9 +31,6 @@
         "write": {
             "file": {
                 "/etc/justclash/default.config": [
-                    "write"
-                ],
-                "/etc/crontabs/root": [
                     "write"
                 ]
             },
