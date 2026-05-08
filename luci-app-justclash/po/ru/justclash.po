@@ -252,9 +252,17 @@ msgstr "Строка с доменом должна содержать как м
 msgid "Suffix must not start or end with a dot or hyphen"
 msgstr "Суффикс не должен начинаться или заканчиваться точкой или дефисом"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:319
-msgid "Double dots or double hyphens are not allowed"
-msgstr "Двойные точки или двойные дефисы не допускаются"
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:358
+msgid "Double dots are not allowed"
+msgstr "Двойные точки не допускаются"
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:365
+msgid "Domain segments may contain only letters, digits, and hyphens"
+msgstr "Сегменты домена могут содержать только буквы, цифры и дефисы"
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:368
+msgid "Domain segments must not start or end with a hyphen"
+msgstr "Сегменты домена не должны начинаться или заканчиваться дефисом"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:32
 msgid "Every 180 minutes"
@@ -1863,3 +1871,11 @@ msgstr "Проверить задержку"
 #: htdocs/luci-static/resources/view/justclash/nodes.js:297 htdocs/luci-static/resources/view/justclash/nodes.js:392
 msgid "Testing..."
 msgstr "Проверка..."
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:446
+msgid "Empty proxy types are not allowed"
+msgstr "Пустые типы прокси не допускаются"
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:463
+msgid "Use a proxy/group name or supported action"
+msgstr "Используйте имя прокси/группы или поддерживаемое действие"

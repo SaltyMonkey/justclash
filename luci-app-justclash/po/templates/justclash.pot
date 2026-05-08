@@ -252,20 +252,28 @@ msgstr ""
 msgid "Every 120 minutes"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:310
-msgid "Domain must not contain spaces"
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:347
+msgid "Domain must not contain spaces or control characters"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:313
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:350
 msgid "Domain must contain at least one dot"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:316
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:353
 msgid "Suffix must not start or end with a dot or hyphen"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:319
-msgid "Double dots or double hyphens are not allowed"
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:356
+msgid "Double dots are not allowed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:363
+msgid "Domain segments may contain only letters, digits, and hyphens"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:366
+msgid "Domain segments must not start or end with a hyphen"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:32
@@ -1874,4 +1882,12 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/nodes.js:220
 msgid "Testing..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:429
+msgid "Empty proxy types are not allowed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:463
+msgid "Use a proxy/group name or supported action"
 msgstr ""
