@@ -173,26 +173,26 @@ safe_paths_clear() {
 }
 
 get_hw_model() {
-    [ -n "$JUSTCLASH_CACHE_HW_MODEL" ] || JUSTCLASH_CACHE_HW_MODEL=$(cat /tmp/sysinfo/model)
+    [ -n "$JUSTCLASH_CACHE_HW_MODEL" ] || JUSTCLASH_CACHE_HW_MODEL=$(cat /tmp/sysinfo/model 2>/dev/null)
     printf '%s' "$JUSTCLASH_CACHE_HW_MODEL"
 }
 
 get_os_arch() {
-    [ -n "$JUSTCLASH_CACHE_OS_ARCH" ] || JUSTCLASH_CACHE_OS_ARCH=$(grep OPENWRT_ARCH /etc/os-release | cut -d'"' -f2)
+    [ -n "$JUSTCLASH_CACHE_OS_ARCH" ] || JUSTCLASH_CACHE_OS_ARCH=$(grep OPENWRT_ARCH /etc/os-release 2>/dev/null | cut -d'"' -f2)
     printf '%s' "$JUSTCLASH_CACHE_OS_ARCH"
 }
 
 get_os_name() {
-    [ -n "$JUSTCLASH_CACHE_OS_NAME" ] || JUSTCLASH_CACHE_OS_NAME=$(grep '^NAME=' /etc/os-release | cut -d'"' -f2)
+    [ -n "$JUSTCLASH_CACHE_OS_NAME" ] || JUSTCLASH_CACHE_OS_NAME=$(grep '^NAME=' /etc/os-release 2>/dev/null | cut -d'"' -f2)
     printf '%s' "$JUSTCLASH_CACHE_OS_NAME"
 }
 
 get_os_version_full() {
-    grep OPENWRT_RELEASE /etc/os-release | cut -d'"' -f2
+    grep OPENWRT_RELEASE /etc/os-release 2>/dev/null | cut -d'"' -f2
 }
 
 get_os_version() {
-    [ -n "$JUSTCLASH_CACHE_OS_VERSION" ] || JUSTCLASH_CACHE_OS_VERSION=$(grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}')
+    [ -n "$JUSTCLASH_CACHE_OS_VERSION" ] || JUSTCLASH_CACHE_OS_VERSION=$(grep OPENWRT_RELEASE /etc/os-release 2>/dev/null | awk '{print $2}')
     printf '%s' "$JUSTCLASH_CACHE_OS_VERSION"
 }
 
