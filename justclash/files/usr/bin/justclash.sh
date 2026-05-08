@@ -1772,6 +1772,10 @@ core_prepare_workdir() {
 
     log info "Preparing workdir $CORE_WORKDIR_PATH" "📁"
 
+    mkdir -p "$CORE_WORKDIR_PATH"
+    chown 0:0 "$CORE_WORKDIR_PATH"
+    chmod 700 "$CORE_WORKDIR_PATH"
+
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
             current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str)
@@ -1785,9 +1789,6 @@ core_prepare_workdir() {
                 res=0
             fi
         fi
-    else
-        mkdir -p "$CORE_WORKDIR_PATH"
-        chmod 700 "$CORE_WORKDIR_PATH"
     fi
 
     if [ "$mihomo_persistent_ext_rules" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
@@ -2283,11 +2284,19 @@ diag_icmp() {
 }
 
 diag_mihomo_config() {
-    cat "$OUTPUT_YAML_CONFIG_PATH"
+    if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
+        sed -E 's/^([[:space:]]*"?(secret|password|obfs-password|tls-password|uuid|public-key|short-id|private-key|certificate|preshared-key|username|client-fingerprint|token|auth|authentication)"?:).*/\1 "***REDACTED***"/gI' "$OUTPUT_YAML_CONFIG_PATH"
+    else
+        clog error "Config file not found." "❌"
+    fi
 }
 
 diag_service_config() {
-    cat "$CONFIG_PATH"
+    if [ -f "$CONFIG_PATH" ]; then
+        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+(password|obfs_password|tls_password|key|private_key|preshared_key|api_password|username|uuid|public_key|short_id|certificate|client_fingerprint|token|auth|authentication|subscription|proxy_link_uri|proxy_link_object)[[:space:]]+).*/\1'***REDACTED***'/gI" "$CONFIG_PATH"
+    else
+        clog error "Service config file not found." "❌"
+    fi
 }
 
 diag_report() {
@@ -2346,13 +2355,16 @@ $(if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "⚠️ YoutubeUnblock install
 $(cat /etc/resolv.conf)
 
 ❯❯❯❯ Network config:
-$(uci show network)
+$(uci show network | sed -E "s/(\.(password|key|private_key|preshared_key|secret|passphrase))=('.*'|[^ ]*)/\1='***REDACTED***'/gI")
 
 ❯❯❯❯ DHCP config:
 $(uci show dhcp)
 
 ❯❯❯❯ Service config:
-$(uci show "$PROGNAME")
+$(diag_service_config)
+
+❯❯❯❯ Mihomo config:
+$(diag_mihomo_config)
 
 EOF
 
