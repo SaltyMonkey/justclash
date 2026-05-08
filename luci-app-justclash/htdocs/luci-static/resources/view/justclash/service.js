@@ -99,10 +99,19 @@ return view.extend({
         o.description = _("User names or numeric UIDs for router-originated sockets that should bypass proxy redirection rules. Useful for services like byedpi or https-dns-proxy that must reach the internet directly.");
         o.placeholder = "byedpi";
         o.rmempty = true;
+        o.retain = true;
         o.depends("nft_apply_changes_router", primitives.TRUE);
         o.validate = function (section_id, value) {
             return common.validateUsernameOrUid(value);
         };
+
+        o = s.taboption(tabname, form.DynamicList, "nft_ports_exclude_router", _("Router bypassed ports:"));
+        o.description = _("Destination ports (e.g., 22 or 80) for router traffic to bypass the proxy.");
+        o.placeholder = "22";
+        o.rmempty = true;
+        o.retain = true;
+        o.datatype = datatypes.PORT;
+        o.depends("nft_apply_changes_router", primitives.TRUE);
 
         // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interfaces:"));
@@ -115,6 +124,14 @@ return view.extend({
         o.multiple = true;
         o.description = _("Select which interfaces receive client traffic that should be processed by JustClash. This is usually your LAN bridge; do not select WAN unless you know exactly why.");
         o.filter = common.filterInboundDeviceSelect;
+
+        o = s.taboption(tabname, form.DynamicList, "nft_exclude_ports", _("Client bypassed ports:"));
+        o.description = _("Destination ports (e.g., 22 or 80) for client traffic to bypass the proxy.");
+        o.placeholder = "22";
+        o.rmempty = true;
+        o.retain = true;
+        o.datatype = datatypes.PORT;
+        o.depends("nft_apply_changes", primitives.TRUE);
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
         o.description = _("Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
