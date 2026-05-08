@@ -635,6 +635,7 @@ justclash_uninstall() {
     if [ "$jc_is_installed" -ne 0 ] && [ "$lajc_is_installed" -ne 0 ]; then
         echo " - JustClash package was not found."
         echo " - Cleaning up known JustClash files and directories."
+        rm -rf /usr/bin/justclash.sh
         rm -rf /usr/bin/justclash
         rm -rf /usr/bin/mihomo
         rm -rf /tmp/justclash/

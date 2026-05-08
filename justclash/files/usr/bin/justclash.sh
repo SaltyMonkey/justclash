@@ -181,14 +181,14 @@ ntp_force_sync() {
 }
 
 core_validate_yaml() {
-    local test_output app_exit_code grep_test_exit_code grep_error_exit_code
+    local test_output app_exit_code
     test_output="$("$CORE_PATH" -t -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
     app_exit_code=$?
-    echo "$test_output" | grep -qiF "test failed"
-    grep_test_exit_code=$?
-    echo "$test_output" | grep -qiF "error"
-    grep_error_exit_code=$?
-    if [ "$grep_test_exit_code" -eq 0 ] || [ "$app_exit_code" -ne 0 ] || [ "$grep_error_exit_code" -eq 0 ]; then
+    # shellcheck disable=SC2249
+    case "$test_output" in
+        *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
+    esac
+    if [ "$app_exit_code" -ne 0 ]; then
         log error "Generated YAML configuration is invalid." "❌"
         log error "$test_output" "❌"
         log error "Mihomo configuration validation failed." "❌"
@@ -746,10 +746,13 @@ check_for_conflicts_warn() {
 }
 
 info_mihomo() {
+    local out
     if [ ! -x "$CORE_PATH" ]; then
         echo "$NO_DATA_STRING"
     else
-        "$CORE_PATH" -v 2>/dev/null | awk 'NR == 1 { print $3; exit }'
+        out="$("$CORE_PATH" -v 2>/dev/null)"
+        out="${out#* * }"
+        echo "${out%% *}"
     fi
 }
 
@@ -2090,7 +2093,7 @@ cron_make_if_missing() {
 
 core_update_cron_check() {
     cron_make_if_missing
-    if grep -qF "/usr/bin/${PROGNAME} core_update" /etc/crontabs/root; then
+    if grep -qE "/usr/bin/${PROGNAME}(\.sh)? core_update" /etc/crontabs/root; then
         return 0
     else
         return 1
@@ -2118,7 +2121,7 @@ core_update_cron_add() {
         return 0
     fi
 
-    echo "$mihomo_cron_update_string /usr/bin/${PROGNAME} core_update" >> /etc/crontabs/root
+    echo "$mihomo_cron_update_string /usr/bin/${PROGNAME}.sh core_update" >> /etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
         log info "Cron job added and service restarted" "✅"
@@ -2131,6 +2134,7 @@ core_update_cron_add() {
 core_update_cron_remove() {
     cron_make_if_missing
     if core_update_cron_check > /dev/null; then
+        sed -i '\|/usr/bin/justclash.sh core_update|d' /etc/crontabs/root
         sed -i '\|/usr/bin/justclash core_update|d' /etc/crontabs/root
         if /etc/init.d/cron enabled; then
             /etc/init.d/cron restart
@@ -2420,7 +2424,7 @@ config_reset() {
 
 help() {
     cat << EOF
-Usage: justclash <command> [args]
+Usage: justclash.sh <command> [args]
 
 Service Management:
   start|run               Start the service
@@ -2551,7 +2555,7 @@ case "$1" in
         ;;
     *)
         clog info "Unknown command: $1"
-        clog info "Type 'justclash help' for a list of available commands."
+        clog info "Type 'justclash.sh help' for a list of available commands."
         exit 1
         ;;
 esac
