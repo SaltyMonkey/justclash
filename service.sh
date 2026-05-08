@@ -20,6 +20,7 @@ NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
 TMP_DOWNLOAD_PATH="/tmp/justclash/downloads"
+TMP_ARCHIVE_PATH="${TMP_DOWNLOAD_PATH}/mihomo.gz"
 
 rm -rf "$TMP_DOWNLOAD_PATH"
 mkdir -p "$TMP_DOWNLOAD_PATH"
@@ -526,14 +527,14 @@ core_download() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
-        --progress-bar -L -o "${TMP_DOWNLOAD_PATH}/mihomo.gz" "$download_url" || {
+        --progress-bar -L -o "$TMP_ARCHIVE_PATH" "$download_url" || {
         print_red "Failed to download the Mihomo archive."
         return 1
     }
 
-    actual_sha256=$(sha256sum "${TMP_DOWNLOAD_PATH}/mihomo.gz" 2>/dev/null | awk '{print $1}')
+    actual_sha256=$(sha256sum "$TMP_ARCHIVE_PATH" 2>/dev/null | awk '{print $1}')
     if [ -z "$actual_sha256" ] || [ "$actual_sha256" != "$expected_sha256" ]; then
-        rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"
+        rm -f "$TMP_ARCHIVE_PATH"
         print_red "SHA256 verification failed for Mihomo archive version $param_version."
         return 1
     fi
@@ -541,7 +542,7 @@ core_download() {
     echo " - SHA256 verification passed for Mihomo archive version $param_version"
 
     echo " - Extracting to $CORE_PATH" "⬇️"
-    gunzip -c "${TMP_DOWNLOAD_PATH}/mihomo.gz" > "$CORE_PATH" || {
+    gunzip -c "$TMP_ARCHIVE_PATH" > "$CORE_PATH" || {
         print_red "Failed to extract the Mihomo archive."
         return 1
     }
@@ -553,8 +554,8 @@ core_download() {
     fi
 
     echo " - Cleaning up temporary files"
-    if ! rm -f "${TMP_DOWNLOAD_PATH}/mihomo.gz"; then
-        print_red "Failed to clean up temporary file: ${TMP_DOWNLOAD_PATH}/mihomo.gz"
+    if ! rm -f "$TMP_ARCHIVE_PATH"; then
+        print_red "Failed to clean up temporary file: $TMP_ARCHIVE_PATH"
     fi
 }
 
