@@ -25,6 +25,12 @@
             "ubus": {
                 "system": [
                     "board"
+                ],
+                "service": [
+                    "list"
+                ],
+                "luci": [
+                    "getInitList"
                 ]
             }
         },
