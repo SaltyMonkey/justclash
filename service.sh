@@ -20,7 +20,6 @@ NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
 TMP_DOWNLOAD_PATH="/tmp/justclash/downloads"
-TMP_ARCHIVE_PATH="${TMP_DOWNLOAD_PATH}/mihomo.gz"
 
 rm -rf "$TMP_DOWNLOAD_PATH"
 mkdir -p "$TMP_DOWNLOAD_PATH"
@@ -514,10 +513,11 @@ core_download() {
     version_txt_url="$1"
     local param_version="$2"
     local expected_sha256="$3"
-    local actual_sha256
+    local actual_sha256 tmp_archive_path
 
     arch=$(detect_arch)
     mkdir -p "$TMP_DOWNLOAD_PATH"
+    tmp_archive_path=$(mktemp "${TMP_DOWNLOAD_PATH}/mihomo.XXXXXX.gz")
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
     base_url="${version_txt_url%/*}"
@@ -527,14 +527,15 @@ core_download() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
-        --progress-bar -L -o "$TMP_ARCHIVE_PATH" "$download_url" || {
+        --progress-bar -L -o "$tmp_archive_path" "$download_url" || {
         print_red "Failed to download the Mihomo archive."
+        rm -f "$tmp_archive_path"
         return 1
     }
 
-    actual_sha256=$(sha256sum "$TMP_ARCHIVE_PATH" 2>/dev/null | awk '{print $1}')
+    actual_sha256=$(sha256sum "$tmp_archive_path" 2>/dev/null | awk '{print $1}')
     if [ -z "$actual_sha256" ] || [ "$actual_sha256" != "$expected_sha256" ]; then
-        rm -f "$TMP_ARCHIVE_PATH"
+        rm -f "$tmp_archive_path"
         print_red "SHA256 verification failed for Mihomo archive version $param_version."
         return 1
     fi
@@ -542,7 +543,8 @@ core_download() {
     echo " - SHA256 verification passed for Mihomo archive version $param_version"
 
     echo " - Extracting to $CORE_PATH" "⬇️"
-    gunzip -c "$TMP_ARCHIVE_PATH" > "$CORE_PATH" || {
+    gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
+        rm -f "$tmp_archive_path"
         print_red "Failed to extract the Mihomo archive."
         return 1
     }
@@ -554,8 +556,8 @@ core_download() {
     fi
 
     echo " - Cleaning up temporary files"
-    if ! rm -f "$TMP_ARCHIVE_PATH"; then
-        print_red "Failed to clean up temporary file: $TMP_ARCHIVE_PATH"
+    if ! rm -f "$tmp_archive_path"; then
+        print_red "Failed to clean up temporary file: $tmp_archive_path"
     fi
 }
 
