@@ -78,11 +78,11 @@ check_icmp() {
 }
 
 get_os_arch() {
-    grep OPENWRT_ARCH /etc/os-release | cut -d'"' -f2 || echo "${NO_DATA_STRING}"
+    (. /etc/os-release 2>/dev/null && echo "${OPENWRT_ARCH:-$NO_DATA_STRING}") || echo "${NO_DATA_STRING}"
 }
 
 get_os_version() {
-    grep OPENWRT_RELEASE /etc/os-release | awk '{print $2}'
+    (. /etc/os-release 2>/dev/null && echo "${VERSION:-$VERSION_ID}") || echo "${NO_DATA_STRING}"
 }
 
 info_device() {
