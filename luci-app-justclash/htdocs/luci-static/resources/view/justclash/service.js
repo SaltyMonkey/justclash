@@ -125,7 +125,7 @@ return view.extend({
         o.description = _("Select which interfaces receive client traffic that should be processed by JustClash. This is usually your LAN bridge; do not select WAN unless you know exactly why.");
         o.filter = common.filterInboundDeviceSelect;
 
-        o = s.taboption(tabname, form.DynamicList, "nft_exclude_ports", _("Client bypassed ports:"));
+        o = s.taboption(tabname, form.DynamicList, "nft_ports_exclude", _("Client bypassed ports:"));
         o.description = _("Destination ports (e.g., 22 or 80) for client traffic to bypass the proxy.");
         o.placeholder = "22";
         o.rmempty = true;

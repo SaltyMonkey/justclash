@@ -101,6 +101,8 @@ DEFAULT_SECONDARY_HTTP_PORT_RANGE=8080
 DEFAULT_SECONDARY_HTTP_PORT_RANGE_END=8880
 DEFAULT_SOCKS_PORT=1080
 DEFAULT_DOT_PORT=853
+DEFAULT_SECONDARY_DOQ_PORT_SECOND=784
+DEFAULT_SECONDARY_DOQ_PORT_THIRD=8853
 DEFAULT_NTP_PORT=123
 
 DEFAULT_CORE_RESTART_RETRIES=3
@@ -176,8 +178,6 @@ ntp_force_sync() {
         # shellcheck disable=SC2086
         /usr/sbin/ntpd -q $NTP_ARGS
     fi
-
-    sleep 2
 }
 
 core_validate_yaml() {
@@ -274,12 +274,12 @@ start_core() {
                 "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
             )
             exit_code=$?
-            log warn "Procd mode: Mihomo exited with code $exit_code" "❌"
-
-            if [ "$exit_code" -eq 0 ]; then
+            if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then
+                log info "Procd mode: Mihomo stopped gracefully" "🐱"
                 break
             fi
 
+            log warn "Procd mode: Mihomo exited with code $exit_code" "❌"
             attempt=$((attempt + 1))
             log error "Procd mode: Mihomo crashed, attempt $attempt of $DEFAULT_CORE_RESTART_RETRIES" "❌"
 
@@ -293,8 +293,10 @@ start_core() {
     else
         "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
         exit_code=$?
-        log warn "Manual mode: Mihomo exited with code $exit_code" "❌"
-        if [ "$exit_code" -ne 0 ]; then
+        if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then
+            log info "Manual mode: Mihomo stopped gracefully" "🐱"
+        else
+            log warn "Manual mode: Mihomo exited with code $exit_code" "❌"
             log error "Manual mode: Mihomo crashed; exiting" "❌"
             return "$exit_code"
         fi
@@ -386,7 +388,7 @@ nf_table_add() {
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
     local pbr_priority iface skuid_values skuid_list skuid_resolved routing_mark_values routing_mark_value
-    local nft_exclude_ports nft_ports_exclude_router
+    local nft_ports_exclude nft_ports_exclude_router
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -401,7 +403,7 @@ nf_table_add() {
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_ntp_mode settings nft_ntp_mode
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
-    config_get nft_exclude_ports settings nft_exclude_ports
+    config_get nft_ports_exclude settings nft_ports_exclude
     config_get nft_ports_exclude_router settings nft_ports_exclude_router
     config_get skuid_values settings nft_skuid_exclude_router
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
@@ -435,13 +437,10 @@ nf_table_add() {
 
         echo "add table inet $NF_TABLE_NAME"
         echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
-        echo "add set inet $NF_TABLE_NAME private_ips6 { type ipv6_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
-        echo "add element inet $NF_TABLE_NAME private_ips6 { ::/128, ::1/128, fe80::/10, fc00::/7, ff00::/8 }"
 
         if [ "$nft_apply_changes" = "1" ]; then
-            echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority -150; policy accept; }"
-            echo "add chain inet $NF_TABLE_NAME proxy { type filter hook prerouting priority -100; policy accept; }"
+            echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
             echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
             echo "add set inet $NF_TABLE_NAME inbound_interfaces { type ifname; }"
@@ -449,20 +448,24 @@ nf_table_add() {
                 echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
             done
 
+            echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return"
+
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept"
+
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return"
+
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return"
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return"
-            echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ips6 return"
 
-            if [ -n "$nft_exclude_ports" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_exclude_ports" | spaces_to_commas) } return"
+            if [ -n "$nft_ports_exclude" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return"
             fi
 
             if [ "$nft_quic_mode" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT } drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } drop"
             fi
             if [ "$nft_dot_quic_mode" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT } drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } drop"
             fi
             if [ "$nft_dot_mode" = "DROP" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop"
@@ -474,13 +477,12 @@ nf_table_add() {
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return"
             fi
 
-            echo "add rule inet $NF_TABLE_NAME prerouting meta mark set $NF_TABLE_FWMARK_FINAL"
-            echo "add rule inet $NF_TABLE_NAME proxy meta mark $NF_TABLE_FWMARK_FINAL meta l4proto tcp tproxy ip to 127.0.0.1:$tproxy_port"
-            echo "add rule inet $NF_TABLE_NAME proxy meta mark $NF_TABLE_FWMARK_FINAL meta l4proto udp tproxy ip to 127.0.0.1:$tproxy_port"
+            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port"
         fi
 
         if [ "$nft_apply_changes_router" = "1" ]; then
-            echo "add chain inet $NF_TABLE_NAME output { type route hook output priority -150; policy accept; }"
+            echo "add chain inet $NF_TABLE_NAME output { type route hook output priority mangle; policy accept; }"
+            echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return"
             echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return"
             for routing_mark_value in $routing_mark_values; do
                 echo "add rule inet $NF_TABLE_NAME output meta mark $routing_mark_value return"
@@ -488,9 +490,7 @@ nf_table_add() {
 
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return"
             echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return"
-            echo "add rule inet $NF_TABLE_NAME output ip6 daddr @private_ips6 return"
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return"
-            echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return"
 
             if [ -n "$nft_ports_exclude_router" ]; then
                 echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return"
@@ -2265,7 +2265,7 @@ diag_icmp() {
 
 diag_mihomo_config() {
     if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-        sed -E 's/^([[:space:]]*"?(secret|password|obfs-password|tls-password|uuid|public-key|short-id|private-key|certificate|preshared-key|username|client-fingerprint|token|auth|authentication)"?:).*/\1 "***REDACTED***"/gI' "$OUTPUT_YAML_CONFIG_PATH"
+        sed -E 's/^([[:space:]]*"?(secret|password|obfs-password|tls-password|uuid|public-key|short-id|private-key|certificate|preshared-key|username|server|servername|token|auth|authentication)"?:).*/\1 "***REDACTED***"/gI' "$OUTPUT_YAML_CONFIG_PATH"
     else
         clog error "Config file not found." "❌"
     fi
@@ -2273,7 +2273,7 @@ diag_mihomo_config() {
 
 diag_service_config() {
     if [ -f "$CONFIG_PATH" ]; then
-        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+(password|obfs_password|tls_password|key|private_key|preshared_key|api_password|username|uuid|public_key|short_id|certificate|client_fingerprint|token|auth|authentication|subscription|proxy_link_uri|proxy_link_object)[[:space:]]+).*/\1'***REDACTED***'/gI" "$CONFIG_PATH"
+        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+(password|obfs_password|tls_password|key|private_key|preshared_key|api_password|username|uuid|public_key|short_id|certificate|server|servername|token|auth|authentication|subscription|proxy_link_uri|proxy_link_object)[[:space:]]+).*/\1'***REDACTED***'/gI" "$CONFIG_PATH"
     else
         clog error "Service config file not found." "❌"
     fi
