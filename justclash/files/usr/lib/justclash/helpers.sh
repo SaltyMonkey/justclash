@@ -10,8 +10,20 @@
 JUSTCLASH_CACHE_OS_ARCH=""
 JUSTCLASH_CACHE_OS_NAME=""
 JUSTCLASH_CACHE_OS_VERSION=""
+JUSTCLASH_CACHE_OS_VERSION_FULL=""
 JUSTCLASH_CACHE_HW_MODEL=""
 JUSTCLASH_CACHE_HWID=""
+
+if [ -f /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    # shellcheck disable=SC2154
+    JUSTCLASH_CACHE_OS_ARCH="$OPENWRT_ARCH"
+    # shellcheck disable=SC2154
+    JUSTCLASH_CACHE_OS_NAME="$NAME"
+    JUSTCLASH_CACHE_OS_VERSION="${PRETTY_NAME:-$OPENWRT_RELEASE}"
+    JUSTCLASH_CACHE_OS_VERSION_FULL="$OPENWRT_RELEASE"
+fi
 
 url_decode() {
     # shellcheck disable=SC3060
@@ -69,7 +81,7 @@ format_uci_list_as_json_array() {
 md5_str() {
     local res
     res=$(md5sum)
-    echo "${res%% *}"
+    printf '%s' "${res%% *}"
 }
 
 spaces_to_commas() {
@@ -178,21 +190,18 @@ get_hw_model() {
 }
 
 get_os_arch() {
-    [ -n "$JUSTCLASH_CACHE_OS_ARCH" ] || JUSTCLASH_CACHE_OS_ARCH=$(grep OPENWRT_ARCH /etc/os-release 2>/dev/null | cut -d'"' -f2)
     printf '%s' "$JUSTCLASH_CACHE_OS_ARCH"
 }
 
 get_os_name() {
-    [ -n "$JUSTCLASH_CACHE_OS_NAME" ] || JUSTCLASH_CACHE_OS_NAME=$(grep '^NAME=' /etc/os-release 2>/dev/null | cut -d'"' -f2)
     printf '%s' "$JUSTCLASH_CACHE_OS_NAME"
 }
 
 get_os_version_full() {
-    grep OPENWRT_RELEASE /etc/os-release 2>/dev/null | cut -d'"' -f2
+    printf '%s' "$JUSTCLASH_CACHE_OS_VERSION_FULL"
 }
 
 get_os_version() {
-    [ -n "$JUSTCLASH_CACHE_OS_VERSION" ] || JUSTCLASH_CACHE_OS_VERSION=$(grep OPENWRT_RELEASE /etc/os-release 2>/dev/null | awk '{print $2}')
     printf '%s' "$JUSTCLASH_CACHE_OS_VERSION"
 }
 
