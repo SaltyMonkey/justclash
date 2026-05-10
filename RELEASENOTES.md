@@ -1,3 +1,46 @@
+## [0.15.0] - 10052026
+
+### Security
+- **Critical:** Fixed a privilege escalation vulnerability in LuCI ACL that allowed arbitrary writes to `/etc/crontabs/root`.
+- **High:** Fixed severe information disclosure in diagnostic reports. `diag_report` now properly redacts system network secrets (WireGuard, PPPoE, WiFi keys) and all proxy tokens/passwords.
+- **Medium:** Mitigated Symlink Attack vectors by using `mktemp` with randomized names for all temporary downloads and rule files.
+- **Medium:** Secured the temporary working directory (`/tmp/justclash`) with strict `root:root` ownership and `700` permissions.
+- **Medium:** Secured generated `config.yaml` with `600` permissions to prevent unauthorized access to API and proxy passwords.
+
+### Features & Enhancements
+- **Service:** Renamed main binary from `justclash` to `justclash.sh` for better consistency (requires manual update of custom user scripts/aliases if any).
+- **Service:** Added highly requested port bypass feature for both router and client traffic (`nft_ports_exclude_router` and `nft_ports_exclude`).
+- **Service:** Synchronized blocked QUIC and DoQ ports with sniffer settings (added ports 8443, 784, 8853).
+- **Service:** Simplify external controller logic.
+- **Service:** Updated `procd` parameters to safely handle high connection loads (`nofile="65535 65535"`).
+- **Service:** Added support for parsing `direct://` URIs in proxy configurations.
+- **Service:** Added support for custom `routing-mark` (fwmark) overrides for individual proxies and proxy providers.
+- **LuCI:** Replaced CPU-heavy `fs.exec` polling with lightweight `ubus call service list` RPC calls for the status page.
+- **LuCI:** Unified UI naming for bypass ports.
+- **LuCI:** Added `Routing mark` configuration fields in Proxy and Proxy Provider sections.
+- **LuCI:** Added `direct://` scheme to the proxy link validator.
+- **Docs:** Updated `uci-structure` documentation.
+
+### Performance & Optimizations
+- **Service:** Completely redesigned `nftables` architecture. Merged `prerouting` and `proxy` chains into a single high-performance pipeline.
+- **Service:** Massive shell script performance optimizations. Eliminated unnecessary `fork`/`exec` calls by replacing `cat <<EOF` and some `awk`/`grep` calls with shell built-ins (`echo`, `printf`, `source`).
+- **Service:** Optimized `nftables` rules application to use a single atomic `nft -f -` transaction, drastically reducing CPU load during service start/restart.
+- **URI:** Cleanup unused `xhttp` fields to optimize parsing logic.
+- **Service:** Added lightning-fast hardware bypass for IPv6 (`meta nfproto ipv6 return`).
+- **Service:** Removed artificial 2-second delay during NTP synchronization.
+- **Service:** Optimized API password and MAC variable randomization in post-install script using `/proc/sys/kernel/random/uuid` and native shell pipes.
+
+### Bug Fixes
+- **Service:** Fixed logic bugs in `stop_core` and `start_core` that caused false crash reports during graceful reloads (now correctly handling exit codes 130, 137, 143).
+- **Service:** Fixed JSON corruption during config generation caused by `echo` interpreting escape characters (replaced with `printf '%s\n'`).
+- **Service:** Fixed `dnsmasq` configuration parsing and restoration bugs that caused duplicate or malformed DNS servers.
+- **LuCI:** Fix duplication for auth header and query param in HTTP (Mihomo API calls).
+- **Service:** Fixed handling of spaces in UCI lists by switching to `config_list_foreach`.
+- **Service:** Fixed caching bug in OS/Hardware detection where variables were lost in subshells.
+
+**This version requires:**
+- Browser cache should be cleaned up after LuCI update
+
 ## [0.11.0] - 20042026
 
 - Service: Added proper `pipefail` handling for Mihomo startup and release metadata/version fetch pipelines
