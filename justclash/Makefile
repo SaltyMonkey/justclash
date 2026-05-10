@@ -42,7 +42,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/usr/lib/justclash/uri.sh $(1)/usr/lib/justclash/
 
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/usr/bin/justclash $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/usr/bin/justclash.sh $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/justclash $(1)/etc/config/
@@ -55,13 +55,12 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
 
-	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/bin/justclash
-
-	sed -i -e 's|__CORE_RELEASE_CHECK_URL_VARIABLE__|https://api.github.com/repos/MetaCubeX/mihomo/releases/latest|g' $(1)/usr/bin/justclash
-	sed -i -e 's|__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data|g' $(1)/usr/bin/justclash
-	sed -i -e 's|__DASHBOARD_ZASHBOARD_EXTERNAL_URL__|https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip|g' $(1)/usr/bin/justclash
-	sed -i -e 's|__DASHBOARD_METACUBEX_EXTERNAL_URL__|https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip|g' $(1)/usr/bin/justclash
-	sed -i -e 's|__DASHBOARD_YACD_EXTERNAL_URL__|https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip|g' $(1)/usr/bin/justclash
+	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/bin/justclash.sh
+	sed -i -e 's|__CORE_RELEASE_CHECK_URL_VARIABLE__|https://api.github.com/repos/MetaCubeX/mihomo/releases/latest|g' $(1)/usr/bin/justclash.sh
+	sed -i -e 's|__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data|g' $(1)/usr/bin/justclash.sh
+	sed -i -e 's|__DASHBOARD_ZASHBOARD_EXTERNAL_URL__|https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip|g' $(1)/usr/bin/justclash.sh
+	sed -i -e 's|__DASHBOARD_METACUBEX_EXTERNAL_URL__|https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip|g' $(1)/usr/bin/justclash.sh
+	sed -i -e 's|__DASHBOARD_YACD_EXTERNAL_URL__|https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip|g' $(1)/usr/bin/justclash.sh
 
 endef
 
@@ -88,7 +87,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	CURRENT_API_PASSWORD="$$(uci -q get justclash.proxy.api_password)"
 
 	if [ "$${CURRENT_API_PASSWORD}" = "$${DEFAULT_API_PASSWORD}" ]; then
-		RANDOM_API_PASSWORD="$$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | sha256sum | cut -c1-32)"
+		RANDOM_API_PASSWORD="$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-')"
 		if [ -n "$${RANDOM_API_PASSWORD}" ]; then
 			uci set justclash.proxy.api_password="$${RANDOM_API_PASSWORD}"
 			uci commit justclash
@@ -96,9 +95,10 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		fi
 	fi
 	# randomize failover mac string if placeholder value detected
-	RANDOM_MAC_REPLACEMENT="$$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | sha256sum | cut -c1-30)"
+	RANDOM_MAC_REPLACEMENT="$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-' | cut -c1-30)"
 	[ -n "$${RANDOM_MAC_REPLACEMENT}" ] && sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|$${RANDOM_MAC_REPLACEMENT}|g" /usr/lib/justclash/helpers.sh || true
 fi
+exit 0
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
