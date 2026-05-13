@@ -159,10 +159,6 @@ return baseclass.extend({
         "randomized",
         "edge"
     ],
-    defaultUpdateOptions: [
-        { value: "no", text: _("Disabled") },
-        { value: "checkandupdate", text: _("Check and do update") }
-    ],
     defaultUpdateChannelOptions: [
         { value: "stable", text: _("Stable") },
         { value: "alpha", text: _("Alpha") }
@@ -330,13 +326,13 @@ return baseclass.extend({
     },
     isValidSimpleName: function (value) {
         const val = String(value || "").trim();
-        const pattern = /^[a-z0-9_]+$/;
+        const pattern = /^[a-zA-Z0-9_-]+$/;
         return val.length <= 64 && pattern.test(val);
     },
     validateSimpleName: function (value) {
         return this.isValidSimpleName(value)
             ? true
-            : _("Name must contain 1-64 lowercase letters, digits, and underscores");
+            : _("Name must contain 1-64 letters, digits, hyphens, and underscores");
     },
     validateUsernameOrUid: function (value) {
         const trimmedValue = String(value || "").trim();
