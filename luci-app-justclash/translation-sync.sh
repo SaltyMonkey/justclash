@@ -6,6 +6,7 @@ WIDTH=900
 SRC_DIR="htdocs/luci-static/resources/view/${PROGNAME}"
 OUT_POT="po/templates/${PROGNAME}.pot"
 RU_PO="po/ru/${PROGNAME}.po"
+ZH_HANS_PO="po/zh_Hans/${PROGNAME}.po"
 
 make_pot() {
     echo "Analyze all JS files in project"
@@ -31,12 +32,13 @@ make_pot() {
 
 make_po() {
     local po_path="$1"
+    local locale_code="$2"
     if [ -f "${po_path}" ]; then
         echo "Updating $po_path"
         msgmerge --update --width="$WIDTH" "${po_path}" "$OUT_POT"
     else
         echo "Creating new $po_path using msginit"
-        msginit --no-translator --locale="$LANG" --width="$WIDTH" --no-wrap --input="$OUT_POT" --output-file="${po_path}"
+        msginit --no-translator --locale="$locale_code" --width="$WIDTH" --no-wrap --input="$OUT_POT" --output-file="${po_path}"
     fi
     echo "PO file generated: ${po_path}"
 }
@@ -45,4 +47,5 @@ echo "Generating POT..."
 make_pot
 
 echo "Generating PO files..."
-make_po "$RU_PO"
+make_po "$RU_PO" "ru"
+make_po "$ZH_HANS_PO" "zh_CN"
