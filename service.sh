@@ -2,7 +2,7 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-CORE_RELEASE_CHECK_URL="https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
+MIHOMO_GITHUB_REPO="MetaCubeX/mihomo"
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash/releases/latest"
 
 CURL_CONNECT_TIMEOUT=15
@@ -421,7 +421,7 @@ core_update() {
     local check_url channel arch
     local asset_name digest expected_sha256
     channel=${1}
-    check_url="$CORE_RELEASE_CHECK_URL"
+    check_url="https://api.github.com/repos/${MIHOMO_GITHUB_REPO}/releases/latest"
 
     cur_ver=$(info_mihomo)
     arch=$(detect_arch)
@@ -607,7 +607,7 @@ packages_install() {
 }
 
 justclash_uninstall() {
-    local jc_is_installed lajc_is_installed laijc_is_installed
+    local jc_is_installed lajc_is_installed laijc_is_installed_ru laijc_is_installed_zh_cn
     echo "  "
     print_bold_green "Checking installed JustClash packages..."
 
@@ -626,10 +626,17 @@ justclash_uninstall() {
     fi
 
     pkg_is_installed luci-i18n-justclash-ru
-    laijc_is_installed="$?"
-    if [ "$laijc_is_installed" -eq 0 ]; then
-        echo " - LuCI i18n JustClash package was found. Removing..."
+    laijc_is_installed_ru="$?"
+    if [ "$laijc_is_installed_ru" -eq 0 ]; then
+        echo " - LuCI i18n JustClash package (RU) was found. Removing..."
         pkg_remove luci-i18n-justclash-ru
+    fi
+
+    pkg_is_installed luci-i18n-justclash-zh-cn
+    laijc_is_installed_zh_cn="$?"
+    if [ "$laijc_is_installed_zh_cn" -eq 0 ]; then
+        echo " - LuCI i18n JustClash package (ZH-CN) was found. Removing..."
+        pkg_remove luci-i18n-justclash-zh-cn
     fi
 
     if [ "$jc_is_installed" -ne 0 ] && [ "$lajc_is_installed" -ne 0 ]; then
@@ -644,7 +651,7 @@ justclash_uninstall() {
 }
 
 packages_download() {
-    local install_ru="$1"
+    local install_lang="$1"
     if [ -z "$JUSTCLASH_RELEASE_URL_API" ] || [ -z "$TMP_DOWNLOAD_PATH" ]; then
         print_red "Usage: packages_download requires JUSTCLASH_RELEASE_URL_API and TMP_DOWNLOAD_PATH to be set."
         return 1
@@ -677,10 +684,19 @@ packages_download() {
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        if [ "$install_ru" -ne 1 ] && echo "$file" | grep -q "luci-i18n-justclash-ru"; then
-            echo " - Skipping $file"
-            continue
+        
+        # Skip translation files if they don't match the selected language
+        if echo "$file" | grep -q "luci-i18n-justclash-"; then
+            if [ "$install_lang" != "ru" ] && echo "$file" | grep -q "luci-i18n-justclash-ru"; then
+                echo " - Skipping $file (not selected)"
+                continue
+            fi
+            if [ "$install_lang" != "zh-cn" ] && echo "$file" | grep -q "luci-i18n-justclash-zh"; then
+                echo " - Skipping $file (not selected)"
+                continue
+            fi
         fi
+        
         wget "$file" -qO "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
             print_red "Failed to download $file"
             continue
@@ -691,18 +707,29 @@ packages_download() {
 }
 
 install_translation_interactive() {
-    print_bold_green "Russian translation installation mode..."
+    print_bold_green "Select translation to install:"
+    echo "1. English (Default, no extra package)"
+    echo "2. Russian (RU)"
+    echo "3. Simplified Chinese (ZH-CN)"
+    
     while true; do
-            printf "Do you want to install RU translation? y/n: "
-            read -r inp
-            inp=$(echo "$inp" | tr '[:upper:]' '[:lower:]')
-            # shellcheck disable=SC2249
-            case $inp in
-                yes|y)
+            printf "Enter your choice [1-3]: "
+            read -r choice
+            case "$choice" in
+                1)
+                    echo "en"
                     return 0
                     ;;
-                n|no)
-                    return 1
+                2)
+                    echo "ru"
+                    return 0
+                    ;;
+                3)
+                    echo "zh-cn"
+                    return 0
+                    ;;
+                *)
+                    echo "Invalid choice. Please enter 1, 2, or 3." >&2
                     ;;
             esac
     done
@@ -723,7 +750,7 @@ install_packages() {
 }
 
 install_service() {
-    local install_ru=0
+    local install_lang="en"
     mkdir -p "$TMP_DOWNLOAD_PATH"
 
     diagnostic_tools
@@ -733,10 +760,10 @@ install_service() {
     fi
     diagnostic_conflicts_interactive
     core_update "stable"
-    if install_translation_interactive; then
-        install_ru=1
-    fi
-    packages_download "$install_ru"
+    
+    install_lang=$(install_translation_interactive)
+    
+    packages_download "$install_lang"
     if [ $? -ne 1 ]; then
         packages_install
     fi
