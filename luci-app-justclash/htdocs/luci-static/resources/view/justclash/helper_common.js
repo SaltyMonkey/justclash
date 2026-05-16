@@ -250,6 +250,21 @@ return baseclass.extend({
             return false;
         }
     },
+    validateHttpUrl: function (value) {
+        if (!value || value.trim() === "") return true; // Let rmempty handle required fields
+        return this.isValidHttpUrl(value) ? true : _("Invalid HTTP(S) URL");
+    },
+    validateHttpZipUrl: function (value) {
+        if (!value || value.trim() === "") return true;
+        if (!this.isValidHttpUrl(value)) return _("Invalid HTTP(S) URL");
+        
+        try {
+            const url = new URL(value);
+            return url.pathname.toLowerCase().split('/').pop().includes('.zip') ? true : _("URL must point to a .zip file");
+        } catch {
+            return _("Invalid HTTP(S) URL");
+        }
+    },
     isValidResourceFilePath: function (value) {
         const val = String(value || "").trim();
 
