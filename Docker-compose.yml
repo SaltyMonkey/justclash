@@ -10,10 +10,11 @@
     command: >
         /bin/bash -c "
         rm -f bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk &&
+        rm -f bin/packages/x86_64/luci/luci-i18n-justclash-zh_*.ipk &&
         make defconfig && \
         make package/justclash/compile V=s -j2 && \
         make package/luci-app-justclash/compile V=s -j2 && \
-        for f in bin/packages/x86_64/utilities/justclash_*.ipk bin/packages/x86_64/luci/luci-app-justclash_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk; do \
+        for f in bin/packages/x86_64/utilities/justclash_*.ipk bin/packages/x86_64/luci/luci-app-justclash_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-zh_*.ipk; do \
             [ -e \"$$f\" ] || continue; \
             base=$$(basename \"$$f\"); \
             newname=\"$${base/_/-}\"; \
@@ -37,5 +38,6 @@
         make package/luci-app-justclash/compile V=s -j2 &&
         cp bin/packages/x86_64/utilities/justclash-*.apk /output/ &&
         cp bin/packages/x86_64/luci/luci-app-justclash-*.apk /output/ &&
-        cp bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk /output/
+        cp bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk /output/ &&
+        cp bin/packages/x86_64/luci/luci-i18n-justclash-zh-*.apk /output/
         "
