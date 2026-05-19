@@ -41,11 +41,7 @@ import /usr/lib/justclash/helpers.sh
 
 config_load "$PROGNAME"
 
-CORE_RELEASE_CHECK_URL="__CORE_RELEASE_CHECK_URL_VARIABLE__"
-INBUILD_RULESETS_FILES_DOWNLOAD_URL="__INBUILD_RULESETS_FILES_DOWNLOAD_URL_VARIABLE__"
-
 NO_DATA_STRING="N/A"
-
 CORE_BIN_NAME="mihomo"
 
 # Path to Mihomo core
@@ -69,9 +65,6 @@ RULESETS_BLOCKS_FILE="${PROG_ETC_DIR}/${RULESETS_BLOCKS_FILENAME}"
 RULESETS_FILE="${PROG_ETC_DIR}/${RULESETS_FILENAME}"
 
 DASHBOARD_PATH="${PROG_ETC_DIR}/dashboard"
-DASHBOARD_ZASHBOARD_URL="__DASHBOARD_ZASHBOARD_EXTERNAL_URL__"
-DASHBOARD_METACUBEXD_URL="__DASHBOARD_METACUBEX_EXTERNAL_URL__"
-DASHBOARD_YACD_META_URL="__DASHBOARD_YACD_EXTERNAL_URL__"
 
 ETC_CONFIG_DIR="/etc/config"
 DEFAULT_CONFIG_PATH="${PROG_ETC_DIR}/default.config"
@@ -80,7 +73,13 @@ CONFIG_BAK_PATH="${ETC_CONFIG_DIR}/${PROGNAME}.bak"
 
 # List of NTP server IP addresses:
 DEFAULT_NTP_IPS="194.190.168.1 89.109.251.22 89.109.251.23 216.239.35.4 216.239.35.8"
-
+DEFAULT_DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+DEFAULT_DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
+DEFAULT_DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
+DEFAULT_MIHOMO_SOURCE_CORE="github"
+DEFAULT_MIHOMO_UPDATE_CHANNEL="stable"
+DEFAULT_MIHOMO_GITHUB_REPO="MetaCubeX/mihomo"
+DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL="https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
 DEFAULT_EXTERNAL_PANEL="metacubexd"
 DEFAULT_RULESET_PROXY_DIRECT_SECTION="DIRECT"
 DEFAULT_PROXY="DIRECT"
@@ -199,6 +198,23 @@ core_validate_yaml() {
 
 start() {
     local skip_environment_checks core_exit_code
+
+    if [ -n "$JUSTCLASH_WAIT_WAN_MAX" ] && [ "$JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
+        log info "Waiting for WAN (max ${JUSTCLASH_WAIT_WAN_MAX}s)..." "⏳"
+        local waited=0
+        while [ "$waited" -lt "$JUSTCLASH_WAIT_WAN_MAX" ]; do
+            if ip route show default 2>/dev/null | grep -q default | grep -q default; then
+                break
+            fi
+            sleep 2
+            waited=$((waited + 2))
+        done
+    fi
+
+    if [ -n "$JUSTCLASH_BOOT_DELAY" ] && [ "$JUSTCLASH_BOOT_DELAY" -gt 0 ]; then
+        log info "Delaying start by ${JUSTCLASH_BOOT_DELAY}s..." "⏳"
+        sleep "$JUSTCLASH_BOOT_DELAY"
+    fi
 
     log info "Initializing JustClash service..." "₍^. .^₎⟆"
 
@@ -1153,7 +1169,7 @@ handle_proxy_provider_section() {
         local section="$1"
         local name enabled url override_dialer_proxy override_interface_name override_routing_mark subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
         local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
-        local provider_json override_json=""
+        local provider_json override_json="udp:true"
 
         config_get name "$section" name
         config_get_bool enabled "$section" enabled 1
@@ -1232,6 +1248,17 @@ handle_block_rule_section() {
     local list_rulesets_names=""
     local list_suffix_names=""
 
+    local enabled
+    config_get_bool enabled block_rules enabled 1
+    if [ "$enabled" -ne 1 ]; then
+        log warn "Skipping disabled proxy group: $section" "⚠️";
+        echo "[]" > "$file_rules"
+        echo "{}" > "$file_rulesets"
+        echo "" > "$file_rulesets_names"
+        echo "" > "$file_suffix_names"
+        return
+    fi
+
     # Selected blocklists and generated manual block routes.
     local enabled_blocklist proxy list_update_interval size_limit rules_fragment rulesets_fragment names_fragment bundle
     # Scratch vars for generated manual block routes.
@@ -1288,6 +1315,16 @@ handle_direct_rule_section() {
     local domain_list cidr_list rules_fragment rulesets_fragment fake_ip_fragment bundle
     # Scratch vars for generated manual routes.
     local generated_rule route_entry
+
+    local enabled
+    config_get_bool enabled direct_rules enabled 1
+    if [ "$enabled" -ne 1 ]; then
+        log warn "Skipping disabled proxy group: $section" "⚠️";
+        echo "[]" > "$file_rules"
+        echo "{}" > "$file_rulesets"
+        echo "[]" > "$file_fake_ip_rules"
+        return
+    fi
 
     config_get list_update_interval direct_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
     config_get size_limit direct_rules size_limit 0
@@ -1369,19 +1406,24 @@ handle_final_rule_section() {
 
 get_dashboard_url() {
     local dashboard_repo="$1"
+    local url
 
     case "$dashboard_repo" in
         metacubexd)
-            echo "$DASHBOARD_METACUBEXD_URL"
+            config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL"
+            echo "$url"
             ;;
         yacd-meta)
-            echo "$DASHBOARD_YACD_META_URL"
+            config_get url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL"
+            echo "$url"
             ;;
         zashboard)
-            echo "$DASHBOARD_ZASHBOARD_URL"
+            config_get url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL"
+            echo "$url"
             ;;
         *)
-            echo "$DASHBOARD_METACUBEXD_URL"
+            config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL"
+            echo "$url"
             ;;
     esac
 }
@@ -1661,6 +1703,8 @@ core_generate_yaml() {
         echo "  port: $core_ntp_port"
         echo "  interval: $core_ntp_interval"
         echo ""
+        printf '%s\n' "rule-providers: $rule_providers"
+        echo ""
         echo "dns:"
         echo "  enable: true"
         echo "  cache-algorithm: arc"
@@ -1701,7 +1745,6 @@ core_generate_yaml() {
         echo ""
         printf '%s\n' "proxies: $proxies"
         printf '%s\n' "proxy-groups: $proxy_groups"
-        printf '%s\n' "rule-providers: $rule_providers"
         printf '%s\n' "proxy-providers: $proxy_providers"
         printf '%s\n' "rules: $rules"
     } > "$OUTPUT_YAML_CONFIG_PATH"
@@ -1710,6 +1753,9 @@ core_generate_yaml() {
 }
 
 service_data_update() {
+    local mihomo_rulesets_files_download_url
+    config_get mihomo_rulesets_files_download_url settings mihomo_rulesets_files_download_url "$DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL"
+
     local complete_url
     local tmp_rulesets_file tmp_block_rulesets_file
 
@@ -1718,7 +1764,7 @@ service_data_update() {
 
     log info "Downloading ruleset list" "📥"
     tmp_rulesets_file=$(mktemp "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}.XXXXXX")
-    complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_FILENAME}
+    complete_url=${mihomo_rulesets_files_download_url}/${RULESETS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_rulesets_file" "$complete_url" || {
         log error "Failed to download the ruleset list." "❌"
         rm -f "$tmp_rulesets_file"
@@ -1729,7 +1775,7 @@ service_data_update() {
 
     log info "Downloading block ruleset list" "📥"
     tmp_block_rulesets_file=$(mktemp "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}.XXXXXX")
-    complete_url=${INBUILD_RULESETS_FILES_DOWNLOAD_URL}/${RULESETS_BLOCKS_FILENAME}
+    complete_url=${mihomo_rulesets_files_download_url}/${RULESETS_BLOCKS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_block_rulesets_file" "$complete_url" || {
         log error "Failed to download the block ruleset list." "❌"
         rm -f "$tmp_block_rulesets_file"
@@ -1831,7 +1877,7 @@ detect_arch() {
 }
 
 get_latest_version_url() {
-    local check_url="$1" channel="${2:-stable}"
+    local check_url="$1" channel="${2}"
     local api_url jq_filter
 
     if [ "$channel" = "alpha" ]; then
@@ -1852,50 +1898,43 @@ get_latest_version_url() {
     )
 }
 
-get_release_asset_digest() {
-    local check_url="$1" channel="${2:-stable}" asset_name="$3"
-    local api_url jq_filter
-
-    if [ "$channel" = "alpha" ]; then
-        api_url="${check_url%/latest}"
-        # shellcheck disable=SC2016
-        jq_filter='[.[] | select(.tag_name == "Prerelease-Alpha")][0].assets[] | select(.name == $name) | (.digest // "")'
-    else
-        api_url="$check_url"
-        # shellcheck disable=SC2016
-        jq_filter='.assets[] | select(.name == $name) | (.digest // "")'
-    fi
-
-    (
-        set -o pipefail
-        curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
-            --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-            --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-            -sL "$api_url" | jq -r --arg name "$asset_name" "$jq_filter" | sed -n '1p'
-    )
-}
-
 core_update() {
     local cur_ver latest_ver version_txt_url
-    local check_url channel mihomo_autoupdate_channel arch
-    local asset_name digest expected_sha256
-    config_get mihomo_autoupdate_channel settings mihomo_autoupdate_channel
+    local check_url channel arch source_type
+    local custom_url
 
-    check_url="$CORE_RELEASE_CHECK_URL"
-    channel=${1:-$mihomo_autoupdate_channel}
+    config_get source_type settings mihomo_core_source_type "${DEFAULT_MIHOMO_SOURCE_CORE}"
     cur_ver=$(info_mihomo)
     arch=$(detect_arch)
 
-    log info "Checking for Mihomo updates (channel: $channel)..." "🔄"
+    if [ "$source_type" = "custom" ]; then
+        config_get custom_url settings mihomo_custom_core_url
+        if [ -z "$custom_url" ]; then
+            log error "Custom core base URL is not set in configuration." "❌"
+            return 1
+        fi
 
-    version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
-        log error "Failed to get the version.txt URL from the GitHub API." "❌"
-        return 1
-    }
+        # Ensure URL doesn't have a trailing slash
+        custom_url="${custom_url%/}"
+        version_txt_url="${custom_url}/version.txt"
+        log info "Checking for Mihomo updates from custom source..." "🔄"
+    else
+        local github_repo
+        config_get channel settings mihomo_github_channel "$DEFAULT_MIHOMO_UPDATE_CHANNEL"
+        config_get github_repo settings mihomo_github_repo "$DEFAULT_MIHOMO_GITHUB_REPO"
+
+        channel=${1:-$channel}
+
+        check_url="https://api.github.com/repos/${github_repo}/releases/latest"
+        log info "Checking for Mihomo updates (channel: $channel) from GitHub repository: $github_repo..." "🔄"
+        version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
+            log error "Failed to get the version.txt URL from the GitHub API." "❌"
+            return 1
+        }
+    fi
 
     if [ -z "$version_txt_url" ]; then
         log error "Release asset version.txt was not found."
-        log error "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
         return 1
     fi
 
@@ -1912,31 +1951,12 @@ core_update() {
 
     if [ -z "$latest_ver" ]; then
         log error "Failed to retrieve the latest version information."
-        log error "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
-        return 1
-    fi
-
-    asset_name="mihomo-linux-${arch}-${latest_ver}.gz"
-    digest=$(get_release_asset_digest "$check_url" "$channel" "$asset_name")
-
-    case "$digest" in
-        sha256:*)
-            expected_sha256="${digest#sha256:}"
-            ;;
-        *)
-            log error "Release asset digest is missing or unsupported: $asset_name" "❌"
-            return 1
-            ;;
-    esac
-
-    if ! printf '%s' "$expected_sha256" | grep -qiE '^[0-9a-f]{64}$'; then
-        log error "Release asset sha256 digest is invalid: $asset_name" "❌"
         return 1
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
-        log warn "Mihomo is not installed. Installing version $latest_ver ($channel)." "⚠️"
-        core_download "$version_txt_url" "$latest_ver" "$expected_sha256"
+        log warn "Mihomo is not installed. Installing version $latest_ver." "⚠️"
+        core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             log error "Core update failed." "❌"
             return 1
@@ -1945,7 +1965,7 @@ core_update() {
     fi
 
     log info "Current Mihomo version: $cur_ver"
-    log info "Latest Mihomo version ($channel): $latest_ver"
+    log info "Latest Mihomo version: $latest_ver"
 
     if [ "$cur_ver" != "$latest_ver" ]; then
         log info "Removing current mihomo binary..." "⚠️"
@@ -1955,8 +1975,8 @@ core_update() {
             return 1
         fi
 
-        log info "Updating Mihomo to version $latest_ver ($channel)" "⬆️"
-        core_download "$version_txt_url" "$latest_ver" "$expected_sha256"
+        log info "Updating Mihomo to version $latest_ver" "⬆️"
+        core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
             log error "Core update failed." "❌"
             return 1
@@ -1971,9 +1991,8 @@ core_update() {
 core_download() {
     local arch file_name base_url param_version version_txt_url download_url
     version_txt_url="$1"
-    local param_version="$2"
-    local expected_sha256="$3"
-    local actual_sha256 tmp_archive_path
+    param_version="$2"
+    local tmp_archive_path
 
     arch=$(detect_arch)
     mkdir -p "$CORE_WORKDIR_PATH"
@@ -1983,7 +2002,7 @@ core_download() {
     base_url="${version_txt_url%/*}"
     download_url="${base_url}/${file_name}"
 
-    log info "Downloading mihomo binary" "📥"
+    log info "Downloading mihomo binary from $download_url" "📥"
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
@@ -1993,21 +2012,20 @@ core_download() {
         return 1
     }
 
-    actual_sha256=$(sha256sum "$tmp_archive_path" 2>/dev/null | awk '{print $1}')
-    if [ -z "$actual_sha256" ] || [ "$actual_sha256" != "$expected_sha256" ]; then
-        rm -f "$tmp_archive_path"
-        log error "SHA256 verification failed for Mihomo archive version $param_version." "❌"
-        return 1
-    fi
-
-    log info "SHA256 verification passed for Mihomo archive version $param_version." "🔐"
-
     log info "Extracting to $CORE_PATH" "⬇️"
-    gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
-        rm -f "$tmp_archive_path"
-        log error "Failed to extract the Mihomo archive." "❌"
-        return 1
-    }
+    if gzip -t "$tmp_archive_path" 2>/dev/null; then
+        gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
+            rm -f "$tmp_archive_path"
+            log error "Failed to extract the Mihomo archive." "❌"
+            return 1
+        }
+    else
+        cp "$tmp_archive_path" "$CORE_PATH" || {
+            rm -f "$tmp_archive_path"
+            log error "Failed to copy the Mihomo binary." "❌"
+            return 1
+        }
+    fi
 
     log info "Mihomo installed at $CORE_PATH" "🚀"
 
@@ -2039,63 +2057,6 @@ core_remove() {
 cron_make_if_missing() {
     if [ ! -f "/etc/crontabs/root" ]; then
         touch "/etc/crontabs/root"
-    fi
-}
-
-core_update_cron_check() {
-    cron_make_if_missing
-    if grep -qE "/usr/bin/${PROGNAME}(\.sh)? core_update" /etc/crontabs/root; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-core_update_cron_add() {
-    cron_make_if_missing
-    local mihomo_cron_update_string
-
-    config_get mihomo_cron_update_string settings mihomo_cron_update_string
-
-    if [ -z "$mihomo_cron_update_string" ]; then
-        log error "Cron schedule string is empty! Cron job not added." "❌"
-        return 1
-    fi
-
-    if ! validate_cron_expr "$mihomo_cron_update_string"; then
-        log error "Cron schedule string is invalid! Cron job not added."
-        return 1
-    fi
-
-    if core_update_cron_check > /dev/null; then
-        log warn "Core autoupdate cron job already exists." "ℹ️"
-        return 0
-    fi
-
-    echo "$mihomo_cron_update_string /usr/bin/${PROGNAME}.sh core_update" >> /etc/crontabs/root
-    if /etc/init.d/cron enabled; then
-        /etc/init.d/cron restart
-        log info "Cron job added and service restarted" "✅"
-    else
-        log info "Cron job added (service not enabled)" "ℹ️"
-    fi
-    log info "Core autoupdate cron job added." "✅"
-}
-
-core_update_cron_remove() {
-    cron_make_if_missing
-    if core_update_cron_check > /dev/null; then
-        sed -i '\|/usr/bin/justclash.sh core_update|d' /etc/crontabs/root
-        sed -i '\|/usr/bin/justclash core_update|d' /etc/crontabs/root
-        if /etc/init.d/cron enabled; then
-            /etc/init.d/cron restart
-            log info "Cron job removed and service restarted" "✅"
-        else
-            log info "Cron job removed (service not enabled)" "ℹ️"
-        fi
-        log info "Core autoupdate cron job removed." "🗑️"
-    else
-        log info "Core autoupdate cron job not found." "ℹ️"
     fi
 }
 
@@ -2397,12 +2358,8 @@ help() {
     echo "  service_data_update     Update service files from repository"
     echo ""
     echo "Mihomo management Commands:"
-    echo "  core_update [alpha|stable]      Check current version and update Mihomo if a newer version is available"
+    echo "  core_update                     Check current version and update Mihomo if a newer version is available"
     echo "  core_remove                     Remove the currently installed Mihomo binary"
-    echo ""
-    echo "  core_update_cron_check          Check if a scheduled Mihomo core auto-update task exists"
-    echo "  core_update_cron_add            Add a scheduled task to periodically check and update Mihomo core"
-    echo "  core_update_cron_remove         Remove the scheduled Mihomo core auto-update task"
     echo ""
     echo "  core_autorestart_cron_check     Check if a scheduled Mihomo auto-restart task exists"
     echo "  core_autorestart_cron_add       Add a scheduled task to automatically restart Mihomo periodically"

@@ -1,0 +1,37 @@
+#!/bin/sh
+# Ash isn't supported properly in spellcheck static analyzer
+# Using debian based version (kind of similar)
+# shellcheck shell=dash
+[ -f /etc/config/justclash ] || exit 0
+
+add_missing_option() {
+    local path="$1"
+    local default_value="$2"
+
+    if ! uci -q get "$path" >/dev/null; then
+        uci set "$path"="$default_value"
+    fi
+}
+
+add_missing_option "justclash.settings.mihomo_core_source_type" "github"
+add_missing_option "justclash.settings.mihomo_github_repo" "MetaCubeX/mihomo"
+add_missing_option "justclash.settings.mihomo_github_channel" "alpha"
+add_missing_option "justclash.settings.mihomo_custom_core_url" ""
+add_missing_option "justclash.settings.mihomo_rulesets_files_download_url" "https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
+add_missing_option "justclash.settings.mihomo_dashboard_zashboard_url" "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+add_missing_option "justclash.settings.mihomo_dashboard_metacubexd_url" "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
+add_missing_option "justclash.settings.mihomo_dashboard_yacd_meta_url" "https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
+add_missing_option "justclash.settings.wait_for_wan" "0"
+add_missing_option "justclash.settings.wait_for_wan_max" "90"
+
+if ! uci -q get justclash.settings.nft_ports_exclude >/dev/null; then
+    uci add_list justclash.settings.nft_ports_exclude='6881'
+fi
+
+uci -q delete justclash.settings.mihomo_autoupdate
+uci -q delete justclash.settings.mihomo_autoupdate_channel
+uci -q delete justclash.settings.mihomo_cron_update_string
+
+uci commit justclash
+
+exit 0
