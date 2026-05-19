@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-16 22:34+0300\n"
+"POT-Creation-Date: 2026-05-19 09:44+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -40,8 +40,8 @@ msgstr "Подробности соединения"
 msgid "Copied to clipboard"
 msgstr "Скопировано в буфер обмена"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:108 htdocs/luci-static/resources/view/justclash/connections.js:135 htdocs/luci-static/resources/view/justclash/connections.js:214 htdocs/luci-static/resources/view/justclash/connections.js:287 htdocs/luci-static/resources/view/justclash/nodes.js:467 htdocs/luci-static/resources/view/justclash/realtime_logs.js:184 htdocs/luci-static/resources/view/justclash/status.js:146 htdocs/luci-static/resources/view/justclash/status.js:341 htdocs/luci-static/resources/view/justclash/status.js:372 htdocs/luci-static/resources/view/justclash/status.js:453 htdocs/luci-static/resources/view/justclash/status.js:483 htdocs/luci-static/resources/view/justclash/status.js:484 htdocs/luci-static/resources/view/justclash/status.js:488 htdocs/luci-static/resources/view/justclash/status.js:537 htdocs/luci-static/resources/view/justclash/status.js:608
-#: htdocs/luci-static/resources/view/justclash/status.js:611 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:123
+#: htdocs/luci-static/resources/view/justclash/connections.js:108 htdocs/luci-static/resources/view/justclash/connections.js:135 htdocs/luci-static/resources/view/justclash/connections.js:214 htdocs/luci-static/resources/view/justclash/connections.js:287 htdocs/luci-static/resources/view/justclash/nodes.js:467 htdocs/luci-static/resources/view/justclash/realtime_logs.js:184 htdocs/luci-static/resources/view/justclash/status.js:146 htdocs/luci-static/resources/view/justclash/status.js:341 htdocs/luci-static/resources/view/justclash/status.js:372 htdocs/luci-static/resources/view/justclash/status.js:453 htdocs/luci-static/resources/view/justclash/status.js:484 htdocs/luci-static/resources/view/justclash/status.js:485 htdocs/luci-static/resources/view/justclash/status.js:487 htdocs/luci-static/resources/view/justclash/status.js:491 htdocs/luci-static/resources/view/justclash/status.js:540
+#: htdocs/luci-static/resources/view/justclash/status.js:611 htdocs/luci-static/resources/view/justclash/status.js:614 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:123
 msgid "Error"
 msgstr "Ошибка"
 
@@ -1672,138 +1672,146 @@ msgid "Client QUIC traffic:"
 msgstr "Клиентский QUIC:"
 
 #: htdocs/luci-static/resources/view/justclash/service.js:150
-msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
-msgstr "Выберите, как обрабатывать QUIC-трафик устройств в сети. Выбранный режим определяет, будет ли этот трафик перенаправляться, обходить прокси или блокироваться."
+msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked."
+msgstr "Выберите, как обрабатывать QUIC-трафик устройств в сети. Выбранный режим определяет, будет ли этот трафик перенаправляться или блокироваться."
 
 #: htdocs/luci-static/resources/view/justclash/service.js:159
 msgid "Client DoT traffic:"
 msgstr "Клиентский DoT:"
 
 #: htdocs/luci-static/resources/view/justclash/service.js:160
-msgid "Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
-msgstr "Выберите, как обрабатывать DoT-трафик устройств в сети. Выбранный режим определяет, будет ли этот трафик перенаправляться, обходить прокси или блокироваться."
+msgid "Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked."
+msgstr "Выберите, как обрабатывать DoT-трафик устройств в сети. Выбранный режим определяет, будет ли этот трафик перенаправляться или блокироваться."
 
 #: htdocs/luci-static/resources/view/justclash/service.js:169
+msgid "Client DoH traffic:"
+msgstr "Клиентский DoH:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:170
+msgid "Choose how to handle DoH traffic from devices on your network to well-known DoH IPs. The selected mode decides whether this traffic is redirected or blocked."
+msgstr "Выберите, как обрабатывать DoH-трафик к известным DoH-серверам от устройств в сети. Выбранный режим определяет, будет ли этот трафик перенаправляться или блокироваться."
+
+#: htdocs/luci-static/resources/view/justclash/service.js:179
 msgid "Client DoQ traffic:"
 msgstr "Клиентский DoQ:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:170
-msgid "Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked."
-msgstr "Выберите, как обрабатывать DoQ-трафик устройств в сети. Выбранный режим определяет, будет ли этот трафик перенаправляться, обходить прокси или блокироваться."
+#: htdocs/luci-static/resources/view/justclash/service.js:180
+msgid "Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked."
+msgstr "Выберите, как обрабатывать DoQ-трафик устройств в сети. Выбранный режим определяет, будет ли этот трафик перенаправляться или блокироваться."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:179
+#: htdocs/luci-static/resources/view/justclash/service.js:189
 msgid "Client NTP traffic:"
 msgstr "Клиентский NTP:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:180
+#: htdocs/luci-static/resources/view/justclash/service.js:190
 msgid "Choose how to handle time sync requests from devices on your network. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr "Выберите, как обрабатывать запросы времени от устройств в сети. Выбранный режим определяет, будут ли эти запросы перенаправляться, обходить прокси или блокироваться."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:189
+#: htdocs/luci-static/resources/view/justclash/service.js:199
 msgid "Router NTP traffic:"
 msgstr "NTP-трафик роутера:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:190
+#: htdocs/luci-static/resources/view/justclash/service.js:200
 msgid "Choose how to handle time sync requests from the router itself. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr "Выберите, как обрабатывать запросы времени от самого роутера. Выбранный режим определяет, будут ли эти запросы перенаправляться, обходить прокси или блокироваться."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:200
+#: htdocs/luci-static/resources/view/justclash/service.js:210
 msgid "Scheduled tasks"
 msgstr "Задачи по расписанию"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:202
+#: htdocs/luci-static/resources/view/justclash/service.js:212
 msgid "Restart Mihomo automatically:"
 msgstr "Автоперезапуск Mihomo:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:203
+#: htdocs/luci-static/resources/view/justclash/service.js:213
 msgid "Restart Mihomo on a schedule, for example once a week or once a day."
 msgstr "Перезапускать Mihomo по расписанию, например раз в день или раз в неделю."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:207
+#: htdocs/luci-static/resources/view/justclash/service.js:217
 msgid "Restart schedule:"
 msgstr "Расписание перезапуска:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:213
+#: htdocs/luci-static/resources/view/justclash/service.js:223
 msgid "Use cron format to choose when Mihomo should restart automatically."
 msgstr "Используйте формат cron, чтобы указать время автоматического перезапуска Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:215
+#: htdocs/luci-static/resources/view/justclash/service.js:225
 msgid "Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')"
 msgstr "Неверный формат расписания. Используйте: 'minute hour day month weekday' (например, '0 3 * * 0')"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:219
+#: htdocs/luci-static/resources/view/justclash/service.js:229
 msgid "External resources"
 msgstr "Внешние ресурсы"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:221
+#: htdocs/luci-static/resources/view/justclash/service.js:231
 msgid "Core update source:"
 msgstr "Источник ядра:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:222
+#: htdocs/luci-static/resources/view/justclash/service.js:232
 msgid "Github"
 msgstr "Github"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:223
+#: htdocs/luci-static/resources/view/justclash/service.js:233
 msgid "Custom URL"
 msgstr "Пользовательский URL"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:224
+#: htdocs/luci-static/resources/view/justclash/service.js:234
 msgid "Choose where Mihomo core should be downloaded from. 'Github' will automatically fetch the latest release, 'Custom URL' allows downloading directly from your specified link."
 msgstr "Выберите, откуда загружать ядро Mihomo. 'Github' автоматически загрузит последний релиз, 'Custom URL' позволяет загружать напрямую по вашей ссылке."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:229
+#: htdocs/luci-static/resources/view/justclash/service.js:239
 msgid "GitHub repository:"
 msgstr "Репозиторий GitHub:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:230
+#: htdocs/luci-static/resources/view/justclash/service.js:240
 msgid "GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'."
 msgstr "Репозиторий GitHub для обновлений ядра Mihomo. Формат: 'пользователь/репозиторий'. Пример: 'MetaCubeX/mihomo'."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:237
+#: htdocs/luci-static/resources/view/justclash/service.js:247
 msgid "Update channel:"
 msgstr "Канал обновлений:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:241
+#: htdocs/luci-static/resources/view/justclash/service.js:251
 msgid "Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs."
 msgstr "Выберите канал для автоматических обновлений Mihomo. Стабильный канал безопаснее, а более новые каналы могут содержать и новые функции, и новые ошибки."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:247
+#: htdocs/luci-static/resources/view/justclash/service.js:257
 msgid "Custom core base URL:"
 msgstr "Пользовательский базовый URL ядра:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:248
+#: htdocs/luci-static/resources/view/justclash/service.js:258
 msgid "Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'"
 msgstr "Базовый URL сервера с файлами ядра. На сервере ДОЛЖНЫ быть файл 'version.txt' и архивы 'mihomo-linux-arch-version.gz'. Пример: 'https://example.com/mihomo/'"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:257
+#: htdocs/luci-static/resources/view/justclash/service.js:267
 msgid "Rulesets download URL:"
 msgstr "URL для загрузки наборов правил:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:258
+#: htdocs/luci-static/resources/view/justclash/service.js:268
 msgid "URL to download inbuild rulesets from. Leave empty to use the default."
 msgstr "URL для скачивания встроенных наборов правил. Оставьте пустым, чтобы использовать по умолчанию."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:264
+#: htdocs/luci-static/resources/view/justclash/service.js:274
 msgid "Zashboard download URL:"
 msgstr "URL для загрузки Zashboard:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:265
+#: htdocs/luci-static/resources/view/justclash/service.js:275
 msgid "URL to download Zashboard dashboard from. Leave empty to use the default."
 msgstr "URL для загрузки панели Zashboard. Оставьте пустым для использования по умолчанию."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:271
+#: htdocs/luci-static/resources/view/justclash/service.js:281
 msgid "Metacubexd download URL:"
 msgstr "URL для загрузки Metacubexd:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:272
+#: htdocs/luci-static/resources/view/justclash/service.js:282
 msgid "URL to download Metacubexd dashboard from. Leave empty to use the default."
 msgstr "URL для загрузки панели Metacubexd. Оставьте пустым для использования по умолчанию."
 
-#: htdocs/luci-static/resources/view/justclash/service.js:278
+#: htdocs/luci-static/resources/view/justclash/service.js:288
 msgid "YACD-meta download URL:"
 msgstr "URL для загрузки YACD-meta:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:279
+#: htdocs/luci-static/resources/view/justclash/service.js:289
 msgid "URL to download YACD-meta dashboard from. Leave empty to use the default."
 msgstr "URL для загрузки панели YACD-meta. Оставьте пустым для использования по умолчанию."
 
@@ -1891,7 +1899,7 @@ msgstr "Версия Mihomo"
 msgid "Stop"
 msgstr "Остановить"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:265 htdocs/luci-static/resources/view/justclash/status.js:555
+#: htdocs/luci-static/resources/view/justclash/status.js:265 htdocs/luci-static/resources/view/justclash/status.js:558
 msgid "Start"
 msgstr "Запустить"
 
@@ -1899,7 +1907,7 @@ msgstr "Запустить"
 msgid "Disable on boot"
 msgstr "Отключить при старте"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:280 htdocs/luci-static/resources/view/justclash/status.js:557
+#: htdocs/luci-static/resources/view/justclash/status.js:280 htdocs/luci-static/resources/view/justclash/status.js:560
 msgid "Enable on boot"
 msgstr "Включить при старте"
 
@@ -1927,7 +1935,7 @@ msgstr "Нет ответа"
 msgid "Run"
 msgstr "Выполнить"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:439 htdocs/luci-static/resources/view/justclash/status.js:613
+#: htdocs/luci-static/resources/view/justclash/status.js:439 htdocs/luci-static/resources/view/justclash/status.js:616
 msgid "Update rulesets"
 msgstr "Обновить rulesets"
 
@@ -1963,91 +1971,91 @@ msgstr "Статус"
 msgid "Getting rulesets..."
 msgstr "Получение наборов правил..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:519 htdocs/luci-static/resources/view/justclash/status.js:520
+#: htdocs/luci-static/resources/view/justclash/status.js:522 htdocs/luci-static/resources/view/justclash/status.js:523
 msgid "Loading..."
 msgstr "Загрузка..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:531
+#: htdocs/luci-static/resources/view/justclash/status.js:534
 msgid "Running command..."
 msgstr "Выполняется команда..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:531
+#: htdocs/luci-static/resources/view/justclash/status.js:534
 msgid "Please wait."
 msgstr "Пожалуйста, подождите."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:556
+#: htdocs/luci-static/resources/view/justclash/status.js:559
 msgid "Restart"
 msgstr "Перезапустить"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:586
+#: htdocs/luci-static/resources/view/justclash/status.js:589
 msgid "Current status:"
 msgstr "Текущий статус:"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:591
+#: htdocs/luci-static/resources/view/justclash/status.js:594
 msgid "Service actions:"
 msgstr "Действия сервиса:"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:597
+#: htdocs/luci-static/resources/view/justclash/status.js:600
 msgid "Run diagnostics"
 msgstr "Запустить диагностику"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:597
+#: htdocs/luci-static/resources/view/justclash/status.js:600
 msgid "Diagnostic report"
 msgstr "Отчёт диагностики"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:598
+#: htdocs/luci-static/resources/view/justclash/status.js:601
 msgid "Update core"
 msgstr "Обновить ядро"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:598
+#: htdocs/luci-static/resources/view/justclash/status.js:601
 msgid "Update Mihomo core"
 msgstr "Обновить ядро Mihomo"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:598
+#: htdocs/luci-static/resources/view/justclash/status.js:601
 msgid "Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."
 msgstr "Обновление ядра Mihomo пока не является атомарным. Если на роутере слишком мало свободного места или загрузка сорвётся в процессе обновления, текущее ядро может быть удалено до полной установки нового."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:614
+#: htdocs/luci-static/resources/view/justclash/status.js:617
 msgid "Update service data"
 msgstr "Обновить данные сервиса"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:614
+#: htdocs/luci-static/resources/view/justclash/status.js:617
 msgid "This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."
 msgstr "Это действие загружает и заменяет локальные файлы данных сервиса. Если загрузка завершится с ошибкой или удалённый источник вернёт некорректные данные, поведение сервиса может измениться до следующего успешного обновления."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:619
+#: htdocs/luci-static/resources/view/justclash/status.js:622
 msgid "Maintenance"
 msgstr "Обслуживание"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:625
+#: htdocs/luci-static/resources/view/justclash/status.js:628
 msgid "Show Mihomo config"
 msgstr "Показать конфигурацию Mihomo"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:625
+#: htdocs/luci-static/resources/view/justclash/status.js:628
 msgid "Mihomo config"
 msgstr "Конфигурация Mihomo"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:626
+#: htdocs/luci-static/resources/view/justclash/status.js:629
 msgid "Show service config"
 msgstr "Показать конфигурацию сервиса"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:626
+#: htdocs/luci-static/resources/view/justclash/status.js:629
 msgid "Service config"
 msgstr "Конфигурация сервиса"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:627
+#: htdocs/luci-static/resources/view/justclash/status.js:630
 msgid "Reset config"
 msgstr "Сбросить конфигурацию"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:627
+#: htdocs/luci-static/resources/view/justclash/status.js:630
 msgid "Reset configuration"
 msgstr "Сброс конфигурации"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:627
+#: htdocs/luci-static/resources/view/justclash/status.js:630
 msgid "This will reset the JustClash configuration. Use with care."
 msgstr "Это сбросит конфигурацию JustClash. Используйте с осторожностью."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:632
+#: htdocs/luci-static/resources/view/justclash/status.js:635
 msgid "Configuration"
 msgstr "Конфигурация"
 
