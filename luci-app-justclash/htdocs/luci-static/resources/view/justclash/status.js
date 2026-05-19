@@ -681,8 +681,8 @@ return view.extend({
             .jc-card-header, .jc-status-text, .jc-summary-value, .jc-button-content, .jc-card-icon, .jc-button-icon { display:inline-flex; align-items:center; }
             .jc-card-header, .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:6px; background:var(--background-color-medium, #f6f6f6); }
             .jc-card-header { align-self:flex-start; gap:0.45em; margin-bottom:0.7em; padding:0.2em 0.45em; font-size:0.96em; color:var(--text-color, inherit); opacity:0.88; }
-            .jc-card-icon, .jc-button-icon { justify-content:center; width:1.75em; height:1.75em; }
-            .jc-card-icon { flex:0 0 1.75em; }
+            .jc-card-icon { justify-content:center; width:1.75em; height:1.75em; flex:0 0 1.25em; }
+            .jc-button-icon { justify-content:center; width:1.25em; height:1.25em; line-height:1; }
             .jc-card-icon-svg, .jc-button-icon-svg { width:100%; height:100%; stroke:currentColor; stroke-width:1; stroke-linecap:round; stroke-linejoin:round; }
             .jc-summary-body { gap:0.45em; }
             .jc-summary-row { gap:0.18em; min-width:0; }
@@ -691,9 +691,16 @@ return view.extend({
             .cbi-section-actions + .cbi-section-actions { margin-top:8px; }
             .jc-actions-wrap { padding:0.7em 0.8em; }
             .jc-primary-actions { flex-wrap:wrap; gap:0.65em; margin:0; }
-            .jc-primary-actions .cbi-button { margin:0 !important; }
+            .jc-primary-actions .cbi-button, .jc-actions-wrap .cbi-button {
+                margin:0 !important;
+                height: 31px !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                display: inline-flex;
+                align-items: center;
+                box-sizing: border-box;
+            }
             .jc-button-content { justify-content:center; gap:0.45em; vertical-align:middle; }
-            .jc-button-icon { line-height:1; }
             .jc-modal-warning, .jc-modal-warning-text { color:var(--error-color-medium); }
             .jc-modal-warning-text, .jc-modal-actions { margin-top:1em; }
             .jc-modal-pre { max-height:460px; overflow:auto; }
