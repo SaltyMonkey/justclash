@@ -1989,11 +1989,11 @@ msgid "Restart"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:589
-msgid "Current status:"
+msgid "Current status"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:594
-msgid "Service actions:"
+msgid "Service actions"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/status.js:600

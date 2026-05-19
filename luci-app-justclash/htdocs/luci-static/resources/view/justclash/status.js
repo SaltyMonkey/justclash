@@ -586,12 +586,12 @@ return view.extend({
         ]);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Current status:")),
+            E("h3", { class: "cbi-section-title" }, _("Current status")),
             statusGrid
         ]);
 
         const serviceActionSection = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Service actions:")),
+            E("h3", { class: "cbi-section-title" }, _("Service actions")),
             serviceActionContainer
         ]);
 

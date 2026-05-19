@@ -1988,12 +1988,12 @@ msgid "Restart"
 msgstr "Перезапустить"
 
 #: htdocs/luci-static/resources/view/justclash/status.js:589
-msgid "Current status:"
-msgstr "Текущий статус:"
+msgid "Current status"
+msgstr "Текущий статус"
 
 #: htdocs/luci-static/resources/view/justclash/status.js:594
-msgid "Service actions:"
-msgstr "Действия сервиса:"
+msgid "Service actions"
+msgstr "Сервис"
 
 #: htdocs/luci-static/resources/view/justclash/status.js:600
 msgid "Run diagnostics"
