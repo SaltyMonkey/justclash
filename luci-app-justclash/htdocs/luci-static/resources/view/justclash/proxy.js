@@ -200,6 +200,21 @@ return view.extend({
         o.default = "7894";
         o.rmempty = false;
 
+        o = s.taboption(tabname, form.Flag, "use_hosts", _("Use custom hosts:"));
+        o.description = _("Load DNS entries from the system hosts file when possible.");
+        o.rmempty = false;
+        o.default = primitives.TRUE;
+
+        o = s.taboption(tabname, form.DynamicList, "hosts", _("Custom hosts policy:"));
+        o.rmempty = true;
+        o.retain = true;
+        o.editable = true;
+        o.optional = true;
+        o.depends("use_hosts", primitives.TRUE);
+        o.validate = function (section_id, value) {
+            return common.validateNameserverPolicy(value);
+        };
+
         o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
         o.description = _("Load DNS entries from the system hosts file when possible.");
         o.rmempty = false;

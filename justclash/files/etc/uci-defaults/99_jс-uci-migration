@@ -24,6 +24,7 @@ add_missing_option "justclash.settings.mihomo_dashboard_yacd_meta_url" "https://
 add_missing_option "justclash.settings.wait_for_wan" "0"
 add_missing_option "justclash.settings.wait_for_wan_max" "90"
 add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
+add_missing_option "justclash.proxy.use_hosts" "0"
 
 if ! uci -q get justclash.settings.nft_ports_exclude >/dev/null; then
     uci add_list justclash.settings.nft_ports_exclude='6881'
