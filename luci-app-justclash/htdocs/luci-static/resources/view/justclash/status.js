@@ -480,7 +480,10 @@ return view.extend({
         } catch (e) {}
 
         const boardPromise = callSystemBoard()
-            .then(data => [data.model || _("Error"), data.release ? data.release.description : _("Error")])
+            .then(data => [
+                data.model ? data.model.replace(/\s*\(.*\)\s*$/, "") : _("Error"),
+                data.release && data.release.description ? data.release.description.replace(/ r\d+-[a-f0-9]+.*$/, "") : _("Error")
+            ])
             .catch(() => [_("Error"), _("Error")]);
 
         const packagePromise = fs.exec(common.binPath, ["_luci_call"])
