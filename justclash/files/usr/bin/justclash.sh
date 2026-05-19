@@ -491,7 +491,7 @@ nf_table_add() {
             if [ "$nft_doh_mode" = "DROP" ]; then
                 echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
                 echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
-                echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport 443 drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop"
             fi
 
             if [ "$nft_ntp_mode" = "DROP" ]; then
@@ -1717,7 +1717,7 @@ core_generate_yaml() {
         echo "  cache-algorithm: arc"
         echo "  cache-max-size: $dns_cache_max_size"
         echo "  listen: $(yaml_quote "127.0.0.1:$dns_listen_port")"
-        echo "  prefer-h3: false"
+        #echo "  prefer-h3: false"
         echo "  ipv6: false"
         echo "  use-hosts: false"
         echo "  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")"
