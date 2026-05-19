@@ -147,7 +147,7 @@ return view.extend({
         o.depends("nft_apply_changes", primitives.TRUE);
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
-        o.description = _("Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
+        o.description = _("Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -157,7 +157,17 @@ return view.extend({
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_mode", _("Client DoT traffic:"));
-        o.description = _("Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
+        o.description = _("Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked.");
+        o.depends("nft_apply_changes", primitives.TRUE);
+        o.retain = true;
+        o.rmempty = false;
+        o.default = common.defaultNftOptions[0].value;
+        common.defaultNftOptions.forEach(item => {
+            o.value(item.value, `${item.text}`);
+        });
+
+        o = s.taboption(tabname, form.ListValue, "nft_doh_mode", _("Client DoH traffic:"));
+        o.description = _("Choose how to handle DoH traffic from devices on your network to well-known DoH IPs. The selected mode decides whether this traffic is redirected or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -167,7 +177,7 @@ return view.extend({
         });
 
         o = s.taboption(tabname, form.ListValue, "nft_dot_quic_mode", _("Client DoQ traffic:"));
-        o.description = _("Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected, bypassed, or blocked.");
+        o.description = _("Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
@@ -181,7 +191,7 @@ return view.extend({
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
-        o.default = common.defaultNftOptions[0].value;
+        o.default = common.defaultNftNtpOptions[0].value;
         common.defaultNftNtpOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
@@ -191,7 +201,7 @@ return view.extend({
         o.depends("nft_apply_changes_router", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
-        o.default = common.defaultNftOptions[0].value;
+        o.default = common.defaultNftNtpOptions[0].value;
         common.defaultNftNtpOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });

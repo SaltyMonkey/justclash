@@ -73,6 +73,7 @@ CONFIG_BAK_PATH="${ETC_CONFIG_DIR}/${PROGNAME}.bak"
 
 # List of NTP server IP addresses:
 DEFAULT_NTP_IPS="194.190.168.1 89.109.251.22 89.109.251.23 216.239.35.4 216.239.35.8"
+DEFAULT_DOH_IPS="223.5.5.5, 223.6.6.6, 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 94.140.14.14, 94.140.15.15, 208.67.222.222, 208.67.220.220, 76.76.2.0, 76.76.10.0, 77.88.8.8, 77.88.8.1"
 DEFAULT_DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
 DEFAULT_DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
 DEFAULT_DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
@@ -402,7 +403,7 @@ build_fake_ip_rule_array() {
 nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
-    local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router
+    local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router nft_doh_mode
     local pbr_priority iface skuid_values skuid_list skuid_resolved routing_mark_values routing_mark_value
     local nft_ports_exclude nft_ports_exclude_router
 
@@ -417,6 +418,7 @@ nf_table_add() {
     config_get nft_quic_mode settings nft_quic_mode
     config_get nft_dot_mode settings nft_dot_mode
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
+    config_get nft_doh_mode settings nft_doh_mode
     config_get nft_ntp_mode settings nft_ntp_mode
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
     config_get nft_ports_exclude settings nft_ports_exclude
@@ -485,6 +487,11 @@ nf_table_add() {
             fi
             if [ "$nft_dot_mode" = "DROP" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop"
+            fi
+            if [ "$nft_doh_mode" = "DROP" ]; then
+                echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
+                echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
+                echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport 443 drop"
             fi
 
             if [ "$nft_ntp_mode" = "DROP" ]; then
