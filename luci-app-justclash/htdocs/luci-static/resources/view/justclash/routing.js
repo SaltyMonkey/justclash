@@ -932,14 +932,22 @@ return view.extend({
         const style = E("style", {}, `
             ul.dropdown { max-height:320px !important; }
             .cbi-value { margin-bottom:14px !important; }
-            .cbi-value[data-name="enabled"] > .cbi-value-title,
-            .cbi-value[data-name="proxy_link_uri"] > .cbi-value-title,
-            .cbi-value[data-name="subscription"] > .cbi-value-title,
-            .cbi-value[data-name="group_type"] > .cbi-value-title {
-                color:var(--error-color-medium, #f44336) !important;
+            .cbi-value[data-name="enabled"] .cbi-value-title,
+            .cbi-value[data-name="proxy_link_uri"] .cbi-value-title,
+            .cbi-value[data-name="subscription"] .cbi-value-title,
+            .cbi-value[data-name="group_type"] .cbi-value-title,
+            .cbi-value[data-name="enabled_list"] .cbi-value-title,
+            .cbi-value[data-name="enabled_blocklist"] .cbi-value-title,
+            .cbi-value[data-name="use_proxy_for_list_update"] .cbi-value-title,
+            .cbi-value[data-name="additional_domain_route"] .cbi-value-title,
+            .cbi-value[data-name="additional_domain_direct"] .cbi-value-title,
+            .cbi-value[data-name="additional_domain_blockroute"] .cbi-value-title,
+            .cbi-value[data-name="health_check"] .cbi-value-title,
+            .cbi-value[data-name="filter"] .cbi-value-title {
+                border-left: 4px solid var(--error-color-medium, #f44336) !important;
+                padding-left: 12px !important;
             }
         `);
-
         return m.render().then(formEl => E("div", {}, [style, formEl]));
     }
 });

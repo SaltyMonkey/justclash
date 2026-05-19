@@ -405,13 +405,17 @@ return view.extend({
         const style = E("style", {}, `
              ul.dropdown { max-height:320px !important; }
             .cbi-value { margin-bottom:14px !important; }
-            .cbi-value[data-name="tproxy_port"] > .cbi-value-title,
-            .cbi-value[data-name="use_mixed_port"] > .cbi-value-title,
-            .cbi-value[data-name="mixed_port"] > .cbi-value-title,
-            .cbi-value[data-name="controller_bind_interface"] > .cbi-value-title,
-            .cbi-value[data-name="api_password"] > .cbi-value-title,
-            .cbi-value[data-name="dns_listen_port"] > .cbi-value-title {
-                color:var(--error-color-medium, #f44336) !important;
+            .cbi-value[data-name="tproxy_port"] .cbi-value-title,
+            .cbi-value[data-name="use_mixed_port"] .cbi-value-title,
+            .cbi-value[data-name="mixed_port"] .cbi-value-title,
+            .cbi-value[data-name="controller_bind_interface"] .cbi-value-title,
+            .cbi-value[data-name="api_password"] .cbi-value-title,
+            .cbi-value[data-name="dns_listen_port"] .cbi-value-title,
+            .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
+            .cbi-value[data-name="core_ntp_enabled"] .cbi-value-title,
+            .cbi-value[data-name="core_ntp_write_system"] .cbi-value-title {
+                border-left: 4px solid var(--error-color-medium, #f44336) !important;
+                padding-left: 12px !important;
             }
         `);
 

@@ -26,6 +26,19 @@ return view.extend({
         tabname = "servicestartup_tab";
         s.tab(tabname, _("Startup"));
 
+        o = s.taboption(tabname, form.Flag, "wait_for_wan", _("Wait for WAN connection on boot:"));
+        o.description = _("Pause the startup process until the router establishes an active Internet connection (default route).");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
+
+        o = s.taboption(tabname, form.Value, "wait_for_wan_max", _("Maximum wait time for WAN (s):"));
+        o.datatype = datatypes.UINTEGER;
+        o.default = '90';
+        o.retain = true;
+        o.depends("wait_for_wan", primitives.TRUE);
+        o.description = _("Maximum time in seconds to wait for WAN connection before proceeding with the current state.");
+        o.rmempty = false;
+
         o = s.taboption(tabname, form.Flag, "delayed_boot", _("Delay startup after boot:"));
         o.description = _("Start the service a little later after the router boots. Useful if the router needs extra time to bring up storage, WAN, or other services.");
         o.rmempty = false;
@@ -202,41 +215,85 @@ return view.extend({
             return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
         };
 
-        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate", _("Update Mihomo automatically:"));
-        common.defaultUpdateOptions.forEach(item => {
-            o.value(item.value, `${item.text}`);
-        });
-        o.description = _("Choose whether Mihomo should update automatically, and under what conditions.");
-        o.rmempty = false;
-        o.default = common.defaultUpdateOptions[0].value;
+        tabname = "external_resources_tab";
+        s.tab(tabname, _("External resources"));
 
-        o = s.taboption(tabname, form.ListValue, "mihomo_autoupdate_channel", _("Update channel:"));
+        o = s.taboption(tabname, form.ListValue, "mihomo_core_source_type", _("Core update source:"));
+        o.value("github", _("Github"));
+        o.value("custom", _("Custom URL"));
+        o.description = _("Choose where Mihomo core should be downloaded from. 'Github' will automatically fetch the latest release, 'Custom URL' allows downloading directly from your specified link.");
+        o.rmempty = false;
+        o.retain = true;
+        o.default = "github";
+
+        o = s.taboption(tabname, form.Value, "mihomo_github_repo", _("GitHub repository:"));
+        o.description = _("GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'.");
+        o.placeholder = "MetaCubeX/mihomo";
+        o.default = "MetaCubeX/mihomo";
+        o.depends("mihomo_core_source_type", "github");
+        o.rmempty = false;
+        o.retain = true;
+
+        o = s.taboption(tabname, form.ListValue, "mihomo_github_channel", _("Update channel:"));
         common.defaultUpdateChannelOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
         o.description = _("Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs.");
+        o.depends("mihomo_core_source_type", "github");
         o.rmempty = false;
+        o.retain = true;
         o.default = common.defaultUpdateChannelOptions[0].value;
 
-        o = s.taboption(tabname, form.Value, "mihomo_cron_update_string", _("Update schedule:"));
-        o.placeholder = "0 5 * * 0";
-        o.default = "0 5 * * 0";
+        o = s.taboption(tabname, form.Value, "mihomo_custom_core_url", _("Custom core base URL:"));
+        o.description = _("Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'");
+        o.placeholder = "https://example.com/mihomo";
+        o.depends("mihomo_core_source_type", "custom");
         o.rmempty = false;
-        o.description = _("Use cron format to choose when Mihomo should check for updates automatically.");
+        o.retain = true;
         o.validate = function (section_id, value) {
-            return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
+            return common.validateHttpUrl(value);
+        };
+
+        o = s.taboption(tabname, form.Value, "inbuild_rulesets_files_download_url", _("Rulesets download URL:"));
+        o.description = _("URL to download inbuild rulesets from. Leave empty to use the default.");
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return common.validateHttpUrl(value);
+        };
+
+        o = s.taboption(tabname, form.Value, "mihomo_dashboard_zashboard_url", _("Zashboard download URL:"));
+        o.description = _("URL to download Zashboard dashboard from. Leave empty to use the default.");
+        o.rmempty = true;
+        o.validate = function (section_id, value) {
+            return common.validateHttpZipUrl(value);
+        };
+
+        o = s.taboption(tabname, form.Value, "mihomo_dashboard_metacubexd_url", _("Metacubexd download URL:"));
+        o.description = _("URL to download Metacubexd dashboard from. Leave empty to use the default.");
+        o.rmempty = true;
+        o.validate = function (section_id, value) {
+            return common.validateHttpZipUrl(value);
+        };
+
+        o = s.taboption(tabname, form.Value, "mihomo_dashboard_yacd_meta_url", _("YACD-meta download URL:"));
+        o.description = _("URL to download YACD-meta dashboard from. Leave empty to use the default.");
+        o.rmempty = true;
+        o.validate = function (section_id, value) {
+            return common.validateHttpZipUrl(value);
         };
 
         const style = E("style", {}, `
             .cbi-value { margin-bottom:14px !important; }
-            .cbi-value[data-name="ntpd_start"] > .cbi-value-title,
-            .cbi-value[data-name="nft_apply_changes_router"] > .cbi-value-title,
-            .cbi-value[data-name="dnsmasq_apply_changes"] > .cbi-value-title,
-            .cbi-value[data-name="nft_apply_changes"] > .cbi-value-title,
-            .cbi-value[data-name="tproxy_input_interfaces"] > .cbi-value-title,
-            .cbi-value[data-name="mihomo_autoupdate_channel"] > .cbi-value-title,
-            .cbi-value[data-name="delayed_boot"] > .cbi-value-title {
-                color:var(--error-color-medium, #f44336) !important;
+            .cbi-value[data-name="ntpd_start"] .cbi-value-title,
+            .cbi-value[data-name="nft_apply_changes_router"] .cbi-value-title,
+            .cbi-value[data-name="dnsmasq_apply_changes"] .cbi-value-title,
+            .cbi-value[data-name="nft_apply_changes"] .cbi-value-title,
+            .cbi-value[data-name="tproxy_input_interfaces"] .cbi-value-title,
+            .cbi-value[data-name="mihomo_github_channel"] .cbi-value-title,
+            .cbi-value[data-name="wait_for_wan"] .cbi-value-title,
+            .cbi-value[data-name="delayed_boot"] .cbi-value-title {
+                border-left: 4px solid var(--error-color-medium, #f44336) !important;
+                padding-left: 12px !important;
             }
         `);
 
