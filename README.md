@@ -65,49 +65,65 @@ Prebuilt packages are available in the [Releases](https://github.com/SaltyMonkey
 3. **Install them using:**
 
    - **For OpenWrt (ipk packages):**
-     ```
-     opkg install justclash_*.ipk luci-app-justclash_*.ipk luci-i18n-justclash-ru-*.ipk
+     ```bash
+     opkg install justclash-*.ipk luci-app-justclash-*.ipk luci-i18n-justclash-ru-*.ipk
      ```
 
    - **For OpenWrt (apk packages):**
-    ```
-    apk add --allow-untrusted justclash-*.apk luci-app-justclash-*.apk luci-i18n-justclash-ru-*.apk
-    ```
+     ```bash
+     apk add --allow-untrusted justclash-*.apk luci-app-justclash-*.apk luci-i18n-justclash-ru-*.apk
+     ```
 
 ### 3. Build from Source (using Docker)
 
-You can build the JustClash packages using the provided Dockerfiles (with OpenWRT SDK):
+You can build the JustClash packages using the provided Dockerfiles (which contain the OpenWrt SDK).
 
 - **For OpenWrt (ipk packages):**
-
-    ```
-    docker build -t justclash-builder-ipk -f Dockerfile-ipk .
-    ```
+  1. Build the builder image:
+     ```bash
+     docker build -t justclash-builder-ipk -f Dockerfile-ipk .
+     ```
+  2. Extract the compiled packages from the container:
+     ```bash
+     docker create --name ipk-builder justclash-builder-ipk
+     mkdir -p ./output/ipk
+     docker cp ipk-builder:/builder/bin/packages/x86_64/utilities/. ./output/ipk/
+     docker cp ipk-builder:/builder/bin/packages/x86_64/luci/. ./output/ipk/
+     docker rm ipk-builder
+     ```
 
 - **For OpenWrt (apk packages):**
+  1. Build the builder image:
+     ```bash
+     docker build -t justclash-builder-apk -f Dockerfile-apk .
+     ```
+  2. Extract the compiled packages from the container:
+     ```bash
+     docker create --name apk-builder justclash-builder-apk
+     mkdir -p ./output/apk
+     docker cp apk-builder:/builder/bin/packages/x86_64/utilities/. ./output/apk/
+     docker cp apk-builder:/builder/bin/packages/x86_64/luci/. ./output/apk/
+     docker rm apk-builder
+     ```
 
-    ```
-    docker build -t justclash-builder-apk -f Dockerfile-apk .
-    ```
-
-After the build, extract the resulting packages from the container and install as explained above.
+The compiled packages will be available in the `./output/ipk/` or `./output/apk/` directory.
 
 ### 4. Build from Source (using Docker Compose)
 
-You can build the JustClash packages using the provided Docker compose file (with OpenWRT SDK), output volume mount: /output:
+Docker Compose is the recommended way to build because it automatically mounts the output folder and copies the built packages to your host machine.
 
 - **For OpenWrt (ipk packages):**
-
-```
-docker compose -f 'Docker-compose.yml' up -d --build 'ipk-builder'
-```
+  ```bash
+  docker compose -f Docker-compose.yml up --build ipk-builder
+  ```
+  Once the container exits, the packages will be in the `./output/ipk/` directory.
 
 - **For OpenWrt (apk packages):**
+  ```bash
+  docker compose -f Docker-compose.yml up --build apk-builder
+  ```
+  Once the container exits, the packages will be in the `./output/apk/` directory.`
 
-```
-docker compose -f 'Docker-compose.yml' up -d --build 'apk-builder'
-
-```
 ## Usage
 
 1. Configure via LuCI: **Services → JustClash**.

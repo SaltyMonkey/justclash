@@ -1,7 +1,0 @@
-FROM openwrt/sdk:x86-64-25.12.0-rc2
-WORKDIR /builder
-RUN ./setup.sh \
-    && ./scripts/feeds update -a \
-    && ./scripts/feeds install luci-base \
-    && mkdir -p /builder/package/feeds/utilities/ \
-    && mkdir -p /builder/package/feeds/luci/

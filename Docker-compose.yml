@@ -1,19 +1,26 @@
- services:
+services:
   ipk-builder:
-    image: saltymonkey/owrt-sdk-ipk-cached:latest
+    image: openwrt/sdk:x86-64-24.10.0
     container_name: ipk-builder
     volumes:
-        - ./justclash:/builder/package/feeds/utilities/justclash
-        - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
+        - ./justclash:/src/justclash:ro
+        - ./luci-app-justclash:/src/luci-app-justclash:ro
         - ./output/ipk:/output
     working_dir: /builder
     command: >
         /bin/bash -c "
-        rm -f bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk &&
-        rm -f bin/packages/x86_64/luci/luci-i18n-justclash-zh_*.ipk &&
-        make defconfig && \
-        make package/justclash/compile V=s -j2 && \
-        make package/luci-app-justclash/compile V=s -j2 && \
+        ./scripts/feeds update -a &&
+        ./scripts/feeds install luci-base nftables coreutils jq curl &&
+        mkdir -p package/feeds/utilities/ package/feeds/luci/ &&
+        rm -rf package/feeds/utilities/justclash && cp -r /src/justclash package/feeds/utilities/justclash &&
+        rm -rf package/feeds/luci/luci-app-justclash && cp -r /src/luci-app-justclash package/feeds/luci/luci-app-justclash &&
+        sed -i 's/^[[:space:]]*DEPENDS:=.*/	EXTRA_DEPENDS:=nftables (>=0), coreutils-base64 (>=0), jq-full (>=0), curl (>=0), kmod-nft-tproxy (>=0), kmod-nf-tproxy (>=0)\\n	DEPENDS:=/' package/feeds/utilities/justclash/Makefile &&
+        sed -i 's/^[[:space:]]*LUCI_DEPENDS:=.*/	EXTRA_DEPENDS:=luci-base (>=0), justclash (>=0)\\nLUCI_DEPENDS:=/' package/feeds/luci/luci-app-justclash/Makefile &&
+        rm -f bin/packages/x86_64/utilities/justclash*.ipk &&
+        rm -f bin/packages/x86_64/luci/luci-app-justclash*.ipk &&
+        rm -f bin/packages/x86_64/luci/luci-i18n-justclash*.ipk &&
+        make defconfig &&
+        make package/justclash/compile package/luci-app-justclash/compile -j1 &&
         for f in bin/packages/x86_64/utilities/justclash_*.ipk bin/packages/x86_64/luci/luci-app-justclash_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-ru_*.ipk bin/packages/x86_64/luci/luci-i18n-justclash-zh_*.ipk; do \
             [ -e \"$$f\" ] || continue; \
             base=$$(basename \"$$f\"); \
@@ -23,21 +30,31 @@
         "
 
   apk-builder:
-    image: saltymonkey/owrt-sdk-apk-cached:latest
+    image: openwrt/sdk:x86-64-25.12.4
     container_name: apk-builder
     volumes:
-        - ./justclash:/builder/package/feeds/utilities/justclash
-        - ./luci-app-justclash:/builder/package/feeds/luci/luci-app-justclash
+        - ./justclash:/src/justclash:ro
+        - ./luci-app-justclash:/src/luci-app-justclash:ro
         - ./output/apk:/output
     working_dir: /builder
+    environment:
+        - APK_APKGEN=1
     command: >
         /bin/bash -c "
-        rm -f bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk &&
+        ./scripts/feeds update -a &&
+        ./scripts/feeds install luci-base nftables coreutils jq curl &&
+        mkdir -p package/feeds/utilities/ package/feeds/luci/ &&
+        rm -rf package/feeds/utilities/justclash && cp -r /src/justclash package/feeds/utilities/justclash &&
+        rm -rf package/feeds/luci/luci-app-justclash && cp -r /src/luci-app-justclash package/feeds/luci/luci-app-justclash &&
+        sed -i 's/^[[:space:]]*DEPENDS:=.*/	EXTRA_DEPENDS:=nftables (>=0), coreutils-base64 (>=0), jq-full (>=0), curl (>=0), kmod-nft-tproxy (>=0), kmod-nf-tproxy (>=0)\\n	DEPENDS:=/' package/feeds/utilities/justclash/Makefile &&
+        sed -i 's/^[[:space:]]*LUCI_DEPENDS:=.*/	EXTRA_DEPENDS:=luci-base (>=0), justclash (>=0)\\nLUCI_DEPENDS:=/' package/feeds/luci/luci-app-justclash/Makefile &&
+        rm -f bin/packages/x86_64/utilities/justclash*.apk &&
+        rm -f bin/packages/x86_64/luci/luci-app-justclash*.apk &&
+        rm -f bin/packages/x86_64/luci/luci-i18n-justclash*.apk &&
         make defconfig &&
-        make package/justclash/compile V=s -j2 &&
-        make package/luci-app-justclash/compile V=s -j2 &&
-        cp bin/packages/x86_64/utilities/justclash-*.apk /output/ &&
-        cp bin/packages/x86_64/luci/luci-app-justclash-*.apk /output/ &&
-        cp bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk /output/ &&
-        cp bin/packages/x86_64/luci/luci-i18n-justclash-zh-*.apk /output/
+        make package/justclash/compile package/luci-app-justclash/compile -j1 &&
+        for f in bin/packages/x86_64/utilities/justclash-*.apk bin/packages/x86_64/luci/luci-app-justclash-*.apk bin/packages/x86_64/luci/luci-i18n-justclash-ru-*.apk bin/packages/x86_64/luci/luci-i18n-justclash-zh-*.apk; do \
+            [ -e "$$f" ] || continue; \
+            cp "$$f" /output/; \
+        done
         "

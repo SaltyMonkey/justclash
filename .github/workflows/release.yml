@@ -42,12 +42,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build ${{ matrix.type }}
         uses: docker/build-push-action@v6
         with:
           file: ./Dockerfile-${{ matrix.type }}
           context: .
           tags: justclash/build:${{ matrix.type }}
+          cache-from: type=gha,scope=build-${{ matrix.type }}
+          cache-to: type=gha,mode=max,scope=build-${{ matrix.type }}
+          load: true
 
       - name: Create ${{ matrix.type }} Docker container
         run: docker create --name ${{ matrix.type }} justclash/build:${{ matrix.type }}
