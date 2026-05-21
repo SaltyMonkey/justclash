@@ -59,10 +59,14 @@ OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}/config.yaml"
 PROG_ETC_DIR="/etc/${PROGNAME}"
 RULESETS_BLOCKS_FILENAME="block.rulesets.txt"
 RULESETS_FILENAME="rulesets.txt"
+USER_RULESETS_FILENAME="user.rulesets.txt"
+USER_RULESETS_BLOCKS_FILENAME="user.block.rulesets.txt"
 SYMLINKDIR_RULESETS="${PROG_ETC_DIR}/rules"
 SYMLINK_CACHE_DB_PATH="${PROG_ETC_DIR}/cache.db"
 RULESETS_BLOCKS_FILE="${PROG_ETC_DIR}/${RULESETS_BLOCKS_FILENAME}"
 RULESETS_FILE="${PROG_ETC_DIR}/${RULESETS_FILENAME}"
+USER_RULESETS_FILE="${PROG_ETC_DIR}/${USER_RULESETS_FILENAME}"
+USER_RULESETS_BLOCKS_FILE="${PROG_ETC_DIR}/${USER_RULESETS_BLOCKS_FILENAME}"
 
 DASHBOARD_PATH="${PROG_ETC_DIR}/dashboard"
 
@@ -831,7 +835,17 @@ build_builtin_rules_bundle() {
             ruleset_url="${ruleset_fields#*|}"
 
             generated_rule="RULE-SET,$ruleset_name,$target_name"
-            rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
+            case "$ruleset_url" in
+                http://*|https://*)
+                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
+                ;;
+                *)
+                    local escaped_path
+                    escaped_path=$(json_escape "$ruleset_url")
+                    safe_paths_add "$(dirname "$ruleset_url")"
+                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"path\":\"$escaped_path\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"type\":\"file\"},"
+                ;;
+            esac
             added_rulesets="$added_rulesets$ruleset_name|"
 
             case "$rule_mode" in
@@ -1536,8 +1550,17 @@ core_generate_yaml() {
     proxy_providers=$(handle_proxy_provider_section | jq .)
 
     # optimization: load files one time
-    block_rulesets_content=$(cat "$RULESETS_BLOCKS_FILE")
-    rulesets_content=$(cat "$RULESETS_FILE")
+    local user_block_rulesets=""
+    if [ -f "$USER_RULESETS_BLOCKS_FILE" ]; then
+        user_block_rulesets=$(cat "$USER_RULESETS_BLOCKS_FILE")
+    fi
+    block_rulesets_content=$(printf '%s\n%s' "$(cat "$RULESETS_BLOCKS_FILE")" "$user_block_rulesets")
+
+    local user_rulesets=""
+    if [ -f "$USER_RULESETS_FILE" ]; then
+        user_rulesets=$(cat "$USER_RULESETS_FILE")
+    fi
+    rulesets_content=$(printf '%s\n%s' "$(cat "$RULESETS_FILE")" "$user_rulesets")
 
     tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules_direct.XXXXXX")
     tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_direct.XXXXXX")

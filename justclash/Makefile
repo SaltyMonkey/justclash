@@ -51,6 +51,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./files/etc/justclash/default.config $(1)/etc/justclash/
 	$(INSTALL_CONF) ./files/etc/justclash/rulesets.txt $(1)/etc/justclash/
 	$(INSTALL_CONF) ./files/etc/justclash/block.rulesets.txt $(1)/etc/justclash/
+	$(INSTALL_CONF) ./files/etc/justclash/user.rulesets.txt $(1)/etc/justclash/
+	$(INSTALL_CONF) ./files/etc/justclash/user.block.rulesets.txt $(1)/etc/justclash/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
@@ -64,6 +66,8 @@ endef
 
 define Package/justclash/conffiles
 /etc/config/justclash
+/etc/justclash/user.rulesets.txt
+/etc/justclash/user.block.rulesets.txt
 endef
 
 define Package/$(PKG_NAME)/postrm
