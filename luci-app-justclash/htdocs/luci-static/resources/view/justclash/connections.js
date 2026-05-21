@@ -2,7 +2,7 @@
 "require view";
 "require ui";
 "require view.justclash.helper_clipboard as clipboard";
-"require view.justclash.helper_luci_session as luciSession";
+"require view.justclash.helper_ubus as luciSession";
 "require view.justclash.helper_common as common";
 "require view.justclash.helper_mihomo_api as mihomoApi";
 "require uci";

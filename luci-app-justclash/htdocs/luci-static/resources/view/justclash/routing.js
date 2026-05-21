@@ -2,8 +2,7 @@
 "require view";
 "require uci";
 "require view.justclash.helper_common as common";
-"require view.justclash.helper_fs_api as fsApi";
-"require view.justclash.helper_names as names";
+"require view.justclash.helper_fs as fsApi";
 "require form";
 "require tools.widgets as widgets";
 
@@ -15,8 +14,25 @@ return view.extend({
         let blockRulesetsItems = [];
 
         try {
-            rulesetsItems = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
-            blockRulesetsItems = await fsApi.readNameYamlEntries(common.blockRulesetsFilePath);
+            const inbuildRules = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
+            const userRules = await fsApi.readNameYamlEntries(common.userRulesetsFilePath);
+            const combinedRules = [...inbuildRules, ...userRules];
+            const seenRules = new Set();
+            rulesetsItems = combinedRules.filter(item => {
+                if (seenRules.has(item.yamlName)) return false;
+                seenRules.add(item.yamlName);
+                return true;
+            });
+
+            const inbuildBlockRules = await fsApi.readNameYamlEntries(common.blockRulesetsFilePath);
+            const userBlockRules = await fsApi.readNameYamlEntries(common.userBlockRulesetsFilePath);
+            const combinedBlockRules = [...inbuildBlockRules, ...userBlockRules];
+            const seenBlock = new Set();
+            blockRulesetsItems = combinedBlockRules.filter(item => {
+                if (seenBlock.has(item.yamlName)) return false;
+                seenBlock.add(item.yamlName);
+                return true;
+            });
         } catch (e) {}
 
         return {
@@ -64,7 +80,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return names.generateRandomName();
+            return common.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -143,26 +159,6 @@ return view.extend({
             o.value(item.yamlName, item.name);
         });
         o.description = _("Predefined rule set lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
-        o.modalonly = true;
-
-        o = s.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
-        o.optional = true;
-        o.editable = true;
-        o.placeholder = "/etc/justclash/list.mrs";
-        o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
-        };
-        o.modalonly = true;
-
-        o = s.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
-        o.optional = true;
-        o.editable = true;
-        o.placeholder = "/etc/justclash/cidr-list.mrs";
-        o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
-        };
         o.modalonly = true;
 
         o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
@@ -250,7 +246,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return names.generateRandomName();
+            return common.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -455,7 +451,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return names.generateRandomName();
+            return common.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -628,25 +624,7 @@ return view.extend({
         o.description = _("Predefined rule set lists. Select the ones you want to route through the proxy group.");
         o.modalonly = true;
 
-        o = s2.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
-        o.optional = true;
-        o.editable = true;
-        o.placeholder = "/etc/justclash/list.mrs";
-        o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
-        };
-        o.modalonly = true;
 
-        o = s2.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
-        o.optional = true;
-        o.editable = true;
-        o.placeholder = "/etc/justclash/cidr-list.mrs";
-        o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
-        };
-        o.modalonly = true;
 
         o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy group:"));
         o.description = _("If selected, rule set lists will be updated through the proxy group.");
@@ -731,25 +709,7 @@ return view.extend({
         o.description = _("Ready-made lists for traffic that should bypass the proxy.");
         o.modalonly = true;
 
-        o = s3.taboption(tabname, form.DynamicList, "custom_enabled_domain_list", _("Use with custom domain list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
-        o.optional = true;
-        o.editable = true;
-        o.placeholder = "/etc/justclash/list.mrs";
-        o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
-        };
-        o.modalonly = true;
 
-        o = s3.taboption(tabname, form.DynamicList, "custom_enabled_cidr_list", _("Use with custom CIDR list:"));
-        o.description = _("Each entry can be a web link or an absolute local path to a binary MRS rules file.");
-        o.optional = true;
-        o.editable = true;
-        o.placeholder = "/etc/justclash/cidr-list.mrs";
-        o.validate = function (section_id, value) {
-            return common.isValidResourceFilePath(value) ? true : _("A binary MRS rules file is required.");
-        };
-        o.modalonly = true;
 
         o = s3.taboption(tabname, form.Value, "proxy", _("Download lists through:"));
         o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");

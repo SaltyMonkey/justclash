@@ -4,11 +4,9 @@
 "require fs";
 "require uci";
 "require view.justclash.helper_clipboard as clipboard";
-"require view.justclash.helper_luci_session as luciSession";
+"require view.justclash.helper_ubus as ubusApi";
 "require view.justclash.helper_common as common";
-"require view.justclash.helper_fs_api as fsApi";
 "require view.justclash.helper_mihomo_api as mihomoApi";
-"require rpc";
 
 const POLL_TIMEOUT = 3000;
 const ACTION_DELAY_TIMEOUT = 5000;
@@ -134,13 +132,6 @@ const createIcon = (iconSet, iconKey, spanClass, svgClass) => {
 
 const createButtonIcon = (iconKey) => createIcon(buttonIcons, iconKey, "jc-button-icon", "jc-button-icon-svg");
 const createHeaderIcon = (iconKey) => createIcon(cardIcons, iconKey, "jc-card-icon", "jc-card-icon-svg");
-
-const callSystemBoard = rpc.declare({
-    object: "system",
-    method: "board",
-    params: [],
-    expect: { "": {} }
-});
 
 const cleanStdout = (val) =>
     val && val.stdout ? val.stdout.replace(/[\r\n]+/g, "").trim() : _("Error");
@@ -298,15 +289,15 @@ const updateServiceStatus = async (dynamicElements) => {
     pollingInProgress = true;
 
     try {
-        if (!await luciSession.isSessionAlive()) {
+        if (!await ubusApi.isSessionAlive()) {
             stopPolling();
             cleanupWs();
             return;
         }
 
         const [isRunning, isAutostarting] = await Promise.all([
-            fsApi.isServiceRunning().catch(() => false),
-            fsApi.isServiceAutoStartEnabled().catch(() => false)
+            ubusApi.isServiceRunning().catch(() => false),
+            ubusApi.isServiceAutoStartEnabled().catch(() => false)
         ]);
         requestAnimationFrame(() => updateUI(dynamicElements, isAutostarting, isRunning));
     } finally {
@@ -479,7 +470,7 @@ return view.extend({
             apiToken = uci.get(common.binName, "proxy", "api_password") || "";
         } catch (e) {}
 
-        const boardPromise = callSystemBoard()
+        const boardPromise = ubusApi.getSystemBoard()
             .then(data => [
                 data.model ? data.model.replace(/\s*\(.*\)\s*$/, "") : _("Error"),
                 data.release && data.release.description ? data.release.description.replace(/ r\d+-[a-f0-9]+.*$/, "") : _("Error")
@@ -494,8 +485,8 @@ return view.extend({
             .catch(() => null);
 
         const statusPromise = Promise.all([
-            fsApi.isServiceRunning().catch(() => false),
-            fsApi.isServiceAutoStartEnabled().catch(() => false)
+            ubusApi.isServiceRunning().catch(() => false),
+            ubusApi.isServiceAutoStartEnabled().catch(() => false)
         ]);
 
         const [
@@ -641,7 +632,7 @@ return view.extend({
                 return;
 
             cleanupWs();
-            if (!await luciSession.isSessionAlive())
+            if (!await ubusApi.isSessionAlive())
                 return;
 
             wsCleanups.push(mihomoApi.createTrafficWebSocket({

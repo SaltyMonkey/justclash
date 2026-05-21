@@ -9,13 +9,16 @@
                 "/usr/bin/justclash.sh": [
                     "exec"
                 ],
-                "/etc/justclash/default.config": [
-                    "read"
-                ],
                 "/etc/justclash/rulesets.txt": [
                     "read"
                 ],
                 "/etc/justclash/block.rulesets.txt": [
+                    "read"
+                ],
+                "/etc/justclash/user.rulesets.txt": [
+                    "read"
+                ],
+                "/etc/justclash/user.block.rulesets.txt": [
                     "read"
                 ]
             },
@@ -36,7 +39,10 @@
         },
         "write": {
             "file": {
-                "/etc/justclash/default.config": [
+                "/etc/justclash/user.rulesets.txt": [
+                    "write"
+                ],
+                "/etc/justclash/user.block.rulesets.txt": [
                     "write"
                 ]
             },

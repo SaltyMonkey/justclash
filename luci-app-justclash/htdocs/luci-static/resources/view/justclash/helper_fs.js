@@ -2,21 +2,6 @@
 "require baseclass";
 "require fs";
 "require view.justclash.helper_common as common";
-"require rpc";
-
-const callServiceList = rpc.declare({
-    object: "service",
-    method: "list",
-    params: ["name"],
-    expect: { "": {} }
-});
-
-const callInitList = rpc.declare({
-    object: "luci",
-    method: "getInitList",
-    params: ["name"],
-    expect: { "": {} }
-});
 
 return baseclass.extend({
     async readFileSafe(path, fallback = "") {
@@ -26,6 +11,13 @@ return baseclass.extend({
         } catch {
             return fallback;
         }
+    },
+
+    async saveFileSafe(routingContent, blockingContent) {
+        return Promise.all([
+            fs.write(common.userRulesetsFilePath, routingContent != null ? routingContent : ""),
+            fs.write(common.userBlockRulesetsFilePath, blockingContent != null ? blockingContent : "")
+        ]);
     },
 
     parseNameYamlEntries(content) {
@@ -47,24 +39,5 @@ return baseclass.extend({
     async readNameYamlEntries(path) {
         const content = await this.readFileSafe(path);
         return this.parseNameYamlEntries(content);
-    },
-
-    async isServiceAutoStartEnabled() {
-        try {
-            const res = await callInitList(common.binName);
-            return !!(res && res[common.binName] && res[common.binName].enabled);
-        } catch {
-            return false;
-        }
-    },
-
-    async isServiceRunning() {
-        try {
-            const res = await callServiceList(common.binName);
-            const instances = (res && res[common.binName] && res[common.binName].instances) ? res[common.binName].instances : {};
-            return Object.values(instances).some(instance => instance.running);
-        } catch {
-            return false;
-        }
     }
 });

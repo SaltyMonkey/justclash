@@ -3,7 +3,7 @@
 "require form";
 "require view";
 "require view.justclash.helper_common as common";
-"require view.justclash.helper_fs_api as fsApi";
+"require view.justclash.helper_fs as fsApi";
 "require tools.widgets as widgets";
 
 return view.extend({
@@ -11,7 +11,15 @@ return view.extend({
         let rulesetsItems = [];
 
         try {
-            rulesetsItems = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
+            const inbuildRules = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
+            const userRules = await fsApi.readNameYamlEntries(common.userRulesetsFilePath);
+            const combinedRules = [...inbuildRules, ...userRules];
+            const seenRules = new Set();
+            rulesetsItems = combinedRules.filter(item => {
+                if (seenRules.has(item.yamlName)) return false;
+                seenRules.add(item.yamlName);
+                return true;
+            });
         } catch (e) {}
 
         return {

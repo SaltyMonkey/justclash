@@ -9,6 +9,8 @@ return baseclass.extend({
     binPath: "/usr/bin/justclash.sh",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
+    userBlockRulesetsFilePath: "/etc/justclash/user.block.rulesets.txt",
+    userRulesetsFilePath: "/etc/justclash/user.rulesets.txt",
     logsCount: "400",
 
     // Default option values
@@ -629,6 +631,24 @@ return baseclass.extend({
         }
 
         return true;
+    },
+    generateRandomName: function () {
+        const adjectives = [
+            "silent", "rapid", "bright", "calm", "solid", "swift",
+            "sharp", "steady", "wild", "clear", "bold", "smart",
+            "brisk", "clean", "cool", "eager", "fine", "fresh",
+            "gentle", "grand", "keen", "light", "lucky", "quick"
+        ];
+        const nouns = [
+            "fox", "wolf", "owl", "hawk", "raven", "panda",
+            "tiger", "lynx", "bear", "falcon", "yak",
+            "eagle", "shark", "whale", "dolphin", "badger", "cobra",
+            "moose", "rabbit", "beaver", "goose", "horse", "koala"
+        ];
+        const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+        const noun = nouns[Math.floor(Math.random() * nouns.length)];
+        const suffix = Math.random().toString(16).substring(2, 6);
+        return `${adj}-${noun}-${suffix}`;
     },
     // Keep menu-only titles translatable for luci-app-justclash.json.
     stub_nodes_tab: _("Nodes"),

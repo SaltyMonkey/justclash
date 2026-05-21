@@ -1,0 +1,1 @@
+# Custom blocking rulesets format: Name|ID|Type|mrs|URL_or_Path
