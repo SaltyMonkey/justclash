@@ -1829,6 +1829,26 @@ core_prepare_workdir() {
 
     log info "Preparing workdir $CORE_WORKDIR_PATH" "📁"
 
+    if [ -e "$CORE_WORKDIR_PATH" ] || [ -L "$CORE_WORKDIR_PATH" ]; then
+        if [ -L "$CORE_WORKDIR_PATH" ]; then
+            log warn "Removing insecure symbolic link at $CORE_WORKDIR_PATH" "⚠️"
+            rm -f "$CORE_WORKDIR_PATH"
+        elif [ -f "$CORE_WORKDIR_PATH" ]; then
+            log warn "Removing regular file at $CORE_WORKDIR_PATH" "⚠️"
+            rm -f "$CORE_WORKDIR_PATH"
+        elif [ -d "$CORE_WORKDIR_PATH" ]; then
+            local owner
+            owner=$(stat -c '%u' "$CORE_WORKDIR_PATH" 2>/dev/null)
+            if [ "$owner" != "0" ]; then
+                log warn "Removing insecure directory at $CORE_WORKDIR_PATH owned by UID $owner" "⚠️"
+                rm -rf "$CORE_WORKDIR_PATH"
+            fi
+        else
+            log warn "Removing unknown file type at $CORE_WORKDIR_PATH" "⚠️"
+            rm -rf "$CORE_WORKDIR_PATH"
+        fi
+    fi
+
     mkdir -p "$CORE_WORKDIR_PATH"
     chown 0:0 "$CORE_WORKDIR_PATH"
     chmod 700 "$CORE_WORKDIR_PATH"

@@ -90,6 +90,9 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 
 	if [ "$${CURRENT_API_PASSWORD}" = "$${DEFAULT_API_PASSWORD}" ]; then
 		RANDOM_API_PASSWORD="$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-')"
+		if [ -z "$${RANDOM_API_PASSWORD}" ]; then
+			RANDOM_API_PASSWORD="$$(head -c 32 /dev/urandom 2>/dev/null | base64 2>/dev/null | tr -d '+/=\r\n' | cut -c1-32)"
+		fi
 		if [ -n "$${RANDOM_API_PASSWORD}" ]; then
 			uci set justclash.proxy.api_password="$${RANDOM_API_PASSWORD}"
 			uci commit justclash
@@ -98,6 +101,9 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	fi
 	# randomize failover mac string if placeholder value detected
 	RANDOM_MAC_REPLACEMENT="$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-' | cut -c1-30)"
+	if [ -z "$${RANDOM_MAC_REPLACEMENT}" ]; then
+		RANDOM_MAC_REPLACEMENT="$$(head -c 30 /dev/urandom 2>/dev/null | base64 2>/dev/null | tr -d '+/=\r\n' | cut -c1-30)"
+	fi
 	[ -n "$${RANDOM_MAC_REPLACEMENT}" ] && sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|$${RANDOM_MAC_REPLACEMENT}|g" /usr/lib/justclash/helpers.sh || true
 fi
 exit 0
