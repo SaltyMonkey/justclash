@@ -1,0 +1,12 @@
+{
+  "name": "luci-app-justclash",
+  "private": true,
+  "scripts": {
+    "lint": "eslint htdocs",
+    "lint:fix": "eslint --fix htdocs"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.0"
+  }
+}
