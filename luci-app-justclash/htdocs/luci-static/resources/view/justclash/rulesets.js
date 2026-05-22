@@ -37,8 +37,51 @@ return view.extend({
         const userRouting = this.parseRules(result.userRulesets);
         const userBlocking = this.parseRules(result.userBlockRulesets);
 
-        const header = E("h2", {}, _("User-defined Rulesets"));
-        const desc = E("p", { class: "cbi-map-descr" }, _("Manage custom routing and blocking rulesets. Both remote URLs and local paths must point to binary MRS ruleset files. Local rulesets are loaded as file-based rulesets in Mihomo. Saving changes here writes to files but does not restart the service. Reload the service from the Status tab or apply changes in Routing/Proxy tabs to take effect."));
+
+        const hideBuiltInCheckbox = E("input", {
+            type: "checkbox",
+            id: "jc-hide-builtin",
+            checked: true,
+            change: function (ev) {
+                const checked = ev.target.checked;
+                const builtinRows = document.querySelectorAll(".jc-builtin-row");
+                builtinRows.forEach(row => {
+                    if (checked) {
+                        row.classList.add("jc-hidden-row");
+                    } else {
+                        row.classList.remove("jc-hidden-row");
+                    }
+                });
+            }
+        });
+
+        const clickableLinksCheckbox = E("input", {
+            type: "checkbox",
+            id: "jc-clickable-links",
+            checked: true,
+            change: function (ev) {
+                const checked = ev.target.checked;
+                const containers = document.querySelectorAll(".jc-grid-container");
+                containers.forEach(container => {
+                    if (checked) {
+                        container.classList.remove("jc-links-disabled");
+                    } else {
+                        container.classList.add("jc-links-disabled");
+                    }
+                });
+            }
+        });
+
+        const actionWrap = E("div", { class: "jc-actions-wrap" }, [
+            E("label", { for: "jc-hide-builtin", class: "jc-action-label" }, [
+                hideBuiltInCheckbox,
+                _("Hide built-in rulesets")
+            ]),
+            E("label", { for: "jc-clickable-links", class: "jc-action-label" }, [
+                clickableLinksCheckbox,
+                _("Clickable links")
+            ])
+        ]);
 
         const routingPanel = this.renderPanel(builtInRouting, userRouting, false);
         const blockingPanel = this.renderPanel(builtInBlocking, userBlocking, true);
@@ -78,48 +121,148 @@ return view.extend({
                 border: 1px solid var(--border-color-medium, #d9d9d9);
                 font-weight: 500;
             }
-            .cbi-section-table-row {
+            .jc-actions-wrap {
+                display: flex;
+                gap: 20px;
+                align-items: center;
+                flex-wrap: wrap;
+                padding: 10px 15px;
+                border: 1px solid var(--border-color-medium, #d9d9d9);
+                border-radius: 6px;
+                background: var(--background-color-medium, #f6f6f6);
+                margin-bottom: 15px;
+            }
+            .jc-action-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                margin: 0;
+            }
+            .jc-error-list {
+                margin: 0;
+                padding-left: 20px;
+                text-align: left;
+            }
+            [data-theme="dark"] .jc-actions-wrap {
+                border-color: rgba(255, 255, 255, .08);
+                background: rgba(255, 255, 255, .04);
+            }
+            .jc-hidden-row {
+                display: none !important;
+            }
+            .jc-grid-container:not(:has(.jc-grid-row:not(.jc-hidden-row))) .jc-grid-header {
+                display: none;
+            }
+            .jc-grid-container {
+                display: flex;
+                flex-direction: column;
+                border: 1px solid var(--border-color-medium, #d9d9d9);
+                border-radius: 8px;
+                overflow: hidden;
+                background-color: var(--background-color-low, #fff);
+                margin-bottom: 15px;
+            }
+            [data-theme="dark"] .jc-grid-container {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+            .jc-grid-header {
+                display: grid;
+                grid-template-columns: 1.5fr 1.5fr 1fr 3fr 100px;
+                gap: 12px;
+                padding: 10px 15px;
+                background-color: var(--background-color-medium, #f6f6f6);
+                border-bottom: 1px solid var(--border-color-medium, #d9d9d9);
+                font-weight: bold;
+                color: var(--text-color-high, inherit);
+            }
+            .jc-grid-row {
+                display: grid;
+                grid-template-columns: 1.5fr 1.5fr 1fr 3fr 100px;
+                gap: 12px;
+                padding: 10px 15px;
+                align-items: center;
+                border-bottom: 1px solid var(--border-color-low, #f0f0f0);
                 transition: background-color 0.15s ease;
+                color: var(--text-color, inherit);
             }
-            .cbi-section-table-row:hover {
-                background-color: var(--background-color-medium, rgba(0, 0, 0, 0.02)) !important;
+            .jc-grid-row:last-child {
+                border-bottom: none;
             }
-            [data-theme="dark"] .cbi-section-table-row:hover {
-                background-color: rgba(255, 255, 255, 0.03) !important;
+            .jc-grid-row:hover {
+                background-color: var(--background-color-medium, rgba(0, 0, 0, 0.02));
+            }
+            [data-theme="dark"] .jc-grid-row:hover {
+                background-color: rgba(255, 255, 255, 0.03);
+            }
+            .jc-grid-col {
+                min-width: 0;
+                display: flex;
+                align-items: center;
+            }
+            .jc-grid-col.jc-col-id code {
+                font-family: monospace;
             }
             .jc-url-cell {
-                max-width: 350px;
+                word-break: break-all;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                white-space: nowrap;
             }
-            .jc-url-cell:has(input) {
-                overflow: visible;
-                white-space: normal;
-                max-width: none;
-            }
-            .cbi-section-table td input,
-            .cbi-section-table td select {
+            .jc-grid-col input,
+            .jc-grid-col select {
                 width: 100% !important;
                 box-sizing: border-box !important;
-                max-width: 100% !important;
-                min-width: 0 !important;
                 height: 30px !important;
                 padding: 4px 6px !important;
                 margin: 0 !important;
             }
-            .cbi-button-remove {
-                font-weight: bold;
-                padding: 2px 8px !important;
-                height: 26px !important;
-                line-height: 1 !important;
+            .jc-grid-container.jc-links-disabled .jc-url-link {
+                color: inherit !important;
+                text-decoration: none !important;
+                pointer-events: none !important;
+                cursor: default !important;
+            }
+            @media (max-width: 768px) {
+                .jc-grid-header {
+                    display: none;
+                }
+                .jc-grid-row {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                    padding: 15px;
+                    border-bottom: 1px solid var(--border-color-medium, #d9d9d9);
+                }
+                .jc-grid-row:last-child {
+                    border-bottom: none;
+                }
+                .jc-grid-col {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    width: 100%;
+                }
+                .jc-grid-col::before {
+                    content: attr(data-label);
+                    font-size: 10px;
+                    font-weight: bold;
+                    color: var(--text-color-medium, #888);
+                    margin-bottom: 4px;
+                    text-transform: uppercase;
+                }
+                .jc-grid-col.jc-col-action {
+                    align-items: flex-end;
+                    margin-top: 5px;
+                }
+                .jc-grid-col.jc-col-action::before {
+                    display: none;
+                }
             }
         `);
 
-        return E("div", { class: "cbi-map fade-in" }, [
+        return E("div", { class: "fade-in" }, [
             style,
-            header,
-            desc,
+            actionWrap,
             routingPanel,
             blockingPanel
         ]);
@@ -146,45 +289,48 @@ return view.extend({
     renderPanel: function (builtInRules, userRules, isBlock) {
         const sectionTitle = isBlock ? _("Blocking Rulesets") : _("Routing Rulesets");
 
-        const table = E("table", { class: "cbi-section-table" }, [
-            E("tr", { class: "cbi-section-table-titles" }, [
-                E("th", { class: "th", style: "width: 20%;" }, _("Name")),
-                E("th", { class: "th", style: "width: 20%;" }, _("ID")),
-                E("th", { class: "th", style: "width: 15%;" }, _("Type")),
-                E("th", { class: "th", style: "width: 35%;" }, _("URL / Local Path")),
-                E("th", { class: "th", style: "width: 10%;" }, _("Actions"))
+        const grid = E("div", { class: "jc-grid-container" }, [
+            E("div", { class: "jc-grid-header" }, [
+                E("div", { class: "jc-grid-col" }, _("Readable name")),
+                E("div", { class: "jc-grid-col" }, _("Name")),
+                E("div", { class: "jc-grid-col" }, _("Type")),
+                E("div", { class: "jc-grid-col" }, _("URL / Local Path")),
+                E("div", { class: "jc-grid-col" }, _("Actions"))
             ])
         ]);
 
         if (isBlock) {
-            this.blockingGrid = table;
+            this.blockingGrid = grid;
         } else {
-            this.routingGrid = table;
+            this.routingGrid = grid;
         }
 
         // Add built-in rulesets
         builtInRules.forEach(rule => {
-            table.appendChild(this.createRowElement(rule, true));
+            grid.appendChild(this.createRowElement(rule, true, isBlock));
         });
 
         // Add user-defined rulesets
         userRules.forEach(rule => {
-            table.appendChild(this.createRowElement(rule, false));
+            grid.appendChild(this.createRowElement(rule, false, isBlock));
         });
 
         const addBtn = E("button", {
             type: "button",
             class: "cbi-button cbi-button-add",
             click: () => {
-                const newRow = this.createRowElement({ name: "", id: "", type: "domain", format: "mrs", url: "" }, false);
-                table.appendChild(newRow);
+                const newRow = this.createRowElement({ name: "", id: "", type: "domain", format: "mrs", url: "" }, false, isBlock);
+                grid.appendChild(newRow);
             }
         }, _("Add Custom Ruleset"));
 
-        const panel = E("div", { class: "cbi-section" }, [
+        const panel = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, sectionTitle),
+            E("div", { class: "cbi-section-descr" }, isBlock
+                ? _("Rulesets used to block matching domains or IP ranges entirely.")
+                : _("Rulesets used to determine which proxy or direct connection is used for outgoing traffic.")),
             E("div", { class: "cbi-section-node" }, [
-                table,
+                grid,
                 E("div", { class: "cbi-section-create" }, addBtn)
             ])
         ]);
@@ -192,17 +338,23 @@ return view.extend({
         return panel;
     },
 
-    createRowElement: function (rule = { name: "", id: "", type: "domain", format: "mrs", url: "" }, isBuiltIn = false) {
-        const tr = E("tr", {
-            class: isBuiltIn ? "cbi-section-table-row jc-builtin-row" : "cbi-section-table-row jc-custom-row"
+    createRowElement: function (rule = { name: "", id: "", type: "domain", format: "mrs", url: "" }, isBuiltIn = false, isBlock = false) {
+        const row = E("div", {
+            class: isBuiltIn ? "jc-grid-row jc-builtin-row jc-hidden-row" : "jc-grid-row jc-custom-row"
         });
 
         if (isBuiltIn) {
-            tr.appendChild(E("td", { class: "td" }, rule.name));
-            tr.appendChild(E("td", { class: "td" }, E("code", {}, rule.id)));
-            tr.appendChild(E("td", { class: "td" }, E("span", { class: "jc-badge-type " + rule.type }, rule.type.toUpperCase())));
-            tr.appendChild(E("td", { class: "td jc-url-cell" }, rule.url));
-            tr.appendChild(E("td", { class: "td" }, E("span", { class: "jc-badge-builtin" }, _("Built-in"))));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-name", "data-label": _("Readable name") }, rule.name));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-id", "data-label": _("Name") }, E("code", {}, rule.id)));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, E("span", { class: "jc-badge-type " + rule.type }, rule.type.toUpperCase())));
+
+            const isHttp = rule.url.startsWith("http://") || rule.url.startsWith("https://");
+            const urlNode = isHttp
+                ? E("a", { class: "jc-url-link", href: rule.url, download: "" }, rule.url)
+                : rule.url;
+
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-url jc-url-cell", "data-label": _("URL / Local Path") }, urlNode));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-action" }, E("span", { class: "jc-badge-builtin" }, _("Built-in"))));
         } else {
             const nameInput = E("input", {
                 type: "text",
@@ -215,7 +367,7 @@ return view.extend({
                 type: "text",
                 class: "cbi-input-text",
                 value: rule.id,
-                placeholder: _("e.g. my-custom-rules")
+                placeholder: _("e.g. my_custom_rules")
             });
 
             const typeSelect = E("select", { class: "cbi-input-select" }, [
@@ -234,121 +386,143 @@ return view.extend({
             const deleteBtn = E("button", {
                 type: "button",
                 class: "cbi-button cbi-button-remove",
-                title: _("Delete"),
                 click: function () {
-                    tr.remove();
+                    row.remove();
                 }
-            }, "×");
+            }, _("Delete"));
 
-            tr.appendChild(E("td", { class: "td" }, nameInput));
-            tr.appendChild(E("td", { class: "td" }, idInput));
-            tr.appendChild(E("td", { class: "td" }, typeSelect));
-            tr.appendChild(E("td", { class: "td jc-url-cell" }, urlInput));
-            tr.appendChild(E("td", { class: "td" }, deleteBtn));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-name", "data-label": _("Readable name") }, nameInput));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-id", "data-label": _("Name") }, idInput));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, typeSelect));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-url jc-url-cell", "data-label": _("URL / Local Path") }, urlInput));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-action" }, deleteBtn));
 
-            tr.nameInput = nameInput;
-            tr.idInput = idInput;
-            tr.typeSelect = typeSelect;
-            tr.urlInput = urlInput;
+            row.nameInput = nameInput;
+            row.idInput = idInput;
+            row.typeSelect = typeSelect;
+            row.urlInput = urlInput;
+
+            // Apply validation rules using LuCI's ui.addValidator
+            ui.addValidator(nameInput, "string", false, function(value) {
+                if (!value || value.trim() === "") {
+                    return _("Readable name is required.");
+                }
+                if (!/^[a-zA-Zа-яА-ЯёЁ0-9_\s-]+$/.test(value)) {
+                    return _("Readable name contains invalid characters. Only letters, numbers, spaces, underscores, and dashes are allowed.");
+                }
+                return true;
+            }, "blur", "keyup");
+
+            ui.addValidator(idInput, "string", false, function(value) {
+                const simpleNameErr = common.validateSimpleName(value);
+                if (simpleNameErr !== true) {
+                    return simpleNameErr;
+                }
+                // Check for duplicates in the current list
+                const gridContainer = idInput.closest(".jc-grid-container");
+                if (!gridContainer) return true;
+
+                const customInputs = gridContainer.querySelectorAll(".jc-custom-row .jc-col-id input");
+                let count = 0;
+                customInputs.forEach(input => {
+                    if (input.value.trim() === value) {
+                        count++;
+                    }
+                });
+
+                if (count > 1) {
+                    return _("Duplicate Name \"%s\" in this list.").format(value);
+                }
+
+                // Check against built-in IDs
+                const builtInIds = isBlock ? this.builtInBlockingIds : this.builtInRoutingIds;
+                if (builtInIds && builtInIds.includes(value)) {
+                    return _("Reserved or built-in Name \"%s\".").format(value);
+                }
+
+                return true;
+            }.bind(this), "blur", "keyup");
+
+            ui.addValidator(urlInput, "string", false, function(value) {
+                if (!value || value.trim() === "") {
+                    return _("URL / Local Path is required.");
+                }
+                if (value.includes("|") || value.includes("\n")) {
+                    return _("URL / Local Path cannot contain pipe (|) or newlines.");
+                }
+                if (!/^(https?:\/\/|\/)/.test(value)) {
+                    return _("URL / Local Path must start with http://, https://, or /");
+                }
+                return true;
+            }, "blur", "keyup");
         }
 
-        return tr;
+        return row;
     },
 
-    saveData: async function (apply) {
+    saveData: async function (_apply) {
         const routingRows = this.routingGrid.querySelectorAll(".jc-custom-row");
         const blockingRows = this.blockingGrid.querySelectorAll(".jc-custom-row");
 
         const routingData = [];
         const blockingData = [];
 
-        const seenRoutingIds = new Set(this.builtInRoutingIds);
-        const seenBlockingIds = new Set(this.builtInBlockingIds);
+        const errors = [];
 
         // Validate Routing Rulesets
-        for (let i = 0; i < routingRows.length; i++) {
-            const card = routingRows[i];
-            const name = card.nameInput.value.trim();
-            const id = card.idInput.value.trim();
-            const type = card.typeSelect.value;
-            const url = card.urlInput.value.trim();
+        routingRows.forEach((row, i) => {
+            // Trigger real-time validation via blur events
+            row.nameInput.dispatchEvent(new window.Event("blur"));
+            row.idInput.dispatchEvent(new window.Event("blur"));
+            row.urlInput.dispatchEvent(new window.Event("blur"));
 
-            const rowErrors = [];
+            const nameErr = row.nameInput.getAttribute("data-tooltip");
+            const idErr = row.idInput.getAttribute("data-tooltip");
+            const urlErr = row.urlInput.getAttribute("data-tooltip");
 
-            if (!name) {
-                rowErrors.push(_("Routing Ruleset #%d: Name is required.").format(i + 1));
-            } else if (name.includes("|") || name.includes("\n")) {
-                rowErrors.push(_("Routing Ruleset #%d: Name cannot contain pipe (|) or newlines.").format(i + 1));
+            if (nameErr) errors.push(_("Routing Ruleset #%d (Readable name): %s").format(i + 1, nameErr));
+            if (idErr) errors.push(_("Routing Ruleset #%d (Name): %s").format(i + 1, idErr));
+            if (urlErr) errors.push(_("Routing Ruleset #%d (URL / Local Path): %s").format(i + 1, urlErr));
+
+            if (!nameErr && !idErr && !urlErr) {
+                const name = row.nameInput.value.trim();
+                const id = row.idInput.value.trim();
+                const type = row.typeSelect.value;
+                const url = row.urlInput.value.trim();
+                routingData.push(`${name}|${id}|${type}|mrs|${url}`);
             }
-
-            if (!id) {
-                rowErrors.push(_("Routing Ruleset #%d: ID is required.").format(i + 1));
-            } else if (!/^[a-z0-9-]+$/.test(id)) {
-                rowErrors.push(_("Routing Ruleset #%d: ID must contain only lowercase letters, numbers, and dashes.").format(i + 1));
-            } else if (seenRoutingIds.has(id)) {
-                rowErrors.push(_("Routing Ruleset #%d: Duplicate or reserved ID '%s'.").format(i + 1, id));
-            } else {
-                seenRoutingIds.add(id);
-            }
-
-            if (!url) {
-                rowErrors.push(_("Routing Ruleset #%d: URL / Local Path is required.").format(i + 1));
-            } else if (url.includes("|") || url.includes("\n")) {
-                rowErrors.push(_("Routing Ruleset #%d: URL / Local Path cannot contain pipe (|) or newlines.").format(i + 1));
-            }
-
-            if (rowErrors.length > 0) {
-                const errorContent = E("ul", { style: "margin: 0; padding-left: 20px; text-align: left;" },
-                    rowErrors.map(err => E("li", {}, err))
-                );
-                ui.addTimeLimitedNotification(_("Validation Error"), errorContent, common.notificationTimeout, "danger");
-                return false;
-            }
-
-            routingData.push(`${name}|${id}|${type}|mrs|${url}`);
-        }
+        });
 
         // Validate Blocking Rulesets
-        for (let i = 0; i < blockingRows.length; i++) {
-            const card = blockingRows[i];
-            const name = card.nameInput.value.trim();
-            const id = card.idInput.value.trim();
-            const type = card.typeSelect.value;
-            const url = card.urlInput.value.trim();
+        blockingRows.forEach((row, i) => {
+            // Trigger real-time validation via blur events
+            row.nameInput.dispatchEvent(new window.Event("blur"));
+            row.idInput.dispatchEvent(new window.Event("blur"));
+            row.urlInput.dispatchEvent(new window.Event("blur"));
 
-            const rowErrors = [];
+            const nameErr = row.nameInput.getAttribute("data-tooltip");
+            const idErr = row.idInput.getAttribute("data-tooltip");
+            const urlErr = row.urlInput.getAttribute("data-tooltip");
 
-            if (!name) {
-                rowErrors.push(_("Blocking Ruleset #%d: Name is required.").format(i + 1));
-            } else if (name.includes("|") || name.includes("\n")) {
-                rowErrors.push(_("Blocking Ruleset #%d: Name cannot contain pipe (|) or newlines.").format(i + 1));
+            if (nameErr) errors.push(_("Blocking Ruleset #%d (Readable name): %s").format(i + 1, nameErr));
+            if (idErr) errors.push(_("Blocking Ruleset #%d (Name): %s").format(i + 1, idErr));
+            if (urlErr) errors.push(_("Blocking Ruleset #%d (URL / Local Path): %s").format(i + 1, urlErr));
+
+            if (!nameErr && !idErr && !urlErr) {
+                const name = row.nameInput.value.trim();
+                const id = row.idInput.value.trim();
+                const type = row.typeSelect.value;
+                const url = row.urlInput.value.trim();
+                blockingData.push(`${name}|${id}|${type}|mrs|${url}`);
             }
+        });
 
-            if (!id) {
-                rowErrors.push(_("Blocking Ruleset #%d: ID is required.").format(i + 1));
-            } else if (!/^[a-z0-9-]+$/.test(id)) {
-                rowErrors.push(_("Blocking Ruleset #%d: ID must contain only lowercase letters, numbers, and dashes.").format(i + 1));
-            } else if (seenBlockingIds.has(id)) {
-                rowErrors.push(_("Blocking Ruleset #%d: Duplicate or reserved ID '%s'.").format(i + 1, id));
-            } else {
-                seenBlockingIds.add(id);
-            }
-
-            if (!url) {
-                rowErrors.push(_("Blocking Ruleset #%d: URL / Local Path is required.").format(i + 1));
-            } else if (url.includes("|") || url.includes("\n")) {
-                rowErrors.push(_("Blocking Ruleset #%d: URL / Local Path cannot contain pipe (|) or newlines.").format(i + 1));
-            }
-
-            if (rowErrors.length > 0) {
-                const errorContent = E("ul", { style: "margin: 0; padding-left: 20px; text-align: left;" },
-                    rowErrors.map(err => E("li", {}, err))
-                );
-                ui.addTimeLimitedNotification(_("Validation Error"), errorContent, common.notificationTimeout, "danger");
-                return false;
-            }
-
-            blockingData.push(`${name}|${id}|${type}|mrs|${url}`);
+        if (errors.length > 0) {
+            const errorContent = E("ul", { class: "jc-error-list" },
+                errors.map(err => E("li", {}, err))
+            );
+            ui.addTimeLimitedNotification(_("Validation Error"), errorContent, common.notificationTimeout, "danger");
+            return false;
         }
 
         const routingContent = routingData.length > 0 ? routingData.join("\n") + "\n" : "";
@@ -370,11 +544,9 @@ return view.extend({
         }
     },
 
-    handleSave: function (ev) {
+    handleSave: function (_ev) {
         return this.saveData(false);
     },
-
-    handleSaveApply: function (ev) {
-        return this.saveData(true);
-    }
+    handleReset: null,
+    handleSaveApply: null
 });

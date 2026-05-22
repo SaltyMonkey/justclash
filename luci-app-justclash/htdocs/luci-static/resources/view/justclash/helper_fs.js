@@ -7,7 +7,7 @@ return baseclass.extend({
     async readFileSafe(path, fallback = "") {
         try {
             const content = await fs.read(path);
-            return content != null ? content : fallback;
+            return content ?? fallback;
         } catch {
             return fallback;
         }
@@ -15,8 +15,8 @@ return baseclass.extend({
 
     async saveFileSafe(routingContent, blockingContent) {
         return Promise.all([
-            fs.write(common.userRulesetsFilePath, routingContent != null ? routingContent : ""),
-            fs.write(common.userBlockRulesetsFilePath, blockingContent != null ? blockingContent : "")
+            fs.write(common.userRulesetsFilePath, routingContent ?? ""),
+            fs.write(common.userBlockRulesetsFilePath, blockingContent ?? "")
         ]);
     },
 

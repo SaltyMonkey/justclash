@@ -262,7 +262,7 @@ return baseclass.extend({
         
         try {
             const url = new URL(value);
-            return url.pathname.toLowerCase().split('/').pop().includes('.zip') ? true : _("URL must point to a .zip file");
+            return url.pathname.toLowerCase().split("/").pop().includes(".zip") ? true : _("URL must point to a .zip file");
         } catch {
             return _("Invalid HTTP(S) URL");
         }

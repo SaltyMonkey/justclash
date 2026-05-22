@@ -634,6 +634,7 @@ return view.extend({
         `);
 
         container.appendChild(E("h3", { class: "cbi-section-title" }, _("Nodes")));
+        container.appendChild(E("div", { class: "cbi-section-descr" }, _("View and select proxy nodes. You can also test latency for individual nodes or groups.")));
         container.appendChild(modeWrap);
         container.appendChild(content);
         container.appendChild(style);

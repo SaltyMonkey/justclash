@@ -578,11 +578,13 @@ return view.extend({
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Current status")),
+            E("div", { class: "cbi-section-descr" }, _("Overview of the running Mihomo service status, core version, and active traffic usage.")),
             statusGrid
         ]);
 
         const serviceActionSection = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Service actions")),
+            E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
             serviceActionContainer
         ]);
 
@@ -611,6 +613,7 @@ return view.extend({
 
         const maintenanceActionSection = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Maintenance")),
+            E("div", { class: "cbi-section-descr" }, _("Perform diagnostic tests, update the core binary, and update downloaded rulesets or service data files.")),
             maintenanceActionContainer
         ]);
 
@@ -624,6 +627,7 @@ return view.extend({
 
         const configActionSection = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Configuration")),
+            E("div", { class: "cbi-section-descr" }, _("Inspect the generated Mihomo or JustClash settings, or reset the configuration back to default values.")),
             configActionContainer
         ]);
 

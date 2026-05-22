@@ -33,7 +33,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "wait_for_wan_max", _("Maximum wait time for WAN (s):"));
         o.datatype = datatypes.UINTEGER;
-        o.default = '90';
+        o.default = "90";
         o.retain = true;
         o.depends("wait_for_wan", primitives.TRUE);
         o.description = _("Maximum time in seconds to wait for WAN connection before proceeding with the current state.");
@@ -264,9 +264,9 @@ return view.extend({
             return common.validateHttpUrl(value);
         };
 
-        o = s.taboption(tabname, form.Value, "inbuild_rulesets_files_download_url", _("Rulesets download URL:"));
+        o = s.taboption(tabname, form.Value, "mihomo_rulesets_files_download_url", _("Rulesets download URL:"));
         o.description = _("URL to download inbuild rulesets from. Leave empty to use the default.");
-        o.rmempty = false;
+        o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpUrl(value);
         };

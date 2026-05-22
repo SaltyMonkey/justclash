@@ -70,7 +70,7 @@ const setRowCloseButtonState = (button, isClosing) => {
 const showCloseAllConnectionsModal = (onConfirm) => {
     ui.showModal(_("Close all connections"), [
         E("p", _("Close all active connections?")),
-        E("div", { class: "right", style: "margin-top: 10px;" }, [
+        E("div", { class: "jc-modal-actions" }, [
             E("button", {
                 class: "cbi-button cbi-button-negative",
                 click: () => {
@@ -80,7 +80,6 @@ const showCloseAllConnectionsModal = (onConfirm) => {
             }, [_("Close all")]),
             E("button", {
                 class: "cbi-button cbi-button-neutral",
-                style: "margin-left: 5px;",
                 click: ui.hideModal
             }, [_("Cancel")])
         ])
@@ -110,7 +109,6 @@ const showConnectionDetails = (connId) => {
             }, [_("Copy details")]),
             E("button", {
                 class: "cbi-button",
-                style: "margin-left: 5px;",
                 click: ui.hideModal
             }, [_("Close")])
         ])
@@ -143,6 +141,7 @@ return view.extend({
 
         const container = E("div", { class: "cbi-section fade-in" });
         container.appendChild(E("h3", { class: "cbi-section-title" }, _("Active Connections")));
+        container.appendChild(E("div", { class: "cbi-section-descr" }, _("Monitor and manage active network connections established through Mihomo.")));
 
         let currentInterval = DEFAULT_CONNECTIONS_INTERVAL;
         let connectionsWsCleanup = null;
@@ -537,7 +536,8 @@ return view.extend({
             .jc-hidden-row{display:none !important;}
             .jc-new-row{animation:jcFadeHighlight 2s ease;background-color:rgba(126, 231, 135, .12) !important;}
             .jc-modal-pre { max-height:460px; overflow:auto; }
-            .jc-modal-actions { text-align:right; }
+            .jc-modal-actions { text-align:right; margin-top:10px; }
+            .jc-modal-actions .cbi-button + .cbi-button { margin-left: 5px; }
             @keyframes jcFadeHighlight{0%{background-color:rgba(126, 231, 135, .24);}100%{background-color:transparent;}}
             [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
             @media (max-width:900px){.flex-header{display:none;}.flex-row{flex-direction:column;align-items:flex-start;border:1px solid #ccc;border-radius:4px;margin-bottom:10px;padding:8px;background:var(--background-color-medium, #fff);}.flex-row > div{display:flex;width:100%;max-width:none;flex:1 1 auto;white-space:normal;padding:2px 0;}.jc-connections-actions{justify-content:flex-start;}.jc-connections-filters{justify-content:stretch;}.hide-mobile{display:none !important;}.show-mobile{display:flex !important;}.flex-row > div::before{content:attr(data-label) ": ";font-weight:bold;color:#555;min-width:110px;display:inline-block;flex-shrink:0;}.c-proto,.c-host,.c-chains,.c-rule,.c-action{flex:auto;max-width:none;}.c-action{justify-content:flex-start;}.c-action-cell{padding-right:0;}.jc-connection-close{margin-top:4px;}.jc-filter-input{min-width:100%;}}

@@ -179,6 +179,7 @@ return view.extend({
         return E("div", { class: "cbi-section fade-in" }, [
             style,
             E("h3", { class: "cbi-section-title" }, _("System logs")),
+            E("div", { class: "cbi-section-descr" }, _("View system logs related to the JustClash service and its startup scripts.")),
             buttonBar,
             settingsBar,
             logContainer,
