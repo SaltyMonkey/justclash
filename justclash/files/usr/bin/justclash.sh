@@ -1833,6 +1833,7 @@ core_prepare_workdir() {
     if [ -L "$CORE_WORKDIR_PATH" ] || [ ! -d "$CORE_WORKDIR_PATH" ]; then
         [ -e "$CORE_WORKDIR_PATH" ] || [ -L "$CORE_WORKDIR_PATH" ] && log warn "Removing invalid path at $CORE_WORKDIR_PATH" "⚠️"
         rm -rf "$CORE_WORKDIR_PATH"
+        # shellcheck disable=SC2174
         mkdir -m 700 -p "$CORE_WORKDIR_PATH"
     else
         local owner
@@ -1840,6 +1841,7 @@ core_prepare_workdir() {
         if [ "$owner" != "0" ]; then
             log warn "Removing insecure directory at $CORE_WORKDIR_PATH owned by UID $owner" "⚠️"
             rm -rf "$CORE_WORKDIR_PATH"
+            # shellcheck disable=SC2174
             mkdir -m 700 -p "$CORE_WORKDIR_PATH"
         fi
     fi

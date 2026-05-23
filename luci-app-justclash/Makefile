@@ -9,11 +9,12 @@ LUCI_DEPENDS:=+luci-base +justclash
 LUCI_PKGARCH:=all
 LUCI_LANG.ru:=Русский (Russian)
 LUCI_LANG.en:=English
+LUCI_LANG.zh_Hans:=简体中文 (Chinese Simplified)
 
 PKG_MAINTAINER:=SaltyMonkey <https://github.com/SaltyMonkey>
 PKG_LICENSE:=GPL-2.0-or-later
 
-LUCI_LANGUAGES:=en ru
+LUCI_LANGUAGES:=en ru zh_Hans
 
 define Package/$(PKG_NAME)/description
 	LuCI web interface for the JustClash proxy service.
