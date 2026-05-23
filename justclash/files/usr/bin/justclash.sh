@@ -208,7 +208,7 @@ start() {
         log info "Waiting for WAN (max ${JUSTCLASH_WAIT_WAN_MAX}s)..." "⏳"
         local waited=0
         while [ "$waited" -lt "$JUSTCLASH_WAIT_WAN_MAX" ]; do
-            if ip route show default 2>/dev/null | grep -q default | grep -q default; then
+            if ip route show default 2>/dev/null | grep -q default; then
                 break
             fi
             sleep 2
@@ -840,9 +840,10 @@ build_builtin_rules_bundle() {
                     rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
                 ;;
                 *)
-                    local escaped_path
+                    local escaped_path safe_path
                     escaped_path=$(json_escape "$ruleset_url")
-                    safe_paths_add "$(dirname "$ruleset_url")"
+                    safe_path=$(readlink -f "$(dirname "$ruleset_url")" 2>/dev/null || realpath "$(dirname "$ruleset_url")" 2>/dev/null)
+                    [ -n "$safe_path" ] && safe_paths_add "$safe_path"
                     rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"path\":\"$escaped_path\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"type\":\"file\"},"
                 ;;
             esac
@@ -1272,7 +1273,7 @@ handle_block_rule_section() {
     local enabled
     config_get_bool enabled block_rules enabled 1
     if [ "$enabled" -ne 1 ]; then
-        log warn "Skipping disabled proxy group: $section" "⚠️";
+        log warn "Skipping disabled proxy group: block_rules" "⚠️"
         echo "[]" > "$file_rules"
         echo "{}" > "$file_rulesets"
         echo "" > "$file_rulesets_names"
@@ -1340,7 +1341,7 @@ handle_direct_rule_section() {
     local enabled
     config_get_bool enabled direct_rules enabled 1
     if [ "$enabled" -ne 1 ]; then
-        log warn "Skipping disabled proxy group: $section" "⚠️";
+        log warn "Skipping disabled proxy group: direct_rules" "⚠️"
         echo "[]" > "$file_rules"
         echo "{}" > "$file_rulesets"
         echo "[]" > "$file_fake_ip_rules"
@@ -1829,29 +1830,19 @@ core_prepare_workdir() {
 
     log info "Preparing workdir $CORE_WORKDIR_PATH" "📁"
 
-    if [ -e "$CORE_WORKDIR_PATH" ] || [ -L "$CORE_WORKDIR_PATH" ]; then
-        if [ -L "$CORE_WORKDIR_PATH" ]; then
-            log warn "Removing insecure symbolic link at $CORE_WORKDIR_PATH" "⚠️"
-            rm -f "$CORE_WORKDIR_PATH"
-        elif [ -f "$CORE_WORKDIR_PATH" ]; then
-            log warn "Removing regular file at $CORE_WORKDIR_PATH" "⚠️"
-            rm -f "$CORE_WORKDIR_PATH"
-        elif [ -d "$CORE_WORKDIR_PATH" ]; then
-            local owner
-            owner=$(stat -c '%u' "$CORE_WORKDIR_PATH" 2>/dev/null)
-            if [ "$owner" != "0" ]; then
-                log warn "Removing insecure directory at $CORE_WORKDIR_PATH owned by UID $owner" "⚠️"
-                rm -rf "$CORE_WORKDIR_PATH"
-            fi
-        else
-            log warn "Removing unknown file type at $CORE_WORKDIR_PATH" "⚠️"
+    if [ -L "$CORE_WORKDIR_PATH" ] || [ ! -d "$CORE_WORKDIR_PATH" ]; then
+        [ -e "$CORE_WORKDIR_PATH" ] || [ -L "$CORE_WORKDIR_PATH" ] && log warn "Removing invalid path at $CORE_WORKDIR_PATH" "⚠️"
+        rm -rf "$CORE_WORKDIR_PATH"
+        mkdir -m 700 -p "$CORE_WORKDIR_PATH"
+    else
+        local owner
+        owner=$(stat -c '%u' "$CORE_WORKDIR_PATH" 2>/dev/null)
+        if [ "$owner" != "0" ]; then
+            log warn "Removing insecure directory at $CORE_WORKDIR_PATH owned by UID $owner" "⚠️"
             rm -rf "$CORE_WORKDIR_PATH"
+            mkdir -m 700 -p "$CORE_WORKDIR_PATH"
         fi
     fi
-
-    mkdir -p "$CORE_WORKDIR_PATH"
-    chown 0:0 "$CORE_WORKDIR_PATH"
-    chmod 700 "$CORE_WORKDIR_PATH"
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
         if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
