@@ -2040,7 +2040,7 @@ core_download() {
 
     arch=$(detect_arch)
     mkdir -p "$CORE_WORKDIR_PATH"
-    tmp_archive_path=$(mktemp "${CORE_WORKDIR_PATH}/mihomo.XXXXXX.gz")
+    tmp_archive_path=$(mktemp "${CORE_WORKDIR_PATH}/mihomo.XXXXXX")
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
     base_url="${version_txt_url%/*}"
