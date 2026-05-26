@@ -6,8 +6,8 @@ RUN ./scripts/feeds update -a && \
     ./scripts/feeds install luci-base nftables coreutils jq curl && \
     mkdir -p package/feeds/utilities/ package/feeds/luci/
 
-COPY ./justclash package/feeds/utilities/justclash
-COPY ./luci-app-justclash package/feeds/luci/luci-app-justclash
+COPY --chown=buildbot:buildbot ./justclash package/feeds/utilities/justclash
+COPY --chown=buildbot:buildbot ./luci-app-justclash package/feeds/luci/luci-app-justclash
 
 RUN sed -i 's/^[[:space:]]*DEPENDS:=.*/\tEXTRA_DEPENDS:=nftables (>=0), coreutils-base64 (>=0), jq-full (>=0), curl (>=0), kmod-nft-tproxy (>=0), kmod-nf-tproxy (>=0)\n\tDEPENDS:=/' package/feeds/utilities/justclash/Makefile && \
     sed -i 's/^[[:space:]]*LUCI_DEPENDS:=.*/\tEXTRA_DEPENDS:=luci-base (>=0), justclash (>=0)\nLUCI_DEPENDS:=/' package/feeds/luci/luci-app-justclash/Makefile && \
