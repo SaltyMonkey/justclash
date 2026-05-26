@@ -385,7 +385,7 @@ const showTextModalHandler = (title, warning, task, options = {}) => async () =>
 
 const showExecModalHandler = (title, warning, command, args, afterExec) =>
     showTextModalHandler(title, warning, async () => {
-        const res = await fs.exec(command, args);
+        const res = await ubusApi.exec(command, args);
         if (afterExec)
             await afterExec(res);
         return res.stdout || _("No response");

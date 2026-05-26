@@ -31,7 +31,18 @@ const callSessionAccess = rpc.declare({
     expect: { access: false }
 });
 
+const callFileExec = rpc.declare({
+    object: "file",
+    method: "exec",
+    params: ["command", "params"],
+    timeout: 300000 // 5 minutes in milliseconds
+});
+
 return baseclass.extend({
+    async exec(command, args) {
+        return callFileExec(command, args);
+    },
+
     async getSystemBoard() {
         return callSystemBoard();
     },
