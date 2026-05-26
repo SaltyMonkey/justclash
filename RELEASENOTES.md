@@ -1,3 +1,44 @@
+## [0.20.2] - 26052026
+
+### Security
+- **Medium:** Service: Security fix for main `/tmp/justclash` folder.
+
+### Features & Enhancements
+- **Service:** Complete overhaul for inbuilt rulesets, mihomo core, and dashboard links downloads with support for custom sources (github and custom url for home labs).
+- **Service:** Removed automatic core update functionality.
+- **Service:** Config provider by default includes `udp: true` in override object.
+- **Service:** Added support for enable/disable toggle in block/direct sections.
+- **Service:** In mihomo config, `rule-providers` are now placed above main structures for readability improvements.
+- **Service:** Added migration script after update for UCI config.
+- **Service:** Added support for new user-defined rulesets logic.
+- **Service:** Added support for `use-hosts` logic.
+- **Service:** Added `nft_doh_mode` switch for popular public DoH resolvers.
+- **Service:** Big refactoring, cleanup, and new options support.
+- **InitD:** Refactored init.d script and implemented new logic for WAN awaiting.
+- **LuCI:** Overhauled styling, synced styles between pages, removed monospace style in connections, and synced sizes.
+- **LuCI:** Improved rulesets with validators and mobile view.
+- **LuCI:** Refactored helpers and overhauled user-defined rulesets logic, removed incorrect ACLs.
+- **LuCI:** Added `use-hosts` option.
+- **LuCI:** Extended "highlighted" titles and added new UCI controls for WAN await logic.
+- **LuCI:** Compacted view in status tab for OpenWrt and hardware versions.
+- **LuCI:** Compacted view in routing tab, added `Enabled` field for direct/block rules.
+- **LuCI:** Added more validators.
+- **Installer:** Added support for `zh_CN` language selector.
+- **Translation:** Added `zh_CN` translation and updated existing translations.
+
+### Performance & Optimizations
+- **Build:** Optimized docker building and github workflow.
+- **Build:** Added and fixed `zh_CN` build in CI/CD.
+- **LuCI:** Added linter.
+
+### Bug Fixes
+- **Service:** Logical fixes.
+- **LuCI:** Fixed regressed validator.
+- **General:** Minor fixes, `.gitignore` and README updates.
+
+**This version requires:**
+- Browser cache should be cleaned up after LuCI update
+
 ## [0.15.0] - 10052026
 
 ### Security
