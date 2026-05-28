@@ -22,6 +22,9 @@
 > **3. Limitation of Liability:**
 > The authors accept no responsibility or liability for any consequences, legal claims, network downtime, data loss, or hardware damage arising from the use or misuse of this software.
 >
+> **4. Trademark and Commercial Use:**
+> The JustClash name and logo cannot be used to sell hardware, paid access to external networks, or commercial configurations. We are not affiliated with any commercial network providers or sellers. See our [Trademark Policy](TRADEMARK.md) for details.
+>
 > ---
 >
 > ### Русская версия
@@ -39,6 +42,9 @@
 >
 > **3. Ограничение ответственности:**
 > Разработчики проекта не несут ответственности за любые прямые или косвенные последствия использования данного ПО, включая сбои в работе сети провайдера связи, порчу оборудования (роутера), а также за возможные нарушения пользователем законодательства своей страны при настройке маршрутизации.
+>
+> **4. Товарный знак и коммерческое использование:**
+> Имя и логотип JustClash запрещено использовать для продажи роутеров, платного доступа к внешним узлам маршрутизации или коммерческих настроек. Мы не имеем отношения ни к каким коммерческим сетям или продавцам оборудования. Подробнее читайте в [Политике товарного знака](TRADEMARK_RU.md).
 
 ---
 
@@ -49,7 +55,7 @@
 Instead of requiring users to manually write complex JSON or YAML files, JustClash bridges OpenWrt's native configuration system with Mihomo's runtime environment—handling service supervision, config compilation, and firewall hookups automatically.
 
 ### Design Philosophy: A Complete External Dashboard Replacement
-Most OpenWrt proxy clients act as simple launchers, forcing users to access external, third-party dashboards hosted on separate ports (like YACD or Metacubexd) to switch proxy groups, check latency, or view logs.
+Most OpenWrt routing clients act as simple launchers, forcing users to access external, third-party dashboards hosted on separate ports (like YACD or Metacubexd) to switch routing groups, check latency, or view logs.
 
 JustClash is designed to **fully replace the need for external panels** by implementing a feature-complete dashboard directly inside OpenWrt's native administration interface. Users can switch active nodes, monitor active connections, close sockets in real time, and stream live logs directly within the system panel.
 
@@ -72,7 +78,7 @@ The system features are configured across five main administration sections insi
 
 ### 3. Traffic Rules & Packet Filtering (nftables)
 *   **Target Interface Binding:** Binds traffic interception rules to specific local network devices.
-*   **Port & Subnet Exclusions:** Prevents specific local source IPs, target subnets, or application ports (e.g. Bittorrent) from being redirected through the proxy rules.
+*   **Port & Subnet Exclusions:** Prevents specific local source IPs, target subnets, or application ports (e.g. Bittorrent) from being redirected through the routing rules.
 *   **Encrypted DNS Redirection profiles:** Specialized packet capturing rules to block or allow encrypted DNS tunnels like DoT, DoH, and DoQ at the firewall level.
 *   **QUIC Redirection Control:** Configure firewall actions (block, bypass, or redirect) for UDP port 443 (QUIC/HTTP3) connections to prevent protocol leaks.
 *   **NTP Query Capturing:** Intercepts system or client NTP requests to synchronize router time reliably.
@@ -103,10 +109,10 @@ Allows defining custom domain or IP-CIDR list sources:
 *   **Backend MRS Translation:** The compiler hashes list configurations. It maps endpoints to remote rulesets (with interval updates downloaded via `curl`) and maps local paths to local file-based rulesets on the router.
 
 ### 2. Outbound-Centric Rules & Groups
-Instead of global rules arrays, routing rules are declared directly **inside each proxy's setup panel**:
-*   **Predefined Lists Association:** Select which ruleset lists should be routed specifically through a particular proxy.
-*   **Subnet & Suffix Rules:** Map target domain suffixes, target subnets, and local source subnets directly within the proxy parameters.
-*   **Proxy Providers:** Load dynamic external subscriptions with custom health checks, node filtering, and overrides (force specific proxy chains or physical interface bindings for fetched nodes).
+Instead of global rules arrays, routing rules are declared directly **inside each node's setup panel**:
+*   **Predefined Lists Association:** Select which ruleset lists should be routed specifically through a particular outbound node.
+*   **Subnet & Suffix Rules:** Map target domain suffixes, target subnets, and local source subnets directly within the node parameters.
+*   **Outbound Providers:** Load dynamic external subscriptions with custom health checks, node filtering, and overrides (force specific routing chains or physical interface bindings for fetched nodes).
 
 ---
 
