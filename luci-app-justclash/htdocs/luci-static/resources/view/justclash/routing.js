@@ -42,9 +42,6 @@ return view.extend({
     },
     render(result) {
         let m, s, s2, spp, s3, s4, s5, smp, o, optionFinal, tabname;
-        const generatedNamesProxies = {};
-        const generatedNamesProviders = {};
-        const generatedNamesGroups = {};
 
         const primitives = {
             TRUE: "1",
@@ -69,13 +66,13 @@ return view.extend({
         tabname = "proxiesbasic_tab";
         s.tab(tabname, _("Basic"));
 
-        o = s.option(form.Flag, "enabled", _("Enabled"));
+        o = s.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.description = _("Enable or disable this proxy entry without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
         o.editable = true;
 
-        o = s.option(form.Value, "name", _("Name:"));
+        o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
         o.rmempty = false;
         o.editable = true;
@@ -83,10 +80,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            if (!generatedNamesProxies[section_id]) {
-                generatedNamesProxies[section_id] = common.generateRandomName();
-            }
-            return generatedNamesProxies[section_id];
+            return common.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -233,7 +227,7 @@ return view.extend({
         tabname = "proxyprovidersbasic_tab";
         spp.tab(tabname, _("Basic"));
 
-        o = spp.option(form.Flag, "enabled", _("Enabled"));
+        o = spp.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.description = _("Enable or disable this proxy provider without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
@@ -244,7 +238,7 @@ return view.extend({
         o.description = _("Send HWID data to server with proxy provider request.");
         o.editable = true;
 
-        o = spp.option(form.Value, "name", _("Name:"));
+        o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy provider name.");
         o.rmempty = false;
         o.editable = true;
@@ -252,10 +246,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            if (!generatedNamesProviders[section_id]) {
-                generatedNamesProviders[section_id] = common.generateRandomName();
-            }
-            return generatedNamesProviders[section_id];
+            return common.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -446,13 +437,13 @@ return view.extend({
         tabname = "proxygroupsbasic_tab";
         s2.tab(tabname, _("Basic"));
 
-        o = s2.option(form.Flag, "enabled", _("Enabled"));
+        o = s2.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.description = _("Enable or disable this proxy group without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
         o.editable = true;
 
-        o = s2.option(form.Value, "name", _("Name:"));
+        o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
         o.rmempty = false;
         o.editable = true;
@@ -460,10 +451,7 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            if (!generatedNamesGroups[section_id]) {
-                generatedNamesGroups[section_id] = common.generateRandomName();
-            }
-            return generatedNamesGroups[section_id];
+            return common.generateRandomName();
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -707,7 +695,7 @@ return view.extend({
         tabname = "directruleslist_tab";
         s3.tab(tabname, _("Lists"));
 
-        o = s3.option(form.Flag, "enabled", _("Enabled"));
+        o = s3.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.description = _("Enable or disable direct rules.");
         o.default = primitives.TRUE;
         o.rmempty = false;
@@ -796,7 +784,7 @@ return view.extend({
         tabname = "rejectrules_tab";
         s4.tab(tabname, _("Lists"));
 
-        o = s4.option(form.Flag, "enabled", _("Enabled"));
+        o = s4.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.description = _("Enable or disable block rules.");
         o.default = primitives.TRUE;
         o.rmempty = false;
