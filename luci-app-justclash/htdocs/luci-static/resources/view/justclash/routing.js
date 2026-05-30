@@ -42,6 +42,9 @@ return view.extend({
     },
     render(result) {
         let m, s, s2, spp, s3, s4, s5, smp, o, optionFinal, tabname;
+        const generatedNamesProxies = {};
+        const generatedNamesProviders = {};
+        const generatedNamesGroups = {};
 
         const primitives = {
             TRUE: "1",
@@ -80,7 +83,10 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName();
+            if (!generatedNamesProxies[section_id]) {
+                generatedNamesProxies[section_id] = common.generateRandomName();
+            }
+            return generatedNamesProxies[section_id];
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -246,7 +252,10 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName();
+            if (!generatedNamesProviders[section_id]) {
+                generatedNamesProviders[section_id] = common.generateRandomName();
+            }
+            return generatedNamesProviders[section_id];
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
@@ -451,7 +460,10 @@ return view.extend({
             const val = uci.get(common.binName, section_id, "name");
             if (val)
                 return val;
-            return common.generateRandomName();
+            if (!generatedNamesGroups[section_id]) {
+                generatedNamesGroups[section_id] = common.generateRandomName();
+            }
+            return generatedNamesGroups[section_id];
         };
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
