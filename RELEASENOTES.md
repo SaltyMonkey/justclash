@@ -1,3 +1,15 @@
+## [0.20.4] - 30052026
+
+### Legal & Licensing
+- **General:** Added `TRADEMARK.md` and `TRADEMARK_RU.md` policy strictly prohibiting commercial hardware sales, SaaS services, and merchandise using the JustClash name or logo.
+- **General:** Removed all "questionable words" from `README.md` and added a clear disclaimer distancing the project from commercial routing node sellers.
+
+### Features & Enhancements
+- **Service:** Added "None" option for `global_client_fingerprint` to completely omit it from the Mihomo YAML config. Changed default value from `random` to empty.
+
+### Bug Fixes
+- **LuCI:** Fixed an issue where the "Name" field for proxies, providers, and groups would regenerate randomly on popup render by isolating the input strictly to the "Basic" modal tab.
+
 ## [0.20.2] - 26052026
 
 ### Security
