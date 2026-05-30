@@ -1714,7 +1714,9 @@ core_generate_yaml() {
         echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
         echo "tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")"
         echo "routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")"
-        echo "global-client-fingerprint: $(yaml_quote "$global_client_fingerprint")"
+        if [ -n "$global_client_fingerprint" ]; then
+            echo "global-client-fingerprint: $(yaml_quote "$global_client_fingerprint")"
+        fi
         echo "global-ua: $(yaml_quote_soft "$global_ua")"
         echo "find-process-mode: off"
         echo "geodata-mode: false"
