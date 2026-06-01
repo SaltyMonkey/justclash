@@ -610,7 +610,7 @@ parse_vless_url() {
                 network: $net,
                 udp: true
             }
-            + (if $penc != "" then {"packet-encoding": $penc} else {} end)
+            + (if $penc != "" then {"packet-encoding": $penc} else {"packet-encoding": "xudp"} end)
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
             + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
