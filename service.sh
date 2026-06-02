@@ -684,7 +684,7 @@ packages_download() {
     local file
     for file in $urls; do
         echo " - Downloading $file"
-        
+
         # Skip translation files if they don't match the selected language
         if echo "$file" | grep -q "luci-i18n-justclash-"; then
             if [ "$install_lang" != "ru" ] && echo "$file" | grep -q "luci-i18n-justclash-ru"; then
@@ -696,7 +696,7 @@ packages_download() {
                 continue
             fi
         fi
-        
+
         wget "$file" -qO "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
             print_red "Failed to download $file"
             continue
@@ -711,26 +711,15 @@ install_translation_interactive() {
     echo "1. English (Default, no extra package)"
     echo "2. Russian (RU)"
     echo "3. Simplified Chinese (ZH-CN)"
-    
+
     while true; do
             printf "Enter your choice [1-3]: "
             read -r choice
             case "$choice" in
-                1)
-                    echo "en"
-                    return 0
-                    ;;
-                2)
-                    echo "ru"
-                    return 0
-                    ;;
-                3)
-                    echo "zh-cn"
-                    return 0
-                    ;;
-                *)
-                    echo "Invalid choice. Please enter 1, 2, or 3." >&2
-                    ;;
+                1) return 1 ;; # en
+                2) return 2 ;; # ru
+                3) return 3 ;; # zh-cn
+                *) echo "Invalid choice. Please enter 1, 2, or 3." >&2 ;;
             esac
     done
 }
@@ -760,9 +749,14 @@ install_service() {
     fi
     diagnostic_conflicts_interactive
     core_update "stable"
-    
-    install_lang=$(install_translation_interactive)
-    
+
+    install_translation_interactive
+    # shellcheck disable=SC2249
+    case "$?" in
+        2) install_lang="ru" ;;
+        3) install_lang="zh-cn" ;;
+    esac
+
     packages_download "$install_lang"
     if [ $? -ne 1 ]; then
         packages_install
