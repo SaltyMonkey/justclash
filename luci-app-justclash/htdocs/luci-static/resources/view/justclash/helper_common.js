@@ -142,7 +142,8 @@ return baseclass.extend({
     ],
     defaultNftOptions: [
         { value: "BY RULES", text: _("By rules") },
-        { value: "DROP", text: _("Drop") }
+        { value: "DROP", text: _("Drop") },
+        { value: "REJECT", text: _("Reject") }
     ],
     defaultNftNtpOptions: [
         { value: "BY RULES", text: _("By rules") },

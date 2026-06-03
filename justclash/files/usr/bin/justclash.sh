@@ -463,19 +463,20 @@ nf_table_add() {
 
         if [ "$nft_apply_changes" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
+            echo "add chain inet $NF_TABLE_NAME filter_input { type filter hook input priority filter; policy accept; }"
+            echo "add chain inet $NF_TABLE_NAME filter_forward { type filter hook forward priority filter; policy accept; }"
+
             echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
             echo "add set inet $NF_TABLE_NAME inbound_interfaces { type ifname; }"
             for iface in $tproxy_input_interfaces; do
                 echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
             done
-
+            echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
+            echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
             echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return"
-
             echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept"
-
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return"
-
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return"
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return"
 
@@ -485,17 +486,30 @@ nf_table_add() {
 
             if [ "$nft_quic_mode" = "DROP" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } drop"
+            elif [ "$nft_quic_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject"
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject"
             fi
+
             if [ "$nft_dot_quic_mode" = "DROP" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } drop"
+            elif [ "$nft_dot_quic_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject"
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject"
             fi
+
             if [ "$nft_dot_mode" = "DROP" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop"
+            elif [ "$nft_dot_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject"
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject"
             fi
+
             if [ "$nft_doh_mode" = "DROP" ]; then
-                echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
-                echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
                 echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop"
+            elif [ "$nft_doh_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject"
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject"
             fi
 
             if [ "$nft_ntp_mode" = "DROP" ]; then
