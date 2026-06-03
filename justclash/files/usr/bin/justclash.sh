@@ -1468,7 +1468,7 @@ core_generate_yaml() {
     local router_selected_ipaddr
     local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level interface_name tproxy_port unified_delay
     local use_mixed_port mixed_port proxy_authentication
-    local tcp_concurrent global_client_fingerprint
+    local tcp_concurrent
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_hosts use_system_hosts fake_ip_range fake_ip_ttl dns_cache_max_size
@@ -1516,7 +1516,6 @@ core_generate_yaml() {
     config_get mixed_port proxy mixed_port
     config_get_bool unified_delay proxy unified_delay
     config_get_bool tcp_concurrent proxy tcp_concurrent
-    config_get global_client_fingerprint proxy global_client_fingerprint
     config_get keep_alive_idle proxy keep_alive_idle
     config_get keep_alive_interval proxy keep_alive_interval
     config_get global_ua proxy global_ua
@@ -1728,9 +1727,6 @@ core_generate_yaml() {
         echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
         echo "tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")"
         echo "routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")"
-        if [ -n "$global_client_fingerprint" ]; then
-            echo "global-client-fingerprint: $(yaml_quote "$global_client_fingerprint")"
-        fi
         echo "global-ua: $(yaml_quote_soft "$global_ua")"
         echo "find-process-mode: off"
         echo "geodata-mode: false"

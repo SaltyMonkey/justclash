@@ -107,14 +107,7 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.ListValue, "global_client_fingerprint", _("Client profile for all connections:"));
-        o.value("", _("None (Disabled)"));
-        common.defaultFingerprints.forEach(item => {
-            o.value(item, _(`${item}`));
-        });
-        o.description = _("How the client identifies itself for supported protocols. Select 'None' to skip adding a global fingerprint.");
-        o.default = "";
-        o.rmempty = true;
+
 
         o = s.taboption(tabname, form.Value, "global_ua", _("User-Agent for downloads:"));
         o.description = _("User-Agent sent when downloading external files such as subscriptions or rule lists.");
