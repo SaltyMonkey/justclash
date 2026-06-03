@@ -1989,7 +1989,7 @@ core_update() {
         curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p
+        -sL "$version_txt_url" | sed -n 1p | tr -d '\r\n'
     ) || {
         log error "Failed to download version.txt." "❌"
         return 1

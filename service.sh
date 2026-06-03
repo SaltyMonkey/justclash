@@ -442,7 +442,7 @@ core_update() {
     latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
-        -sL "$version_txt_url" | tr -d '\r\n' | sed -n 1p) || {
+        -sL "$version_txt_url" | sed -n 1p | tr -d '\r\n') || {
         print_red "Failed to download version.txt."
         return 1
     }
