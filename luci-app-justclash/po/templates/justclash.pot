@@ -696,13 +696,6 @@ msgstr ""
 msgid "Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:110
-msgid "Client profile for all connections:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/proxy.js:114
-msgid "How the client identifies itself for supported protocols. Leave the default unless your provider expects a specific profile."
-msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:118
 msgid "User-Agent for downloads:"

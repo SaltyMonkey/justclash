@@ -695,13 +695,6 @@ msgstr "并行尝试 TCP 连接:"
 msgid "Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts."
 msgstr "同时尝试多个 TCP 连接。这在不稳定的网络上可能会有帮助，但可能会产生额外的连接尝试。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:110
-msgid "Client profile for all connections:"
-msgstr "所有连接的客户端配置:"
-
-#: htdocs/luci-static/resources/view/justclash/proxy.js:114
-msgid "How the client identifies itself for supported protocols. Leave the default unless your provider expects a specific profile."
-msgstr "客户端在受支持协议中的身份标识方式。除非提供商要求特定的配置文件，否则请保留默认值。"
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:118
 msgid "User-Agent for downloads:"
