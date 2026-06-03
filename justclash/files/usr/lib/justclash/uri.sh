@@ -436,7 +436,7 @@ parse_trojan_url() {
             + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $sni != "" then {sni: $sni} else {} end)
             + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
-            + (if $fp != "" then {"client-fingerprint": $fp} else {} end)
+            + {"client-fingerprint": (if $fp != "" then $fp else "random" end)}
             + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
             + (if $net == "ws" then
                     {"ws-opts": (
@@ -619,7 +619,7 @@ parse_vless_url() {
                     {tls: true}
                     + (if $sni != "" then {servername: $sni} else {} end)
                     + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
-                    + (if $fp != "" then {"client-fingerprint": $fp} else {} end)
+                    + {"client-fingerprint": (if $fp != "" then $fp else "random" end)}
                     + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
                 else {} end)
             + (if $sec == "reality" then
@@ -882,7 +882,7 @@ parse_hysteria2_url() {
             + (if $down != "" then {down: ($down | tonumber)} else {} end)
             + (if $ports != "" then {ports: $ports} else {} end)
             + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
-            + (if $fingerprint != "" then {fingerprint: $fingerprint} else {} end)
+            + {"fingerprint": (if $fingerprint != "" then $fingerprint else "random" end)}
             + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
         '
     ) || return 1
