@@ -20,7 +20,9 @@ return baseclass.extend({
         connections: "/connections",
         connection: (id) => `/connections/${encodeURIComponent(id)}`,
         ruleProviders: "/providers/rules",
-        rulesetProvider: (providerName) => `/providers/rules/${encodeURIComponent(providerName)}`
+        rulesetProvider: (providerName) => `/providers/rules/${encodeURIComponent(providerName)}`,
+        rules: "/rules",
+        disableRules: "/rules/disable"
     },
 
     // URL builders
@@ -261,6 +263,27 @@ return baseclass.extend({
         }
 
         return (await res.text()).trim();
+    },
+    fetchRules(token, timeout = this.fetchTimeout) {
+        return this.fetchJson(this.paths.rules, token, timeout);
+    },
+    async disableRule(payload, token, timeout = this.fetchTimeout) {
+        const res = await this.fetch(this.paths.disableRules, token, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        }, timeout);
+
+        if (!res.ok) {
+            let detail = "";
+            try {
+                detail = (await res.text()).trim();
+            } catch (e) {}
+            throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
+        }
+        return res;
     },
     async closeConnection(id, token, timeout = this.fetchTimeout) {
         const res = await this.fetch(this.paths.connection(id), token, { method: "DELETE" }, timeout);
