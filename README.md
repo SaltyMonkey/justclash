@@ -145,6 +145,22 @@ Run the following script to automatically download dependencies and install the 
 sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh)
 ```
 
+The setup script supports additional flags for custom or automated deployment:
+*   `--automated`, `--auto`, `-y`: Non-interactive automated mode. Automatically removes conflicting packages, skips translation downloads (installs only the base English package), and exits upon completion without opening the menu.
+*   `--silent`, `-s`: Suppresses all regular standard output (`stdout`). Error messages and system validation warnings will still be printed to `stderr`.
+*   `--update-core`, `-u`: Core-only update mode. Runs basic system diagnostics and updates only the Mihomo core binary, bypassing packages download and installation.
+*   `--skip-space-check`: Bypasses the minimum free storage space check.
+
+Example of silent non-interactive installation:
+```bash
+sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh) --automated --silent
+```
+
+Example of automated core-only update:
+```bash
+sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh) --update-core
+```
+
 ### Option 2: Prebuilt Packages
 1. Download `justclash`, `luci-app-justclash`, and optionally translations from the Releases page.
 2. Copy files to your router via SCP.

@@ -7,19 +7,27 @@ JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash/re
 
 CURL_CONNECT_TIMEOUT=15
 CURL_MIN_SPEED_LIMIT_BYTES=5000
-CURL_MIN_SPEEED_TIMEOUT=15
+CURL_MIN_SPEED_TIMEOUT=15
 NSLOOKUP_TIMEOUT=5
 
 CHECK_SPACE=1
+AUTOMATED=0
+SILENT=0
+UPDATE_CORE=0
 
 URL_GITHUB="github.com"
 URL_CHECK_PING="77.88.8.8"
 URL_CHECK_PING_BACKUP="8.8.8.8"
-MIN_SPACE=34768
+MIN_SPACE=40960
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
-TMP_DOWNLOAD_PATH=$(mktemp -d "/tmp/justclash.downloads.XXXXXX")
+TMP_DOWNLOAD_PATH=$(mktemp -d -p /tmp justclash.downloads.XXXXXX)
+
+cleanup() {
+    [ -n "$TMP_DOWNLOAD_PATH" ] && [ -d "$TMP_DOWNLOAD_PATH" ] && rm -rf "$TMP_DOWNLOAD_PATH"
+}
+trap cleanup EXIT INT TERM
 
 print_bold_yellow() {
     local text="$1"
@@ -38,7 +46,7 @@ print_green() {
 
 print_red() {
     local text="$1"
-    printf '\033[0;31m%s\033[0m\n' "$text"
+    printf '\033[0;31m%s\033[0m\n' "$text" >&2
 }
 
 clear_screen() {
@@ -78,7 +86,7 @@ check_icmp() {
 }
 
 get_os_arch() {
-    (. /etc/os-release 2>/dev/null && echo "${OPENWRT_ARCH:-$NO_DATA_STRING}") || echo "${NO_DATA_STRING}"
+    (. /etc/openwrt_release 2>/dev/null && echo "${DISTRIB_ARCH:-$NO_DATA_STRING}") || echo "${NO_DATA_STRING}"
 }
 
 get_os_version() {
@@ -307,6 +315,11 @@ diagnostic_conflict() {
         print_red "DETECTED!"
         print_red "Conflict detected with package: $pkg_name."
         print_red "You should remove it before installing JustClash."
+        if [ "$AUTOMATED" -eq 1 ]; then
+            echo "Removing conflicting package $pkg_name..."
+            pkg_remove "$pkg_name"
+            return 0
+        fi
         print_red "Do you want to remove $pkg_name? yes/no"
 
         while true; do
@@ -392,7 +405,7 @@ get_latest_version_url() {
 
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
         -sL "$api_url" | jq -r "$jq_filter"
 }
 
@@ -412,7 +425,7 @@ get_release_asset_digest() {
 
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
         -sL "$api_url" | jq -r --arg name "$asset_name" "$jq_filter" | sed -n 1p
 }
 
@@ -441,7 +454,7 @@ core_update() {
 
     latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
         -sL "$version_txt_url" | sed -n 1p | tr -d '\r\n') || {
         print_red "Failed to download version.txt."
         return 1
@@ -523,7 +536,7 @@ core_download() {
     echo  "- Downloading mihomo binary"
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-        --speed-time "$CURL_MIN_SPEEED_TIMEOUT" \
+        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
         --progress-bar -L -o "$tmp_archive_path" "$download_url" || {
         print_red "Failed to download the Mihomo archive."
         rm -f "$tmp_archive_path"
@@ -540,11 +553,19 @@ core_download() {
     echo " - SHA256 verification passed for Mihomo archive version $param_version"
 
     echo " - Extracting to $CORE_PATH" "⬇️"
-    gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
-        rm -f "$tmp_archive_path"
-        print_red "Failed to extract the Mihomo archive."
-        return 1
-    }
+    if gzip -t "$tmp_archive_path" 2>/dev/null; then
+        gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
+            rm -f "$tmp_archive_path"
+            print_red "Failed to extract the Mihomo archive."
+            return 1
+        }
+    else
+        cp "$tmp_archive_path" "$CORE_PATH" || {
+            rm -f "$tmp_archive_path"
+            print_red "Failed to copy the Mihomo binary."
+            return 1
+        }
+    fi
 
     echo " - Mihomo installed at $CORE_PATH"
 
@@ -750,12 +771,16 @@ install_service() {
     diagnostic_conflicts_interactive
     core_update "stable"
 
-    install_translation_interactive
-    # shellcheck disable=SC2249
-    case "$?" in
-        2) install_lang="ru" ;;
-        3) install_lang="zh-cn" ;;
-    esac
+    if [ "$AUTOMATED" -eq 1 ]; then
+        install_lang="none"
+    else
+        install_translation_interactive
+        # shellcheck disable=SC2249
+        case "$?" in
+            2) install_lang="ru" ;;
+            3) install_lang="zh-cn" ;;
+        esac
+    fi
 
     packages_download "$install_lang"
     if [ $? -ne 1 ]; then
@@ -835,11 +860,44 @@ while [ $# -gt 0 ]; do
             CHECK_SPACE=0
             shift
             ;;
+        --automated|--auto|-y)
+            AUTOMATED=1
+            shift
+            ;;
+        --silent|-s)
+            SILENT=1
+            shift
+            ;;
+        --update-core|-u)
+            UPDATE_CORE=1
+            AUTOMATED=1
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
+            shift
             ;;
     esac
 done
 
+if [ "$SILENT" -eq 1 ]; then
+    exec >/dev/null
+fi
+
 install_packages
-run
+if [ "$UPDATE_CORE" -eq 1 ]; then
+    echo "Starting Mihomo core update..."
+    diagnostic_tools
+    diagnostic_net
+    if [ "$CHECK_SPACE" -eq 1 ]; then
+        diagnostic_mem
+    fi
+    core_update "stable"
+elif [ "$AUTOMATED" -eq 1 ]; then
+    echo "Starting automated installation..."
+    echo "Device model: $(info_device)"
+    echo "Architecture: $(get_os_arch)"
+    install_service
+else
+    run
+fi
