@@ -1,5 +1,6 @@
 "use strict";
 "require view";
+"require ui";
 "require uci";
 "require view.justclash.helper_common as common";
 "require view.justclash.helper_mihomo_api as mihomoApi";
@@ -118,6 +119,11 @@ return view.extend({
             };
         } catch (e) {
             console.error("Failed to load Mihomo proxy groups", e);
+            ui.addNotification(
+                _("Error"),
+                E("p", _("Failed to load Mihomo proxy groups") + ": " + (e.message || String(e))),
+                "danger"
+            );
             return {
                 token,
                 mode: "rule",
@@ -133,6 +139,7 @@ return view.extend({
     render: function (result) {
         const DELAY_TEST_CONCURRENCY = 3;
         const NON_TESTABLE_PROXY_TYPES = new Set(["reject", "rejectdrop", "pass", "compatible"]);
+
         const container = E("div", { class: "cbi-section fade-in" });
         const modeWrap = E("div", { class: "jc-actions-wrap" });
         const content = E("div", { class: "jc-nodes-layout" });
@@ -463,13 +470,9 @@ return view.extend({
             }
 
             if (state.nodesState.groups.length === 0 && !state.providersState.length) {
-                const emptyText = result.fetchFailed
-                    ? `${_("Failed to load proxy groups")}: ${result.fetchError || _("Error")}`
-                    : _("No selectable proxy groups or providers were found");
-
                 content.appendChild(E("div", { class: "jc-card jc-empty-card" }, [
                     E("div", { class: "jc-card-header" }, _("Nodes")),
-                    E("div", { class: "jc-empty-text" }, emptyText)
+                    E("div", { class: "jc-empty-text" }, _("No selectable proxy groups or providers were found"))
                 ]));
                 return;
             }
