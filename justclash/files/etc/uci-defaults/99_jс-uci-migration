@@ -36,6 +36,11 @@ uci -q delete justclash.settings.mihomo_cron_update_string
 
 uci -q delete justclash.proxy.direct_nameserver
 
+# Migrate fake_ip_ttl from minutes (1) to seconds (60)
+if [ "$(uci -q get justclash.proxy.fake_ip_ttl)" = "1" ]; then
+    uci set justclash.proxy.fake_ip_ttl="60"
+fi
+
 uci commit justclash
 
 exit 0

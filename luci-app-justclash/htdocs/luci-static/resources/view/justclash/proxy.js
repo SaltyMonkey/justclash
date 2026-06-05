@@ -242,7 +242,7 @@ return view.extend({
         o.datatype = "cidr4";
 
         o = s.taboption(tabname, form.Value, "fake_ip_ttl", _("Fake IP TTL:"));
-        o.description = _("TTL for fake-IP DNS responses.");
+        o.description = _("TTL for fake-IP DNS responses (in seconds).");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         common.defaultFakeIPTtlValues.forEach(item => {
@@ -250,7 +250,7 @@ return view.extend({
         });
         o.default = common.defaultFakeIPTtlValues[0].value;
         o.validate = function (section_id, value) {
-            return common.validateIntegerRange(value, 1, 1440);
+            return common.validateIntegerRange(value, 1, 86400);
         };
 
         o = s.taboption(tabname, form.DynamicList, "nameserver_policy", _("Nameserver policy:"));

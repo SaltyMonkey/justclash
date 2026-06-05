@@ -41,9 +41,9 @@ return baseclass.extend({
         { value: "40", text: _("40 seconds") }
     ],
     defaultFakeIPTtlValues: [
-        { value: "1", text: _("For 1 minute") },
-        { value: "2", text: _("For 2 minutes") },
-        { value: "3", text: _("For 3 minutes") },
+        { value: "60", text: _("60 seconds") },
+        { value: "120", text: _("120 seconds") },
+        { value: "180", text: _("180 seconds") },
     ],
     defaultIPDnsCache: [
         { value: "1024", text: _("1024 entries") },
