@@ -654,6 +654,9 @@ return baseclass.extend({
     // Keep menu-only titles translatable for luci-app-justclash.json.
     stub_nodes_tab: _("Nodes"),
     stub_connections_tab: _("Connections"),
-    stub_routing_tab: _("Routing"),
-    stub_proxy_tab: _("Proxy")
+    stub_rules_tab: _("Rules"),
+    stub_rulesets_tab: _("Setup: Rulesets"),
+    stub_routing_tab: _("Setup: Routing"),
+    stub_service_tab: _("Setup: Service"),
+    stub_proxy_tab: _("Setup: Proxy")
 });
