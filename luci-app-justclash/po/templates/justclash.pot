@@ -872,6 +872,13 @@ msgstr ""
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/proxy.js:272
+msgid "Proxy nameservers:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:273
+msgid "Nameservers used to resolve proxy server hostnames."
+msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:289
 msgid "Nameservers:"

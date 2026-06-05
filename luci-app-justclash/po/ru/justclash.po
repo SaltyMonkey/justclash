@@ -873,6 +873,13 @@ msgstr "DNS по умолчанию:"
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "DNS сервера по умолчанию при запуске. Рекомендуется использовать UDP-серверы."
 
+#: htdocs/luci-static/resources/view/justclash/proxy.js:272
+msgid "Proxy nameservers:"
+msgstr "DNS-серверы прокси:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:273
+msgid "Nameservers used to resolve proxy server hostnames."
+msgstr "DNS-серверы, используемые для разрешения доменных имен серверов прокси."
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:289
 msgid "Nameservers:"

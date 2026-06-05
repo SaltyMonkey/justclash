@@ -269,6 +269,14 @@ return view.extend({
             if (!value || value.trim() === "") return true;
             return common.validateDnsServer(value);
         };
+        o = s.taboption(tabname, form.DynamicList, "proxy_server_nameserver", _("Proxy nameservers:"));
+        o.description = _("Nameservers used to resolve proxy server hostnames.");
+        o.rmempty = false;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
+            return common.validateDnsServer(value);
+        };
         o = s.taboption(tabname, form.DynamicList, "nameserver", _("Nameservers:"));
         o.description = _("Main nameservers used for regular DNS queries.");
         o.rmempty = false;

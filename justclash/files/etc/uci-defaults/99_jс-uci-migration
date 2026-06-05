@@ -35,7 +35,6 @@ uci -q delete justclash.settings.mihomo_autoupdate_channel
 uci -q delete justclash.settings.mihomo_cron_update_string
 
 uci -q delete justclash.proxy.direct_nameserver
-uci -q delete justclash.proxy.proxy_server_nameserver
 
 uci commit justclash
 

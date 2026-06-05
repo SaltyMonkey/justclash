@@ -873,6 +873,13 @@ msgstr "默认名称服务器:"
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "启动时使用的默认名称服务器。推荐使用 UDP 类型。"
 
+#: htdocs/luci-static/resources/view/justclash/proxy.js:272
+msgid "Proxy nameservers:"
+msgstr "代理名称服务器:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:273
+msgid "Nameservers used to resolve proxy server hostnames."
+msgstr "用于解析代理服务器主机名的名称服务器。"
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:289
 msgid "Nameservers:"
