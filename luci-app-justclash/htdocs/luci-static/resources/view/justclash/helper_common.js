@@ -535,6 +535,7 @@ return baseclass.extend({
 
         return this.validateDnsServer(nameserver);
     },
+
     validateProxyJsonObject: function (value) {
         let parsed;
 

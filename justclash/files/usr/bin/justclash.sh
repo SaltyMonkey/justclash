@@ -1484,7 +1484,7 @@ core_generate_yaml() {
     local tcp_concurrent
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
-    local dns_listen_port use_hosts use_system_hosts fake_ip_range fake_ip_ttl dns_cache_max_size
+    local dns_listen_port use_system_hosts fake_ip_range fake_ip_ttl dns_cache_max_size
     local etag_support global_ua
     local default_nameserver proxy_server_nameserver nameserver fake_ip_filter_data
     local fake_ip_include_domain_values fake_ip_exclude_domain_values
@@ -1499,7 +1499,7 @@ core_generate_yaml() {
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path tmp_fake_ip_rules_path
     local block_rulesets_content rulesets_content
     local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
-    local nameserver_policy hosts_custom
+    local nameserver_policy
 
     config_get controller_bind_interface proxy controller_bind_interface
     if [ -n "$controller_bind_interface" ]; then
@@ -1542,7 +1542,6 @@ core_generate_yaml() {
     config_get_bool core_ntp_write_system proxy core_ntp_write_system
     config_get dns_listen_port proxy dns_listen_port
     config_get dns_cache_max_size proxy dns_cache_max_size
-    config_get_bool use_hosts proxy use_hosts
     config_get_bool use_system_hosts proxy use_system_hosts
     config_get fake_ip_range proxy fake_ip_range
     config_get fake_ip_ttl proxy fake_ip_ttl
@@ -1564,7 +1563,6 @@ core_generate_yaml() {
     proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     nameserver=$(format_uci_list_as_json_array proxy nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     nameserver_policy_custom=$(format_uci_list_as_json_array proxy nameserver_policy "" "    ")
-    hosts_custom=$(format_uci_list_as_json_array proxy hosts "" "    ")
     sniffer_force_domain=$(format_uci_list_as_json_array proxy sniffer_force_domain "" "    ")
     sniffer_exclude_domain=$(format_uci_list_as_json_array proxy sniffer_exclude_domain "" "    ")
     sniffer_skip_src_address=$(format_uci_list_as_json_array proxy sniffer_skip_src_address "" "    ")
@@ -1767,8 +1765,6 @@ core_generate_yaml() {
         echo "  listen: $(yaml_quote "127.0.0.1:$dns_listen_port")"
         echo "  prefer-h3: false"
         echo "  ipv6: false"
-        echo "  use-hosts: $(format_uci_bool_as_yaml "$use_hosts")"
-        printf '%s\n' "  hosts: $hosts_custom"
         echo "  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")"
         printf '%s\n' "  nameserver-policy: $nameserver_policy"
         printf '%s\n' "  default-nameserver: $default_nameserver"
