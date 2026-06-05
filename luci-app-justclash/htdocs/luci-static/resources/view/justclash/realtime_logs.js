@@ -252,7 +252,7 @@ return view.extend({
             .jc-logs-terminal{width:100%;font-family:'Menlo', 'Consolas', 'Monaco', monospace;font-size:12px;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-y:auto;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;padding:10px;margin-bottom:10px !important;height:500px;resize:vertical;}
             .log-line{padding:1px 0;border-bottom:1px solid transparent;}
             .log-line:hover{background-color:#2a2d2e;}
-            .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:.1em .55em;border:1px solid transparent;border-radius:999px;font-size:.82em;font-weight:700;line-height:1.25;vertical-align:middle;}
+            .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:2px 6px;border:1px solid transparent;border-radius:4px;font-size:10px;font-weight:bold;line-height:1.2;vertical-align:middle;box-sizing:border-box;}
             .log-type-badge-error{color:#ff7b72;border-color:rgba(255,123,114,.35);background:rgba(255,123,114,.12);}
             .log-type-badge-warning{color:#f2cc60;border-color:rgba(242,204,96,.35);background:rgba(242,204,96,.12);}
             .log-type-badge-info{color:#7ee787;border-color:rgba(126,231,135,.35);background:rgba(126,231,135,.12);}
