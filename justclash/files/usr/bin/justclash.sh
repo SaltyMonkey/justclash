@@ -559,7 +559,7 @@ nf_table_add() {
     # PBR
     ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" priority "$pbr_priority"
 
-    if ! ip route show table "$NF_ROUTE_TABLE" | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
+    if ! ip route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
         ip route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE"
     fi
 
@@ -848,10 +848,23 @@ build_builtin_rules_bundle() {
             ruleset_format="${ruleset_fields%%|*}"
             ruleset_url="${ruleset_fields#*|}"
 
+            # Extract optional Authorization header field (6th field)
+            ruleset_auth=""
+            case "$ruleset_url" in
+                *\|*)
+                    ruleset_auth=$(trim "${ruleset_url#*|}")
+                    ruleset_url="${ruleset_url%%|*}"
+                ;;
+            esac
+
             generated_rule="RULE-SET,$ruleset_name,$target_name"
             case "$ruleset_url" in
                 http://*|https://*)
-                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
+                    local auth_fragment=""
+                    if [ -n "$ruleset_auth" ]; then
+                        auth_fragment=",\"header\":{\"Authorization\":[\"$(json_escape "$ruleset_auth")\"]}"
+                    fi
+                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"${auth_fragment}},"
                 ;;
                 *)
                     local escaped_path safe_path
@@ -1473,7 +1486,7 @@ core_generate_yaml() {
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_hosts use_system_hosts fake_ip_range fake_ip_ttl dns_cache_max_size
     local etag_support global_ua
-    local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_filter_data
+    local default_nameserver nameserver fake_ip_filter_data
     local fake_ip_include_domain_values fake_ip_exclude_domain_values
     local fake_ip_include_ruleset_values fake_ip_exclude_ruleset_values
     local nameserver_policy_custom
@@ -1548,8 +1561,6 @@ core_generate_yaml() {
 
     dashboard_url=$(get_dashboard_url "$dashboard_repo")
     default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
-    direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
-    proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     nameserver=$(format_uci_list_as_json_array proxy nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     nameserver_policy_custom=$(format_uci_list_as_json_array proxy nameserver_policy "" "    ")
     hosts_custom=$(format_uci_list_as_json_array proxy hosts "" "    ")
@@ -1761,9 +1772,6 @@ core_generate_yaml() {
         printf '%s\n' "  nameserver-policy: $nameserver_policy"
         printf '%s\n' "  default-nameserver: $default_nameserver"
         printf '%s\n' "  nameserver: $nameserver"
-        printf '%s\n' "  proxy-server-nameserver: $proxy_server_nameserver"
-        printf '%s\n' "  direct-nameserver: $direct_nameserver"
-        echo "  direct-nameserver-follow-policy: true"
         echo "  respect-rules: true"
         echo "  enhanced-mode: fake-ip"
         echo "  fake-ip-range: $fake_ip_range"
@@ -2198,10 +2206,10 @@ diag_route() {
     fi
     ip rule list
 
-    if ! ip route show table "$NF_ROUTE_TABLE" | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
+    if ! ip route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
          clog error "Route table $NF_ROUTE_TABLE is incorrect!" "❌"
     fi
-    ip route show table "$NF_ROUTE_TABLE"
+    ip route show table "$NF_ROUTE_TABLE" 2>/dev/null
 }
 
 diag_proxy_resolver() {
