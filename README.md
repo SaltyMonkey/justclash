@@ -134,6 +134,12 @@ Instead of global rules arrays, routing rules are declared directly **inside eac
 
 ### System
 *   **OpenWrt:** Version 24.10 or newer (uses modern `nftables` syntax).
+*   **Hardware Compatibility:** Works on a wide variety of architectures supported by both OpenWrt and Mihomo:
+    *   **x86_64 / 386:** The setup defaults to the standard **`amd64`** (v1) Mihomo build. This ensures out-of-the-box compatibility and avoids `Illegal instruction` crashes caused by `amd64-v3` builds on hypervisors (Proxmox, VMware, Hyper-V, KVM, etc. with default CPU emulation) or older CPUs without AVX2/FMA3 support. On modern systems (e.g., modern bare-metal x86_64 routers, or virtual machines where the CPU type is configured as `host`), it is still recommended to manually download and replace the core binary with the **`amd64-v3`** (or **`amd64-v4`** if the CPU supports AVX-512) build to benefit from instruction set optimizations.
+    *   **ARM:** Support for `arm64` (aarch64), `armv7` (neon-vfp), `armv6` (neon/vfp), and `armv5`.
+    *   **MIPS:** Support for both big-endian and little-endian configurations, including hardfloat/softfloat variants (`mips-hardfloat`, `mips-softfloat`, `mipsle-hardfloat`, `mipsle-softfloat`, `mips64`, `mips64le`).
+    *   **RISC-V:** Support for `riscv64` platforms.
+    *   **LoongArch:** Support for `loong64-abi2` platforms.
 
 ---
 

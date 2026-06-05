@@ -1931,14 +1931,14 @@ detect_arch() {
             ;;
         mips64_*) echo "mips64" ;;
         mips64el_*) echo "mips64le" ;;
-        x86_64) echo "amd64-v3" ;;
+        x86_64) echo "amd64" ;;
         i386_*) echo "386" ;;
         riscv64_*) echo "riscv64" ;;
         loongarch64_*) echo "loong64-abi2" ;;
         *_neon-vfp*) echo "armv7" ;;
         *_neon* | *_vfp*) echo "armv6" ;;
         arm_*) echo "armv5" ;;
-        *) echo "amd64-v3" ;;
+        *) echo "amd64" ;;
     esac
 }
 
