@@ -55,31 +55,10 @@ return view.extend({
             }
         });
 
-        const clickableLinksCheckbox = E("input", {
-            type: "checkbox",
-            id: "jc-clickable-links",
-            checked: true,
-            change: function (ev) {
-                const checked = ev.target.checked;
-                const containers = document.querySelectorAll(".jc-grid-container");
-                containers.forEach(container => {
-                    if (checked) {
-                        container.classList.remove("jc-links-disabled");
-                    } else {
-                        container.classList.add("jc-links-disabled");
-                    }
-                });
-            }
-        });
-
         const actionWrap = E("div", { class: "jc-actions-wrap" }, [
             E("label", { for: "jc-hide-builtin", class: "jc-action-label" }, [
                 hideBuiltInCheckbox,
                 _("Hide built-in rulesets")
-            ]),
-            E("label", { for: "jc-clickable-links", class: "jc-action-label" }, [
-                clickableLinksCheckbox,
-                _("Clickable links")
             ])
         ]);
 
@@ -169,7 +148,7 @@ return view.extend({
             }
             .jc-grid-header {
                 display: grid;
-                grid-template-columns: 1.5fr 1.5fr 1fr 3fr 100px;
+                grid-template-columns: 1.2fr 1.2fr 0.8fr 2.5fr 1.8fr 50px;
                 gap: 12px;
                 padding: 10px 15px;
                 background-color: var(--background-color-medium, #f6f6f6);
@@ -179,7 +158,7 @@ return view.extend({
             }
             .jc-grid-row {
                 display: grid;
-                grid-template-columns: 1.5fr 1.5fr 1fr 3fr 100px;
+                grid-template-columns: 1.2fr 1.2fr 0.8fr 2.5fr 1.8fr 50px;
                 gap: 12px;
                 padding: 10px 15px;
                 align-items: center;
@@ -217,12 +196,7 @@ return view.extend({
                 padding: 4px 6px !important;
                 margin: 0 !important;
             }
-            .jc-grid-container.jc-links-disabled .jc-url-link {
-                color: inherit !important;
-                text-decoration: none !important;
-                pointer-events: none !important;
-                cursor: default !important;
-            }
+
             @media (max-width: 768px) {
                 .jc-grid-header {
                     display: none;
@@ -280,7 +254,8 @@ return view.extend({
                     id: parts[1] || "",
                     type: parts[2] || "domain",
                     format: parts[3] || "mrs",
-                    url: parts[4] || ""
+                    url: parts[4] || "",
+                    auth: parts[5] || ""
                 };
             })
             .filter(item => item.name && item.id);
@@ -295,7 +270,8 @@ return view.extend({
                 E("div", { class: "jc-grid-col" }, _("Name")),
                 E("div", { class: "jc-grid-col" }, _("Type")),
                 E("div", { class: "jc-grid-col" }, _("URL / Local Path")),
-                E("div", { class: "jc-grid-col" }, _("Actions"))
+                E("div", { class: "jc-grid-col" }, _("Authorization")),
+                E("div", { class: "jc-grid-col" }, "")
             ])
         ]);
 
@@ -319,7 +295,7 @@ return view.extend({
             type: "button",
             class: "cbi-button cbi-button-add",
             click: () => {
-                const newRow = this.createRowElement({ name: "", id: "", type: "domain", format: "mrs", url: "" }, false, isBlock);
+                const newRow = this.createRowElement({ name: "", id: "", type: "domain", format: "mrs", url: "", auth: "" }, false, isBlock);
                 grid.appendChild(newRow);
             }
         }, _("Add Custom Ruleset"));
@@ -338,7 +314,7 @@ return view.extend({
         return panel;
     },
 
-    createRowElement: function (rule = { name: "", id: "", type: "domain", format: "mrs", url: "" }, isBuiltIn = false, isBlock = false) {
+    createRowElement: function (rule = { name: "", id: "", type: "domain", format: "mrs", url: "", auth: "" }, isBuiltIn = false, isBlock = false) {
         const row = E("div", {
             class: isBuiltIn ? "jc-grid-row jc-builtin-row jc-hidden-row" : "jc-grid-row jc-custom-row"
         });
@@ -354,6 +330,7 @@ return view.extend({
                 : rule.url;
 
             row.appendChild(E("div", { class: "jc-grid-col jc-col-url jc-url-cell", "data-label": _("URL / Local Path") }, urlNode));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-auth jc-url-cell", "data-label": _("Authorization") }, rule.auth ? "••••••" : ""));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-action" }, E("span", { class: "jc-badge-builtin" }, _("Built-in"))));
         } else {
             const nameInput = E("input", {
@@ -383,24 +360,33 @@ return view.extend({
                 placeholder: _("e.g. https://... or /etc/justclash/...")
             });
 
+            const authInput = E("input", {
+                type: "password",
+                class: "cbi-input-text",
+                value: rule.auth || "",
+                placeholder: _("e.g. Bearer token (optional)")
+            });
+
             const deleteBtn = E("button", {
                 type: "button",
                 class: "cbi-button cbi-button-remove",
                 click: function () {
                     row.remove();
                 }
-            }, _("Delete"));
+            }, "X");
 
             row.appendChild(E("div", { class: "jc-grid-col jc-col-name", "data-label": _("Readable name") }, nameInput));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-id", "data-label": _("Name") }, idInput));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, typeSelect));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-url jc-url-cell", "data-label": _("URL / Local Path") }, urlInput));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-auth", "data-label": _("Authorization") }, authInput));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-action" }, deleteBtn));
 
             row.nameInput = nameInput;
             row.idInput = idInput;
             row.typeSelect = typeSelect;
             row.urlInput = urlInput;
+            row.authInput = authInput;
 
             // Apply validation rules using LuCI's ui.addValidator
             ui.addValidator(nameInput, "string", false, function(value) {
@@ -455,6 +441,13 @@ return view.extend({
                 }
                 return true;
             }, "blur", "keyup");
+
+            ui.addValidator(authInput, "string", true, function(value) {
+                if (value && (value.includes("|") || value.includes("\n"))) {
+                    return _("Authorization cannot contain pipe (|) or newlines.");
+                }
+                return true;
+            }, "blur", "keyup");
         }
 
         return row;
@@ -475,21 +468,29 @@ return view.extend({
             row.nameInput.dispatchEvent(new window.Event("blur"));
             row.idInput.dispatchEvent(new window.Event("blur"));
             row.urlInput.dispatchEvent(new window.Event("blur"));
+            row.authInput.dispatchEvent(new window.Event("blur"));
 
             const nameErr = row.nameInput.getAttribute("data-tooltip");
             const idErr = row.idInput.getAttribute("data-tooltip");
             const urlErr = row.urlInput.getAttribute("data-tooltip");
+            const authErr = row.authInput.getAttribute("data-tooltip");
 
             if (nameErr) errors.push(_("Routing Ruleset #%d (Readable name): %s").format(i + 1, nameErr));
             if (idErr) errors.push(_("Routing Ruleset #%d (Name): %s").format(i + 1, idErr));
             if (urlErr) errors.push(_("Routing Ruleset #%d (URL / Local Path): %s").format(i + 1, urlErr));
+            if (authErr) errors.push(_("Routing Ruleset #%d (Authorization): %s").format(i + 1, authErr));
 
-            if (!nameErr && !idErr && !urlErr) {
+            if (!nameErr && !idErr && !urlErr && !authErr) {
                 const name = row.nameInput.value.trim();
                 const id = row.idInput.value.trim();
                 const type = row.typeSelect.value;
                 const url = row.urlInput.value.trim();
-                routingData.push(`${name}|${id}|${type}|mrs|${url}`);
+                const auth = row.authInput.value.trim();
+                if (auth) {
+                    routingData.push(`${name}|${id}|${type}|mrs|${url}|${auth}`);
+                } else {
+                    routingData.push(`${name}|${id}|${type}|mrs|${url}`);
+                }
             }
         });
 
@@ -499,21 +500,29 @@ return view.extend({
             row.nameInput.dispatchEvent(new window.Event("blur"));
             row.idInput.dispatchEvent(new window.Event("blur"));
             row.urlInput.dispatchEvent(new window.Event("blur"));
+            row.authInput.dispatchEvent(new window.Event("blur"));
 
             const nameErr = row.nameInput.getAttribute("data-tooltip");
             const idErr = row.idInput.getAttribute("data-tooltip");
             const urlErr = row.urlInput.getAttribute("data-tooltip");
+            const authErr = row.authInput.getAttribute("data-tooltip");
 
             if (nameErr) errors.push(_("Blocking Ruleset #%d (Readable name): %s").format(i + 1, nameErr));
             if (idErr) errors.push(_("Blocking Ruleset #%d (Name): %s").format(i + 1, idErr));
             if (urlErr) errors.push(_("Blocking Ruleset #%d (URL / Local Path): %s").format(i + 1, urlErr));
+            if (authErr) errors.push(_("Blocking Ruleset #%d (Authorization): %s").format(i + 1, authErr));
 
-            if (!nameErr && !idErr && !urlErr) {
+            if (!nameErr && !idErr && !urlErr && !authErr) {
                 const name = row.nameInput.value.trim();
                 const id = row.idInput.value.trim();
                 const type = row.typeSelect.value;
                 const url = row.urlInput.value.trim();
-                blockingData.push(`${name}|${id}|${type}|mrs|${url}`);
+                const auth = row.authInput.value.trim();
+                if (auth) {
+                    blockingData.push(`${name}|${id}|${type}|mrs|${url}|${auth}`);
+                } else {
+                    blockingData.push(`${name}|${id}|${type}|mrs|${url}`);
+                }
             }
         });
 
