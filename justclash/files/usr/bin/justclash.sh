@@ -1649,10 +1649,10 @@ core_generate_yaml() {
             )
         else . end |
         if $rulesets != "" then
-            . + {($rulesets): "rcode://refused"}
+            . + {($rulesets): "rcode://success"}
         else . end |
         if $suffixes != "" then
-            . + {($suffixes): "rcode://refused"}
+            . + {($suffixes): "rcode://success"}
         else . end
         ')
 
