@@ -1502,18 +1502,6 @@ core_generate_yaml() {
     local nameserver_policy
 
     config_get controller_bind_interface proxy controller_bind_interface
-    if [ -n "$controller_bind_interface" ]; then
-        if ! is_ifname "$controller_bind_interface"; then
-            router_selected_ipaddr="0.0.0.0"
-            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will listen on all interfaces." "⚠️"
-        elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
-            router_selected_ipaddr="0.0.0.0"
-            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will listen on all interfaces." "⚠️"
-        fi
-    else
-        router_selected_ipaddr="0.0.0.0"
-    fi
-
     config_get use_dashboard_raw proxy use_dashboard
     if [ -n "$use_dashboard_raw" ]; then
         config_get_bool use_dashboard proxy use_dashboard
@@ -1551,6 +1539,18 @@ core_generate_yaml() {
     config_get fake_ip_exclude_domain_values proxy fake_ip_exclude_domains
     config_get fake_ip_include_ruleset_values proxy fake_ip_include_rulesets
     config_get fake_ip_exclude_ruleset_values proxy fake_ip_exclude_rulesets
+
+    if [ -n "$controller_bind_interface" ]; then
+        if ! is_ifname "$controller_bind_interface"; then
+            router_selected_ipaddr="0.0.0.0"
+            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will listen on all interfaces." "⚠️"
+        elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
+            router_selected_ipaddr="0.0.0.0"
+            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will listen on all interfaces." "⚠️"
+        fi
+    else
+        router_selected_ipaddr="0.0.0.0"
+    fi
 
     [ -n "$interface_name" ] && interface_name=$(trim "$interface_name")
     if [ -n "$interface_name" ] && ! is_ifname "$interface_name"; then
