@@ -1866,17 +1866,18 @@ core_prepare_workdir() {
     fi
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
-        if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-            current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str)
-            saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null || echo "")
-            if [ "$current_hash" != "$saved_hash" ]; then
-                log info "Existing $OUTPUT_YAML_CONFIG_PATH is outdated and will be regenerated." "🐱"
-                rm -f "$OUTPUT_YAML_CONFIG_PATH"
-                echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
-            else
-                log info "Existing $OUTPUT_YAML_CONFIG_PATH is up to date and will be reused." "🐱"
-                res=0
-            fi
+        current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str)
+        saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null)
+
+        if [ ! -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
+            echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
+        elif [ "$current_hash" != "$saved_hash" ]; then
+            log info "Existing $OUTPUT_YAML_CONFIG_PATH is outdated and will be regenerated." "🐱"
+            rm -f "$OUTPUT_YAML_CONFIG_PATH"
+            echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
+        else
+            log info "Existing $OUTPUT_YAML_CONFIG_PATH is up to date and will be reused." "🐱"
+            res=0
         fi
     fi
 
