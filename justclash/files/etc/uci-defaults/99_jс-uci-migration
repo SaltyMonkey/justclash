@@ -45,4 +45,10 @@ fi
 
 uci commit justclash
 
+# Remove '+.' prefix from fake_ip domains
+sed -i "s/list fake_ip_exclude_domains '+\./list fake_ip_exclude_domains '/g" /etc/config/justclash
+sed -i 's/list fake_ip_exclude_domains +\./list fake_ip_exclude_domains /g' /etc/config/justclash
+sed -i "s/list fake_ip_include_domains '+\./list fake_ip_include_domains '/g" /etc/config/justclash
+sed -i 's/list fake_ip_include_domains +\./list fake_ip_include_domains /g' /etc/config/justclash
+
 exit 0

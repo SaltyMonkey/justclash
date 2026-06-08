@@ -510,8 +510,8 @@ return baseclass.extend({
         if (parts.some(part => part.length > 63))
             return _("Each domain segment must not exceed 63 characters");
 
-        if (parts.some(part => !/^[a-z0-9-]+$/.test(part)))
-            return _("Domain segments may contain only letters, digits, and hyphens");
+        if (parts.some(part => !/^[a-z0-9-*]+$/.test(part)))
+            return _("Domain segments may contain only letters, digits, hyphens, and asterisks");
 
         if (parts.some(part => part.startsWith("-") || part.endsWith("-")))
             return _("Domain segments must not start or end with a hyphen");

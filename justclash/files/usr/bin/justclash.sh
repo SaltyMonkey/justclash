@@ -406,11 +406,20 @@ build_fake_ip_rule_array() {
     local entries="$1"
     local rule_type="$2"
     local action="${3:-fake-ip}"
-    local entry generated_rule rules=""
+    local entry generated_rule rules="" rt
 
     for entry in $entries; do
         [ -n "$entry" ] || continue
-        generated_rule="$rule_type,$entry,$action"
+        rt="$rule_type"
+        
+        # Auto-detect DOMAIN-WILDCARD if entry contains *
+        if [ "$rt" = "DOMAIN-SUFFIX" ]; then
+            case "$entry" in
+                *[*]* ) rt="DOMAIN-WILDCARD" ;;
+            esac
+        fi
+        
+        generated_rule="$rt,$entry,$action"
         rules="${rules:+$rules,}\"$(json_escape "$generated_rule")\""
     done
 
