@@ -23,6 +23,7 @@ add_missing_option "justclash.settings.mihomo_dashboard_metacubexd_url" "https:/
 add_missing_option "justclash.settings.mihomo_dashboard_yacd_meta_url" "https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
 add_missing_option "justclash.settings.wait_for_wan" "0"
 add_missing_option "justclash.settings.wait_for_wan_max" "90"
+add_missing_option "justclash.settings.mihomo_mem_limit" "0"
 add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
 uci -q delete justclash.proxy.use_hosts
 uci -q delete justclash.proxy.hosts

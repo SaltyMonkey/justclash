@@ -202,7 +202,9 @@ core_validate_yaml() {
 }
 
 start() {
-    local skip_environment_checks core_exit_code
+    local skip_environment_checks core_exit_code mihomo_mem_limit
+
+    log info "Initializing JustClash service..." "₍^. .^₎⟆"
 
     if [ -n "$JUSTCLASH_WAIT_WAN_MAX" ] && [ "$JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
         log info "Waiting for WAN (max ${JUSTCLASH_WAIT_WAN_MAX}s)..." "⏳"
@@ -221,11 +223,11 @@ start() {
         sleep "$JUSTCLASH_BOOT_DELAY"
     fi
 
-    log info "Initializing JustClash service..." "₍^. .^₎⟆"
-
     check_requirement || return 1
 
+    config_get mihomo_mem_limit settings mihomo_mem_limit "0"
     config_get_bool skip_environment_checks settings skip_environment_checks 0
+
     if [ "$skip_environment_checks" -eq 0 ]; then
 
         log info "Checking for non-critical conflicts" "⏳"
@@ -258,7 +260,7 @@ start() {
     dnsmasq_update
 
     log info "Starting Mihomo core" "🐱"
-    start_core
+    start_core "$mihomo_mem_limit"
     core_exit_code=$?
 
     log warn "Mihomo core exited; restoring networking changes." "🔑"
@@ -283,6 +285,7 @@ stop() {
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
+    local mihomo_mem_limit="$1"
     local attempt=0
     local exit_code=0
     log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries" "🐱"
@@ -292,6 +295,10 @@ start_core() {
         while [ "$attempt" -lt "$DEFAULT_CORE_RESTART_RETRIES" ]; do
             (
                 set -o pipefail
+                if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
+                    # shellcheck disable=SC2030
+                    export GOMEMLIMIT="${mihomo_mem_limit}MiB"
+                fi
                 "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
             )
             exit_code=$?
@@ -312,7 +319,13 @@ start_core() {
             sleep 2
         done
     else
-        "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
+        (
+            if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
+                # shellcheck disable=SC2030
+                export GOMEMLIMIT="${mihomo_mem_limit}MiB"
+            fi
+            "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
+        )
         exit_code=$?
         if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then
             log info "Manual mode: Mihomo stopped gracefully" "🐱"
