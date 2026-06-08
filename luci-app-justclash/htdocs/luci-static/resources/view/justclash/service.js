@@ -31,7 +31,10 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.Value, "wait_for_wan_max", _("Maximum wait time for WAN (s):"));
+        o = s.taboption(tabname, form.ListValue, "wait_for_wan_max", _("Maximum wait time for WAN (s):"));
+        common.defaultWaitForWanMaxValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
         o.datatype = datatypes.UINTEGER;
         o.default = "90";
         o.retain = true;
@@ -65,6 +68,15 @@ return view.extend({
         o.description = _("Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
         o.rmempty = false;
         o.default = primitives.TRUE;
+
+        o = s.taboption(tabname, form.ListValue, "mihomo_mem_limit", _("GOMEMLIMIT (Memory limit):"));
+        common.defaultGoMemLimitValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.description = _("Limit the Go garbage collector memory usage (in MiB). Select a predefined limit or 0 to disable.");
+        o.datatype = datatypes.STRING;
+        o.rmempty = false;
+        o.default = common.defaultGoMemLimitValues[0].value;
 
         tabname = "servicestorage_tab";
         s.tab(tabname, _("Storage"));

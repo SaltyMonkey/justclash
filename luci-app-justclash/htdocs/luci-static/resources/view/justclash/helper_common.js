@@ -40,6 +40,15 @@ return baseclass.extend({
         { value: "20", text: _("20 seconds") },
         { value: "40", text: _("40 seconds") }
     ],
+    defaultWaitForWanMaxValues: [
+        { value: "10", text: _("10 seconds") },
+        { value: "20", text: _("20 seconds") },
+        { value: "30", text: _("30 seconds") },
+        { value: "60", text: _("60 seconds") },
+        { value: "90", text: _("90 seconds") },
+        { value: "120", text: _("120 seconds") },
+        { value: "180", text: _("180 seconds") }
+    ],
     defaultFakeIPTtlValues: [
         { value: "60", text: _("60 seconds") },
         { value: "120", text: _("120 seconds") },
@@ -57,6 +66,16 @@ return baseclass.extend({
         { value: "43200", text: _("Every 12 hours") },
         { value: "172800", text: _("Every 48 hours") },
         { value: "259200", text: _("Every 72 hours") },
+    ],
+    defaultGoMemLimitValues: [
+        { value: "0", text: _("Disabled") },
+        { value: "48", text: _("48 MiB") },
+        { value: "64", text: _("64 MiB") },
+        { value: "96", text: _("96 MiB") },
+        { value: "128", text: _("128 MiB") },
+        { value: "160", text: _("160 MiB") },
+        { value: "192", text: _("192 MiB") },
+        { value: "224", text: _("224 MiB") },
     ],
     defaultProxyGroupIntervalSec: [
         { value: "60", text: _("Every 1 minute") },
