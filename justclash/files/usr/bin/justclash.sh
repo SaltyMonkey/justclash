@@ -1854,9 +1854,10 @@ core_prepare_workdir() {
         # shellcheck disable=SC2174
         mkdir -m 700 -p "$CORE_WORKDIR_PATH"
     else
-        local owner
-        owner=$(stat -c '%u' "$CORE_WORKDIR_PATH" 2>/dev/null)
-        if [ "$owner" != "0" ]; then
+        local owner current_uid
+        owner=$(ls -ldn "$CORE_WORKDIR_PATH" 2>/dev/null | awk '{print $3}')
+        current_uid=$(id -u)
+        if [ -n "$owner" ] && [ "$owner" != "$current_uid" ]; then
             log warn "Removing insecure directory at $CORE_WORKDIR_PATH owned by UID $owner" "⚠️"
             rm -rf "$CORE_WORKDIR_PATH"
             # shellcheck disable=SC2174
