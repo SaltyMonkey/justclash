@@ -300,7 +300,7 @@ return view.extend({
         o.editable = true;
         o.optional = true;
         o.validate = function (section_id, value) {
-            return common.isValidDomainMatcher(value);
+            return common.isValidDomainSuffix(value);
         };
 
         o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Force real IP rules:"));
@@ -310,7 +310,7 @@ return view.extend({
         o.editable = true;
         o.optional = true;
         o.validate = function (section_id, value) {
-            return common.isValidDomainMatcher(value);
+            return common.isValidDomainSuffix(value);
         };
 
         tabname = "sniffersettings_tab";

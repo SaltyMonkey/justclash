@@ -493,9 +493,6 @@ return baseclass.extend({
         if (/\s/.test(value) || this.hasControlChars(value))
             return _("Domain must not contain spaces or control characters");
 
-        if (!value.includes("."))
-            return _("Domain must contain at least one dot");
-
         if (/^[.-]/.test(value) || /[.-]$/.test(value))
             return _("Suffix must not start or end with a dot or hyphen");
 
