@@ -369,7 +369,7 @@ const showTextModalHandler = (title, warning, task, options = {}) => async () =>
 
         actions.push(E("button", {
             class: "cbi-button",
-            style: allowCopy ? "margin-left: 5px;" : "",
+            style: allowCopy ? "margin-left: 0.3125rem;" : "",
             click: () => ui.hideModal()
         }, [_("Dismiss")]));
 
@@ -405,7 +405,7 @@ const showConfirmExecModalHandler = (title, warning, command, args, afterExec) =
             }, [_("Run")]),
             E("button", {
                 class: "cbi-button",
-                style: "margin-left: 5px;",
+                style: "margin-left: 0.3125rem;",
                 click: () => ui.hideModal()
             }, [_("Cancel")])
         ])
@@ -669,12 +669,12 @@ return view.extend({
             .jc-status-text { color:var(--text-color-high, inherit); font-weight:700; line-height:1.3; }
             .jc-status-text-active { color:var(--success-color-medium, #4caf50); }
             .jc-status-text-inactive { color:var(--error-color-medium, #f44336); }
-            .jc-summary-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:15px; margin-bottom:20px; align-items:start; }
+            .jc-summary-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.9375rem; margin-bottom:1.25rem; align-items:start; }
             .jc-card, .jc-summary-body, .jc-summary-row, .jc-primary-actions { display:flex; }
             .jc-card, .jc-summary-body, .jc-summary-row { flex-direction:column; }
-            .jc-card { padding:0.75em; border:1px solid var(--border-color-medium, #bfbfbf); border-radius:4px; box-sizing:border-box; }
+            .jc-card { padding:0.75em; border:1px solid var(--border-color-medium, #bfbfbf); border-radius:0.25rem; box-sizing:border-box; }
             .jc-card-header, .jc-status-text, .jc-summary-value, .jc-button-content, .jc-card-icon, .jc-button-icon { display:inline-flex; align-items:center; }
-            .jc-card-header, .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:6px; background:var(--background-color-medium, #f6f6f6); }
+            .jc-card-header, .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); }
             .jc-card-header { align-self:flex-start; gap:0.45em; margin-bottom:0.7em; padding:0.2em 0.45em; font-size:0.96em; color:var(--text-color, inherit); opacity:0.88; }
             .jc-card-icon { justify-content:center; width:1.75em; height:1.75em; flex:0 0 1.25em; }
             .jc-button-icon { justify-content:center; width:1.25em; height:1.25em; line-height:1; }
@@ -683,12 +683,12 @@ return view.extend({
             .jc-summary-row { gap:0.18em; min-width:0; }
             .jc-summary-key { font-size:0.88em; color:var(--text-color, inherit); opacity:0.78; }
             .jc-summary-value { gap:0.45em; min-width:0; font-size:0.96em; font-weight:600; text-align:left; white-space:nowrap; }
-            .cbi-section-actions + .cbi-section-actions { margin-top:8px; }
+            .cbi-section-actions + .cbi-section-actions { margin-top:0.5rem; }
             .jc-actions-wrap { padding:0.7em 0.8em; }
             .jc-primary-actions { flex-wrap:wrap; gap:0.65em; margin:0; }
             .jc-primary-actions .cbi-button, .jc-actions-wrap .cbi-button {
                 margin:0 !important;
-                height: 31px !important;
+                height: 1.9375rem !important;
                 padding-top: 0 !important;
                 padding-bottom: 0 !important;
                 display: inline-flex;
@@ -698,12 +698,12 @@ return view.extend({
             .jc-button-content { justify-content:center; gap:0.45em; vertical-align:middle; }
             .jc-modal-warning, .jc-modal-warning-text { color:var(--error-color-medium); }
             .jc-modal-warning-text, .jc-modal-actions { margin-top:1em; }
-            .jc-modal-pre { max-height:460px; overflow:auto; }
+            .jc-modal-pre { max-height:28rem; overflow:auto; }
             .jc-modal-actions { text-align:right; }
             [data-theme="dark"] .jc-card-header,
             [data-theme="dark"] .jc-actions-wrap { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.04); }
-            @media (max-width:1000px) { .jc-summary-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-            @media (max-width:600px) { .jc-summary-grid { grid-template-columns:1fr; } }
+            @media (max-width:62.5rem) { .jc-summary-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+            @media (max-width:37.5rem) { .jc-summary-grid { grid-template-columns:1fr; } }
         `);
 
         startPolling(dynamicElements);
