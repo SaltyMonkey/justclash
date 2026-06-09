@@ -3,6 +3,8 @@
 # Using debian based version (kind of similar)
 # shellcheck shell=dash
 
+set -f # Disable path expansion (globbing) globally to safely iterate over user-defined lists containing *
+
 # --------------------------------------------
 # Main justclash service part
 # Directly using uci config calls every load
@@ -411,14 +413,14 @@ build_fake_ip_rule_array() {
     for entry in $entries; do
         [ -n "$entry" ] || continue
         rt="$rule_type"
-        
+
         # Auto-detect DOMAIN-WILDCARD if entry contains *
         if [ "$rt" = "DOMAIN-SUFFIX" ]; then
             case "$entry" in
                 *[*]* ) rt="DOMAIN-WILDCARD" ;;
             esac
         fi
-        
+
         generated_rule="$rt,$entry,$action"
         rules="${rules:+$rules,}\"$(json_escape "$generated_rule")\""
     done
@@ -1802,10 +1804,10 @@ core_generate_yaml() {
         echo "sniffer:"
         echo "  enable: $(format_uci_bool_as_yaml "$sniffer_enable")"
         echo "  parse-pure-ip: $(format_uci_bool_as_yaml "$sniffer_parse_pure_ip")"
+        echo "  override-destination: false"
         echo "  sniff:"
         echo "    HTTP:"
         echo "      ports: [$DEFAULT_HTTP_PORT, $DEFAULT_SECONDARY_HTTP_PORT_RANGE-$DEFAULT_SECONDARY_HTTP_PORT_RANGE_END]"
-        echo "      override-destination: true"
         echo "    TLS:"
         echo "      ports: [$DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT]"
         echo "    QUIC:"
