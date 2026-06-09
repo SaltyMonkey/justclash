@@ -43,6 +43,10 @@ if [ "$(uci -q get justclash.proxy.fake_ip_ttl)" = "1" ]; then
     uci set justclash.proxy.fake_ip_ttl="60"
 fi
 
+if ! uci -q get justclash.proxy.sniffer_exclude_domain | grep -qF "*"; then
+    uci add_list justclash.proxy.sniffer_exclude_domain='*'
+fi
+
 uci commit justclash
 
 # Remove '+.' prefix from fake_ip domains
