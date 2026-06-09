@@ -47,12 +47,32 @@ if ! uci -q get justclash.proxy.sniffer_exclude_domain | grep -qF "*"; then
     uci add_list justclash.proxy.sniffer_exclude_domain='*'
 fi
 
-uci commit justclash
+clean_fake_ip_list() {
+    local option="$1"
+    local list_val item new_val
+    local need_clean=0
 
-# Remove '+.' prefix from fake_ip domains
-sed -i "s/list fake_ip_exclude_domains '+\./list fake_ip_exclude_domains '/g" /etc/config/justclash
-sed -i 's/list fake_ip_exclude_domains +\./list fake_ip_exclude_domains /g' /etc/config/justclash
-sed -i "s/list fake_ip_include_domains '+\./list fake_ip_include_domains '/g" /etc/config/justclash
-sed -i 's/list fake_ip_include_domains +\./list fake_ip_include_domains /g' /etc/config/justclash
+    list_val=$(uci -q get "justclash.proxy.$option")
+    [ -n "$list_val" ] || return 0
+
+    for item in $list_val; do
+        case "$item" in
+            +.*) need_clean=1; break ;;
+        esac
+    done
+
+    [ "$need_clean" = "1" ] || return 0
+
+    uci -q delete "justclash.proxy.$option"
+    for item in $list_val; do
+        new_val="${item#+.}"
+        uci add_list "justclash.proxy.$option=$new_val"
+    done
+}
+
+clean_fake_ip_list "fake_ip_exclude_domains"
+clean_fake_ip_list "fake_ip_include_domains"
+
+uci commit justclash
 
 exit 0
