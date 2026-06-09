@@ -190,7 +190,6 @@ core_validate_yaml() {
     local test_output app_exit_code
     test_output="$("$CORE_PATH" -t -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
     app_exit_code=$?
-    # shellcheck disable=SC2249
     case "$test_output" in
         *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
     esac
@@ -324,6 +323,7 @@ start_core() {
         (
             if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
                 # shellcheck disable=SC2030
+                # shellcheck disable=SC2031
                 export GOMEMLIMIT="${mihomo_mem_limit}MiB"
             fi
             "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
@@ -784,10 +784,12 @@ systemlogs() {
 }
 
 lookup_many_rulesets_full() {
-    local ruleset_content="$1"
-    local keys="$2"
+    local keys="$1"
 
-    printf '%s\n' "$ruleset_content" | awk -F'|' -v keys="$keys" '
+    # Optimization: Uses global _RULESETS_CONTENT (or _BLOCK_RULESETS_CONTENT swapped at caller)
+    # to avoid passing large strings via function arguments (which causes heavy copying in ash).
+    # Uses a single awk invocation to efficiently filter all matching keys in one pass.
+    printf '%s\n' "$_RULESETS_CONTENT" | awk -F'|' -v keys="$keys" '
         BEGIN {
             split(keys, arr, /[[:space:]]+/)
             for (i in arr) {
@@ -840,18 +842,18 @@ build_manual_rules_array() {
 }
 
 build_builtin_rules_bundle() {
-    local ruleset_content="$1"
-    local enabled_list="$2"
-    local target_name="$3"
-    local download_proxy="$4"
-    local list_update_interval="$5"
-    local size_limit="$6"
-    local rule_mode="${7:-all}"
+    local enabled_list="$1"
+    local target_name="$2"
+    local download_proxy="$3"
+    local list_update_interval="$4"
+    local size_limit="$5"
+    local rule_mode="${6:-all}"
     local ruleset_lines ruleset_line ruleset_name ruleset_behavior ruleset_format ruleset_url ruleset_fields generated_rule
-    local rules_fragment="" rulesets_fragment="" names_fragment="" fake_ip_rules_fragment=""
+    local rules_fragment="" ip_rules_fragment="" rulesets_fragment="" names_fragment="" fake_ip_rules_fragment=""
     local added_rulesets="|"
 
-    ruleset_lines=$(lookup_many_rulesets_full "$ruleset_content" "$enabled_list")
+    # Queries the active ruleset database (globally defined in _RULESETS_CONTENT)
+    ruleset_lines=$(lookup_many_rulesets_full "$enabled_list")
     printf '%s\n' "$ruleset_lines" | {
         while IFS= read -r ruleset_line; do
             [ -z "$ruleset_line" ] && continue
@@ -859,7 +861,6 @@ build_builtin_rules_bundle() {
             ruleset_name="${ruleset_line#*|}"
             ruleset_name="${ruleset_name%%|*}"
 
-            # shellcheck disable=SC2249
             case "$added_rulesets" in
                 *"|$ruleset_name|"*) log warn "Skipping duplicated ruleset: $ruleset_name"; continue ;;
             esac
@@ -902,7 +903,12 @@ build_builtin_rules_bundle() {
 
             case "$rule_mode" in
                 all)
-                    rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
+                    # IP-based rulesets emitted separately so callers place them before domain rules.
+                    if [ "$ruleset_behavior" = "ipcidr" ]; then
+                        ip_rules_fragment="${ip_rules_fragment:+$ip_rules_fragment,}\"$generated_rule\""
+                    else
+                        rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
+                    fi
                 ;;
                 non-domain-only)
                     if [ "$ruleset_behavior" != "domain" ]; then
@@ -921,6 +927,7 @@ build_builtin_rules_bundle() {
             fi
         done
 
+        printf 'IP_RULES:%s\n' "${ip_rules_fragment:-}"
         printf 'RULES:%s\n' "$rules_fragment"
         printf 'RULESETS:%s\n' "$rulesets_fragment"
         printf 'NAMES:%s\n' "$names_fragment"
@@ -978,11 +985,10 @@ build_custom_rules_bundle() {
 }
 
 handle_proxy_section() {
-    local ruleset_content="$1"
-    local file_rules="$2"
-    local file_rulesets="$3"
-    local file_proxies="$4"
-    local file_fake_ip_rules="$5"
+    local file_rules="$1"
+    local file_rulesets="$2"
+    local file_proxies="$3"
+    local file_fake_ip_rules="$4"
     local proxies=""
     local rules_array=""
     local selectedRuleSets=""
@@ -993,8 +999,8 @@ handle_proxy_section() {
         local section="$1"
         local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
         local list_update_interval size_limit mode proxy_link_object use_proxy_for_list_update
-        # Source lists loaded from UCI for generated rules and custom rulesets.
-        local route_entries route_entry domain_list cidr_list rules_fragment rulesets_fragment fake_ip_fragment bundle
+        # Source lists loaded from UCI for generated rules.
+        local route_entries route_entry rules_fragment ip_rules_fragment rulesets_fragment fake_ip_fragment bundle
         local proxy_obj=""
         # Scratch vars for parsing one custom source at a time.
         local download_proxy generated_rule
@@ -1048,35 +1054,24 @@ handle_proxy_section() {
         proxies="${proxies:+$proxies,}$proxy_obj"
         [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
 
-        config_get enabled_list "$section" enabled_list
-        bundle=$(build_builtin_rules_bundle "$ruleset_content" "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        selectedRuleSets="${selectedRuleSets}${rulesets_fragment}"
-        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
-
-        # Custom files/URLs are hashed to stable hashed ruleset names; HTTP sources reuse the selected download proxy.
-        config_get domain_list "$section" custom_enabled_domain_list
-        bundle=$(build_custom_rules_bundle "$domain_list" "domain" "$name" "$download_proxy" "$list_update_interval" "$size_limit" 1 "domain")
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        selectedRuleSets="${selectedRuleSets}${rulesets_fragment}"
-        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
-
-        config_get cidr_list "$section" custom_enabled_cidr_list
-        bundle=$(build_custom_rules_bundle "$cidr_list" "ipcidr" "$name" "$download_proxy" "$list_update_interval" "$size_limit" 0 "CIDR")
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        selectedRuleSets="${selectedRuleSets}${rulesets_fragment}"
-
         config_get route_entries "$section" additional_srcip_route
         rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        config_get route_entries "$section" additional_destip_route
+        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        config_get enabled_list "$section" enabled_list
+        bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
+        ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
+        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
+        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
+        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
+        [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+        selectedRuleSets="${selectedRuleSets}${rulesets_fragment}"
+        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
 
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
@@ -1086,10 +1081,6 @@ handle_proxy_section() {
                 fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
             }
         done
-
-        config_get route_entries "$section" additional_destip_route
-        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
     }
 
@@ -1102,11 +1093,10 @@ handle_proxy_section() {
 }
 
 handle_proxy_group_section() {
-    local ruleset_content="$1"
-    local file_rules="$2"
-    local file_rulesets="$3"
-    local file_proxygroups="$4"
-    local file_fake_ip_rules="$5"
+    local file_rules="$1"
+    local file_rulesets="$2"
+    local file_proxygroups="$3"
+    local file_fake_ip_rules="$4"
     local proxy_groups=""
     local rules_array=""
     local proxy_groups_rulesets=""
@@ -1118,9 +1108,9 @@ handle_proxy_group_section() {
         local name enabled
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
         local filter exclude_filter exclude_type expected_status
-        # Source lists loaded from UCI for generated rules and custom rulesets.
-        local enabled_list list_update_interval size_limit use_proxy_group_for_list_update route_entries route_entry rules_fragment
-        local domain_list cidr_list rulesets_fragment fake_ip_fragment bundle
+        # Source lists loaded from UCI for generated rules.
+        local enabled_list list_update_interval size_limit use_proxy_group_for_list_update route_entries route_entry
+        local rules_fragment ip_rules_fragment rulesets_fragment fake_ip_fragment bundle
         # Scratch vars for group JSON assembly and per-entry index parsing.
         local escaped_proxies escaped_providers group_json
         local download_proxy generated_rule
@@ -1181,34 +1171,23 @@ handle_proxy_group_section() {
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
         [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
 
-        bundle=$(build_builtin_rules_bundle "$ruleset_content" "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        proxy_groups_rulesets="${proxy_groups_rulesets}${rulesets_fragment}"
-        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
-
-        # Custom files/URLs are hashed to stable hashed ruleset names; HTTP sources reuse the selected download proxy.
-        config_get domain_list "$section" custom_enabled_domain_list
-        bundle=$(build_custom_rules_bundle "$domain_list" "domain" "$name" "$download_proxy" "$list_update_interval" "$size_limit" 1 "domain")
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        proxy_groups_rulesets="${proxy_groups_rulesets}${rulesets_fragment}"
-        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
-
-        config_get cidr_list "$section" custom_enabled_cidr_list
-        bundle=$(build_custom_rules_bundle "$cidr_list" "ipcidr" "$name" "$download_proxy" "$list_update_interval" "$size_limit" 0 "CIDR")
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        proxy_groups_rulesets="${proxy_groups_rulesets}${rulesets_fragment}"
-
         config_get route_entries "$section" additional_srcip_route
         rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        config_get route_entries "$section" additional_destip_route
+        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
+        ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
+        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
+        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
+        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
+        [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+        proxy_groups_rulesets="${proxy_groups_rulesets}${rulesets_fragment}"
+        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
 
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
@@ -1218,10 +1197,6 @@ handle_proxy_group_section() {
                 fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
             }
         done
-
-        config_get route_entries "$section" additional_destip_route
-        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
     }
 
@@ -1311,11 +1286,10 @@ handle_proxy_provider_section() {
 }
 
 handle_block_rule_section() {
-    local blocklist_content="$1"
-    local file_rules="$2"
-    local file_rulesets="$3"
-    local file_rulesets_names="$4"
-    local file_suffix_names="$5"
+    local file_rules="$1"
+    local file_rulesets="$2"
+    local file_rulesets_names="$3"
+    local file_suffix_names="$4"
     local rules_array=""
     local selected_rule_sets=""
     local list_rulesets_names=""
@@ -1342,7 +1316,15 @@ handle_block_rule_section() {
     config_get proxy block_rules proxy "$DEFAULT_PROXY"
     config_get list_update_interval block_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
     config_get size_limit block_rules size_limit 0
-    bundle=$(build_builtin_rules_bundle "$blocklist_content" "$enabled_blocklist" "REJECT" "$proxy" "$list_update_interval" "$size_limit" "non-domain-only")
+    config_get additional_destip_blockroute block_rules additional_destip_blockroute
+    for ip_val in $additional_destip_blockroute; do
+        [ -n "$ip_val" ] && {
+            generated_rule="IP-CIDR,$ip_val,REJECT"
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+        }
+    done
+
+    bundle=$(build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$proxy" "$list_update_interval" "$size_limit" "non-domain-only")
     rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
     rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
     names_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^NAMES://p')
@@ -1358,14 +1340,6 @@ handle_block_rule_section() {
         }
     done
 
-    config_get additional_destip_blockroute block_rules additional_destip_blockroute
-    for ip_val in $additional_destip_blockroute; do
-        [ -n "$ip_val" ] && {
-            generated_rule="IP-CIDR,$ip_val,REJECT"
-            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-        }
-    done
-
     echo "[${rules_array:-}]" > "$file_rules"
     echo "{${selected_rule_sets%,}}" > "$file_rulesets"
     echo "$list_rulesets_names" > "$file_rulesets_names"
@@ -1373,19 +1347,18 @@ handle_block_rule_section() {
 }
 
 handle_direct_rule_section() {
-    local ruleset_content="$1"
-    local file_rules="$2"
-    local file_rulesets="$3"
-    local file_fake_ip_rules="$4"
+    local file_rules="$1"
+    local file_rulesets="$2"
+    local file_fake_ip_rules="$3"
     local rules_array=""
     local direct_rulesets=""
 
     local fake_ip_rules=""
     local proxy additional_domain_direct
     local additional_srcip_direct additional_destip_direct
-    # Source lists loaded from UCI for generated DIRECT rules and custom rulesets.
+    # Source lists loaded from UCI for generated DIRECT rules.
     local list_update_interval size_limit enabled_list
-    local domain_list cidr_list rules_fragment rulesets_fragment fake_ip_fragment bundle
+    local rules_fragment ip_rules_fragment rulesets_fragment fake_ip_fragment bundle
     # Scratch vars for generated manual routes.
     local generated_rule route_entry
 
@@ -1404,30 +1377,23 @@ handle_direct_rule_section() {
     config_get enabled_list direct_rules enabled_list
     config_get proxy direct_rules proxy "$DEFAULT_PROXY"
 
-    bundle=$(build_builtin_rules_bundle "$ruleset_content" "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$proxy" "$list_update_interval" "$size_limit")
+    config_get additional_srcip_direct direct_rules additional_srcip_direct
+    rules_fragment=$(build_manual_rules_array "$additional_srcip_direct" "SRC-IP-CIDR" "DIRECT" "no-resolve")
+    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+    config_get additional_destip_direct direct_rules additional_destip_direct
+    rules_fragment=$(build_manual_rules_array "$additional_destip_direct" "IP-CIDR" "DIRECT" "")
+    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+    bundle=$(build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$proxy" "$list_update_interval" "$size_limit")
+    ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
     rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
     rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
     fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
+    [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
     [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
     direct_rulesets="${direct_rulesets}${rulesets_fragment}"
     [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
-
-    # Custom files/URLs are hashed to stable hashed ruleset names; HTTP sources reuse the selected download proxy.
-    config_get domain_list direct_rules custom_enabled_domain_list
-    bundle=$(build_custom_rules_bundle "$domain_list" "domain" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$proxy" "$list_update_interval" "$size_limit" 1 "domain")
-    rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-    rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-    fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-    direct_rulesets="${direct_rulesets}${rulesets_fragment}"
-    [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
-
-    config_get cidr_list direct_rules custom_enabled_cidr_list
-    bundle=$(build_custom_rules_bundle "$cidr_list" "ipcidr" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$proxy" "$list_update_interval" "$size_limit" 0 "CIDR")
-    rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-    rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-    direct_rulesets="${direct_rulesets}${rulesets_fragment}"
 
     config_get additional_domain_direct direct_rules additional_domain_direct
     for route_entry in $additional_domain_direct; do
@@ -1437,14 +1403,6 @@ handle_direct_rule_section() {
             fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
         }
     done
-
-    config_get additional_srcip_direct direct_rules additional_srcip_direct
-    rules_fragment=$(build_manual_rules_array "$additional_srcip_direct" "SRC-IP-CIDR" "DIRECT" "no-resolve")
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-
-    config_get additional_destip_direct direct_rules additional_destip_direct
-    rules_fragment=$(build_manual_rules_array "$additional_destip_direct" "IP-CIDR" "DIRECT" "")
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
     echo "[${rules_array:-}]" > "$file_rules"
     echo "{${direct_rulesets%,}}" > "$file_rulesets"
@@ -1521,7 +1479,7 @@ core_generate_yaml() {
     local custom_fake_ip_rules custom_real_ip_rules custom_fake_ip_rulesets custom_real_ip_rulesets
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path tmp_fake_ip_rules_path
-    local block_rulesets_content rulesets_content
+    # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls
     local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
 
@@ -1597,33 +1555,40 @@ core_generate_yaml() {
     rule_final=$(handle_final_rule_section)
     proxy_providers=$(handle_proxy_provider_section | jq .)
 
-    # optimization: load files one time
+    # optimization: load ruleset files once into globals to avoid re-reading and argument-copying per proxy/group
     local user_block_rulesets=""
     if [ -f "$USER_RULESETS_BLOCKS_FILE" ]; then
         user_block_rulesets=$(cat "$USER_RULESETS_BLOCKS_FILE")
     fi
-    block_rulesets_content=$(printf '%s\n%s' "$(cat "$RULESETS_BLOCKS_FILE")" "$user_block_rulesets")
+    _BLOCK_RULESETS_CONTENT=$(printf '%s\n%s' "$(cat "$RULESETS_BLOCKS_FILE")" "$user_block_rulesets")
 
     local user_rulesets=""
     if [ -f "$USER_RULESETS_FILE" ]; then
         user_rulesets=$(cat "$USER_RULESETS_FILE")
     fi
-    rulesets_content=$(printf '%s\n%s' "$(cat "$RULESETS_FILE")" "$user_rulesets")
+    _RULESETS_CONTENT=$(printf '%s\n%s' "$(cat "$RULESETS_FILE")" "$user_rulesets")
 
+    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
     tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules_direct.XXXXXX")
     tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_direct.XXXXXX")
     tmp_fake_ip_rules_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_fake_ip_rules_direct.XXXXXX")
-    handle_direct_rule_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_fake_ip_rules_path"
+    handle_direct_rule_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_fake_ip_rules_path"
     rules_direct=$(cat "$tmp_rules_file")
     rulesets_direct=$(cat "$tmp_rulesets_path")
     fake_ip_rules_direct=$(cat "$tmp_fake_ip_rules_path")
     rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_fake_ip_rules_path"
 
+    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
     tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules_block.XXXXXX")
     tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_block.XXXXXX")
     tmp_names_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_names_policy.XXXXXX")
     tmp_names_suffixes_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_suffixes_names_policy.XXXXXX")
-    handle_block_rule_section "$block_rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+    # Optimization: Temporarily swap the global rulesets database to use blocklist rulesets database.
+    # This allows downstream functions (like build_builtin_rules_bundle) to transparently use block ruleset definitions.
+    local _saved_rulesets_content="$_RULESETS_CONTENT"
+    _RULESETS_CONTENT="$_BLOCK_RULESETS_CONTENT"
+    handle_block_rule_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+    _RULESETS_CONTENT="$_saved_rulesets_content"
     rules_block=$(cat "$tmp_rules_file")
     rulesets_block=$(cat "$tmp_rulesets_path")
     names_rulesets_block_policy=$(cat "$tmp_names_rulesets_path")
@@ -1635,7 +1600,7 @@ core_generate_yaml() {
     tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets.XXXXXX")
     tmp_proxygroup_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_proxygroups.XXXXXX")
     tmp_fake_ip_rules_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_fake_ip_rules_proxygroups.XXXXXX")
-    handle_proxy_group_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_fake_ip_rules_path"
+    handle_proxy_group_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_fake_ip_rules_path"
     rules_proxygroups=$(cat "$tmp_rules_file")
     rulesets_proxygroup=$(cat "$tmp_rulesets_path")
     proxy_groups=$(cat "$tmp_proxygroup_path")
@@ -1647,7 +1612,7 @@ core_generate_yaml() {
     tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets.XXXXXX")
     tmp_proxies_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_proxies.XXXXXX")
     tmp_fake_ip_rules_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_fake_ip_rules_proxies.XXXXXX")
-    handle_proxy_section "$rulesets_content" "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_fake_ip_rules_path"
+    handle_proxy_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_fake_ip_rules_path"
     rules_proxies=$(cat "$tmp_rules_file")
     rulesets_proxies=$(cat "$tmp_rulesets_path")
     proxies=$(cat "$tmp_proxies_path")
@@ -1879,6 +1844,7 @@ core_prepare_workdir() {
         mkdir -m 700 -p "$CORE_WORKDIR_PATH"
     else
         local owner current_uid
+        # shellcheck disable=SC2012
         owner=$(ls -ldn "$CORE_WORKDIR_PATH" 2>/dev/null | awk '{print $3}')
         current_uid=$(id -u)
         if [ -n "$owner" ] && [ "$owner" != "$current_uid" ]; then

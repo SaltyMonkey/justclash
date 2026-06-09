@@ -183,7 +183,6 @@ parse_ss_url() {
     local userinfo hostport method password server port decoded query_part proxy_obj
     query_part=""
 
-    # shellcheck disable=SC2249
     case "$link" in *\?*) query_part="${link#*\?}"; link="${link%%\?*}"; esac
 
     if echo "$link" | grep -q '@'; then
@@ -336,7 +335,6 @@ parse_trojan_url() {
     [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
 
     local query_part=""
-    # shellcheck disable=SC2249
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
     local sni="" insecure=0 net="tcp" httpupgrade=0 fp="" alpn="" ws_path="" ws_host="" grpc_service="" grpc_ua="" grpc_ping_interval=""
@@ -354,7 +352,6 @@ parse_trojan_url() {
         local v="${param#*=}"
         [ -z "$k" ] && continue
 
-        # shellcheck disable=SC2249
         case "$k" in
             sni|peer) sni="$(url_decode "$v")" ;;
             insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
@@ -484,7 +481,6 @@ parse_vless_url() {
     [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
 
     local query_part=""
-    # shellcheck disable=SC2249
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
 
     local net="tcp" httpupgrade=0 sec="" sni="" fp="" alpn="" flow="" penc="" insecure=0
@@ -504,7 +500,6 @@ parse_vless_url() {
         local v="${param#*=}"
         [ -z "$k" ] && continue
 
-        # shellcheck disable=SC2249
         case "$k" in
             type)
                 if [ "$v" = "httpupgrade" ]; then
@@ -786,7 +781,6 @@ parse_hysteria2_url() {
     local userinfo hostport password server port query_part
     query_part=""
 
-    # shellcheck disable=SC2249
     case "$raw" in *\?*) query_part="${raw#*\?}"; raw="${raw%%\?*}"; esac
 
     if echo "$raw" | grep -q '@'; then
@@ -817,7 +811,6 @@ parse_hysteria2_url() {
         local v="${param#*=}"
         [ -z "$k" ] && continue
 
-        # shellcheck disable=SC2249
         case "$k" in
             sni) sni="$(url_decode "$v")" ;;
             insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
@@ -899,7 +892,6 @@ parse_mieru_url() {
     local auth_host_query
     auth_host_query="${raw%%\?*}"
     local query_part=""
-    # shellcheck disable=SC2249
     case "$raw" in *\?*) query_part="${raw#*\?}" ;; esac
 
     local auth=""
@@ -939,7 +931,6 @@ parse_mieru_url() {
         local v="${param#*=}"
         [ -z "$k" ] && continue
 
-        # shellcheck disable=SC2249
         case "$k" in
             # Seems MTU aren't there in mihomo
             #mtu) mtu="$v" ;;

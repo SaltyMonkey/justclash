@@ -775,7 +775,6 @@ install_service() {
         install_lang="none"
     else
         install_translation_interactive
-        # shellcheck disable=SC2249
         case "$?" in
             2) install_lang="ru" ;;
             3) install_lang="zh-cn" ;;
