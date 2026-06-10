@@ -1,6 +1,8 @@
-# Example UCI structure for sections and fields exposed in LuCI.
-# This is a compact reference, not a copy of the shipped default config.
+# JustClash UCI Configuration Structure Reference
 
+This is a compact reference showcasing the default UCI structure for sections and fields exposed in LuCI.
+
+```ini
 config main 'settings'
     option delayed_boot                   '0'
     option delayed_boot_value             '10'
@@ -12,7 +14,7 @@ config main 'settings'
     option nft_apply_changes              '1'
     option pbr_priority                   '169'
     option nft_apply_changes_router       '0'
-    list   nft_skuid_exclude_router       'byedpi'
+    list   nft_skuid_exclude_router       'custom_utility'
     list   nft_ports_exclude_router       '22'
     list   nft_ports_exclude              '22'
     list   tproxy_input_interfaces        'br-lan'
@@ -24,10 +26,10 @@ config main 'settings'
     option nft_ntp_mode_router            'DIRECT'
     option mihomo_autorestart             '0'
     option mihomo_cron_autorestart_string '0 5 * * 0'
-    option mihomo_core_source_type 'github'
-    option mihomo_github_repo 'MetaCubeX/mihomo'
-    option mihomo_github_channel 'alpha'
-    option mihomo_custom_core_url ''
+    option mihomo_core_source_type        'github'
+    option mihomo_github_repo             'MetaCubeX/mihomo'
+    option mihomo_github_channel          'alpha'
+    option mihomo_custom_core_url         ''
     option mihomo_rulesets_files_download_url 'https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data'
     option mihomo_dashboard_zashboard_url 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip'
     option mihomo_dashboard_metacubexd_url 'https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip'
@@ -63,9 +65,9 @@ config proxy 'proxy'
     list   direct_nameserver              'tls://dns.example.org'
     list   proxy_server_nameserver        'https://dns.google/dns-query'
     list   nameserver                     'https://1.1.1.1/dns-query'
-    list   fake_ip_include_domains        '+.example.org'
+    list   fake_ip_include_domains        'example.org'
     list   fake_ip_include_rulesets       'example_ruleset'
-    list   fake_ip_exclude_domains        '+.lan'
+    list   fake_ip_exclude_domains        'lan'
     list   fake_ip_exclude_rulesets       'example_ruleset'
     option sniffer_enable                 '1'
     option sniffer_parse_pure_ip          '1'
@@ -174,3 +176,4 @@ config mixed_port_rules 'mixed_port_rules'
 
 config final_rules 'final_rules'
     option exit_rule                      'DIRECT'
+```
