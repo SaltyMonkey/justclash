@@ -120,8 +120,8 @@ DEFAULT_DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
 DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB="github.com"
 
 NF_TABLE_NAME="${PROGNAME}_tproxy"
-NF_TABLE_FWMARK_FINAL=0x3
-NF_TABLE_FWMARK_PROXY=0xff
+NF_TABLE_FWMARK_FINAL=3
+NF_TABLE_FWMARK_PROXY=255
 NF_ROUTE_TABLE=100
 
 WARN_PATTERNS_DHCP_CONFIG="podkop_server podkop_noresolv podkop_cachesize doh_backup_noresolv doh_backup_server doh_server"
@@ -355,7 +355,9 @@ stop_core() {
 }
 
 cleanup_fwmark() {
-    while ip rule show | grep -qF "fwmark ${NF_TABLE_FWMARK_FINAL} lookup ${NF_ROUTE_TABLE}"; do
+    local hex_mark
+    hex_mark=$(printf "0x%x" "$NF_TABLE_FWMARK_FINAL")
+    while ip rule show | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; do
         ip rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
     done
 }
@@ -384,26 +386,6 @@ build_nft_skuid_exclusions() {
     printf '%s' "$skuid_list"
 }
 
-print_proxy_routing_mark() {
-    local section="$1"
-    local routing_mark
-
-    config_get routing_mark "$section" routing_mark
-    [ -n "$routing_mark" ] || return 0
-
-    printf '%s\n' "$routing_mark"
-}
-
-print_proxy_provider_routing_mark() {
-    local section="$1"
-    local override_routing_mark
-
-    config_get override_routing_mark "$section" override_routing_mark
-    [ -n "$override_routing_mark" ] || return 0
-
-    printf '%s\n' "$override_routing_mark"
-}
-
 build_fake_ip_rule_array() {
     local entries="$1"
     local rule_type="$2"
@@ -428,19 +410,51 @@ build_fake_ip_rule_array() {
     printf '[%s]' "${rules:-}"
 }
 
+get_routing_mark() {
+    local section="$1"
+    local option_name="$2"
+    local routing_mark
+
+    config_get routing_mark "$section" "$option_name"
+    routing_mark=$(parse_routing_mark "$routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
+    [ -n "$routing_mark" ] || return 0
+
+    if [ "$routing_mark" = "-1" ]; then
+        echo "-1"
+        return 0
+    fi
+
+    printf '%s ' "$routing_mark"
+}
+
 nf_table_add() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router nft_doh_mode
-    local pbr_priority iface skuid_values skuid_list skuid_resolved routing_mark_values routing_mark_value
+    local pbr_priority iface skuid_values skuid_list skuid_resolved proxy_routing_marks provider_routing_marks
     local nft_ports_exclude nft_ports_exclude_router
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
-
     [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ] && return 0
 
     config_get tproxy_port proxy tproxy_port
+    [ -n "$tproxy_port" ] || panic "tproxy_port is not set"
+    is_port "$tproxy_port" || panic "tproxy_port is invalid: $tproxy_port"
+
+    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
+    is_uint "$pbr_priority" || panic "pbr_priority is invalid: $pbr_priority"
+
+    proxy_routing_marks=$(trim "$(config_foreach get_routing_mark proxies routing_mark)")
+    case "$proxy_routing_marks" in
+        *-1*) panic "Invalid routing_mark detected in proxies configuration" ;;
+    esac
+
+    provider_routing_marks=$(trim "$(config_foreach get_routing_mark proxy_provider override_routing_mark)")
+    case "$provider_routing_marks" in
+        *-1*) panic "Invalid override_routing_mark detected in proxy providers configuration" ;;
+    esac
+
     config_get fake_ip_range proxy fake_ip_range
     config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
     config_get nft_quic_mode settings nft_quic_mode
@@ -452,15 +466,6 @@ nf_table_add() {
     config_get nft_ports_exclude settings nft_ports_exclude
     config_get nft_ports_exclude_router settings nft_ports_exclude_router
     config_get skuid_values settings nft_skuid_exclude_router
-    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
-    routing_mark_values=$(
-        config_foreach print_proxy_routing_mark proxies
-        config_foreach print_proxy_provider_routing_mark proxy_provider
-    )
-
-    [ -n "$tproxy_port" ] || panic "tproxy_port is not set"
-    is_port "$tproxy_port" || panic "tproxy_port is invalid: $tproxy_port"
-    is_uint "$pbr_priority" || panic "pbr_priority is invalid: $pbr_priority"
 
     if [ "$nft_apply_changes" = "1" ]; then
         [ -n "$fake_ip_range" ] || panic "fake_ip_range is not set"
@@ -498,83 +503,86 @@ nf_table_add() {
             done
             echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
-            echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return"
-            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept"
-            echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return"
-            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return"
-            echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return"
+            echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
+            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
 
             if [ -n "$nft_ports_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded ports\""
             fi
 
             if [ "$nft_quic_mode" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } drop comment \"Drop QUIC traffic\""
             elif [ "$nft_quic_mode" = "REJECT" ]; then
-                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject"
-                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject"
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject comment \"Reject QUIC traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject comment \"Reject QUIC traffic\""
             fi
 
             if [ "$nft_dot_quic_mode" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } drop comment \"Drop DNS-over-QUIC traffic\""
             elif [ "$nft_dot_quic_mode" = "REJECT" ]; then
-                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject"
-                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject"
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject comment \"Reject DNS-over-QUIC traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject comment \"Reject DNS-over-QUIC traffic\""
             fi
 
             if [ "$nft_dot_mode" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop comment \"Drop DNS-over-TLS traffic\""
             elif [ "$nft_dot_mode" = "REJECT" ]; then
-                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject"
-                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject"
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject comment \"Reject DNS-over-TLS traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject comment \"Reject DNS-over-TLS traffic\""
             fi
 
             if [ "$nft_doh_mode" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS traffic\""
             elif [ "$nft_doh_mode" = "REJECT" ]; then
-                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject"
-                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject"
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
             fi
 
             if [ "$nft_ntp_mode" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop comment \"Drop NTP traffic\""
             elif [ "$nft_ntp_mode" = "DIRECT" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return"
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port"
+            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept to TProxy\""
         fi
 
         if [ "$nft_apply_changes_router" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME output { type route hook output priority mangle; policy accept; }"
-            echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return"
-            echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return"
-            for routing_mark_value in $routing_mark_values; do
-                echo "add rule inet $NF_TABLE_NAME output meta mark $routing_mark_value return"
-            done
+            echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
+            if [ -n "$proxy_routing_marks" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
+            fi
+            if [ -n "$provider_routing_marks" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
+            fi
 
-            echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return"
-            echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return"
-            echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return"
+            echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return"
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router ports\""
             fi
 
             if [ -n "$skuid_values" ]; then
                 skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
                 for skuid_resolved in $skuid_list; do
-                    echo "add rule inet $NF_TABLE_NAME output meta skuid $skuid_resolved return"
+                    echo "add rule inet $NF_TABLE_NAME output meta skuid $skuid_resolved return comment \"Bypass excluded user (skuid)\""
                 done
             fi
 
             if [ "$nft_ntp_mode_router" = "DROP" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop"
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop comment \"Drop NTP traffic\""
             elif [ "$nft_ntp_mode_router" = "DIRECT" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return"
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL"
+            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router traffic for interception\""
         fi
     } | nft -f -
 
@@ -1006,19 +1014,28 @@ handle_proxy_section() {
         local download_proxy generated_rule
 
         config_get name "$section" name
+        [ -z "$name" ] && { log warn "Skipping proxy without name: $section" "⚠️"; return; }
+
         config_get_bool enabled "$section" enabled 1
+        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy: $section" "⚠️"; return; }
+
+        config_get routing_mark "$section" routing_mark
+        if [ "$routing_mark" = "-1" ]; then
+            log warn "Skipping proxy '$section' due to invalid routing_mark" "⚠️"
+            return 0
+        fi
+
         config_get proxy_link_uri "$section" proxy_link_uri
         config_get dialer_proxy "$section" dialer_proxy
         config_get interface_name "$section" interface_name
-        config_get routing_mark "$section" routing_mark
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
         config_get size_limit "$section" size_limit 0
         config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
+        routing_mark=$(parse_routing_mark "$routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
 
-        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy: $section" "⚠️"; return; }
-        [ -z "$name" ] && { log warn "Skipping proxy without name: $section" "⚠️"; return; }
+
 
         if [ "$mode" = "object" ]; then
             [ -z "$proxy_link_object" ] && { log warn "Skipping empty proxy '$name'" "⚠️" ; return; }
@@ -1116,12 +1133,13 @@ handle_proxy_group_section() {
         local download_proxy generated_rule
 
         config_get name "$section" name
+        [ -z "$name" ] && { log warn "Skipping proxy group without a name: $section" "⚠️"; return; }
+
         config_get_bool enabled "$section" enabled 1
+        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy group: $section" "⚠️"; return; }
+
         config_get proxies_list "$section" proxies
         config_get providers_list "$section" providers
-
-        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy group: $section" "⚠️"; return; }
-        [ -z "$name" ] && { log warn "Skipping proxy group without a name: $section" "⚠️"; return; }
         [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log warn "Skipping empty proxy group: $name" "⚠️"; return; }
 
         config_get group_type "$section" group_type
@@ -1143,8 +1161,6 @@ handle_proxy_group_section() {
 
         [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(trim "$providers_list" | list_to_json_array)
-
-        [ "$group_type" = "load-balancer" ] && group_type="load-balance"
 
         group_json="\"name\":\"$(json_escape "$name")\",\
                         \"type\":\"$(json_escape "$group_type")\",\
@@ -1220,8 +1236,23 @@ handle_proxy_provider_section() {
         local provider_json override_json="udp:true"
 
         config_get name "$section" name
-        config_get_bool enabled "$section" enabled 1
         config_get url "$section" subscription
+        { [ -z "$name" ] || [ -z "$url" ]; } && {
+        log warn "Skipping proxy provider without a name or subscription" "⚠️"
+            return
+        }
+
+        config_get_bool enabled "$section" enabled 1
+        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy provider: $section" "⚠️"; return; }
+
+        config_get override_routing_mark "$section" override_routing_mark
+        override_routing_mark=$(parse_routing_mark "$override_routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
+
+        if [ "$override_routing_mark" = "-1" ]; then
+            log warn "Skipping proxy provider '$section' due to invalid routing_mark" "⚠️"
+            return 0
+        fi
+
         config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
         config_get size_limit "$section" size_limit 0
         config_get filter "$section" filter
@@ -1230,13 +1261,6 @@ handle_proxy_provider_section() {
         config_get proxy "$section" proxy "$DEFAULT_PROXY"
         config_get override_dialer_proxy "$section" override_dialer_proxy
         config_get override_interface_name "$section" override_interface_name
-        config_get override_routing_mark "$section" override_routing_mark
-
-        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy provider: $section" "⚠️"; return; }
-        { [ -z "$name" ] || [ -z "$url" ]; } && {
-        log warn "Skipping proxy provider without a name or subscription" "⚠️"
-            return
-        }
 
         provider_json="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
         [ -n "$filter" ] && provider_json="$provider_json,\"filter\":\"$(json_escape "$filter")\""
@@ -1727,7 +1751,7 @@ core_generate_yaml() {
         echo "tproxy-port: $tproxy_port"
         echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
         echo "tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")"
-        echo "routing-mark: $(printf "%d" "$NF_TABLE_FWMARK_PROXY")"
+        echo "routing-mark: $NF_TABLE_FWMARK_PROXY"
         echo "global-ua: $(yaml_quote_soft "$global_ua")"
         echo "find-process-mode: off"
         echo "geodata-mode: false"
@@ -2196,7 +2220,9 @@ diag_route() {
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
 
     clog info "Verifying existence of route rule..."
-    if ! ip rule list | awk -v priority="${pbr_priority}:" -v mark="$NF_TABLE_FWMARK_FINAL" -v table="$NF_ROUTE_TABLE" \
+    local hex_mark
+    hex_mark=$(printf "0x%x" "$NF_TABLE_FWMARK_FINAL")
+    if ! ip rule list | awk -v priority="${pbr_priority}:" -v mark="$hex_mark" -v table="$NF_ROUTE_TABLE" \
         '$1 == priority && $0 ~ ("fwmark " mark) && $0 ~ ("lookup " table "([[:space:]]|$)") { found=1 } END { exit !found }'; then
         clog error "Required route rule is missing: ip rule add fwmark $NF_TABLE_FWMARK_FINAL table $NF_ROUTE_TABLE priority $pbr_priority" "❌"
     fi

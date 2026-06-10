@@ -31,6 +31,38 @@ url_decode() {
     echo -n "$data" | sed 's/\\/\\\\/g; s/%/\\x/g' | xargs -0 printf '%b'
 }
 
+parse_routing_mark() {
+    local val="$1"
+    local reserved_marks="$2"
+    [ -z "$val" ] && return 0
+
+    case "$val" in
+        0[xX]*[!0-9a-fA-F]*) echo "-1"; return 0 ;;
+        0[xX]) echo "-1"; return 0 ;;
+        0[xX]*) ;;
+        *[!0-9]*) echo "-1"; return 0 ;;
+        *) ;;
+    esac
+
+    local dec_val
+    dec_val=$(printf "%d" "$val" 2>/dev/null)
+    if [ "$dec_val" = "0" ] && [ "$val" != "0" ] && [ "$val" != "0x0" ] && [ "$val" != "0X0" ]; then
+        echo "-1"
+        return 0
+    fi
+
+    local res_mark dec_res_mark
+    for res_mark in $reserved_marks; do
+        dec_res_mark=$(printf "%d" "$res_mark" 2>/dev/null)
+        if [ "$dec_val" = "$dec_res_mark" ]; then
+            echo "-1"
+            return 0
+        fi
+    done
+
+    echo "$dec_val"
+}
+
 json_escape() {
     printf '%s' "$1" | \
     sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
