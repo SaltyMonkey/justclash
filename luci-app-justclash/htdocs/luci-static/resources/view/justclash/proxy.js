@@ -264,6 +264,14 @@ return view.extend({
             if (!value || value.trim() === "") return true;
             return common.validateDnsServer(value);
         };
+        o = s.taboption(tabname, form.DynamicList, "direct_nameserver", _("Direct nameservers:"));
+        o.description = _("Direct nameservers used for DIRECT rules.");
+        o.rmempty = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") return true;
+            return common.validateDnsServer(value);
+        };
         o = s.taboption(tabname, form.DynamicList, "nameserver", _("Nameservers:"));
         o.description = _("Main nameservers used for regular DNS queries.");
         o.rmempty = false;
@@ -325,6 +333,11 @@ return view.extend({
         o.description = _("Force domain detection for traffic without resolved domain names.");
         o.rmempty = false;
         o.default = primitives.TRUE;
+
+        o = s.taboption(tabname, form.Flag, "sniffer_override_destination", _("Override destination:"));
+        o.description = _("Override connection destination address with sniffed domain name.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.DynamicList, "sniffer_exclude_domain", _("Excluded from sniffer domains:"));
         o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
