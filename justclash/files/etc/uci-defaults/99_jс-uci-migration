@@ -13,40 +13,6 @@ add_missing_option() {
     fi
 }
 
-add_missing_option "justclash.settings.mihomo_core_source_type" "github"
-add_missing_option "justclash.settings.mihomo_github_repo" "MetaCubeX/mihomo"
-add_missing_option "justclash.settings.mihomo_github_channel" "alpha"
-add_missing_option "justclash.settings.mihomo_custom_core_url" ""
-add_missing_option "justclash.settings.mihomo_rulesets_files_download_url" "https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
-add_missing_option "justclash.settings.mihomo_dashboard_zashboard_url" "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
-add_missing_option "justclash.settings.mihomo_dashboard_metacubexd_url" "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
-add_missing_option "justclash.settings.mihomo_dashboard_yacd_meta_url" "https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
-add_missing_option "justclash.settings.wait_for_wan" "0"
-add_missing_option "justclash.settings.wait_for_wan_max" "90"
-add_missing_option "justclash.settings.mihomo_mem_limit" "0"
-add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
-uci -q delete justclash.proxy.use_hosts
-uci -q delete justclash.proxy.hosts
-
-if ! uci -q get justclash.settings.nft_ports_exclude >/dev/null; then
-    uci add_list justclash.settings.nft_ports_exclude='6881'
-fi
-
-uci -q delete justclash.settings.mihomo_autoupdate
-uci -q delete justclash.settings.mihomo_autoupdate_channel
-uci -q delete justclash.settings.mihomo_cron_update_string
-
-uci -q delete justclash.proxy.direct_nameserver
-
-# Migrate fake_ip_ttl from minutes (1) to seconds (60)
-if [ "$(uci -q get justclash.proxy.fake_ip_ttl)" = "1" ]; then
-    uci set justclash.proxy.fake_ip_ttl="60"
-fi
-
-if ! uci -q get justclash.proxy.sniffer_exclude_domain | grep -qF "*"; then
-    uci add_list justclash.proxy.sniffer_exclude_domain='*'
-fi
-
 clean_fake_ip_list() {
     local option="$1"
     local list_val item new_val
@@ -69,6 +35,38 @@ clean_fake_ip_list() {
         uci add_list "justclash.proxy.$option=$new_val"
     done
 }
+
+add_missing_option "justclash.settings.mihomo_core_source_type" "github"
+add_missing_option "justclash.settings.mihomo_github_repo" "MetaCubeX/mihomo"
+add_missing_option "justclash.settings.mihomo_github_channel" "alpha"
+add_missing_option "justclash.settings.mihomo_custom_core_url" ""
+add_missing_option "justclash.settings.mihomo_rulesets_files_download_url" "https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
+add_missing_option "justclash.settings.mihomo_dashboard_zashboard_url" "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+add_missing_option "justclash.settings.mihomo_dashboard_metacubexd_url" "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
+add_missing_option "justclash.settings.mihomo_dashboard_yacd_meta_url" "https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
+add_missing_option "justclash.settings.wait_for_wan" "0"
+add_missing_option "justclash.settings.wait_for_wan_max" "90"
+add_missing_option "justclash.settings.mihomo_mem_limit" "0"
+add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
+add_missing_option "justclash.proxy.sniffer_override_destination" "0"
+uci -q delete justclash.proxy.use_hosts
+uci -q delete justclash.proxy.hosts
+
+if ! uci -q get justclash.settings.nft_ports_exclude >/dev/null; then
+    uci add_list justclash.settings.nft_ports_exclude='6881'
+fi
+
+uci -q delete justclash.settings.mihomo_autoupdate
+uci -q delete justclash.settings.mihomo_autoupdate_channel
+uci -q delete justclash.settings.mihomo_cron_update_string
+
+if [ "$(uci -q get justclash.proxy.fake_ip_ttl)" = "1" ]; then
+    uci set justclash.proxy.fake_ip_ttl="60"
+fi
+
+if ! uci -q get justclash.proxy.sniffer_exclude_domain | grep -qF "*"; then
+    uci add_list justclash.proxy.sniffer_exclude_domain='*'
+fi
 
 clean_fake_ip_list "fake_ip_exclude_domains"
 clean_fake_ip_list "fake_ip_include_domains"
