@@ -1468,7 +1468,7 @@ core_generate_yaml() {
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_system_hosts fake_ip_range fake_ip_ttl dns_cache_max_size
     local etag_support global_ua
-    local default_nameserver proxy_server_nameserver nameserver fake_ip_filter_data
+    local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_filter_data
     local fake_ip_include_domain_values fake_ip_exclude_domain_values
     local fake_ip_include_ruleset_values fake_ip_exclude_ruleset_values
     local nameserver_policy_custom
@@ -1480,7 +1480,7 @@ core_generate_yaml() {
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path tmp_fake_ip_rules_path
     # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls
-    local sniffer_enable sniffer_parse_pure_ip sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
+    local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
 
     config_get controller_bind_interface proxy controller_bind_interface
@@ -1517,6 +1517,7 @@ core_generate_yaml() {
     config_get fake_ip_ttl proxy fake_ip_ttl
     config_get_bool sniffer_enable proxy sniffer_enable
     config_get_bool sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
+    config_get_bool sniffer_override_destination proxy sniffer_override_destination 0
     config_get fake_ip_include_domain_values proxy fake_ip_include_domains
     config_get fake_ip_exclude_domain_values proxy fake_ip_exclude_domains
     config_get fake_ip_include_ruleset_values proxy fake_ip_include_rulesets
@@ -1542,6 +1543,7 @@ core_generate_yaml() {
 
     dashboard_url=$(get_dashboard_url "$dashboard_repo")
     default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
+    direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     nameserver=$(format_uci_list_as_json_array proxy nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     nameserver_policy_custom=$(format_uci_list_as_json_array proxy nameserver_policy "" "    ")
@@ -1759,6 +1761,10 @@ core_generate_yaml() {
         printf '%s\n' "  default-nameserver: $default_nameserver"
         printf '%s\n' "  nameserver: $nameserver"
         printf '%s\n' "  proxy-server-nameserver: $proxy_server_nameserver"
+        if [ "$direct_nameserver" != "[]" ] && [ -n "$direct_nameserver" ]; then
+            printf '%s\n' "  direct-nameserver: $direct_nameserver"
+            echo "  direct-nameserver-follow-policy: true"
+        fi
         echo "  respect-rules: true"
         echo "  enhanced-mode: fake-ip"
         echo "  fake-ip-range: $fake_ip_range"
@@ -1769,7 +1775,7 @@ core_generate_yaml() {
         echo "sniffer:"
         echo "  enable: $(format_uci_bool_as_yaml "$sniffer_enable")"
         echo "  parse-pure-ip: $(format_uci_bool_as_yaml "$sniffer_parse_pure_ip")"
-        echo "  override-destination: false"
+        echo "  override-destination: $(format_uci_bool_as_yaml "$sniffer_override_destination")"
         echo "  sniff:"
         echo "    HTTP:"
         echo "      ports: [$DEFAULT_HTTP_PORT, $DEFAULT_SECONDARY_HTTP_PORT_RANGE-$DEFAULT_SECONDARY_HTTP_PORT_RANGE_END]"
