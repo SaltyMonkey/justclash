@@ -393,8 +393,8 @@ return baseclass.extend({
         if (this.hasControlChars(val) || /\s/.test(val))
             return _("Routing mark must not contain whitespace or control characters");
 
-        if (!/^\d+$/.test(val))
-            return _("Use a decimal number, for example 268435456");
+        if (!/^(0[xX][0-9a-fA-F]+|\d+)$/.test(val))
+            return _("Use a decimal or hex number, for example 268435456 or 0xff");
 
         const mark = Number(val);
         if (!Number.isSafeInteger(mark))
