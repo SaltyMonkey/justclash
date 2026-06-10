@@ -972,6 +972,14 @@ msgstr ""
 msgid "Force domain detection for traffic without resolved domain names."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/proxy.js:338
+msgid "Override destination:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:339
+msgid "Override connection destination address with sniffed domain name."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/proxy.js:329
 msgid "Excluded from sniffer domains:"
 msgstr ""
