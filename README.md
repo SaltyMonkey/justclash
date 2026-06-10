@@ -12,7 +12,7 @@
 > This project is a non-commercial educational demonstration created for scientific and technical research in embedded systems, Linux network stack configurations (`nftables`/`tproxy`), and OpenWrt UCI/LuCI integration. It is provided "AS IS" without any warranties of any kind.
 >
 > **2. Compliance with Local Laws:**
-> *   **No Censorship Circumvention:** This software does not contain, distribute, host, or pre-configure any tools, keys, servers, subscription links, or methods intended to bypass state-mandated internet filters, government registry blocks (such as Roskomnadzor registry in the RF), or Internet Service Provider (ISP) restrictions.
+> *   **No Censorship Circumvention:** This software does not contain, distribute, host, or pre-configure any tools, keys, servers, subscription links, or methods intended to bypass state-mandated internet filters, government registry blocks, or Internet Service Provider (ISP) restrictions.
 > *   **Nature of Included Rulesets:** The included default rulesets are public domain/IP classification databases provided solely as metadata definitions for traffic categorization.
 >     *   These lists **do not** contain any circumvention tools, access keys, or communication channels.
 >     *   By default, without user-provided external routing destination configurations, all traffic matching these lists routes through the default WAN gateway directly and remains subject to all local ISP blocks.
@@ -32,13 +32,13 @@
 > **1. Исключительно образовательные и научные цели:**
 > Данный проект является некоммерческой демонстрацией и предназначен исключительно для технического изучения сетевого стека Linux (`nftables`, `tproxy`), автоматизации системных служб и интеграции интерфейсов управления в среде OpenWrt. Код предоставляется по принципу «как есть» (AS IS).
 >
-> **2. Соответствие законодательству РФ (ФЗ № 149-ФЗ и др.):**
+> **2. Соответствие местному законодательству:**
 > *   **Отсутствие средств обхода блокировок:** Данное программное обеспечение **не содержит, не распространяет и не настраивает по умолчанию** какие-либо средства обхода ограничений доступа, ключи, подписки или методы, предназначенные для получения доступа к заблокированным информационным ресурсам.
 > *   **Статус встроенных списков (Rulesets):** Встроенные по умолчанию списки правил маршрутизации представляют собой исключительно публичные классификаторы доменных имён и IP-диапазонов (метаданные), служащие для демонстрации работы с бинарным форматом MRS.
 >     *   Данные списки **не являются средствами обхода ограничений доступа** и не содержат серверов, ключей доступа или туннелей.
 >     *   По умолчанию (без добавления пользователем собственных внешних серверов маршрутизации) весь трафик к этим ресурсам направляется напрямую через сеть провайдера и подвергается стандартной фильтрации со стороны оператора связи.
 > *   **Инструмент маршрутизации, а не сервис:** Утилита является исключительно локальным инструментом для управления маршрутизацией трафика и не предоставляет никаких услуг по предоставлению средств обхода ограничений доступа, сторонних серверов или каналов связи. Все конфигурации заполняются конечным пользователем самостоятельно.
-> *   **Соблюдение правил использования шифрования:** Проект не содержит специализированных средств шифрования, кроме встроенных в ядро используемых сторонних бинарных файлов. Пользователь самостоятельно несет ответственность за соблюдение законодательства РФ в области использования шифровальных (криптографических) средств и защиты информации.
+> *   **Соблюдение правил использования шифрования:** Проект не содержит специализированных средств шифрования, кроме встроенных в используемые сторонние бинарные файлы. Пользователь самостоятельно несет ответственность за соблюдение местного законодательства в области использования шифровальных (криптографических) средств и защиты информации.
 >
 > **3. Ограничение ответственности:**
 > Разработчики проекта не несут ответственности за любые прямые или косвенные последствия использования данного ПО, включая сбои в работе сети провайдера связи, порчу оборудования (роутера), а также за возможные нарушения пользователем законодательства своей страны при настройке маршрутизации.
