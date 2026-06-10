@@ -2292,9 +2292,25 @@ diag_mihomo_config() {
     fi
 }
 
+diag_mihomo_config_unsafe() {
+    if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
+        cat "$OUTPUT_YAML_CONFIG_PATH"
+    else
+        clog error "Config file not found." "❌"
+    fi
+}
+
 diag_service_config() {
     if [ -f "$CONFIG_PATH" ]; then
         sed -E "s/^([[:space:]]*(option|list)[[:space:]]+(password|obfs_password|tls_password|key|private_key|preshared_key|api_password|username|uuid|public_key|short_id|certificate|server|servername|token|auth|authentication|subscription|proxy_link_uri|proxy_link_object)[[:space:]]+).*/\1'***REDACTED***'/gI" "$CONFIG_PATH"
+    else
+        clog error "Service config file not found." "❌"
+    fi
+}
+
+diag_service_config_unsafe() {
+    if [ -f "$CONFIG_PATH" ]; then
+        cat "$CONFIG_PATH"
     else
         clog error "Service config file not found." "❌"
     fi
@@ -2371,11 +2387,7 @@ diag_report() {
     echo ""
 }
 
-config_show() {
-    uci export "$PROGNAME"
-}
-
-config_reset() {
+diag_service_config_reset() {
     if [ ! -f "$DEFAULT_CONFIG_PATH" ]; then
         clog error "Default configuration file is missing. Restore is unavailable."
         return 1
@@ -2411,8 +2423,6 @@ help() {
     echo "Service Management:"
     echo "  start|run               Start the service"
     echo "  stop                    Stop the service"
-    echo "  config_show             Show configuration in console"
-    echo "  config_reset            Reset configuration"
     echo "  info_core|version_core  Show Mihomo core version"
     echo "  info_package|version    Show service version"
     echo "  service_data_update     Update service files from repository"
@@ -2426,14 +2436,17 @@ help() {
     echo "  core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task"
     echo ""
     echo "Diagnostics:"
-    echo "  diag_report             Run diagnostic"
-    echo "  diag_nft                Run nftables diagnostic"
-    echo "  diag_route              Run route tables diagnostic"
-    echo "  diag_icmp               Run internet check with ICMP"
-    echo "  diag_proxy_resolver     Run Internal DNS diagnostic"
-    echo "  diag_external_resolver  Run Default DNS diagnostic"
-    echo "  diag_mihomo_config      Show generated mihomo config"
-    echo "  diag_service_config     Show service config"
+    echo "  diag_report                 Run diagnostic"
+    echo "  diag_nft                    Run nftables diagnostic"
+    echo "  diag_route                  Run route tables diagnostic"
+    echo "  diag_icmp                   Run internet check with ICMP"
+    echo "  diag_proxy_resolver         Run Internal DNS diagnostic"
+    echo "  diag_external_resolver      Run Default DNS diagnostic"
+    echo "  diag_mihomo_config          Show generated mihomo config (redacted)"
+    echo "  diag_mihomo_config_unsafe   Show raw generated mihomo config (includes passwords)"
+    echo "  diag_service_config         Show service config (redacted)"
+    echo "  diag_service_config_unsafe  Show raw service config (includes passwords)"
+    echo "  diag_service_config_reset   Reset service configuration to default"
     echo ""
     echo "Logs:"
     echo "  logs|systemlogs [N]     Show last N lines of system logs (default 40)"
@@ -2444,47 +2457,32 @@ help() {
 }
 
 case "$1" in
-    start|run)
+    start|run|up|u)
         [ "$JUSTCLASH_ENV" != "procd" ] && trap stop INT TERM HUP
         start
         ;;
-    stop)
+    stop|down|d)
         stop
         ;;
-    config_show)
-        config_show
-        ;;
-    config_reset)
-        config_reset
-        ;;
-    core_update)
+    core_update|cu)
         core_update
         ;;
-    core_remove)
+    core_remove|cr)
         core_remove
         ;;
-    core_update_cron_check)
-        core_update_cron_check
-        ;;
-    core_update_cron_add)
-        core_update_cron_add
-        ;;
-    core_update_cron_remove)
-        core_update_cron_remove
-        ;;
-    core_autorestart_cron_check)
+    core_autorestart_cron_check|cacc)
         core_autorestart_cron_check
         ;;
-    core_autorestart_cron_add)
+    core_autorestart_cron_add|caca)
         core_autorestart_cron_add
         ;;
-    core_autorestart_cron_remove)
+    core_autorestart_cron_remove|cacr)
         core_autorestart_cron_remove
         ;;
-    service_data_update)
+    service_data_update|sdu)
         service_data_update
         ;;
-    logs|systemlogs)
+    logs|systemlogs|log|l)
         case "$2" in
             *[!0-9]* | '')
                 systemlogs
@@ -2494,37 +2492,46 @@ case "$1" in
                 ;;
         esac
         ;;
-    info_core|info_mihomo|version_core)
+    info_core|info_mihomo|version_core|vc|--vc)
         info_mihomo
         ;;
-    info_package|version)
+    info_package|version|v|-v|--version)
         echo "$JUSTCLASH_VERSION"
         ;;
-    diag_nft)
+    diag_nft|dn)
         diag_nft
         ;;
-    diag_route)
+    diag_route|dr)
         diag_route
         ;;
-    diag_report)
+    diag_report|diag|dg)
         diag_report
         ;;
-    diag_proxy_resolver)
+    diag_proxy_resolver|dpr)
         diag_proxy_resolver "$2"
         ;;
-    diag_external_resolver)
+    diag_external_resolver|der)
         diag_external_resolver "$2" "$3"
         ;;
-    diag_icmp)
+    diag_icmp|di)
         diag_icmp "$2" "${3:-3}"
         ;;
-    diag_mihomo_config)
+    diag_mihomo_config|dmc)
         diag_mihomo_config
         ;;
-    diag_service_config)
+    diag_mihomo_config_unsafe|dmcu)
+        diag_mihomo_config_unsafe
+        ;;
+    diag_service_config|dsc)
         diag_service_config
         ;;
-    help|?|command)
+    diag_service_config_unsafe|dscu)
+        diag_service_config_unsafe
+        ;;
+    diag_service_config_reset|dscr)
+        diag_service_config_reset
+        ;;
+    help|\?|command|h|-h|--help)
         help
         ;;
     _luci_call)

@@ -621,7 +621,7 @@ return view.extend({
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), false, common.binPath, ["diag_mihomo_config"]), "config"),
                 createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Show service config"), showExecModalHandler(_("Service config"), false, common.binPath, ["diag_service_config"]), "config"),
-                createActionButton(buttonsIDs.CONFIG_RESET, buttons.NEGATIVE, _("Reset config"), showConfirmExecModalHandler(_("Reset configuration"), _("This will reset the JustClash configuration. Use with care."), common.binPath, ["config_reset"]), "reset")
+                createActionButton(buttonsIDs.CONFIG_RESET, buttons.NEGATIVE, _("Reset config"), showConfirmExecModalHandler(_("Reset configuration"), _("This will reset the JustClash configuration. Use with care."), common.binPath, ["diag_service_config_reset"]), "reset")
             ])
         ]);
 
