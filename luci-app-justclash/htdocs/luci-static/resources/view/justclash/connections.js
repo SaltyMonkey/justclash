@@ -257,12 +257,14 @@ return view.extend({
 
         const actionBar = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions jc-connections-actions" }, [
-                E("div", { class: "jc-interval-control" }, [
-                    E("label", { class: "cbi-checkbox-label", for: "jcConnectionsInterval" }, _("Interval:")),
-                    intervalSelect
+                E("div", { class: "jc-left-group" }, [
+                    E("div", { class: "jc-interval-control" }, [
+                        E("label", { class: "cbi-checkbox-label", for: "jcConnectionsInterval" }, _("Interval:")),
+                        intervalSelect
+                    ]),
+                    copyTextBtn,
+                    copyJsonBtn
                 ]),
-                copyTextBtn,
-                copyJsonBtn,
                 closeAllBtn
             ])
         ]);
@@ -572,6 +574,7 @@ return view.extend({
             .jc-actions-wrap{padding:.7em .8em;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.375rem;background:var(--background-color-medium, #f6f6f6);margin-bottom:0.75rem;}
             .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
             .jc-primary-actions .cbi-button{margin:0 !important;}
+            .jc-left-group{display:flex;gap:.65em;align-items:center;flex-wrap:wrap;}
             .jc-connections-actions{justify-content:space-between;}
             .jc-interval-control{gap:0.625rem;flex-wrap:wrap;}
             .jc-interval-select{width:auto;min-width:11.25rem;margin:0;}
