@@ -2636,7 +2636,7 @@ case "$1" in
     diag_service_config_reset|dscr)
         diag_service_config_reset
         ;;
-    help|\?|command|h|-h|--help)
+    help|'?'|command|h|-h|--help)
         help
         ;;
     _luci_call)
