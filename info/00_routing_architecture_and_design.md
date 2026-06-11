@@ -29,7 +29,7 @@ Mihomo becomes the single source of truth for your network.
 * **Predictability:** Rules are evaluated top-to-bottom. If you want to bypass a domain, you add it to `Direct Rules`. If you want to block it, you add it to `Block Rules`. Everything happens in one place.
 
 **The Trade-off:**
-Routing network traffic through a userspace proxy engine inherently consumes more CPU/RAM than native kernel routing. To mitigate this, JustClash provides **Traffic Exclusions** to bypass heavy P2P/torrent ports at the firewall level, keeping them in the kernel and saving CPU.
+Routing network traffic through a userspace proxy engine inherently consumes more CPU/RAM than native kernel routing. To mitigate this, JustClash provides **Traffic Exclusions** to bypass heavy P2P/torrent ports or specific client devices (by MAC/IP address) at the firewall level, keeping them in the kernel and saving CPU.
 
 ---
 
