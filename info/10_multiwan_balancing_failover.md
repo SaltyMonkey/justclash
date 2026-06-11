@@ -111,33 +111,33 @@ Using the `endpoint_name/wanX` naming format keeps this configuration clear:
    * **Via Console (UCI)**:
      * **Instance 1 (`my_server/wan`)**:
        ```bash
-     uci set justclash.endpoint_wan1=proxies
-     uci set justclash.endpoint_wan1.enabled='1'
-     uci set justclash.endpoint_wan1.name='my_server/wan'
-     uci set justclash.endpoint_wan1.proxy_link_uri='tunnel://...'
-     uci set justclash.endpoint_wan1.interface_name='wan'
-     ```
-   * **Instance 2 (`my_server/wan2`)**:
-     ```bash
-     uci set justclash.endpoint_wan2=proxies
-     uci set justclash.endpoint_wan2.enabled='1'
-     uci set justclash.endpoint_wan2.name='my_server/wan2'
-     uci set justclash.endpoint_wan2.proxy_link_uri='tunnel://...'
-     uci set justclash.endpoint_wan2.interface_name='wan2'
-     ```
+       uci set justclash.endpoint_wan1=proxies
+       uci set justclash.endpoint_wan1.enabled='1'
+       uci set justclash.endpoint_wan1.name='my_server/wan'
+       uci set justclash.endpoint_wan1.proxy_link_uri='tunnel://...'
+       uci set justclash.endpoint_wan1.interface_name='wan'
+       ```
+     * **Instance 2 (`my_server/wan2`)**:
+       ```bash
+       uci set justclash.endpoint_wan2=proxies
+       uci set justclash.endpoint_wan2.enabled='1'
+       uci set justclash.endpoint_wan2.name='my_server/wan2'
+       uci set justclash.endpoint_wan2.proxy_link_uri='tunnel://...'
+       uci set justclash.endpoint_wan2.interface_name='wan2'
+       ```
 
 2. **Group them for Load Balancing or Failover**:
    * **Via LuCI Web Interface**: In the *Proxy Groups Tab*, create a new `fallback` or `load-balance` group and add both instances to it.
    * **Via Console (UCI)**:
      ```bash
-   uci set justclash.group_wan=proxy_group
-   uci set justclash.group_wan.enabled='1'
-   uci set justclash.group_wan.name='Endpoint_MultiWAN'
-   uci set justclash.group_wan.group_type='fallback'
-   uci add_list justclash.group_wan.proxies='my_server/wan'
-   uci add_list justclash.group_wan.proxies='my_server/wan2'
-   uci commit justclash
-   ```
+     uci set justclash.group_wan=proxy_group
+     uci set justclash.group_wan.enabled='1'
+     uci set justclash.group_wan.name='Endpoint_MultiWAN'
+     uci set justclash.group_wan.group_type='fallback'
+     uci add_list justclash.group_wan.proxies='my_server/wan'
+     uci add_list justclash.group_wan.proxies='my_server/wan2'
+     uci commit justclash
+     ```
 
 ---
 
