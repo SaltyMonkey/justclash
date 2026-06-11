@@ -173,19 +173,32 @@ return view.extend({
             click: () => { logContainer.scrollTop = logContainer.scrollHeight; }
         }, [_("Scroll to bottom")]);
 
-        const copyBtn = E("button", {
+        const createCopyBtn = (isJson) => E("button", {
             class: "cbi-button cbi-button-action",
             click: async () => {
                 if (!logEntries.length) return;
                 try {
-                    await clipboard.copy(logEntries.join("\n"));
-                    ui.addTimeLimitedNotification(null, E("p", _("Data copied to clipboard")), common.notificationTimeout, "success");
+                    const content = isJson
+                        ? JSON.stringify(logEntries.map(entryStr => {
+                            try {
+                                return JSON.parse(entryStr);
+                            } catch (e) {
+                                return entryStr;
+                            }
+                        }), null, 4)
+                        : logEntries.map(entryStr => common.formatLogEntryText(entryStr)).join("\n");
+                    await clipboard.copy(content);
+                    const msg = isJson ? _("Logs copied as JSON") : _("Logs copied as text");
+                    ui.addTimeLimitedNotification(null, E("p", msg), common.notificationTimeout, "success");
                 } catch (e) {
                     ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
                     console.error("Failed to copy logs to clipboard", e);
                 }
             }
-        }, [_("Copy log")]);
+        }, [isJson ? _("Copy JSON") : _("Copy Text")]);
+
+        const copyTextBtnTop = createCopyBtn(false);
+        const copyJsonBtnTop = createCopyBtn(true);
 
         const topBtn = E("button", {
             class: "cbi-button cbi-button-neutral",
@@ -203,11 +216,14 @@ return view.extend({
         const buttonBar = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 tailBtn,
-                copyBtn
+                copyTextBtnTop,
+                copyJsonBtnTop
             ])
         ]);
         const buttonBottomBar = E("div", { class: "jc-actions-wrap" }, [
-            E("div", { class: "cbi-section-actions jc-primary-actions" }, [topBtn])
+            E("div", { class: "cbi-section-actions jc-primary-actions" }, [
+                topBtn
+            ])
         ]);
 
         requestAnimationFrame(() => {

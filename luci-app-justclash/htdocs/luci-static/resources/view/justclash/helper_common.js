@@ -668,6 +668,59 @@ return baseclass.extend({
         const suffix = Math.random().toString(16).substring(2, 6);
         return `${adj}-${noun}-${suffix}`;
     },
+    formatBytes: function (b) {
+        if (!b) return "0 B";
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        const k = 1024;
+        const i = Math.floor(Math.log(b) / Math.log(k));
+        return parseFloat((b / Math.pow(k, i)).toFixed(2)) + " " + units[i];
+    },
+    formatConnectionSummary: function (conn) {
+        const metadata = conn.metadata || {};
+        const lines = [];
+
+        lines.push(`Connection ID: ${conn.id}`);
+        lines.push(`Protocol: ${String(metadata.network || "").toUpperCase()} (${metadata.type || "N/A"})`);
+
+        const src = metadata.sourceIP + ":" + metadata.sourcePort;
+        lines.push(`Source: ${src}`);
+
+        const dest = metadata.destinationIP
+            ? `${metadata.host || ""}` + (metadata.host ? ` (${metadata.destinationIP}:${metadata.destinationPort})` : `${metadata.destinationIP}:${metadata.destinationPort}`)
+            : (metadata.remoteDestination || "N/A");
+        lines.push(`Destination: ${dest}`);
+
+        if (metadata.sniffHost) {
+            lines.push(`Sniffed Host: ${metadata.sniffHost}`);
+        }
+
+        lines.push(`Rule: ${conn.rulePayload || conn.rule || "N/A"}`);
+        lines.push(`Proxy Chain: ${(conn.chains || []).join(" → ") || "DIRECT"}`);
+
+        lines.push(`Upload: ${this.formatBytes(conn.upload)}`);
+        lines.push(`Download: ${this.formatBytes(conn.download)}`);
+
+        if (conn.start) {
+            try {
+                const date = new Date(conn.start);
+                lines.push(`Start Time: ${date.toLocaleString()}`);
+            } catch(e) {
+                lines.push(`Start Time: ${conn.start}`);
+            }
+        }
+
+        return lines.join("\n");
+    },
+    formatLogEntryText: function (entryStr) {
+        try {
+            const parsed = JSON.parse(entryStr);
+            if (parsed && typeof parsed === "object" && parsed.payload !== undefined) {
+                const typeStr = parsed.type ? `[${parsed.type.toUpperCase()}] ` : "";
+                return `${typeStr}${parsed.payload}`;
+            }
+        } catch (e) {}
+        return entryStr;
+    },
     // Keep menu-only titles translatable for luci-app-justclash.json.
     stub_nodes_tab: _("Nodes"),
     stub_connections_tab: _("Connections"),

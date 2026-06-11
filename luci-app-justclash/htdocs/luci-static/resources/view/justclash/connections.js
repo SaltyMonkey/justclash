@@ -90,24 +90,31 @@ const showConnectionDetails = (connId) => {
     if (!connData) return;
     const jsonString = JSON.stringify(connData.raw, null, 2);
 
+    const createModalCopyBtn = (isJson) => E("button", {
+        class: "cbi-button cbi-button-action",
+        style: isJson ? "margin-left: 0.3125rem;" : "",
+        click: async () => {
+            try {
+                const content = isJson ? jsonString : common.formatConnectionSummary(connData.raw);
+                await clipboard.copy(content || "");
+                const msg = isJson ? _("Connection JSON copied") : _("Connection summary copied");
+                ui.addTimeLimitedNotification(null, E("p", msg), common.notificationTimeout, "success");
+                ui.hideModal();
+            } catch (e) {
+                ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
+                console.error("Failed to copy connection details to clipboard", e);
+            }
+        }
+    }, [isJson ? _("Copy JSON") : _("Copy Summary")]);
+
     ui.showModal(_("Connection details"), [
         E("pre", { class: "jc-modal-pre" }, jsonString),
         E("div", { class: "jc-modal-actions" }, [
-            E("button", {
-                class: "cbi-button cbi-button-action",
-                click: async () => {
-                    try {
-                        await clipboard.copy(jsonString || "");
-                        ui.addTimeLimitedNotification(null, E("p", _("Copied to clipboard")), common.notificationTimeout, "success");
-                        ui.hideModal();
-                    } catch (e) {
-                        ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
-                        console.error("Failed to copy connection details to clipboard", e);
-                    }
-                }
-            }, [_("Copy details")]),
+            createModalCopyBtn(false),
+            createModalCopyBtn(true),
             E("button", {
                 class: "cbi-button",
+                style: "margin-left: 0.3125rem;",
                 click: ui.hideModal
             }, [_("Close")])
         ])
@@ -215,9 +222,41 @@ return view.extend({
             })
         }, [_("Close all")]);
 
+        const createCopyBtn = (isJson) => E("button", {
+            class: "cbi-button cbi-button-action",
+            click: async () => {
+                const conns = [];
+                connectionsData.forEach((connData) => {
+                    if (matchesFilters(connData)) {
+                        conns.push(connData.raw);
+                    }
+                });
+                if (!conns.length) {
+                    ui.addTimeLimitedNotification(null, E("p", _("No active connections to copy")), common.notificationTimeout, "warning");
+                    return;
+                }
+                try {
+                    const content = isJson
+                        ? JSON.stringify(conns, null, 2)
+                        : conns.map(conn => common.formatConnectionSummary(conn)).join("\n\n" + "=".repeat(40) + "\n\n");
+                    await clipboard.copy(content);
+                    const msg = isJson ? _("Connections JSON copied") : _("Connections summary copied");
+                    ui.addTimeLimitedNotification(null, E("p", msg), common.notificationTimeout, "success");
+                } catch (e) {
+                    ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
+                    console.error("Failed to copy connections to clipboard", e);
+                }
+            }
+        }, [isJson ? _("Copy JSON") : _("Copy Text")]);
+
+        const copyTextBtn = createCopyBtn(false);
+        const copyJsonBtn = createCopyBtn(true);
+
         if (result.configLoadFailed) {
             intervalSelect.disabled = true;
             closeAllBtn.disabled = true;
+            copyTextBtn.disabled = true;
+            copyJsonBtn.disabled = true;
         }
 
         const actionBar = E("div", { class: "jc-actions-wrap" }, [
@@ -226,6 +265,8 @@ return view.extend({
                     E("label", { class: "cbi-checkbox-label", for: "jcConnectionsInterval" }, _("Interval:")),
                     intervalSelect
                 ]),
+                copyTextBtn,
+                copyJsonBtn,
                 closeAllBtn
             ])
         ]);
