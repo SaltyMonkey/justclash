@@ -436,7 +436,7 @@ nf_table_add() {
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router nft_doh_mode
     local pbr_priority iface skuid_values skuid_list skuid_resolved proxy_routing_marks provider_routing_marks
-    local nft_ports_exclude nft_ports_exclude_router
+    local nft_ports_exclude nft_ports_exclude_router nft_mac_exclude nft_ips_exclude
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -469,6 +469,8 @@ nf_table_add() {
     config_get nft_ntp_mode_router settings nft_ntp_mode_router
     config_get nft_ports_exclude settings nft_ports_exclude
     config_get nft_ports_exclude_router settings nft_ports_exclude_router
+    config_get nft_mac_exclude settings nft_mac_exclude
+    config_get nft_ips_exclude settings nft_ips_exclude
     config_get skuid_values settings nft_skuid_exclude_router
 
     if [ "$nft_apply_changes" = "1" ]; then
@@ -512,6 +514,14 @@ nf_table_add() {
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+
+            if [ -n "$nft_mac_exclude" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | spaces_to_commas) } return comment \"Bypass excluded MACs\""
+            fi
+
+            if [ -n "$nft_ips_exclude" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip saddr { $(echo "$nft_ips_exclude" | spaces_to_commas) } return comment \"Bypass excluded client IPs\""
+            fi
 
             if [ -n "$nft_ports_exclude" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded ports\""
