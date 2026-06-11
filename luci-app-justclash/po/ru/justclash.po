@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-08 22:07+0300\n"
+"POT-Creation-Date: 2026-06-11 19:16+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -24,104 +24,112 @@ msgstr "Закрыть все соединения"
 msgid "Close all active connections?"
 msgstr "Закрыть все активные соединения?"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:79 htdocs/luci-static/resources/view/justclash/connections.js:216
+#: htdocs/luci-static/resources/view/justclash/connections.js:79 htdocs/luci-static/resources/view/justclash/connections.js:221
 msgid "Close all"
 msgstr "Закрыть все"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:83 htdocs/luci-static/resources/view/justclash/status.js:410
+#: htdocs/luci-static/resources/view/justclash/connections.js:83 htdocs/luci-static/resources/view/justclash/status.js:409
 msgid "Cancel"
 msgstr "Отмена"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:93
-msgid "Connection details"
-msgstr "Подробности соединения"
-
-#: htdocs/luci-static/resources/view/justclash/connections.js:101
-msgid "Copied to clipboard"
-msgstr "Скопировано в буфер обмена"
-
-#: htdocs/luci-static/resources/view/justclash/connections.js:104 htdocs/luci-static/resources/view/justclash/connections.js:130 htdocs/luci-static/resources/view/justclash/connections.js:210 htdocs/luci-static/resources/view/justclash/connections.js:278 htdocs/luci-static/resources/view/justclash/nodes.js:123 htdocs/luci-static/resources/view/justclash/realtime_logs.js:184 htdocs/luci-static/resources/view/justclash/rules.js:36 htdocs/luci-static/resources/view/justclash/rules.js:108 htdocs/luci-static/resources/view/justclash/rules.js:175 htdocs/luci-static/resources/view/justclash/status.js:137 htdocs/luci-static/resources/view/justclash/status.js:332 htdocs/luci-static/resources/view/justclash/status.js:363 htdocs/luci-static/resources/view/justclash/status.js:444 htdocs/luci-static/resources/view/justclash/status.js:475 htdocs/luci-static/resources/view/justclash/status.js:476
-#: htdocs/luci-static/resources/view/justclash/status.js:478 htdocs/luci-static/resources/view/justclash/status.js:482 htdocs/luci-static/resources/view/justclash/status.js:531 htdocs/luci-static/resources/view/justclash/status.js:604 htdocs/luci-static/resources/view/justclash/status.js:607 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:123
+#: htdocs/luci-static/resources/view/justclash/connections.js:102 htdocs/luci-static/resources/view/justclash/connections.js:135 htdocs/luci-static/resources/view/justclash/connections.js:215 htdocs/luci-static/resources/view/justclash/connections.js:242 htdocs/luci-static/resources/view/justclash/connections.js:315 htdocs/luci-static/resources/view/justclash/nodes.js:123 htdocs/luci-static/resources/view/justclash/realtime_logs.js:192 htdocs/luci-static/resources/view/justclash/rules.js:36 htdocs/luci-static/resources/view/justclash/rules.js:108 htdocs/luci-static/resources/view/justclash/rules.js:175 htdocs/luci-static/resources/view/justclash/status.js:137 htdocs/luci-static/resources/view/justclash/status.js:332 htdocs/luci-static/resources/view/justclash/status.js:362 htdocs/luci-static/resources/view/justclash/status.js:443 htdocs/luci-static/resources/view/justclash/status.js:474
+#: htdocs/luci-static/resources/view/justclash/status.js:475 htdocs/luci-static/resources/view/justclash/status.js:477 htdocs/luci-static/resources/view/justclash/status.js:481 htdocs/luci-static/resources/view/justclash/status.js:530 htdocs/luci-static/resources/view/justclash/status.js:603 htdocs/luci-static/resources/view/justclash/status.js:606 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:122
 msgid "Error"
 msgstr "Ошибка"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:108
-msgid "Copy details"
-msgstr "Скопировать данные"
+#: htdocs/luci-static/resources/view/justclash/connections.js:106 htdocs/luci-static/resources/view/justclash/connections.js:246 htdocs/luci-static/resources/view/justclash/realtime_logs.js:196
+msgid "Copy JSON"
+msgstr "Копировать JSON"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:112
+#: htdocs/luci-static/resources/view/justclash/connections.js:106
+msgid "Copy Summary"
+msgstr "Копировать сводку"
+
+#: htdocs/luci-static/resources/view/justclash/connections.js:108
+msgid "Connection details"
+msgstr "Подробности соединения"
+
+#: htdocs/luci-static/resources/view/justclash/connections.js:117
 msgid "Close"
 msgstr "Закрыть"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:131 htdocs/luci-static/resources/view/justclash/nodes.js:467
+#: htdocs/luci-static/resources/view/justclash/connections.js:136 htdocs/luci-static/resources/view/justclash/nodes.js:467
 msgid "Failed to load configuration"
 msgstr "Не удалось загрузить конфигурацию"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:142
+#: htdocs/luci-static/resources/view/justclash/connections.js:147
 msgid "Active Connections"
 msgstr "Активные соединения"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:143
+#: htdocs/luci-static/resources/view/justclash/connections.js:148
 msgid "Monitor and manage active network connections established through Mihomo."
 msgstr "Мониторинг и управление активными сетевыми соединениями, установленными через Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:158 htdocs/luci-static/resources/view/justclash/connections.js:251
+#: htdocs/luci-static/resources/view/justclash/connections.js:163 htdocs/luci-static/resources/view/justclash/connections.js:288
 msgid "Proto"
 msgstr "Протокол"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:159 htdocs/luci-static/resources/view/justclash/connections.js:252
+#: htdocs/luci-static/resources/view/justclash/connections.js:164 htdocs/luci-static/resources/view/justclash/connections.js:289
 msgid "Connection"
 msgstr "Соединение"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:160 htdocs/luci-static/resources/view/justclash/connections.js:169 htdocs/luci-static/resources/view/justclash/connections.js:255
+#: htdocs/luci-static/resources/view/justclash/connections.js:165 htdocs/luci-static/resources/view/justclash/connections.js:174 htdocs/luci-static/resources/view/justclash/connections.js:292
 msgid "Host/Sniff"
 msgstr "Хост / sniff"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:161 htdocs/luci-static/resources/view/justclash/connections.js:179 htdocs/luci-static/resources/view/justclash/connections.js:256
+#: htdocs/luci-static/resources/view/justclash/connections.js:166 htdocs/luci-static/resources/view/justclash/connections.js:184 htdocs/luci-static/resources/view/justclash/connections.js:293
 msgid "Chains"
 msgstr "Цепочки"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:162 htdocs/luci-static/resources/view/justclash/connections.js:184 htdocs/luci-static/resources/view/justclash/connections.js:257 htdocs/luci-static/resources/view/justclash/nodes.js:512
+#: htdocs/luci-static/resources/view/justclash/connections.js:167 htdocs/luci-static/resources/view/justclash/connections.js:189 htdocs/luci-static/resources/view/justclash/connections.js:294 htdocs/luci-static/resources/view/justclash/nodes.js:512
 msgid "Rule"
 msgstr "Правило"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:163 htdocs/luci-static/resources/view/justclash/connections.js:258
+#: htdocs/luci-static/resources/view/justclash/connections.js:168 htdocs/luci-static/resources/view/justclash/connections.js:295
 msgid "Action"
 msgstr "Действие"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:174
+#: htdocs/luci-static/resources/view/justclash/connections.js:179
 msgid "Source/Endpoint IP"
 msgstr "Source/Endpoint IP"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:189 htdocs/luci-static/resources/view/justclash/connections.js:389
+#: htdocs/luci-static/resources/view/justclash/connections.js:194 htdocs/luci-static/resources/view/justclash/connections.js:424
 msgid "Apply"
 msgstr "Применить"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:208
+#: htdocs/luci-static/resources/view/justclash/connections.js:213
 msgid "All active connections were closed"
 msgstr "Все активные соединения закрыты"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:226
+#: htdocs/luci-static/resources/view/justclash/connections.js:233
+msgid "No active connections to copy"
+msgstr "Нет активных соединений для копирования"
+
+#: htdocs/luci-static/resources/view/justclash/connections.js:246 htdocs/luci-static/resources/view/justclash/realtime_logs.js:196
+msgid "Copy Text"
+msgstr "Копировать текст"
+
+#: htdocs/luci-static/resources/view/justclash/connections.js:261
 msgid "Interval:"
 msgstr "Интервал:"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:253
+#: htdocs/luci-static/resources/view/justclash/connections.js:290
 msgid "Source"
 msgstr "Источник"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:254
+#: htdocs/luci-static/resources/view/justclash/connections.js:291
 msgid "Destination"
 msgstr "Назначение"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:261 htdocs/luci-static/resources/view/justclash/connections.js:262
+#: htdocs/luci-static/resources/view/justclash/connections.js:298 htdocs/luci-static/resources/view/justclash/connections.js:299
 msgid "Close connection"
 msgstr "Закрыть соединение"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:275
+#: htdocs/luci-static/resources/view/justclash/connections.js:312
 msgid "Connection closed"
 msgstr "Соединение закрыто"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:389
+#: htdocs/luci-static/resources/view/justclash/connections.js:424
 msgid "Reset"
 msgstr "Сбросить"
 
@@ -436,7 +444,8 @@ msgid "Routing mark must not contain whitespace or control characters"
 msgstr "Метка маршрутизации не должна содержать пробелов или управляющих символов"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:397
-msgid "Use a decimal number, for example 268435456"
+#, fuzzy
+msgid "Use a decimal or hex number, for example 268435456 or 0xff"
 msgstr "Используйте десятичное число, например 268435456"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:401
@@ -504,122 +513,118 @@ msgid "Domain must not contain spaces or control characters"
 msgstr "Домен не должен содержать пробелов или управляющих символов"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:497
-msgid "Domain must contain at least one dot"
-msgstr "Строка с доменом должна содержать как минимум одну точку."
-
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:500
 msgid "Suffix must not start or end with a dot or hyphen"
 msgstr "Суффикс не должен начинаться или заканчиваться точкой или дефисом"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:503
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:500
 msgid "Double dots are not allowed"
 msgstr "Двойные точки не допускаются"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:508
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:505
 msgid "There must be no empty segments between dots"
 msgstr "Между точками не должно быть пустых сегментов"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:511
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:508
 msgid "Each domain segment must not exceed 63 characters"
 msgstr "Каждый сегмент домена не должен превышать 63 символа"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:514
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:511
 msgid "Domain segments may contain only letters, digits, hyphens, and asterisks"
 msgstr "Сегменты домена могут содержать только буквы, цифры, дефисы и звёздочки"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:517
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:514
 msgid "Domain segments must not start or end with a hyphen"
 msgstr "Сегменты домена не должны начинаться или заканчиваться дефисом"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:520
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:517
 msgid "Suffix length must not exceed 253 characters"
 msgstr "Длина суффикса не должна превышать 253 символа"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:546
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:543
 msgid "Invalid policy format. Use domain/nameserver."
 msgstr "Неверный формат политики. Используйте domain/nameserver."
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:562
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:559
 msgid "JSON object cannot be empty"
 msgstr "Объект JSON не может быть пустым"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:567
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:564
 msgid "Invalid JSON format"
 msgstr "Неверный формат JSON"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:571
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:568
 msgid "JSON must be an object"
 msgstr "JSON должен быть объектом"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:574
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:571
 msgid "Name field must not be defined in object."
 msgstr "Поле Name не должно быть определено в объекте."
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:577
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:574
 msgid "DIRECT proxy type must be defined without server or port fields."
 msgstr "Тип прокси DIRECT должен быть определен без полей server или port."
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:589
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:586
 msgid "JSON must contain at least type, server and port fields."
 msgstr "JSON должен содержать как минимум поля type, server и port."
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:592
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:589
 msgid "Proxy type contains unsupported characters"
 msgstr "Тип прокси содержит неподдерживаемые символы"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:595
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:592
 msgid "Server must be a non-empty host without whitespace"
 msgstr "Server должен быть непустым хостом без пробелов"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:605
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:602
 msgid "Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols."
 msgstr "Разрешены только строчные буквы, цифры и разделитель '|'. Пробелы и специальные символы запрещены."
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:608
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:605
 msgid "Empty proxy types are not allowed"
 msgstr "Пустые типы прокси не допускаются"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:615
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:612
 msgid "Unsupported type: "
 msgstr "Неподдерживаемый тип: "
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:624
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:621
 msgid "This field cannot be empty"
 msgstr "Это поле не может быть пустым"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:631
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:628
 msgid "Use a proxy/group name or supported action"
 msgstr "Используйте имя прокси/группы или поддерживаемое действие"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:650
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:647
 msgid "Invalid expression in "
 msgstr "Некорректное выражение в "
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:675 htdocs/luci-static/resources/view/justclash/nodes.js:466 htdocs/luci-static/resources/view/justclash/nodes.js:474 htdocs/luci-static/resources/view/justclash/nodes.js:639
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:725 htdocs/luci-static/resources/view/justclash/nodes.js:466 htdocs/luci-static/resources/view/justclash/nodes.js:474 htdocs/luci-static/resources/view/justclash/nodes.js:639
 msgid "Nodes"
 msgstr "Узлы"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:676
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:726
 msgid "Connections"
 msgstr "Соединения"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:677 htdocs/luci-static/resources/view/justclash/rules.js:232
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:727 htdocs/luci-static/resources/view/justclash/rules.js:233
 msgid "Rules"
 msgstr "Правила"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:678
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:728
 msgid "Setup: Rulesets"
 msgstr "Настройка: Правила"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:679
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:729
 msgid "Setup: Routing"
 msgstr "Настройка: Маршруты"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:680
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:730
 msgid "Setup: Service"
 msgstr "Настройка: Сервис"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:681
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:731
 msgid "Setup: Proxy"
 msgstr "Настройка: Прокси"
 
@@ -912,146 +917,156 @@ msgid "Nameservers used to resolve proxy server hostnames."
 msgstr "DNS-серверы, используемые для разрешения доменных имен серверов прокси."
 
 #: htdocs/luci-static/resources/view/justclash/proxy.js:267
+#, fuzzy
+msgid "Direct nameservers:"
+msgstr "DNS по умолчанию:"
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:268
+#, fuzzy
+msgid "Direct nameservers used for DIRECT rules."
+msgstr "Основные DNS-серверы, используемые для обычных DNS-запросов."
+
+#: htdocs/luci-static/resources/view/justclash/proxy.js:275
 msgid "Nameservers:"
 msgstr "DNS-серверы:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:268
+#: htdocs/luci-static/resources/view/justclash/proxy.js:276
 msgid "Main nameservers used for regular DNS queries."
 msgstr "Основные DNS-серверы, используемые для обычных DNS-запросов."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:276
+#: htdocs/luci-static/resources/view/justclash/proxy.js:284
 msgid "Force fake IP rulesets:"
 msgstr "Принудительные ruleset'ы для fake IP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:280
+#: htdocs/luci-static/resources/view/justclash/proxy.js:288
 msgid "Ruleset names that should resolve through fake IP. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list."
 msgstr "Имена ruleset'ов, которые должны резолвиться через fake IP. Значения трактуются как селекторы RULE-SET, например youtube или custom_domain_list."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:286
+#: htdocs/luci-static/resources/view/justclash/proxy.js:294
 msgid "Force real IP rulesets:"
 msgstr "Принудительные ruleset'ы для real IP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:290
+#: htdocs/luci-static/resources/view/justclash/proxy.js:298
 msgid "Ruleset names that should resolve through real IP before fake-IP matches are applied. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list."
 msgstr "Имена ruleset'ов, которые должны резолвиться через real IP до применения fake-IP совпадений. Значения трактуются как селекторы RULE-SET, например youtube или custom_domain_list."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:296
+#: htdocs/luci-static/resources/view/justclash/proxy.js:304
 msgid "Force fake IP rules:"
 msgstr "Принудительные правила fake IP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:297
+#: htdocs/luci-static/resources/view/justclash/proxy.js:305
 msgid "Entries that should resolve through fake IP; use plain suffixes like example.com."
 msgstr "Записи, которые должны резолвиться через fake IP; используйте обычные суффиксы вроде example.com."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:306
+#: htdocs/luci-static/resources/view/justclash/proxy.js:314
 msgid "Force real IP rules:"
 msgstr "Принудительные правила real IP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:307
+#: htdocs/luci-static/resources/view/justclash/proxy.js:315
 msgid "Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com."
 msgstr "Записи, которые должны резолвиться через real IP до применения fake-IP совпадений; используйте обычные суффиксы вроде example.com."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:317
+#: htdocs/luci-static/resources/view/justclash/proxy.js:325
 msgid "Sniffer settings"
 msgstr "Настройки анализатора"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:319
+#: htdocs/luci-static/resources/view/justclash/proxy.js:327
 msgid "Enable sniffer:"
 msgstr "Включить sniffer:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:320
+#: htdocs/luci-static/resources/view/justclash/proxy.js:328
 msgid "Enable Mihomo traffic sniffing."
 msgstr "Включить анализ трафика Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:324
+#: htdocs/luci-static/resources/view/justclash/proxy.js:332
 msgid "Parse pure IP:"
 msgstr "Анализ IP без домена:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:325
+#: htdocs/luci-static/resources/view/justclash/proxy.js:333
 msgid "Force domain detection for traffic without resolved domain names."
 msgstr "Принудительно определять домен для трафика без доменного имени."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:338
+#: htdocs/luci-static/resources/view/justclash/proxy.js:337
 msgid "Override destination:"
 msgstr "Переопределять адрес назначения:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:339
+#: htdocs/luci-static/resources/view/justclash/proxy.js:338
 msgid "Override connection destination address with sniffed domain name."
 msgstr "Переопределять IP-адрес назначения соединения на перехваченное доменное имя."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:329
+#: htdocs/luci-static/resources/view/justclash/proxy.js:342
 msgid "Excluded from sniffer domains:"
 msgstr "Исключить домены из sniffer:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:330
+#: htdocs/luci-static/resources/view/justclash/proxy.js:343
 msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr "Домены, исключённые из sniffer, если это возможно. Иногда это помогает избежать ошибок в приложениях."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:338
+#: htdocs/luci-static/resources/view/justclash/proxy.js:351
 msgid "Forcefully sniff domains:"
 msgstr "Домены для принудительного анализа:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:339
+#: htdocs/luci-static/resources/view/justclash/proxy.js:352
 msgid "Domains included for detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr "Домены, для которых по возможности выполняется принудительный анализ. Иногда это помогает избежать ошибок в приложениях."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:347
+#: htdocs/luci-static/resources/view/justclash/proxy.js:360
 msgid "Exclude from sniffer SRC CIDR traffic:"
 msgstr "Исключить SRC CIDR из sniffer:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:348
+#: htdocs/luci-static/resources/view/justclash/proxy.js:361
 msgid "Source address ranges excluded from sniffing."
 msgstr "Диапазоны исходных адресов, исключённые из sniffing."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:354
+#: htdocs/luci-static/resources/view/justclash/proxy.js:367
 msgid "Exclude from sniffer DST CIDR traffic:"
 msgstr "Исключить DST CIDR из sniffer:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:355
+#: htdocs/luci-static/resources/view/justclash/proxy.js:368
 msgid "Destination address ranges excluded from sniffing."
 msgstr "Диапазоны адресов назначения, исключённые из sniffing."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:362
+#: htdocs/luci-static/resources/view/justclash/proxy.js:375
 msgid "NTP settings"
 msgstr "Настройки NTP"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:364
+#: htdocs/luci-static/resources/view/justclash/proxy.js:377
 msgid "Enable NTP client:"
 msgstr "Включить NTP-клиент:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:365
+#: htdocs/luci-static/resources/view/justclash/proxy.js:378
 msgid "Enable the built-in Mihomo NTP client."
 msgstr "Включить встроенный NTP-клиент Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:369
+#: htdocs/luci-static/resources/view/justclash/proxy.js:382
 msgid "Endpoint NTP server:"
 msgstr "NTP-сервер:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:370
+#: htdocs/luci-static/resources/view/justclash/proxy.js:383
 msgid "Upstream NTP server used by Mihomo."
 msgstr "Вышестоящий NTP-сервер, который использует Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:378
+#: htdocs/luci-static/resources/view/justclash/proxy.js:391
 msgid "NTP port:"
 msgstr "Порт NTP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:379
+#: htdocs/luci-static/resources/view/justclash/proxy.js:392
 msgid "Upstream NTP server port."
 msgstr "Порт вышестоящего NTP-сервера."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:383
+#: htdocs/luci-static/resources/view/justclash/proxy.js:396
 msgid "NTP check interval:"
 msgstr "Интервал проверки NTP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:384
+#: htdocs/luci-static/resources/view/justclash/proxy.js:397
 msgid "How often Mihomo should sync time, in minutes."
 msgstr "Как часто Mihomo должен синхронизировать время, в минутах."
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:395
+#: htdocs/luci-static/resources/view/justclash/proxy.js:408
 msgid "Write to system:"
 msgstr "Менять системное время:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:396
+#: htdocs/luci-static/resources/view/justclash/proxy.js:409
 msgid "Allow Mihomo to write corrected time to the system clock."
 msgstr "Разрешить Mihomo записывать скорректированное время в системные часы."
 
@@ -1063,27 +1078,19 @@ msgstr "Нет записей журнала"
 msgid "Scroll to bottom"
 msgstr "Прокрутить вниз"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:182 htdocs/luci-static/resources/view/justclash/status.js:360 htdocs/luci-static/resources/view/justclash/system_logs.js:121
-msgid "Data copied to clipboard"
-msgstr "Скопировано в буфер обмена"
-
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:188 htdocs/luci-static/resources/view/justclash/system_logs.js:127
-msgid "Copy log"
-msgstr "Скопировать журнал"
-
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:193 htdocs/luci-static/resources/view/justclash/system_logs.js:132
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:204 htdocs/luci-static/resources/view/justclash/system_logs.js:131
 msgid "Scroll to top"
 msgstr "Прокрутить вверх"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:195
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:206
 msgid "Level:"
 msgstr "Уровень:"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:274
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:288
 msgid "Realtime logs"
 msgstr "Логи в реальном времени"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:275
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:289
 msgid "View realtime traffic logs and debug information from the Mihomo core."
 msgstr "Просмотр логов трафика и отладочной информации ядра Mihomo в реальном времени."
 
@@ -1579,7 +1586,7 @@ msgstr "Обновить"
 msgid "Active"
 msgstr "Активно"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:128 htdocs/luci-static/resources/view/justclash/rules.js:147 htdocs/luci-static/resources/view/justclash/rulesets.js:271 htdocs/luci-static/resources/view/justclash/rulesets.js:325 htdocs/luci-static/resources/view/justclash/rulesets.js:380
+#: htdocs/luci-static/resources/view/justclash/rules.js:128 htdocs/luci-static/resources/view/justclash/rules.js:147 htdocs/luci-static/resources/view/justclash/rulesets.js:136 htdocs/luci-static/resources/view/justclash/rulesets.js:190 htdocs/luci-static/resources/view/justclash/rulesets.js:245
 msgid "Type"
 msgstr "Тип"
 
@@ -1591,7 +1598,7 @@ msgstr "Содержимое"
 msgid "Proxy / Group"
 msgstr "Прокси / Группа"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:233
+#: htdocs/luci-static/resources/view/justclash/rules.js:234
 msgid "Mihomo rules list and routing information. Rules can be temporarily disabled (resets on service restart)."
 msgstr "Список правил Mihomo и информация о маршрутизации. Правила можно временно отключить (сбрасывается после перезапуска службы)."
 
@@ -1599,153 +1606,153 @@ msgstr "Список правил Mihomo и информация о маршру
 msgid "Hide built-in rulesets"
 msgstr "Скрыть встроенные наборы правил"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:265
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:130
 msgid "Blocking Rulesets"
 msgstr "Наборы правил блокировки"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:265
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:130
 msgid "Routing Rulesets"
 msgstr "Наборы правил маршрутизации"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:269 htdocs/luci-static/resources/view/justclash/rulesets.js:323 htdocs/luci-static/resources/view/justclash/rulesets.js:378
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:134 htdocs/luci-static/resources/view/justclash/rulesets.js:188 htdocs/luci-static/resources/view/justclash/rulesets.js:243
 msgid "Readable name"
 msgstr "Понятное имя"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:270 htdocs/luci-static/resources/view/justclash/rulesets.js:324 htdocs/luci-static/resources/view/justclash/rulesets.js:379
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:135 htdocs/luci-static/resources/view/justclash/rulesets.js:189 htdocs/luci-static/resources/view/justclash/rulesets.js:244
 msgid "Name"
 msgstr "Имя"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:272 htdocs/luci-static/resources/view/justclash/rulesets.js:332 htdocs/luci-static/resources/view/justclash/rulesets.js:381
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:137 htdocs/luci-static/resources/view/justclash/rulesets.js:197 htdocs/luci-static/resources/view/justclash/rulesets.js:246
 msgid "URL / Local Path"
 msgstr "URL / Локальный путь"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:273 htdocs/luci-static/resources/view/justclash/rulesets.js:333 htdocs/luci-static/resources/view/justclash/rulesets.js:382
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:138 htdocs/luci-static/resources/view/justclash/rulesets.js:198 htdocs/luci-static/resources/view/justclash/rulesets.js:247
 msgid "Authorization"
 msgstr "Авторизация"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:301
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:166
 msgid "Add Custom Ruleset"
 msgstr "Добавить пользовательский набор правил"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:306
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:171
 msgid "Rulesets used to block matching domains or IP ranges entirely."
 msgstr "Наборы правил для полной блокировки соответствующих доменов или диапазонов IP-адресов."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:307
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:172
 msgid "Rulesets used to determine which proxy or direct connection is used for outgoing traffic."
 msgstr "Наборы правил для определения того, какой прокси или прямое соединение используется для исходящего трафика."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:334
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:199
 msgid "Built-in"
 msgstr "Встроенный"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:340
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:205
 msgid "e.g. My Custom Rules"
 msgstr "например, Мои правила"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:347
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:212
 msgid "e.g. my_custom_rules"
 msgstr "например, my_custom_rules"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:351
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:216
 msgid "Domain"
 msgstr "Домен"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:352
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:217
 msgid "IP CIDR"
 msgstr "IP CIDR"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:360
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:225
 msgid "e.g. https://... or /etc/justclash/..."
 msgstr "например, https://... или /etc/justclash/..."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:367
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:232
 msgid "e.g. Bearer token (optional)"
 msgstr "например, Bearer token (опционально)"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:394
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:259
 msgid "Readable name is required."
 msgstr "Требуется понятное имя."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:397
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:262
 msgid "Readable name contains invalid characters. Only letters, numbers, spaces, underscores, and dashes are allowed."
 msgstr "Понятное имя содержит недопустимые символы. Разрешены только буквы, цифры, пробелы, подчеркивания и дефисы."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:420
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:285
 #, javascript-format
 msgid "Duplicate Name \"%s\" in this list."
 msgstr "Дублирующееся имя \"%s\" в этом списке."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:426
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:291
 #, javascript-format
 msgid "Reserved or built-in Name \"%s\"."
 msgstr "Зарезервированное или встроенное имя \"%s\"."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:434
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:299
 msgid "URL / Local Path is required."
 msgstr "Требуется URL / Локальный путь."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:437
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:302
 msgid "URL / Local Path cannot contain pipe (|) or newlines."
 msgstr "URL / Локальный путь не может содержать вертикальную черту (|) или переводы строк."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:440
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:305
 msgid "URL / Local Path must start with http://, https://, or /"
 msgstr "URL / Локальный путь должен начинаться с http://, https:// или /"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:447
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:312
 msgid "Authorization cannot contain pipe (|) or newlines."
 msgstr "Поле авторизации не может содержать символ вертикальной черты (|) или переводы строк."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:478
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:343
 #, javascript-format
 msgid "Routing Ruleset #%d (Readable name): %s"
 msgstr "Набор правил маршрутизации #%d (Понятное имя): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:479
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:344
 #, javascript-format
 msgid "Routing Ruleset #%d (Name): %s"
 msgstr "Набор правил маршрутизации #%d (Имя): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:480
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:345
 #, javascript-format
 msgid "Routing Ruleset #%d (URL / Local Path): %s"
 msgstr "Набор правил маршрутизации #%d (URL / Локальный путь): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:481
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:346
 #, javascript-format
 msgid "Routing Ruleset #%d (Authorization): %s"
 msgstr "Набор правил маршрутизации #%d (Авторизация): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:510
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:375
 #, javascript-format
 msgid "Blocking Ruleset #%d (Readable name): %s"
 msgstr "Набор правил блокировки #%d (Понятное имя): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:511
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:376
 #, javascript-format
 msgid "Blocking Ruleset #%d (Name): %s"
 msgstr "Набор правил блокировки #%d (Имя): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:512
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:377
 #, javascript-format
 msgid "Blocking Ruleset #%d (URL / Local Path): %s"
 msgstr "Набор правил блокировки #%d (URL / Локальный путь): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:513
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:378
 #, javascript-format
 msgid "Blocking Ruleset #%d (Authorization): %s"
 msgstr "Набор правил блокировки #%d (Авторизация): %s"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:533
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:398
 msgid "Validation Error"
 msgstr "Ошибка валидации"
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:545
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:410
 msgid "User rulesets saved successfully. (Note: service is not reloaded. To apply, save & apply on Routing or Proxy tabs, or reload from Status tab)."
 msgstr "Пользовательские наборы правил успешно сохранены. (Примечание: сервис не перезапущен. Чтобы применить изменения, нажмите «Сохранить и применить» на вкладках «Маршрутизация» или «Прокси» либо перезапустите сервис на вкладке «Статус»)."
 
-#: htdocs/luci-static/resources/view/justclash/rulesets.js:551
+#: htdocs/luci-static/resources/view/justclash/rulesets.js:416
 msgid "Save Error"
 msgstr "Ошибка сохранения"
 
@@ -2133,7 +2140,7 @@ msgstr "Версия Mihomo"
 msgid "Stop"
 msgstr "Остановить"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:256 htdocs/luci-static/resources/view/justclash/status.js:549
+#: htdocs/luci-static/resources/view/justclash/status.js:256 htdocs/luci-static/resources/view/justclash/status.js:548
 msgid "Start"
 msgstr "Запустить"
 
@@ -2141,15 +2148,15 @@ msgstr "Запустить"
 msgid "Disable on boot"
 msgstr "Отключить при старте"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:271 htdocs/luci-static/resources/view/justclash/status.js:551
+#: htdocs/luci-static/resources/view/justclash/status.js:271 htdocs/luci-static/resources/view/justclash/status.js:550
 msgid "Enable on boot"
 msgstr "Включить при старте"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:335 htdocs/luci-static/resources/view/justclash/status.js:374
+#: htdocs/luci-static/resources/view/justclash/status.js:335 htdocs/luci-static/resources/view/justclash/status.js:373
 msgid "Dismiss"
 msgstr "Закрыть"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:342 htdocs/luci-static/resources/view/justclash/status.js:396
+#: htdocs/luci-static/resources/view/justclash/status.js:342 htdocs/luci-static/resources/view/justclash/status.js:395
 msgid "Dangerous action!"
 msgstr "Опасное действие!"
 
@@ -2157,166 +2164,170 @@ msgstr "Опасное действие!"
 msgid "Please wait..."
 msgstr "Пожалуйста, подождите."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:367
+#: htdocs/luci-static/resources/view/justclash/status.js:366
 msgid "Copy to clipboard"
 msgstr "Скопировать"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:378 htdocs/luci-static/resources/view/justclash/status.js:391
+#: htdocs/luci-static/resources/view/justclash/status.js:377 htdocs/luci-static/resources/view/justclash/status.js:390
 msgid "No response"
 msgstr "Нет ответа"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:405
+#: htdocs/luci-static/resources/view/justclash/status.js:404
 msgid "Run"
 msgstr "Выполнить"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:430 htdocs/luci-static/resources/view/justclash/status.js:609
+#: htdocs/luci-static/resources/view/justclash/status.js:429 htdocs/luci-static/resources/view/justclash/status.js:608
 msgid "Update rulesets"
 msgstr "Обновить rulesets"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:435
+#: htdocs/luci-static/resources/view/justclash/status.js:434
 msgid "Updated"
 msgstr "Обновлено"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:444
+#: htdocs/luci-static/resources/view/justclash/status.js:443
 msgid "Failed"
 msgstr "Ошибка"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:449 htdocs/luci-static/resources/view/justclash/status.js:453
+#: htdocs/luci-static/resources/view/justclash/status.js:448 htdocs/luci-static/resources/view/justclash/status.js:452
 msgid "No rulesets returned by API."
 msgstr "API не вернул ни одного ruleset."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:450
+#: htdocs/luci-static/resources/view/justclash/status.js:449
 msgid "Completed with errors"
 msgstr "Завершено с ошибками"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:450
+#: htdocs/luci-static/resources/view/justclash/status.js:449
 msgid "Completed"
 msgstr "Завершено"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:454
+#: htdocs/luci-static/resources/view/justclash/status.js:453
 msgid "Received rulesets:"
 msgstr "Полученные rulesets:"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:454
+#: htdocs/luci-static/resources/view/justclash/status.js:453
 msgid "Status"
 msgstr "Статус"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:457
+#: htdocs/luci-static/resources/view/justclash/status.js:456
 msgid "Getting rulesets..."
 msgstr "Получение наборов правил..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:513 htdocs/luci-static/resources/view/justclash/status.js:514
+#: htdocs/luci-static/resources/view/justclash/status.js:512 htdocs/luci-static/resources/view/justclash/status.js:513
 msgid "Loading..."
 msgstr "Загрузка..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:525
+#: htdocs/luci-static/resources/view/justclash/status.js:524
 msgid "Running command..."
 msgstr "Выполняется команда..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:525
+#: htdocs/luci-static/resources/view/justclash/status.js:524
 msgid "Please wait."
 msgstr "Пожалуйста, подождите."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:550
+#: htdocs/luci-static/resources/view/justclash/status.js:549
 msgid "Restart"
 msgstr "Перезапустить"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:580
+#: htdocs/luci-static/resources/view/justclash/status.js:579
 msgid "Current status"
 msgstr "Текущий статус"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:581
+#: htdocs/luci-static/resources/view/justclash/status.js:580
 msgid "Overview of the running Mihomo service status, core version, and active traffic usage."
 msgstr "Обзор текущего состояния службы Mihomo, версии ядра и текущего трафика."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:586
+#: htdocs/luci-static/resources/view/justclash/status.js:585
 msgid "Service actions"
 msgstr "Сервис"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:587
+#: htdocs/luci-static/resources/view/justclash/status.js:586
 msgid "Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot."
 msgstr "Управление службой Mihomo. Вы можете запустить, остановить или перезапустить службу, а также настроить её автозапуск."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:593
+#: htdocs/luci-static/resources/view/justclash/status.js:592
 msgid "Run diagnostics"
 msgstr "Запустить диагностику"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:593
+#: htdocs/luci-static/resources/view/justclash/status.js:592
 msgid "Diagnostic report"
 msgstr "Отчёт диагностики"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:594
+#: htdocs/luci-static/resources/view/justclash/status.js:593
 msgid "Update core"
 msgstr "Обновить ядро"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:594
+#: htdocs/luci-static/resources/view/justclash/status.js:593
 msgid "Update Mihomo core"
 msgstr "Обновить ядро Mihomo"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:594
+#: htdocs/luci-static/resources/view/justclash/status.js:593
 msgid "Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."
 msgstr "Обновление ядра Mihomo пока не является атомарным. Если на роутере слишком мало свободного места или загрузка сорвётся в процессе обновления, текущее ядро может быть удалено до полной установки нового."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:610
+#: htdocs/luci-static/resources/view/justclash/status.js:609
 msgid "Update service data"
 msgstr "Обновить данные сервиса"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:610
+#: htdocs/luci-static/resources/view/justclash/status.js:609
 msgid "This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."
 msgstr "Это действие загружает и заменяет локальные файлы данных сервиса. Если загрузка завершится с ошибкой или удалённый источник вернёт некорректные данные, поведение сервиса может измениться до следующего успешного обновления."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:615
+#: htdocs/luci-static/resources/view/justclash/status.js:614
 msgid "Maintenance"
 msgstr "Обслуживание"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:616
+#: htdocs/luci-static/resources/view/justclash/status.js:615
 msgid "Perform diagnostic tests, update the core binary, and update downloaded rulesets or service data files."
 msgstr "Выполнение диагностических тестов, обновление исполняемого файла ядра, а также обновление загруженных правил и служебных данных."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:622
+#: htdocs/luci-static/resources/view/justclash/status.js:621
 msgid "Show Mihomo config"
 msgstr "Показать конфигурацию Mihomo"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:622
+#: htdocs/luci-static/resources/view/justclash/status.js:621
 msgid "Mihomo config"
 msgstr "Конфигурация Mihomo"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:623
+#: htdocs/luci-static/resources/view/justclash/status.js:622
 msgid "Show service config"
 msgstr "Показать конфигурацию сервиса"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:623
+#: htdocs/luci-static/resources/view/justclash/status.js:622
 msgid "Service config"
 msgstr "Конфигурация сервиса"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:624
+#: htdocs/luci-static/resources/view/justclash/status.js:623
 msgid "Reset config"
 msgstr "Сбросить конфигурацию"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:624
+#: htdocs/luci-static/resources/view/justclash/status.js:623
 msgid "Reset configuration"
 msgstr "Сброс конфигурации"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:624
+#: htdocs/luci-static/resources/view/justclash/status.js:623
 msgid "This will reset the JustClash configuration. Use with care."
 msgstr "Это сбросит конфигурацию JustClash. Используйте с осторожностью."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:629
+#: htdocs/luci-static/resources/view/justclash/status.js:628
 msgid "Configuration"
 msgstr "Конфигурация"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:630
+#: htdocs/luci-static/resources/view/justclash/status.js:629
 msgid "Inspect the generated Mihomo or JustClash settings, or reset the configuration back to default values."
 msgstr "Просмотр сгенерированных настроек Mihomo или JustClash, либо сброс конфигурации к значениям по умолчанию."
 
-#: htdocs/luci-static/resources/view/justclash/system_logs.js:134
+#: htdocs/luci-static/resources/view/justclash/system_logs.js:126
+msgid "Copy log"
+msgstr "Скопировать журнал"
+
+#: htdocs/luci-static/resources/view/justclash/system_logs.js:133
 msgid "Newest first"
 msgstr "Новые сверху"
 
-#: htdocs/luci-static/resources/view/justclash/system_logs.js:181
+#: htdocs/luci-static/resources/view/justclash/system_logs.js:180
 msgid "System logs"
 msgstr "Системные логи"
 
-#: htdocs/luci-static/resources/view/justclash/system_logs.js:182
+#: htdocs/luci-static/resources/view/justclash/system_logs.js:181
 msgid "View system logs related to the JustClash service and its startup scripts."
 msgstr "Просмотр системных логов работы сервиса JustClash и его скриптов запуска."
