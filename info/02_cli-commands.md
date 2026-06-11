@@ -37,9 +37,13 @@ The core control script `/usr/bin/justclash.sh` handles setup, routing, auto-upd
 | :--- | :--- | :--- |
 | `core_update` | `cu` | Checks and updates the Mihomo binary to the latest version. |
 | `core_remove` | `cr` | Uninstalls and removes the currently installed Mihomo binary. |
+| `cron_update` | `cru` | Updates all scheduled tasks from UCI settings. |
 | `core_autorestart_cron_check` | `cacc` | Check if auto-restart cron schedule is active. |
 | `core_autorestart_cron_add` | `caca` | Adds a cron schedule to periodically restart Mihomo. |
 | `core_autorestart_cron_remove` | `cacr` | Removes the scheduled cron auto-restart task. |
+| `service_data_cron_check` | `sdcc` | Check if rules/databases auto-update cron schedule is active. |
+| `service_data_cron_add` | `sdca` | Adds a cron schedule to periodically update rules/databases. |
+| `service_data_cron_remove` | `sdcr` | Removes the scheduled cron rules/databases update task. |
 | `service_data_update` | `sdu` | Updates JustClash rules/static files from the repository. |
 
 ### Logs
