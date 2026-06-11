@@ -237,6 +237,22 @@ return view.extend({
             return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
         };
 
+        o = s.taboption(tabname, form.Flag, "mihomo_service_data_autoupdate", _("Update rules and databases automatically:"));
+        o.description = _("Update rules and databases on a schedule, for example once a week or once a day.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
+
+        o = s.taboption(tabname, form.Value, "mihomo_cron_service_data_update_string", _("Update schedule:"));
+        o.placeholder = "0 4 * * 0";
+        o.default = "0 4 * * 0";
+        o.rmempty = false;
+        o.retain = true;
+        o.depends("mihomo_service_data_autoupdate", primitives.TRUE);
+        o.description = _("Use cron format to choose when rules and databases should update automatically.");
+        o.validate = function (section_id, value) {
+            return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
+        };
+
         tabname = "external_resources_tab";
         s.tab(tabname, _("External resources"));
 
@@ -260,7 +276,7 @@ return view.extend({
         common.defaultUpdateChannelOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
-        o.description = _("Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs.");
+        o.description = _("Choose which release channel to use for Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs.");
         o.depends("mihomo_core_source_type", "github");
         o.rmempty = false;
         o.retain = true;
