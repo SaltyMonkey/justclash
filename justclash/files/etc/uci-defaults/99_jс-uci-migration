@@ -48,6 +48,8 @@ add_missing_option "justclash.settings.wait_for_wan" "0"
 add_missing_option "justclash.settings.wait_for_wan_max" "90"
 add_missing_option "justclash.settings.mihomo_mem_limit" "0"
 add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
+add_missing_option "justclash.settings.mihomo_service_data_autoupdate" "0"
+add_missing_option "justclash.settings.mihomo_cron_service_data_update_string" "0 4 * * 0"
 add_missing_option "justclash.proxy.sniffer_override_destination" "0"
 uci -q delete justclash.proxy.use_hosts
 uci -q delete justclash.proxy.hosts
