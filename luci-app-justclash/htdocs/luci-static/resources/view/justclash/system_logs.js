@@ -118,7 +118,6 @@ return view.extend({
 
                 try {
                     await clipboard.copy(rawLogs);
-                    ui.addTimeLimitedNotification(null, E("p", _("Data copied to clipboard")), common.notificationTimeout, "success");
                 } catch (e) {
                     ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
                     console.error("Failed to copy logs to clipboard", e);

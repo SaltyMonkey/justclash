@@ -188,8 +188,6 @@ return view.extend({
                         }), null, 4)
                         : logEntries.map(entryStr => common.formatLogEntryText(entryStr)).join("\n");
                     await clipboard.copy(content);
-                    const msg = isJson ? _("Logs copied as JSON") : _("Logs copied as text");
-                    ui.addTimeLimitedNotification(null, E("p", msg), common.notificationTimeout, "success");
                 } catch (e) {
                     ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
                     console.error("Failed to copy logs to clipboard", e);

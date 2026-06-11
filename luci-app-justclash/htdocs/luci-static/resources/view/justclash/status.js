@@ -357,7 +357,6 @@ const showTextModalHandler = (title, warning, task, options = {}) => async () =>
                 click: async () => {
                     try {
                         await clipboard.copy(output || "");
-                        ui.addTimeLimitedNotification(null, E("p", _("Data copied to clipboard")), common.notificationTimeout, "success");
                         ui.hideModal();
                     } catch (e) {
                         ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");

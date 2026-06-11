@@ -97,8 +97,6 @@ const showConnectionDetails = (connId) => {
             try {
                 const content = isJson ? jsonString : common.formatConnectionSummary(connData.raw);
                 await clipboard.copy(content || "");
-                const msg = isJson ? _("Connection JSON copied") : _("Connection summary copied");
-                ui.addTimeLimitedNotification(null, E("p", msg), common.notificationTimeout, "success");
                 ui.hideModal();
             } catch (e) {
                 ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
@@ -240,8 +238,6 @@ return view.extend({
                         ? JSON.stringify(conns, null, 2)
                         : conns.map(conn => common.formatConnectionSummary(conn)).join("\n\n" + "=".repeat(40) + "\n\n");
                     await clipboard.copy(content);
-                    const msg = isJson ? _("Connections JSON copied") : _("Connections summary copied");
-                    ui.addTimeLimitedNotification(null, E("p", msg), common.notificationTimeout, "success");
                 } catch (e) {
                     ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
                     console.error("Failed to copy connections to clipboard", e);
