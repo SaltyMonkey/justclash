@@ -17,7 +17,9 @@ return view.extend({
             PORT: "port",
             UINTEGER: "uinteger",
             IPADDR: "ipaddr",
-            CIDR4: "cidr4"
+            CIDR4: "cidr4",
+            MACADDR: "macaddr",
+            IP4ADDR: "ip4addr"
         };
 
         m = new form.Map(common.binName);
@@ -156,6 +158,22 @@ return view.extend({
         o.rmempty = true;
         o.retain = true;
         o.datatype = datatypes.PORT;
+        o.depends("nft_apply_changes", primitives.TRUE);
+
+        o = s.taboption(tabname, form.DynamicList, "nft_mac_exclude", _("Client bypassed MAC addresses:"));
+        o.description = _("MAC addresses of clients that should bypass the proxy.");
+        o.placeholder = "00:11:22:33:44:55";
+        o.rmempty = true;
+        o.retain = true;
+        o.datatype = datatypes.MACADDR;
+        o.depends("nft_apply_changes", primitives.TRUE);
+
+        o = s.taboption(tabname, form.DynamicList, "nft_ips_exclude", _("Client bypassed IP addresses:"));
+        o.description = _("IP addresses or subnets (CIDR) of clients that should bypass the proxy.");
+        o.placeholder = "192.168.1.100";
+        o.rmempty = true;
+        o.retain = true;
+        o.datatype = datatypes.IP4ADDR;
         o.depends("nft_apply_changes", primitives.TRUE);
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
