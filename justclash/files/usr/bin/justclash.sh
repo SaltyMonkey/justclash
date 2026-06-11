@@ -49,6 +49,7 @@ CORE_BIN_NAME="mihomo"
 # Path to Mihomo core
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
 INITD_PATH="/etc/init.d/${PROGNAME}"
+PROG_PATH="/usr/bin/${PROGNAME}.sh"
 # workdir path (in RAM)
 CORE_WORKDIR_PATH="/tmp/${PROGNAME}"
 # Mihomo using directory 'rules' by default in workdir
@@ -259,6 +260,9 @@ start() {
 
     log info "Modifying dnsmasq configuration" "🔑"
     dnsmasq_update
+
+    log info "Updating scheduled tasks" "🕒"
+    cron_update
 
     log info "Starting Mihomo core" "🐱"
     start_core "$mihomo_mem_limit"
@@ -2144,58 +2148,105 @@ cron_make_if_missing() {
     fi
 }
 
-core_autorestart_cron_check() {
+cron_job_check() {
     cron_make_if_missing
-    if grep -qF "${INITD_PATH} reload" /etc/crontabs/root; then
-        return 0
-    else
+    grep -qF "$1" /etc/crontabs/root
+}
+
+cron_job_add() {
+    cron_make_if_missing
+    local schedule="$1"
+    local pattern="$2"
+    local cmd="$3"
+    local name="$4"
+
+    if [ -z "$schedule" ]; then
+        log error "$name cron schedule string is empty! Cron job not added." "❌"
         return 1
     fi
+
+    if ! validate_cron_expr "$schedule"; then
+        log error "$name cron schedule string is invalid: $schedule! Cron job not added." "❌"
+        return 1
+    fi
+
+    local expected_entry="${schedule} ${cmd}"
+    if grep -qF "$expected_entry" /etc/crontabs/root; then
+        return 0
+    fi
+
+    # Remove any existing entry matching the pattern (regardless of schedule)
+    sed -i "\|${pattern}|d" /etc/crontabs/root
+
+    # Append new entry
+    echo "$expected_entry" >> /etc/crontabs/root
+    if /etc/init.d/cron enabled; then
+        /etc/init.d/cron restart
+        log info "$name cron job added and cron service restarted" "✅"
+    else
+        log info "$name cron job added (cron service not enabled)" "ℹ️"
+    fi
+}
+
+cron_job_remove() {
+    cron_make_if_missing
+    local pattern="$1"
+    local name="$2"
+    if cron_job_check "$pattern"; then
+        sed -i "\|${pattern}|d" /etc/crontabs/root
+        if /etc/init.d/cron enabled; then
+            /etc/init.d/cron restart
+            log info "$name cron job removed and cron service restarted" "✅"
+        else
+            log info "$name cron job removed (cron service not enabled)" "ℹ️"
+        fi
+    fi
+}
+
+core_autorestart_cron_check() {
+    cron_job_check "${INITD_PATH} reload"
 }
 
 core_autorestart_cron_add() {
-    cron_make_if_missing
-    local mihomo_cron_autorestart_string
-
-    config_get mihomo_cron_autorestart_string settings mihomo_cron_autorestart_string
-
-    if [ -z "$mihomo_cron_autorestart_string" ]; then
-        log error "Cron schedule string is empty! Cron job not added." "❌"
-        return 1
-    fi
-
-    if ! validate_cron_expr "$mihomo_cron_autorestart_string"; then
-        log error "Cron schedule string is invalid! Cron job not added."
-        return 1
-    fi
-
-    if core_autorestart_cron_check > /dev/null; then
-        log warn "Core autorestart cron job already exists." "ℹ️"
-        return 0
-    fi
-
-    echo "$mihomo_cron_autorestart_string ${INITD_PATH} reload" >> /etc/crontabs/root
-    if /etc/init.d/cron enabled; then
-        /etc/init.d/cron restart
-        log info "Cron job added and service restarted" "✅"
-    else
-        log info "Cron job added (service not enabled)" "ℹ️"
-    fi
+    local schedule
+    config_get schedule settings mihomo_cron_autorestart_string
+    cron_job_add "$schedule" "${INITD_PATH} reload" "pgrep -f ${CORE_PATH} >/dev/null && ${INITD_PATH} reload" "Core autorestart"
 }
 
 core_autorestart_cron_remove() {
-    cron_make_if_missing
-    if core_autorestart_cron_check > /dev/null; then
-        sed -i "\|${INITD_PATH} reload|d" /etc/crontabs/root
-        if /etc/init.d/cron enabled; then
-            /etc/init.d/cron restart
-            log info "Cron job removed and service restarted" "✅"
-        else
-            log info "Cron job removed (service not enabled)" "ℹ️"
-        fi
-        log info "Core autorestart cron job removed." "🗑️"
+    cron_job_remove "${INITD_PATH} reload" "Core autorestart"
+}
+
+service_data_cron_check() {
+    cron_job_check "${PROG_PATH} service_data_update"
+}
+
+service_data_cron_add() {
+    local schedule
+    config_get schedule settings mihomo_cron_service_data_update_string
+    cron_job_add "$schedule" "${PROG_PATH} service_data_update" "pgrep -f ${CORE_PATH} >/dev/null && $PROG_PATH service_data_update" "Service data update"
+}
+
+service_data_cron_remove() {
+    cron_job_remove "${PROG_PATH} service_data_update" "Service data update"
+}
+
+cron_update() {
+    local mihomo_autorestart mihomo_service_data_autoupdate
+
+    config_get_bool mihomo_autorestart settings mihomo_autorestart 0
+    config_get_bool mihomo_service_data_autoupdate settings mihomo_service_data_autoupdate 0
+
+    if [ "$mihomo_autorestart" -eq 1 ]; then
+        core_autorestart_cron_add
     else
-        log info "Core autorestart cron job not found." "ℹ️"
+        core_autorestart_cron_remove
+    fi
+
+    if [ "$mihomo_service_data_autoupdate" -eq 1 ]; then
+        service_data_cron_add
+    else
+        service_data_cron_remove
     fi
 }
 
@@ -2457,9 +2508,15 @@ help() {
     echo "  core_update                     Check current version and update Mihomo if a newer version is available"
     echo "  core_remove                     Remove the currently installed Mihomo binary"
     echo ""
+    echo "  cron_update                     Update all scheduled tasks from UCI settings"
+    echo ""
     echo "  core_autorestart_cron_check     Check if a scheduled Mihomo auto-restart task exists"
     echo "  core_autorestart_cron_add       Add a scheduled task to automatically restart Mihomo periodically"
     echo "  core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task"
+    echo ""
+    echo "  service_data_cron_check         Check if a scheduled service data update task exists"
+    echo "  service_data_cron_add           Add a scheduled task to automatically update rules/databases"
+    echo "  service_data_cron_remove        Remove the scheduled service data update task"
     echo ""
     echo "Diagnostics:"
     echo "  diag_report                 Run diagnostic"
@@ -2504,6 +2561,18 @@ case "$1" in
         ;;
     core_autorestart_cron_remove|cacr)
         core_autorestart_cron_remove
+        ;;
+    cron_update|cru)
+        cron_update
+        ;;
+    service_data_cron_check|sdcc)
+        service_data_cron_check
+        ;;
+    service_data_cron_add|sdca)
+        service_data_cron_add
+        ;;
+    service_data_cron_remove|sdcr)
+        service_data_cron_remove
         ;;
     service_data_update|sdu)
         service_data_update
