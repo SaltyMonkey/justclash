@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-11 19:16+0300\n"
+"POT-Creation-Date: 2026-06-11 22:43+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -1759,307 +1759,339 @@ msgstr "用户规则集保存成功。（注意：服务未重新加载。要应
 msgid "Save Error"
 msgstr "保存错误"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:24
+#: htdocs/luci-static/resources/view/justclash/service.js:26
 msgid "Service settings:"
 msgstr "服务设置:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:24
+#: htdocs/luci-static/resources/view/justclash/service.js:26
 msgid "Main service settings and scheduled tasks."
 msgstr "主要服务设置和计划任务。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:27
+#: htdocs/luci-static/resources/view/justclash/service.js:29
 msgid "Startup"
 msgstr "启动"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:29
+#: htdocs/luci-static/resources/view/justclash/service.js:31
 msgid "Wait for WAN connection on boot:"
 msgstr "启动时等待 WAN 连接:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:30
+#: htdocs/luci-static/resources/view/justclash/service.js:32
 msgid "Pause the startup process until the router establishes an active Internet connection (default route)."
 msgstr "暂停启动过程，直到路由器建立处于活动状态的互联网连接（默认路由）。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:34
+#: htdocs/luci-static/resources/view/justclash/service.js:36
 msgid "Maximum wait time for WAN (s):"
 msgstr "等待 WAN 的最长时间（秒）:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:42
+#: htdocs/luci-static/resources/view/justclash/service.js:44
 msgid "Maximum time in seconds to wait for WAN connection before proceeding with the current state."
 msgstr "在进入当前状态之前，等待 WAN 连接的最长秒数。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:45
+#: htdocs/luci-static/resources/view/justclash/service.js:47
 msgid "Delay startup after boot:"
 msgstr "启动后延迟启动:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:46
+#: htdocs/luci-static/resources/view/justclash/service.js:48
 msgid "Start the service a little later after the router boots. Useful if the router needs extra time to bring up storage, WAN, or other services."
 msgstr "在路由器启动后稍晚启动服务。如果路由器需要额外的时间来启动存储、WAN 或其他服务，这很有用。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:50
+#: htdocs/luci-static/resources/view/justclash/service.js:52
 msgid "Startup delay:"
 msgstr "启动延迟:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:60
+#: htdocs/luci-static/resources/view/justclash/service.js:62
 msgid "Choose how many seconds to wait before the first service start after boot."
 msgstr "选择在启动后首次启动服务之前等待的秒数。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:62
+#: htdocs/luci-static/resources/view/justclash/service.js:64
 msgid "Skip startup checks:"
 msgstr "跳过启动检查:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:63
+#: htdocs/luci-static/resources/view/justclash/service.js:65
 msgid "Skip some safety checks during startup. This can speed up startup, but it may hide problems with files, permissions, or system settings."
 msgstr "在启动期间跳过一些安全检查。这可以加快启动速度，但可能会隐藏文件、权限或系统设置的问题。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:67
+#: htdocs/luci-static/resources/view/justclash/service.js:69
 msgid "Start time sync service:"
 msgstr "启动时间同步服务:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:68
+#: htdocs/luci-static/resources/view/justclash/service.js:70
 msgid "Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail."
 msgstr "启动内置的 ntpd 守护程序，以便系统时钟保持正确以进行安全连接。如果没有正确的时间，安全下载和 API 连接可能会失败。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:72
+#: htdocs/luci-static/resources/view/justclash/service.js:74
 msgid "GOMEMLIMIT (Memory limit):"
 msgstr "GOMEMLIMIT (内存限制):"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:76
+#: htdocs/luci-static/resources/view/justclash/service.js:78
 msgid "Limit the Go garbage collector memory usage (in MiB). Select a predefined limit or 0 to disable."
 msgstr "限制 Go 垃圾回收器的内存使用量 (以 MiB 为单位)。选择预定义限制或设置为 0 以禁用。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:82
+#: htdocs/luci-static/resources/view/justclash/service.js:84
 msgid "Storage"
 msgstr "存储"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:84
+#: htdocs/luci-static/resources/view/justclash/service.js:86
 msgid "Store Mihomo external rules persistently:"
 msgstr "持久存储 Mihomo 外部规则:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:85
+#: htdocs/luci-static/resources/view/justclash/service.js:87
 msgid "Keep Mihomo external rule files in persistent router storage instead of temporary memory. Use this only if you need faster recovery after restart, because frequent writes can wear out built-in flash memory faster."
 msgstr "将 Mihomo 外部规则文件保存在持久化路由器存储而不是临时内存中。仅在您需要重启后更快恢复时才使用此功能，因为频繁写入会加快内置闪存的磨损。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:89
+#: htdocs/luci-static/resources/view/justclash/service.js:91
 msgid "Store Mihomo cache persistently:"
 msgstr "持久存储 Mihomo 缓存:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:90
+#: htdocs/luci-static/resources/view/justclash/service.js:92
 msgid "Keep Mihomo cache data such as selected groups and fake-IP mappings in persistent router storage instead of temporary memory. Use this only if you need it, because frequent writes can wear out built-in flash memory faster."
 msgstr "将选定组和 fake-IP 映射等 Mihomo 缓存数据保存在持久化路由器存储而不是临时内存中。仅在需要时才使用它，因为频繁写入会加快内置闪存的磨损。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:95
+#: htdocs/luci-static/resources/view/justclash/service.js:97
 msgid "Traffic rules"
 msgstr "流量规则"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:97
+#: htdocs/luci-static/resources/view/justclash/service.js:99
 msgid "Change DNS settings at startup:"
 msgstr "启动时更改 DNS 设置:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:98
+#: htdocs/luci-static/resources/view/justclash/service.js:100
 msgid "Update DNS settings automatically when the service starts. Use this if you want JustClash to manage dnsmasq DNS settings for you."
 msgstr "在服务启动时自动更新 DNS 设置。如果您希望 JustClash 为您管理 dnsmasq DNS 设置，请使用此选项。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:102
+#: htdocs/luci-static/resources/view/justclash/service.js:104
 msgid "Set traffic rules at startup:"
 msgstr "启动时设置流量规则:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:103
+#: htdocs/luci-static/resources/view/justclash/service.js:105
 msgid "Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash."
 msgstr "创建流量规则，以便客户端设备使用代理。仅当您在 JustClash 之外已管理流量重定向规则时，才禁用此选项。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:107
+#: htdocs/luci-static/resources/view/justclash/service.js:109
 msgid "PBR priority:"
 msgstr "策略路由优先级:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:108
+#: htdocs/luci-static/resources/view/justclash/service.js:110
 msgid "Priority for the policy routing rule that sends marked traffic to the local TPROXY table. Lower numbers run earlier."
 msgstr "将标记流量发送到本地 TPROXY 表的策略路由规则优先级。较低数字的规则将更早运行。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:118
+#: htdocs/luci-static/resources/view/justclash/service.js:120
 msgid "Set router traffic rules at startup:"
 msgstr "启动时设置路由器流量规则:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:119
+#: htdocs/luci-static/resources/view/justclash/service.js:121
 msgid "Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too."
 msgstr "创建流量规则，使路由器自身的流量也使用代理。仅当您希望更新、软件包安装和其他路由器流量也通过代理时才启用此功能。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:123
+#: htdocs/luci-static/resources/view/justclash/service.js:125
 msgid "Router socket owner exclusions:"
 msgstr "路由器套接字所有者排除:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:124
+#: htdocs/luci-static/resources/view/justclash/service.js:126
 msgid "User names or numeric UIDs for router-originated sockets that should bypass proxy redirection rules. Useful for services like byedpi or https-dns-proxy that must reach the internet directly."
 msgstr "应绕过代理重定向规则的源自路由器套接字的用户名或数字 UID。这对于必须直接连接互联网的服务（例如 byedpi 或 https-dns-proxy）非常有用。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:133
+#: htdocs/luci-static/resources/view/justclash/service.js:135
 msgid "Router bypassed ports:"
 msgstr "路由器绕过端口:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:134
+#: htdocs/luci-static/resources/view/justclash/service.js:136
 msgid "Destination ports (e.g., 22 or 80) for router traffic to bypass the proxy."
 msgstr "供路由器流量绕过代理的目标端口（例如：22 或 80）。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:142
+#: htdocs/luci-static/resources/view/justclash/service.js:144
 msgid "Client traffic interfaces:"
 msgstr "客户端流量接口:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:150
+#: htdocs/luci-static/resources/view/justclash/service.js:152
 msgid "Select which interfaces receive client traffic that should be processed by JustClash. This is usually your LAN bridge; do not select WAN unless you know exactly why."
 msgstr "选择哪些接口接收应由 JustClash 处理的客户端流量。这通常是您的局域网网桥 (LAN)；除非您确切知道原因，否则不要选择广域网 (WAN)。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:153
+#: htdocs/luci-static/resources/view/justclash/service.js:155
 msgid "Client bypassed ports:"
 msgstr "客户端绕过端口:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:154
+#: htdocs/luci-static/resources/view/justclash/service.js:156
 msgid "Destination ports (e.g., 22 or 80) for client traffic to bypass the proxy."
 msgstr "供客户端流量绕过代理的目标端口（例如：22 或 80）。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:161
+#: htdocs/luci-static/resources/view/justclash/service.js:163
+msgid "Client bypassed MAC addresses:"
+msgstr "客户端绕过 MAC 地址:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:164
+msgid "MAC addresses of clients that should bypass the proxy."
+msgstr "绕过代理的客户端 MAC 地址。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:171
+msgid "Client bypassed IP addresses:"
+msgstr "客户端绕过 IP 地址:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:172
+msgid "IP addresses or subnets (CIDR) of clients that should bypass the proxy."
+msgstr "绕过代理的客户端 IP 地址或子网 (CIDR)。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:179
 msgid "Client QUIC traffic:"
 msgstr "客户端 QUIC 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:162
+#: htdocs/luci-static/resources/view/justclash/service.js:180
 msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked."
 msgstr "选择如何处理来自所选客户端流量接口上设备的 QUIC 流量。所选模式决定了此流量是否被重定向或阻止。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:171
+#: htdocs/luci-static/resources/view/justclash/service.js:189
 msgid "Client DoT traffic:"
 msgstr "客户端 DoT 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:172
+#: htdocs/luci-static/resources/view/justclash/service.js:190
 msgid "Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked."
 msgstr "选择如何处理来自网络上设备的 DoT 流量。所选模式决定了此流量是否被重定向或阻止。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:181
+#: htdocs/luci-static/resources/view/justclash/service.js:199
 msgid "Client DoH traffic:"
 msgstr "客户端 DoH 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:182
+#: htdocs/luci-static/resources/view/justclash/service.js:200
 msgid "Choose how to handle DoH traffic from devices on your network to well-known DoH IPs. The selected mode decides whether this traffic is redirected or blocked."
 msgstr "选择如何处理来自网络上设备发往知名 DoH IP 的 DoH 流量。所选模式决定了此流量是否被重定向或阻止。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:191
+#: htdocs/luci-static/resources/view/justclash/service.js:209
 msgid "Client DoQ traffic:"
 msgstr "客户端 DoQ 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:192
+#: htdocs/luci-static/resources/view/justclash/service.js:210
 msgid "Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked."
 msgstr "选择如何处理来自网络上设备的 DoQ 流量。所选模式决定了此流量是否被重定向或阻止。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:201
+#: htdocs/luci-static/resources/view/justclash/service.js:219
 msgid "Client NTP traffic:"
 msgstr "客户端 NTP 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:202
+#: htdocs/luci-static/resources/view/justclash/service.js:220
 msgid "Choose how to handle time sync requests from devices on your network. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr "选择如何处理网络上设备的时间同步请求。所选模式决定了这些请求是被重定向、绕过还是阻止。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:211
+#: htdocs/luci-static/resources/view/justclash/service.js:229
 msgid "Router NTP traffic:"
 msgstr "路由器 NTP 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:212
+#: htdocs/luci-static/resources/view/justclash/service.js:230
 msgid "Choose how to handle time sync requests from the router itself. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr "选择如何处理来自路由器本身的时间同步请求。所选模式决定了这些请求是被重定向、绕过还是阻止。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:222
+#: htdocs/luci-static/resources/view/justclash/service.js:240
 msgid "Scheduled tasks"
 msgstr "计划任务"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:224
+#: htdocs/luci-static/resources/view/justclash/service.js:242
 msgid "Restart Mihomo automatically:"
 msgstr "自动重启 Mihomo:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:225
+#: htdocs/luci-static/resources/view/justclash/service.js:243
 msgid "Restart Mihomo on a schedule, for example once a week or once a day."
 msgstr "按计划重启 Mihomo，例如每周一次或每天一次。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:229
+#: htdocs/luci-static/resources/view/justclash/service.js:247
 msgid "Restart schedule:"
 msgstr "重启计划:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:235
+#: htdocs/luci-static/resources/view/justclash/service.js:253
 msgid "Use cron format to choose when Mihomo should restart automatically."
 msgstr "使用 cron 格式选择 Mihomo 应在何时自动重启。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:237
+#: htdocs/luci-static/resources/view/justclash/service.js:255 htdocs/luci-static/resources/view/justclash/service.js:271
 msgid "Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')"
 msgstr "无效计划格式。使用: '分 时 日 月 周' (例如: '0 3 * * 0')"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:241
+#: htdocs/luci-static/resources/view/justclash/service.js:258
+msgid "Update rules and databases automatically:"
+msgstr "自动更新规则和数据库:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:259
+msgid "Update rules and databases on a schedule, for example once a week or once a day."
+msgstr "按计划更新规则和数据库，例如每周一次或每天一次。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:263
+msgid "Update schedule:"
+msgstr "更新计划:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:269
+msgid "Use cron format to choose when rules and databases should update automatically."
+msgstr "使用 cron 格式选择规则和数据库应在何时自动更新。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:275
 msgid "External resources"
 msgstr "外部资源"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:243
+#: htdocs/luci-static/resources/view/justclash/service.js:277
 msgid "Core update source:"
 msgstr "核心更新源:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:244
+#: htdocs/luci-static/resources/view/justclash/service.js:278
 msgid "Github"
 msgstr "Github"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:245
+#: htdocs/luci-static/resources/view/justclash/service.js:279
 msgid "Custom URL"
 msgstr "自定义 URL"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:246
+#: htdocs/luci-static/resources/view/justclash/service.js:280
 msgid "Choose where Mihomo core should be downloaded from. 'Github' will automatically fetch the latest release, 'Custom URL' allows downloading directly from your specified link."
 msgstr "选择 Mihomo 核心应从何处下载。“Github” 将自动获取最新版本，“自定义 URL”允许直接从您指定的链接下载。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:251
+#: htdocs/luci-static/resources/view/justclash/service.js:285
 msgid "GitHub repository:"
 msgstr "GitHub 仓库:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:252
+#: htdocs/luci-static/resources/view/justclash/service.js:286
 msgid "GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'."
 msgstr "Mihomo 核心更新的 GitHub 仓库。必须采用 “用户名/仓库” 格式。示例：“MetaCubeX/mihomo”。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:259
+#: htdocs/luci-static/resources/view/justclash/service.js:293
 msgid "Update channel:"
 msgstr "更新渠道:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:263
-msgid "Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs."
-msgstr "选择用于 Mihomo 自动更新的发布渠道。正式版 (Stable) 更安全，而较新的渠道可能包含新功能但也可能包含新的错误。"
+#: htdocs/luci-static/resources/view/justclash/service.js:297
+msgid "Choose which release channel to use for Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs."
+msgstr "选择用于 Mihomo 更新的发布渠道。正式版 (Stable) 更安全，而较新的渠道可能包含新功能但也可能包含新的错误。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:269
+#: htdocs/luci-static/resources/view/justclash/service.js:303
 msgid "Custom core base URL:"
 msgstr "自定义核心基本 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:270
+#: htdocs/luci-static/resources/view/justclash/service.js:304
 msgid "Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'"
 msgstr "托管核心文件的服务器的基本 URL（类似于 GitHub releases）。服务器必须包含“version.txt”文件和相应的“mihomo-linux-arch-version.gz”存档。示例：“https://example.com/mihomo/”"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:279
+#: htdocs/luci-static/resources/view/justclash/service.js:313
 msgid "Rulesets download URL:"
 msgstr "规则集下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:280
+#: htdocs/luci-static/resources/view/justclash/service.js:314
 msgid "URL to download inbuild rulesets from. Leave empty to use the default."
 msgstr "下载内置规则集的 URL。留空以使用默认值。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:286
+#: htdocs/luci-static/resources/view/justclash/service.js:320
 msgid "Zashboard download URL:"
 msgstr "Zashboard 下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:287
+#: htdocs/luci-static/resources/view/justclash/service.js:321
 msgid "URL to download Zashboard dashboard from. Leave empty to use the default."
 msgstr "下载 Zashboard 面板的 URL。留空以使用默认值。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:293
+#: htdocs/luci-static/resources/view/justclash/service.js:327
 msgid "Metacubexd download URL:"
 msgstr "Metacubexd 下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:294
+#: htdocs/luci-static/resources/view/justclash/service.js:328
 msgid "URL to download Metacubexd dashboard from. Leave empty to use the default."
 msgstr "下载 Metacubexd 面板的 URL。留空以使用默认值。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:300
+#: htdocs/luci-static/resources/view/justclash/service.js:334
 msgid "YACD-meta download URL:"
 msgstr "YACD-meta 下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:301
+#: htdocs/luci-static/resources/view/justclash/service.js:335
 msgid "URL to download YACD-meta dashboard from. Leave empty to use the default."
 msgstr "下载 YACD-meta 面板的 URL。留空以使用默认值。"
 

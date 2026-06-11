@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-11 19:16+0300\n"
+"POT-Creation-Date: 2026-06-11 22:43+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1754,307 +1754,339 @@ msgstr ""
 msgid "Save Error"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:24
+#: htdocs/luci-static/resources/view/justclash/service.js:26
 msgid "Service settings:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:24
+#: htdocs/luci-static/resources/view/justclash/service.js:26
 msgid "Main service settings and scheduled tasks."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:27
+#: htdocs/luci-static/resources/view/justclash/service.js:29
 msgid "Startup"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:29
+#: htdocs/luci-static/resources/view/justclash/service.js:31
 msgid "Wait for WAN connection on boot:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:30
+#: htdocs/luci-static/resources/view/justclash/service.js:32
 msgid "Pause the startup process until the router establishes an active Internet connection (default route)."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:34
+#: htdocs/luci-static/resources/view/justclash/service.js:36
 msgid "Maximum wait time for WAN (s):"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:42
+#: htdocs/luci-static/resources/view/justclash/service.js:44
 msgid "Maximum time in seconds to wait for WAN connection before proceeding with the current state."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:45
+#: htdocs/luci-static/resources/view/justclash/service.js:47
 msgid "Delay startup after boot:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:46
+#: htdocs/luci-static/resources/view/justclash/service.js:48
 msgid "Start the service a little later after the router boots. Useful if the router needs extra time to bring up storage, WAN, or other services."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:50
+#: htdocs/luci-static/resources/view/justclash/service.js:52
 msgid "Startup delay:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:60
+#: htdocs/luci-static/resources/view/justclash/service.js:62
 msgid "Choose how many seconds to wait before the first service start after boot."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:62
+#: htdocs/luci-static/resources/view/justclash/service.js:64
 msgid "Skip startup checks:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:63
+#: htdocs/luci-static/resources/view/justclash/service.js:65
 msgid "Skip some safety checks during startup. This can speed up startup, but it may hide problems with files, permissions, or system settings."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:67
+#: htdocs/luci-static/resources/view/justclash/service.js:69
 msgid "Start time sync service:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:68
+#: htdocs/luci-static/resources/view/justclash/service.js:70
 msgid "Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:72
+#: htdocs/luci-static/resources/view/justclash/service.js:74
 msgid "GOMEMLIMIT (Memory limit):"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:76
+#: htdocs/luci-static/resources/view/justclash/service.js:78
 msgid "Limit the Go garbage collector memory usage (in MiB). Select a predefined limit or 0 to disable."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:82
+#: htdocs/luci-static/resources/view/justclash/service.js:84
 msgid "Storage"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:84
+#: htdocs/luci-static/resources/view/justclash/service.js:86
 msgid "Store Mihomo external rules persistently:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:85
+#: htdocs/luci-static/resources/view/justclash/service.js:87
 msgid "Keep Mihomo external rule files in persistent router storage instead of temporary memory. Use this only if you need faster recovery after restart, because frequent writes can wear out built-in flash memory faster."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:89
+#: htdocs/luci-static/resources/view/justclash/service.js:91
 msgid "Store Mihomo cache persistently:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:90
+#: htdocs/luci-static/resources/view/justclash/service.js:92
 msgid "Keep Mihomo cache data such as selected groups and fake-IP mappings in persistent router storage instead of temporary memory. Use this only if you need it, because frequent writes can wear out built-in flash memory faster."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:95
+#: htdocs/luci-static/resources/view/justclash/service.js:97
 msgid "Traffic rules"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:97
+#: htdocs/luci-static/resources/view/justclash/service.js:99
 msgid "Change DNS settings at startup:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:98
+#: htdocs/luci-static/resources/view/justclash/service.js:100
 msgid "Update DNS settings automatically when the service starts. Use this if you want JustClash to manage dnsmasq DNS settings for you."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:102
+#: htdocs/luci-static/resources/view/justclash/service.js:104
 msgid "Set traffic rules at startup:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:103
+#: htdocs/luci-static/resources/view/justclash/service.js:105
 msgid "Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:107
+#: htdocs/luci-static/resources/view/justclash/service.js:109
 msgid "PBR priority:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:108
+#: htdocs/luci-static/resources/view/justclash/service.js:110
 msgid "Priority for the policy routing rule that sends marked traffic to the local TPROXY table. Lower numbers run earlier."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:118
+#: htdocs/luci-static/resources/view/justclash/service.js:120
 msgid "Set router traffic rules at startup:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:119
+#: htdocs/luci-static/resources/view/justclash/service.js:121
 msgid "Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:123
+#: htdocs/luci-static/resources/view/justclash/service.js:125
 msgid "Router socket owner exclusions:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:124
+#: htdocs/luci-static/resources/view/justclash/service.js:126
 msgid "User names or numeric UIDs for router-originated sockets that should bypass proxy redirection rules. Useful for services like byedpi or https-dns-proxy that must reach the internet directly."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:133
+#: htdocs/luci-static/resources/view/justclash/service.js:135
 msgid "Router bypassed ports:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:134
+#: htdocs/luci-static/resources/view/justclash/service.js:136
 msgid "Destination ports (e.g., 22 or 80) for router traffic to bypass the proxy."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:142
+#: htdocs/luci-static/resources/view/justclash/service.js:144
 msgid "Client traffic interfaces:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:150
+#: htdocs/luci-static/resources/view/justclash/service.js:152
 msgid "Select which interfaces receive client traffic that should be processed by JustClash. This is usually your LAN bridge; do not select WAN unless you know exactly why."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:153
+#: htdocs/luci-static/resources/view/justclash/service.js:155
 msgid "Client bypassed ports:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:154
+#: htdocs/luci-static/resources/view/justclash/service.js:156
 msgid "Destination ports (e.g., 22 or 80) for client traffic to bypass the proxy."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:161
-msgid "Client QUIC traffic:"
+#: htdocs/luci-static/resources/view/justclash/service.js:163
+msgid "Client bypassed MAC addresses:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:162
-msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked."
+#: htdocs/luci-static/resources/view/justclash/service.js:164
+msgid "MAC addresses of clients that should bypass the proxy."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:171
-msgid "Client DoT traffic:"
+msgid "Client bypassed IP addresses:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:172
+msgid "IP addresses or subnets (CIDR) of clients that should bypass the proxy."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:179
+msgid "Client QUIC traffic:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:180
+msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:189
+msgid "Client DoT traffic:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:190
 msgid "Choose how to handle DoT traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:181
+#: htdocs/luci-static/resources/view/justclash/service.js:199
 msgid "Client DoH traffic:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:182
+#: htdocs/luci-static/resources/view/justclash/service.js:200
 msgid "Choose how to handle DoH traffic from devices on your network to well-known DoH IPs. The selected mode decides whether this traffic is redirected or blocked."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:191
+#: htdocs/luci-static/resources/view/justclash/service.js:209
 msgid "Client DoQ traffic:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:192
+#: htdocs/luci-static/resources/view/justclash/service.js:210
 msgid "Choose how to handle DoQ traffic from devices on your network. The selected mode decides whether this traffic is redirected or blocked."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:201
+#: htdocs/luci-static/resources/view/justclash/service.js:219
 msgid "Client NTP traffic:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:202
+#: htdocs/luci-static/resources/view/justclash/service.js:220
 msgid "Choose how to handle time sync requests from devices on your network. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:211
+#: htdocs/luci-static/resources/view/justclash/service.js:229
 msgid "Router NTP traffic:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:212
+#: htdocs/luci-static/resources/view/justclash/service.js:230
 msgid "Choose how to handle time sync requests from the router itself. The selected mode decides whether these requests are redirected, bypassed, or blocked."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:222
+#: htdocs/luci-static/resources/view/justclash/service.js:240
 msgid "Scheduled tasks"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:224
+#: htdocs/luci-static/resources/view/justclash/service.js:242
 msgid "Restart Mihomo automatically:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:225
+#: htdocs/luci-static/resources/view/justclash/service.js:243
 msgid "Restart Mihomo on a schedule, for example once a week or once a day."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:229
+#: htdocs/luci-static/resources/view/justclash/service.js:247
 msgid "Restart schedule:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:235
+#: htdocs/luci-static/resources/view/justclash/service.js:253
 msgid "Use cron format to choose when Mihomo should restart automatically."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:237
+#: htdocs/luci-static/resources/view/justclash/service.js:255 htdocs/luci-static/resources/view/justclash/service.js:271
 msgid "Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:241
-msgid "External resources"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:243
-msgid "Core update source:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:244
-msgid "Github"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:245
-msgid "Custom URL"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:246
-msgid "Choose where Mihomo core should be downloaded from. 'Github' will automatically fetch the latest release, 'Custom URL' allows downloading directly from your specified link."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:251
-msgid "GitHub repository:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:252
-msgid "GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'."
+#: htdocs/luci-static/resources/view/justclash/service.js:258
+msgid "Update rules and databases automatically:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:259
-msgid "Update channel:"
+msgid "Update rules and databases on a schedule, for example once a week or once a day."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:263
-msgid "Choose which release channel to use for automatic Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs."
+msgid "Update schedule:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:269
-msgid "Custom core base URL:"
+msgid "Use cron format to choose when rules and databases should update automatically."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:270
-msgid "Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'"
+#: htdocs/luci-static/resources/view/justclash/service.js:275
+msgid "External resources"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:277
+msgid "Core update source:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:278
+msgid "Github"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:279
-msgid "Rulesets download URL:"
+msgid "Custom URL"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:280
-msgid "URL to download inbuild rulesets from. Leave empty to use the default."
+msgid "Choose where Mihomo core should be downloaded from. 'Github' will automatically fetch the latest release, 'Custom URL' allows downloading directly from your specified link."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:285
+msgid "GitHub repository:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:286
-msgid "Zashboard download URL:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/service.js:287
-msgid "URL to download Zashboard dashboard from. Leave empty to use the default."
+msgid "GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/service.js:293
+msgid "Update channel:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:297
+msgid "Choose which release channel to use for Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:303
+msgid "Custom core base URL:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:304
+msgid "Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:313
+msgid "Rulesets download URL:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:314
+msgid "URL to download inbuild rulesets from. Leave empty to use the default."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:320
+msgid "Zashboard download URL:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:321
+msgid "URL to download Zashboard dashboard from. Leave empty to use the default."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/service.js:327
 msgid "Metacubexd download URL:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:294
+#: htdocs/luci-static/resources/view/justclash/service.js:328
 msgid "URL to download Metacubexd dashboard from. Leave empty to use the default."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:300
+#: htdocs/luci-static/resources/view/justclash/service.js:334
 msgid "YACD-meta download URL:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/service.js:301
+#: htdocs/luci-static/resources/view/justclash/service.js:335
 msgid "URL to download YACD-meta dashboard from. Leave empty to use the default."
 msgstr ""
 
