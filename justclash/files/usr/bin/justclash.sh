@@ -870,7 +870,7 @@ build_builtin_rules_bundle() {
     local list_update_interval="$4"
     local size_limit="$5"
     local rule_mode="${6:-all}"
-    local ruleset_lines ruleset_line ruleset_name ruleset_behavior ruleset_format ruleset_url ruleset_fields generated_rule
+    local ruleset_lines ruleset_line ruleset_name ruleset_behavior ruleset_format ruleset_url ruleset_fields generated_rule ruleset_auth
     local rules_fragment="" ip_rules_fragment="" rulesets_fragment="" names_fragment="" fake_ip_rules_fragment=""
     local added_rulesets="|"
 
@@ -955,55 +955,6 @@ build_builtin_rules_bundle() {
         printf 'NAMES:%s\n' "$names_fragment"
         printf 'FAKEIPRULES:%s\n' "$fake_ip_rules_fragment"
     }
-}
-
-build_custom_rules_bundle() {
-    local custom_sources="$1"
-    local behavior="$2"
-    local target_name="$3"
-    local download_proxy="$4"
-    local list_update_interval="$5"
-    local size_limit="$6"
-    local emit_names="$7"
-    local invalid_list_label="$8"
-    local custom_source hashed_ruleset_name escaped_path generated_rule
-    local rules_fragment="" rulesets_fragment="" names_fragment="" fake_ip_rules_fragment=""
-
-    for custom_source in $custom_sources; do
-        custom_source=$(trim "$custom_source")
-        [ -n "$custom_source" ] || continue
-
-        hashed_ruleset_name=$(printf "%s" "$custom_source" | md5_str)
-
-        case "$custom_source" in
-            http://*|https://*)
-                rulesets_fragment="${rulesets_fragment}\"$hashed_ruleset_name\":{\"url\":\"$(json_escape "$custom_source")\",\"behavior\":\"$behavior\",\"format\":\"mrs\",\"proxy\":\"$download_proxy\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"},"
-            ;;
-            *)
-                if [ -f "$custom_source" ]; then
-                    escaped_path=$(json_escape "$custom_source")
-                    safe_paths_add "$(dirname "$custom_source")"
-                    rulesets_fragment="${rulesets_fragment}\"$hashed_ruleset_name\":{\"path\":\"$escaped_path\",\"behavior\":\"$behavior\",\"format\":\"mrs\",\"type\":\"file\"},"
-                else
-                    log warn "Invalid path in custom $invalid_list_label list: $custom_source" "[!]"
-                    continue
-                fi
-            ;;
-        esac
-
-        generated_rule="RULE-SET,$hashed_ruleset_name,$target_name"
-        rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
-
-        if [ "$emit_names" -eq 1 ]; then
-            names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$hashed_ruleset_name\""
-            fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$hashed_ruleset_name,fake-ip\""
-        fi
-    done
-
-    printf 'RULES:%s\n' "$rules_fragment"
-    printf 'RULESETS:%s\n' "$rulesets_fragment"
-    printf 'NAMES:%s\n' "$names_fragment"
-    printf 'FAKEIPRULES:%s\n' "$fake_ip_rules_fragment"
 }
 
 handle_proxy_section() {
@@ -1497,6 +1448,16 @@ get_dashboard_url() {
     esac
 }
 
+build_hosts_section() {
+    echo "hosts:"
+    echo "  'cloudflare-dns.com': [1.1.1.1, 1.0.0.1]"
+    echo "  'one.one.one.one': [1.1.1.1, 1.0.0.1]"
+    echo "  'dns.google': [8.8.8.8, 8.8.4.4]"
+    echo "  'common.dot.dns.yandex.net': [77.88.8.8, 77.88.8.1]"
+    echo "  'safe.dot.dns.yandex.net': [77.88.8.88, 77.88.8.2]"
+    echo "  'family.dot.dns.yandex.net': [77.88.8.7, 77.88.8.3]"
+}
+
 core_generate_yaml() {
     local router_selected_ipaddr
     local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level interface_name tproxy_port unified_delay
@@ -1778,6 +1739,8 @@ core_generate_yaml() {
         echo "  store-selected: $(format_uci_bool_as_yaml "$profile_store_selected")"
         echo "  store-fake-ip: $(format_uci_bool_as_yaml "$profile_store_fake_ip")"
         echo ""
+        build_hosts_section
+        echo ""
         echo "ntp:"
         echo "  enable: $(format_uci_bool_as_yaml "$core_ntp_enabled")"
         echo "  write-to-system: $(format_uci_bool_as_yaml "$core_ntp_write_system")"
@@ -1795,6 +1758,7 @@ core_generate_yaml() {
         echo "  prefer-h3: false"
         echo "  ipv6: false"
         echo "  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")"
+        echo "  use-hosts: true"
         printf '%s\n' "  nameserver-policy: $nameserver_policy"
         printf '%s\n' "  default-nameserver: $default_nameserver"
         printf '%s\n' "  nameserver: $nameserver"
