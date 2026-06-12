@@ -233,7 +233,7 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
 
-        o = spp.option(form.Flag, "subscription_hwid_support", _("HWID support:"));
+        o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
         o.default = primitives.FALSE;
         o.description = _("Send HWID data to server with proxy provider request.");
         o.editable = true;
