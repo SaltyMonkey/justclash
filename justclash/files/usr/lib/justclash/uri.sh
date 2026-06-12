@@ -686,6 +686,65 @@ parse_vless_url() {
                         + (if (($xe.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $xe.scMinPostsIntervalMs}
                            elif (($xe["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $xe["sc-min-posts-interval-ms"]}
                            else {} end)
+                        + (if (($xe.sessionIDPlacement // "") | tostring) != "" then {"session-placement": $xe.sessionIDPlacement}
+                           elif (($xe.sessionPlacement // "") | tostring) != "" then {"session-placement": $xe.sessionPlacement}
+                           elif (($xe["session-placement"] // "") | tostring) != "" then {"session-placement": $xe["session-placement"]}
+                           else {} end)
+                        + (if (($xe.sessionIDKey // "") | tostring) != "" then {"session-key": $xe.sessionIDKey}
+                           elif (($xe.sessionKey // "") | tostring) != "" then {"session-key": $xe.sessionKey}
+                           elif (($xe["session-key"] // "") | tostring) != "" then {"session-key": $xe["session-key"]}
+                           else {} end)
+                        + (if (($xe.sessionIDTable // "") | tostring) != "" then {"session-table": $xe.sessionIDTable}
+                           elif (($xe["session-table"] // "") | tostring) != "" then {"session-table": $xe["session-table"]}
+                           else {} end)
+                        + (if (($xe.sessionIDLength // "") | tostring) != "" then {"session-length": ($xe.sessionIDLength | tostring)}
+                           elif (($xe["session-length"] // "") | tostring) != "" then {"session-length": ($xe["session-length"] | tostring)}
+                           else {} end)
+                         + (if ($xe.noSseHeader // null) != null then {"no-sse-header": $xe.noSseHeader}
+                            elif ($xe["no-sse-header"] // null) != null then {"no-sse-header": $xe["no-sse-header"]}
+                            else {} end)
+                         + (if ($xe.xPaddingObfsMode // null) != null then {"x-padding-obfs-mode": $xe.xPaddingObfsMode}
+                            elif ($xe["x-padding-obfs-mode"] // null) != null then {"x-padding-obfs-mode": $xe["x-padding-obfs-mode"]}
+                            else {} end)
+                         + (if (($xe.xPaddingKey // "") | tostring) != "" then {"x-padding-key": $xe.xPaddingKey}
+                            elif (($xe["x-padding-key"] // "") | tostring) != "" then {"x-padding-key": $xe["x-padding-key"]}
+                            else {} end)
+                         + (if (($xe.xPaddingHeader // "") | tostring) != "" then {"x-padding-header": $xe.xPaddingHeader}
+                            elif (($xe["x-padding-header"] // "") | tostring) != "" then {"x-padding-header": $xe["x-padding-header"]}
+                            else {} end)
+                         + (if (($xe.xPaddingPlacement // "") | tostring) != "" then {"x-padding-placement": $xe.xPaddingPlacement}
+                            elif (($xe["x-padding-placement"] // "") | tostring) != "" then {"x-padding-placement": $xe["x-padding-placement"]}
+                            else {} end)
+                         + (if (($xe.xPaddingMethod // "") | tostring) != "" then {"x-padding-method": $xe.xPaddingMethod}
+                            elif (($xe["x-padding-method"] // "") | tostring) != "" then {"x-padding-method": $xe["x-padding-method"]}
+                            else {} end)
+                         + (if (($xe.uplinkHTTPMethod // "") | tostring) != "" then {"uplink-http-method": $xe.uplinkHTTPMethod}
+                            elif (($xe.uplinkHttpMethod // "") | tostring) != "" then {"uplink-http-method": $xe.uplinkHttpMethod}
+                            elif (($xe["uplink-http-method"] // "") | tostring) != "" then {"uplink-http-method": $xe["uplink-http-method"]}
+                            else {} end)
+                         + (if (($xe.seqIDPlacement // "") | tostring) != "" then {"seq-placement": $xe.seqIDPlacement}
+                            elif (($xe.seqPlacement // "") | tostring) != "" then {"seq-placement": $xe.seqPlacement}
+                            elif (($xe["seq-placement"] // "") | tostring) != "" then {"seq-placement": $xe["seq-placement"]}
+                            else {} end)
+                         + (if (($xe.seqIDKey // "") | tostring) != "" then {"seq-key": $xe.seqIDKey}
+                            elif (($xe.seqKey // "") | tostring) != "" then {"seq-key": $xe.seqKey}
+                            elif (($xe["seq-key"] // "") | tostring) != "" then {"seq-key": $xe["seq-key"]}
+                            else {} end)
+                         + (if (($xe.uplinkDataPlacement // "") | tostring) != "" then {"uplink-data-placement": $xe.uplinkDataPlacement}
+                            elif (($xe["uplink-data-placement"] // "") | tostring) != "" then {"uplink-data-placement": $xe["uplink-data-placement"]}
+                            else {} end)
+                         + (if (($xe.uplinkDataKey // "") | tostring) != "" then {"uplink-data-key": $xe.uplinkDataKey}
+                            elif (($xe["uplink-data-key"] // "") | tostring) != "" then {"uplink-data-key": $xe["uplink-data-key"]}
+                            else {} end)
+                         + (if (($xe.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($xe.uplinkChunkSize | tonumber)}
+                            elif (($xe["uplink-chunk-size"] // "") | tostring) != "" then {"uplink-chunk-size": ($xe["uplink-chunk-size"] | tonumber)}
+                            else {} end)
+                         + (if (($xe.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($xe.scMaxBufferedPosts | tonumber)}
+                            elif (($xe["sc-max-buffered-posts"] // "") | tostring) != "" then {"sc-max-buffered-posts": ($xe["sc-max-buffered-posts"] | tonumber)}
+                            else {} end)
+                         + (if (($xe.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": $xe.scStreamUpServerSecs}
+                            elif (($xe["sc-stream-up-server-secs"] // "") | tostring) != "" then {"sc-stream-up-server-secs": $xe["sc-stream-up-server-secs"]}
+                            else {} end)
                         + (if ($xmux | type) == "object" and ($xmux | length) > 0 then
                                 {"reuse-settings": (
                                     {}
@@ -760,6 +819,96 @@ parse_vless_url() {
                                     + (if (($ds.servername // "") | tostring) != "" then {servername: $ds.servername} else {} end)
                                     + (if (($ds.clientFingerprint // "") | tostring) != "" then {"client-fingerprint": $ds.clientFingerprint}
                                        elif (($ds["client-fingerprint"] // "") | tostring) != "" then {"client-fingerprint": $ds["client-fingerprint"]}
+                                       else {} end)
+                                    + (if (($dxe.sessionIDPlacement // "") | tostring) != "" then {"session-placement": $dxe.sessionIDPlacement}
+                                       elif (($dxe.sessionPlacement // "") | tostring) != "" then {"session-placement": $dxe.sessionPlacement}
+                                       elif (($ds.sessionIDPlacement // "") | tostring) != "" then {"session-placement": $ds.sessionIDPlacement}
+                                       elif (($ds.sessionPlacement // "") | tostring) != "" then {"session-placement": $ds.sessionPlacement}
+                                       elif (($ds["session-placement"] // "") | tostring) != "" then {"session-placement": $ds["session-placement"]}
+                                       else {} end)
+                                    + (if (($dxe.sessionIDKey // "") | tostring) != "" then {"session-key": $dxe.sessionIDKey}
+                                       elif (($dxe.sessionKey // "") | tostring) != "" then {"session-key": $dxe.sessionKey}
+                                       elif (($ds.sessionIDKey // "") | tostring) != "" then {"session-key": $ds.sessionIDKey}
+                                       elif (($ds.sessionKey // "") | tostring) != "" then {"session-key": $ds.sessionKey}
+                                       elif (($ds["session-key"] // "") | tostring) != "" then {"session-key": $ds["session-key"]}
+                                       else {} end)
+                                    + (if (($dxe.sessionIDTable // "") | tostring) != "" then {"session-table": $dxe.sessionIDTable}
+                                       elif (($ds.sessionIDTable // "") | tostring) != "" then {"session-table": $ds.sessionIDTable}
+                                       elif (($ds["session-table"] // "") | tostring) != "" then {"session-table": $ds["session-table"]}
+                                       else {} end)
+                                    + (if (($dxe.sessionIDLength // "") | tostring) != "" then {"session-length": ($dxe.sessionIDLength | tostring)}
+                                       elif (($ds.sessionIDLength // "") | tostring) != "" then {"session-length": ($ds.sessionIDLength | tostring)}
+                                       elif (($ds["session-length"] // "") | tostring) != "" then {"session-length": ($ds["session-length"] | tostring)}
+                                       else {} end)
+                                    + (if ($dxe.noSseHeader // null) != null then {"no-sse-header": $dxe.noSseHeader}
+                                       elif ($ds.noSseHeader // null) != null then {"no-sse-header": $ds.noSseHeader}
+                                       elif ($ds["no-sse-header"] // null) != null then {"no-sse-header": $ds["no-sse-header"]}
+                                       else {} end)
+                                    + (if ($dxe.xPaddingObfsMode // null) != null then {"x-padding-obfs-mode": $dxe.xPaddingObfsMode}
+                                       elif ($ds.xPaddingObfsMode // null) != null then {"x-padding-obfs-mode": $ds.xPaddingObfsMode}
+                                       elif ($ds["x-padding-obfs-mode"] // null) != null then {"x-padding-obfs-mode": $ds["x-padding-obfs-mode"]}
+                                       else {} end)
+                                    + (if (($dxe.xPaddingKey // "") | tostring) != "" then {"x-padding-key": $dxe.xPaddingKey}
+                                       elif (($ds.xPaddingKey // "") | tostring) != "" then {"x-padding-key": $ds.xPaddingKey}
+                                       elif (($ds["x-padding-key"] // "") | tostring) != "" then {"x-padding-key": $ds["x-padding-key"]}
+                                       else {} end)
+                                    + (if (($dxe.xPaddingHeader // "") | tostring) != "" then {"x-padding-header": $dxe.xPaddingHeader}
+                                       elif (($ds.xPaddingHeader // "") | tostring) != "" then {"x-padding-header": $ds.xPaddingHeader}
+                                       elif (($ds["x-padding-header"] // "") | tostring) != "" then {"x-padding-header": $ds["x-padding-header"]}
+                                       else {} end)
+                                    + (if (($dxe.xPaddingPlacement // "") | tostring) != "" then {"x-padding-placement": $dxe.xPaddingPlacement}
+                                       elif (($ds.xPaddingPlacement // "") | tostring) != "" then {"x-padding-placement": $ds.xPaddingPlacement}
+                                       elif (($ds["x-padding-placement"] // "") | tostring) != "" then {"x-padding-placement": $ds["x-padding-placement"]}
+                                       else {} end)
+                                    + (if (($dxe.xPaddingMethod // "") | tostring) != "" then {"x-padding-method": $dxe.xPaddingMethod}
+                                       elif (($ds.xPaddingMethod // "") | tostring) != "" then {"x-padding-method": $ds.xPaddingMethod}
+                                       elif (($ds["x-padding-method"] // "") | tostring) != "" then {"x-padding-method": $ds["x-padding-method"]}
+                                       else {} end)
+                                    + (if (($dxe.uplinkHTTPMethod // "") | tostring) != "" then {"uplink-http-method": $dxe.uplinkHTTPMethod}
+                                       elif (($dxe.uplinkHttpMethod // "") | tostring) != "" then {"uplink-http-method": $dxe.uplinkHttpMethod}
+                                       elif (($ds.uplinkHTTPMethod // "") | tostring) != "" then {"uplink-http-method": $ds.uplinkHTTPMethod}
+                                       elif (($ds.uplinkHttpMethod // "") | tostring) != "" then {"uplink-http-method": $ds.uplinkHttpMethod}
+                                       elif (($ds["uplink-http-method"] // "") | tostring) != "" then {"uplink-http-method": $ds["uplink-http-method"]}
+                                       else {} end)
+                                    + (if (($dxe.seqIDPlacement // "") | tostring) != "" then {"seq-placement": $dxe.seqIDPlacement}
+                                       elif (($dxe.seqPlacement // "") | tostring) != "" then {"seq-placement": $dxe.seqPlacement}
+                                       elif (($ds.seqIDPlacement // "") | tostring) != "" then {"seq-placement": $ds.seqIDPlacement}
+                                       elif (($ds.seqPlacement // "") | tostring) != "" then {"seq-placement": $ds.seqPlacement}
+                                       elif (($ds["seq-placement"] // "") | tostring) != "" then {"seq-placement": $ds["seq-placement"]}
+                                       else {} end)
+                                    + (if (($dxe.seqIDKey // "") | tostring) != "" then {"seq-key": $dxe.seqIDKey}
+                                       elif (($dxe.seqKey // "") | tostring) != "" then {"seq-key": $dxe.seqKey}
+                                       elif (($ds.seqIDKey // "") | tostring) != "" then {"seq-key": $ds.seqIDKey}
+                                       elif (($ds.seqKey // "") | tostring) != "" then {"seq-key": $ds.seqKey}
+                                       elif (($ds["seq-key"] // "") | tostring) != "" then {"seq-key": $ds["seq-key"]}
+                                       else {} end)
+                                    + (if (($dxe.uplinkDataPlacement // "") | tostring) != "" then {"uplink-data-placement": $dxe.uplinkDataPlacement}
+                                       elif (($ds.uplinkDataPlacement // "") | tostring) != "" then {"uplink-data-placement": $ds.uplinkDataPlacement}
+                                       elif (($ds["uplink-data-placement"] // "") | tostring) != "" then {"uplink-data-placement": $ds["uplink-data-placement"]}
+                                       else {} end)
+                                    + (if (($dxe.uplinkDataKey // "") | tostring) != "" then {"uplink-data-key": $dxe.uplinkDataKey}
+                                       elif (($ds.uplinkDataKey // "") | tostring) != "" then {"uplink-data-key": $ds.uplinkDataKey}
+                                       elif (($ds["uplink-data-key"] // "") | tostring) != "" then {"uplink-data-key": $ds["uplink-data-key"]}
+                                       else {} end)
+                                    + (if (($dxe.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($dxe.uplinkChunkSize | tonumber)}
+                                       elif (($ds.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($ds.uplinkChunkSize | tonumber)}
+                                       elif (($ds["uplink-chunk-size"] // "") | tostring) != "" then {"uplink-chunk-size": ($ds["uplink-chunk-size"] | tonumber)}
+                                       else {} end)
+                                    + (if (($dxe.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($dxe.scMaxBufferedPosts | tonumber)}
+                                       elif (($ds.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($ds.scMaxBufferedPosts | tonumber)}
+                                       elif (($ds["sc-max-buffered-posts"] // "") | tostring) != "" then {"sc-max-buffered-posts": ($ds["sc-max-buffered-posts"] | tonumber)}
+                                       else {} end)
+                                    + (if (($dxe.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": $dxe.scStreamUpServerSecs}
+                                       elif (($ds.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": $ds.scStreamUpServerSecs}
+                                       elif (($ds["sc-stream-up-server-secs"] // "") | tostring) != "" then {"sc-stream-up-server-secs": $ds["sc-stream-up-server-secs"]}
+                                       else {} end)
+                                    + (if (($dxe.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $dxe.scMaxEachPostBytes}
+                                       elif (($ds.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds.scMaxEachPostBytes}
+                                       elif (($ds["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds["sc-max-each-post-bytes"]}
+                                       else {} end)
+                                    + (if (($dxe.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $dxe.scMinPostsIntervalMs}
+                                       elif (($ds.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds.scMinPostsIntervalMs}
+                                       elif (($ds["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds["sc-min-posts-interval-ms"]}
                                        else {} end)
                                 )}
                            else {} end)
