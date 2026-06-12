@@ -1,3 +1,55 @@
+## [0.30.0] - 12062026
+
+### Features & Enhancements
+- **Service:** Added client routing exclusions (bypasses) by MAC address (`nft_mac_exclude`) and IP address/subnet (`nft_ips_exclude`).
+- **Service:** Added support for automatic updating of the built-in rulesets and blocklists (`rulesets.txt` and `block.rulesets.txt`) via `mihomo_service_data_autoupdate` and custom cron schedule strings (`mihomo_cron_service_data_update_string`).
+- **Service:** Refactored cron task management, implementing automated verification, sync, correction, and creation of scheduled tasks for both Mihomo auto-restart and ruleset updates on service startup.
+- **Service:** Added memory limit option (`mihomo_mem_limit`) for Mihomo core to prevent kernel OOM killer events on low-resource routers.
+- **Service:** Re-implemented direct proxy nameservers options (`direct_nameserver` with optional fallback resolution logic).
+- **Service:** Added optional sniffer destination overrides support (`sniffer_override_destination`).
+- **Service:** Optimized block rules DNS behavior to return proper RCODE answers for blocked domains, preventing incorrect caching on clients.
+- **Service:** Added support for parsing `packet-encoding` parameter from proxy URIs.
+- **Service:** Added support for both decimal and hexadecimal routing mark (`fwmark`) values, auto-converting hex values to decimal.
+- **Service:** Added support for specifying a custom `Authorization` header for external ruleset providers using a delimiter in the URL list (e.g., `url|Bearer token`).
+- **Service:** Added `REJECT` action option for traffic control to reject blocked client connections instead of silently dropping them.
+- **Service:** Overhauled sniffer destination overrides behavior to properly manage destination overrides.
+- **Service:** Removed deprecated `global_client_fingerprint` options in favor of parsing client fingerprints dynamically from proxy connection strings.
+- **Service:** Removed unused virtual hosts files logic.
+- **Service:** Added automatic compilation of wildcard domain entries (containing `*`) as `DOMAIN-WILDCARD` rules in fake-IP bypass and inclusion lists.
+- **Service:** Optimized rulesets compilation process by sorting `IP-CIDR` rules to be matched first, and `DOMAIN` rules later, enhancing overall routing performance.
+- **Service:** Disabled path expansion (globbing) globally with `set -f` in `justclash.sh` to prevent errors when handling wildcard characters in user configuration lists.
+- **Service:** Optimized RAM/CPU usage during configuration generation by preventing redundant copy operations of large ruleset arrays between functions.
+- **UCI:** Updated default update channel from alpha to stable.
+- **UCI:** Updated default dns resolvers, switching `proxy_server_nameserver` and default `nameservers` to IP-based DoH endpoints (`45.11.45.11`, `185.222.222.222`) to prevent bootstrap/resolution loop issues.
+- **UCI:** Added more out-of-the-box domain exclusions for sniffer and fake-IP filters (optimized STUN/NTP rules using wildcards), and updated default User-Agent.
+- **LuCI:** Added a new dedicated **Rules** tab utilizing the Mihomo API to view active routing rules and matched traffic policies in real time.
+- **LuCI:** Refactored **Connections** action bar layout: grouped interval control and copy buttons on the left, and isolated the destructive "Close all" button on the far right.
+- **LuCI:** Improved connections and logs clipboard copying, adding detailed plain-text formatting (includes ID, Protocol, Source, Destination, rule name, proxy chain, upload/download speed/bytes, and start time) matching active UI search/filters.
+- **LuCI:** Simplified and polished **Nodes** and **Rulesets** views for better readability.
+- **LuCI:** Added hexadecimal formatting support and validation for routing marks (`fwmarks`) in UI forms.
+- **LuCI:** Refactored main navigation tabs position and naming.
+- **LuCI:** Improved tab styling, adjusted font sizes across pages, and removed redundant success notifications.
+- **LuCI:** Updated domain validators to allow asterisks (`*`) in domain suffixes to support wildcard matching entries.
+- **Makefile:** Updated conflicts list to include `sing-box-tiny`, `netshift`, `luci-app-netshift`, `nikki`, `luci-app-nikki`, and `luci-app-ssclash` to prevent packaging conflicts.
+- **Migration:** Updated post-install migration script to automatically replace the deprecated `+.` prefix in fake-IP domain lists using the `uci` CLI tool, correct obsolete default `fake_ip_ttl` values from `1` to `60`, and add `*` to `sniffer_exclude_domain` lists if not present.
+
+### Bug Fixes
+- **LuCI:** Fixed custom core source URL validator (`mihomo_custom_core_url`) triggering validation errors and blocking save when the custom source type is disabled.
+- **Service:** Fixed missing UCI config hash generation on first start or post-boot, resolving false-positive configuration change detections.
+- **Service:** Fixed `/tmp/justclash` folder ownership check on systems without the `stat` utility.
+- **Service:** Fixed incorrect formatting of fake-IP domain list configuration files.
+- **Service:** Fixed a bug where language package variables were invisible when run in nested subshells.
+- **Service:** Fixed Mihomo core installation and update flow on x86_64 architecture platforms.
+- **Service:** Fixed busybox compatibility issues in download pipelines.
+- **Service:** Fixed error messages in `nftables` by piping route check command output to `/dev/null`.
+
+### Documentation & Translations
+- **Docs:** Extensively updated multiple documentation guides including UCI structure config, CLI commands, traffic exclusions, direct rules, and Multi-WAN load balancing/failover.
+- **Translation:** Updated Russian (`ru`) and Chinese (`zh_Hans`) translation catalogs to support the new features, UI controls, and settings.
+
+**This version requires:**
+- Browser cache should be cleaned up after LuCI update
+
 ## [0.20.4] - 30052026
 
 ### Legal & Licensing
