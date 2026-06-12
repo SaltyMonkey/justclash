@@ -1,5 +1,9 @@
 # JustClash
 
+<p align="center">
+  <img src=".github/assets/logo.png" alt="JustClash Logo" width="200"/>
+</p>
+
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue.svg)](https://opensource.org/licenses/GPL-2.0)
 [![OpenWrt Compatibility](https://img.shields.io/badge/OpenWrt-24.x%20%7C%2025.x-emerald)](https://openwrt.org)
 
