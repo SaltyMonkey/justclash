@@ -1,7 +1,7 @@
 # JustClash
 
 <p align="center">
-  <img src=".github/assets/logo.png" alt="JustClash Logo" width="200"/>
+  <img src=".github/assets/logo.webp" alt="JustClash Logo" width="200"/>
 </p>
 
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue.svg)](https://opensource.org/licenses/GPL-2.0)
