@@ -130,6 +130,14 @@ OUT_PROXIES=""         # Generated proxies array (JSON)
 OUT_NAMES_RULESETS=""  # Generated block ruleset names list (plain text)
 OUT_NAMES_SUFFIXES=""  # Generated block suffix names list (plain text)
 OUT_TEMPLATE=""        # Helper buffer used by templating functions (JSON)
+OUT_PROXY_PROVIDERS="" # Generated proxy providers object (JSON)
+OUT_MIXED_RULES=""     # Generated mixed-port rules array (JSON)
+OUT_FINAL_RULES=""     # Generated final rules array (JSON)
+OUT_BUNDLE_IP_RULES="" # Stores IP-based routing rules from build_builtin_rules_bundle (placed before domain rules to optimize DNS)
+OUT_BUNDLE_RULES=""    # Stores domain and other routing rules from build_builtin_rules_bundle to construct clash rules
+OUT_BUNDLE_RULESETS="" # Stores rule-provider templates from build_builtin_rules_bundle to define rule-providers in configuration
+OUT_BUNDLE_NAMES=""    # Stores active ruleset names from build_builtin_rules_bundle, used to build blocklist name lists
+OUT_BUNDLE_FAKEIPRULES="" # Stores rules mapping domains to fake-ip from build_builtin_rules_bundle for correct DNS routing
 
 # Global in-memory caches storing the contents of ruleset/blocklist databases.
 # Loaded once at the start of core_generate_yaml to prevent multiple slow file reads.
@@ -620,7 +628,6 @@ nf_table_add() {
     log warn "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority" "🛠️"
 }
 
-
 nf_table_remove() {
     cleanup_fwmark
     nft flush table inet "$NF_TABLE_NAME" 2>/dev/null || true
@@ -880,87 +887,88 @@ build_builtin_rules_bundle() {
 
     # Queries the active ruleset database (globally defined in _RULESETS_CONTENT)
     ruleset_lines=$(lookup_many_rulesets_full "$enabled_list")
-    printf '%s\n' "$ruleset_lines" | {
-        while IFS= read -r ruleset_line; do
-            [ -z "$ruleset_line" ] && continue
 
-            ruleset_name="${ruleset_line#*|}"
-            ruleset_name="${ruleset_name%%|*}"
+    local old_ifs="$IFS"
+    # shellcheck disable=SC2154
+    IFS="$NL"
+    for ruleset_line in $ruleset_lines; do
+        IFS="$old_ifs"
+        [ -z "$ruleset_line" ] && continue
 
-            case "$added_rulesets" in
-                *"|$ruleset_name|"*) log warn "Skipping duplicated ruleset: $ruleset_name"; continue ;;
-            esac
+        ruleset_name="${ruleset_line#*|}"
+        ruleset_name="${ruleset_name%%|*}"
 
-            ruleset_fields="${ruleset_line#*|}"
-            ruleset_name="${ruleset_fields%%|*}"
-            ruleset_fields="${ruleset_fields#*|}"
-            ruleset_behavior="${ruleset_fields%%|*}"
-            ruleset_fields="${ruleset_fields#*|}"
-            ruleset_format="${ruleset_fields%%|*}"
-            ruleset_url="${ruleset_fields#*|}"
+        case "$added_rulesets" in
+            *"|$ruleset_name|"*) log warn "Skipping duplicated ruleset: $ruleset_name"; continue ;;
+        esac
 
-            # Extract optional Authorization header field (6th field)
-            ruleset_auth=""
-            case "$ruleset_url" in
-                *\|*)
-                    ruleset_auth=$(trim "${ruleset_url#*|}")
-                    ruleset_url="${ruleset_url%%|*}"
-                ;;
-            esac
+        ruleset_fields="${ruleset_line#*|}"
+        ruleset_name="${ruleset_fields%%|*}"
+        ruleset_fields="${ruleset_fields#*|}"
+        ruleset_behavior="${ruleset_fields%%|*}"
+        ruleset_fields="${ruleset_fields#*|}"
+        ruleset_format="${ruleset_fields%%|*}"
+        ruleset_url="${ruleset_fields#*|}"
 
-            generated_rule="RULE-SET,$ruleset_name,$target_name"
-            case "$ruleset_url" in
-                http://*|https://*)
-                    local auth_fragment=""
-                    if [ -n "$ruleset_auth" ]; then
-                        template_auth_header "$ruleset_auth"
-                        auth_fragment="$OUT_TEMPLATE"
-                    fi
-                    template_ruleset_http "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$auth_fragment"
-                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
-                ;;
-                *)
-                    local safe_path
-                    safe_path=$(readlink -f "$(dirname "$ruleset_url")" 2>/dev/null || realpath "$(dirname "$ruleset_url")" 2>/dev/null)
-                    [ -n "$safe_path" ] && safe_paths_add "$safe_path"
-                    template_ruleset_file "$ruleset_url" "$ruleset_behavior" "$ruleset_format"
-                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
-                ;;
-            esac
-            added_rulesets="$added_rulesets$ruleset_name|"
+        # Extract optional Authorization header field (6th field)
+        ruleset_auth=""
+        case "$ruleset_url" in
+            *\|*)
+                ruleset_auth=$(trim "${ruleset_url#*|}")
+                ruleset_url="${ruleset_url%%|*}"
+            ;;
+        esac
 
-            case "$rule_mode" in
-                all)
-                    # IP-based rulesets emitted separately so callers place them before domain rules.
-                    if [ "$ruleset_behavior" = "ipcidr" ]; then
-                        ip_rules_fragment="${ip_rules_fragment:+$ip_rules_fragment,}\"$generated_rule\""
-                    else
-                        rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
-                    fi
-                ;;
-                non-domain-only)
-                    if [ "$ruleset_behavior" != "domain" ]; then
-                        rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
-                    fi
-                ;;
-                *)
-                    log error "Unsupported builtin rules bundle mode: $rule_mode"
-                    return 1
-                ;;
-            esac
+        generated_rule="RULE-SET,$ruleset_name,$target_name"
+        case "$ruleset_url" in
+            http://*|https://*)
+                local auth_fragment=""
+                if [ -n "$ruleset_auth" ]; then
+                    template_auth_header "$ruleset_auth"
+                    auth_fragment="$OUT_TEMPLATE"
+                fi
+                template_ruleset_http "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$auth_fragment"
+                rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
+            ;;
+            *)
+                local safe_path
+                safe_path=$(readlink -f "$(dirname "$ruleset_url")" 2>/dev/null || realpath "$(dirname "$ruleset_url")" 2>/dev/null)
+                [ -n "$safe_path" ] && safe_paths_add "$safe_path"
+                template_ruleset_file "$ruleset_url" "$ruleset_behavior" "$ruleset_format"
+                rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
+            ;;
+        esac
+        added_rulesets="$added_rulesets$ruleset_name|"
 
-            if [ "$ruleset_behavior" = "domain" ]; then
-                names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$ruleset_name\""
-                fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\""
-            fi
-        done
+        case "$rule_mode" in
+            all)
+                # IP-based rulesets emitted separately so callers place them before domain rules.
+                if [ "$ruleset_behavior" = "ipcidr" ]; then
+                    ip_rules_fragment="${ip_rules_fragment:+$ip_rules_fragment,}\"$generated_rule\""
+                else
+                    rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
+                fi
+            ;;
+            non-domain-only)
+                if [ "$ruleset_behavior" != "domain" ]; then
+                    rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
+                fi
+            ;;
+        esac
 
-        printf 'IP_RULES:%s\n' "${ip_rules_fragment:-}"
-        printf 'RULES:%s\n' "$rules_fragment"
-        printf 'RULESETS:%s\n' "$rulesets_fragment"
-        printf 'NAMES:%s\n' "$names_fragment"
-        printf 'FAKEIPRULES:%s\n' "$fake_ip_rules_fragment"
-    }
+        if [ "$ruleset_behavior" = "domain" ]; then
+            names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$ruleset_name\""
+            fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\""
+        fi
+        IFS="$NL"
+    done
+    IFS="$old_ifs"
+
+    OUT_BUNDLE_IP_RULES="${ip_rules_fragment:-}"
+    OUT_BUNDLE_RULES="$rules_fragment"
+    OUT_BUNDLE_RULESETS="${rulesets_fragment%,}"
+    OUT_BUNDLE_NAMES="$names_fragment"
+    OUT_BUNDLE_FAKEIPRULES="$fake_ip_rules_fragment"
 }
 
 # Helper to build proxy group JSON fragment in memory without subshell forks
@@ -1072,7 +1080,7 @@ handle_proxy_section() {
     local fake_ip_rules=""
 
     # shellcheck disable=SC2317
-    _parse_single_proxy() {
+    __parse_single_proxy() {
         local section="$1"
         local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
         local list_update_interval size_limit mode proxy_link_object use_proxy_for_list_update
@@ -1148,15 +1156,11 @@ handle_proxy_section() {
 
         config_get enabled_list "$section" enabled_list
         if [ -n "$enabled_list" ]; then
-            bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
-            ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
-            rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-            rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-            fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-            [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
-            [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-            selected_rulesets="${selected_rulesets}${rulesets_fragment}"
-            [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+            build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit"
+            [ -n "$OUT_BUNDLE_IP_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
+            [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+            [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
+            [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
         fi
 
         config_get route_entries "$section" additional_domain_route
@@ -1170,10 +1174,10 @@ handle_proxy_section() {
 
     }
 
-    config_foreach _parse_single_proxy proxies
+    config_foreach __parse_single_proxy proxies
 
     OUT_RULES="[${rules_array:-}]"
-    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_RULESETS="{${selected_rulesets:-}}"
     OUT_PROXIES="[${proxies:-}]"
     OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
@@ -1186,7 +1190,7 @@ handle_proxy_group_section() {
     local fake_ip_rules=""
 
     # shellcheck disable=SC2317  # Called via config_foreach
-    _parse_proxy_group() {
+    __parse_proxy_group() {
         local section="$1"
         local name enabled
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
@@ -1245,15 +1249,11 @@ handle_proxy_group_section() {
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
         if [ -n "$enabled_list" ]; then
-            bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
-            ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
-            rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-            rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-            fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-            [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
-            [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-            selected_rulesets="${selected_rulesets}${rulesets_fragment}"
-            [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+            build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit"
+            [ -n "$OUT_BUNDLE_IP_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
+            [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+            [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
+            [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
         fi
 
         config_get route_entries "$section" additional_domain_route
@@ -1267,10 +1267,10 @@ handle_proxy_group_section() {
 
     }
 
-    config_foreach _parse_proxy_group proxy_group
+    config_foreach __parse_proxy_group proxy_group
 
     OUT_RULES="[${rules_array:-}]"
-    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_RULESETS="{${selected_rulesets:-}}"
     OUT_PROXY_GROUPS="[${proxy_groups:-}]"
     OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
@@ -1280,7 +1280,7 @@ handle_proxy_provider_section() {
 
     # shellcheck disable=SC2317
     # shellcheck disable=SC2329
-    _handle_proxy_provider() {
+    __handle_proxy_provider() {
         local section="$1"
         local name enabled url override_dialer_proxy override_interface_name override_routing_mark subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
         local health_check hc_expected_status hc_url hc_interval hc_timeout hc_lazy
@@ -1340,11 +1340,9 @@ handle_proxy_provider_section() {
         result="$result\"$(json_escape "$name")\":$provider_json,"
     }
 
-    config_foreach _handle_proxy_provider proxy_provider
+    config_foreach __handle_proxy_provider proxy_provider
 
-    result="{${result%,}}"
-
-    echo "$result"
+    OUT_PROXY_PROVIDERS="{${result%,}}"
 }
 
 # Parses block rules; outputs to global buffer: OUT_RULES, OUT_RULESETS, OUT_NAMES_RULESETS, OUT_NAMES_SUFFIXES
@@ -1384,15 +1382,11 @@ handle_block_rule_section() {
     done
 
     if [ -n "$enabled_blocklist" ]; then
-        bundle=$(build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "non-domain-only")
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        names_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^NAMES://p')
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        selected_rulesets="${selected_rulesets}${rulesets_fragment}"
-        [ -n "$names_fragment" ] && list_rulesets_names=$(printf '%s' "$names_fragment" | sed 's/"//g; s/,rule-set:/,/g')
+        build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "non-domain-only"
+        [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+        [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
+        [ -n "$OUT_BUNDLE_NAMES" ] && list_rulesets_names=$(printf '%s' "$OUT_BUNDLE_NAMES" | sed 's/"//g; s/,rule-set:/,/g')
     fi
-
 
     config_get additional_domain_blockroute block_rules additional_domain_blockroute
     for route_entry in $additional_domain_blockroute; do
@@ -1402,7 +1396,7 @@ handle_block_rule_section() {
     done
 
     OUT_RULES="[${rules_array:-}]"
-    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_RULESETS="{${selected_rulesets:-}}"
     OUT_NAMES_RULESETS="$list_rulesets_names"
     OUT_NAMES_SUFFIXES="$list_suffix_names"
 }
@@ -1445,15 +1439,11 @@ handle_direct_rule_section() {
     [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
     if [ -n "$enabled_list" ]; then
-        bundle=$(build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$download_proxy" "$list_update_interval" "$size_limit")
-        ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-        [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        selected_rulesets="${selected_rulesets}${rulesets_fragment}"
-        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+        build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$download_proxy" "$list_update_interval" "$size_limit"
+        [ -n "$OUT_BUNDLE_IP_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
+        [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+        [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
+        [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
     fi
 
     config_get additional_domain_direct direct_rules additional_domain_direct
@@ -1466,7 +1456,7 @@ handle_direct_rule_section() {
     done
 
     OUT_RULES="[${rules_array:-}]"
-    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_RULESETS="{${selected_rulesets:-}}"
     OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
 
@@ -1482,7 +1472,7 @@ handle_mixed_port_rules_section() {
         rules="[\"${rule_str:-}\"]"
     fi
 
-    echo "$rules"
+    OUT_MIXED_RULES="$rules"
 }
 
 handle_final_rule_section() {
@@ -1493,7 +1483,7 @@ handle_final_rule_section() {
 
     rules="[\"${rule_str:-}\"]"
 
-    echo "$rules"
+    OUT_FINAL_RULES="$rules"
 }
 
 get_dashboard_url() {
@@ -1503,19 +1493,19 @@ get_dashboard_url() {
     case "$dashboard_repo" in
         metacubexd)
             config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL"
-            echo "$url"
+            printf '%s\n' "$url"
             ;;
         yacd-meta)
             config_get url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL"
-            echo "$url"
+            printf '%s\n' "$url"
             ;;
         zashboard)
             config_get url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL"
-            echo "$url"
+            printf '%s\n' "$url"
             ;;
         *)
             config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL"
-            echo "$url"
+            printf '%s\n' "$url"
             ;;
     esac
 }
@@ -1625,9 +1615,17 @@ core_generate_yaml() {
     sniffer_skip_dst_address=$(format_uci_list_as_json_array proxy sniffer_skip_dst_address "" "    ")
     proxy_authentication=$(format_uci_list_as_json_array proxy proxy_authentication "" "    ")
 
-    rule_mixed=$(handle_mixed_port_rules_section)
-    rule_final=$(handle_final_rule_section)
-    proxy_providers=$(handle_proxy_provider_section | jq .)
+    # MIXED PORT RULES section
+    handle_mixed_port_rules_section
+    rule_mixed="$OUT_MIXED_RULES"
+
+    # FINAL RULE section
+    handle_final_rule_section
+    rule_final="$OUT_FINAL_RULES"
+
+    # PROXY PROVIDERS section
+    handle_proxy_provider_section
+    proxy_providers=$(printf '%s\n' "$OUT_PROXY_PROVIDERS" | jq .)
 
     # optimization: load ruleset files once into globals to avoid re-reading and argument-copying per proxy/group
     local user_block_rulesets=""
@@ -1849,6 +1847,13 @@ core_generate_yaml() {
         printf '%s\n' "proxy-providers: $proxy_providers"
         printf '%s\n' "rules: $rules"
     } > "$OUTPUT_YAML_CONFIG_PATH"
+
+    # Clean up global buffers and caches to free memory on low-RAM routers
+    unset _RULESETS_CONTENT _BLOCK_RULESETS_CONTENT \
+          OUT_RULES OUT_RULESETS OUT_FAKE_IP_RULES OUT_PROXY_GROUPS OUT_PROXIES \
+          OUT_NAMES_RULESETS OUT_NAMES_SUFFIXES OUT_TEMPLATE OUT_PROXY_PROVIDERS \
+          OUT_MIXED_RULES OUT_FINAL_RULES OUT_BUNDLE_IP_RULES OUT_BUNDLE_RULES \
+          OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES OUT_BUNDLE_FAKEIPRULES
 
     return 0;
 }

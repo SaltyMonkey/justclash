@@ -19,7 +19,6 @@ NL="$(printf '\n.')"; NL="${NL%.}"
 CR="$(printf '\r')"
 TAB="$(printf '\t')"
 
-
 if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
@@ -114,7 +113,7 @@ format_uci_list_as_json_array() {
     local result=""
 
     # shellcheck disable=SC2329
-    _append_json_array_element() {
+    __append_json_array_element() {
         local val="$1"
         [ -n "$val" ] || return 0
 
@@ -129,7 +128,7 @@ format_uci_list_as_json_array() {
         fi
     }
 
-    config_list_foreach "$section_name" "$list_name" _append_json_array_element
+    config_list_foreach "$section_name" "$list_name" __append_json_array_element
 
     [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
 }
@@ -215,25 +214,15 @@ is_choice() {
 }
 
 safe_paths_add() {
-    local new_value="$1"
-    [ -z "$new_value" ] && return
+    [ -n "$1" ] || return
 
-    local original_value="$SAFE_PATHS"
-    [ -z "$original_value" ] && original_value=""
-
-    case ":$original_value:" in
-        *":$new_value:"*)
-            ;;
+    case ":$SAFE_PATHS:" in
+        *":$1:"*) ;;
         *)
-            if [ -z "$original_value" ]; then
-                SAFE_PATHS="$new_value"
-            else
-                SAFE_PATHS="$original_value:$new_value"
-            fi
+            SAFE_PATHS="${SAFE_PATHS:+$SAFE_PATHS:}$1"
+            export SAFE_PATHS
             ;;
     esac
-
-    export SAFE_PATHS
 }
 
 safe_paths_clear() {
@@ -265,27 +254,33 @@ get_os_version() {
 hwid_generate() {
     local interface mac_addr board_data arch_data hwid_str
     local no_mac_string="__COMPILED_DEFAULT_MAC_VARIABLE__"
+    local interface_dump device_status
 
     if [ -n "$JUSTCLASH_CACHE_HWID" ]; then
         printf '%s' "$JUSTCLASH_CACHE_HWID"
         return 0
     fi
 
-    interface=$(ubus call network.interface dump | jq -r '.interface[] | select(.route[]?.target == "0.0.0.0") | .l3_device' | head -n1)
+    # Cache ubus network calls locally
+    interface_dump=$(ubus call network.interface dump)
+    device_status=$(ubus call network.device status)
 
-    if [ -z "$interface" ]; then
-        interface=$(ubus call network.device status | jq -r 'to_entries[] | select(.value.up == true and .key != "lo" and (.key | startswith("br-") | not)) | .key' | head -n1)
+    # Find default route interface using jq first()
+    interface=$(printf '%s\n' "$interface_dump" | jq -r 'first(.interface[] | select(.route[]?.target == "0.0.0.0") | .l3_device)')
+
+    # Fallback: find first up physical interface using jq first()
+    if [ -z "$interface" ] || [ "$interface" = "null" ]; then
+        interface=$(printf '%s\n' "$device_status" | jq -r 'first(to_entries[] | select(.value.up == true and .key != "lo" and (.key | startswith("br-") | not)) | .key)')
     fi
 
-    if [ -n "$interface" ]; then
-        mac_addr=$(ubus call network.device status "{\"name\":\"$interface\"}" | jq -r '.macaddr // empty' | tr -d ':')
-        [ -z "$mac_addr" ] && mac_addr=$no_mac_string
-    else
-        mac_addr=$no_mac_string
+    # Extract MAC address directly from the cached device status JSON
+    if [ -n "$interface" ] && [ "$interface" != "null" ]; then
+        mac_addr=$(printf '%s\n' "$device_status" | jq -r --arg dev "$interface" '.[$dev].macaddr // empty' | tr -d ':')
     fi
+
+    { [ -z "$mac_addr" ] || [ "$mac_addr" = "null" ]; } && mac_addr="$no_mac_string"
 
     board_data=$(ubus call system board | jq -r '.board_name')
-
     arch_data=$(get_os_arch)
 
     hwid_str=$(printf "hwid_%s%s%s" "$mac_addr" "$board_data" "$arch_data" | md5sum | cut -c1-14)
@@ -293,4 +288,3 @@ hwid_generate() {
     JUSTCLASH_CACHE_HWID="$hwid_str"
     printf '%s' "$JUSTCLASH_CACHE_HWID"
 }
-
