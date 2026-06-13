@@ -51,6 +51,9 @@ add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
 add_missing_option "justclash.settings.mihomo_service_data_autoupdate" "0"
 add_missing_option "justclash.settings.mihomo_cron_service_data_update_string" "0 4 * * 0"
 add_missing_option "justclash.proxy.sniffer_override_destination" "0"
+add_missing_option "justclash.proxy.api_tls" "0"
+add_missing_option "justclash.proxy.api_tls_cert" "/etc/uhttpd.crt"
+add_missing_option "justclash.proxy.api_tls_key" "/etc/uhttpd.key"
 uci -q delete justclash.proxy.use_hosts
 uci -q delete justclash.proxy.hosts
 
