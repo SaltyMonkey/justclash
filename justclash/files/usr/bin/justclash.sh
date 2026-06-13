@@ -2552,6 +2552,7 @@ help() {
     echo "  service_data_cron_remove        Remove the scheduled service data update task"
     echo ""
     echo "Diagnostics:"
+    echo "  show_hwid                   Show Hardware ID (HWID)"
     echo "  diag_report                 Run diagnostic"
     echo "  diag_nft                    Run nftables diagnostic"
     echo "  diag_route                  Run route tables diagnostic"
@@ -2658,6 +2659,10 @@ case "$1" in
         ;;
     diag_service_config_reset|dscr)
         diag_service_config_reset
+        ;;
+    show_hwid|hwid)
+        hwid_generate
+        echo ""
         ;;
     help|'?'|command|h|-h|--help)
         help

@@ -55,6 +55,7 @@ The core control script `/usr/bin/justclash.sh` handles setup, routing, auto-upd
 | Command | Short Aliases | Arguments | Description |
 | :--- | :--- | :--- | :--- |
 | `diag_report` | `diag`, `dg` | *None* | Runs a full system diagnostic report (NFT, routes, resolves). |
+| `show_hwid` | `hwid` | *None* | Outputs the generated Hardware ID (HWID) of the device. |
 | `diag_nft` | `dn` | *None* | Verifies if the NFTables rules are properly loaded. |
 | `diag_route` | `dr` | *None* | Outputs routing tables status. |
 | `diag_icmp` | `di` | `[target] [count]` | Runs a latency/connectivity test using ICMP. |
