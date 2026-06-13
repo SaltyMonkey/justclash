@@ -129,6 +129,7 @@ OUT_PROXY_GROUPS=""    # Generated proxy groups array (JSON)
 OUT_PROXIES=""         # Generated proxies array (JSON)
 OUT_NAMES_RULESETS=""  # Generated block ruleset names list (plain text)
 OUT_NAMES_SUFFIXES=""  # Generated block suffix names list (plain text)
+OUT_TEMPLATE=""        # Helper buffer used by templating functions (JSON)
 
 # Global in-memory caches storing the contents of ruleset/blocklist databases.
 # Loaded once at the start of core_generate_yaml to prevent multiple slow file reads.
@@ -147,14 +148,6 @@ ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 REQUIRED_TOOLS="jq nft curl md5sum ntpd"
-
-ucibool_to_yesno() {
-    case "$1" in
-        1) echo "Yes" ;;
-        0) echo "No" ;;
-        *) echo "$1" ;;
-    esac
-}
 
 panic() {
     log error "$1" '💥'
@@ -843,18 +836,12 @@ lookup_many_rulesets_full() {
 }
 
 build_hwid_header_fragment() {
-    jq -nc \
-        --arg hwid "$(hwid_generate)" \
-        --arg device_os "$(get_os_name)" \
-        --arg version_os "$(get_os_version)" \
-        --arg device_model "$(get_hw_model)" '
-        "\"header\":" + ({
-            "x-hwid": $hwid,
-            "x-device-os": $device_os,
-            "x-ver-os": $version_os,
-            "x-device-model": $device_model
-        } | tojson)
-    '
+    local hwid device_os version_os device_model
+    hwid=$(hwid_generate)
+    device_os=$(get_os_name)
+    version_os=$(get_os_version)
+    device_model=$(get_hw_model)
+    template_hwid_header "$hwid" "$device_os" "$version_os" "$device_model"
 }
 
 build_manual_rules_array() {
@@ -926,16 +913,18 @@ build_builtin_rules_bundle() {
                 http://*|https://*)
                     local auth_fragment=""
                     if [ -n "$ruleset_auth" ]; then
-                        auth_fragment=",\"header\":{\"Authorization\":[\"$(json_escape "$ruleset_auth")\"]}"
+                        template_auth_header "$ruleset_auth"
+                        auth_fragment="$OUT_TEMPLATE"
                     fi
-                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"url\":\"$(json_escape "$ruleset_url")\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"proxy\":\"$(json_escape "$download_proxy")\",\"interval\":$list_update_interval,\"size-limit\":$size_limit,\"type\":\"http\"${auth_fragment}},"
+                    template_ruleset_http "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$auth_fragment"
+                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
                 ;;
                 *)
-                    local escaped_path safe_path
-                    escaped_path=$(json_escape "$ruleset_url")
+                    local safe_path
                     safe_path=$(readlink -f "$(dirname "$ruleset_url")" 2>/dev/null || realpath "$(dirname "$ruleset_url")" 2>/dev/null)
                     [ -n "$safe_path" ] && safe_paths_add "$safe_path"
-                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":{\"path\":\"$escaped_path\",\"behavior\":\"$(json_escape "$ruleset_behavior")\",\"format\":\"$(json_escape "$ruleset_format")\",\"type\":\"file\"},"
+                    template_ruleset_file "$ruleset_url" "$ruleset_behavior" "$ruleset_format"
+                    rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
                 ;;
             esac
             added_rulesets="$added_rulesets$ruleset_name|"
@@ -972,6 +961,107 @@ build_builtin_rules_bundle() {
         printf 'NAMES:%s\n' "$names_fragment"
         printf 'FAKEIPRULES:%s\n' "$fake_ip_rules_fragment"
     }
+}
+
+# Helper to build proxy group JSON fragment in memory without subshell forks
+template_proxy_group() {
+    local name="$1" type="$2" url="$3" status="$4" interval="$5" timeout="$6" max_failed="$7" lazy="$8"
+    local tolerance="$9" strategy="${10}" proxies="${11}" providers="${12}" filter="${13}" exclude_filter="${14}" exclude_type="${15}"
+    local out
+
+    out="\"name\":\"$(json_escape "$name")\""
+    out="$out,\"type\":\"$(json_escape "$type")\""
+    out="$out,\"url\":\"$(json_escape "$url")\""
+    out="$out,\"expected-status\":$status"
+    out="$out,\"interval\":$interval"
+    out="$out,\"timeout\":$timeout"
+    out="$out,\"max-failed-times\":$max_failed"
+    out="$out,\"lazy\":$lazy"
+
+    if [ "$type" = "url-test" ] && [ -n "$tolerance" ]; then
+        out="$out,\"tolerance\":\"$(json_escape "$tolerance")\""
+    elif [ "$type" = "load-balance" ] && [ -n "$strategy" ]; then
+        out="$out,\"strategy\":\"$(json_escape "$strategy")\""
+    fi
+
+    [ -n "$proxies" ] && out="$out,\"proxies\":[$proxies]"
+    [ -n "$providers" ] && out="$out,\"use\":[$providers]"
+    [ -n "$filter" ] && out="$out,\"filter\":\"$(json_escape "$filter")\""
+    [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
+    [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+
+    OUT_TEMPLATE="{$out}"
+}
+
+# Helper to build proxy provider JSON fragment in memory without subshell forks
+template_proxy_provider() {
+    local url="$1" interval="$2" size_limit="$3" proxy="$4" filter="$5" exclude_filter="$6" exclude_type="$7"
+    local override_dialer="$8" override_ifname="$9" override_fwmark="${10}" hwid_header="${11}"
+    local hc_enabled="${12}" hc_url="${13}" hc_status="${14}" hc_interval="${15}" hc_timeout="${16}" hc_lazy="${17}"
+    local out override_json hc_json
+
+    out="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
+    [ -n "$filter" ] && out="$out,\"filter\":\"$(json_escape "$filter")\""
+    [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
+    [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+
+    # Override object
+    override_json="\"udp\":true"
+    [ -n "$override_dialer" ] && override_json="$override_json,\"dialer-proxy\":\"$(json_escape "$override_dialer")\""
+    [ -n "$override_ifname" ] && override_json="$override_json,\"interface-name\":\"$(json_escape "$override_ifname")\""
+    [ -n "$override_fwmark" ] && override_json="$override_json,\"routing-mark\":$override_fwmark"
+    out="$out,\"override\":{$override_json}"
+
+    # Optional HWID headers
+    [ -n "$hwid_header" ] && out="$out,$hwid_header"
+
+    # Health check object
+    if [ "$hc_enabled" -eq 1 ]; then
+        hc_json="\"enable\":true,\"lazy\":$hc_lazy,\"url\":\"$(json_escape "$hc_url")\",\"expected-status\":$hc_status,\"interval\":$hc_interval,\"timeout\":$hc_timeout"
+        out="$out,\"health-check\":{$hc_json}"
+    fi
+
+    OUT_TEMPLATE="{$out}"
+}
+
+# Helper to build x-hwid and other device headers JSON fragment in memory without subshell forks
+template_hwid_header() {
+    local hwid="$1" device_os="$2" version_os="$3" device_model="$4"
+    local out
+
+    out="\"x-hwid\":\"$(json_escape "$hwid")\""
+    out="$out,\"x-device-os\":\"$(json_escape "$device_os")\""
+    out="$out,\"x-ver-os\":\"$(json_escape "$version_os")\""
+    out="$out,\"x-device-model\":\"$(json_escape "$device_model")\""
+
+    OUT_TEMPLATE="\"header\":{$out}"
+}
+
+# Helper to build Authorization header JSON fragment in memory without subshell forks
+template_auth_header() {
+    local auth="$1"
+    OUT_TEMPLATE="\"header\":{\"Authorization\":[\"$(json_escape "$auth")\"]}"
+}
+
+# Helper to build HTTP ruleset JSON fragment in memory without subshell forks
+template_ruleset_http() {
+    local url="$1" behavior="$2" format="$3" proxy="$4" interval="$5" size_limit="$6" auth_fragment="$7"
+    local out
+
+    out="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$interval,\"size-limit\":$size_limit"
+    [ -n "$auth_fragment" ] && out="$out,$auth_fragment"
+
+    OUT_TEMPLATE="{$out}"
+}
+
+# Helper to build file-based ruleset JSON fragment in memory without subshell forks
+template_ruleset_file() {
+    local path="$1" behavior="$2" format="$3"
+    local out
+
+    out="\"type\":\"file\",\"path\":\"$(json_escape "$path")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\""
+
+    OUT_TEMPLATE="{$out}"
 }
 
 # Parses proxies; outputs to global buffer: OUT_RULES, OUT_RULESETS, OUT_PROXIES, OUT_FAKE_IP_RULES
@@ -1140,27 +1230,10 @@ handle_proxy_group_section() {
         [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(trim "$providers_list" | list_to_json_array)
 
-        group_json="\"name\":\"$(json_escape "$name")\",\
-                        \"type\":\"$(json_escape "$group_type")\",\
-                        \"url\":\"$(json_escape "$check_url")\",\
-                        \"expected-status\":$expected_status,\
-                        \"interval\":$interval,\
-                        \"timeout\":$check_timeout,\
-                        \"max-failed-times\":$max_failed_times,\
-                        \"lazy\":$(format_uci_bool_as_yaml "$lazy")"
-
-        if [ "$group_type" = "url-test" ]; then
-            group_json="$group_json,\"tolerance\":\"$tolerance\""
-        elif [ "$group_type" = "load-balance" ]; then
-            group_json="$group_json,\"strategy\":\"$(json_escape "$strategy")\""
-        fi
-
-        [ -n "$escaped_proxies" ] && group_json="$group_json,\"proxies\":[$escaped_proxies]"
-        [ -n "$escaped_providers" ] && group_json="$group_json,\"use\":[$escaped_providers]"
-        [ -n "$filter" ] && group_json="$group_json,\"filter\":\"$(json_escape "$filter")\""
-        [ -n "$exclude_filter" ] && group_json="$group_json,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
-        [ -n "$exclude_type" ] && group_json="$group_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
-        group_json="{$group_json}"
+        template_proxy_group \
+            "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$(format_uci_bool_as_yaml "$lazy")" \
+            "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type"
+        group_json="$OUT_TEMPLATE"
 
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
         [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
@@ -1212,8 +1285,8 @@ handle_proxy_provider_section() {
     _handle_proxy_provider() {
         local section="$1"
         local name enabled url override_dialer_proxy override_interface_name override_routing_mark subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
-        local health_check health_check_url health_check_interval health_check_timeout health_check_expected_status health_check_lazy
-        local provider_json override_json="udp:true"
+        local health_check hc_expected_status hc_url hc_interval hc_timeout hc_lazy
+        local provider_json hwid_header
 
         config_get name "$section" name
         config_get url "$section" subscription
@@ -1242,42 +1315,29 @@ handle_proxy_provider_section() {
         config_get override_dialer_proxy "$section" override_dialer_proxy
         config_get override_interface_name "$section" override_interface_name
 
-        provider_json="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
-        [ -n "$filter" ] && provider_json="$provider_json,\"filter\":\"$(json_escape "$filter")\""
-        [ -n "$exclude_filter" ] && provider_json="$provider_json,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
-        [ -n "$exclude_type" ] && provider_json="$provider_json,\"exclude-type\":\"$(json_escape "$exclude_type")\""
-
-        [ -n "$override_dialer_proxy" ] && override_json="\"dialer-proxy\":\"$(trim "$override_dialer_proxy")\""
-        [ -n "$override_interface_name" ] && override_json="${override_json:+$override_json,}\"interface-name\":\"$(trim "$override_interface_name")\""
-        if [ -n "$override_routing_mark" ]; then
-            override_json="${override_json:+$override_json,}\"routing-mark\":$override_routing_mark"
-        fi
-        [ -n "$override_json" ] && provider_json="$provider_json,\"override\":{$override_json}"
-
+        hwid_header=""
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
         if [ "$subscription_hwid_support" -eq 1 ]; then
-            provider_json="$provider_json,$(build_hwid_header_fragment)"
+            build_hwid_header_fragment
+            hwid_header="$OUT_TEMPLATE"
         fi
 
         config_get_bool health_check "$section" health_check 0
+        hc_expected_status="$DEFAULT_HEALTHCHECK_RESULT" hc_url="$DEFAULT_HEALTHCHECK_URL" hc_interval="$DEFAULT_HEALTHCHECK_INTERVAL" hc_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT" hc_lazy="false"
         if [ "$health_check" -eq 1 ]; then
-            config_get health_check_expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
-            config_get health_check_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
-            config_get health_check_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
-            config_get health_check_timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
-            config_get health_check_lazy "$section" health_check_lazy 0
-
-            provider_json="$provider_json,\"health-check\":{\
-            \"enable\":true,\
-            \"lazy\":$(format_uci_bool_as_yaml "$health_check_lazy"),\
-            \"url\":\"$(json_escape "$health_check_url")\",\
-            \"expected-status\":$health_check_expected_status,\
-            \"interval\":$health_check_interval,\
-            \"timeout\":$health_check_timeout\
-            }"
+            config_get hc_expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
+            config_get hc_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
+            config_get hc_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
+            config_get hc_timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
+            config_get hc_lazy "$section" health_check_lazy 0
+            hc_lazy=$(format_uci_bool_as_yaml "$hc_lazy")
         fi
 
-        provider_json="{$provider_json}"
+        template_proxy_provider \
+            "$url" "$interval" "$size_limit" "$proxy" "$filter" "$exclude_filter" "$exclude_type" \
+            "$override_dialer_proxy" "$override_interface_name" "$override_routing_mark" "$hwid_header" \
+            "$health_check" "$hc_url" "$hc_expected_status" "$hc_interval" "$hc_timeout" "$hc_lazy"
+        provider_json="$OUT_TEMPLATE"
 
         result="$result\"$(json_escape "$name")\":$provider_json,"
     }
@@ -1723,7 +1783,7 @@ core_generate_yaml() {
         echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
         echo "tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")"
         echo "routing-mark: $NF_TABLE_FWMARK_PROXY"
-        echo "global-ua: $(yaml_quote_soft "$global_ua")"
+        echo "global-ua: $(yaml_quote "$global_ua")"
         echo "find-process-mode: off"
         echo "geodata-mode: false"
         echo "etag-support: $(format_uci_bool_as_yaml "$etag_support")"
