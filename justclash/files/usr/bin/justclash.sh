@@ -1528,6 +1528,7 @@ core_generate_yaml() {
     local use_mixed_port mixed_port proxy_authentication
     local tcp_concurrent
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
+    local api_tls api_tls_cert api_tls_key
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
     local dns_listen_port use_system_hosts fake_ip_range fake_ip_ttl dns_cache_max_size
     local etag_support global_ua
@@ -1556,6 +1557,9 @@ core_generate_yaml() {
     config_get dashboard_repo proxy dashboard_repo "$DEFAULT_EXTERNAL_PANEL"
     config_get api_password proxy api_password
     config_get log_level proxy log_level
+    config_get_bool api_tls proxy api_tls 0
+    config_get api_tls_cert proxy api_tls_cert "/etc/uhttpd.crt"
+    config_get api_tls_key proxy api_tls_key "/etc/uhttpd.key"
     config_get interface_name proxy interface_name
     config_get tproxy_port proxy tproxy_port
     config_get use_mixed_port proxy use_mixed_port
@@ -1773,8 +1777,21 @@ core_generate_yaml() {
 
         echo "mode: rule"
         echo "ipv6: false"
-        echo "external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")"
+        if [ "$api_tls" -eq 1 ]; then
+            echo "external-controller-tls: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")"
+        else
+            echo "external-controller: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")"
+        fi
         echo "secret: $(yaml_quote "$api_password")"
+        echo "external-controller-cors:"
+        echo "  allow-origins:"
+        echo "    - '*'"
+        echo "  allow-private-network: true"
+        if [ "$api_tls" -eq 1 ]; then
+            echo "tls:"
+            echo "  certificate: $(yaml_quote "$api_tls_cert")"
+            echo "  private-key: $(yaml_quote "$api_tls_key")"
+        fi
         echo "log-level: $(yaml_quote "$log_level")"
         echo "tproxy-port: $tproxy_port"
         echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
