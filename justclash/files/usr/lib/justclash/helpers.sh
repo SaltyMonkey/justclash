@@ -95,7 +95,7 @@ format_uci_list_as_json_array() {
         local val="$1"
         [ -n "$val" ] || return 0
 
-        val=$(printf '%s' "$val" | sed 's/"/\\"/g')
+        val="${val//\"/\\\"}"
         [ -n "$add_custom" ] && val="${val}${add_custom}"
 
         if [ -n "$result" ]; then
