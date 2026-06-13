@@ -1089,6 +1089,7 @@ handle_proxy_section() {
         [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy: $section" "⚠️"; return; }
 
         config_get routing_mark "$section" routing_mark
+        routing_mark=$(parse_routing_mark "$routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
         if [ "$routing_mark" = "-1" ]; then
             log warn "Skipping proxy '$section' due to invalid routing_mark" "⚠️"
             return 0
@@ -1102,9 +1103,6 @@ handle_proxy_section() {
         config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
-        routing_mark=$(parse_routing_mark "$routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
-
-
 
         if [ "$mode" = "object" ]; then
             [ -z "$proxy_link_object" ] && { log warn "Skipping empty proxy '$name'" "⚠️" ; return; }
