@@ -1045,15 +1045,17 @@ handle_proxy_section() {
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
         config_get enabled_list "$section" enabled_list
-        bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
-        ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-        [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        selectedRuleSets="${selectedRuleSets}${rulesets_fragment}"
-        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+        if [ -n "$enabled_list" ]; then
+            bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
+            ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
+            rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
+            rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
+            fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
+            [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
+            [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+            selectedRuleSets="${selectedRuleSets}${rulesets_fragment}"
+            [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+        fi
 
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
@@ -1160,15 +1162,17 @@ handle_proxy_group_section() {
         rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
-        bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
-        ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
-        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-        [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-        proxy_groups_rulesets="${proxy_groups_rulesets}${rulesets_fragment}"
-        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+        if [ -n "$enabled_list" ]; then
+            bundle=$(build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit")
+            ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
+            rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
+            rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
+            fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
+            [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
+            [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+            proxy_groups_rulesets="${proxy_groups_rulesets}${rulesets_fragment}"
+            [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+        fi
 
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
@@ -1313,13 +1317,15 @@ handle_block_rule_section() {
         }
     done
 
-    bundle=$(build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$proxy" "$list_update_interval" "$size_limit" "non-domain-only")
-    rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-    rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-    names_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^NAMES://p')
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-    selected_rule_sets="${selected_rule_sets}${rulesets_fragment}"
-    [ -n "$names_fragment" ] && list_rulesets_names=$(printf '%s' "$names_fragment" | sed 's/"//g; s/,rule-set:/,/g')
+    if [ -n "$enabled_blocklist" ]; then
+        bundle=$(build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$proxy" "$list_update_interval" "$size_limit" "non-domain-only")
+        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
+        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
+        names_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^NAMES://p')
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+        selected_rule_sets="${selected_rule_sets}${rulesets_fragment}"
+        [ -n "$names_fragment" ] && list_rulesets_names=$(printf '%s' "$names_fragment" | sed 's/"//g; s/,rule-set:/,/g')
+    fi
 
 
     config_get additional_domain_blockroute block_rules additional_domain_blockroute
@@ -1374,15 +1380,17 @@ handle_direct_rule_section() {
     rules_fragment=$(build_manual_rules_array "$additional_destip_direct" "IP-CIDR" "DIRECT" "")
     [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
-    bundle=$(build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$proxy" "$list_update_interval" "$size_limit")
-    ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
-    rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
-    rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
-    fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
-    [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-    direct_rulesets="${direct_rulesets}${rulesets_fragment}"
-    [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+    if [ -n "$enabled_list" ]; then
+        bundle=$(build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$proxy" "$list_update_interval" "$size_limit")
+        ip_rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^IP_RULES://p')
+        rules_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULES://p')
+        rulesets_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^RULESETS://p')
+        fake_ip_fragment=$(printf '%s\n' "$bundle" | sed -n 's/^FAKEIPRULES://p')
+        [ -n "$ip_rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$ip_rules_fragment"
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+        direct_rulesets="${direct_rulesets}${rulesets_fragment}"
+        [ -n "$fake_ip_fragment" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$fake_ip_fragment"
+    fi
 
     config_get additional_domain_direct direct_rules additional_domain_direct
     for route_entry in $additional_domain_direct; do
