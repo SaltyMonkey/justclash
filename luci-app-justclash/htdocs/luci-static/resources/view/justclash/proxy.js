@@ -192,6 +192,23 @@ return view.extend({
             return common.validateApiSecret(value);
         };
 
+        o = s.taboption(tabname, form.Flag, "api_tls", _("Enable API TLS"));
+        o.description = _("Enable secure HTTPS/WSS protocol for the Mihomo API controller.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
+
+        o = s.taboption(tabname, form.Value, "api_tls_cert", _("API TLS certificate path"));
+        o.description = _("Path to the PEM-encoded SSL/TLS certificate file.");
+        o.placeholder = "/etc/uhttpd.crt";
+        o.default = "/etc/uhttpd.crt";
+        o.depends("api_tls", primitives.TRUE);
+
+        o = s.taboption(tabname, form.Value, "api_tls_key", _("API TLS key path"));
+        o.description = _("Path to the PEM-encoded SSL/TLS private key file.");
+        o.placeholder = "/etc/uhttpd.key";
+        o.default = "/etc/uhttpd.key";
+        o.depends("api_tls", primitives.TRUE);
+
         tabname = "dnssettings_tab";
         s.tab(tabname, _("DNS settings"));
 

@@ -5,6 +5,11 @@
 return baseclass.extend({
     port: 9090,
     fetchTimeout: 5000,
+    apiTls: false,
+
+    setTls(enabled) {
+        this.apiTls = !!enabled;
+    },
 
     // API paths
     paths: {
@@ -48,10 +53,10 @@ return baseclass.extend({
         return url.toString();
     },
     getHttpProtocol() {
-        return window.location.protocol === "https:" ? "https:" : "http:";
+        return this.apiTls ? "https:" : "http:";
     },
     getWsProtocol() {
-        return window.location.protocol === "https:" ? "wss:" : "ws:";
+        return this.apiTls ? "wss:" : "ws:";
     },
     getHttpUrl(path, searchParams = null) {
         return this.buildUrl(path, this.getHttpProtocol(), searchParams);

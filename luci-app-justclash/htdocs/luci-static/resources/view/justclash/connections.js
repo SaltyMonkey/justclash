@@ -125,9 +125,14 @@ return view.extend({
     handleReset: null,
 
     load: async function () {
+        let token = "";
+        let apiTls = false;
+
         try {
             await uci.load(common.binName);
-            const token = uci.get(common.binName, "proxy", "api_password") || "";
+            token = uci.get(common.binName, "proxy", "api_password") || "";
+            apiTls = uci.get(common.binName, "proxy", "api_tls") === "1";
+            mihomoApi.setTls(apiTls);
             return { token, configLoadFailed: false };
         } catch (e) {
             console.error("Failed to load justclash config", e);
