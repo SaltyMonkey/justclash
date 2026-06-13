@@ -14,6 +14,12 @@ JUSTCLASH_CACHE_OS_VERSION_FULL=""
 JUSTCLASH_CACHE_HW_MODEL=""
 JUSTCLASH_CACHE_HWID=""
 
+# Global constants for ash-native string operations
+NL="$(printf '\n.')"; NL="${NL%.}"
+CR="$(printf '\r')"
+TAB="$(printf '\t')"
+
+
 if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
@@ -64,16 +70,33 @@ parse_routing_mark() {
 }
 
 json_escape() {
-    printf '%s' "$1" | \
-    sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
+    local val="$1"
+    # shellcheck disable=SC3060
+    val="${val//\\/\\\\}"
+    # shellcheck disable=SC3060
+    val="${val//\"/\\\"}"
+    # shellcheck disable=SC3060
+    val="${val//$TAB/\\t}"
+    # shellcheck disable=SC3060
+    val="${val//$NL/\\n}"
+    # shellcheck disable=SC3060
+    val="${val//$CR/\\r}"
+    printf '%s' "$val"
 }
 
 yaml_quote() {
-    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C sed 's/[[:cntrl:]]//g; s/\\/\\\\/g; s/"/\\"/g')"
-}
-
-yaml_quote_soft() {
-    printf '"%s"' "$(printf '%s' "$1" | LC_ALL=C sed 's/[[:cntrl:]]//g; s/\\/\\\\/g; s/"/\\"/g')"
+    local val="$1"
+    # shellcheck disable=SC3060
+    val="${val//\\/\\\\}"
+    # shellcheck disable=SC3060
+    val="${val//\"/\\\"}"
+    # shellcheck disable=SC3060
+    val="${val//$TAB/}"
+    # shellcheck disable=SC3060
+    val="${val//$NL/}"
+    # shellcheck disable=SC3060
+    val="${val//$CR/}"
+    printf '"%s"' "$val"
 }
 
 format_uci_bool_as_yaml() {
@@ -95,6 +118,7 @@ format_uci_list_as_json_array() {
         local val="$1"
         [ -n "$val" ] || return 0
 
+        # shellcheck disable=SC3060
         val="${val//\"/\\\"}"
         [ -n "$add_custom" ] && val="${val}${add_custom}"
 
@@ -133,6 +157,7 @@ list_to_json_array() {
     local input_list
     read -r input_list
 
+    # TODO: Try to replace this with an in-memory implementation to avoid calling sed unnecessarily
     if [ -n "$input_list" ]; then
         printf '"%s"' "$(echo "$input_list" | sed -e 's/"/\\"/g' -e 's/[[:space:]]\+/","/g')"
     fi
@@ -268,3 +293,4 @@ hwid_generate() {
     JUSTCLASH_CACHE_HWID="$hwid_str"
     printf '%s' "$JUSTCLASH_CACHE_HWID"
 }
+
