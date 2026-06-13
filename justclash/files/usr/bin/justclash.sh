@@ -120,6 +120,21 @@ DEFAULT_DIAG_IP_CHECK_PING_YANDEX="77.88.8.8"
 DEFAULT_DIAG_IP_CHECK_PING_GOOGLE="8.8.8.8"
 DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB="github.com"
 
+# Global buffer variables used by handle_*_section functions to return values
+# to core_generate_yaml, avoiding filesystem I/O (mktemp/cat/rm) and eval.
+OUT_RULES=""           # Generated routing rules array (JSON)
+OUT_RULESETS=""        # Generated rule-providers object (JSON)
+OUT_FAKE_IP_RULES=""   # Generated fake-ip filtering rules array (JSON)
+OUT_PROXY_GROUPS=""    # Generated proxy groups array (JSON)
+OUT_PROXIES=""         # Generated proxies array (JSON)
+OUT_NAMES_RULESETS=""  # Generated block ruleset names list (plain text)
+OUT_NAMES_SUFFIXES=""  # Generated block suffix names list (plain text)
+
+# Global in-memory caches storing the contents of ruleset/blocklist databases.
+# Loaded once at the start of core_generate_yaml to prevent multiple slow file reads.
+_RULESETS_CONTENT=""        # Cache of rulesets.txt content
+_BLOCK_RULESETS_CONTENT=""  # Cache of block.rulesets.txt content
+
 NF_TABLE_NAME="${PROGNAME}_tproxy"
 NF_TABLE_FWMARK_FINAL=3
 NF_TABLE_FWMARK_PROXY=255
@@ -805,6 +820,7 @@ systemlogs() {
     return 0
 }
 
+# Searches active ruleset list in memory (uses global _RULESETS_CONTENT cache)
 lookup_many_rulesets_full() {
     local keys="$1"
 
@@ -863,6 +879,7 @@ build_manual_rules_array() {
     printf '%s' "$rules_fragment"
 }
 
+# Builds built-in rules bundle (uses global _RULESETS_CONTENT cache via lookup)
 build_builtin_rules_bundle() {
     local enabled_list="$1"
     local target_name="$2"
@@ -957,11 +974,8 @@ build_builtin_rules_bundle() {
     }
 }
 
+# Parses proxies; outputs to global buffer: OUT_RULES, OUT_RULESETS, OUT_PROXIES, OUT_FAKE_IP_RULES
 handle_proxy_section() {
-    local file_rules="$1"
-    local file_rulesets="$2"
-    local file_proxies="$3"
-    local file_fake_ip_rules="$4"
     local proxies=""
     local rules_array=""
     local selected_rulesets=""
@@ -1070,17 +1084,14 @@ handle_proxy_section() {
 
     config_foreach _parse_single_proxy proxies
 
-    echo "[${rules_array:-}]" > "$file_rules"
-    echo "{${selected_rulesets%,}}" > "$file_rulesets"
-    echo "[${proxies:-}]" > "$file_proxies"
-    echo "[${fake_ip_rules:-}]" > "$file_fake_ip_rules"
+    OUT_RULES="[${rules_array:-}]"
+    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_PROXIES="[${proxies:-}]"
+    OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
 
+# Parses proxy groups; outputs to global buffer: OUT_RULES, OUT_RULESETS, OUT_PROXY_GROUPS, OUT_FAKE_IP_RULES
 handle_proxy_group_section() {
-    local file_rules="$1"
-    local file_rulesets="$2"
-    local file_proxygroups="$3"
-    local file_fake_ip_rules="$4"
     local proxy_groups=""
     local rules_array=""
     local selected_rulesets=""
@@ -1187,10 +1198,10 @@ handle_proxy_group_section() {
 
     config_foreach _parse_proxy_group proxy_group
 
-    echo "[${rules_array:-}]" > "$file_rules"
-    echo "{${selected_rulesets%,}}" > "$file_rulesets"
-    echo "[${proxy_groups:-}]" > "$file_proxygroups"
-    echo "[${fake_ip_rules:-}]" > "$file_fake_ip_rules"
+    OUT_RULES="[${rules_array:-}]"
+    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_PROXY_GROUPS="[${proxy_groups:-}]"
+    OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
 
 handle_proxy_provider_section() {
@@ -1278,11 +1289,8 @@ handle_proxy_provider_section() {
     echo "$result"
 }
 
+# Parses block rules; outputs to global buffer: OUT_RULES, OUT_RULESETS, OUT_NAMES_RULESETS, OUT_NAMES_SUFFIXES
 handle_block_rule_section() {
-    local file_rules="$1"
-    local file_rulesets="$2"
-    local file_rulesets_names="$3"
-    local file_suffix_names="$4"
     local rules_array=""
     local selected_rulesets=""
     local list_rulesets_names=""
@@ -1292,10 +1300,10 @@ handle_block_rule_section() {
     config_get_bool enabled block_rules enabled 1
     if [ "$enabled" -ne 1 ]; then
         log warn "Skipping disabled proxy group: block_rules" "⚠️"
-        echo "[]" > "$file_rules"
-        echo "{}" > "$file_rulesets"
-        echo "" > "$file_rulesets_names"
-        echo "" > "$file_suffix_names"
+        OUT_RULES="[]"
+        OUT_RULESETS="{}"
+        OUT_NAMES_RULESETS=""
+        OUT_NAMES_SUFFIXES=""
         return
     fi
 
@@ -1335,16 +1343,14 @@ handle_block_rule_section() {
         }
     done
 
-    echo "[${rules_array:-}]" > "$file_rules"
-    echo "{${selected_rulesets%,}}" > "$file_rulesets"
-    echo "$list_rulesets_names" > "$file_rulesets_names"
-    echo "$list_suffix_names" > "$file_suffix_names"
+    OUT_RULES="[${rules_array:-}]"
+    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_NAMES_RULESETS="$list_rulesets_names"
+    OUT_NAMES_SUFFIXES="$list_suffix_names"
 }
 
+# Parses direct rules; outputs to global buffer: OUT_RULES, OUT_RULESETS, OUT_FAKE_IP_RULES
 handle_direct_rule_section() {
-    local file_rules="$1"
-    local file_rulesets="$2"
-    local file_fake_ip_rules="$3"
     local rules_array=""
     local selected_rulesets=""
 
@@ -1361,9 +1367,9 @@ handle_direct_rule_section() {
     config_get_bool enabled direct_rules enabled 1
     if [ "$enabled" -ne 1 ]; then
         log warn "Skipping disabled proxy group: direct_rules" "⚠️"
-        echo "[]" > "$file_rules"
-        echo "{}" > "$file_rulesets"
-        echo "[]" > "$file_fake_ip_rules"
+        OUT_RULES="[]"
+        OUT_RULESETS="{}"
+        OUT_FAKE_IP_RULES="[]"
         return
     fi
 
@@ -1401,9 +1407,9 @@ handle_direct_rule_section() {
         }
     done
 
-    echo "[${rules_array:-}]" > "$file_rules"
-    echo "{${selected_rulesets%,}}" > "$file_rulesets"
-    echo "[${fake_ip_rules:-}]" > "$file_fake_ip_rules"
+    OUT_RULES="[${rules_array:-}]"
+    OUT_RULESETS="{${selected_rulesets%,}}"
+    OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
 
 handle_mixed_port_rules_section() {
@@ -1466,6 +1472,7 @@ build_hosts_section() {
     echo "  'family.dot.dns.yandex.net': [77.88.8.7, 77.88.8.3]"
 }
 
+# Main config generator; fills global caches (_*_CONTENT) and reads from global buffer (OUT_*)
 core_generate_yaml() {
     local router_selected_ipaddr
     local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level interface_name tproxy_port unified_delay
@@ -1485,7 +1492,7 @@ core_generate_yaml() {
     local fake_ip_rules_direct fake_ip_rules_proxy_groups fake_ip_rules_proxies
     local custom_fake_ip_rules custom_real_ip_rules custom_fake_ip_rulesets custom_real_ip_rulesets
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
-    local tmp_rules_file tmp_rulesets_path tmp_proxygroup_path tmp_proxies_path tmp_names_rulesets_path tmp_names_suffixes_path tmp_fake_ip_rules_path
+
     # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls
     local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
@@ -1577,56 +1584,37 @@ core_generate_yaml() {
     fi
     _RULESETS_CONTENT=$(printf '%s\n%s' "$(cat "$RULESETS_FILE")" "$user_rulesets")
 
-    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules_direct.XXXXXX")
-    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_direct.XXXXXX")
-    tmp_fake_ip_rules_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_fake_ip_rules_direct.XXXXXX")
-    handle_direct_rule_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_fake_ip_rules_path"
-    rules_direct=$(cat "$tmp_rules_file")
-    rulesets_direct=$(cat "$tmp_rulesets_path")
-    fake_ip_rules_direct=$(cat "$tmp_fake_ip_rules_path")
-    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_fake_ip_rules_path"
+    # DIRECT section
+    handle_direct_rule_section
+    rules_direct="$OUT_RULES"
+    rulesets_direct="$OUT_RULESETS"
+    fake_ip_rules_direct="$OUT_FAKE_IP_RULES"
 
-    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules_block.XXXXXX")
-    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_block.XXXXXX")
-    tmp_names_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets_names_policy.XXXXXX")
-    tmp_names_suffixes_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_suffixes_names_policy.XXXXXX")
+    # BLOCK section
     # Optimization: Temporarily swap the global rulesets database to use blocklist rulesets database.
     # This allows downstream functions (like build_builtin_rules_bundle) to transparently use block ruleset definitions.
     local _saved_rulesets_content="$_RULESETS_CONTENT"
     _RULESETS_CONTENT="$_BLOCK_RULESETS_CONTENT"
-    handle_block_rule_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+    handle_block_rule_section
     _RULESETS_CONTENT="$_saved_rulesets_content"
-    rules_block=$(cat "$tmp_rules_file")
-    rulesets_block=$(cat "$tmp_rulesets_path")
-    names_rulesets_block_policy=$(cat "$tmp_names_rulesets_path")
-    names_suffixes_block_policy=$(cat "$tmp_names_suffixes_path")
-    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_names_rulesets_path" "$tmp_names_suffixes_path"
+    rules_block="$OUT_RULES"
+    rulesets_block="$OUT_RULESETS"
+    names_rulesets_block_policy="$OUT_NAMES_RULESETS"
+    names_suffixes_block_policy="$OUT_NAMES_SUFFIXES"
 
-    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules.XXXXXX")
-    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets.XXXXXX")
-    tmp_proxygroup_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_proxygroups.XXXXXX")
-    tmp_fake_ip_rules_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_fake_ip_rules_proxygroups.XXXXXX")
-    handle_proxy_group_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_fake_ip_rules_path"
-    rules_proxygroups=$(cat "$tmp_rules_file")
-    rulesets_proxygroup=$(cat "$tmp_rulesets_path")
-    proxy_groups=$(cat "$tmp_proxygroup_path")
-    fake_ip_rules_proxy_groups=$(cat "$tmp_fake_ip_rules_path")
-    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxygroup_path" "$tmp_fake_ip_rules_path"
+    # PROXY GROUP section
+    handle_proxy_group_section
+    rules_proxygroups="$OUT_RULES"
+    rulesets_proxygroup="$OUT_RULESETS"
+    proxy_groups="$OUT_PROXY_GROUPS"
+    fake_ip_rules_proxy_groups="$OUT_FAKE_IP_RULES"
 
-    #Creating files in RAM since ASH funcs can't return multiple values, neiter it can return values by reference (so we are going to write result in file)
-    tmp_rules_file=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rules.XXXXXX")
-    tmp_rulesets_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_rulesets.XXXXXX")
-    tmp_proxies_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_proxies.XXXXXX")
-    tmp_fake_ip_rules_path=$(mktemp "${CORE_WORKDIR_PATH}/tmp_fake_ip_rules_proxies.XXXXXX")
-    handle_proxy_section "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_fake_ip_rules_path"
-    rules_proxies=$(cat "$tmp_rules_file")
-    rulesets_proxies=$(cat "$tmp_rulesets_path")
-    proxies=$(cat "$tmp_proxies_path")
-    fake_ip_rules_proxies=$(cat "$tmp_fake_ip_rules_path")
-    rm -f "$tmp_rules_file" "$tmp_rulesets_path" "$tmp_proxies_path" "$tmp_fake_ip_rules_path"
+    # PROXY section
+    handle_proxy_section
+    rules_proxies="$OUT_RULES"
+    rulesets_proxies="$OUT_RULESETS"
+    proxies="$OUT_PROXIES"
+    fake_ip_rules_proxies="$OUT_FAKE_IP_RULES"
 
     nameserver_policy=$(jq --indent 4 -n \
         --arg custom_entries "$nameserver_policy_custom" \

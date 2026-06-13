@@ -189,21 +189,21 @@ parse_ss_url() {
         userinfo="${link%@*}"
         hostport="${link#*@}"
 
-        # Проверяем, начинается ли с 2022- (plain text)
+        # Check if starts with 2022- (plain text)
         if echo "$userinfo" | grep -q '^2022-'; then
-            # Plain text format для 2022 ciphers
+            # Plain text format for 2022 ciphers
             method="${userinfo%%:*}"
             local pass_part="${userinfo#*:}"
 
-            # Проверяем наличие второго пароля (EIH)
+            # Check for second password (EIH) presence
             if echo "$pass_part" | grep -q ':.*:'; then
-                # Формат: method:serverPass:clientPass
+                # Format: method:serverPass:clientPass
                 password="${pass_part}"
             else
                 password="${pass_part}"
             fi
         else
-            # Пробуем base64
+            # Try base64
             decoded="$(echo "$userinfo" | base64 -d 2>/dev/null)"
             if [ -n "$decoded" ] && echo "$decoded" | grep -q ':'; then
                 method="$(url_decode "${decoded%%:*}")"
@@ -215,7 +215,7 @@ parse_ss_url() {
             fi
         fi
     else
-        # Полностью base64-encoded
+        # Fully base64-encoded
         decoded="$(echo "$link" | base64 -d 2>/dev/null)"
         userinfo="${decoded%@*}"
         hostport="${decoded#*@}"
