@@ -155,6 +155,7 @@ RESOLVCONF_FILEPATH="/etc/resolv.conf"
 ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
+B4_FILEPATH="/etc/init.d/b4"
 REQUIRED_TOOLS="jq nft curl md5sum ntpd"
 
 panic() {
@@ -795,7 +796,7 @@ check_for_conflicts_warn() {
         log warn "If you intend to use a local DNS service, these entries should be removed." "⚠️"
     fi
 
-    for service_path in "$ZAPRETINITD_FILEPATH" "$BYEDPI_FILEPATH" "$YOUTUBEUNBLOCK_FILEPATH"; do
+    for service_path in "$ZAPRETINITD_FILEPATH" "$BYEDPI_FILEPATH" "$YOUTUBEUNBLOCK_FILEPATH" "$B4_FILEPATH"; do
         if [ -f "$service_path" ]; then
             log warn "Warning: Service detected by path $service_path:" "⚠️"
             log warn "This service can cause unexpected results if configured incorrectly." "⚠️"
@@ -2430,56 +2431,54 @@ diag_report() {
     local running autoload hw_model os_ver
     service "$PROGNAME" running && running="✅" || running="❌"
     service "$PROGNAME" enabled && autoload="✅" || autoload="❌"
+    os_ver=$(get_os_version)
+    hw_model=$(get_hw_model)
 
     echo ""
     echo "₍^. .^₎⟆ $PROGNAME diagnostic:"
     echo ""
     echo "❯❯❯❯ Basic:"
-    hw_model=$(get_hw_model)
     echo "Device:  ${hw_model:-$NO_DATA_STRING}"
-    os_ver=$(get_os_version)
     echo "OpenWRT: ${os_ver:-$NO_DATA_STRING}"
     echo "Service: $JUSTCLASH_VERSION"
-    printf "Mihomo:  "
-    info_mihomo
+    echo "Mihomo:  $(info_mihomo)"
+    echo "HWID:    $(hwid_generate)"
     echo ""
     echo "❯❯❯❯ Status:"
     echo "Active:  $running"
-    echo "Load:  $autoload"
+    echo "Load:    $autoload"
+    echo ""
+    echo "❯❯❯❯ ICMP Pings:"
+    echo "Yandex ($DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
+    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2
+    echo ""
+    echo "Google ($DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
+    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2
+    echo ""
+    echo "GitHub ($DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB):"
+    diag_icmp "$DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB" 2
+    echo ""
+    echo "❯❯❯❯ DNS Resolves:"
+    echo "Proxy ($DEFAULT_DIAG_RESOLVE_URL_YANDEX):"
+    diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX"
+    echo ""
+    echo "External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
+    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX"
+    echo ""
+    echo "External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
+    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE"
+    echo ""
+    echo "❯❯❯❯ DPI applications:"
+    if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo " - Zapret: ⚠️ Installed"; else echo " - Zapret: ✅ Not installed"; fi
+    if [ -f "$BYEDPI_FILEPATH" ]; then echo " - ByeDPI: ⚠️ Installed"; else echo " - ByeDPI: ✅ Not installed"; fi
+    if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo " - YoutubeUnblock: ⚠️ Installed"; else echo " - YoutubeUnblock: ✅ Not installed"; fi
+    if [ -f "$B4_FILEPATH" ]; then echo " - B4: ⚠️ Installed"; else echo " - B4: ✅ Not installed"; fi
     echo ""
     echo "❯❯❯❯ NFT Tables:"
     diag_nft
     echo ""
     echo "❯❯❯❯ Routes:"
     diag_route
-    echo ""
-    echo "❯❯❯❯ ICMP $DEFAULT_DIAG_IP_CHECK_PING_YANDEX :"
-    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2
-    echo ""
-    echo "❯❯❯❯ ICMP $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE :"
-    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2
-    echo ""
-    echo "❯❯❯❯ ICMP $DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB :"
-    diag_icmp "$DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB" 2
-    echo ""
-    echo "❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with proxy:"
-    diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX"
-    echo ""
-    echo "❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with $DEFAULT_DIAG_IP_CHECK_PING_YANDEX:"
-    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX"
-    echo ""
-    echo "❯❯❯❯ DNS resolve $DEFAULT_DIAG_RESOLVE_URL_YANDEX with $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE:"
-    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE"
-    echo ""
-    echo "❯❯❯❯ Zapret:"
-    if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo "⚠️ Zapret installed."; else echo "✅ No zapret installed."; fi
-    echo ""
-    echo "❯❯❯❯ ByeDPI:"
-    if [ -f "$BYEDPI_FILEPATH" ]; then echo "⚠️ ByeDPI installed."; else echo "✅ No ByeDPI installed."; fi
-    echo ""
-    echo "❯❯❯❯ YoutubeUnblock:"
-    if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo "⚠️ YoutubeUnblock installed."; else echo "✅ No YoutubeUnblock installed."; fi
-    echo ""
     echo "❯❯❯❯ /etc/resolv.conf:"
     cat /etc/resolv.conf
     echo ""
