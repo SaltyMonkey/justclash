@@ -237,6 +237,7 @@ return view.extend({
         o.default = primitives.FALSE;
         o.description = _("Send HWID data to server with proxy provider request.");
         o.editable = true;
+        o.rmempty = false;
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy provider name.");
