@@ -1,3 +1,8 @@
+## [0.50.3] - 14062026
+
+### Bug Fixes
+- **LuCI:** Fixed Hardware ID option visibility and layout rendering in the Proxy Provider edit modal by marking it as modal-only and binding it to the correct tab.
+
 ## [0.50.2] - 14062026
 
 ### Security
@@ -44,7 +49,6 @@
 - **Service:** Fixed a typo where routing mark was checked before being parsed.
 - **Service:** Resolved out-of-sync cron validation bugs on startup.
 - **Service:** Cleaned up unused configuration builder variables and simplified global logging logic.
-- **LuCI:** Fixed Hardware ID option layout rendering in the Proxy Provider edit modal by binding it correctly to its designated tab.
 
 ### Documentation & Translations
 - **Docs:** Added secure access information.
