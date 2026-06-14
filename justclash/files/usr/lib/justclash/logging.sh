@@ -9,53 +9,41 @@
 
 PROGNAME="justclash"
 
-normalize_log_level() {
-    case "$1" in
-        0|err|error) echo "0" ;;
-        1|warn|warning) echo "1" ;;
-        2|info) echo "2" ;;
-        3|debug) echo "3" ;;
-        *) echo "1" ;;
-    esac
-}
-
-get_log_level() {
-    case "$(normalize_log_level "$1")" in
-        0) echo "user.err"     ;;
-        1) echo "user.warning" ;;
-        2) echo "user.info"    ;;
-        3) echo "user.debug"   ;;
-        *) echo "user.warning" ;;
-    esac
-}
-
 clog() {
-    local normalized_level
+    local level="$1"
     local message="$2"
     local emoji="${3:-}"
-
-    normalized_level=$(normalize_log_level "$1")
 
     # shellcheck disable=SC2154
     [ "$JUSTCLASH_ENV" = "procd" ] && return
 
-    local ts facility
+    local facility
+    case "$level" in
+        0|err|error)   facility="user.err"     ;;
+        2|info)        facility="user.info"    ;;
+        3|debug)       facility="user.debug"   ;;
+        *)             facility="user.warning" ;;
+    esac
+
+    local ts
     ts=$(date '+%Y-%m-%d %H:%M:%S')
-    facility=$(get_log_level "$normalized_level")
 
     printf '[%s] [%s] %s\n' "$ts" "$facility" "${emoji:+$emoji }$message"
 }
 
 log() {
-    local normalized_level
+    local level="$1"
     local message="$2"
     local emoji="${3:-}"
 
-    normalized_level=$(normalize_log_level "$1")
-
-    local facility
-    facility=$(get_log_level "$normalized_level")
+    local facility lvl_num
+    case "$level" in
+        0|err|error)   lvl_num="0"; facility="user.err"     ;;
+        2|info)        lvl_num="2"; facility="user.info"    ;;
+        3|debug)       lvl_num="3"; facility="user.debug"   ;;
+        *)             lvl_num="1"; facility="user.warning" ;;
+    esac
 
     logger -p "$facility" -t "$PROGNAME" "$message"
-    clog "$normalized_level" "$message" "$emoji"
+    clog "$lvl_num" "$message" "$emoji"
 }
