@@ -4,4 +4,4 @@ enable=check-unassigned-uppercase
 enable=quote-safe-variables
 enable=deprecate-which
 enable=useless-use-of-cat
-disable=SC1083,SC2155,SC1091,SC2249
+disable=SC1083,SC2249
