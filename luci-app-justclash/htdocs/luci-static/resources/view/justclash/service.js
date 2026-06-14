@@ -133,7 +133,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.DynamicList, "nft_ports_exclude_router", _("Router bypassed ports:"));
-        o.description = _("Destination ports (e.g., 22 or 80) for router traffic to bypass the proxy.");
+        o.description = _("Ports (destination or source, e.g., 22 or 80) for router traffic to bypass the proxy.");
         o.placeholder = "22";
         o.rmempty = true;
         o.retain = true;
@@ -153,7 +153,7 @@ return view.extend({
         o.filter = common.filterInboundDeviceSelect;
 
         o = s.taboption(tabname, form.DynamicList, "nft_ports_exclude", _("Client bypassed ports:"));
-        o.description = _("Destination ports (e.g., 22 or 80) for client traffic to bypass the proxy.");
+        o.description = _("Ports (destination or source, e.g., 22 or 80) for client traffic to bypass the proxy.");
         o.placeholder = "22";
         o.rmempty = true;
         o.retain = true;
