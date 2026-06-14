@@ -1,3 +1,55 @@
+## [0.50.2] - 14062026
+
+### Security
+- **Service:** Added TLS encryption support for the Mihomo REST API controller along with automatic settings migration.
+- **Service:** Added CORS control configuration for secure connections from external web dashboards.
+- **LuCI:** Added a TLS toggle switch for the Mihomo REST API controller in the user interface.
+
+### Features & Enhancements
+- **Service:** Expanded the bypassed ports feature in firewall configuration to filter both destination and source ports.
+- **Service:** Improved configuration generator robustness by implementing strict type, port range, and integer validation check functions with fallback defaults for all user settings.
+- **Service:** Refactored cron scheduled tasks management on startup, resolving out-of-sync cron logic and implementing automatic verification and correction of crontab entries.
+- **Service:** Added checks to prevent starting multiple concurrent instances of the service script.
+- **Service:** Added a static virtual hosts section inside the generated configuration containing local resolution mappings for DNS-over-HTTPS and DNS-over-TLS bootstrap domains to prevent resolution loop issues during cold starts.
+- **Service:** Added a setting to the DNS configuration to ensure that the inline hosts section is utilized.
+- **Service:** Optimized configuration generation by passing section handlers' values using global variables instead of spawning multiple temporary files, preventing CPU-heavy file creation and removal fork cycles on low-resource routers.
+- **Service:** Refactored configuration builders to use local in-memory templates within the main service script instead of inline string-building complexity.
+- **Service:** Removed external command calls and subshell forks in device hardware header formatting by refactoring it to use local template helpers.
+- **Service:** Added a standalone CLI command to generate and display the device's unique Hardware ID.
+- **Service:** Refactored diagnostic report view and added support for detecting active DPI bypass applications alongside other bypass tools.
+- **Service:** Added automatic clearing of global variables and caches at the end of configuration generation to free RAM on memory-constrained router platforms.
+- **Service:** Optimized Hardware ID generation by caching network interface dump and device status outputs in local shell variables, avoiding duplicate external query calls, and replacing multiple piped subprocesses with native filter logic.
+- **Service:** Added fallback checks in Hardware ID generation to handle edge cases where physical interfaces or MAC addresses return empty or null values.
+- **Service:** Optimized configuration assembly by skipping expensive ruleset compilation and parsing steps for configuration sections that contain no active or enabled rulesets.
+- **Service:** Removed obsolete, unused custom ruleset compilation functions from the service script.
+- **Service:** Enforced exit code preservation when trapping signals during manual foreground service execution.
+- **Helpers:** Replaced slow external command subprocess calls in list formatting with native shell in-memory replacements to avoid forks.
+- **Helpers:** Rewrote JSON escaping and quoting helper functions to run completely in-memory using native shell string substitutions with zero subprocess forks, and removed the duplicate quoting helper function.
+- **Helpers:** Optimized path validation by rewriting the path uniqueness checks and list concatenation entirely within native shell string operations without subprocesses.
+- **Helpers:** Introduced global constants for carriage return, line feed, and tab characters to avoid repeating character allocation commands in helper functions.
+- **Logging:** Simplified and optimized the internal logging framework by removing redundant log level conversion and normalization helpers, resolving log facility names directly using native conditional statements.
+- **LuCI:** Fixed visibility of the Hardware ID option inside the Proxy Provider editing modal by placing it under the correct tab settings.
+- **LuCI:** Updated port bypass option descriptions to reflect source and destination port matching, simplified controllers, and fixed the visibility of the Hardware ID input field.
+- **LuCI:** Replaced duplicate formatting helper functions with shared helper module calls, reducing browser script size and unifying user interface formatters.
+- **xhttp:** Extended the URI parser to handle all custom transport configuration parameters.
+- **xhttp:** Resolved potential YAML unmarshalling issues by ensuring that session length parameters are parsed and stored as string values rather than numbers.
+- **xhttp:** Refactored local variable declarations and assignments in the URI parser by separating them, preventing shell keywords from masking command failure exit codes.
+- **xhttp:** Cleaned up parser namespace pollution by removing duplicate and redundant helper functions that were already defined globally.
+- **Makefile:** Added bundle package to package dependencies to ensure out-of-the-box HTTPS downloads work properly.
+- **Development:** Normalized line-endings to enforce LF for all shell scripts, preventing carriage return parser errors on the target operating system when checked out or built on other platforms.
+- **Migration:** Updated the post-install/upgrade configuration migration script to populate new REST API TLS settings and clean up deprecated, obsolete options.
+
+### Bug Fixes
+- **Service:** Fixed global scope leakage of the authorization variable inside ruleset compilation.
+- **Service:** Fixed a typo where routing mark was checked before being parsed.
+- **Service:** Resolved out-of-sync cron validation bugs on startup.
+- **Service:** Cleaned up unused configuration builder variables and simplified global logging logic.
+- **LuCI:** Fixed Hardware ID option layout rendering in the Proxy Provider edit modal by binding it correctly to its designated tab.
+
+### Documentation & Translations
+- **Docs:** Added secure access information.
+- **Translation:** Updated Russian and Chinese translation catalogs to support the new features, UI controls, and settings.
+
 ## [0.30.0] - 12062026
 
 ### Features & Enhancements
