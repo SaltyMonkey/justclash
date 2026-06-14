@@ -6,7 +6,7 @@ This document explains how to exclude specific network traffic from being interc
 
 ## 1. Excluding Traffic by Ports
 
-The service allows you to bypass transparent routing for specific destination ports (both TCP and UDP). This is useful for keeping latency-sensitive or administrative protocols (like SSH on port 22 or NTP on port 123) out of the interception engine.
+The service allows you to bypass transparent routing for specific ports (both TCP and UDP, matching destination or source ports). This is useful for keeping latency-sensitive or administrative protocols (like SSH on port 22 or NTP on port 123) out of the interception engine.
 
 ### Configuration Options
 You can configure exclusions separately for local LAN clients and the router itself:
@@ -21,12 +21,12 @@ You can configure exclusions separately for local LAN clients and the router its
     service justclash restart
     ```
   * **Via LuCI Web Interface**:  
-    Go to *Services -> JustClash -> Settings -> Exclude Ports* and add the ports.
+    Go to *Services -> JustClash -> Settings -> Client bypassed ports* and add the ports.
 
 * **Router Exclusions (`nft_ports_exclude_router`)**:
   Bypasses traffic originating from processes running directly on the router itself.
   * **Via LuCI Web Interface**:  
-    Go to *Services -> JustClash -> Settings -> Exclude Router Ports* and add the ports.
+    Go to *Services -> JustClash -> Settings -> Router bypassed ports* and add the ports.
   * **Via Console (UCI)**:
      ```bash
      uci add_list justclash.settings.nft_ports_exclude_router='22'
@@ -35,15 +35,18 @@ You can configure exclusions separately for local LAN clients and the router its
      ```
 
 ### How it Works (nftables Rules)
-When these options are populated, JustClash dynamically generates the following `return` (bypass) rules inside the `justclash` nftables table:
+When these options are populated, JustClash dynamically generates the following `return` (bypass) rules inside the `justclash_tproxy` nftables table:
 
 ```nginx
 # For LAN clients (prerouting chain):
-add rule inet justclash prerouting meta l4proto { tcp, udp } th dport { 22, 123 } return
+add rule inet justclash_tproxy prerouting meta l4proto { tcp, udp } th dport { 22, 123 } return comment "Bypass excluded destination ports"
+add rule inet justclash_tproxy prerouting meta l4proto { tcp, udp } th sport { 22, 123 } return comment "Bypass excluded source ports"
 
 # For local router output (output chain):
-add rule inet justclash output meta l4proto { tcp, udp } th dport { 22 } return
+add rule inet justclash_tproxy output meta l4proto { tcp, udp } th dport { 22 } return comment "Bypass excluded router destination ports"
+add rule inet justclash_tproxy output meta l4proto { tcp, udp } th sport { 22 } return comment "Bypass excluded router source ports"
 ```
+
 
 ---
 
