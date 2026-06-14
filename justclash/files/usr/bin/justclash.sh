@@ -557,7 +557,8 @@ nf_table_add() {
             fi
 
             if [ -n "$nft_ports_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded ports\""
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded destination ports\""
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded source ports\""
             fi
 
             if [ "$nft_quic_mode" = "DROP" ]; then
@@ -613,7 +614,8 @@ nf_table_add() {
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router ports\""
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router source ports\""
             fi
 
             if [ -n "$skuid_values" ]; then
