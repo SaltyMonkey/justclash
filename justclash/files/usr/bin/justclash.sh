@@ -223,6 +223,10 @@ core_validate_yaml() {
 start() {
     local skip_environment_checks core_exit_code mihomo_mem_limit
 
+    if check_is_already_running; then
+        return 0
+    fi
+
     log info "Initializing JustClash service..." "₍^. .^₎⟆"
 
     if [ -n "$JUSTCLASH_WAIT_WAN_MAX" ] && [ "$JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
@@ -749,6 +753,14 @@ dnsmasq_restore() {
     else
         log info "Skipping dnsmasq restore because dnsmasq_apply_changes is disabled." "🛠️"
     fi
+}
+
+check_is_already_running() {
+    if pgrep -f "$(basename "$CORE_PATH")" >/dev/null 2>&1; then
+        log warn "JustClash is already running." "⚠️"
+        return 0
+    fi
+    return 1
 }
 
 check_requirement() {
