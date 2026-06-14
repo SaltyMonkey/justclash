@@ -5,4 +5,4 @@ Makefile text
 *.mk     text
 *.md    text
 *.yaml   text
-*.sh    text
+*.sh    text eol=lf
