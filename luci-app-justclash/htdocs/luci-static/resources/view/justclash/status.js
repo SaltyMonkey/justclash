@@ -155,15 +155,7 @@ const createActionButton = (action, cssClass, label, handler, iconKey) =>
         ])
     ]);
 
-const formatBytes = (bytes) => {
-    if (!bytes || bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-
-const formatSpeed = (bytesPerSec) => formatBytes(bytesPerSec) + "/s";
+const formatSpeed = (bytesPerSec) => common.formatBytes(bytesPerSec) + "/s";
 
 const cleanupWs = () => {
     wsCleanups.forEach(fn => fn());
@@ -649,8 +641,8 @@ return view.extend({
                         const data = JSON.parse(event.data);
                         dynamicElements.upValue.textContent = formatSpeed(data.up);
                         dynamicElements.downValue.textContent = formatSpeed(data.down);
-                        dynamicElements.upTotalValue.textContent = formatBytes(data.upTotal);
-                        dynamicElements.downTotalValue.textContent = formatBytes(data.downTotal);
+                        dynamicElements.upTotalValue.textContent = common.formatBytes(data.upTotal);
+                        dynamicElements.downTotalValue.textContent = common.formatBytes(data.downTotal);
                     } catch (e) {}
                 }
             }));
@@ -661,7 +653,7 @@ return view.extend({
                 onMessage: (event) => {
                     try {
                         const data = JSON.parse(event.data);
-                        dynamicElements.ramValue.textContent = formatBytes(data.inuse);
+                        dynamicElements.ramValue.textContent = common.formatBytes(data.inuse);
                     } catch (e) {}
                 }
             }));
