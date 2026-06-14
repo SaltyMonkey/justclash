@@ -120,7 +120,7 @@ For interactive administration, JustClash exposes a feature-complete, responsive
 *   **Setup: Service (System-level Orchestration):**
     *   *Startup & Initialization:* Configure WAN connectivity checks (timeouts), delayed startup to prevent CPU bottlenecks, time synchronization (ntpd) prior to launching Mihomo, and options to skip startup checks.
     *   *Storage & Memory Optimization:* Flash wear protection options to store external rulesets and core metadata cache databases in temporary RAM storage (`/tmp`) or in persistent flash memory (`/etc/justclash/`).
-    *   *Traffic Rules & Packet Filtering (nftables):* Define traffic interception rules, bind rules to client interfaces (e.g., `br-lan`), set policy routing priority (PBR), specify router traffic redirection, exclude specific destination ports or router socket owners (UIDs), and configure redirection/blocking actions for client QUIC, DoT, DoH, DoQ, and NTP traffic.
+    *   *Traffic Rules & Packet Filtering (nftables):* Define traffic interception rules, bind rules to client interfaces (e.g., `br-lan`), set policy routing priority (PBR), specify router traffic redirection, exclude specific ports (source/destination) or router socket owners (UIDs), and configure redirection/blocking actions for client QUIC, DoT, DoH, DoQ, and NTP traffic.
     *   *Scheduled Tasks (Cron Automation):* Register and manage cron entries on the host system to automatically restart Mihomo on a schedule.
     *   *External Resources:* Configure download sources for the core (GitHub or Custom URL with version.txt validation) and custom zip mirrors for Zashboard, Metacubexd, and YACD-meta dashboards.
 *   **Setup: Proxy (Mihomo Core Runtime Settings):**
