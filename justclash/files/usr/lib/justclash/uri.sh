@@ -7,20 +7,6 @@
 # External justclash parsers/generators part
 # --------------------------------------------
 
-is_uint() {
-    case "$1" in
-        ''|*[!0-9]*) return 1 ;;
-        *) return 0 ;;
-    esac
-}
-
-require_uint() {
-    is_uint "$1" || {
-        echo "Error: expected unsigned integer, got '$1'" >&2
-        return 1
-    }
-}
-
 is_truthy() {
     case "$1" in
         1|true|TRUE|True|yes|YES|on|ON) return 0 ;;
@@ -325,10 +311,12 @@ parse_trojan_url() {
 
     local userinfo="${raw%@*}"
     local hostport="${raw#*@}"
-    local password="$(printf '%b' "$(echo "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
+    local password
+    password="$(printf '%b' "$(echo "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
 
     local host="${hostport%%\?*}"
-    local server="$(url_decode "${host%%:*}")"
+    local server
+    server="$(url_decode "${host%%:*}")"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port="$DEFAULT_TLS_PORT"
     port=$(echo "$port" | tr -cd '0-9')
@@ -474,7 +462,8 @@ parse_vless_url() {
     local uuid="${raw%%@*}"
     local hostport="${raw#*@}"
     local host="${hostport%%\?*}"
-    local server="$(url_decode "${host%%:*}")"
+    local server
+    server="$(url_decode "${host%%:*}")"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
     port=$(echo "$port" | tr -cd '0-9')
@@ -976,11 +965,11 @@ parse_hysteria2_url() {
 
     [ -n "$up" ] && {
         up_value=$(echo "$up" | tr -cd '0-9')
-        require_uint "$up_value" || return 1
+        is_uint "$up_value" || return 1
     }
     [ -n "$down" ] && {
         down_value=$(echo "$down" | tr -cd '0-9')
-        require_uint "$down_value" || return 1
+        is_uint "$down_value" || return 1
     }
     alpn_json=$(json_array_from_csv "$alpn") || return 1
 
