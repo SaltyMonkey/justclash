@@ -100,6 +100,14 @@ DEFAULT_HEALTHCHECK_RESULT=204
 DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES=5
 DEFAULT_EXTERNAL_CONTROLLER_PORT=9090
 DEFAULT_INPUT_INTERFACE="br-lan"
+DEFAULT_DNS_LISTEN_PORT=1053
+DEFAULT_MIXED_PORT=7890
+DEFAULT_KEEP_ALIVE_IDLE=600
+DEFAULT_KEEP_ALIVE_INTERVAL=15
+DEFAULT_CORE_NTP_INTERVAL=30
+DEFAULT_DNS_CACHE_MAX_SIZE=10000
+DEFAULT_FAKE_IP_TTL=60
+DEFAULT_MIHOMO_MEM_LIMIT=0
 
 DEFAULT_TLS_PORT=443
 DEFAULT_SECONDARY_TLS_PORT=8443
@@ -248,7 +256,11 @@ start() {
 
     check_requirement || return 1
 
-    config_get mihomo_mem_limit settings mihomo_mem_limit "0"
+    config_get mihomo_mem_limit settings mihomo_mem_limit "$DEFAULT_MIHOMO_MEM_LIMIT"
+    is_uint "$mihomo_mem_limit" || {
+        log warn "Invalid settings.mihomo_mem_limit: '$mihomo_mem_limit', using default: '$DEFAULT_MIHOMO_MEM_LIMIT'" "⚠️"
+        mihomo_mem_limit="$DEFAULT_MIHOMO_MEM_LIMIT"
+    }
     config_get_bool skip_environment_checks settings skip_environment_checks 0
 
     if [ "$skip_environment_checks" -eq 0 ]; then
@@ -662,7 +674,11 @@ dnsmasq_update() {
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
-        config_get dns_listen_port proxy dns_listen_port
+        config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
+        is_port "$dns_listen_port" || {
+            log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+            dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
+        }
 
         current_servers=$(uci -q get dhcp.@dnsmasq[0].server 2>/dev/null)
         for server in $current_servers; do
@@ -703,7 +719,11 @@ dnsmasq_restore() {
     config_get_bool dnsmasq_apply_changes settings dnsmasq_apply_changes
 
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
-        config_get dns_listen_port proxy dns_listen_port
+        config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
+        is_port "$dns_listen_port" || {
+            log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+            dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
+        }
         bak_cachesize=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize)
         if [ "$bak_cachesize" = "unset" ]; then
             log warn "dnsmasq restore: backup cachesize is unset"
@@ -1098,7 +1118,7 @@ handle_proxy_section() {
         local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
         local list_update_interval size_limit mode proxy_link_object use_proxy_for_list_update
         # Source lists loaded from UCI for generated rules.
-        local route_entries route_entry rules_fragment ip_rules_fragment rulesets_fragment fake_ip_fragment bundle
+        local route_entries route_entry rules_fragment
         local proxy_obj=""
         # Scratch vars for parsing one custom source at a time.
         local download_proxy generated_rule
@@ -1120,7 +1140,15 @@ handle_proxy_section() {
         config_get dialer_proxy "$section" dialer_proxy
         config_get interface_name "$section" interface_name
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
+        is_uint "$list_update_interval" || {
+            log warn "Invalid list_update_interval for proxy '$name': '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+            list_update_interval="$DEFAULT_RULESET_INTERVAL"
+        }
         config_get size_limit "$section" size_limit 0
+        is_uint "$size_limit" || {
+            log warn "Invalid size_limit for proxy '$name': '$size_limit', using default: 0" "⚠️"
+            size_limit=0
+        }
         config_get mode "$section" mode "uri"
         config_get proxy_link_object "$section" proxy_link_object
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
@@ -1210,7 +1238,7 @@ handle_proxy_group_section() {
         local filter exclude_filter exclude_type expected_status
         # Source lists loaded from UCI for generated rules.
         local enabled_list list_update_interval size_limit use_proxy_group_for_list_update route_entries route_entry
-        local rules_fragment ip_rules_fragment rulesets_fragment fake_ip_fragment bundle
+        local rules_fragment
         # Scratch vars for group JSON assembly and per-entry index parsing.
         local escaped_proxies escaped_providers group_json
         local download_proxy generated_rule
@@ -1229,9 +1257,25 @@ handle_proxy_group_section() {
         config_get strategy "$section" strategy
         config_get check_url "$section" check_url "$DEFAULT_HEALTHCHECK_URL"
         config_get expected_status "$section" expected_status "$DEFAULT_HEALTHCHECK_RESULT"
+        is_uint "$expected_status" || {
+            log warn "Invalid expected_status for proxy group '$name': '$expected_status', using default: '$DEFAULT_HEALTHCHECK_RESULT'" "⚠️"
+            expected_status="$DEFAULT_HEALTHCHECK_RESULT"
+        }
         config_get interval "$section" interval "$DEFAULT_HEALTHCHECK_INTERVAL"
+        is_uint "$interval" || {
+            log warn "Invalid health check interval for proxy group '$name': '$interval', using default: '$DEFAULT_HEALTHCHECK_INTERVAL'" "⚠️"
+            interval="$DEFAULT_HEALTHCHECK_INTERVAL"
+        }
         config_get check_timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
+        is_uint "$check_timeout" || {
+            log warn "Invalid health check timeout for proxy group '$name': '$check_timeout', using default: '$DEFAULT_HEALTHCHECK_TIMEOUT'" "⚠️"
+            check_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
+        }
         config_get max_failed_times "$section" max_failed_times "$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
+        is_uint "$max_failed_times" || {
+            log warn "Invalid health check max_failed_times for proxy group '$name': '$max_failed_times', using default: '$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES'" "⚠️"
+            max_failed_times="$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
+        }
         config_get lazy "$section" lazy 0
         config_get tolerance "$section" tolerance
         config_get filter "$section" filter
@@ -1239,7 +1283,15 @@ handle_proxy_group_section() {
         config_get exclude_type "$section" exclude_type
         config_get enabled_list "$section" enabled_list
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
+        is_uint "$list_update_interval" || {
+            log warn "Invalid list_update_interval for proxy group '$name': '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+            list_update_interval="$DEFAULT_RULESET_INTERVAL"
+        }
         config_get size_limit "$section" size_limit 0
+        is_uint "$size_limit" || {
+            log warn "Invalid size_limit for proxy group '$name': '$size_limit', using default: 0" "⚠️"
+            size_limit=0
+        }
         config_get_bool use_proxy_group_for_list_update "$section" use_proxy_group_for_list_update 0
 
         [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
@@ -1318,7 +1370,15 @@ handle_proxy_provider_section() {
         fi
 
         config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
+        is_uint "$interval" || {
+            log warn "Invalid update_interval for proxy provider '$name': '$interval', using default: '$DEFAULT_PROVIDERUPDATE_INTERVAL'" "⚠️"
+            interval="$DEFAULT_PROVIDERUPDATE_INTERVAL"
+        }
         config_get size_limit "$section" size_limit 0
+        is_uint "$size_limit" || {
+            log warn "Invalid size_limit for proxy provider '$name': '$size_limit', using default: 0" "⚠️"
+            size_limit=0
+        }
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
         config_get exclude_type "$section" exclude_type
@@ -1337,9 +1397,21 @@ handle_proxy_provider_section() {
         hc_expected_status="$DEFAULT_HEALTHCHECK_RESULT" hc_url="$DEFAULT_HEALTHCHECK_URL" hc_interval="$DEFAULT_HEALTHCHECK_INTERVAL" hc_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT" hc_lazy="false"
         if [ "$health_check" -eq 1 ]; then
             config_get hc_expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
+            is_uint "$hc_expected_status" || {
+                log warn "Invalid health_check_expected_status for proxy provider '$name': '$hc_expected_status', using default: '$DEFAULT_HEALTHCHECK_RESULT'" "⚠️"
+                hc_expected_status="$DEFAULT_HEALTHCHECK_RESULT"
+            }
             config_get hc_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
             config_get hc_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
+            is_uint "$hc_interval" || {
+                log warn "Invalid health_check_interval for proxy provider '$name': '$hc_interval', using default: '$DEFAULT_HEALTHCHECK_INTERVAL'" "⚠️"
+                hc_interval="$DEFAULT_HEALTHCHECK_INTERVAL"
+            }
             config_get hc_timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
+            is_uint "$hc_timeout" || {
+                log warn "Invalid health_check_timeout for proxy provider '$name': '$hc_timeout', using default: '$DEFAULT_HEALTHCHECK_TIMEOUT'" "⚠️"
+                hc_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
+            }
             config_get hc_lazy "$section" health_check_lazy 0
             hc_lazy=$(format_uci_bool_as_yaml "$hc_lazy")
         fi
@@ -1377,7 +1449,7 @@ handle_block_rule_section() {
     fi
 
     # Selected blocklists and generated manual block routes.
-    local enabled_blocklist download_proxy list_update_interval size_limit rules_fragment rulesets_fragment names_fragment bundle
+    local enabled_blocklist download_proxy list_update_interval size_limit
     # Scratch vars for generated manual block routes.
     local generated_rule
     local additional_domain_blockroute additional_destip_blockroute
@@ -1385,7 +1457,15 @@ handle_block_rule_section() {
     config_get enabled_blocklist block_rules enabled_blocklist
     config_get download_proxy block_rules proxy "$DEFAULT_PROXY"
     config_get list_update_interval block_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
+    is_uint "$list_update_interval" || {
+        log warn "Invalid list_update_interval for block_rules: '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+        list_update_interval="$DEFAULT_RULESET_INTERVAL"
+    }
     config_get size_limit block_rules size_limit 0
+    is_uint "$size_limit" || {
+        log warn "Invalid size_limit for block_rules: '$size_limit', using default: 0" "⚠️"
+        size_limit=0
+    }
     config_get additional_destip_blockroute block_rules additional_destip_blockroute
     for route_entry in $additional_destip_blockroute; do
         [ -n "$route_entry" ] && {
@@ -1424,7 +1504,7 @@ handle_direct_rule_section() {
     local additional_srcip_direct additional_destip_direct
     # Source lists loaded from UCI for generated DIRECT rules.
     local list_update_interval size_limit enabled_list
-    local rules_fragment ip_rules_fragment rulesets_fragment fake_ip_fragment bundle
+    local rules_fragment
     # Scratch vars for generated manual routes.
     local generated_rule route_entry
 
@@ -1439,7 +1519,15 @@ handle_direct_rule_section() {
     fi
 
     config_get list_update_interval direct_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
+    is_uint "$list_update_interval" || {
+        log warn "Invalid list_update_interval for direct_rules: '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+        list_update_interval="$DEFAULT_RULESET_INTERVAL"
+    }
     config_get size_limit direct_rules size_limit 0
+    is_uint "$size_limit" || {
+        log warn "Invalid size_limit for direct_rules: '$size_limit', using default: 0" "⚠️"
+        size_limit=0
+    }
     config_get enabled_list direct_rules enabled_list
     config_get download_proxy direct_rules proxy "$DEFAULT_PROXY"
 
@@ -1574,26 +1662,58 @@ core_generate_yaml() {
     config_get api_tls_key proxy api_tls_key "/etc/uhttpd.key"
     config_get interface_name proxy interface_name
     config_get tproxy_port proxy tproxy_port
-    config_get use_mixed_port proxy use_mixed_port
-    config_get mixed_port proxy mixed_port
+    config_get_bool use_mixed_port proxy use_mixed_port 0
+    config_get mixed_port proxy mixed_port "$DEFAULT_MIXED_PORT"
+    is_port "$mixed_port" || {
+        log warn "Invalid proxy.mixed_port: '$mixed_port', using default: '$DEFAULT_MIXED_PORT'" "⚠️"
+        mixed_port="$DEFAULT_MIXED_PORT"
+    }
     config_get_bool unified_delay proxy unified_delay
     config_get_bool tcp_concurrent proxy tcp_concurrent
-    config_get keep_alive_idle proxy keep_alive_idle
-    config_get keep_alive_interval proxy keep_alive_interval
+    config_get keep_alive_idle proxy keep_alive_idle "$DEFAULT_KEEP_ALIVE_IDLE"
+    is_uint "$keep_alive_idle" || {
+        log warn "Invalid proxy.keep_alive_idle: '$keep_alive_idle', using default: '$DEFAULT_KEEP_ALIVE_IDLE'" "⚠️"
+        keep_alive_idle="$DEFAULT_KEEP_ALIVE_IDLE"
+    }
+    config_get keep_alive_interval proxy keep_alive_interval "$DEFAULT_KEEP_ALIVE_INTERVAL"
+    is_uint "$keep_alive_interval" || {
+        log warn "Invalid proxy.keep_alive_interval: '$keep_alive_interval', using default: '$DEFAULT_KEEP_ALIVE_IDLE'" "⚠️"
+        keep_alive_interval="$DEFAULT_KEEP_ALIVE_INTERVAL"
+    }
     config_get global_ua proxy global_ua
     config_get_bool etag_support proxy etag_support
     config_get_bool profile_store_selected proxy profile_store_selected
     config_get_bool profile_store_fake_ip proxy profile_store_fake_ip
     config_get_bool core_ntp_enabled proxy core_ntp_enabled
     config_get core_ntp_server proxy core_ntp_server
-    config_get core_ntp_port proxy core_ntp_port
-    config_get core_ntp_interval proxy core_ntp_interval
+    config_get core_ntp_port proxy core_ntp_port "$DEFAULT_NTP_PORT"
+    is_port "$core_ntp_port" || {
+        log warn "Invalid proxy.core_ntp_port: '$core_ntp_port', using default: '$DEFAULT_NTP_PORT'" "⚠️"
+        core_ntp_port="$DEFAULT_NTP_PORT"
+    }
+    config_get core_ntp_interval proxy core_ntp_interval "$DEFAULT_CORE_NTP_INTERVAL"
+    is_uint "$core_ntp_interval" || {
+        log warn "Invalid proxy.core_ntp_interval: '$core_ntp_interval', using default: '$DEFAULT_CORE_NTP_INTERVAL'" "⚠️"
+        core_ntp_interval="$DEFAULT_CORE_NTP_INTERVAL"
+    }
     config_get_bool core_ntp_write_system proxy core_ntp_write_system
-    config_get dns_listen_port proxy dns_listen_port
-    config_get dns_cache_max_size proxy dns_cache_max_size
+    config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
+    is_port "$dns_listen_port" || {
+        log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+        dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
+    }
+    config_get dns_cache_max_size proxy dns_cache_max_size "$DEFAULT_DNS_CACHE_MAX_SIZE"
+    is_uint "$dns_cache_max_size" || {
+        log warn "Invalid proxy.dns_cache_max_size: '$dns_cache_max_size', using default: '$DEFAULT_DNS_CACHE_MAX_SIZE'" "⚠️"
+        dns_cache_max_size="$DEFAULT_DNS_CACHE_MAX_SIZE"
+    }
     config_get_bool use_system_hosts proxy use_system_hosts
     config_get fake_ip_range proxy fake_ip_range
-    config_get fake_ip_ttl proxy fake_ip_ttl
+    config_get fake_ip_ttl proxy fake_ip_ttl "$DEFAULT_FAKE_IP_TTL"
+    is_uint "$fake_ip_ttl" || {
+        log warn "Invalid proxy.fake_ip_ttl: '$fake_ip_ttl', using default: '$DEFAULT_FAKE_IP_TTL'" "⚠️"
+        fake_ip_ttl="$DEFAULT_FAKE_IP_TTL"
+    }
     config_get_bool sniffer_enable proxy sniffer_enable
     config_get_bool sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
     config_get_bool sniffer_override_destination proxy sniffer_override_destination 0
@@ -2057,7 +2177,6 @@ core_update() {
     config_get source_type settings mihomo_core_source_type "${DEFAULT_MIHOMO_SOURCE_CORE}"
     cur_ver=$(info_mihomo)
     arch=$(detect_arch)
-
     if [ "$source_type" = "custom" ]; then
         config_get custom_url settings mihomo_custom_core_url
         if [ -z "$custom_url" ]; then
@@ -2357,7 +2476,11 @@ diag_proxy_resolver() {
         log warn "Usage: diag_proxy_resolver <domain>"
         return 1
     fi
-    config_get dns_listen_port proxy dns_listen_port
+    config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
+    is_port "$dns_listen_port" || {
+        log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+        dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
+    }
 
     clog info "Testing Fake IP DNS resolution..."
 
@@ -2603,7 +2726,7 @@ help() {
 
 case "$1" in
     start|run|up|u)
-        [ "$JUSTCLASH_ENV" != "procd" ] && trap stop INT TERM HUP
+        [ "$JUSTCLASH_ENV" != "procd" ] && trap 'stop; exit 0' INT TERM HUP
         start
         ;;
     stop|down|d)
