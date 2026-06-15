@@ -4,6 +4,8 @@ This is a compact reference showcasing the default UCI structure for sections an
 
 ```ini
 config main 'settings'
+    option wait_for_wan                   '0'
+    option wait_for_wan_max               '90'
     option delayed_boot                   '0'
     option delayed_boot_value             '10'
     option skip_environment_checks        '0'
@@ -38,12 +40,15 @@ config main 'settings'
     option mihomo_dashboard_zashboard_url 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip'
     option mihomo_dashboard_metacubexd_url 'https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip'
     option mihomo_dashboard_yacd_meta_url 'https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip'
-
+ 
 config proxy 'proxy'
     option controller_bind_interface      'lan'
     option use_dashboard                  '0'
     option dashboard_repo                 'metacubexd'
     option api_password                   'changeme'
+    option api_tls                        '0'
+    option api_tls_cert                   '/etc/uhttpd.crt'
+    option api_tls_key                    '/etc/uhttpd.key'
     option log_level                      'warning'
     option interface_name                 'eth0'
     option tproxy_port                    '7893'
