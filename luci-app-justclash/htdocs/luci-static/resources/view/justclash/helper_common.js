@@ -54,6 +54,13 @@ return baseclass.extend({
         { value: "120", text: _("120 seconds") },
         { value: "180", text: _("180 seconds") },
     ],
+    defaultGeoDataIntervalH: [
+        { value: "12", text: _("12 hours") },
+        { value: "24", text: _("24 hours") },
+        { value: "48", text: _("48 hours") },
+        { value: "96", text: _("96 hours") },
+        { value: "168", text: _("168 hours") },
+    ],
     defaultIPDnsCache: [
         { value: "1024", text: _("1024 entries") },
         { value: "2048", text: _("2048 entries") },
@@ -279,7 +286,7 @@ return baseclass.extend({
     validateHttpZipUrl: function (value) {
         if (!value || value.trim() === "") return true;
         if (!this.isValidHttpUrl(value)) return _("Invalid HTTP(S) URL");
-        
+
         try {
             const url = new URL(value);
             return url.pathname.toLowerCase().split("/").pop().includes(".zip") ? true : _("URL must point to a .zip file");

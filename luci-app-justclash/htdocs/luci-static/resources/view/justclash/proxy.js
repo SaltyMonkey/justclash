@@ -107,8 +107,6 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-
-
         o = s.taboption(tabname, form.Value, "global_ua", _("User-Agent for downloads:"));
         o.description = _("User-Agent sent when downloading external files such as subscriptions or rule lists.");
         o.default = common.defaultUserAgent;
@@ -152,6 +150,30 @@ return view.extend({
         o.description = _("Keep assigned fake IP addresses when possible, which can reduce repeated DNS work after restarts.");
         o.rmempty = false;
         o.default = primitives.TRUE;
+
+        tabname = "geodatasettings_tab";
+        s.tab(tabname, _("GeoData settings"));
+
+        o = s.taboption(tabname, form.Flag, "geodata_mode", _("Enable:"));
+        o.description = _("Enable geodata features in rules.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
+
+        o = s.taboption(tabname, form.Flag, "geodata_autoupdate", _("Enable autoupdate:"));
+        o.description = _("Enable geodata features in rules.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
+        o.depends("geodata_mode", primitives.TRUE);
+
+        o = s.taboption(tabname, form.Value, "geodata_autoupdate_interval", _("Update interval:"));
+        o.description = _("Geodata update interval in hours.");
+        o.rmempty = false;
+        o.default = common.defaultGeoDataIntervalH[0].value;
+        common.defaultGeoDataIntervalH.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.rmempty = false;
+        o.depends("geodata_mode", primitives.TRUE);
 
         tabname = "apicontrollersettings_tab";
         s.tab(tabname, _("Controller/API settings"));
@@ -218,8 +240,6 @@ return view.extend({
         o.placeholder = "7894";
         o.default = "7894";
         o.rmempty = false;
-
-
 
         o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
         o.description = _("Load DNS entries from the system hosts file when possible.");

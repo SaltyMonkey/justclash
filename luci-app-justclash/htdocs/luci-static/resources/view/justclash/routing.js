@@ -12,6 +12,7 @@ return view.extend({
     async load() {
         let rulesetsItems = [];
         let blockRulesetsItems = [];
+        let geoDataMode = false;
 
         try {
             const inbuildRules = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
@@ -33,11 +34,17 @@ return view.extend({
                 seenBlock.add(item.yamlName);
                 return true;
             });
-        } catch (e) {}
+        } catch (e) { }
+
+        try {
+            await uci.load(common.binName);
+            geoDataMode = (uci.get(common.binName, "proxy", "geodata_mode") === "1") || false;
+        } catch (e) { }
 
         return {
             rulesetsItems,
-            blockRulesetsItems
+            blockRulesetsItems,
+            geoDataMode
         };
     },
     render(result) {
@@ -190,6 +197,23 @@ return view.extend({
         o.optional = true;
         o.modalonly = true;
 
+        if (result.geoDataMode) {
+            tabname = "proxiesgeodatarules_tab";
+            s.tab(tabname, _("Geodata rules"));
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+        }
+
         tabname = "proxiesmanualrules_tab";
         s.tab(tabname, _("Manual rules"));
 
@@ -232,12 +256,6 @@ return view.extend({
         o.default = primitives.TRUE;
         o.rmempty = false;
         o.editable = true;
-
-        o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
-        o.default = primitives.FALSE;
-        o.description = _("Send HWID data to server with proxy provider request.");
-        o.editable = true;
-        o.rmempty = false;
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy provider name.");
@@ -322,6 +340,28 @@ return view.extend({
         o.validate = function (section_id, value) {
             return common.validateExitRule(value);
         };
+        o.modalonly = true;
+
+        tabname = "proxyproviderheaders_tab";
+        spp.tab(tabname, _("Headers"));
+
+        o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
+        o.default = primitives.FALSE;
+        o.description = _("Send HWID data headers to server with proxy provider request. Leave it unchecked if you don't need it.");
+        o.editable = true;
+        o.rmempty = false;
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.Value, "subscription_authorization_support", _("Authorization header:"));
+        o.description = _("Send custom Authorization header to server with proxy provider request. Leave it empty if you don't need it.");
+        o.editable = true;
+        o.rmempty = false;
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.Value, "subscription_useragent_support", _("User agent header:"));
+        o.description = _("Send custom useragent header to server with proxy provider request. Leave it empty if you don't need it.");
+        o.editable = true;
+        o.rmempty = false;
         o.modalonly = true;
 
         tabname = "proxyproviderhelthchk_tab";
@@ -625,8 +665,6 @@ return view.extend({
         o.description = _("Predefined rule set lists. Select the ones you want to route through the proxy group.");
         o.modalonly = true;
 
-
-
         o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy group:"));
         o.description = _("If selected, rule set lists will be updated through the proxy group.");
         o.optional = true;
@@ -655,6 +693,23 @@ return view.extend({
         o.default = common.defaultDownloadSizeLimits[5].value;
         o.optional = true;
         o.modalonly = true;
+
+        if (result.geoDataMode) {
+            tabname = "proxiesgroupgeodatarules_tab";
+            s.tab(tabname, _("Geodata rules"));
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+        }
 
         tabname = "proxiesgroupmanualrules_tab";
         s2.tab(tabname, _("Manual rules"));
@@ -745,6 +800,23 @@ return view.extend({
         o.optional = true;
         o.modalonly = true;
 
+        if (result.geoDataMode) {
+            tabname = "directgeodatarules_tab";
+            s.tab(tabname, _("Geodata rules"));
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+        }
+
         tabname = "directbasic_tab";
         s3.tab(tabname, _("Manual rules"));
 
@@ -830,6 +902,23 @@ return view.extend({
         o.default = common.defaultDownloadSizeLimits[5].value;
         o.optional = true;
         o.modalonly = true;
+
+        if (result.geoDataMode) {
+            tabname = "rejectgeodatarules_tab";
+            s.tab(tabname, _("Geodata rules"));
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geosite_blocklist", _("Use with geosite:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+
+            o = s.taboption(tabname, form.DynamicList, "enabled_geoip_blocklist", _("Use with geoip:"));
+            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.modalonly = true;
+            o.optional = true;
+            o.editable = true;
+        }
 
         tabname = "rejectmanualrules_tab";
         s4.tab(tabname, _("Manual rules"));
