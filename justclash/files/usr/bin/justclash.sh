@@ -84,6 +84,9 @@ DEFAULT_DOH_IPS="223.5.5.5, 223.6.6.6, 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9
 DEFAULT_DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
 DEFAULT_DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
 DEFAULT_DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
+DEFAULT_GEOSITE_URL="https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+DEFAULT_GEOIP_URL="https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+DEFAULT_GEODATA_UPDATE_INTERVAL=24
 DEFAULT_MIHOMO_SOURCE_CORE="github"
 DEFAULT_MIHOMO_UPDATE_CHANNEL="stable"
 DEFAULT_MIHOMO_GITHUB_REPO="MetaCubeX/mihomo"
@@ -137,6 +140,7 @@ OUT_PROXY_GROUPS=""    # Generated proxy groups array (JSON)
 OUT_PROXIES=""         # Generated proxies array (JSON)
 OUT_NAMES_RULESETS=""  # Generated block ruleset names list (plain text)
 OUT_NAMES_SUFFIXES=""  # Generated block suffix names list (plain text)
+OUT_NAMES_GEOSITE=""   # Generated block geosite names list (plain text)
 OUT_TEMPLATE=""        # Helper buffer used by templating functions (JSON)
 OUT_PROXY_PROVIDERS="" # Generated proxy providers object (JSON)
 OUT_MIXED_RULES=""     # Generated mixed-port rules array (JSON)
@@ -954,15 +958,19 @@ build_builtin_rules_bundle() {
             ;;
         esac
 
-        generated_rule="RULE-SET,$ruleset_name,$target_name"
+        if [ "$ruleset_behavior" = "ipcidr" ]; then
+            generated_rule="RULE-SET,$ruleset_name,$target_name,no-resolve"
+        else
+            generated_rule="RULE-SET,$ruleset_name,$target_name"
+        fi
         case "$ruleset_url" in
             http://*|https://*)
-                local auth_fragment=""
+                local headers=""
                 if [ -n "$ruleset_auth" ]; then
-                    template_auth_header "$ruleset_auth"
-                    auth_fragment="$OUT_TEMPLATE"
+                    template_headers "0" "$ruleset_auth" ""
+                    headers="$OUT_TEMPLATE"
                 fi
-                template_ruleset_http "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$auth_fragment"
+                template_ruleset_http "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$headers"
                 rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
             *)
@@ -1067,32 +1075,58 @@ template_proxy_provider() {
     OUT_TEMPLATE="{$out}"
 }
 
-# Helper to build x-hwid and other device headers JSON fragment in memory without subshell forks
-template_hwid_header() {
-    local hwid="$1" device_os="$2" version_os="$3" device_model="$4"
-    local out
+template_headers() {
+    local hwid_enabled="$1"
+    local auth_token="$2"
+    local user_agent="$3"
+    local headers_fragment=""
 
-    out="\"x-hwid\":\"$(json_escape "$hwid")\""
-    out="$out,\"x-device-os\":\"$(json_escape "$device_os")\""
-    out="$out,\"x-ver-os\":\"$(json_escape "$version_os")\""
-    out="$out,\"x-device-model\":\"$(json_escape "$device_model")\""
+    # 1. Build HWID headers as arrays if enabled
+    if [ "$hwid_enabled" = "1" ]; then
+        local hwid device_os version_os device_model
+        hwid=$(hwid_generate)
+        device_os=$(get_os_name)
+        version_os=$(get_os_version)
+        device_model=$(get_hw_model)
 
-    OUT_TEMPLATE="\"header\":{$out}"
-}
+        headers_fragment=$(printf '"x-hwid":["%s"],"x-os":["%s"],"x-os-version":["%s"],"x-device-model":["%s"]' \
+            "$(json_escape "$hwid")" \
+            "$(json_escape "$device_os")" \
+            "$(json_escape "$version_os")" \
+            "$(json_escape "$device_model")")
+    fi
 
-# Helper to build Authorization header JSON fragment in memory without subshell forks
-template_auth_header() {
-    local auth="$1"
-    OUT_TEMPLATE="\"header\":{\"Authorization\":[\"$(json_escape "$auth")\"]}"
+    # 2. Build Authorization header as array if auth token is set
+    if [ -n "$auth_token" ]; then
+        local auth_entry
+        auth_entry=$(printf '"Authorization":["%s"]' "$(json_escape "$auth_token")")
+
+        headers_fragment="${headers_fragment:+$headers_fragment,}$auth_entry"
+    fi
+
+    # 3. Build User-Agent header as array if user_agent is set
+    if [ -n "$user_agent" ]; then
+        local ua_entry
+        ua_entry=$(printf '"User-Agent":["%s"]' "$(json_escape "$user_agent")")
+
+        headers_fragment="${headers_fragment:+$headers_fragment,}$ua_entry"
+    fi
+
+    # Final output generation
+    if [ -n "$headers_fragment" ]; then
+        OUT_TEMPLATE=$(printf '"header":{%s}' "$headers_fragment")
+    else
+        OUT_TEMPLATE=""
+    fi
 }
 
 # Helper to build HTTP ruleset JSON fragment in memory without subshell forks
 template_ruleset_http() {
-    local url="$1" behavior="$2" format="$3" proxy="$4" interval="$5" size_limit="$6" auth_fragment="$7"
+    local url="$1" behavior="$2" format="$3" proxy="$4" interval="$5" size_limit="$6" headers="$7"
     local out
 
     out="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$interval,\"size-limit\":$size_limit"
-    [ -n "$auth_fragment" ] && out="$out,$auth_fragment"
+    [ -n "$headers" ] && out="$out,$headers"
 
     OUT_TEMPLATE="{$out}"
 }
@@ -1193,19 +1227,16 @@ handle_proxy_section() {
         rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
-        config_get route_entries "$section" additional_destip_route
-        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-
+        # Compile ruleset bundle early so we have domain/IP rulesets separated
         config_get enabled_list "$section" enabled_list
         if [ -n "$enabled_list" ]; then
             build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit"
-            [ -n "$OUT_BUNDLE_IP_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
-            [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
             [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
             [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
         fi
 
+        # --- 2. Domain-based Rules (above IP destination rules) ---
+        # Custom Domain Suffixes
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
             [ -n "$route_entry" ] && {
@@ -1215,6 +1246,36 @@ handle_proxy_section() {
             }
         done
 
+        # GEOSITE rules
+        config_get route_entries "$section" enabled_geosite_list
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule="GEOSITE,$route_entry,$name"
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+                fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
+            }
+        done
+
+        # Domain Rulesets (from the bundle)
+        if [ -n "$enabled_list" ] && [ -n "$OUT_BUNDLE_RULES" ]; then
+            rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+        fi
+
+        # --- 3. IP-based Destination Rules (at the bottom) ---
+        # Custom Destination IPs
+        config_get route_entries "$section" additional_destip_route
+        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "no-resolve")
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        # GEOIP rules
+        config_get route_entries "$section" enabled_geoip_list
+        rules_fragment=$(build_manual_rules_array "$route_entries" "GEOIP" "$name" "no-resolve")
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        # IP Rulesets (from the bundle)
+        if [ -n "$enabled_list" ] && [ -n "$OUT_BUNDLE_IP_RULES" ]; then
+            rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
+        fi
     }
 
     config_foreach __parse_single_proxy proxies
@@ -1311,18 +1372,15 @@ handle_proxy_group_section() {
         rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
-        config_get route_entries "$section" additional_destip_route
-        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "")
-        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-
+        # Compile ruleset bundle early so we have domain/IP rulesets separated
         if [ -n "$enabled_list" ]; then
             build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit"
-            [ -n "$OUT_BUNDLE_IP_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
-            [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
             [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
             [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
         fi
 
+        # --- 2. Domain-based Rules (above IP destination rules) ---
+        # Custom Domain Suffixes
         config_get route_entries "$section" additional_domain_route
         for route_entry in $route_entries; do
             [ -n "$route_entry" ] && {
@@ -1331,6 +1389,37 @@ handle_proxy_group_section() {
                 fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
             }
         done
+
+        # GEOSITE rules
+        config_get route_entries "$section" enabled_geosite_list
+        for route_entry in $route_entries; do
+            [ -n "$route_entry" ] && {
+                generated_rule="GEOSITE,$route_entry,$name"
+                rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+                fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
+            }
+        done
+
+        # Domain Rulesets (from the bundle)
+        if [ -n "$enabled_list" ] && [ -n "$OUT_BUNDLE_RULES" ]; then
+            rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+        fi
+
+        # --- 3. IP-based Destination Rules (at the bottom) ---
+        # Custom Destination IPs
+        config_get route_entries "$section" additional_destip_route
+        rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "no-resolve")
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        # GEOIP rules
+        config_get route_entries "$section" enabled_geoip_list
+        rules_fragment=$(build_manual_rules_array "$route_entries" "GEOIP" "$name" "no-resolve")
+        [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+        # IP Rulesets (from the bundle)
+        if [ -n "$enabled_list" ] && [ -n "$OUT_BUNDLE_IP_RULES" ]; then
+            rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
+        fi
 
     }
 
@@ -1351,7 +1440,8 @@ handle_proxy_provider_section() {
         local section="$1"
         local name enabled url override_dialer_proxy override_interface_name override_routing_mark subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
         local health_check hc_expected_status hc_url hc_interval hc_timeout hc_lazy
-        local provider_json hwid_header
+        local provider_json headers
+        local subscription_authorization_support subscription_useragent_support
 
         config_get name "$section" name
         config_get url "$section" subscription
@@ -1388,12 +1478,14 @@ handle_proxy_provider_section() {
         config_get override_dialer_proxy "$section" override_dialer_proxy
         config_get override_interface_name "$section" override_interface_name
 
-        hwid_header=""
-        config_get_bool subscription_hwid_support "$section" subscription_hwid_support 0
-        if [ "$subscription_hwid_support" -eq 1 ]; then
-            build_hwid_header_fragment
-            hwid_header="$OUT_TEMPLATE"
-        fi
+        headers=""
+        config_get_bool subscription_hwid_support "$section" subscription_hwid_support "0"
+        config_get subscription_authorization_support "$section" subscription_authorization_support ""
+        config_get subscription_useragent_support "$section" subscription_useragent_support ""
+
+        template_headers "$subscription_hwid_support" "$subscription_authorization_support" "$subscription_useragent_support"
+        headers="$OUT_TEMPLATE"
+
 
         config_get_bool health_check "$section" health_check 0
         hc_expected_status="$DEFAULT_HEALTHCHECK_RESULT" hc_url="$DEFAULT_HEALTHCHECK_URL" hc_interval="$DEFAULT_HEALTHCHECK_INTERVAL" hc_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT" hc_lazy="false"
@@ -1420,7 +1512,7 @@ handle_proxy_provider_section() {
 
         template_proxy_provider \
             "$url" "$interval" "$size_limit" "$proxy" "$filter" "$exclude_filter" "$exclude_type" \
-            "$override_dialer_proxy" "$override_interface_name" "$override_routing_mark" "$hwid_header" \
+            "$override_dialer_proxy" "$override_interface_name" "$override_routing_mark" "$headers" \
             "$health_check" "$hc_url" "$hc_expected_status" "$hc_interval" "$hc_timeout" "$hc_lazy"
         provider_json="$OUT_TEMPLATE"
 
@@ -1438,6 +1530,7 @@ handle_block_rule_section() {
     local selected_rulesets=""
     local list_rulesets_names=""
     local list_suffix_names=""
+    local list_geosite_names=""
 
     local enabled
     config_get_bool enabled block_rules enabled 1
@@ -1447,6 +1540,7 @@ handle_block_rule_section() {
         OUT_RULESETS="{}"
         OUT_NAMES_RULESETS=""
         OUT_NAMES_SUFFIXES=""
+        OUT_NAMES_GEOSITE=""
         return
     fi
 
@@ -1468,17 +1562,19 @@ handle_block_rule_section() {
         log warn "Invalid size_limit for block_rules: '$size_limit', using default: 0" "⚠️"
         size_limit=0
     }
-    config_get additional_destip_blockroute block_rules additional_destip_blockroute
-    for route_entry in $additional_destip_blockroute; do
+    # --- 1. Domain-based Block Rules ---
+    config_get route_entries block_rules enabled_geosite_blocklist
+    for route_entry in $route_entries; do
         [ -n "$route_entry" ] && {
-            generated_rule="IP-CIDR,$route_entry,REJECT"
-            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+            list_geosite_names="${list_geosite_names:+$list_geosite_names,}$route_entry"
         }
     done
+    if [ -n "$list_geosite_names" ]; then
+        list_geosite_names="geosite:$list_geosite_names"
+    fi
 
     if [ -n "$enabled_blocklist" ]; then
         build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "non-domain-only"
-        [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
         [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
         [ -n "$OUT_BUNDLE_NAMES" ] && list_rulesets_names=$(printf '%s' "$OUT_BUNDLE_NAMES" | sed 's/"//g; s/,rule-set:/,/g')
     fi
@@ -1490,9 +1586,23 @@ handle_block_rule_section() {
         }
     done
 
+    # --- 2. IP-based Block Rules (at the bottom) ---
+    config_get additional_destip_blockroute block_rules additional_destip_blockroute
+    rules_fragment=$(build_manual_rules_array "$additional_destip_blockroute" "IP-CIDR" "REJECT" "no-resolve")
+    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+    config_get route_entries block_rules enabled_geoip_blocklist
+    rules_fragment=$(build_manual_rules_array "$route_entries" "GEOIP" "REJECT" "no-resolve")
+    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+    if [ -n "$enabled_blocklist" ] && [ -n "$OUT_BUNDLE_RULES" ]; then
+        rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+    fi
+
     OUT_RULES="[${rules_array:-}]"
     OUT_RULESETS="{${selected_rulesets:-}}"
     OUT_NAMES_RULESETS="$list_rulesets_names"
+    OUT_NAMES_GEOSITE="$list_geosite_names"
     OUT_NAMES_SUFFIXES="$list_suffix_names"
 }
 
@@ -1538,17 +1648,15 @@ handle_direct_rule_section() {
     [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
     config_get additional_destip_direct direct_rules additional_destip_direct
-    rules_fragment=$(build_manual_rules_array "$additional_destip_direct" "IP-CIDR" "DIRECT" "")
-    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
-
+    # Compile ruleset bundle early so we have domain/IP rulesets separated
     if [ -n "$enabled_list" ]; then
         build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$download_proxy" "$list_update_interval" "$size_limit"
-        [ -n "$OUT_BUNDLE_IP_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
-        [ -n "$OUT_BUNDLE_RULES" ] && rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
         [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
         [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
     fi
 
+    # --- 2. Domain-based Direct Rules (above IP rules) ---
+    # Custom Domain Suffixes direct
     config_get additional_domain_direct direct_rules additional_domain_direct
     for route_entry in $additional_domain_direct; do
         [ -n "$route_entry" ] && {
@@ -1557,6 +1665,37 @@ handle_direct_rule_section() {
             fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
         }
     done
+
+    # GEOSITE direct rules
+    config_get route_entries direct_rules enabled_geosite_list
+    for route_entry in $route_entries; do
+        [ -n "$route_entry" ] && {
+            generated_rule="GEOSITE,$route_entry,DIRECT"
+            rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
+            fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
+        }
+    done
+
+    # Domain Rulesets (from the bundle)
+    if [ -n "$enabled_list" ] && [ -n "$OUT_BUNDLE_RULES" ]; then
+        rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_RULES"
+    fi
+
+    # --- 3. IP-based Destination Rules (at the bottom) ---
+    # Custom Destination IPs direct
+    config_get additional_destip_direct direct_rules additional_destip_direct
+    rules_fragment=$(build_manual_rules_array "$additional_destip_direct" "IP-CIDR" "DIRECT" "no-resolve")
+    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+    # GEOIP direct rules
+    config_get route_entries direct_rules enabled_geoip_list
+    rules_fragment=$(build_manual_rules_array "$route_entries" "GEOIP" "DIRECT" "no-resolve")
+    [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
+
+    # IP Rulesets (from the bundle)
+    if [ -n "$enabled_list" ] && [ -n "$OUT_BUNDLE_IP_RULES" ]; then
+        rules_array="${rules_array:+$rules_array,}$OUT_BUNDLE_IP_RULES"
+    fi
 
     OUT_RULES="[${rules_array:-}]"
     OUT_RULESETS="{${selected_rulesets:-}}"
@@ -1644,7 +1783,7 @@ core_generate_yaml() {
     local fake_ip_rules_direct fake_ip_rules_proxy_groups fake_ip_rules_proxies
     local custom_fake_ip_rules custom_real_ip_rules custom_fake_ip_rulesets custom_real_ip_rulesets
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
-
+    local mihomo_geoip_url mihomo_geosite_url geodata_mode geodata_autoupdate geodata_autoupdate_interval
     # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls
     local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
@@ -1724,6 +1863,12 @@ core_generate_yaml() {
     config_get fake_ip_include_ruleset_values proxy fake_ip_include_rulesets
     config_get fake_ip_exclude_ruleset_values proxy fake_ip_exclude_rulesets
 
+    config_get_bool geodata_mode proxy geodata_mode 0
+    config_get_bool geodata_autoupdate proxy geodata_autoupdate 0
+    config_get geodata_autoupdate_interval proxy geodata_autoupdate_interval "$DEFAULT_GEODATA_UPDATE_INTERVAL"
+    config_get mihomo_geosite_url settings mihomo_geosite_url "$DEFAULT_GEOSITE_URL"
+    config_get mihomo_geoip_url settings mihomo_geoip_url "$DEFAULT_GEOIP_URL"
+
     if [ -n "$controller_bind_interface" ]; then
         if ! is_ifname "$controller_bind_interface"; then
             router_selected_ipaddr="0.0.0.0"
@@ -1796,6 +1941,7 @@ core_generate_yaml() {
     rulesets_block="$OUT_RULESETS"
     names_rulesets_block_policy="$OUT_NAMES_RULESETS"
     names_suffixes_block_policy="$OUT_NAMES_SUFFIXES"
+    names_geosite_block_policy="$OUT_NAMES_GEOSITE"
 
     # PROXY GROUP section
     handle_proxy_group_section
@@ -1815,6 +1961,7 @@ core_generate_yaml() {
         --arg custom_entries "$nameserver_policy_custom" \
         --arg rulesets "$names_rulesets_block_policy" \
         --arg suffixes "$names_suffixes_block_policy" \
+        --arg geosite "$names_geosite_block_policy" \
         '
         {} |
         if $custom_entries != "[]" then
@@ -1831,6 +1978,9 @@ core_generate_yaml() {
         else . end |
         if $rulesets != "" then
             . + {($rulesets): "rcode://success"}
+        else . end |
+        if $geosite != "" then
+            . + {($geosite): "rcode://success"}
         else . end |
         if $suffixes != "" then
             . + {($suffixes): "rcode://success"}
@@ -1933,7 +2083,6 @@ core_generate_yaml() {
         echo "routing-mark: $NF_TABLE_FWMARK_PROXY"
         echo "global-ua: $(yaml_quote "$global_ua")"
         echo "find-process-mode: off"
-        echo "geodata-mode: false"
         echo "etag-support: $(format_uci_bool_as_yaml "$etag_support")"
         echo ""
         echo "keep-alive-idle: $keep_alive_idle"
@@ -1942,6 +2091,18 @@ core_generate_yaml() {
         echo "profile:"
         echo "  store-selected: $(format_uci_bool_as_yaml "$profile_store_selected")"
         echo "  store-fake-ip: $(format_uci_bool_as_yaml "$profile_store_fake_ip")"
+        echo ""
+        if [ "$geodata_mode" -eq 1 ]; then
+            echo "geodata-mode: true"
+            echo "geodata-loader: memconservative"
+            echo "geo-auto-update: $(format_uci_bool_as_yaml "$geodata_autoupdate")"
+            echo "geo-autoupdate-interval: $geodata_autoupdate_interval"
+            echo "geox-url:"
+            echo "  geoip: $(yaml_quote "$mihomo_geoip_url")"
+            echo "  geosite: $(yaml_quote "$mihomo_geosite_url")"
+            echo "  mmdb: false"
+            echo "  asn: false"
+        fi
         echo ""
         build_hosts_section
         echo ""
@@ -2005,9 +2166,9 @@ core_generate_yaml() {
           OUT_RULES OUT_RULESETS OUT_FAKE_IP_RULES OUT_PROXY_GROUPS OUT_PROXIES \
           OUT_NAMES_RULESETS OUT_NAMES_SUFFIXES OUT_TEMPLATE OUT_PROXY_PROVIDERS \
           OUT_MIXED_RULES OUT_FINAL_RULES OUT_BUNDLE_IP_RULES OUT_BUNDLE_RULES \
-          OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES OUT_BUNDLE_FAKEIPRULES
+          OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES OUT_BUNDLE_FAKEIPRULES OUT_NAMES_GEOSITE
 
-    return 0;
+    return 0
 }
 
 service_data_update() {
