@@ -357,12 +357,31 @@ return view.extend({
         o.editable = true;
         o.rmempty = false;
         o.modalonly = true;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") {
+                return true;
+            }
+            if (/[\r\n]/.test(value)) {
+                return _("Newlines (CR/LF) are not allowed in HTTP headers.");
+            }
+
+            return true;
+        };
 
         o = spp.taboption(tabname, form.Value, "subscription_useragent_support", _("User agent header:"));
         o.description = _("Send custom useragent header to server with proxy provider request. Leave it empty if you don't need it.");
         o.editable = true;
         o.rmempty = false;
         o.modalonly = true;
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "") {
+                return true;
+            }
+            if (/[\r\n]/.test(value)) {
+                return _("Newlines (CR/LF) are not allowed in HTTP headers.");
+            }
+            return true;
+        };
 
         tabname = "proxyproviderhelthchk_tab";
         spp.tab(tabname, _("Health check"));
