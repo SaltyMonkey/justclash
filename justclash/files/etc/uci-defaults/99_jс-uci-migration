@@ -54,8 +54,13 @@ add_missing_option "justclash.proxy.sniffer_override_destination" "0"
 add_missing_option "justclash.proxy.api_tls" "0"
 add_missing_option "justclash.proxy.api_tls_cert" "/etc/uhttpd.crt"
 add_missing_option "justclash.proxy.api_tls_key" "/etc/uhttpd.key"
-uci -q delete justclash.proxy.use_hosts
-uci -q delete justclash.proxy.hosts
+add_missing_option "justclash.proxy.api_tls_cert" "/etc/uhttpd.crt"
+add_missing_option "justclash.proxy.api_tls_key" "/etc/uhttpd.key"
+add_missing_option "justclash.settings.mihomo_geosite_url" "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+add_missing_option "justclash.settings.mihomo_geoip_url" "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+add_missing_option "justclash.proxy.geodata_mode" "0"
+add_missing_option "justclash.proxy.geodata_autoupdate" "0"
+add_missing_option "justclash.proxy.geodata_autoupdate_interval" "24"
 
 if ! uci -q get justclash.settings.nft_ports_exclude >/dev/null; then
     uci add_list justclash.settings.nft_ports_exclude='6881'
