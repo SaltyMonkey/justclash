@@ -40,7 +40,7 @@ config main 'settings'
     option mihomo_dashboard_zashboard_url 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip'
     option mihomo_dashboard_metacubexd_url 'https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip'
     option mihomo_dashboard_yacd_meta_url 'https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip'
- 
+
 config proxy 'proxy'
     option controller_bind_interface      'lan'
     option use_dashboard                  '0'
@@ -116,6 +116,8 @@ config proxy_provider
     option override_interface_name        'eth0'
     option override_routing_mark          '268435456'
     option subscription_hwid_support      '0'
+    option subscription_authorization_support 'token abcd'
+    option subscription_useragent_support 'Mihomo/1.69.69'
     option update_interval                '3600'
     option size_limit                     '0'
     option proxy                          'DIRECT'
