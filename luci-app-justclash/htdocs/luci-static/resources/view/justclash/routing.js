@@ -343,7 +343,7 @@ return view.extend({
         o.modalonly = true;
 
         tabname = "proxyproviderheaders_tab";
-        spp.tab(tabname, _("Headers"));
+        spp.tab(tabname, _("Security"));
 
         o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
         o.default = primitives.FALSE;
