@@ -79,6 +79,12 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
 
+        o = s.taboption(tabname, form.Flag, "fake_ip", _("Fake IP:"));
+        o.description = _("Generate fake IP mapping rules for this proxy's domains.");
+        o.default = primitives.TRUE;
+        o.rmempty = false;
+        o.editable = true;
+
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
         o.rmempty = false;
@@ -503,6 +509,12 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
 
+        o = s2.taboption(tabname, form.Flag, "fake_ip", _("Fake IP:"));
+        o.description = _("Generate fake IP mapping rules for this proxy group's domains.");
+        o.default = primitives.TRUE;
+        o.rmempty = false;
+        o.editable = true;
+
         o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
         o.rmempty = false;
@@ -715,15 +727,15 @@ return view.extend({
 
         if (result.geoDataMode) {
             tabname = "proxiesgroupgeodatarules_tab";
-            s.tab(tabname, _("Geodata rules"));
+            s2.tab(tabname, _("Geodata rules"));
 
-            o = s.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
+            o = s2.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
             o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
 
-            o = s.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
+            o = s2.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
             o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
             o.modalonly = true;
             o.optional = true;
@@ -776,6 +788,12 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
 
+        o = s3.taboption(tabname, form.Flag, "fake_ip", _("Fake IP:"));
+        o.description = _("Generate fake IP mapping rules for this direct rule section's domains.");
+        o.default = primitives.TRUE;
+        o.rmempty = false;
+        o.editable = true;
+
         o = s3.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         o.optional = true;
         result.rulesetsItems.forEach(item => {
@@ -821,15 +839,15 @@ return view.extend({
 
         if (result.geoDataMode) {
             tabname = "directgeodatarules_tab";
-            s.tab(tabname, _("Geodata rules"));
+            s3.tab(tabname, _("Geodata rules"));
 
-            o = s.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
+            o = s3.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
             o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
 
-            o = s.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
+            o = s3.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
             o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
             o.modalonly = true;
             o.optional = true;
@@ -924,15 +942,15 @@ return view.extend({
 
         if (result.geoDataMode) {
             tabname = "rejectgeodatarules_tab";
-            s.tab(tabname, _("Geodata rules"));
+            s4.tab(tabname, _("Geodata rules"));
 
-            o = s.taboption(tabname, form.DynamicList, "enabled_geosite_blocklist", _("Use with geosite:"));
+            o = s4.taboption(tabname, form.DynamicList, "enabled_geosite_blocklist", _("Use with geosite:"));
             o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
 
-            o = s.taboption(tabname, form.DynamicList, "enabled_geoip_blocklist", _("Use with geoip:"));
+            o = s4.taboption(tabname, form.DynamicList, "enabled_geoip_blocklist", _("Use with geoip:"));
             o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
             o.modalonly = true;
             o.optional = true;

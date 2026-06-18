@@ -318,25 +318,6 @@ return view.extend({
             return common.validateDnsServer(value);
         };
 
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_include_rulesets", _("Force fake IP rulesets:"));
-        result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, item.name);
-        });
-        o.description = _("Ruleset names that should resolve through fake IP. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list.");
-        o.rmempty = true;
-        o.retain = true;
-        o.editable = true;
-        o.optional = true;
-
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_rulesets", _("Force real IP rulesets:"));
-        result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, item.name);
-        });
-        o.description = _("Ruleset names that should resolve through real IP before fake-IP matches are applied. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list.");
-        o.rmempty = true;
-        o.retain = true;
-        o.editable = true;
-        o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "fake_ip_include_domains", _("Force fake IP rules:"));
         o.description = _("Entries that should resolve through fake IP; use plain suffixes like example.com.");
