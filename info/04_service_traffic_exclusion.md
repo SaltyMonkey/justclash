@@ -61,10 +61,10 @@ Unlike ports or IP addresses, you can bypass local traffic based on the system u
 #### Configuration Option
 Specify the system user name or numeric UID running the process you want to bypass:
 * **Via LuCI Web Interface**:  
-  Go to *Services -> JustClash -> Settings -> Exclude Router Users (UID)* and enter the user name: `jc_skipped_user`.
+  Go to *Services -> JustClash -> Settings -> Exclude Router Users (UID)* and enter the user name: `skipped_skuid`.
 * **Via Console (UCI)**:
   ```bash
-  uci add_list justclash.settings.nft_skuid_exclude_router='jc_skipped_user'
+  uci add_list justclash.settings.nft_skuid_exclude_router='skipped_skuid'
   uci commit justclash
   service justclash restart
   ```
@@ -147,22 +147,17 @@ To prevent this, you must ensure that bypassed entities resolve **Real IPs** ins
 ### Solutions for Router-Originated Traffic (User ID / `skuid`)
 
 #### Solution 1: Configure Real IP Issuance in the Service
-Configure JustClash to resolve and return the Real IP instead of a Fake-IP for the specific domains or rulesets queried by the bypassed processes. This can be achieved by:
+Configure JustClash to resolve and return the Real IP instead of a Fake-IP for the specific domains queried by the bypassed processes. This can be achieved by:
 * Adding domains to the `fake_ip_exclude_domains` list under the `proxy` config section.
-* Adding rulesets to the `fake_ip_exclude_rulesets` list under the `proxy` config section.
 
 ##### Configuration Syntax Rules:
 * **Individual Domains**: Specify plain domain names (do not prefix with legacy symbols like `+.` or `*.`, e.g., `dns.cloudflare.com`).
 * **Wildcard Domains**: Use a literal `*` (e.g., `*.example.com`).
-* **Rulesets**: Reference the exact name of a configured ruleset block (e.g., `my_excluded_ruleset`).
 
 ##### Example UCI Commands:
 ```bash
 # Exclude Cloudflare DoH domain for an excluded secure DNS daemon
 uci add_list justclash.proxy.fake_ip_exclude_domains='dns.cloudflare.com'
-
-# Exclude an entire ruleset of domains from Fake-IP resolution
-uci add_list justclash.proxy.fake_ip_exclude_rulesets='my_excluded_ruleset'
 uci commit justclash
 service justclash restart
 ```
@@ -175,7 +170,6 @@ dns:
   fake-ip-filter-mode: rule
   fake-ip-filter:
     - DOMAIN-SUFFIX,dns.cloudflare.com,real-ip
-    - RULE-SET,my_excluded_ruleset,real-ip
     - MATCH,real-ip
 ```
 

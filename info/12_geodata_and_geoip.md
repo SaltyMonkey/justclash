@@ -1,0 +1,107 @@
+# Geodata, Geosite, and GeoIP Routing
+
+JustClash supports two different engines to classify domains and IP addresses for routing:
+1. **RuleSet Mode (Default)**: Downloads and compiles text/YAML-based ruleset files.
+2. **Geodata Mode**: Uses binary database files (`geosite.dat` and `geoip.dat`) compiled by the community (e.g., from the MetaCubeX repository).
+
+This guide explains how **Geodata Mode** works, its pros and cons, and how to configure it.
+
+---
+
+## 1. Ruleset Mode vs. Geodata Mode
+
+| Feature | RuleSet Mode (Default) | Geodata Mode |
+| :--- | :--- | :--- |
+| **Source Data** | Individual YAML/text rulesets (e.g. `youtube.yaml`, `telegram.yaml`) | Unified binary files (`geosite.dat` and `geoip.dat`) |
+| **Memory usage** | Low (only loads active rulesets in memory) | Moderate to high (requires parsing large binary files) |
+| **Configuration** | Configured via **Lists** and **RuleSets** tabs | Configured via **Geodata rules** tabs |
+| **Core Integration** | Uses native 'rule-providers' feature | Uses native 'geosite' / 'geoip' features |
+| **Usability** | High (Visual dropdowns in LuCI, easy to select granular lists) | Low (Requires manual typing of category tags, lists not visible in UI) |
+| **Auto-update** | Core updates rulesets automatically. Router cron updates the catalog of available rulesets. | Core updates .dat files automatically. |
+
+### Why use Geodata Mode?
+* **Industry Standard**: Most routing rules and lists in the Clash/Xray ecosystem are shared as `geosite` and `geoip` categories (e.g., `geosite:google`, `geoip:private`).
+* **Simplicity**: You don't need to configure multiple remote ruleset download URLs. All rules are packed into just two binary files.
+* **Fewer HTTP requests**: The core downloads only two big files for all rule matches.
+
+### Why avoid Geodata Mode?
+* **RAM Constraints**: Loading `geosite.dat` and `geoip.dat` into RAM can consume significant memory. On routers with **128MB RAM or less**, this can trigger Out-Of-Memory (OOM) crashes. JustClash uses `geodata-loader: memconservative` to mitigate this, but RuleSet Mode remains safer for low-memory hardware.
+
+---
+
+## 2. Enabling Geodata Mode
+
+To enable Geodata Mode in JustClash:
+
+### Via LuCI Web Interface
+1. Navigate to **Services -> JustClash -> Proxy**.
+2. Go to the **GeoData settings** tab.
+3. Check the **Enable** option.
+4. (Optional) Enable **Enable autoupdate** and configure the update interval.
+5. Save & Apply.
+
+### Via Console (UCI)
+```bash
+# 1. Enable geodata mode
+uci set justclash.proxy.geodata_mode='1'
+
+# 2. Configure auto-update
+uci set justclash.proxy.geodata_autoupdate='1'
+uci set justclash.proxy.geodata_autoupdate_interval='24' # in hours
+
+uci commit justclash
+service justclash restart
+```
+
+---
+
+## 3. Configuring Rules using Geodata
+
+Once Geodata Mode is enabled, the Web UI will hide the standard RuleSets tabs and display **Geodata rules** tabs instead in the following sections:
+* **Proxies** (Rules for specific proxy nodes)
+* **Proxy Groups** (Rules for proxy selector groups)
+* **Direct Rules** (Exclusions/Bypass rules)
+* **Block Rules** (Adblocking/Blocking rules)
+
+### Adding Geosite and Geoip Rules
+Within the **Geodata rules** tab, you can add names to:
+* **Use with geosite**: Domain category tags (e.g. `google`, `telegram`, `category-ads-all`, `cn`).
+* **Use with geoip**: IP category tags (e.g. `cn`, `private`, `telegram`).
+
+### Under the Hood
+JustClash compiles these entries directly into standard Mihomo routing rules:
+```yaml
+rules:
+  - GEOSITE,google,ProxyGroup
+  - GEOIP,cn,DIRECT
+  - GEOSITE,category-ads-all,REJECT
+```
+
+---
+
+## 4. Fake IP Behavior with Geodata
+
+When using Fake IP, domain matching works seamlessly with Geosite:
+* If a domain queries a Geosite rule (e.g. `GEOSITE,google`), Mihomo intercepts the connection via TProxy using its Fake-IP mapping.
+* If you disable `fake_ip` for a section (e.g., in `direct_rules`), the Geosite domains mapped in that section will bypass Fake-IP resolution and return Real IPs.
+
+---
+
+## 5. Customizing Geodata URLs
+
+By default, JustClash downloads the `geosite.dat` and `geoip.dat` databases from a MetaCubeX mirror. If you want to use custom `.dat` files (such as those containing extended lists for specific regions), you can override the download URLs.
+
+### Via LuCI Web Interface
+1. Navigate to **Services -> JustClash -> Service**.
+2. Go to the **External resources** tab.
+3. Look for the **Geosite download URL** and **GeoIP download URL** fields.
+4. Enter the direct links to the desired `.dat` files.
+5. Save & Apply.
+
+### Via Console (UCI)
+```bash
+# Example: Setting a custom URL for Geosite
+uci set justclash.settings.mihomo_geosite_url='https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat'
+uci set justclash.settings.mihomo_geoip_url='https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat'
+uci commit justclash
+```

@@ -79,10 +79,10 @@ An advanced scenario: you want guests to use encrypted address resolution runnin
 ### Configuration Steps:
 
 1. **Create a Dedicated System User and Group**:
-   To prevent conflicts or security overlaps with other processes (which might run as generic low-privilege users), create a dedicated system user and group (e.g., `jc_skipped_user` / `jc_skipped_group` with UID/GID `65530`) specifically for this resolver:
+   To prevent conflicts or security overlaps with other processes (which might run as generic low-privilege users), create a dedicated system user and group (e.g., `skipped_skuid` / `skipped_skgid` with UID/GID `65530`) specifically for this resolver:
    ```bash
-   grep -q '^jc_skipped_group:' /etc/group || echo "jc_skipped_group:x:65530:" >> /etc/group
-   grep -q '^jc_skipped_user:' /etc/passwd || echo "jc_skipped_user:x:65530:65530:jc_skipped_user:/var:/bin/false" >> /etc/passwd
+   grep -q '^skipped_skgid:' /etc/group || echo "skipped_skgid:x:65530:" >> /etc/group
+   grep -q '^skipped_skuid:' /etc/passwd || echo "skipped_skuid:x:65530:65530:skipped_skuid:/var:/bin/false" >> /etc/passwd
    ```
 
 2. **Configure the Local Resolution Helper**:
@@ -111,21 +111,21 @@ An advanced scenario: you want guests to use encrypted address resolution runnin
        option listen_addr '127.0.0.1'
        option listen_port '5053'
        option resolver_url 'https://1.1.1.1/dns-query'
-       option user 'jc_skipped_user'      # Execute daemon under this custom user
-       option group 'jc_skipped_group'    # Execute daemon under this custom group
+       option user 'skipped_skuid'      # Execute daemon under this custom user
+       option group 'skipped_skgid'    # Execute daemon under this custom group
    ```
    Restart the helper service to apply the configuration.
 
 3. **Exclude the Custom User from Interception**:
-   Since the resolver helper connects to the internet to resolve queries, its outgoing traffic could be intercepted by the routing engine. To prevent this, add your custom system user `jc_skipped_user` to the exclusions list:
+   Since the resolver helper connects to the internet to resolve queries, its outgoing traffic could be intercepted by the routing engine. To prevent this, add your custom system user `skipped_skuid` to the exclusions list:
    * **Via Console (UCI)**:
      ```bash
-     uci add_list justclash.settings.nft_skuid_exclude_router='jc_skipped_user'
+     uci add_list justclash.settings.nft_skuid_exclude_router='skipped_skuid'
      uci commit justclash
      service justclash restart
      ```
    * **Via LuCI Web Interface**:  
-     Navigate to *Settings -> Exclude Router Users (UID)* and enter the user name: `jc_skipped_user`.
+     Navigate to *Settings -> Exclude Router Users (UID)* and enter the user name: `skipped_skuid`.
 
 4. **Redirect Guest Queries to Port 5053**:
    To prevent guest devices from hitting the router's default resolution port 53 (where global interception runs), configure a port redirection rule from the guest zone to the local port `5053`.

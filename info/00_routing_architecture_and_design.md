@@ -56,11 +56,13 @@ Routing network traffic through a userspace proxy engine inherently consumes mor
 
 ---
 
-## 4. Using RuleSets instead of GeoData (.dat files)
+## 4. RuleSets as Default vs Geodata Mode
 
-**The Decision:** The service strictly uses Mihomo RuleSets (`.mrs` format) and abandons monolithic GeoIP/GeoSite databases (`.dat`).
+**The Decision:** The service uses Mihomo RuleSets (`.mrs` format) by default, while offering a toggleable **Geodata Mode** for users who prefer unified `.dat` databases.
 
-**Why?**
-* **Memory Efficiency:** GeoData files are massive, monolithic databases containing the entire world's IP and domain mappings. Loading them consumes a huge amount of RAM, which is fatal for many OpenWrt routers with 128MB or 256MB of memory.
+**Why RuleSets by Default?**
+* **Memory Efficiency:** GeoData files (`geosite.dat`, `geoip.dat`) are massive, monolithic databases containing the entire world's IP and domain mappings. Loading them can consume a significant amount of RAM, which can cause Out-Of-Memory crashes on many older OpenWrt routers with 128MB or 256MB of memory.
 * **Modularity:** RuleSets are atomic. You only load exactly what you need (e.g., just the rules for your specific proxy provider or a specific ad-block list).
-* **Dynamic Updates:** RuleSets can be updated individually and dynamically without restarting the core or reloading a massive 50MB `.dat` file into memory.
+
+**Why offer Geodata Mode?**
+* **Industry Standard Compatibility:** Much of the existing routing ecosystem and community guides rely on `geosite` and `geoip` tags. For users with sufficient RAM (512MB+), enabling Geodata mode simplifies configuration as it removes the need to manually manage multiple RuleSet URLs.

@@ -75,9 +75,7 @@ config proxy 'proxy'
     list   proxy_server_nameserver        'https://dns.google/dns-query'
     list   nameserver                     'https://1.1.1.1/dns-query'
     list   fake_ip_include_domains        'example.org'
-    list   fake_ip_include_rulesets       'example_ruleset'
     list   fake_ip_exclude_domains        'lan'
-    list   fake_ip_exclude_rulesets       'example_ruleset'
     option sniffer_enable                 '1'
     option sniffer_parse_pure_ip          '1'
     option sniffer_override_destination   '0'
@@ -93,6 +91,7 @@ config proxy 'proxy'
 
 config proxies
     option enabled                        '1'
+    option fake_ip                        '1'
     option name                           'proxy1'
     option mode                           'uri'
     option proxy_link_object              '{"type":"ss","server":"1.2.3.4","port":12345}'
@@ -133,6 +132,7 @@ config proxy_provider
 
 config proxy_group
     option enabled                        '1'
+    option fake_ip                        '1'
     option name                           'group1'
     # allowed values: fallback | load-balance | url-test
     option group_type                     'fallback'
@@ -159,6 +159,7 @@ config proxy_group
 
 config direct_rules 'direct_rules'
     option enabled                        '1'
+    option fake_ip                        '1'
     list   enabled_list                   'rule_set_2'
     option list_update_interval           '43200'
     option size_limit                     '0'
