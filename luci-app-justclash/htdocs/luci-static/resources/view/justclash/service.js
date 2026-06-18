@@ -317,6 +317,20 @@ return view.extend({
             return common.validateHttpUrl(value);
         };
 
+        o = s.taboption(tabname, form.Value, "mihomo_geosite_url", _("Geosite download URL:"));
+        o.description = _("URL to download geosite.dat from. Leave empty to use the default.");
+        o.rmempty = true;
+        o.validate = function (section_id, value) {
+            return common.validateHttpUrl(value);
+        };
+
+        o = s.taboption(tabname, form.Value, "mihomo_geoip_url", _("GeoIP download URL:"));
+        o.description = _("URL to download geoip.dat from. Leave empty to use the default.");
+        o.rmempty = true;
+        o.validate = function (section_id, value) {
+            return common.validateHttpUrl(value);
+        };
+
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_zashboard_url", _("Zashboard download URL:"));
         o.description = _("URL to download Zashboard dashboard from. Leave empty to use the default.");
         o.rmempty = true;
