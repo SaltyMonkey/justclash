@@ -133,11 +133,11 @@ DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB="github.com"
 
 # Global buffer variables used by handle_*_section functions to return values
 # to core_generate_yaml, avoiding filesystem I/O (mktemp/cat/rm) and eval.
-OUT_RULES=""           # Generated routing rules array (JSON)
-OUT_RULESETS=""        # Generated rule-providers object (JSON)
-OUT_FAKE_IP_RULES=""   # Generated fake-ip filtering rules array (JSON)
-OUT_PROXY_GROUPS=""    # Generated proxy groups array (JSON)
-OUT_PROXIES=""         # Generated proxies array (JSON)
+OUT_RULES="[]"           # Generated routing rules array (JSON)
+OUT_RULESETS="{}"        # Generated rule-providers object (JSON)
+OUT_FAKE_IP_RULES="[]"   # Generated fake-ip filtering rules array (JSON)
+OUT_PROXY_GROUPS="[]"    # Generated proxy groups array (JSON)
+OUT_PROXIES="[]"         # Generated proxies array (JSON)
 OUT_NAMES_RULESETS=""  # Generated block ruleset names list (plain text)
 OUT_NAMES_SUFFIXES=""  # Generated block suffix names list (plain text)
 OUT_NAMES_GEOSITE=""   # Generated block geosite names list (plain text)
@@ -920,6 +920,7 @@ build_builtin_rules_bundle() {
     local list_update_interval="$4"
     local size_limit="$5"
     local rule_mode="${6:-all}"
+    local generate_fake_ip="${7:-0}"
     local ruleset_lines ruleset_line ruleset_name ruleset_behavior ruleset_format ruleset_url ruleset_fields generated_rule ruleset_auth
     local rules_fragment="" ip_rules_fragment="" rulesets_fragment="" names_fragment="" fake_ip_rules_fragment=""
     local added_rulesets="|"
@@ -1001,7 +1002,9 @@ build_builtin_rules_bundle() {
 
         if [ "$ruleset_behavior" = "domain" ]; then
             names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$ruleset_name\""
-            fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\""
+            if [ "$generate_fake_ip" -eq 1 ]; then
+                fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\""
+            fi
         fi
         IFS="$NL"
     done
@@ -1152,7 +1155,7 @@ handle_proxy_section() {
     __parse_single_proxy() {
         local section="$1"
         local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
-        local list_update_interval size_limit mode proxy_link_object use_proxy_for_list_update
+        local list_update_interval size_limit mode proxy_link_object use_proxy_for_list_update fake_ip
         # Source lists loaded from UCI for generated rules.
         local route_entries route_entry rules_fragment
         local proxy_obj=""
@@ -1223,6 +1226,8 @@ handle_proxy_section() {
         proxies="${proxies:+$proxies,}$proxy_obj"
         [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
 
+        config_get_bool fake_ip "$section" fake_ip 1
+
         config_get route_entries "$section" additional_srcip_route
         rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
@@ -1230,7 +1235,7 @@ handle_proxy_section() {
         # Compile ruleset bundle early so we have domain/IP rulesets separated
         config_get enabled_list "$section" enabled_list
         if [ -n "$enabled_list" ]; then
-            build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit"
+            build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit" "all" "$fake_ip"
             [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
             [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
         fi
@@ -1242,7 +1247,7 @@ handle_proxy_section() {
             [ -n "$route_entry" ] && {
                 generated_rule="DOMAIN-SUFFIX,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-                fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
+                [ "$fake_ip" -eq 1 ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
             }
         done
 
@@ -1252,7 +1257,7 @@ handle_proxy_section() {
             [ -n "$route_entry" ] && {
                 generated_rule="GEOSITE,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-                fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
+                [ "$fake_ip" -eq 1 ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
             }
         done
 
@@ -1300,7 +1305,7 @@ handle_proxy_group_section() {
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
         local filter exclude_filter exclude_type expected_status
         # Source lists loaded from UCI for generated rules.
-        local enabled_list list_update_interval size_limit use_proxy_group_for_list_update route_entries route_entry
+        local enabled_list list_update_interval size_limit use_proxy_group_for_list_update route_entries route_entry fake_ip
         local rules_fragment
         # Scratch vars for group JSON assembly and per-entry index parsing.
         local escaped_proxies escaped_providers group_json
@@ -1368,13 +1373,15 @@ handle_proxy_group_section() {
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
         [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
 
+        config_get_bool fake_ip "$section" fake_ip 1
+
         config_get route_entries "$section" additional_srcip_route
         rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
         # Compile ruleset bundle early so we have domain/IP rulesets separated
         if [ -n "$enabled_list" ]; then
-            build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit"
+            build_builtin_rules_bundle "$enabled_list" "$name" "$download_proxy" "$list_update_interval" "$size_limit" "all" "$fake_ip"
             [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
             [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
         fi
@@ -1386,7 +1393,7 @@ handle_proxy_group_section() {
             [ -n "$route_entry" ] && {
                 generated_rule="DOMAIN-SUFFIX,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-                fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
+                [ "$fake_ip" -eq 1 ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
             }
         done
 
@@ -1396,7 +1403,7 @@ handle_proxy_group_section() {
             [ -n "$route_entry" ] && {
                 generated_rule="GEOSITE,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-                fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
+                [ "$fake_ip" -eq 1 ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
             }
         done
 
@@ -1574,7 +1581,7 @@ handle_block_rule_section() {
     fi
 
     if [ -n "$enabled_blocklist" ]; then
-        build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "non-domain-only"
+        build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "non-domain-only" "0"
         [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
         [ -n "$OUT_BUNDLE_NAMES" ] && list_rulesets_names=$(printf '%s' "$OUT_BUNDLE_NAMES" | sed 's/"//g; s/,rule-set:/,/g')
     fi
@@ -1620,7 +1627,7 @@ handle_direct_rule_section() {
     # Scratch vars for generated manual routes.
     local generated_rule route_entry
 
-    local enabled
+    local enabled fake_ip
     config_get_bool enabled direct_rules enabled 1
     if [ "$enabled" -ne 1 ]; then
         log warn "Skipping disabled proxy group: direct_rules" "⚠️"
@@ -1643,6 +1650,8 @@ handle_direct_rule_section() {
     config_get enabled_list direct_rules enabled_list
     config_get download_proxy direct_rules proxy "$DEFAULT_PROXY"
 
+    config_get_bool fake_ip direct_rules fake_ip 1
+
     config_get additional_srcip_direct direct_rules additional_srcip_direct
     rules_fragment=$(build_manual_rules_array "$additional_srcip_direct" "SRC-IP-CIDR" "DIRECT" "no-resolve")
     [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
@@ -1650,7 +1659,7 @@ handle_direct_rule_section() {
     config_get additional_destip_direct direct_rules additional_destip_direct
     # Compile ruleset bundle early so we have domain/IP rulesets separated
     if [ -n "$enabled_list" ]; then
-        build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$download_proxy" "$list_update_interval" "$size_limit"
+        build_builtin_rules_bundle "$enabled_list" "$DEFAULT_RULESET_PROXY_DIRECT_SECTION" "$download_proxy" "$list_update_interval" "$size_limit" "all" "$fake_ip"
         [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
         [ -n "$OUT_BUNDLE_FAKEIPRULES" ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}$OUT_BUNDLE_FAKEIPRULES"
     fi
@@ -1662,7 +1671,7 @@ handle_direct_rule_section() {
         [ -n "$route_entry" ] && {
             generated_rule="DOMAIN-SUFFIX,$route_entry,DIRECT"
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-            fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
+            [ "$fake_ip" -eq 1 ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\""
         }
     done
 
@@ -1672,7 +1681,7 @@ handle_direct_rule_section() {
         [ -n "$route_entry" ] && {
             generated_rule="GEOSITE,$route_entry,DIRECT"
             rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
-            fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
+            [ "$fake_ip" -eq 1 ] && fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\""
         }
     done
 
@@ -1775,7 +1784,6 @@ core_generate_yaml() {
     local etag_support global_ua
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_filter_data
     local fake_ip_include_domain_values fake_ip_exclude_domain_values
-    local fake_ip_include_ruleset_values fake_ip_exclude_ruleset_values
     local nameserver_policy_custom
     local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_direct
     local proxies proxy_groups rule_providers proxy_providers
@@ -1860,8 +1868,6 @@ core_generate_yaml() {
     config_get_bool sniffer_override_destination proxy sniffer_override_destination 0
     config_get fake_ip_include_domain_values proxy fake_ip_include_domains
     config_get fake_ip_exclude_domain_values proxy fake_ip_exclude_domains
-    config_get fake_ip_include_ruleset_values proxy fake_ip_include_rulesets
-    config_get fake_ip_exclude_ruleset_values proxy fake_ip_exclude_rulesets
 
     config_get_bool geodata_mode proxy geodata_mode 0
     config_get_bool geodata_autoupdate proxy geodata_autoupdate 0
@@ -1989,23 +1995,17 @@ core_generate_yaml() {
 
     custom_real_ip_rules=$(build_fake_ip_rule_array "$fake_ip_exclude_domain_values" "DOMAIN-SUFFIX" "real-ip")
     custom_fake_ip_rules=$(build_fake_ip_rule_array "$fake_ip_include_domain_values" "DOMAIN-SUFFIX" "fake-ip")
-    custom_real_ip_rulesets=$(build_fake_ip_rule_array "$fake_ip_exclude_ruleset_values" "RULE-SET" "real-ip")
-    custom_fake_ip_rulesets=$(build_fake_ip_rule_array "$fake_ip_include_ruleset_values" "RULE-SET" "fake-ip")
 
     fake_ip_filter_data=$(jq --indent 4 -n \
         --arg custom_fake "$custom_fake_ip_rules" \
         --arg custom_real "$custom_real_ip_rules" \
-        --arg custom_fake_rulesets "$custom_fake_ip_rulesets" \
-        --arg custom_real_rulesets "$custom_real_ip_rulesets" \
         --arg direct "$fake_ip_rules_direct" \
         --arg proxy_groups "$fake_ip_rules_proxy_groups" \
         --arg proxies "$fake_ip_rules_proxies" \
         '
         (
             ($custom_real | fromjson)
-            + ($custom_real_rulesets | fromjson)
             + ($custom_fake | fromjson)
-            + ($custom_fake_rulesets | fromjson)
             + ($direct | fromjson)
             + ($proxy_groups | fromjson)
             + ($proxies | fromjson)
