@@ -81,6 +81,9 @@ fi
 clean_fake_ip_list "fake_ip_exclude_domains"
 clean_fake_ip_list "fake_ip_include_domains"
 
+uci -q delete justclash.proxy.fake_ip_exclude_rulesets
+uci -q delete justclash.proxy.fake_ip_include_rulesets
+
 uci commit justclash
 
 exit 0
