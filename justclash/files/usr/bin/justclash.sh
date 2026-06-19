@@ -1020,7 +1020,7 @@ build_builtin_rules_bundle() {
 # Helper to build proxy group JSON fragment in memory without subshell forks
 template_proxy_group() {
     local name="$1" type="$2" url="$3" status="$4" interval="$5" timeout="$6" max_failed="$7" lazy="$8"
-    local tolerance="$9" strategy="${10}" proxies="${11}" providers="${12}" filter="${13}" exclude_filter="${14}" exclude_type="${15}"
+    local tolerance="$9" strategy="${10}" proxies="${11}" providers="${12}" filter="${13}" exclude_filter="${14}" exclude_type="${15}" default_selected="${16}"
     local out
 
     out="\"name\":\"$(json_escape "$name")\""
@@ -1036,6 +1036,8 @@ template_proxy_group() {
         out="$out,\"tolerance\":\"$(json_escape "$tolerance")\""
     elif [ "$type" = "load-balance" ] && [ -n "$strategy" ]; then
         out="$out,\"strategy\":\"$(json_escape "$strategy")\""
+    elif [ "$type" = "select" ] && [ -n "$default_selected" ]; then
+        out="$out,\"default-selected\":\"$(json_escape "$default_selected")\""
     fi
 
     [ -n "$proxies" ] && out="$out,\"proxies\":[$proxies]"
@@ -1303,7 +1305,7 @@ handle_proxy_group_section() {
         local section="$1"
         local name enabled
         local proxies_list providers_list group_type strategy check_url interval check_timeout max_failed_times tolerance lazy
-        local filter exclude_filter exclude_type expected_status
+        local filter exclude_filter exclude_type expected_status default_selected
         # Source lists loaded from UCI for generated rules.
         local enabled_list list_update_interval size_limit use_proxy_group_for_list_update route_entries route_entry fake_ip
         local rules_fragment
@@ -1346,6 +1348,8 @@ handle_proxy_group_section() {
         }
         config_get lazy "$section" lazy 0
         config_get tolerance "$section" tolerance
+        config_get strategy "$section" strategy
+        config_get default_selected "$section" default_selected
         config_get filter "$section" filter
         config_get exclude_filter "$section" exclude_filter
         config_get exclude_type "$section" exclude_type
@@ -1367,7 +1371,7 @@ handle_proxy_group_section() {
 
         template_proxy_group \
             "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$(format_uci_bool_as_yaml "$lazy")" \
-            "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type"
+            "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type" "$default_selected"
         group_json="$OUT_TEMPLATE"
 
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
