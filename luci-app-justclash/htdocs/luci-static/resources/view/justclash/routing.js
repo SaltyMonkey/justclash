@@ -623,6 +623,12 @@ return view.extend({
         };
         o.modalonly = true;
 
+        o = s2.taboption(tabname, form.Value, "default_selected", _("Default selected:"));
+        o.description = _("Name of the proxy/group that should be selected by default.");
+        o.depends("group_type", "select");
+        o.rmempty = true;
+        o.modalonly = true;
+
         o = s2.taboption(tabname, form.Value, "check_timeout", _("Check timeout:"));
         o.datatype = datatypes.UINTEGER;
         common.defaultHealthCheckTimeoutMs.forEach(item => {
