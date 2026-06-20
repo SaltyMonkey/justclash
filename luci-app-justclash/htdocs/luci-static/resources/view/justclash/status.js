@@ -455,13 +455,11 @@ return view.extend({
 
     async load() {
         let apiToken = "";
-        let apiTls = false;
 
         try {
             await uci.load(common.binName);
             apiToken = uci.get(common.binName, "proxy", "api_password") || "";
-            apiTls = uci.get(common.binName, "proxy", "api_tls") === "1";
-            mihomoApi.setTls(apiTls);
+            mihomoApi.setTls(uci.get(common.binName, "proxy", "api_tls") === "1");
         } catch (e) {}
 
         const boardPromise = ubusApi.getSystemBoard()

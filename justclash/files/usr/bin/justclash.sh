@@ -1793,7 +1793,7 @@ core_generate_yaml() {
     local proxies proxy_groups rule_providers proxy_providers
     local names_rulesets_block_policy names_suffixes_block_policy
     local fake_ip_rules_direct fake_ip_rules_proxy_groups fake_ip_rules_proxies
-    local custom_fake_ip_rules custom_real_ip_rules custom_fake_ip_rulesets custom_real_ip_rulesets
+    local custom_fake_ip_rules custom_real_ip_rules
     local rulesets_direct rulesets_block rulesets_proxygroup rulesets_proxies
     local mihomo_geoip_url mihomo_geosite_url geodata_mode geodata_autoupdate geodata_autoupdate_interval
     # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls

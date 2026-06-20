@@ -143,14 +143,12 @@ return view.extend({
     async load() {
         let apiToken = "";
         let logLevel = DEFAULT_LOG_LEVEL;
-        let apiTls = false;
 
         try {
             await uci.load(common.binName);
             apiToken = uci.get(common.binName, "proxy", "api_password") || "";
             logLevel = uci.get(common.binName, "proxy", "log_level") || DEFAULT_LOG_LEVEL;
-            apiTls = uci.get(common.binName, "proxy", "api_tls") === "1";
-            mihomoApi.setTls(apiTls);
+            mihomoApi.setTls(uci.get(common.binName, "proxy", "api_tls") === "1");
         } catch (e) {}
 
         if (!LOG_LEVEL_OPTIONS.includes(logLevel))
