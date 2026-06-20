@@ -1054,6 +1054,7 @@ template_proxy_provider() {
     local url="$1" interval="$2" size_limit="$3" proxy="$4" filter="$5" exclude_filter="$6" exclude_type="$7"
     local override_dialer="$8" override_ifname="$9" override_fwmark="${10}" hwid_header="${11}"
     local hc_enabled="${12}" hc_url="${13}" hc_status="${14}" hc_interval="${15}" hc_timeout="${16}" hc_lazy="${17}"
+    local age_priv="${18}"
     local out override_json hc_json
 
     out="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
@@ -1077,6 +1078,9 @@ template_proxy_provider() {
         out="$out,\"health-check\":{$hc_json}"
     fi
 
+    # Optional AGE keys
+    [ -n "$age_priv" ] && out="$out,\"age-private-key\":\"$(json_escape "$age_priv")\""
+
     OUT_TEMPLATE="{$out}"
 }
 
@@ -1084,6 +1088,7 @@ template_headers() {
     local hwid_enabled="$1"
     local auth_token="$2"
     local user_agent="$3"
+    local age_pub_key="$4"
     local headers_fragment=""
 
     # 1. Build HWID headers as arrays if enabled
@@ -1115,6 +1120,14 @@ template_headers() {
         ua_entry=$(printf '"User-Agent":["%s"]' "$(json_escape "$user_agent")")
 
         headers_fragment="${headers_fragment:+$headers_fragment,}$ua_entry"
+    fi
+
+    # 4. Build AGE public key header if set
+    if [ -n "$age_pub_key" ]; then
+        local age_pub_entry
+        age_pub_entry=$(printf '"X-Age-Public-Key":["%s"]' "$(json_escape "$age_pub_key")")
+
+        headers_fragment="${headers_fragment:+$headers_fragment,}$age_pub_entry"
     fi
 
     # Final output generation
@@ -1451,7 +1464,7 @@ handle_proxy_provider_section() {
         local section="$1"
         local name enabled url override_dialer_proxy override_interface_name override_routing_mark subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
         local health_check hc_expected_status hc_url hc_interval hc_timeout hc_lazy
-        local provider_json headers
+        local provider_json headers age_private_key age_public_key
         local subscription_authorization_support subscription_useragent_support
 
         config_get name "$section" name
@@ -1493,8 +1506,9 @@ handle_proxy_provider_section() {
         config_get_bool subscription_hwid_support "$section" subscription_hwid_support "0"
         config_get subscription_authorization_support "$section" subscription_authorization_support ""
         config_get subscription_useragent_support "$section" subscription_useragent_support ""
+        config_get age_public_key "$section" age_public_key ""
 
-        template_headers "$subscription_hwid_support" "$subscription_authorization_support" "$subscription_useragent_support"
+        template_headers "$subscription_hwid_support" "$subscription_authorization_support" "$subscription_useragent_support" "$age_public_key"
         headers="$OUT_TEMPLATE"
 
 
@@ -1521,10 +1535,13 @@ handle_proxy_provider_section() {
             hc_lazy=$(format_uci_bool_as_yaml "$hc_lazy")
         fi
 
+        config_get age_private_key "$section" age_private_key
+
         template_proxy_provider \
             "$url" "$interval" "$size_limit" "$proxy" "$filter" "$exclude_filter" "$exclude_type" \
             "$override_dialer_proxy" "$override_interface_name" "$override_routing_mark" "$headers" \
-            "$health_check" "$hc_url" "$hc_expected_status" "$hc_interval" "$hc_timeout" "$hc_lazy"
+            "$health_check" "$hc_url" "$hc_expected_status" "$hc_interval" "$hc_timeout" "$hc_lazy" \
+            "$age_private_key"
         provider_json="$OUT_TEMPLATE"
 
         result="$result\"$(json_escape "$name")\":$provider_json,"
