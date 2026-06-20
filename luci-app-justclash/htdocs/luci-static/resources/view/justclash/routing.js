@@ -389,6 +389,17 @@ return view.extend({
             return true;
         };
 
+        o = spp.taboption(tabname, form.Value, "age_private_key", _("AGE private key:"));
+        o.description = _("Private key for AGE encryption. Optional.");
+        o.password = true;
+        o.rmempty = true;
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.Value, "age_public_key", _("AGE public key:"));
+        o.description = _("Public key for AGE encryption. Optional.");
+        o.rmempty = true;
+        o.modalonly = true;
+
         tabname = "proxyproviderhelthchk_tab";
         spp.tab(tabname, _("Health check"));
 
