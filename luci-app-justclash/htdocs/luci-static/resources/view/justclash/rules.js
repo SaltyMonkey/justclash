@@ -69,7 +69,6 @@ return view.extend({
             class: "cbi-input-text",
             placeholder: _("Search rules by type, payload or proxy..."),
             style: "width: 100%; max-width: 400px; margin: 0 !important;",
-            disabled: result.fetchFailed,
             keyup: function (ev) {
                 const query = ev.target.value.toLowerCase().trim();
                 const rows = grid.querySelectorAll(".jc-rule-row");
@@ -87,6 +86,10 @@ return view.extend({
                 });
             }
         });
+
+        if (result.fetchFailed) {
+            searchInput.disabled = true;
+        }
 
         const lastFetchLabel = E("span", { class: "jc-log-fetch-label" });
         const updateLastFetchTime = () => {
