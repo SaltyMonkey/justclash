@@ -351,14 +351,14 @@ return view.extend({
         tabname = "proxyproviderheaders_tab";
         spp.tab(tabname, _("Security"));
 
-        o = spp.taboption(tabname, form.Flag, "subscription_hwid_support", _("HWID support:"));
+        o = spp.taboption(tabname, form.Flag, "header_hwid", _("HWID support:"));
         o.default = primitives.FALSE;
         o.description = _("Send HWID data headers to server with proxy provider request. Leave it unchecked if you don't need it.");
         o.editable = true;
         o.rmempty = false;
         o.modalonly = true;
 
-        o = spp.taboption(tabname, form.Value, "subscription_authorization_support", _("Authorization header:"));
+        o = spp.taboption(tabname, form.Value, "header_authorization", _("Authorization header:"));
         o.description = _("Send custom Authorization header to server with proxy provider request. Leave it empty if you don't need it.");
         o.editable = true;
         o.rmempty = false;
@@ -370,11 +370,10 @@ return view.extend({
             if (/[\r\n]/.test(value)) {
                 return _("Newlines (CR/LF) are not allowed in HTTP headers.");
             }
-
             return true;
         };
 
-        o = spp.taboption(tabname, form.Value, "subscription_useragent_support", _("User agent header:"));
+        o = spp.taboption(tabname, form.Value, "header_user_agent", _("User agent header:"));
         o.description = _("Send custom useragent header to server with proxy provider request. Leave it empty if you don't need it.");
         o.editable = true;
         o.rmempty = false;
@@ -394,11 +393,17 @@ return view.extend({
         o.password = true;
         o.rmempty = true;
         o.modalonly = true;
+        o.validate = function(section_id, value) {
+            return common.validateAgePrivateKey(value);
+        };
 
-        o = spp.taboption(tabname, form.Value, "age_public_key", _("AGE public key:"));
+        o = spp.taboption(tabname, form.Value, "header_age_public_key", _("AGE public key:"));
         o.description = _("Public key for AGE encryption. Optional.");
         o.rmempty = true;
         o.modalonly = true;
+        o.validate = function(section_id, value) {
+            return common.validateAgePublicKey(value);
+        };
 
         tabname = "proxyproviderhelthchk_tab";
         spp.tab(tabname, _("Health check"));

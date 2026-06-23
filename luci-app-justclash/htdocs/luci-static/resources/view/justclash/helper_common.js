@@ -640,6 +640,20 @@ return baseclass.extend({
 
         return this.validateIntegerRange(value, this.minimalRuleSetUpdateInterval, 31536000);
     },
+    validateAgePrivateKey: function (value) {
+        if (!value || String(value).trim() === "") return true;
+        if (!String(value).trim().startsWith("AGE-SECRET-KEY")) {
+            return _("Age key has invalid format");
+        }
+        return true;
+    },
+    validateAgePublicKey: function (value) {
+        if (!value || String(value).trim() === "") return true;
+        if (!String(value).trim().startsWith("age1")) {
+            return _("Age key has invalid format");
+        }
+        return true;
+    },
     isValidKeywordOrRegexList: function (value, ctxLabel) {
         if (!value || value.trim() === "") return true;
 
