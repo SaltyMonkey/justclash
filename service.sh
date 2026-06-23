@@ -750,6 +750,9 @@ install_packages() {
     pkg_list_update
 
     print_bold_green "Installing required packages..."
+    echo " - Removing standard jq to prevent conflicts..."
+    pkg_remove jq >/dev/null 2>&1 || true
+
     echo " - Installing jq-full"
     pkg_install jq-full
 
