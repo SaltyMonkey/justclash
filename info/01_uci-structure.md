@@ -114,9 +114,11 @@ config proxy_provider
     option override_dialer_proxy          'proxy1'
     option override_interface_name        'eth0'
     option override_routing_mark          '268435456'
-    option subscription_hwid_support      '0'
-    option subscription_authorization_support 'token abcd'
-    option subscription_useragent_support 'Mihomo/1.69.69'
+    option header_hwid                    '0'
+    option header_authorization           'token abcd'
+    option header_user_agent              'Mihomo/1.69.69'
+    option age_private_key                'AGE-SECRET-KEY...'
+    option header_age_public_key          'age1...'
     option update_interval                '3600'
     option size_limit                     '0'
     option proxy                          'DIRECT'
@@ -129,6 +131,7 @@ config proxy_provider
     option filter                         'HK|US|Netflix'
     option exclude_filter                 'CN|douyin'
     option exclude_type                   'vless|ss'
+
 
 config proxy_group
     option enabled                        '1'
