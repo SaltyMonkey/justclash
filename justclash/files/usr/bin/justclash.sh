@@ -1454,7 +1454,6 @@ handle_proxy_group_section() {
     OUT_PROXY_GROUPS="[${proxy_groups:-}]"
     OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
-
 handle_proxy_provider_section() {
     local result=""
 
@@ -1462,10 +1461,10 @@ handle_proxy_provider_section() {
     # shellcheck disable=SC2329
     __handle_proxy_provider() {
         local section="$1"
-        local name enabled url override_dialer_proxy override_interface_name override_routing_mark subscription_hwid_support interval size_limit proxy filter exclude_filter exclude_type
+        local name enabled url override_dialer_proxy override_interface_name override_routing_mark header_hwid interval size_limit proxy filter exclude_filter exclude_type
         local health_check hc_expected_status hc_url hc_interval hc_timeout hc_lazy
-        local provider_json headers age_private_key age_public_key
-        local subscription_authorization_support subscription_useragent_support
+        local provider_json headers age_private_key header_age_public_key
+        local header_authorization header_user_agent
 
         config_get name "$section" name
         config_get url "$section" subscription
@@ -1503,12 +1502,13 @@ handle_proxy_provider_section() {
         config_get override_interface_name "$section" override_interface_name
 
         headers=""
-        config_get_bool subscription_hwid_support "$section" subscription_hwid_support "0"
-        config_get subscription_authorization_support "$section" subscription_authorization_support ""
-        config_get subscription_useragent_support "$section" subscription_useragent_support ""
-        config_get age_public_key "$section" age_public_key ""
+        config_get header_authorization "$section" header_authorization ""
+        config_get header_user_agent "$section" header_user_agent ""
+        config_get age_private_key "$section" age_private_key ""
+        config_get header_age_public_key "$section" header_age_public_key ""
+        config_get_bool header_hwid "$section" header_hwid "0"
 
-        template_headers "$subscription_hwid_support" "$subscription_authorization_support" "$subscription_useragent_support" "$age_public_key"
+        template_headers "$header_hwid" "$header_authorization" "$header_user_agent" "$header_age_public_key"
         headers="$OUT_TEMPLATE"
 
 
