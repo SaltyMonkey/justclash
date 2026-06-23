@@ -84,6 +84,13 @@ clean_fake_ip_list "fake_ip_include_domains"
 uci -q delete justclash.proxy.fake_ip_exclude_rulesets
 uci -q delete justclash.proxy.fake_ip_include_rulesets
 
+for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_provider$/\1/p'); do
+    uci -q rename "justclash.$section.subscription_useragent_support=header_user_agent"
+    uci -q rename "justclash.$section.subscription_authorization_support=header_authorization"
+    uci -q rename "justclash.$section.subscription_hwid_support=header_hwid"
+    uci -q rename "justclash.$section.age_public_key=header_age_public_key"
+done
+
 uci commit justclash
 
 exit 0
