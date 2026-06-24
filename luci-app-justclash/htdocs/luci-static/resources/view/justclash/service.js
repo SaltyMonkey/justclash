@@ -271,6 +271,33 @@ return view.extend({
             return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
         };
 
+        o = s.taboption(tabname, form.Flag, "mihomo_scheduled_work", _("Enable scheduled work:"));
+        o.description = _("Start and stop the proxy core on a daily schedule.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
+
+        o = s.taboption(tabname, form.Value, "mihomo_cron_scheduled_work_start_string", _("Start schedule:"));
+        o.placeholder = "0 5 * * *";
+        o.default = "0 5 * * *";
+        o.rmempty = false;
+        o.retain = true;
+        o.depends("mihomo_scheduled_work", primitives.TRUE);
+        o.description = _("Use cron format to choose when the core should start.");
+        o.validate = function (section_id, value) {
+            return (common.isValidCronString(value)) ? true : _("Invalid schedule format.");
+        };
+
+        o = s.taboption(tabname, form.Value, "mihomo_cron_scheduled_work_stop_string", _("Stop schedule:"));
+        o.placeholder = "0 23 * * *";
+        o.default = "0 23 * * *";
+        o.rmempty = false;
+        o.retain = true;
+        o.depends("mihomo_scheduled_work", primitives.TRUE);
+        o.description = _("Use cron format to choose when the core should stop.");
+        o.validate = function (section_id, value) {
+            return (common.isValidCronString(value)) ? true : _("Invalid schedule format.");
+        };
+
         tabname = "external_resources_tab";
         s.tab(tabname, _("External resources"));
 
