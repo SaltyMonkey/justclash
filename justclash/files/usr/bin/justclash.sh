@@ -2576,7 +2576,7 @@ core_autorestart_cron_check() {
 core_autorestart_cron_add() {
     local schedule
     config_get schedule settings mihomo_cron_autorestart_string
-    cron_job_add "$schedule" "${INITD_PATH} reload" "pgrep -f ${CORE_PATH} >/dev/null && ${INITD_PATH} reload" "Core autorestart"
+    cron_job_add "$schedule" "${INITD_PATH} reload" "pgrep -f ${CORE_PATH} >/dev/null && ${INITD_PATH} reload # Core Autorestart" "Core autorestart"
 }
 
 core_autorestart_cron_remove() {
@@ -2590,18 +2590,33 @@ service_data_cron_check() {
 service_data_cron_add() {
     local schedule
     config_get schedule settings mihomo_cron_service_data_update_string
-    cron_job_add "$schedule" "${PROG_PATH} service_data_update" "pgrep -f ${CORE_PATH} >/dev/null && $PROG_PATH service_data_update" "Service data update"
+    cron_job_add "$schedule" "${PROG_PATH} service_data_update" "$PROG_PATH service_data_update # Service Data Update" "Service data update"
 }
 
 service_data_cron_remove() {
     cron_job_remove "${PROG_PATH} service_data_update" "Service data update"
 }
 
+scheduled_work_cron_add() {
+    local start_schedule stop_schedule
+    config_get start_schedule settings mihomo_cron_scheduled_work_start_string "0 5 * * *"
+    config_get stop_schedule settings mihomo_cron_scheduled_work_stop_string "0 23 * * *"
+    
+    cron_job_add "$start_schedule" "${INITD_PATH} start # Scheduled Work" "pgrep -f ${CORE_PATH} >/dev/null || ${INITD_PATH} start # Scheduled Work" "Scheduled work start"
+    cron_job_add "$stop_schedule" "${INITD_PATH} stop # Scheduled Work" "pgrep -f ${CORE_PATH} >/dev/null && ${INITD_PATH} stop # Scheduled Work" "Scheduled work stop"
+}
+
+scheduled_work_cron_remove() {
+    cron_job_remove "${INITD_PATH} start # Scheduled Work" "Scheduled work start"
+    cron_job_remove "${INITD_PATH} stop # Scheduled Work" "Scheduled work stop"
+}
+
 cron_update() {
-    local mihomo_autorestart mihomo_service_data_autoupdate
+    local mihomo_autorestart mihomo_service_data_autoupdate mihomo_scheduled_work
 
     config_get_bool mihomo_autorestart settings mihomo_autorestart 0
     config_get_bool mihomo_service_data_autoupdate settings mihomo_service_data_autoupdate 0
+    config_get_bool mihomo_scheduled_work settings mihomo_scheduled_work 0
 
     if [ "$mihomo_autorestart" -eq 1 ]; then
         core_autorestart_cron_add
@@ -2613,6 +2628,12 @@ cron_update() {
         service_data_cron_add
     else
         service_data_cron_remove
+    fi
+
+    if [ "$mihomo_scheduled_work" -eq 1 ]; then
+        scheduled_work_cron_add
+    else
+        scheduled_work_cron_remove
     fi
 }
 
@@ -2886,6 +2907,9 @@ help() {
     echo "  service_data_cron_add           Add a scheduled task to automatically update rules/databases"
     echo "  service_data_cron_remove        Remove the scheduled service data update task"
     echo ""
+    echo "  scheduled_work_cron_add         Add scheduled tasks to start/stop Mihomo daily"
+    echo "  scheduled_work_cron_remove      Remove the scheduled start/stop tasks"
+    echo ""
     echo "Diagnostics:"
     echo "  show_hwid                   Show Hardware ID (HWID)"
     echo "  diag_report                 Run diagnostic"
@@ -2942,6 +2966,12 @@ case "$1" in
         ;;
     service_data_cron_remove|sdcr)
         service_data_cron_remove
+        ;;
+    scheduled_work_cron_add|swca)
+        scheduled_work_cron_add
+        ;;
+    scheduled_work_cron_remove|swcr)
+        scheduled_work_cron_remove
         ;;
     service_data_update|sdu)
         service_data_update
