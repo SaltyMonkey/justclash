@@ -361,7 +361,7 @@ return view.extend({
         o = spp.taboption(tabname, form.Value, "header_authorization", _("Authorization header:"));
         o.description = _("Send custom Authorization header to server with proxy provider request. Leave it empty if you don't need it.");
         o.editable = true;
-        o.rmempty = false;
+        o.rmempty = true;
         o.modalonly = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") {
@@ -376,7 +376,7 @@ return view.extend({
         o = spp.taboption(tabname, form.Value, "header_user_agent", _("User agent header:"));
         o.description = _("Send custom useragent header to server with proxy provider request. Leave it empty if you don't need it.");
         o.editable = true;
-        o.rmempty = false;
+        o.rmempty = true;
         o.modalonly = true;
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") {

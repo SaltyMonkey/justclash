@@ -202,7 +202,7 @@ return view.extend({
             .jc-primary-actions .cbi-button{margin:0 !important;}
             .jc-log-fetch-label{color:#999;font-size:.9em;margin-left:0.5rem;}
             [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
-            .jc-grid-container{display:flex;flex-direction:column;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.5rem;overflow:hidden;background-color:var(--background-color-low, #fff);margin-bottom:1rem;font-size:0.87em;}
+            .jc-grid-container{display:flex;flex-direction:column;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.5rem;overflow:hidden;background-color:var(--background-color-low, #fff);margin-bottom:1rem;}
             [data-theme="dark"] .jc-grid-container{background-color:rgba(0,0,0,.1);}
             .jc-grid-header{display:grid;grid-template-columns:5rem 7.5rem minmax(0, 1fr) 10rem;gap:0.75rem;padding:0.25rem 0.9375rem;background-color:var(--background-color-medium, #f6f6f6);border-bottom:1px solid var(--border-color-medium, #d9d9d9);font-weight:bold;color:var(--text-color-high, inherit);}
             .jc-grid-row{display:grid;grid-template-columns:5rem 7.5rem minmax(0, 1fr) 10rem;gap:0.75rem;padding:0.1875rem 0.9375rem;align-items:center;border-bottom:1px solid transparent;transition:background-color .15s ease,opacity .15s ease;color:var(--text-color, inherit);min-height:1.6875rem;box-sizing:border-box;}
@@ -222,7 +222,6 @@ return view.extend({
             .jc-col-action input[type="checkbox"]{cursor:pointer;width:1rem;height:1rem;}
             @media (max-width:48rem){
                 .jc-grid-header{display:none;}
-                .jc-grid-container{font-size:1em;}
                 .jc-grid-row{grid-template-columns:1fr;gap:0.3rem;padding:0.5rem 0.75rem;border-bottom:1px solid var(--border-color-medium, #d9d9d9);}
                 .jc-grid-row:last-child{border-bottom:none;}
                 .jc-grid-col{display:flex;flex-direction:column;align-items:flex-start;width:100%;}

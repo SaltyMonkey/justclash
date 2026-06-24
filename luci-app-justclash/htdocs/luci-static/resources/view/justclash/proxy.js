@@ -162,6 +162,7 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "geodata_autoupdate", _("Enable autoupdate:"));
         o.description = _("Enable geodata features in rules.");
         o.rmempty = false;
+        o.retain = true;
         o.default = primitives.FALSE;
         o.depends("geodata_mode", primitives.TRUE);
 
@@ -173,6 +174,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.rmempty = false;
+        o.retain = true;
         o.depends("geodata_mode", primitives.TRUE);
 
         tabname = "apicontrollersettings_tab";
@@ -223,12 +225,16 @@ return view.extend({
         o.description = _("Path to the PEM-encoded SSL/TLS certificate file.");
         o.placeholder = "/etc/uhttpd.crt";
         o.default = "/etc/uhttpd.crt";
+        o.rmempty = false;
+        o.retain = true;
         o.depends("api_tls", primitives.TRUE);
 
         o = s.taboption(tabname, form.Value, "api_tls_key", _("API TLS key path"));
         o.description = _("Path to the PEM-encoded SSL/TLS private key file.");
         o.placeholder = "/etc/uhttpd.key";
         o.default = "/etc/uhttpd.key";
+        o.rmempty = false;
+        o.retain = true;
         o.depends("api_tls", primitives.TRUE);
 
         tabname = "dnssettings_tab";

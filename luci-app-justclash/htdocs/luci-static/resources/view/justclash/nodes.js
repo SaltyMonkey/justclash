@@ -567,15 +567,10 @@ return view.extend({
             } catch (e) {
                 console.error(`Failed to update selector ${group.name}`, e);
             } finally {
-                const groupExists = state.nodesState.groups.some((entry) => entry.name === group.name);
                 state.pendingKey = "";
                 state.loading = false;
                 syncModeSelect();
-
-                if (groupExists)
-                    rerenderGroupSection(group.name);
-                else
-                    renderNodes();
+                renderNodes();
             }
         };
 
@@ -606,14 +601,14 @@ return view.extend({
             .jc-group-title{margin:0;font-size:1.05rem;}
             .jc-provider-section .jc-group-title{font-weight:500;opacity:.82;}
             .jc-group-header-actions{justify-content:flex-end;gap:0.5rem;}
-            .jc-group-badges{gap:0.5rem;}
-            .jc-group-badge,.jc-group-delay-button{padding:.2em .55em;border-radius:50rem;font-size:.88em;line-height:1.2;opacity:.88;font-family:inherit;}
-            .jc-group-delay-button{font:inherit;font-family:inherit;font-size:.88em;line-height:1.2;margin:0 !important;min-width:0;min-height:0 !important;height:auto !important;padding:.2em .55em !important;box-sizing:border-box !important;color:var(--text-color, inherit);font-weight:500;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
+            .jc-group-badges{gap:0.25rem;}
+            .jc-group-badge,.jc-group-delay-button{padding:0.18rem 0.5rem;border-radius:0.25rem;font-size:0.88em;line-height:1.2;opacity:.88;font-family:inherit;box-sizing:border-box;}
+            .jc-group-delay-button{font:inherit;font-family:inherit;font-size:0.88em;line-height:1.2;margin:0 !important;min-width:0;min-height:0 !important;height:auto !important;padding:0.18rem 0.5rem !important;box-sizing:border-box !important;color:var(--text-color, inherit);font-weight:500;appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
             .jc-group-delay-button:hover:not(:disabled),.jc-group-delay-button:focus-visible:not(:disabled),.jc-option-card:hover:not(:disabled),.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:rgba(79, 140, 255, .06);transform:translateY(-0.0625rem);}
             .jc-group-delay-button:disabled,.jc-option-card:disabled{opacity:.7;transform:none;}
             .jc-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(10.3125rem, 1fr));gap:0.75rem;}
             .jc-card{padding:.75em;border:1px solid var(--border-color-medium, #bfbfbf);border-radius:0.25rem;box-sizing:border-box;color:var(--text-color, inherit);}
-            .jc-card-header{align-self:flex-start;margin-bottom:.7em;padding:.2em .45em;border-radius:0.375rem;font-size:.96em;color:var(--text-color, inherit);opacity:.88;}
+            .jc-card-header{align-self:flex-start;margin-bottom:.7em;padding:.2em .45em;border-radius:0.375rem;color:var(--text-color, inherit);opacity:.88;}
             .jc-provider-card{cursor:default;background:rgba(240, 140, 0, .08);transform:none !important;border:1px solid rgba(240, 140, 0, .35) !important;transition:none !important;}
             .jc-option-card{width:100%;align-items:flex-start;gap:.35em;text-align:left;cursor:pointer;background:transparent;color:inherit;font:inherit;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
             .jc-option-card:disabled{cursor:default;}
@@ -622,7 +617,7 @@ return view.extend({
             .jc-option-card-top{gap:0.5rem;}
             .jc-option-card-bottom{gap:0.75rem;}
             .jc-option-name{white-space:normal;overflow-wrap:anywhere;}
-            .jc-option-current-badge{flex:0 0 auto;padding:.15em .45em;border-radius:50rem;background:rgba(79, 140, 255, .14);color:var(--primary-color-medium, #356fd9);font-size:.78em;}
+            .jc-option-current-badge{flex:0 0 auto;padding:0.18rem 0.5rem;border-radius:0.25rem;background:rgba(79, 140, 255, .14);color:var(--primary-color-medium, #356fd9);font-size:0.88em;text-transform:uppercase;}
             .jc-option-type,.jc-option-meta{min-width:0;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
             .jc-option-type{flex:1 1 auto;font-size:.9em;opacity:.8;}
             .jc-option-meta{flex:0 1 auto;text-align:right;font-size:.82em;opacity:.72;}

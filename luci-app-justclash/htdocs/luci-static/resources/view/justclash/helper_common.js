@@ -12,6 +12,7 @@ return baseclass.extend({
     userBlockRulesetsFilePath: "/etc/justclash/user.block.rulesets.txt",
     userRulesetsFilePath: "/etc/justclash/user.rulesets.txt",
     logsCount: "400",
+    realtimeLogsCount: "4000",
 
     // Default option values
     defaultNtpServers: [
