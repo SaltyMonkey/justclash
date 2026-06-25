@@ -8,22 +8,34 @@
 
 return view.extend({
     async load() {
-        let rulesetsItems = [];
+        let activeRulesets = new Set();
+        let activeGeosites = new Set();
 
         try {
-            const inbuildRules = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
-            const userRules = await fsApi.readNameYamlEntries(common.userRulesetsFilePath);
-            const combinedRules = [...inbuildRules, ...userRules];
-            const seenRules = new Set();
-            rulesetsItems = combinedRules.filter(item => {
-                if (seenRules.has(item.yamlName)) return false;
-                seenRules.add(item.yamlName);
-                return true;
-            });
+            await uci.load('justclash');
+
+            const sections = uci.sections('justclash');
+            for (const sec of sections) {
+                if (['proxies', 'proxy_group', 'direct_rules'].includes(sec['.type']) && uci.get('justclash', sec['.name'], 'enabled') !== '0') {
+                    const list = uci.get('justclash', sec['.name'], 'enabled_list');
+                    if (list) (Array.isArray(list) ? list : [list]).forEach(i => i && activeRulesets.add(i));
+
+                    const geositeList = uci.get('justclash', sec['.name'], 'enabled_geosite_list');
+                    if (geositeList) (Array.isArray(geositeList) ? geositeList : [geositeList]).forEach(i => i && activeGeosites.add(i));
+                }
+                if (sec['.type'] === 'block_rules' && uci.get('justclash', sec['.name'], 'enabled') !== '0') {
+                    const blocklist = uci.get('justclash', sec['.name'], 'enabled_blocklist');
+                    if (blocklist) (Array.isArray(blocklist) ? blocklist : [blocklist]).forEach(i => i && activeRulesets.add(i));
+
+                    const geositeBlocklist = uci.get('justclash', sec['.name'], 'enabled_geosite_blocklist');
+                    if (geositeBlocklist) (Array.isArray(geositeBlocklist) ? geositeBlocklist : [geositeBlocklist]).forEach(i => i && activeGeosites.add(i));
+                }
+            }
         } catch (e) {}
 
         return {
-            rulesetsItems
+            rulesetsItems: Array.from(activeRulesets).map(name => ({ rawName: name, readableName: `(Set) ${name}` })),
+            geositeItems: Array.from(activeGeosites).map(name => ({ rawName: name, readableName: `(Geo) ${name}` }))
         };
     },
 
@@ -324,16 +336,26 @@ return view.extend({
             return common.validateDnsServer(value);
         };
 
-
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_include_domains", _("Force fake IP rules:"));
-        o.description = _("Entries that should resolve through fake IP; use plain suffixes like example.com.");
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_rulesets", _("Force real IP rulesets:"));
+        result.rulesetsItems.forEach(item => {
+            o.value(item.rawName, item.readableName);
+        });
+        o.description = _("Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied.");
         o.rmempty = true;
         o.retain = true;
         o.editable = true;
         o.optional = true;
-        o.validate = function (section_id, value) {
-            return common.isValidDomainSuffix(value);
-        };
+
+        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_geosites", _("Force real IP geosites:"));
+        result.geositeItems.forEach(item => {
+            o.value(item.rawName, item.readableName);
+        });
+        o.description = _("Select active GEOSITEs that should resolve through real IP before fake-IP matches are applied.");
+        o.rmempty = true;
+        o.retain = true;
+        o.editable = true;
+        o.optional = true;
+
 
         o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Force real IP rules:"));
         o.description = _("Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com.");
@@ -445,7 +467,9 @@ return view.extend({
             .cbi-value[data-name="dns_listen_port"] .cbi-value-title,
             .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
             .cbi-value[data-name="core_ntp_enabled"] .cbi-value-title,
-            .cbi-value[data-name="core_ntp_write_system"] .cbi-value-title {
+            .cbi-value[data-name="core_ntp_write_system"] .cbi-value-title,
+            .cbi-value[data-name="fake_ip_exclude_rulesets"] .cbi-value-title,
+            .cbi-value[data-name="fake_ip_exclude_geosites"] .cbi-value-title {
                 border-left: 4px solid var(--error-color-medium, #f44336) !important;
                 padding-left: 12px !important;
             }
