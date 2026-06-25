@@ -79,12 +79,6 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
 
-        o = s.taboption(tabname, form.Flag, "fake_ip", _("Fake IP:"));
-        o.description = _("Generate fake IP mapping rules for this proxy's domains.");
-        o.default = primitives.TRUE;
-        o.rmempty = false;
-        o.editable = true;
-
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
         o.rmempty = false;
@@ -525,12 +519,6 @@ return view.extend({
         o.rmempty = false;
         o.editable = true;
 
-        o = s2.taboption(tabname, form.Flag, "fake_ip", _("Fake IP:"));
-        o.description = _("Generate fake IP mapping rules for this proxy group's domains.");
-        o.default = primitives.TRUE;
-        o.rmempty = false;
-        o.editable = true;
-
         o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
         o.rmempty = false;
@@ -806,12 +794,6 @@ return view.extend({
 
         o = s3.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.description = _("Enable or disable direct rules.");
-        o.default = primitives.TRUE;
-        o.rmempty = false;
-        o.editable = true;
-
-        o = s3.taboption(tabname, form.Flag, "fake_ip", _("Fake IP:"));
-        o.description = _("Generate fake IP mapping rules for this direct rule section's domains.");
         o.default = primitives.TRUE;
         o.rmempty = false;
         o.editable = true;
