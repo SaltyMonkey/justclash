@@ -82,10 +82,15 @@ if ! uci -q get justclash.proxy.sniffer_exclude_domain | grep -qF "*"; then
 fi
 
 clean_fake_ip_list "fake_ip_exclude_domains"
-clean_fake_ip_list "fake_ip_include_domains"
 
-uci -q delete justclash.proxy.fake_ip_exclude_rulesets
-uci -q delete justclash.proxy.fake_ip_include_rulesets
+# Remove deprecated fake_ip options from routing sections
+for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxies$/\1/p'); do
+    uci -q delete "justclash.$section.fake_ip"
+done
+for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_group$/\1/p'); do
+    uci -q delete "justclash.$section.fake_ip"
+done
+uci -q delete justclash.direct_rules.fake_ip
 
 for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_provider$/\1/p'); do
     uci -q rename "justclash.$section.subscription_useragent_support=header_user_agent"
