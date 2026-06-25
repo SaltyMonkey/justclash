@@ -200,7 +200,7 @@ return view.extend({
             const isPending = state.pendingKey === pendingKey;
             const delayInfo = getDelayText(state.groupDelays[group.name], optionName);
             const metaText = extraMeta || delayInfo?.text;
-            const metaClass = extraMeta ? "jc-option-meta" : `jc-option-meta${delayInfo?.className ? ` ${delayInfo.className}` : ""}`;
+            const metaClass = extraMeta ? "jc-option-meta jc-option-meta-current" : `jc-option-meta${delayInfo?.className ? ` ${delayInfo.className}` : ""}`;
 
             const card = E("button", {
                 type: "button",
@@ -315,7 +315,7 @@ return view.extend({
                     async () => {
                         await handleSelection(group, "", true);
                     },
-                    group.current ? `${_("Current")}: ${group.current}` : null,
+                    group.current || null,
                     `${group.name}::auto`
                 ));
             }
@@ -340,7 +340,7 @@ return view.extend({
                     E("div", { class: "jc-group-header-actions" }, [
                         E("div", { class: "jc-group-badges" }, [
                             E("span", { class: "jc-group-badge" }, group.type || _("Unknown")),
-                            group.current ? E("span", { class: "jc-group-badge jc-group-badge-current" }, `${_("Current")}: ${group.current}`) : ""
+                            group.current ? E("span", { class: "jc-group-badge jc-group-badge-current" }, group.current) : ""
                         ]),
                         delayButton
                     ])
@@ -603,8 +603,11 @@ return view.extend({
             .jc-group-header-actions{justify-content:flex-end;gap:0.5rem;}
             .jc-group-badges{gap:0.25rem;}
             .jc-group-badge,.jc-group-delay-button{padding:0.18rem 0.5rem;border-radius:0.25rem;font-size:0.88em;line-height:1.2;opacity:.88;font-family:inherit;box-sizing:border-box;}
-            .jc-group-delay-button{font:inherit;font-family:inherit;font-size:0.88em;line-height:1.2;margin:0 !important;min-width:0;min-height:0 !important;height:auto !important;padding:0.18rem 0.5rem !important;box-sizing:border-box !important;color:var(--text-color, inherit);font-weight:500;appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
-            .jc-group-delay-button:hover:not(:disabled),.jc-group-delay-button:focus-visible:not(:disabled),.jc-option-card:hover:not(:disabled),.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:rgba(79, 140, 255, .06);transform:translateY(-0.0625rem);}
+            .jc-group-badge-current{color:#fd7e14 !important;border-color:rgba(253,126,20,0.3) !important;background:rgba(253,126,20,0.06) !important;}
+            .jc-option-meta-current{color:#fd7e14;font-weight:600;}
+            .jc-group-delay-button{font:inherit;font-family:inherit;font-size:0.88em;line-height:1.2;margin:0 !important;min-width:0;min-height:0 !important;height:auto !important;padding:0.18rem 0.5rem !important;box-sizing:border-box !important;color:var(--success-color-medium, #2f9e44) !important;border-color:rgba(47, 158, 68, 0.3) !important;background:rgba(47, 158, 68, 0.05) !important;font-weight:500;appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
+            .jc-group-delay-button:hover:not(:disabled),.jc-group-delay-button:focus-visible:not(:disabled){border-color:var(--success-color-medium, #2f9e44) !important;background:rgba(47, 158, 68, 0.12) !important;transform:translateY(-0.0625rem);}
+            .jc-option-card:hover:not(:disabled),.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:rgba(79, 140, 255, .06);transform:translateY(-0.0625rem);}
             .jc-group-delay-button:disabled,.jc-option-card:disabled{opacity:.7;transform:none;}
             .jc-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(10.3125rem, 1fr));gap:0.75rem;}
             .jc-card{padding:.75em;border:1px solid var(--border-color-medium, #bfbfbf);border-radius:0.25rem;box-sizing:border-box;color:var(--text-color, inherit);}
