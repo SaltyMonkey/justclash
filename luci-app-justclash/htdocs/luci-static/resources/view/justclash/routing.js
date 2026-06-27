@@ -539,7 +539,7 @@ return view.extend({
         });
         o.rmempty = false;
         o.default = common.defaultProxyGroupsTypes[0].value;
-        o.description = _("Choose how this group selects a proxy, such as fallback, load balancing, or URL test.");
+        o.description = _("Choose how this group selects a proxy, such as select, fallback, load balancing, or URL test.");
         o.modalonly = true;
 
         o = s2.taboption(tabname, form.ListValue, "strategy", _("Group strategy:"));
