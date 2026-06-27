@@ -20,8 +20,14 @@ import() {
 
     # shellcheck disable=SC1090
     if ! . "$file" 2>/dev/null; then
-        printf '[%s] [user.err] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "File $file can't be loaded!"
-        logger -p "user.err" -t "$PROGNAME" "File $file can't be loaded!"
+        local c_reset="" c_gray="" c_red=""
+        if [ -t 1 ]; then
+            c_red="\033[1;31m"
+            c_gray="\033[90m"
+            c_reset="\033[0m"
+        fi
+        printf "%b%s :: %berror:%s %s\n" "$c_gray" "$(date '+%Y-%m-%d %H:%M:%S')" "$c_red" "$c_reset" "Failed to load file $file" >&2
+        logger -p "user.err" -t "$PROGNAME" "Failed to load file $file"
         exit 1
     fi
 }
@@ -175,17 +181,12 @@ YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 B4_FILEPATH="/etc/init.d/b4"
 REQUIRED_TOOLS="jq nft curl md5sum ntpd"
 
-panic() {
-    log error "$1" '💥'
-    stop
-    exit 1
-}
 
 is_pattern_in_file() {
     local file="$1"
 
     if [ ! -r "$file" ]; then
-        log warn "File $file can't be opened!"
+        log warn "Failed to open file $file"
         return 1
     fi
     shift
@@ -207,7 +208,7 @@ ntp_force_sync() {
     local ntpd_start
     config_get_bool ntpd_start settings ntpd_start
     if [ -z "$DEFAULT_NTP_IPS" ]; then
-        log error "No NTP servers configured" "⚠️"
+        log error "No NTP servers configured"
         return 1
     fi
 
@@ -229,13 +230,103 @@ core_validate_yaml() {
         *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
     esac
     if [ "$app_exit_code" -ne 0 ]; then
-        log error "Generated YAML configuration is invalid." "❌"
-        log error "$test_output" "❌"
-        log error "Mihomo configuration validation failed." "❌"
+        log error "Generated YAML configuration is invalid."
+        log error "$test_output"
+        log error "Mihomo configuration validation failed."
         return 1
     fi
     return 0
 }
+
+check_port_collisions() {
+    local dns_port tproxy_port mixed_port api_port nft_apply_changes
+    config_get dns_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
+    is_port "$dns_port" || dns_port="$DEFAULT_DNS_LISTEN_PORT"
+
+    config_get tproxy_port proxy tproxy_port
+    config_get nft_apply_changes settings nft_apply_changes 0
+    if [ "$nft_apply_changes" = "1" ]; then
+        if [ -n "$tproxy_port" ] && is_port "$tproxy_port"; then
+            :
+        else
+            tproxy_port=""
+        fi
+    else
+        tproxy_port=""
+    fi
+
+    config_get mixed_port proxy mixed_port "$DEFAULT_MIXED_PORT"
+    is_port "$mixed_port" || mixed_port="$DEFAULT_MIXED_PORT"
+
+    api_port="$DEFAULT_EXTERNAL_CONTROLLER_PORT"
+
+    local ports=""
+    local p
+    for p in "$dns_port" "$tproxy_port" "$mixed_port" "$api_port"; do
+        [ -z "$p" ] && continue
+        if echo "$ports" | grep -qw "$p"; then
+            log error "Port collision detected. Port $p is configured multiple times"
+            return 1
+        fi
+        ports="${ports:+$ports }$p"
+    done
+
+    return 0
+}
+
+check_ports_occupancy() {
+    local dns_port tproxy_port mixed_port api_port nft_apply_changes
+    config_get dns_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
+    is_port "$dns_port" || dns_port="$DEFAULT_DNS_LISTEN_PORT"
+
+    config_get tproxy_port proxy tproxy_port
+    config_get nft_apply_changes settings nft_apply_changes 0
+    if [ "$nft_apply_changes" = "1" ]; then
+        if [ -n "$tproxy_port" ] && is_port "$tproxy_port"; then
+            :
+        else
+            tproxy_port=""
+        fi
+    else
+        tproxy_port=""
+    fi
+
+    config_get mixed_port proxy mixed_port "$DEFAULT_MIXED_PORT"
+    is_port "$mixed_port" || mixed_port="$DEFAULT_MIXED_PORT"
+
+    api_port="$DEFAULT_EXTERNAL_CONTROLLER_PORT"
+
+    local ports=""
+    local p
+    for p in "$dns_port" "$tproxy_port" "$mixed_port" "$api_port"; do
+        [ -z "$p" ] && continue
+        ports="${ports:+$ports }$p"
+    done
+
+    local attempt=1
+    local busy_port=""
+    while [ "$attempt" -le 3 ]; do
+        busy_port=""
+        for p in $ports; do
+            if netstat -lntu 2>/dev/null | grep -qE "[:.]${p}\b"; then
+                busy_port="$p"
+                break
+            fi
+        done
+        [ -z "$busy_port" ] && break
+        log warn "Port $busy_port is busy. Retrying in 1s..."
+        sleep 1
+        attempt=$((attempt + 1))
+    done
+
+    if [ -n "$busy_port" ]; then
+        log error "Port $busy_port is already in use by another service"
+        return 1
+    fi
+
+    return 0
+}
+
 
 start() {
     local skip_environment_checks core_exit_code mihomo_mem_limit
@@ -244,10 +335,10 @@ start() {
         return 0
     fi
 
-    log info "Initializing JustClash service..." "₍^. .^₎⟆"
+    log info "Initializing JustClash service..."
 
     if [ -n "$JUSTCLASH_WAIT_WAN_MAX" ] && [ "$JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
-        log info "Waiting for WAN (max ${JUSTCLASH_WAIT_WAN_MAX}s)..." "⏳"
+        log info "Waiting for WAN (max ${JUSTCLASH_WAIT_WAN_MAX}s)..."
         local waited=0
         while [ "$waited" -lt "$JUSTCLASH_WAIT_WAN_MAX" ]; do
             if ip route show default 2>/dev/null | grep -q default; then
@@ -259,58 +350,79 @@ start() {
     fi
 
     if [ -n "$JUSTCLASH_BOOT_DELAY" ] && [ "$JUSTCLASH_BOOT_DELAY" -gt 0 ]; then
-        log info "Delaying start by ${JUSTCLASH_BOOT_DELAY}s..." "⏳"
+        log info "Delaying start by ${JUSTCLASH_BOOT_DELAY}s..."
         sleep "$JUSTCLASH_BOOT_DELAY"
     fi
 
-    check_requirement || return 1
+    check_requirement || {
+        log error "System requirement checks failed. Aborting startup."
+        return 1
+    }
+
+    log info "Checking port configuration collisions"
+    check_port_collisions || {
+        log error "Port configuration validation failed. Aborting startup."
+        return 1
+    }
+
+    log info "Checking active ports availability"
+    check_ports_occupancy || {
+        log error "Active ports check failed. Aborting startup."
+        return 1
+    }
 
     config_get mihomo_mem_limit settings mihomo_mem_limit "$DEFAULT_MIHOMO_MEM_LIMIT"
     is_uint "$mihomo_mem_limit" || {
-        log warn "Invalid settings.mihomo_mem_limit: '$mihomo_mem_limit', using default: '$DEFAULT_MIHOMO_MEM_LIMIT'" "⚠️"
+        log warn "Invalid Mihomo memory limit: '$mihomo_mem_limit', using default: '$DEFAULT_MIHOMO_MEM_LIMIT'"
         mihomo_mem_limit="$DEFAULT_MIHOMO_MEM_LIMIT"
     }
     config_get_bool skip_environment_checks settings skip_environment_checks 0
 
     if [ "$skip_environment_checks" -eq 0 ]; then
 
-        log info "Checking for non-critical conflicts" "⏳"
+        log info "Checking for non-critical conflicts"
         check_for_conflicts_warn
 
-        log info "Fixing known compatibility problems" "🐞"
+        log info "Fixing known compatibility problems"
         compat_fixes
     fi
 
-    log info "Synchronizing system time" "🕒"
+    log info "Synchronizing system time"
     ntp_force_sync
 
-    log info "Updating SAFE_PATHS environment variable" "📦"
+    log info "Updating SAFE_PATHS environment variable"
     safe_paths_add "$DASHBOARD_PATH"
 
-    log info "Preparing Mihomo working directory" "📦"
+    log info "Preparing Mihomo working directory"
     core_prepare_workdir
     if [ $? -eq 1 ]; then
-        log info "Generating YAML configuration..." "🐱"
+        log info "Generating YAML configuration..."
         core_generate_yaml
     fi
 
-    log info "Validating YAML configuration..." "🐱"
-    core_validate_yaml || return 1
+    log info "Validating YAML configuration..."
+    core_validate_yaml || {
+        log error "Configuration validation failed. Aborting startup."
+        return 1
+    }
 
-    log info "Configuring tproxy routing and creating NFTables table" "🔑"
-    nf_table_add
+    log info "Configuring tproxy routing and creating NFTables table"
+    nf_table_add || {
+        log error "Firewall configuration failed. Aborting startup."
+        return 1
+    }
 
-    log info "Modifying dnsmasq configuration" "🔑"
+    log info "Modifying dnsmasq configuration"
     dnsmasq_update
 
-    log info "Updating scheduled tasks" "🕒"
+    log info "Updating scheduled tasks"
     cron_update
 
-    log info "Starting Mihomo core" "🐱"
+    log info "Starting Mihomo core"
     start_core "$mihomo_mem_limit"
     core_exit_code=$?
 
-    log warn "Mihomo core exited; restoring networking changes." "🔑"
+    log warn "Mihomo core exited; restoring networking changes."
     dnsmasq_restore
     nf_table_remove
 
@@ -318,15 +430,15 @@ start() {
 }
 
 stop() {
-    log info "Stopping JustClash service..." "⏳"
+    log info "Stopping JustClash service..."
 
-    log info "Removing tproxy routing and NFTables table" "🔑"
+    log info "Removing tproxy routing and NFTables table"
     nf_table_remove
 
-    log info "Restoring default dnsmasq configuration" "🔑"
+    log info "Restoring default dnsmasq configuration"
     dnsmasq_restore
 
-    log info "Stopping core process" "🐱"
+    log info "Stopping core process"
     stop_core
 }
 
@@ -335,7 +447,7 @@ start_core() {
     local mihomo_mem_limit="$1"
     local attempt=0
     local exit_code=0
-    log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries" "🐱"
+    log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries"
 
     # shellcheck disable=SC2154
     if [ "$JUSTCLASH_ENV" = "procd" ]; then
@@ -350,16 +462,16 @@ start_core() {
             )
             exit_code=$?
             if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then
-                log info "Procd mode: Mihomo stopped gracefully" "🐱"
+                log info "Procd mode: Mihomo stopped gracefully"
                 break
             fi
 
-            log warn "Procd mode: Mihomo exited with code $exit_code" "❌"
+            log warn "Procd mode: Mihomo exited with code $exit_code"
             attempt=$((attempt + 1))
-            log error "Procd mode: Mihomo crashed, attempt $attempt of $DEFAULT_CORE_RESTART_RETRIES" "❌"
+            log error "Procd mode: Mihomo crashed, attempt $attempt of $DEFAULT_CORE_RESTART_RETRIES"
 
             if [ "$attempt" -ge "$DEFAULT_CORE_RESTART_RETRIES" ]; then
-                log error "Procd mode: failed to restart Mihomo after $DEFAULT_CORE_RESTART_RETRIES attempts; exiting" "❌"
+                log error "Procd mode: failed to restart Mihomo after $DEFAULT_CORE_RESTART_RETRIES attempts; exiting"
                 return "$exit_code"
             fi
 
@@ -376,10 +488,10 @@ start_core() {
         )
         exit_code=$?
         if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then
-            log info "Manual mode: Mihomo stopped gracefully" "🐱"
+            log info "Manual mode: Mihomo stopped gracefully"
         else
-            log warn "Manual mode: Mihomo exited with code $exit_code" "❌"
-            log error "Manual mode: Mihomo crashed; exiting" "❌"
+            log warn "Manual mode: Mihomo exited with code $exit_code"
+            log error "Manual mode: Mihomo crashed; exiting"
             return "$exit_code"
         fi
     fi
@@ -394,9 +506,9 @@ stop_core() {
         # DO NOT APPLY "" - STRING MUST BE SPLITTED AUTOMATICALLY
         # shellcheck disable=SC2086
         kill $pids 2>/dev/null
-        log info "Core process stopped" "🐱"
+        log info "Core process stopped"
     else
-        log info "Core process is not running" "🐱"
+        log info "Core process is not running"
     fi
 }
 
@@ -406,6 +518,7 @@ cleanup_fwmark() {
     while ip rule show | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; do
         ip rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
     done
+    conntrack -D --mark "$NF_TABLE_FWMARK_FINAL" 2>/dev/null || true
 }
 
 build_nft_skuid_exclusions() {
@@ -425,7 +538,7 @@ build_nft_skuid_exclusions() {
         if [ -n "$skuid_resolved" ] && is_uint "$skuid_resolved"; then
             skuid_list="${skuid_list:+$skuid_list }$skuid_resolved"
         else
-            log warn "Skipping router socket owner exclusion with unresolved user/UID: $skuid_value" "⚠️"
+            log warn "Skip router socket owner exclusion due to unresolved user/UID: $skuid_value"
         fi
     done
 
@@ -482,23 +595,41 @@ nf_table_add() {
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
-    [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ] && return 0
+    if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
+        log warn "Firewall rules generation is disabled for both LAN and router"
+        return 0
+    fi
 
     config_get tproxy_port proxy tproxy_port
-    [ -n "$tproxy_port" ] || panic "tproxy_port is not set"
-    is_port "$tproxy_port" || panic "tproxy_port is invalid: $tproxy_port"
+    if [ -z "$tproxy_port" ]; then
+        log error "TProxy port is not configured"
+        return 1
+    fi
+    if ! is_port "$tproxy_port"; then
+        log error "Invalid TProxy port: $tproxy_port"
+        return 1
+    fi
 
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
-    is_uint "$pbr_priority" || panic "pbr_priority is invalid: $pbr_priority"
+    if ! is_uint "$pbr_priority"; then
+        log error "Invalid policy routing priority: $pbr_priority"
+        return 1
+    fi
 
     proxy_routing_marks=$(trim "$(config_foreach get_routing_mark proxies routing_mark)")
     case "$proxy_routing_marks" in
-        *-1*) panic "Invalid routing_mark detected in proxies configuration" ;;
+        *-1*)
+            log error "Invalid routing mark detected in proxies configuration"
+            return 1
+            ;;
     esac
 
     provider_routing_marks=$(trim "$(config_foreach get_routing_mark proxy_provider override_routing_mark)")
     case "$provider_routing_marks" in
-        *-1*) panic "Invalid override_routing_mark detected in proxy providers configuration" ;;
+        *-1*)
+            log error "Invalid override routing mark detected in proxy providers configuration"
+            return 1
+            ;;
     esac
 
     config_get fake_ip_range proxy fake_ip_range
@@ -516,11 +647,20 @@ nf_table_add() {
     config_get skuid_values settings nft_skuid_exclude_router
 
     if [ "$nft_apply_changes" = "1" ]; then
-        [ -n "$fake_ip_range" ] || panic "fake_ip_range is not set"
-        [ -n "$tproxy_input_interfaces" ] || panic "tproxy_input_interfaces is not set"
+        if [ -z "$fake_ip_range" ]; then
+            log error "Fake IP range is not configured"
+            return 1
+        fi
+        if [ -z "$tproxy_input_interfaces" ]; then
+            log error "TProxy inbound interfaces are not configured"
+            return 1
+        fi
 
         for iface in $tproxy_input_interfaces; do
-            is_ifname "$iface" || panic "tproxy_input_interfaces contains invalid interface name: $iface"
+            if ! is_ifname "$iface"; then
+                log error "Inbound interfaces contain an invalid interface name: $iface"
+                return 1
+            fi
         done
     fi
 
@@ -554,6 +694,7 @@ nf_table_add() {
             echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
+            echo "add rule inet $NF_TABLE_NAME prerouting ct mark $NF_TABLE_FWMARK_FINAL meta mark set ct mark counter accept comment \"Fast-path established tproxy connections\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
 
@@ -604,13 +745,14 @@ nf_table_add() {
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept to TProxy\""
+            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL ct mark set meta mark tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept to TProxy\""
         fi
 
         if [ "$nft_apply_changes_router" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME output { type route hook output priority mangle; policy accept; }"
             echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
             echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
+            echo "add rule inet $NF_TABLE_NAME output ct mark $NF_TABLE_FWMARK_FINAL meta mark set ct mark counter accept comment \"Fast-path established tproxy connections\""
             if [ -n "$proxy_routing_marks" ]; then
                 echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
             fi
@@ -640,9 +782,13 @@ nf_table_add() {
                 echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router traffic for interception\""
+            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL ct mark set meta mark comment \"Mark router traffic for interception\""
         fi
     } | nft -f -
+    if [ $? -ne 0 ]; then
+        log error "Failed to apply NFTables rules. Transaction rolled back."
+        return 1
+    fi
 
     cleanup_fwmark
 
@@ -653,7 +799,7 @@ nf_table_add() {
         ip route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE"
     fi
 
-    log warn "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority" "🛠️"
+    log warn "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority"
 }
 
 nf_table_remove() {
@@ -662,7 +808,7 @@ nf_table_remove() {
     nft delete table inet "$NF_TABLE_NAME" 2>/dev/null || true
     ip route flush table "$NF_ROUTE_TABLE" 2>/dev/null || true
 
-    log info "Tproxy rules and routing were removed" "🛠️"
+    log info "Tproxy rules and routing were removed"
 }
 
 # Thx Podkop, feels so annoyed already by shell scripting
@@ -687,14 +833,14 @@ dnsmasq_update() {
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
         is_port "$dns_listen_port" || {
-            log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+            log warn "Invalid DNS listen port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'"
             dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
         }
 
         current_servers=$(uci -q get dhcp.@dnsmasq[0].server 2>/dev/null)
         for server in $current_servers; do
             if [ "$server" = "127.0.0.1#${dns_listen_port}" ]; then
-                log warn "dnsmasq already uses 127.0.0.1#${dns_listen_port}; skipping dnsmasq changes."
+                log warn "Dnsmasq already uses 127.0.0.1#${dns_listen_port}. Skip Dnsmasq changes."
                 return 1
             fi
         done
@@ -713,11 +859,11 @@ dnsmasq_update() {
         uci set dhcp.@dnsmasq[0].noresolv="1"
 
         uci commit dhcp
-        log info "DNS configuration updated." "🌐"
+        log info "DNS configuration updated."
         /etc/init.d/dnsmasq restart > /dev/null 2>&1
-        log info "dnsmasq restarted to apply DNS changes." "🔄"
+        log info "Dnsmasq restarted to apply DNS changes."
     else
-        log info "Skipping dnsmasq changes because dnsmasq_apply_changes is disabled." "🛠️"
+        log info "Skip Dnsmasq changes because Dnsmasq rules application is disabled."
     fi
 
 }
@@ -732,22 +878,22 @@ dnsmasq_restore() {
     if [ "$dnsmasq_apply_changes" -eq 1 ]; then
         config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
         is_port "$dns_listen_port" || {
-            log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+            log warn "Invalid DNS listen port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'"
             dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
         }
         bak_cachesize=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_cachesize)
         if [ "$bak_cachesize" = "unset" ]; then
-            log warn "dnsmasq restore: backup cachesize is unset"
+            log warn "Dnsmasq restore: backup cachesize is unset"
             uci -q delete dhcp.@dnsmasq[0].cachesize
         elif [ -z "$bak_cachesize" ]; then
-            log warn "dnsmasq restore: backup cachesize is missing"
+            log warn "Dnsmasq restore: backup cachesize is missing"
         else
             uci set dhcp.@dnsmasq[0].cachesize="$bak_cachesize"
         fi
 
         bak_noresolv=$(uci -q get dhcp.@dnsmasq[0]."${PROGNAME}"_noresolv)
         if [ "$bak_noresolv" = "unset" ]; then
-            log warn "dnsmasq restore: backup noresolv is unset"
+            log warn "Dnsmasq restore: backup noresolv is unset"
             uci -q delete dhcp.@dnsmasq[0].noresolv
         else
             uci set dhcp.@dnsmasq[0].noresolv="$bak_noresolv"
@@ -778,17 +924,17 @@ dnsmasq_restore() {
         fi
 
         uci commit dhcp
-        log info "DNS configuration restored." "🌐"
+        log info "DNS configuration restored."
         /etc/init.d/dnsmasq restart > /dev/null 2>&1
-        log info "dnsmasq restarted to apply DNS changes." "🔄"
+        log info "Dnsmasq restarted to apply DNS changes."
     else
-        log info "Skipping dnsmasq restore because dnsmasq_apply_changes is disabled." "🛠️"
+        log info "Skip Dnsmasq restore because Dnsmasq rules application is disabled."
     fi
 }
 
 check_is_already_running() {
     if pgrep -f "$(basename "$CORE_PATH")" >/dev/null 2>&1; then
-        log warn "JustClash is already running." "⚠️"
+        log warn "JustClash is already running."
         return 0
     fi
     return 1
@@ -800,13 +946,13 @@ check_requirement() {
     ret=0
 
     if [ ! -x "$CORE_PATH" ]; then
-        log error "Requirement is missing: mihomo binary is not installed." "❌"
+        log error "Requirement is missing: mihomo binary is not installed."
         ret=1
     fi
 
     for cmd in $REQUIRED_TOOLS; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
-            log error "Requirement is missing: $cmd is not installed." "❌"
+            log error "Requirement is missing: $cmd is not installed."
             ret=1
         fi
     done
@@ -816,35 +962,37 @@ check_requirement() {
 
 check_for_conflicts_warn() {
     local resolvconf_res
-    local found_patterns pattern
-    local service_path
+    local found_patterns formatted_patterns
+    local service_path detected_services service_name
 
-    # For $WARN_PATTERNS_DHCP_CONFIG only. We don't need "" to make shell split string.
+    # Check for DHCP config leftovers
     # shellcheck disable=SC2086
     found_patterns=$(is_pattern_in_file "$DHCP_CONFIG_FILEPATH" $WARN_PATTERNS_DHCP_CONFIG)
     if [ -n "$found_patterns" ]; then
-        for pattern in $found_patterns; do
-            log warn "Warning: pattern '$pattern' found in /etc/config/dhcp." "⚠️"
-            log warn "This may be a leftover from another DNS/proxy service." "⚠️"
-            log warn "JustClash will continue startup; review DHCP settings if DNS behaves strangely." "⚠️"
-        done
+        formatted_patterns=$(echo "$found_patterns" | sed 's/ /, /g')
+        log warn "DHCP configuration contains leftover patterns: $formatted_patterns"
     fi
 
-    awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" { found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
+    # Check for external DNS in resolv.conf
+    awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" && $2 != "::1" && $2 != "::" { found=1 } END { exit !found }' "$RESOLVCONF_FILEPATH"
     resolvconf_res=$?
 
     if [ "$resolvconf_res" -eq 0 ]; then
-        log warn "Warning: External DNS servers are listed in /etc/resolv.conf" "⚠️"
-        log warn "This may bypass local DNS rules and cause unexpected query results." "⚠️"
-        log warn "If you intend to use a local DNS service, these entries should be removed." "⚠️"
+        log warn "External DNS servers listed in /etc/resolv.conf may bypass proxy rules"
     fi
 
+    # Check for potentially conflicting services
+    detected_services=""
     for service_path in "$ZAPRETINITD_FILEPATH" "$BYEDPI_FILEPATH" "$YOUTUBEUNBLOCK_FILEPATH" "$B4_FILEPATH"; do
         if [ -f "$service_path" ]; then
-            log warn "Warning: Service detected by path $service_path:" "⚠️"
-            log warn "This service can cause unexpected results if configured incorrectly." "⚠️"
+            service_name="${service_path##*/}"
+            detected_services="${detected_services:+$detected_services, }$service_name"
         fi
     done
+
+    if [ -n "$detected_services" ]; then
+        log warn "Potential conflict: active DPI or proxy services detected ($detected_services)"
+    fi
 }
 
 info_mihomo() {
@@ -860,7 +1008,7 @@ info_mihomo() {
 
 systemlogs() {
     local lines=${1:-40}
-    logread -e "$PROGNAME" -l "$lines"
+    logread -e "$PROGNAME|mihomo" | tail -n "$lines"
     return 0
 }
 
@@ -943,7 +1091,7 @@ build_builtin_rules_bundle() {
         ruleset_name="${ruleset_name%%|*}"
 
         case "$added_rulesets" in
-            *"|$ruleset_name|"*) log warn "Skipping duplicated ruleset: $ruleset_name"; continue ;;
+            *"|$ruleset_name|"*) log warn "Skip duplicated ruleset: $ruleset_name"; continue ;;
         esac
 
         ruleset_fields="${ruleset_line#*|}"
@@ -1183,15 +1331,15 @@ handle_proxy_section() {
         local download_proxy generated_rule
 
         config_get name "$section" name
-        [ -z "$name" ] && { log warn "Skipping proxy without name: $section" "⚠️"; return; }
+        [ -z "$name" ] && { log warn "Skip proxy without name: $section"; return; }
 
         config_get_bool enabled "$section" enabled 1
-        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy: $section" "⚠️"; return; }
+        [ "$enabled" -ne 1 ] && { log warn "Skip disabled proxy: $section"; return; }
 
         config_get routing_mark "$section" routing_mark
         routing_mark=$(parse_routing_mark "$routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
         if [ "$routing_mark" = "-1" ]; then
-            log warn "Skipping proxy '$section' due to invalid routing_mark" "⚠️"
+            log warn "Skip proxy '$section' due to invalid routing mark"
             return 0
         fi
 
@@ -1200,12 +1348,12 @@ handle_proxy_section() {
         config_get interface_name "$section" interface_name
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
         is_uint "$list_update_interval" || {
-            log warn "Invalid list_update_interval for proxy '$name': '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+            log warn "Invalid list update interval for proxy '$name': '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'"
             list_update_interval="$DEFAULT_RULESET_INTERVAL"
         }
         config_get size_limit "$section" size_limit 0
         is_uint "$size_limit" || {
-            log warn "Invalid size_limit for proxy '$name': '$size_limit', using default: 0" "⚠️"
+            log warn "Invalid size limit for proxy '$name': '$size_limit', using default: 0"
             size_limit=0
         }
         config_get mode "$section" mode "uri"
@@ -1213,13 +1361,13 @@ handle_proxy_section() {
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
 
         if [ "$mode" = "object" ]; then
-            [ -z "$proxy_link_object" ] && { log warn "Skipping empty proxy '$name'" "⚠️" ; return; }
+            [ -z "$proxy_link_object" ] && { log warn "Skip empty proxy '$name'" ; return; }
 
             proxy_obj=$(printf '%s' "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
 
-            [ -z "$proxy_obj" ] && { log warn "Failed to process object for '$name'" "⚠️"; return; }
+            [ -z "$proxy_obj" ] && { log warn "Failed to process object for '$name'"; return; }
         else
-            [ -z "$proxy_link_uri" ] && { log warn  "Skipping empty '$name'" "⚠️"; return; }
+            [ -z "$proxy_link_uri" ] && { log warn "Skip empty '$name'"; return; }
             proxy_link_uri=$(trim "$proxy_link_uri")
 
             [ -n "$dialer_proxy" ] && dialer_proxy=$(trim "$dialer_proxy")
@@ -1237,10 +1385,10 @@ handle_proxy_section() {
                 vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
                 mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
                 sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                *) log warn "Unknown proxy link type: $proxy_link_uri" "⚠️"; return ;;
+                *) log warn "Unknown proxy link type: $proxy_link_uri"; return ;;
             esac
 
-            [ -z "$proxy_obj" ] && { log warn "Failed to parse proxy link: $proxy_link_uri" "⚠️"; return; }
+            [ -z "$proxy_obj" ] && { log warn "Failed to parse proxy link: $proxy_link_uri"; return; }
         fi
 
         proxies="${proxies:+$proxies,}$proxy_obj"
@@ -1336,36 +1484,36 @@ handle_proxy_group_section() {
         local download_proxy generated_rule
 
         config_get name "$section" name
-        [ -z "$name" ] && { log warn "Skipping proxy group without a name: $section" "⚠️"; return; }
+        [ -z "$name" ] && { log warn "Skip proxy group without a name: $section"; return; }
 
         config_get_bool enabled "$section" enabled 1
-        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy group: $section" "⚠️"; return; }
+        [ "$enabled" -ne 1 ] && { log warn "Skip disabled proxy group: $section"; return; }
 
         config_get proxies_list "$section" proxies
         config_get providers_list "$section" providers
-        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log warn "Skipping empty proxy group: $name" "⚠️"; return; }
+        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log warn "Skip empty proxy group: $name"; return; }
 
         config_get group_type "$section" group_type
         config_get strategy "$section" strategy
         config_get check_url "$section" check_url "$DEFAULT_HEALTHCHECK_URL"
         config_get expected_status "$section" expected_status "$DEFAULT_HEALTHCHECK_RESULT"
         is_uint "$expected_status" || {
-            log warn "Invalid expected_status for proxy group '$name': '$expected_status', using default: '$DEFAULT_HEALTHCHECK_RESULT'" "⚠️"
+            log warn "Invalid expected health check status for proxy group '$name': '$expected_status', using default: '$DEFAULT_HEALTHCHECK_RESULT'"
             expected_status="$DEFAULT_HEALTHCHECK_RESULT"
         }
         config_get interval "$section" interval "$DEFAULT_HEALTHCHECK_INTERVAL"
         is_uint "$interval" || {
-            log warn "Invalid health check interval for proxy group '$name': '$interval', using default: '$DEFAULT_HEALTHCHECK_INTERVAL'" "⚠️"
+            log warn "Invalid health check interval for proxy group '$name': '$interval', using default: '$DEFAULT_HEALTHCHECK_INTERVAL'"
             interval="$DEFAULT_HEALTHCHECK_INTERVAL"
         }
         config_get check_timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
         is_uint "$check_timeout" || {
-            log warn "Invalid health check timeout for proxy group '$name': '$check_timeout', using default: '$DEFAULT_HEALTHCHECK_TIMEOUT'" "⚠️"
+            log warn "Invalid health check timeout for proxy group '$name': '$check_timeout', using default: '$DEFAULT_HEALTHCHECK_TIMEOUT'"
             check_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
         }
         config_get max_failed_times "$section" max_failed_times "$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
         is_uint "$max_failed_times" || {
-            log warn "Invalid health check max_failed_times for proxy group '$name': '$max_failed_times', using default: '$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES'" "⚠️"
+            log warn "Invalid health check max_failed_times for proxy group '$name': '$max_failed_times', using default: '$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES'"
             max_failed_times="$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
         }
         config_get lazy "$section" lazy 0
@@ -1378,12 +1526,12 @@ handle_proxy_group_section() {
         config_get enabled_list "$section" enabled_list
         config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
         is_uint "$list_update_interval" || {
-            log warn "Invalid list_update_interval for proxy group '$name': '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+            log warn "Invalid list update interval for proxy group '$name': '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'"
             list_update_interval="$DEFAULT_RULESET_INTERVAL"
         }
         config_get size_limit "$section" size_limit 0
         is_uint "$size_limit" || {
-            log warn "Invalid size_limit for proxy group '$name': '$size_limit', using default: 0" "⚠️"
+            log warn "Invalid size limit for proxy group '$name': '$size_limit', using default: 0"
             size_limit=0
         }
         config_get_bool use_proxy_group_for_list_update "$section" use_proxy_group_for_list_update 0
@@ -1482,29 +1630,29 @@ handle_proxy_provider_section() {
         config_get name "$section" name
         config_get url "$section" subscription
         { [ -z "$name" ] || [ -z "$url" ]; } && {
-        log warn "Skipping proxy provider without a name or subscription" "⚠️"
+        log warn "Skip proxy provider without a name or subscription"
             return
         }
 
         config_get_bool enabled "$section" enabled 1
-        [ "$enabled" -ne 1 ] && { log warn "Skipping disabled proxy provider: $section" "⚠️"; return; }
+        [ "$enabled" -ne 1 ] && { log warn "Skip disabled proxy provider: $section"; return; }
 
         config_get override_routing_mark "$section" override_routing_mark
         override_routing_mark=$(parse_routing_mark "$override_routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
 
         if [ "$override_routing_mark" = "-1" ]; then
-            log warn "Skipping proxy provider '$section' due to invalid routing_mark" "⚠️"
+            log warn "Skip proxy provider '$section' due to invalid routing mark"
             return 0
         fi
 
         config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
         is_uint "$interval" || {
-            log warn "Invalid update_interval for proxy provider '$name': '$interval', using default: '$DEFAULT_PROVIDERUPDATE_INTERVAL'" "⚠️"
+            log warn "Invalid update interval for proxy provider '$name': '$interval', using default: '$DEFAULT_PROVIDERUPDATE_INTERVAL'"
             interval="$DEFAULT_PROVIDERUPDATE_INTERVAL"
         }
         config_get size_limit "$section" size_limit 0
         is_uint "$size_limit" || {
-            log warn "Invalid size_limit for proxy provider '$name': '$size_limit', using default: 0" "⚠️"
+            log warn "Invalid size limit for proxy provider '$name': '$size_limit', using default: 0"
             size_limit=0
         }
         config_get filter "$section" filter
@@ -1530,18 +1678,18 @@ handle_proxy_provider_section() {
         if [ "$health_check" -eq 1 ]; then
             config_get hc_expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
             is_uint "$hc_expected_status" || {
-                log warn "Invalid health_check_expected_status for proxy provider '$name': '$hc_expected_status', using default: '$DEFAULT_HEALTHCHECK_RESULT'" "⚠️"
+                log warn "Invalid expected health check status for proxy provider '$name': '$hc_expected_status', using default: '$DEFAULT_HEALTHCHECK_RESULT'"
                 hc_expected_status="$DEFAULT_HEALTHCHECK_RESULT"
             }
             config_get hc_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
             config_get hc_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
             is_uint "$hc_interval" || {
-                log warn "Invalid health_check_interval for proxy provider '$name': '$hc_interval', using default: '$DEFAULT_HEALTHCHECK_INTERVAL'" "⚠️"
+                log warn "Invalid health check interval for proxy provider '$name': '$hc_interval', using default: '$DEFAULT_HEALTHCHECK_INTERVAL'"
                 hc_interval="$DEFAULT_HEALTHCHECK_INTERVAL"
             }
             config_get hc_timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
             is_uint "$hc_timeout" || {
-                log warn "Invalid health_check_timeout for proxy provider '$name': '$hc_timeout', using default: '$DEFAULT_HEALTHCHECK_TIMEOUT'" "⚠️"
+                log warn "Invalid health check timeout for proxy provider '$name': '$hc_timeout', using default: '$DEFAULT_HEALTHCHECK_TIMEOUT'"
                 hc_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
             }
             config_get hc_lazy "$section" health_check_lazy 0
@@ -1576,7 +1724,7 @@ handle_block_rule_section() {
     local enabled
     config_get_bool enabled block_rules enabled 1
     if [ "$enabled" -ne 1 ]; then
-        log warn "Skipping disabled proxy group: block_rules" "⚠️"
+        log warn "Skip disabled proxy group: block_rules"
         OUT_RULES="[]"
         OUT_RULESETS="{}"
         OUT_NAMES_RULESETS=""
@@ -1595,12 +1743,12 @@ handle_block_rule_section() {
     config_get download_proxy block_rules proxy "$DEFAULT_PROXY"
     config_get list_update_interval block_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
     is_uint "$list_update_interval" || {
-        log warn "Invalid list_update_interval for block_rules: '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+        log warn "Invalid list update interval for block_rules: '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'"
         list_update_interval="$DEFAULT_RULESET_INTERVAL"
     }
     config_get size_limit block_rules size_limit 0
     is_uint "$size_limit" || {
-        log warn "Invalid size_limit for block_rules: '$size_limit', using default: 0" "⚠️"
+        log warn "Invalid size limit for block_rules: '$size_limit', using default: 0"
         size_limit=0
     }
     # --- 1. Domain-based Block Rules ---
@@ -1664,7 +1812,7 @@ handle_direct_rule_section() {
     local enabled
     config_get_bool enabled direct_rules enabled 1
     if [ "$enabled" -ne 1 ]; then
-        log warn "Skipping disabled proxy group: direct_rules" "⚠️"
+        log warn "Skip disabled proxy group: direct_rules"
         OUT_RULES="[]"
         OUT_RULESETS="{}"
         OUT_FAKE_IP_RULES="[]"
@@ -1673,12 +1821,12 @@ handle_direct_rule_section() {
 
     config_get list_update_interval direct_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
     is_uint "$list_update_interval" || {
-        log warn "Invalid list_update_interval for direct_rules: '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'" "⚠️"
+        log warn "Invalid list update interval for direct_rules: '$list_update_interval', using default: '$DEFAULT_RULESET_INTERVAL'"
         list_update_interval="$DEFAULT_RULESET_INTERVAL"
     }
     config_get size_limit direct_rules size_limit 0
     is_uint "$size_limit" || {
-        log warn "Invalid size_limit for direct_rules: '$size_limit', using default: 0" "⚠️"
+        log warn "Invalid size limit for direct_rules: '$size_limit', using default: 0"
         size_limit=0
     }
     config_get enabled_list direct_rules enabled_list
@@ -1853,19 +2001,19 @@ core_generate_yaml() {
     config_get_bool use_mixed_port proxy use_mixed_port 0
     config_get mixed_port proxy mixed_port "$DEFAULT_MIXED_PORT"
     is_port "$mixed_port" || {
-        log warn "Invalid proxy.mixed_port: '$mixed_port', using default: '$DEFAULT_MIXED_PORT'" "⚠️"
+        log warn "Invalid mixed port: '$mixed_port', using default: '$DEFAULT_MIXED_PORT'"
         mixed_port="$DEFAULT_MIXED_PORT"
     }
     config_get_bool unified_delay proxy unified_delay
     config_get_bool tcp_concurrent proxy tcp_concurrent
     config_get keep_alive_idle proxy keep_alive_idle "$DEFAULT_KEEP_ALIVE_IDLE"
     is_uint "$keep_alive_idle" || {
-        log warn "Invalid proxy.keep_alive_idle: '$keep_alive_idle', using default: '$DEFAULT_KEEP_ALIVE_IDLE'" "⚠️"
+        log warn "Invalid keep alive idle duration: '$keep_alive_idle', using default: '$DEFAULT_KEEP_ALIVE_IDLE'"
         keep_alive_idle="$DEFAULT_KEEP_ALIVE_IDLE"
     }
     config_get keep_alive_interval proxy keep_alive_interval "$DEFAULT_KEEP_ALIVE_INTERVAL"
     is_uint "$keep_alive_interval" || {
-        log warn "Invalid proxy.keep_alive_interval: '$keep_alive_interval', using default: '$DEFAULT_KEEP_ALIVE_IDLE'" "⚠️"
+        log warn "Invalid keep alive interval: '$keep_alive_interval', using default: '$DEFAULT_KEEP_ALIVE_IDLE'"
         keep_alive_interval="$DEFAULT_KEEP_ALIVE_INTERVAL"
     }
     config_get global_ua proxy global_ua
@@ -1876,30 +2024,30 @@ core_generate_yaml() {
     config_get core_ntp_server proxy core_ntp_server
     config_get core_ntp_port proxy core_ntp_port "$DEFAULT_NTP_PORT"
     is_port "$core_ntp_port" || {
-        log warn "Invalid proxy.core_ntp_port: '$core_ntp_port', using default: '$DEFAULT_NTP_PORT'" "⚠️"
+        log warn "Invalid NTP port: '$core_ntp_port', using default: '$DEFAULT_NTP_PORT'"
         core_ntp_port="$DEFAULT_NTP_PORT"
     }
     config_get core_ntp_interval proxy core_ntp_interval "$DEFAULT_CORE_NTP_INTERVAL"
     is_uint "$core_ntp_interval" || {
-        log warn "Invalid proxy.core_ntp_interval: '$core_ntp_interval', using default: '$DEFAULT_CORE_NTP_INTERVAL'" "⚠️"
+        log warn "Invalid NTP interval: '$core_ntp_interval', using default: '$DEFAULT_CORE_NTP_INTERVAL'"
         core_ntp_interval="$DEFAULT_CORE_NTP_INTERVAL"
     }
     config_get_bool core_ntp_write_system proxy core_ntp_write_system
     config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
     is_port "$dns_listen_port" || {
-        log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+        log warn "Invalid DNS listen port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'"
         dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
     }
     config_get dns_cache_max_size proxy dns_cache_max_size "$DEFAULT_DNS_CACHE_MAX_SIZE"
     is_uint "$dns_cache_max_size" || {
-        log warn "Invalid proxy.dns_cache_max_size: '$dns_cache_max_size', using default: '$DEFAULT_DNS_CACHE_MAX_SIZE'" "⚠️"
+        log warn "Invalid DNS cache maximum size: '$dns_cache_max_size', using default: '$DEFAULT_DNS_CACHE_MAX_SIZE'"
         dns_cache_max_size="$DEFAULT_DNS_CACHE_MAX_SIZE"
     }
     config_get_bool use_system_hosts proxy use_system_hosts
     config_get fake_ip_range proxy fake_ip_range
     config_get fake_ip_ttl proxy fake_ip_ttl "$DEFAULT_FAKE_IP_TTL"
     is_uint "$fake_ip_ttl" || {
-        log warn "Invalid proxy.fake_ip_ttl: '$fake_ip_ttl', using default: '$DEFAULT_FAKE_IP_TTL'" "⚠️"
+        log warn "Invalid Fake IP TTL: '$fake_ip_ttl', using default: '$DEFAULT_FAKE_IP_TTL'"
         fake_ip_ttl="$DEFAULT_FAKE_IP_TTL"
     }
     config_get_bool sniffer_enable proxy sniffer_enable
@@ -1919,10 +2067,10 @@ core_generate_yaml() {
     if [ -n "$controller_bind_interface" ]; then
         if ! is_ifname "$controller_bind_interface"; then
             router_selected_ipaddr="0.0.0.0"
-            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will listen on all interfaces." "⚠️"
+            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will listen on all interfaces."
         elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
             router_selected_ipaddr="0.0.0.0"
-            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will listen on all interfaces." "⚠️"
+            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will listen on all interfaces."
         fi
     else
         router_selected_ipaddr="0.0.0.0"
@@ -1930,7 +2078,7 @@ core_generate_yaml() {
 
     [ -n "$interface_name" ] && interface_name=$(trim "$interface_name")
     if [ -n "$interface_name" ] && ! is_ifname "$interface_name"; then
-        log warn "Global interface_name '$interface_name' is invalid and will be ignored." "⚠️"
+        log warn "Global interface_name '$interface_name' is invalid and will be ignored."
         interface_name=""
     fi
 
@@ -2234,27 +2382,27 @@ service_data_update() {
     mkdir -p "$CORE_WORKDIR_PATH"
     mkdir -p "$PROG_ETC_DIR"
 
-    log info "Downloading ruleset list" "📥"
+    log info "Downloading ruleset list"
     tmp_rulesets_file=$(mktemp "${CORE_WORKDIR_PATH}/${RULESETS_FILENAME}.XXXXXX")
     complete_url=${mihomo_rulesets_files_download_url}/${RULESETS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_rulesets_file" "$complete_url" || {
-        log error "Failed to download the ruleset list." "❌"
+        log error "Failed to download the ruleset list."
         rm -f "$tmp_rulesets_file"
         return 1
     }
     mv -f "$tmp_rulesets_file" "$RULESETS_FILE"
-    log info "Ruleset list updated." "✅"
+    log info "Ruleset list updated."
 
-    log info "Downloading block ruleset list" "📥"
+    log info "Downloading block ruleset list"
     tmp_block_rulesets_file=$(mktemp "${CORE_WORKDIR_PATH}/${RULESETS_BLOCKS_FILENAME}.XXXXXX")
     complete_url=${mihomo_rulesets_files_download_url}/${RULESETS_BLOCKS_FILENAME}
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" --speed-time "$CURL_MIN_SPEED_TIMEOUT" --progress-bar -L -f -o "$tmp_block_rulesets_file" "$complete_url" || {
-        log error "Failed to download the block ruleset list." "❌"
+        log error "Failed to download the block ruleset list."
         rm -f "$tmp_block_rulesets_file"
         return 1
     }
     mv -f "$tmp_block_rulesets_file" "$RULESETS_BLOCKS_FILE"
-    log info "Block ruleset list updated." "✅"
+    log info "Block ruleset list updated."
 
     return 0
 }
@@ -2268,10 +2416,10 @@ core_prepare_workdir() {
     config_get mihomo_persistent_ext_rules settings mihomo_persistent_ext_rules 0
     config_get mihomo_persistent_cache settings mihomo_persistent_cache 0
 
-    log info "Preparing workdir $CORE_WORKDIR_PATH" "📁"
+    log info "Preparing workdir $CORE_WORKDIR_PATH"
 
     if [ -L "$CORE_WORKDIR_PATH" ] || [ ! -d "$CORE_WORKDIR_PATH" ]; then
-        [ -e "$CORE_WORKDIR_PATH" ] || [ -L "$CORE_WORKDIR_PATH" ] && log warn "Removing invalid path at $CORE_WORKDIR_PATH" "⚠️"
+        [ -e "$CORE_WORKDIR_PATH" ] || [ -L "$CORE_WORKDIR_PATH" ] && log warn "Removing invalid path at $CORE_WORKDIR_PATH"
         rm -rf "$CORE_WORKDIR_PATH"
         # shellcheck disable=SC2174
         mkdir -m 700 -p "$CORE_WORKDIR_PATH"
@@ -2281,7 +2429,7 @@ core_prepare_workdir() {
         owner=$(ls -ldn "$CORE_WORKDIR_PATH" 2>/dev/null | awk '{print $3}')
         current_uid=$(id -u)
         if [ -n "$owner" ] && [ "$owner" != "$current_uid" ]; then
-            log warn "Removing insecure directory at $CORE_WORKDIR_PATH owned by UID $owner" "⚠️"
+            log warn "Removing insecure directory at $CORE_WORKDIR_PATH owned by UID $owner"
             rm -rf "$CORE_WORKDIR_PATH"
             # shellcheck disable=SC2174
             mkdir -m 700 -p "$CORE_WORKDIR_PATH"
@@ -2295,23 +2443,23 @@ core_prepare_workdir() {
         if [ ! -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
             echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
         elif [ "$current_hash" != "$saved_hash" ]; then
-            log info "Existing $OUTPUT_YAML_CONFIG_PATH is outdated and will be regenerated." "🐱"
+            log info "Existing $OUTPUT_YAML_CONFIG_PATH is outdated and will be regenerated."
             rm -f "$OUTPUT_YAML_CONFIG_PATH"
             echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
         else
-            log info "Existing $OUTPUT_YAML_CONFIG_PATH is up to date and will be reused." "🐱"
+            log info "Existing $OUTPUT_YAML_CONFIG_PATH is up to date and will be reused."
             res=0
         fi
     fi
 
     if [ "$mihomo_persistent_ext_rules" -eq 1 ] && [ ! -L "$CORE_WORKDIR_RULES_PATH" ]; then
-        log info "Creating symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
+        log info "Creating symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
         mkdir -p "$PROG_ETC_DIR"
         [ ! -d "$SYMLINKDIR_RULESETS" ] &&  mkdir -p "$SYMLINKDIR_RULESETS"
         ln -sf "$SYMLINKDIR_RULESETS" "$CORE_WORKDIR_RULES_PATH"
     elif  [ "$mihomo_persistent_ext_rules" -eq 0 ] && [ -L "$CORE_WORKDIR_RULES_PATH" ]; then
-        log info "Removing old symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH" "📁"
+        log info "Removing old symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH"
         rm -rf "$SYMLINKDIR_RULESETS"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
     fi
@@ -2396,14 +2544,14 @@ core_update() {
     if [ "$source_type" = "custom" ]; then
         config_get custom_url settings mihomo_custom_core_url
         if [ -z "$custom_url" ]; then
-            log error "Custom core base URL is not set in configuration." "❌"
+            log error "Custom core base URL is not set in configuration."
             return 1
         fi
 
         # Ensure URL doesn't have a trailing slash
         custom_url="${custom_url%/}"
         version_txt_url="${custom_url}/version.txt"
-        log info "Checking for Mihomo updates from custom source..." "🔄"
+        log info "Checking for Mihomo updates from custom source..."
     else
         local github_repo
         config_get channel settings mihomo_github_channel "$DEFAULT_MIHOMO_UPDATE_CHANNEL"
@@ -2412,9 +2560,9 @@ core_update() {
         channel=${1:-$channel}
 
         check_url="https://api.github.com/repos/${github_repo}/releases/latest"
-        log info "Checking for Mihomo updates (channel: $channel) from GitHub repository: $github_repo..." "🔄"
+        log info "Checking for Mihomo updates (channel: $channel) from GitHub repository: $github_repo..."
         version_txt_url=$(get_latest_version_url "$check_url" "$channel") || {
-            log error "Failed to get the version.txt URL from the GitHub API." "❌"
+            log error "Failed to get the version.txt URL from the GitHub API."
             return 1
         }
     fi
@@ -2431,7 +2579,7 @@ core_update() {
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
         -sL "$version_txt_url" | sed -n 1p | tr -d '\r\n'
     ) || {
-        log error "Failed to download version.txt." "❌"
+        log error "Failed to download version.txt."
         return 1
     }
 
@@ -2441,10 +2589,10 @@ core_update() {
     fi
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
-        log warn "Mihomo is not installed. Installing version $latest_ver." "⚠️"
+        log warn "Mihomo is not installed. Installing version $latest_ver."
         core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log error "Core update failed." "❌"
+            log error "Core update failed."
             return 1
         fi
         return 0
@@ -2454,21 +2602,21 @@ core_update() {
     log info "Latest Mihomo version: $latest_ver"
 
     if [ "$cur_ver" != "$latest_ver" ]; then
-        log info "Removing current mihomo binary..." "⚠️"
+        log info "Removing current mihomo binary..."
         core_remove
         if [ $? -eq 1 ]; then
-            log error "Core update failed." "❌"
+            log error "Core update failed."
             return 1
         fi
 
-        log info "Updating Mihomo to version $latest_ver" "⬆️"
+        log info "Updating Mihomo to version $latest_ver"
         core_download "$version_txt_url" "$latest_ver"
         if [ $? -eq 1 ]; then
-            log error "Core update failed." "❌"
+            log error "Core update failed."
             return 1
         fi
     else
-        log info "Mihomo is already up-to-date." "✅"
+        log info "Mihomo is already up-to-date."
     fi
 
     return 0
@@ -2488,53 +2636,53 @@ core_download() {
     base_url="${version_txt_url%/*}"
     download_url="${base_url}/${file_name}"
 
-    log info "Downloading mihomo binary from $download_url" "📥"
+    log info "Downloading mihomo binary from $download_url"
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
         --progress-bar -L -o "$tmp_archive_path" "$download_url" || {
         rm -f "$tmp_archive_path"
-        log error "Failed to download the Mihomo archive." "❌"
+        log error "Failed to download the Mihomo archive."
         return 1
     }
 
-    log info "Extracting to $CORE_PATH" "⬇️"
+    log info "Extracting to $CORE_PATH"
     if gzip -t "$tmp_archive_path" 2>/dev/null; then
         gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
             rm -f "$tmp_archive_path"
-            log error "Failed to extract the Mihomo archive." "❌"
+            log error "Failed to extract the Mihomo archive."
             return 1
         }
     else
         cp "$tmp_archive_path" "$CORE_PATH" || {
             rm -f "$tmp_archive_path"
-            log error "Failed to copy the Mihomo binary." "❌"
+            log error "Failed to copy the Mihomo binary."
             return 1
         }
     fi
 
-    log info "Mihomo installed at $CORE_PATH" "🚀"
+    log info "Mihomo installed at $CORE_PATH"
 
     if ! chmod +x "$CORE_PATH"; then
-        log error "Failed to set executable permissions: $CORE_PATH" "❌"
+        log error "Failed to set executable permissions: $CORE_PATH"
     fi
 
-    log info "Cleaning up temporary files" "🧹"
+    log info "Cleaning up temporary files"
     if ! rm -f "$tmp_archive_path"; then
-        log error "Failed to clean up temporary file: $tmp_archive_path" "❌"
+        log error "Failed to clean up temporary file: $tmp_archive_path"
     fi
 }
 
 core_remove() {
     if [ ! -x "$CORE_PATH" ]; then
-        log error "Mihomo is not installed." "❌"
+        log error "Mihomo is not installed."
         return 1
     else
         if rm -f "$CORE_PATH"; then
-            log info "Mihomo is removed." "✅"
+            log info "Mihomo is removed."
             return 0
         else
-            log error "Failed to remove Mihomo binary: $CORE_PATH" "❌"
+            log error "Failed to remove Mihomo binary: $CORE_PATH"
             return 1
         fi
     fi
@@ -2559,12 +2707,12 @@ cron_job_add() {
     local name="$4"
 
     if [ -z "$schedule" ]; then
-        log error "$name cron schedule string is empty! Cron job not added." "❌"
+        log error "$name cron schedule string is empty. Cron job was not added."
         return 1
     fi
 
     if ! validate_cron_expr "$schedule"; then
-        log error "$name cron schedule string is invalid: $schedule! Cron job not added." "❌"
+        log error "$name cron schedule string is invalid: $schedule. Cron job was not added."
         return 1
     fi
 
@@ -2580,9 +2728,9 @@ cron_job_add() {
     echo "$expected_entry" >> /etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
-        log info "$name cron job added and cron service restarted" "✅"
+        log info "$name cron job added and cron service restarted"
     else
-        log info "$name cron job added (cron service not enabled)" "ℹ️"
+        log info "$name cron job added (cron service not enabled)"
     fi
 }
 
@@ -2594,9 +2742,9 @@ cron_job_remove() {
         sed -i "\|${pattern}|d" /etc/crontabs/root
         if /etc/init.d/cron enabled; then
             /etc/init.d/cron restart
-            log info "$name cron job removed and cron service restarted" "✅"
+            log info "$name cron job removed and cron service restarted"
         else
-            log info "$name cron job removed (cron service not enabled)" "ℹ️"
+            log info "$name cron job removed (cron service not enabled)"
         fi
     fi
 }
@@ -2672,7 +2820,7 @@ cron_update() {
 diag_nft() {
     clog info "Verifying existence of NFTables table '$NF_TABLE_NAME'..."
     if ! nft list table inet "$NF_TABLE_NAME" >/dev/null 2>&1; then
-        clog error "Table '$NF_TABLE_NAME' not found. Please create the required NFTables table." "❌"
+        clog error "Table '$NF_TABLE_NAME' not found. Please create the required NFTables table."
         return 1
     fi
 
@@ -2694,12 +2842,12 @@ diag_route() {
     hex_mark=$(printf "0x%x" "$NF_TABLE_FWMARK_FINAL")
     if ! ip rule list | awk -v priority="${pbr_priority}:" -v mark="$hex_mark" -v table="$NF_ROUTE_TABLE" \
         '$1 == priority && $0 ~ ("fwmark " mark) && $0 ~ ("lookup " table "([[:space:]]|$)") { found=1 } END { exit !found }'; then
-        clog error "Required route rule is missing: ip rule add fwmark $NF_TABLE_FWMARK_FINAL table $NF_ROUTE_TABLE priority $pbr_priority" "❌"
+        clog error "Required route rule is missing: ip rule add fwmark $NF_TABLE_FWMARK_FINAL table $NF_ROUTE_TABLE priority $pbr_priority"
     fi
     ip rule list
 
     if ! ip route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
-         clog error "Route table $NF_ROUTE_TABLE is incorrect!" "❌"
+         clog error "Route table $NF_ROUTE_TABLE is incorrect"
     fi
     ip route show table "$NF_ROUTE_TABLE" 2>/dev/null
 }
@@ -2715,7 +2863,7 @@ diag_proxy_resolver() {
     fi
     config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
     is_port "$dns_listen_port" || {
-        log warn "Invalid proxy.dns_listen_port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'" "⚠️"
+        log warn "Invalid DNS listen port: '$dns_listen_port', using default: '$DEFAULT_DNS_LISTEN_PORT'"
         dns_listen_port="$DEFAULT_DNS_LISTEN_PORT"
     }
 
@@ -2727,11 +2875,11 @@ diag_proxy_resolver() {
     ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
 
     if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
-        clog error "Fake IP DNS query failed" "❌"
+        clog error "Fake IP DNS query failed"
         return 1
     else
         echo "$ips"
-        clog info "Fake IP DNS query successful" "✅"
+        clog info "Fake IP DNS query successful"
         return 0
     fi
 }
@@ -2753,10 +2901,10 @@ diag_external_resolver() {
     ips=$(echo "$ip_output" | awk '/^Address: / {print $2}')
 
     if [ "$exit_code" -ne 0 ] || [ -z "$ips" ]; then
-        clog error "External DNS query failed" "❌"
+        clog error "External DNS query failed"
         return 1
     else
-        clog info "External DNS query successful" "✅"
+        clog info "External DNS query successful"
         return 0
     fi
 }
@@ -2776,10 +2924,10 @@ diag_icmp() {
     exit_code=$?
 
     if [ "$exit_code" -eq 0 ]; then
-        clog info "Ping to ${target} is successful" "✅"
+        clog info "Ping to ${target} is successful"
         clog info "$ping_output"
     else
-        clog error "Ping to ${target} failed" "❌"
+        clog error "Ping to ${target} failed"
         clog error "$ping_output"
     fi
 }
@@ -2788,7 +2936,7 @@ diag_mihomo_config() {
     if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
         sed -E 's/^([[:space:]]*"?(secret|password|obfs-password|tls-password|uuid|public-key|short-id|private-key|certificate|preshared-key|username|server|servername|token|auth|authentication)"?:).*/\1 "***REDACTED***"/gI' "$OUTPUT_YAML_CONFIG_PATH"
     else
-        clog error "Config file not found." "❌"
+        clog error "Config file not found."
     fi
 }
 
@@ -2796,7 +2944,7 @@ diag_mihomo_config_unsafe() {
     if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
         cat "$OUTPUT_YAML_CONFIG_PATH"
     else
-        clog error "Config file not found." "❌"
+        clog error "Config file not found."
     fi
 }
 
@@ -2804,7 +2952,7 @@ diag_service_config() {
     if [ -f "$CONFIG_PATH" ]; then
         sed -E "s/^([[:space:]]*(option|list)[[:space:]]+(password|obfs_password|tls_password|key|private_key|preshared_key|api_password|username|uuid|public_key|short_id|certificate|server|servername|token|auth|authentication|subscription|proxy_link_uri|proxy_link_object)[[:space:]]+).*/\1'***REDACTED***'/gI" "$CONFIG_PATH"
     else
-        clog error "Service config file not found." "❌"
+        clog error "Service config file not found."
     fi
 }
 
@@ -2812,76 +2960,109 @@ diag_service_config_unsafe() {
     if [ -f "$CONFIG_PATH" ]; then
         cat "$CONFIG_PATH"
     else
-        clog error "Service config file not found." "❌"
+        clog error "Service config file not found."
     fi
 }
 
 diag_report() {
-    local running autoload hw_model os_ver
-    service "$PROGNAME" running && running="✅" || running="❌"
-    service "$PROGNAME" enabled && autoload="✅" || autoload="❌"
+    local running_status autoload_status hw_model os_ver
+
+    local c_green="" c_red="" c_yellow="" c_gray="" c_reset=""
+    if [ -t 1 ]; then
+        c_green="\033[1;32m"
+        c_red="\033[1;31m"
+        c_yellow="\033[1;33m"
+        c_gray="\033[90m"
+        c_reset="\033[0m"
+    fi
+
+    if service "$PROGNAME" running; then
+        running_status="${c_green}active${c_reset}"
+    else
+        running_status="${c_red}inactive${c_reset}"
+    fi
+
+    if service "$PROGNAME" enabled; then
+        autoload_status="${c_green}enabled${c_reset}"
+    else
+        autoload_status="${c_red}disabled${c_reset}"
+    fi
+
     os_ver=$(get_os_version)
     hw_model=$(get_hw_model)
 
+    print_dpi_status() {
+        local name="$1"
+        local filepath="$2"
+        if [ -f "$filepath" ]; then
+            printf "  %-15s :: %bInstalled%b\n" "$name" "$c_green" "$c_reset"
+        else
+            printf "  %-15s :: %bNot installed%b\n" "$name" "$c_gray" "$c_reset"
+        fi
+    }
+
     echo ""
-    echo "₍^. .^₎⟆ $PROGNAME diagnostic:"
+    echo "${c_gray}-- JustClash Diagnostic Report ---------------------------------${c_reset}"
     echo ""
-    echo "❯❯❯❯ Basic:"
-    echo "Device:  ${hw_model:-$NO_DATA_STRING}"
-    echo "OpenWRT: ${os_ver:-$NO_DATA_STRING}"
-    echo "Service: $JUSTCLASH_VERSION"
-    echo "Mihomo:  $(info_mihomo)"
-    echo "HWID:    $(hwid_generate)"
+    echo "  [ Device Info ]"
+    printf "  %-15s :: %s\n" "Device" "${hw_model:-$NO_DATA_STRING}"
+    printf "  %-15s :: %s\n" "OpenWrt" "${os_ver:-$NO_DATA_STRING}"
+    printf "  %-15s :: %s\n" "Service Ver" "$JUSTCLASH_VERSION"
+    printf "  %-15s :: %s\n" "Mihomo Ver" "$(info_mihomo)"
+    printf "  %-15s :: %s\n" "HWID" "$(hwid_generate)"
     echo ""
-    echo "❯❯❯❯ Status:"
-    echo "Active:  $running"
-    echo "Load:    $autoload"
+    echo "  [ Service Status ]"
+    printf "  %-15s :: %b\n" "Active" "$running_status"
+    printf "  %-15s :: %b\n" "Autoload" "$autoload_status"
     echo ""
-    echo "❯❯❯❯ ICMP Pings:"
-    echo "Yandex ($DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
-    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2
+    echo "  [ ICMP Pings ]"
+    echo "  Yandex ($DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
+    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2 | sed 's/^/    /'
     echo ""
-    echo "Google ($DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
-    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2
+    echo "  Google ($DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
+    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2 | sed 's/^/    /'
     echo ""
-    echo "GitHub ($DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB):"
-    diag_icmp "$DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB" 2
+    echo "  GitHub ($DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB):"
+    diag_icmp "$DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB" 2 | sed 's/^/    /'
     echo ""
-    echo "❯❯❯❯ DNS Resolves:"
-    echo "Proxy ($DEFAULT_DIAG_RESOLVE_URL_YANDEX):"
-    diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX"
+    echo "  [ DNS Resolves ]"
+    echo "  Proxy ($DEFAULT_DIAG_RESOLVE_URL_YANDEX):"
+    diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" | sed 's/^/    /'
     echo ""
-    echo "External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
-    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX"
+    echo "  External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
+    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" | sed 's/^/    /'
     echo ""
-    echo "External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
-    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE"
+    echo "  External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
+    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" | sed 's/^/    /'
     echo ""
-    echo "❯❯❯❯ DPI applications:"
-    if [ -f "$ZAPRETINITD_FILEPATH" ]; then echo " - Zapret: ⚠️ Installed"; else echo " - Zapret: ✅ Not installed"; fi
-    if [ -f "$BYEDPI_FILEPATH" ]; then echo " - ByeDPI: ⚠️ Installed"; else echo " - ByeDPI: ✅ Not installed"; fi
-    if [ -f "$YOUTUBEUNBLOCK_FILEPATH" ]; then echo " - YoutubeUnblock: ⚠️ Installed"; else echo " - YoutubeUnblock: ✅ Not installed"; fi
-    if [ -f "$B4_FILEPATH" ]; then echo " - B4: ⚠️ Installed"; else echo " - B4: ✅ Not installed"; fi
+    echo "  [ DPI Applications ]"
+    print_dpi_status "Zapret" "$ZAPRETINITD_FILEPATH"
+    print_dpi_status "ByeDPI" "$BYEDPI_FILEPATH"
+    print_dpi_status "YoutubeUnblock" "$YOUTUBEUNBLOCK_FILEPATH"
+    print_dpi_status "B4" "$B4_FILEPATH"
     echo ""
-    echo "❯❯❯❯ NFT Tables:"
-    diag_nft
+    echo "  [ NFT Tables ]"
+    diag_nft | sed 's/^/    /'
     echo ""
-    echo "❯❯❯❯ Routes:"
-    diag_route
-    echo "❯❯❯❯ /etc/resolv.conf:"
-    cat /etc/resolv.conf
+    echo "  [ Routes ]"
+    diag_route | sed 's/^/    /'
     echo ""
-    echo "❯❯❯❯ Network config:"
-    uci show network | sed -E "s/(\.(password|key|private_key|preshared_key|secret|passphrase))=('.*'|[^ ]*)/\1='***REDACTED***'/gI"
+    echo "  [ /etc/resolv.conf ]"
+    sed 's/^/    /' /etc/resolv.conf
     echo ""
-    echo "❯❯❯❯ DHCP config:"
-    uci show dhcp
+    echo "  [ Network Config ]"
+    uci show network | sed -E "s/(\.(password|key|private_key|preshared_key|secret|passphrase))=('.*'|[^ ]*)/\1='***REDACTED***'/gI" | sed 's/^/    /'
     echo ""
-    echo "❯❯❯❯ Service config:"
-    diag_service_config
+    echo "  [ DHCP Config ]"
+    uci show dhcp | sed 's/^/    /'
     echo ""
-    echo "❯❯❯❯ Mihomo config:"
-    diag_mihomo_config
+    echo "  [ Service Config ]"
+    diag_service_config | sed 's/^/    /'
+    echo ""
+    echo "  [ Mihomo Config ]"
+    diag_mihomo_config | sed 's/^/    /'
+    echo ""
+    echo "${c_gray}----------------------------------------------------------------${c_reset}"
     echo ""
 }
 
