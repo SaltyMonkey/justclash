@@ -28,7 +28,7 @@ start_service() {
 }
 
 stop_service() {
-    $PROG stop
+    JUSTCLASH_ENV=procd $PROG stop
     sleep 1
 }
 
