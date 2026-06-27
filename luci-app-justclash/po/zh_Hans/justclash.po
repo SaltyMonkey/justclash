@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-18 23:01+0300\n"
+"POT-Creation-Date: 2026-06-25 15:48+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -24,7 +24,7 @@ msgstr "关闭所有连接"
 msgid "Close all active connections?"
 msgstr "关闭所有活动连接？"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:79 htdocs/luci-static/resources/view/justclash/connections.js:226
+#: htdocs/luci-static/resources/view/justclash/connections.js:79 htdocs/luci-static/resources/view/justclash/connections.js:224
 msgid "Close all"
 msgstr "全部关闭"
 
@@ -32,18 +32,18 @@ msgstr "全部关闭"
 msgid "Cancel"
 msgstr "取消"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:102 htdocs/luci-static/resources/view/justclash/connections.js:140 htdocs/luci-static/resources/view/justclash/connections.js:220 htdocs/luci-static/resources/view/justclash/connections.js:247 htdocs/luci-static/resources/view/justclash/connections.js:322 htdocs/luci-static/resources/view/justclash/nodes.js:126 htdocs/luci-static/resources/view/justclash/realtime_logs.js:195 htdocs/luci-static/resources/view/justclash/rules.js:39 htdocs/luci-static/resources/view/justclash/rules.js:111 htdocs/luci-static/resources/view/justclash/rules.js:178 htdocs/luci-static/resources/view/justclash/status.js:137 htdocs/luci-static/resources/view/justclash/status.js:324 htdocs/luci-static/resources/view/justclash/status.js:354 htdocs/luci-static/resources/view/justclash/status.js:435 htdocs/luci-static/resources/view/justclash/status.js:469
-#: htdocs/luci-static/resources/view/justclash/status.js:470 htdocs/luci-static/resources/view/justclash/status.js:472 htdocs/luci-static/resources/view/justclash/status.js:476 htdocs/luci-static/resources/view/justclash/status.js:525 htdocs/luci-static/resources/view/justclash/status.js:598 htdocs/luci-static/resources/view/justclash/status.js:601 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:122
+#: htdocs/luci-static/resources/view/justclash/connections.js:102 htdocs/luci-static/resources/view/justclash/connections.js:138 htdocs/luci-static/resources/view/justclash/connections.js:218 htdocs/luci-static/resources/view/justclash/connections.js:245 htdocs/luci-static/resources/view/justclash/connections.js:320 htdocs/luci-static/resources/view/justclash/nodes.js:124 htdocs/luci-static/resources/view/justclash/realtime_logs.js:193 htdocs/luci-static/resources/view/justclash/rules.js:37 htdocs/luci-static/resources/view/justclash/rules.js:112 htdocs/luci-static/resources/view/justclash/rules.js:179 htdocs/luci-static/resources/view/justclash/status.js:137 htdocs/luci-static/resources/view/justclash/status.js:324 htdocs/luci-static/resources/view/justclash/status.js:354 htdocs/luci-static/resources/view/justclash/status.js:435 htdocs/luci-static/resources/view/justclash/status.js:467
+#: htdocs/luci-static/resources/view/justclash/status.js:468 htdocs/luci-static/resources/view/justclash/status.js:470 htdocs/luci-static/resources/view/justclash/status.js:474 htdocs/luci-static/resources/view/justclash/status.js:523 htdocs/luci-static/resources/view/justclash/status.js:596 htdocs/luci-static/resources/view/justclash/status.js:599 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:122
 msgid "Error"
 msgstr "错误"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:106 htdocs/luci-static/resources/view/justclash/connections.js:251 htdocs/luci-static/resources/view/justclash/realtime_logs.js:199
+#: htdocs/luci-static/resources/view/justclash/connections.js:106 htdocs/luci-static/resources/view/justclash/connections.js:249 htdocs/luci-static/resources/view/justclash/realtime_logs.js:197
 msgid "Copy JSON"
-msgstr ""
+msgstr "复制 JSON"
 
 #: htdocs/luci-static/resources/view/justclash/connections.js:106
 msgid "Copy Summary"
-msgstr ""
+msgstr "复制摘要"
 
 #: htdocs/luci-static/resources/view/justclash/connections.js:108
 msgid "Connection details"
@@ -53,85 +53,83 @@ msgstr "连接详情"
 msgid "Close"
 msgstr "关闭"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:141 htdocs/luci-static/resources/view/justclash/nodes.js:470
+#: htdocs/luci-static/resources/view/justclash/connections.js:139 htdocs/luci-static/resources/view/justclash/nodes.js:468
 msgid "Failed to load configuration"
 msgstr "加载配置失败"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:152
+#: htdocs/luci-static/resources/view/justclash/connections.js:150
 msgid "Active Connections"
 msgstr "活动连接"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:153
+#: htdocs/luci-static/resources/view/justclash/connections.js:151
 msgid "Monitor and manage active network connections established through Mihomo."
 msgstr "监控和管理通过 Mihomo 建立的活动网络连接。"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:168 htdocs/luci-static/resources/view/justclash/connections.js:295
+#: htdocs/luci-static/resources/view/justclash/connections.js:166 htdocs/luci-static/resources/view/justclash/connections.js:293
 msgid "Proto"
 msgstr "协议"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:169 htdocs/luci-static/resources/view/justclash/connections.js:296
+#: htdocs/luci-static/resources/view/justclash/connections.js:167 htdocs/luci-static/resources/view/justclash/connections.js:294
 msgid "Connection"
 msgstr "连接"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:170 htdocs/luci-static/resources/view/justclash/connections.js:179 htdocs/luci-static/resources/view/justclash/connections.js:299
+#: htdocs/luci-static/resources/view/justclash/connections.js:168 htdocs/luci-static/resources/view/justclash/connections.js:177 htdocs/luci-static/resources/view/justclash/connections.js:297
 msgid "Host/Sniff"
 msgstr "主机/嗅探"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:171 htdocs/luci-static/resources/view/justclash/connections.js:189 htdocs/luci-static/resources/view/justclash/connections.js:300
+#: htdocs/luci-static/resources/view/justclash/connections.js:169 htdocs/luci-static/resources/view/justclash/connections.js:187 htdocs/luci-static/resources/view/justclash/connections.js:298
 msgid "Chains"
 msgstr "代理链"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:172 htdocs/luci-static/resources/view/justclash/connections.js:194 htdocs/luci-static/resources/view/justclash/connections.js:301 htdocs/luci-static/resources/view/justclash/nodes.js:515
+#: htdocs/luci-static/resources/view/justclash/connections.js:170 htdocs/luci-static/resources/view/justclash/connections.js:192 htdocs/luci-static/resources/view/justclash/connections.js:299 htdocs/luci-static/resources/view/justclash/nodes.js:513
 msgid "Rule"
 msgstr "规则"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:173 htdocs/luci-static/resources/view/justclash/connections.js:302
+#: htdocs/luci-static/resources/view/justclash/connections.js:171 htdocs/luci-static/resources/view/justclash/connections.js:300
 msgid "Action"
 msgstr "动作"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:184
+#: htdocs/luci-static/resources/view/justclash/connections.js:182
 msgid "Source/Endpoint IP"
 msgstr "源/端点 IP"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:199 htdocs/luci-static/resources/view/justclash/connections.js:431
+#: htdocs/luci-static/resources/view/justclash/connections.js:197 htdocs/luci-static/resources/view/justclash/connections.js:429
 msgid "Apply"
 msgstr "应用"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:218
+#: htdocs/luci-static/resources/view/justclash/connections.js:216
 msgid "All active connections were closed"
 msgstr "所有活动连接已关闭"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:238
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/connections.js:236
 msgid "No active connections to copy"
-msgstr "所有活动连接已关闭"
+msgstr "没有可复制的活动连接"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:251 htdocs/luci-static/resources/view/justclash/realtime_logs.js:199
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/connections.js:249 htdocs/luci-static/resources/view/justclash/realtime_logs.js:197
 msgid "Copy Text"
-msgstr "复制详情"
+msgstr "复制文本"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:267
+#: htdocs/luci-static/resources/view/justclash/connections.js:265
 msgid "Interval:"
 msgstr "刷新频率:"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:297
+#: htdocs/luci-static/resources/view/justclash/connections.js:295
 msgid "Source"
 msgstr "源地址"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:298
+#: htdocs/luci-static/resources/view/justclash/connections.js:296
 msgid "Destination"
 msgstr "目标地址"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:305 htdocs/luci-static/resources/view/justclash/connections.js:306
+#: htdocs/luci-static/resources/view/justclash/connections.js:303 htdocs/luci-static/resources/view/justclash/connections.js:304
 msgid "Close connection"
 msgstr "关闭连接"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:319
+#: htdocs/luci-static/resources/view/justclash/connections.js:317
 msgid "Connection closed"
 msgstr "连接已关闭"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:431
+#: htdocs/luci-static/resources/view/justclash/connections.js:429
 msgid "Reset"
 msgstr "重置"
 
@@ -139,1006 +137,997 @@ msgstr "重置"
 msgid "Unable to copy to clipboard"
 msgstr "无法复制到剪贴板"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:25
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:26
 msgid "Every 15 seconds"
 msgstr "每 15 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:26
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:27
 msgid "Every 25 seconds"
 msgstr "每 25 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:27
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:28
 msgid "Every 35 seconds"
 msgstr "每 35 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:28
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:29
 msgid "Every 45 seconds"
 msgstr "每 45 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:29 htdocs/luci-static/resources/view/justclash/helper_common.js:88 htdocs/luci-static/resources/view/justclash/helper_common.js:121
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:30 htdocs/luci-static/resources/view/justclash/helper_common.js:89 htdocs/luci-static/resources/view/justclash/helper_common.js:122
 msgid "Every 1 minute"
 msgstr "每 1 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:32 htdocs/luci-static/resources/view/justclash/helper_common.js:128
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:33 htdocs/luci-static/resources/view/justclash/helper_common.js:129
 msgid "Every 30 minutes"
 msgstr "每 30 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:33
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:34
 msgid "Every 60 minutes"
 msgstr "每 60 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:34
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:35
 msgid "Every 120 minutes"
 msgstr "每 120 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:35
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:36
 msgid "Every 180 minutes"
 msgstr "每 180 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:38 htdocs/luci-static/resources/view/justclash/helper_common.js:109
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:39 htdocs/luci-static/resources/view/justclash/helper_common.js:110
 msgid "5 seconds"
 msgstr "5 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:39 htdocs/luci-static/resources/view/justclash/helper_common.js:44 htdocs/luci-static/resources/view/justclash/helper_common.js:110
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:40 htdocs/luci-static/resources/view/justclash/helper_common.js:45 htdocs/luci-static/resources/view/justclash/helper_common.js:111
 msgid "10 seconds"
 msgstr "10 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:40 htdocs/luci-static/resources/view/justclash/helper_common.js:45
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:41 htdocs/luci-static/resources/view/justclash/helper_common.js:46
 msgid "20 seconds"
 msgstr "20 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:41
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:42
 msgid "40 seconds"
 msgstr "40 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:46
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:47
 msgid "30 seconds"
 msgstr "30 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:47 htdocs/luci-static/resources/view/justclash/helper_common.js:53
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:48 htdocs/luci-static/resources/view/justclash/helper_common.js:54
 msgid "60 seconds"
 msgstr "60 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:48
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:49
 msgid "90 seconds"
 msgstr "90 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:49 htdocs/luci-static/resources/view/justclash/helper_common.js:54
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:50 htdocs/luci-static/resources/view/justclash/helper_common.js:55
 msgid "120 seconds"
 msgstr "120 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:50 htdocs/luci-static/resources/view/justclash/helper_common.js:55
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:51 htdocs/luci-static/resources/view/justclash/helper_common.js:56
 msgid "180 seconds"
 msgstr "180 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:58
-#, fuzzy
-msgid "12 hours"
-msgstr "每 12 小时"
-
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:59
-#, fuzzy
-msgid "24 hours"
-msgstr "每 24 小时"
+msgid "12 hours"
+msgstr "12 小时"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:60
-#, fuzzy
-msgid "48 hours"
-msgstr "每 48 小时"
+msgid "24 hours"
+msgstr "24 小时"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:61
-msgid "96 hours"
-msgstr ""
+msgid "48 hours"
+msgstr "48 小时"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:62
-#, fuzzy
-msgid "168 hours"
-msgstr "每 48 小时"
+msgid "96 hours"
+msgstr "96 小时"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:65
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:63
+msgid "168 hours"
+msgstr "168 小时"
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:66
 msgid "1024 entries"
 msgstr "1024 条"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:66
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:67
 msgid "2048 entries"
 msgstr "2048 条"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:67
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:68
 msgid "4096 entries"
 msgstr "4096 条"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:68
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:69
 msgid "8192 entries"
 msgstr "8192 条"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:69
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:70
 msgid "16384 entries"
 msgstr "16384 条"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:72
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:73
 msgid "Every 24 hours"
 msgstr "每 24 小时"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:73
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:74
 msgid "Every 12 hours"
 msgstr "每 12 小时"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:74
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:75
 msgid "Every 48 hours"
 msgstr "每 48 小时"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:75
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:76
 msgid "Every 72 hours"
 msgstr "每 72 小时"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:78 htdocs/luci-static/resources/view/justclash/status.js:141
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:79 htdocs/luci-static/resources/view/justclash/status.js:141
 msgid "Disabled"
 msgstr "已禁用"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:79
-msgid "48 MiB"
-msgstr ""
-
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:80
-msgid "64 MiB"
-msgstr ""
+msgid "48 MiB"
+msgstr "48 MiB"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:81
-msgid "96 MiB"
-msgstr ""
+msgid "64 MiB"
+msgstr "64 MiB"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:82
-msgid "128 MiB"
-msgstr ""
+msgid "96 MiB"
+msgstr "96 MiB"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:83
-msgid "160 MiB"
-msgstr ""
+msgid "128 MiB"
+msgstr "128 MiB"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:84
-msgid "192 MiB"
-msgstr ""
+msgid "160 MiB"
+msgstr "160 MiB"
 
 #: htdocs/luci-static/resources/view/justclash/helper_common.js:85
-msgid "224 MiB"
-msgstr ""
+msgid "192 MiB"
+msgstr "192 MiB"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:89 htdocs/luci-static/resources/view/justclash/helper_common.js:122
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:86
+msgid "224 MiB"
+msgstr "224 MiB"
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:90 htdocs/luci-static/resources/view/justclash/helper_common.js:123
 msgid "Every 2 minutes"
 msgstr "每 2 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:90 htdocs/luci-static/resources/view/justclash/helper_common.js:123
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:91 htdocs/luci-static/resources/view/justclash/helper_common.js:124
 msgid "Every 3 minutes"
 msgstr "每 3 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:91 htdocs/luci-static/resources/view/justclash/helper_common.js:124
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:92 htdocs/luci-static/resources/view/justclash/helper_common.js:125
 msgid "Every 6 minutes"
 msgstr "每 6 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:94
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:95
 msgid "10 milliseconds"
 msgstr "10 毫秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:95
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:96
 msgid "20 milliseconds"
 msgstr "20 毫秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:96
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:97
 msgid "30 milliseconds"
 msgstr "30 毫秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:97
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:98
 msgid "40 milliseconds"
 msgstr "40 毫秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:98
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:99
 msgid "50 milliseconds"
 msgstr "50 毫秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:99
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:100
 msgid "100 milliseconds"
 msgstr "100 毫秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:102
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:103
 msgid "Response code 200"
 msgstr "响应代码 200"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:103
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:104
 msgid "Response code 204"
 msgstr "响应代码 204"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:106
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:107
 msgid "1 second"
 msgstr "1 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:107
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:108
 msgid "2 seconds"
 msgstr "2 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:108
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:109
 msgid "3 seconds"
 msgstr "3 秒"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:125
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:126
 msgid "Every 12 minutes"
 msgstr "每 12 分钟"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:129
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:130
 msgid "Every hour"
 msgstr "每 1 小时"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:130
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:131
 msgid "Every 3 hour"
 msgstr "每 3 小时"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:142
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:143
 msgid "Object"
 msgstr "对象"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:143
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:144
 msgid "URL"
 msgstr "URL"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:160
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:161
+msgid "Select"
+msgstr "手动选择"
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:162
 msgid "Fallback"
 msgstr "故障转移 (Fallback)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:161
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:163
 msgid "Load balancer"
 msgstr "负载均衡 (Load balance)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:162
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:164
 msgid "URL Test"
 msgstr "自动测速 (URL Test)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:165
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:167
 msgid "Consistent hashing"
 msgstr "一致性哈希"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:166
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:168
 msgid "Round robin"
 msgstr "轮询"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:167
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:169
 msgid "Sticky sessions"
 msgstr "粘性会话"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:170 htdocs/luci-static/resources/view/justclash/helper_common.js:175 htdocs/luci-static/resources/view/justclash/helper_common.js:204
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:172 htdocs/luci-static/resources/view/justclash/helper_common.js:177 htdocs/luci-static/resources/view/justclash/helper_common.js:206
 msgid "By rules"
 msgstr "按规则"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:171 htdocs/luci-static/resources/view/justclash/helper_common.js:176
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:173 htdocs/luci-static/resources/view/justclash/helper_common.js:178
 msgid "Drop"
 msgstr "丢弃 (Drop)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:172 htdocs/luci-static/resources/view/justclash/helper_common.js:205
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:174 htdocs/luci-static/resources/view/justclash/helper_common.js:207
 msgid "Reject"
 msgstr "拒绝 (Reject)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:177 htdocs/luci-static/resources/view/justclash/helper_common.js:203 htdocs/luci-static/resources/view/justclash/nodes.js:517
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:179 htdocs/luci-static/resources/view/justclash/helper_common.js:205 htdocs/luci-static/resources/view/justclash/nodes.js:515
 msgid "Direct"
 msgstr "直连 (Direct)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:192
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:194
 msgid "Stable"
 msgstr "正式版 (Stable)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:193
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:195
 msgid "Alpha"
 msgstr "测试版 (Alpha)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:216
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:218
 msgid "Use a non-negative integer"
 msgstr "使用非负整数"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:220
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:222
 msgid "Number is too large"
 msgstr "数字太大"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:223
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:225
 #, javascript-format
 msgid "Value must be at least %s"
 msgstr "值必须至少为 %s"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:226
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:228
 #, javascript-format
 msgid "Value must not exceed %s"
 msgstr "值不得超过 %s"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:284 htdocs/luci-static/resources/view/justclash/helper_common.js:288 htdocs/luci-static/resources/view/justclash/helper_common.js:294
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:286 htdocs/luci-static/resources/view/justclash/helper_common.js:290 htdocs/luci-static/resources/view/justclash/helper_common.js:296
 msgid "Invalid HTTP(S) URL"
 msgstr "无效的 HTTP(S) URL"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:292
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:294
 msgid "URL must point to a .zip file"
 msgstr "URL 必须指向一个 .zip 文件"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:358
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:360
 msgid "Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4."
 msgstr "名称服务器格式无效。允许：quic://, https://, tls://, udp:// 或 IPv4。"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:379
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:381
 msgid "Name must contain 1-64 letters, digits, hyphens, and underscores"
 msgstr "名称必须包含 1-64 个字母、数字、连字符和下划线"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:392
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:394
 msgid "Use a user name or numeric UID"
 msgstr "使用用户名或数字 UID"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:401
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:403
 msgid "Routing mark must not contain whitespace or control characters"
 msgstr "路由标记不得包含空格或控制字符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:404
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:406
 msgid "Use a decimal or hex number, for example 268435456 or 0xff"
-msgstr "使用十进制数字，例如 268435456"
+msgstr "使用十进制或十六进制数字，例如 268435456 或 0xff"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:408
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:410
 msgid "Routing mark is too large"
 msgstr "路由标记太大"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:411
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:413
 msgid "Routing mark must be between 1 and 2147483647"
 msgstr "路由标记必须介于 1 和 2147483647 之间"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:414
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:416
 msgid "Routing mark 0x3 and 0xff are reserved by JustClash"
 msgstr "路由标记 0x3 和 0xff 由 JustClash 保留"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:426 htdocs/luci-static/resources/view/justclash/helper_common.js:449
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:428 htdocs/luci-static/resources/view/justclash/helper_common.js:451
 msgid "Value must not contain whitespace or control characters"
 msgstr "值不得包含空格或控制字符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:430
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:432
 msgid "Only one : separator is allowed"
 msgstr "只允许一个 : 分隔符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:434
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:436
 msgid "Value must use the user:pass format"
 msgstr "值必须使用 user:pass 格式"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:443
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:445
 msgid "API password cannot be empty"
 msgstr "API 密码不能为空"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:446
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:448
 msgid "Use at least 8 characters"
 msgstr "至少使用 8 个字符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:470
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:472
 msgid "Proxy link cannot be empty!"
 msgstr "代理链接不能为空！"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:472
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:474
 msgid "Proxy link is too long"
 msgstr "代理链接太长"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:474
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:476
 msgid "Proxy link contains control characters!"
 msgstr "代理链接包含控制字符！"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:477
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:479
 msgid "Input is not supported or incorrect!"
 msgstr "输入不受支持或不正确！"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:479
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:481
 msgid "Proxy link contains not encoded whitespace!"
 msgstr "代理链接包含未编码的空格！"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:484
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:486
 msgid "DIRECT link must be exactly direct://"
 msgstr "DIRECT 链接必须完全为 direct://"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:492
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:494
 msgid "Proxy link can't be parsed!"
 msgstr "代理链接无法解析！"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:501
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:503
 msgid "Domain must not contain spaces or control characters"
 msgstr "域名不得包含空格或控制字符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:504
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:506
 msgid "Suffix must not start or end with a dot or hyphen"
 msgstr "后缀不得以点或连字符开头或结尾"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:507
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:509
 msgid "Double dots are not allowed"
 msgstr "不允许使用双点"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:512
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:514
 msgid "There must be no empty segments between dots"
 msgstr "点之间不得有空段"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:515
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:517
 msgid "Each domain segment must not exceed 63 characters"
 msgstr "每个域段不得超过 63 个字符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:518
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:520
 msgid "Domain segments may contain only letters, digits, hyphens, and asterisks"
 msgstr "域段只能包含字母、数字、连字符和星号"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:521
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:523
 msgid "Domain segments must not start or end with a hyphen"
 msgstr "域段不得以连字符开头或结尾"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:524
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:526
 msgid "Suffix length must not exceed 253 characters"
 msgstr "后缀长度不得超过 253 个字符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:550
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:552
 msgid "Invalid policy format. Use domain/nameserver."
 msgstr "策略格式无效。使用 域名/名称服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:566
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:568
 msgid "JSON object cannot be empty"
 msgstr "JSON 对象不能为空"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:571
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:573
 msgid "Invalid JSON format"
 msgstr "无效的 JSON 格式"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:575
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:577
 msgid "JSON must be an object"
 msgstr "JSON 必须是一个对象"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:578
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:580
 msgid "Name field must not be defined in object."
 msgstr "对象中不得定义 Name 字段。"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:581
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:583
 msgid "DIRECT proxy type must be defined without server or port fields."
 msgstr "DIRECT 代理类型必须在没有服务器或端口字段的情况下定义。"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:593
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:595
 msgid "JSON must contain at least type, server and port fields."
 msgstr "JSON 必须至少包含 type、server 和 port 字段。"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:596
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:598
 msgid "Proxy type contains unsupported characters"
 msgstr "代理类型包含不受支持的字符"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:599
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:601
 msgid "Server must be a non-empty host without whitespace"
 msgstr "Server 必须是没有空格的非空主机"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:609
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:611
 msgid "Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols."
 msgstr "仅允许小写字母、数字和 '|' 分隔符。没有空格或特殊符号。"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:612
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:614
 msgid "Empty proxy types are not allowed"
 msgstr "不允许使用空的代理类型"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:619
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:621
 msgid "Unsupported type: "
-msgstr "不受支持的类型："
+msgstr "不支持的类型: "
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:628
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:630
 msgid "This field cannot be empty"
 msgstr "此字段不能为空"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:635
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:637
 msgid "Use a proxy/group name or supported action"
 msgstr "使用代理/组名称或支持的动作"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:654
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:648 htdocs/luci-static/resources/view/justclash/helper_common.js:655
+msgid "Age key has invalid format"
+msgstr "Age 密钥格式无效"
+
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:670
 msgid "Invalid expression in "
 msgstr "无效表达式于 "
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:732 htdocs/luci-static/resources/view/justclash/nodes.js:469 htdocs/luci-static/resources/view/justclash/nodes.js:477 htdocs/luci-static/resources/view/justclash/nodes.js:642
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:748 htdocs/luci-static/resources/view/justclash/nodes.js:467 htdocs/luci-static/resources/view/justclash/nodes.js:475 htdocs/luci-static/resources/view/justclash/nodes.js:638
 msgid "Nodes"
 msgstr "节点 (Nodes)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:733
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:749
 msgid "Connections"
 msgstr "连接 (Connections)"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:734 htdocs/luci-static/resources/view/justclash/rules.js:236
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:750 htdocs/luci-static/resources/view/justclash/rules.js:236
 msgid "Rules"
 msgstr "规则"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:735
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:751
 msgid "Setup: Rulesets"
 msgstr "设置：规则集"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:736
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:752
 msgid "Setup: Routing"
 msgstr "设置：路由"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:737
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:753
 msgid "Setup: Service"
 msgstr "设置：服务"
 
-#: htdocs/luci-static/resources/view/justclash/helper_common.js:738
+#: htdocs/luci-static/resources/view/justclash/helper_common.js:754
 msgid "Setup: Proxy"
 msgstr "设置：代理"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:127
+#: htdocs/luci-static/resources/view/justclash/nodes.js:125
 msgid "Failed to load Mihomo proxy groups"
 msgstr "加载 Mihomo 代理组失败"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:168 htdocs/luci-static/resources/view/justclash/nodes.js:315 htdocs/luci-static/resources/view/justclash/nodes.js:344 htdocs/luci-static/resources/view/justclash/nodes.js:380 htdocs/luci-static/resources/view/justclash/nodes.js:383
+#: htdocs/luci-static/resources/view/justclash/nodes.js:166 htdocs/luci-static/resources/view/justclash/nodes.js:313 htdocs/luci-static/resources/view/justclash/nodes.js:342 htdocs/luci-static/resources/view/justclash/nodes.js:378 htdocs/luci-static/resources/view/justclash/nodes.js:381
 msgid "Unknown"
 msgstr "未知"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:194 htdocs/luci-static/resources/view/justclash/nodes.js:374
+#: htdocs/luci-static/resources/view/justclash/nodes.js:192 htdocs/luci-static/resources/view/justclash/nodes.js:372
 msgid "Timeout"
 msgstr "超时"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:217
+#: htdocs/luci-static/resources/view/justclash/nodes.js:215
 msgid "Applying..."
 msgstr "应用中..."
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:300 htdocs/luci-static/resources/view/justclash/nodes.js:301 htdocs/luci-static/resources/view/justclash/nodes.js:307 htdocs/luci-static/resources/view/justclash/nodes.js:395 htdocs/luci-static/resources/view/justclash/nodes.js:396 htdocs/luci-static/resources/view/justclash/nodes.js:402
+#: htdocs/luci-static/resources/view/justclash/nodes.js:298 htdocs/luci-static/resources/view/justclash/nodes.js:299 htdocs/luci-static/resources/view/justclash/nodes.js:305 htdocs/luci-static/resources/view/justclash/nodes.js:393 htdocs/luci-static/resources/view/justclash/nodes.js:394 htdocs/luci-static/resources/view/justclash/nodes.js:400
 msgid "Test delay"
 msgstr "延迟测速"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:307 htdocs/luci-static/resources/view/justclash/nodes.js:402
+#: htdocs/luci-static/resources/view/justclash/nodes.js:305 htdocs/luci-static/resources/view/justclash/nodes.js:400
 msgid "Testing..."
 msgstr "测试中..."
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:314
+#: htdocs/luci-static/resources/view/justclash/nodes.js:312
 msgid "Auto"
 msgstr "自动"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:320 htdocs/luci-static/resources/view/justclash/nodes.js:345
-msgid "Current"
-msgstr "当前"
-
-#: htdocs/luci-static/resources/view/justclash/nodes.js:341 htdocs/luci-static/resources/view/justclash/nodes.js:516
+#: htdocs/luci-static/resources/view/justclash/nodes.js:339 htdocs/luci-static/resources/view/justclash/nodes.js:514
 msgid "Global"
 msgstr "全局"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:478
+#: htdocs/luci-static/resources/view/justclash/nodes.js:476
 msgid "No selectable proxy groups or providers were found"
 msgstr "未找到可选的代理组或提供者"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:513
+#: htdocs/luci-static/resources/view/justclash/nodes.js:511
 msgid "Mode"
 msgstr "模式"
 
-#: htdocs/luci-static/resources/view/justclash/nodes.js:643
+#: htdocs/luci-static/resources/view/justclash/nodes.js:639
 msgid "View and select proxy nodes. You can also test latency for individual nodes or groups."
 msgstr "查看并选择代理节点。您还可以测试单个节点或代理组的延迟。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:47
+#: htdocs/luci-static/resources/view/justclash/proxy.js:59
 msgid "Proxy settings"
 msgstr "代理设置"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:47
+#: htdocs/luci-static/resources/view/justclash/proxy.js:59
 msgid "Main proxy settings used by Mihomo."
 msgstr "Mihomo 使用的主要代理设置。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:50
+#: htdocs/luci-static/resources/view/justclash/proxy.js:62
 msgid "Basic settings"
 msgstr "基本设置"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:52
+#: htdocs/luci-static/resources/view/justclash/proxy.js:64
 msgid "Logging level:"
 msgstr "日志级别:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:56
+#: htdocs/luci-static/resources/view/justclash/proxy.js:68
 msgid "Choose how much information Mihomo writes to the log. Higher levels help with debugging, but create more log entries."
 msgstr "选择 Mihomo 写入日志的信息量。较高级别有助于调试，但会创建更多日志条目。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:60
+#: htdocs/luci-static/resources/view/justclash/proxy.js:72
 msgid "Bind all outbound connections to interface:"
 msgstr "绑定所有出站连接到接口:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:61
+#: htdocs/luci-static/resources/view/justclash/proxy.js:73
 msgid "Bind Mihomo outbound connections to a specific network device by default. Leave empty to let the system choose the outgoing interface. Per-proxy and per-provider interface settings should override this value when set."
 msgstr "默认将 Mihomo 出站连接绑定到特定网络设备。留空则由系统选择输出接口。每个代理和每个提供商的接口设置将覆盖此值（如果已设置）。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:69
+#: htdocs/luci-static/resources/view/justclash/proxy.js:81
 msgid "Transparent proxy port:"
 msgstr "透明代理端口:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:70
+#: htdocs/luci-static/resources/view/justclash/proxy.js:82
 msgid "Port used for redirected TCP/UDP traffic. Change it only if this port is already used by another service."
 msgstr "用于重定向的 TCP/UDP 流量的端口。仅在此端口已被其他服务占用时才更改它。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:76
+#: htdocs/luci-static/resources/view/justclash/proxy.js:88
 msgid "Enable Mihomo mixed port:"
 msgstr "启用 Mihomo 混合端口:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:77
+#: htdocs/luci-static/resources/view/justclash/proxy.js:89
 msgid "Use the Mihomo mixed port so one port handles both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy."
 msgstr "使用 Mihomo 混合端口，这样一个端口可以同时处理 HTTP(S) 和 SOCKS5 连接。这在应用或设备将路由器作为常规代理连接时非常有用。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:81
+#: htdocs/luci-static/resources/view/justclash/proxy.js:93
 msgid "Mihomo mixed port:"
 msgstr "Mihomo 混合端口:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:82
+#: htdocs/luci-static/resources/view/justclash/proxy.js:94
 msgid "Port used by the Mihomo mixed port listener for both HTTP(S) and SOCKS5 connections from apps and devices on your network."
 msgstr "Mihomo 混合端口监听器使用的端口，用于处理网络中应用和设备的 HTTP(S) 和 SOCKS5 连接。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:90
+#: htdocs/luci-static/resources/view/justclash/proxy.js:102
 msgid "Mixed port authentication:"
 msgstr "混合端口身份验证:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:91
+#: htdocs/luci-static/resources/view/justclash/proxy.js:103
 msgid "Require username and password for access to the Mihomo mixed port. Add one entry per line in the format user:pass."
 msgstr "需要用户名和密码才能访问 Mihomo 混合端口。每行添加一个条目，格式为 user:pass。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:100
+#: htdocs/luci-static/resources/view/justclash/proxy.js:112
 msgid "Unified delay:"
 msgstr "统一延迟 (Unified delay):"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:101
+#: htdocs/luci-static/resources/view/justclash/proxy.js:113
 msgid "Use the same delay value when checking response time, so test results stay more consistent."
 msgstr "在检查响应时间时使用相同的延迟值，这样测试结果会更加一致。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:105
+#: htdocs/luci-static/resources/view/justclash/proxy.js:117
 msgid "Try TCP connections in parallel:"
 msgstr "并行尝试 TCP 连接:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:106
+#: htdocs/luci-static/resources/view/justclash/proxy.js:118
 msgid "Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts."
 msgstr "同时尝试多个 TCP 连接。这在不稳定的网络上可能会有帮助，但可能会产生额外的连接尝试。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:110
+#: htdocs/luci-static/resources/view/justclash/proxy.js:122
 msgid "User-Agent for downloads:"
 msgstr "下载的 User-Agent:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:111
+#: htdocs/luci-static/resources/view/justclash/proxy.js:123
 msgid "User-Agent sent when downloading external files such as subscriptions or rule lists."
 msgstr "下载订阅或规则列表等外部文件时发送的 User-Agent。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:115
+#: htdocs/luci-static/resources/view/justclash/proxy.js:127
 msgid "Check whether files changed:"
 msgstr "检查文件是否更改:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:116
+#: htdocs/luci-static/resources/view/justclash/proxy.js:128
 msgid "Only download external files again when the server says they changed. This saves bandwidth and avoids unnecessary updates."
 msgstr "仅在服务器表示外部文件发生更改时重新下载。这可以节省带宽并避免不必要的更新。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:120
+#: htdocs/luci-static/resources/view/justclash/proxy.js:132
 msgid "Idle time before connection check:"
 msgstr "连接检查前的空闲时间:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:121
+#: htdocs/luci-static/resources/view/justclash/proxy.js:133
 msgid "How long to wait with no activity before checking whether the connection is still alive. Shorter values detect dead connections sooner."
 msgstr "在检查连接是否仍然存活之前等待无活动的时间。较短的值能更快检测到死连接。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:132
+#: htdocs/luci-static/resources/view/justclash/proxy.js:144
 msgid "Connection check interval:"
 msgstr "连接检查间隔:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:133
+#: htdocs/luci-static/resources/view/justclash/proxy.js:145
 msgid "How often to repeat that check after the connection becomes idle."
 msgstr "连接处于空闲状态后，多久重复一次该检查。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:144
+#: htdocs/luci-static/resources/view/justclash/proxy.js:156
 msgid "Save profile data:"
 msgstr "保存配置数据:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:145
+#: htdocs/luci-static/resources/view/justclash/proxy.js:157
 msgid "Keep profile data when possible, so selected items can be restored after a restart."
 msgstr "尽可能保留配置数据，以便在重启后可以恢复选定的项目。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:149
+#: htdocs/luci-static/resources/view/justclash/proxy.js:161
 msgid "Save fake IP addresses:"
 msgstr "保存 fake-ip 记录:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:150
+#: htdocs/luci-static/resources/view/justclash/proxy.js:162
 msgid "Keep assigned fake IP addresses when possible, which can reduce repeated DNS work after restarts."
 msgstr "尽可能保留分配的 fake IP 地址，这可以减少重启后重复的 DNS 工作。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:155
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:167
 msgid "GeoData settings"
-msgstr "DNS 设置"
+msgstr "地理数据设置"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:157
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:169
 msgid "Enable:"
-msgstr "启用"
+msgstr "启用:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:158 htdocs/luci-static/resources/view/justclash/proxy.js:163
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:170 htdocs/luci-static/resources/view/justclash/proxy.js:175
 msgid "Enable geodata features in rules."
-msgstr "启用或禁用直连规则。"
+msgstr "在规则中启用地理数据功能。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:162
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:174
 msgid "Enable autoupdate:"
-msgstr "启用面板:"
+msgstr "启用自动更新:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:168 htdocs/luci-static/resources/view/justclash/routing.js:321
+#: htdocs/luci-static/resources/view/justclash/proxy.js:181 htdocs/luci-static/resources/view/justclash/routing.js:315
 msgid "Update interval:"
 msgstr "更新间隔:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:169
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:182
 msgid "Geodata update interval in hours."
-msgstr "列表更新间隔:"
+msgstr "地理数据更新间隔（小时）。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:179
+#: htdocs/luci-static/resources/view/justclash/proxy.js:193
 msgid "Controller/API settings"
 msgstr "控制/API 设置"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:182
+#: htdocs/luci-static/resources/view/justclash/proxy.js:196
 msgid "Controller bind:"
 msgstr "控制器绑定:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:182 htdocs/luci-static/resources/view/justclash/proxy.js:187
+#: htdocs/luci-static/resources/view/justclash/proxy.js:196 htdocs/luci-static/resources/view/justclash/proxy.js:201
 msgid "Select which network will allow access to the API controller and dashboard."
 msgstr "选择允许访问 API 控制器和面板的网络。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:189
+#: htdocs/luci-static/resources/view/justclash/proxy.js:203
 msgid "Enable dashboard:"
 msgstr "启用面板:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:190
+#: htdocs/luci-static/resources/view/justclash/proxy.js:204
 msgid "Enable an additional external web dashboard for Mihomo. Turn this on only if you need a separate dashboard interface."
 msgstr "启用 Mihomo 额外的外部 Web 面板。仅在您需要单独的面板界面时才打开此选项。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:199
+#: htdocs/luci-static/resources/view/justclash/proxy.js:213
 msgid "Web dashboard:"
 msgstr "Web 面板:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:200
+#: htdocs/luci-static/resources/view/justclash/proxy.js:214
 msgid "Choose which web dashboard Mihomo should download and serve."
 msgstr "选择 Mihomo 应该下载和提供哪个 Web 面板。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:201
+#: htdocs/luci-static/resources/view/justclash/proxy.js:215
 msgid "zashboard"
 msgstr "zashboard"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:202
+#: htdocs/luci-static/resources/view/justclash/proxy.js:216
 msgid "metacubexd"
 msgstr "metacubexd"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:203
+#: htdocs/luci-static/resources/view/justclash/proxy.js:217
 msgid "Yacd-meta"
 msgstr "Yacd-meta"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:209
+#: htdocs/luci-static/resources/view/justclash/proxy.js:223
 msgid "API password:"
 msgstr "API 密码:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:211
+#: htdocs/luci-static/resources/view/justclash/proxy.js:225
 msgid "Password or token required to access the API controller."
 msgstr "访问 API 控制器所需的密码或 Token。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:217
+#: htdocs/luci-static/resources/view/justclash/proxy.js:231
 msgid "Enable API TLS"
-msgstr ""
+msgstr "启用 API TLS"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:218
+#: htdocs/luci-static/resources/view/justclash/proxy.js:232
 msgid "Enable secure HTTPS/WSS protocol for the Mihomo API controller."
-msgstr ""
+msgstr "为 Mihomo API 控制器启用安全的 HTTPS/WSS 协议。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:222
+#: htdocs/luci-static/resources/view/justclash/proxy.js:236
 msgid "API TLS certificate path"
-msgstr ""
+msgstr "API TLS 证书路径"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:223
+#: htdocs/luci-static/resources/view/justclash/proxy.js:237
 msgid "Path to the PEM-encoded SSL/TLS certificate file."
-msgstr ""
+msgstr "PEM 编码的 SSL/TLS 证书文件的路径。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:228
+#: htdocs/luci-static/resources/view/justclash/proxy.js:244
 msgid "API TLS key path"
-msgstr ""
+msgstr "API TLS 密钥路径"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:229
+#: htdocs/luci-static/resources/view/justclash/proxy.js:245
 msgid "Path to the PEM-encoded SSL/TLS private key file."
-msgstr ""
+msgstr "PEM 编码 of SSL/TLS 私钥文件的路径。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:235
+#: htdocs/luci-static/resources/view/justclash/proxy.js:253
 msgid "DNS settings"
 msgstr "DNS 设置"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:237
+#: htdocs/luci-static/resources/view/justclash/proxy.js:255
 msgid "DNS listen port:"
 msgstr "DNS 监听端口:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:238
+#: htdocs/luci-static/resources/view/justclash/proxy.js:256
 msgid "Port where Mihomo built-in DNS server listens."
 msgstr "Mihomo 内置 DNS 服务器的监听端口。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:244
+#: htdocs/luci-static/resources/view/justclash/proxy.js:262
 msgid "Use system hosts:"
 msgstr "使用系统 hosts:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:245
+#: htdocs/luci-static/resources/view/justclash/proxy.js:263
 msgid "Load DNS entries from the system hosts file when possible."
 msgstr "尽可能从系统 hosts 文件中加载 DNS 条目。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:249
+#: htdocs/luci-static/resources/view/justclash/proxy.js:267
 msgid "DNS cache size:"
 msgstr "DNS 缓存大小:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:250
+#: htdocs/luci-static/resources/view/justclash/proxy.js:268
 msgid "Maximum number of DNS cache entries kept by Mihomo."
 msgstr "Mihomo 保留的 DNS 缓存条目的最大数量。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:261
+#: htdocs/luci-static/resources/view/justclash/proxy.js:279
 msgid "Fake IP range:"
 msgstr "Fake IP 范围:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:262
+#: htdocs/luci-static/resources/view/justclash/proxy.js:280
 msgid "IPv4 CIDR range used for fake-IP responses."
 msgstr "用于 fake-IP 响应的 IPv4 CIDR 范围。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:268
+#: htdocs/luci-static/resources/view/justclash/proxy.js:286
 msgid "Fake IP TTL:"
 msgstr "Fake IP TTL:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:269
+#: htdocs/luci-static/resources/view/justclash/proxy.js:287
 msgid "TTL for fake-IP DNS responses (in seconds)."
 msgstr "fake-IP DNS 响应的 TTL（单位：秒）。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:280
+#: htdocs/luci-static/resources/view/justclash/proxy.js:298
 msgid "Nameserver policy:"
 msgstr "名称服务器策略:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:281
+#: htdocs/luci-static/resources/view/justclash/proxy.js:299
 msgid "Domain-specific DNS policy in the format domain/nameserver (example: +.arpa/10.0.0.1)."
 msgstr "指定域名的 DNS 策略，格式为 域名/名称服务器 (示例：+.arpa/10.0.0.1)。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:288
+#: htdocs/luci-static/resources/view/justclash/proxy.js:306
 msgid "Default nameservers:"
 msgstr "默认名称服务器:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:289
+#: htdocs/luci-static/resources/view/justclash/proxy.js:307
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "启动时使用的默认名称服务器。推荐使用 UDP 类型。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:296
+#: htdocs/luci-static/resources/view/justclash/proxy.js:314
 msgid "Proxy nameservers:"
 msgstr "代理名称服务器:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:297
+#: htdocs/luci-static/resources/view/justclash/proxy.js:315
 msgid "Nameservers used to resolve proxy server hostnames."
 msgstr "用于解析代理服务器主机名的名称服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:304
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:322
 msgid "Direct nameservers:"
-msgstr "默认名称服务器:"
+msgstr "直连名称服务器:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:305
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:323
 msgid "Direct nameservers used for DIRECT rules."
-msgstr "用于常规 DNS 查询的主要名称服务器。"
+msgstr "用于 DIRECT 规则的名称服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:312
+#: htdocs/luci-static/resources/view/justclash/proxy.js:330
 msgid "Nameservers:"
 msgstr "名称服务器 (Nameservers):"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:313
+#: htdocs/luci-static/resources/view/justclash/proxy.js:331
 msgid "Main nameservers used for regular DNS queries."
 msgstr "用于常规 DNS 查询的主要名称服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:321
-msgid "Force fake IP rulesets:"
-msgstr "强制 Fake IP 规则集:"
+#: htdocs/luci-static/resources/view/justclash/proxy.js:339
+msgid "Force real IP rulesets:"
+msgstr "强制真实 IP 规则集:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:325
-msgid "Ruleset names that should resolve through fake IP. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list."
-msgstr "应通过 fake IP 解析的规则集名称。值将被视为 RULE-SET 选择器，例如 youtube 或 custom_domain_list。"
+#: htdocs/luci-static/resources/view/justclash/proxy.js:343
+msgid "Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied."
+msgstr "选择应在应用 fake-IP 匹配前通过真实 IP 解析的活跃 RULE-SET。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:331
-msgid "Force fake IP rules:"
-msgstr "强制 Fake IP 规则:"
+#: htdocs/luci-static/resources/view/justclash/proxy.js:349
+msgid "Force real IP geosites:"
+msgstr "强制真实 IP Geosite:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:332
-msgid "Entries that should resolve through fake IP; use plain suffixes like example.com."
-msgstr "应通过 fake IP 解析的条目；请使用简单的后缀，例如 example.com。"
+#: htdocs/luci-static/resources/view/justclash/proxy.js:353
+msgid "Select active GEOSITEs that should resolve through real IP before fake-IP matches are applied."
+msgstr "选择应在应用 fake-IP 匹配前通过真实 IP 解析的活跃 GEOSITE。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:341
+#: htdocs/luci-static/resources/view/justclash/proxy.js:360
 msgid "Force real IP rules:"
 msgstr "强制真实 IP 规则:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:342
+#: htdocs/luci-static/resources/view/justclash/proxy.js:361
 msgid "Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com."
 msgstr "应在应用 fake-IP 匹配前通过真实 IP 解析的条目；请使用简单的后缀，例如 example.com。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:352
+#: htdocs/luci-static/resources/view/justclash/proxy.js:371
 msgid "Sniffer settings"
 msgstr "嗅探器设置"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:354
+#: htdocs/luci-static/resources/view/justclash/proxy.js:373
 msgid "Enable sniffer:"
 msgstr "启用嗅探器:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:355
+#: htdocs/luci-static/resources/view/justclash/proxy.js:374
 msgid "Enable Mihomo traffic sniffing."
 msgstr "启用 Mihomo 流量嗅探。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:359
+#: htdocs/luci-static/resources/view/justclash/proxy.js:378
 msgid "Parse pure IP:"
 msgstr "解析纯 IP:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:360
+#: htdocs/luci-static/resources/view/justclash/proxy.js:379
 msgid "Force domain detection for traffic without resolved domain names."
 msgstr "对没有解析域名的流量强制进行域名检测。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:364
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/proxy.js:383
 msgid "Override destination:"
-msgstr "目标地址"
+msgstr "覆盖目标地址:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:365
+#: htdocs/luci-static/resources/view/justclash/proxy.js:384
 msgid "Override connection destination address with sniffed domain name."
-msgstr ""
+msgstr "使用嗅探到的域名覆盖连接目标地址。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:369
+#: htdocs/luci-static/resources/view/justclash/proxy.js:388
 msgid "Excluded from sniffer domains:"
 msgstr "从嗅探器排除的域名:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:370
+#: htdocs/luci-static/resources/view/justclash/proxy.js:389
 msgid "Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr "尽可能从详细分析中排除的域名。有时这可以帮助解决应用中的错误。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:378
+#: htdocs/luci-static/resources/view/justclash/proxy.js:397
 msgid "Forcefully sniff domains:"
 msgstr "强制嗅探域名:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:379
+#: htdocs/luci-static/resources/view/justclash/proxy.js:398
 msgid "Domains included for detailed analysis when possible. Sometimes this can help with errors in apps."
 msgstr "尽可能包含在详细分析中的域名。有时这可以帮助解决应用中的错误。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:387
+#: htdocs/luci-static/resources/view/justclash/proxy.js:406
 msgid "Exclude from sniffer SRC CIDR traffic:"
 msgstr "从嗅探器排除源 CIDR 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:388
+#: htdocs/luci-static/resources/view/justclash/proxy.js:407
 msgid "Source address ranges excluded from sniffing."
 msgstr "从嗅探中排除的源地址范围。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:394
+#: htdocs/luci-static/resources/view/justclash/proxy.js:413
 msgid "Exclude from sniffer DST CIDR traffic:"
 msgstr "从嗅探器排除目标 CIDR 流量:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:395
+#: htdocs/luci-static/resources/view/justclash/proxy.js:414
 msgid "Destination address ranges excluded from sniffing."
 msgstr "从嗅探中排除的目标地址范围。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:402
+#: htdocs/luci-static/resources/view/justclash/proxy.js:421
 msgid "NTP settings"
 msgstr "NTP 设置"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:404
+#: htdocs/luci-static/resources/view/justclash/proxy.js:423
 msgid "Enable NTP client:"
 msgstr "启用 NTP 客户端:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:405
+#: htdocs/luci-static/resources/view/justclash/proxy.js:424
 msgid "Enable the built-in Mihomo NTP client."
 msgstr "启用内置的 Mihomo NTP 客户端。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:409
+#: htdocs/luci-static/resources/view/justclash/proxy.js:428
 msgid "Endpoint NTP server:"
 msgstr "端点 NTP 服务器:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:410
+#: htdocs/luci-static/resources/view/justclash/proxy.js:429
 msgid "Upstream NTP server used by Mihomo."
 msgstr "Mihomo 使用的上游 NTP 服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:418
+#: htdocs/luci-static/resources/view/justclash/proxy.js:437
 msgid "NTP port:"
 msgstr "NTP 端口:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:419
+#: htdocs/luci-static/resources/view/justclash/proxy.js:438
 msgid "Upstream NTP server port."
 msgstr "上游 NTP 服务器端口。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:423
+#: htdocs/luci-static/resources/view/justclash/proxy.js:442
 msgid "NTP check interval:"
 msgstr "NTP 检查间隔:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:424
+#: htdocs/luci-static/resources/view/justclash/proxy.js:443
 msgid "How often Mihomo should sync time, in minutes."
 msgstr "Mihomo 应该多久同步一次时间（分钟）。"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:435
+#: htdocs/luci-static/resources/view/justclash/proxy.js:454
 msgid "Write to system:"
 msgstr "写入系统:"
 
-#: htdocs/luci-static/resources/view/justclash/proxy.js:436
+#: htdocs/luci-static/resources/view/justclash/proxy.js:455
 msgid "Allow Mihomo to write corrected time to the system clock."
 msgstr "允许 Mihomo 将更正后的时间写入系统时钟。"
 
@@ -1146,23 +1135,23 @@ msgstr "允许 Mihomo 将更正后的时间写入系统时钟。"
 msgid "No log entries"
 msgstr "没有日志条目"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:177 htdocs/luci-static/resources/view/justclash/system_logs.js:112
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:175 htdocs/luci-static/resources/view/justclash/system_logs.js:112
 msgid "Scroll to bottom"
 msgstr "滚动到底部"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:207 htdocs/luci-static/resources/view/justclash/system_logs.js:131
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:205 htdocs/luci-static/resources/view/justclash/system_logs.js:131
 msgid "Scroll to top"
 msgstr "滚动到顶部"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:209
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:207
 msgid "Level:"
 msgstr "级别:"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:291
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:289
 msgid "Realtime logs"
 msgstr "实时日志"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:292
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:290
 msgid "View realtime traffic logs and debug information from the Mihomo core."
 msgstr "查看来自 Mihomo 核心的实时流量日志和调试信息。"
 
@@ -1174,11 +1163,11 @@ msgstr "代理列表:"
 msgid "Proxies defined as outbound connections."
 msgstr "定义为出站连接的代理。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:74 htdocs/luci-static/resources/view/justclash/routing.js:258 htdocs/luci-static/resources/view/justclash/routing.js:504 htdocs/luci-static/resources/view/justclash/routing.js:984 htdocs/luci-static/resources/view/justclash/routing.js:1000
+#: htdocs/luci-static/resources/view/justclash/routing.js:74 htdocs/luci-static/resources/view/justclash/routing.js:252 htdocs/luci-static/resources/view/justclash/routing.js:514 htdocs/luci-static/resources/view/justclash/routing.js:988 htdocs/luci-static/resources/view/justclash/routing.js:1004
 msgid "Basic"
 msgstr "基本"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:76 htdocs/luci-static/resources/view/justclash/routing.js:260 htdocs/luci-static/resources/view/justclash/routing.js:506 htdocs/luci-static/resources/view/justclash/routing.js:785 htdocs/luci-static/resources/view/justclash/routing.js:897 htdocs/luci-static/resources/view/justclash/status.js:141
+#: htdocs/luci-static/resources/view/justclash/routing.js:76 htdocs/luci-static/resources/view/justclash/routing.js:254 htdocs/luci-static/resources/view/justclash/routing.js:516 htdocs/luci-static/resources/view/justclash/routing.js:795 htdocs/luci-static/resources/view/justclash/routing.js:901 htdocs/luci-static/resources/view/justclash/status.js:141
 msgid "Enabled"
 msgstr "启用"
 
@@ -1186,547 +1175,547 @@ msgstr "启用"
 msgid "Enable or disable this proxy entry without removing it."
 msgstr "启用或禁用此代理条目而不删除它。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:82 htdocs/luci-static/resources/view/justclash/routing.js:512 htdocs/luci-static/resources/view/justclash/routing.js:791
-#, fuzzy
-msgid "Fake IP:"
-msgstr "Fake IP TTL:"
-
-#: htdocs/luci-static/resources/view/justclash/routing.js:83
-msgid "Generate fake IP mapping rules for this proxy's domains."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/routing.js:88 htdocs/luci-static/resources/view/justclash/routing.js:266 htdocs/luci-static/resources/view/justclash/routing.js:518
+#: htdocs/luci-static/resources/view/justclash/routing.js:82 htdocs/luci-static/resources/view/justclash/routing.js:260 htdocs/luci-static/resources/view/justclash/routing.js:522
 msgid "Name:"
 msgstr "名称:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:89
+#: htdocs/luci-static/resources/view/justclash/routing.js:83
 msgid "Proxy name."
 msgstr "代理名称。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:102
+#: htdocs/luci-static/resources/view/justclash/routing.js:96
 msgid "Mode:"
 msgstr "模式:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:103
+#: htdocs/luci-static/resources/view/justclash/routing.js:97
 msgid "Choose whether this proxy is defined as a URL or a JSON object."
 msgstr "选择此代理定义为 URL 还是 JSON 对象。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:111
+#: htdocs/luci-static/resources/view/justclash/routing.js:105
 msgid "JSON object:"
 msgstr "JSON 对象:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:112
+#: htdocs/luci-static/resources/view/justclash/routing.js:106
 msgid "JSON object with connection parameters."
 msgstr "包含连接参数的 JSON 对象。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:121
+#: htdocs/luci-static/resources/view/justclash/routing.js:115
 msgid "Link:"
 msgstr "链接:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:122
+#: htdocs/luci-static/resources/view/justclash/routing.js:116
 msgid "URI link with connection parameters."
 msgstr "包含连接参数的 URI 链接。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:132 htdocs/luci-static/resources/view/justclash/routing.js:289
+#: htdocs/luci-static/resources/view/justclash/routing.js:126 htdocs/luci-static/resources/view/justclash/routing.js:283
 msgid "Connect through:"
 msgstr "通过以下方式连接:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:133
+#: htdocs/luci-static/resources/view/justclash/routing.js:127
 msgid "Route this proxy through the specified proxy server, or connect directly if left empty."
 msgstr "通过指定的代理服务器路由此代理，如果留空则直接连接。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:145 htdocs/luci-static/resources/view/justclash/routing.js:301
+#: htdocs/luci-static/resources/view/justclash/routing.js:139 htdocs/luci-static/resources/view/justclash/routing.js:295
 msgid "Bind to interface:"
 msgstr "绑定到接口:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:146
+#: htdocs/luci-static/resources/view/justclash/routing.js:140
 msgid "Bind this proxy to a specific network device. Leave empty to let the system choose the outgoing interface."
 msgstr "将此代理绑定到特定网络设备。留空由系统选择外出接口。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:156 htdocs/luci-static/resources/view/justclash/routing.js:311
+#: htdocs/luci-static/resources/view/justclash/routing.js:150 htdocs/luci-static/resources/view/justclash/routing.js:305
 msgid "Routing mark:"
 msgstr "路由标记:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:157
+#: htdocs/luci-static/resources/view/justclash/routing.js:151
 msgid "Optional Linux fwmark applied by Mihomo to outbound connections of this proxy. Leave empty to use the global mark."
 msgstr "Mihomo 应用于此代理的出站连接的可选 Linux fwmark。留空以使用全局标记。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:168 htdocs/luci-static/resources/view/justclash/routing.js:690 htdocs/luci-static/resources/view/justclash/routing.js:783 htdocs/luci-static/resources/view/justclash/routing.js:895
+#: htdocs/luci-static/resources/view/justclash/routing.js:162 htdocs/luci-static/resources/view/justclash/routing.js:700 htdocs/luci-static/resources/view/justclash/routing.js:793 htdocs/luci-static/resources/view/justclash/routing.js:899
 msgid "Lists"
 msgstr "列表"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:170 htdocs/luci-static/resources/view/justclash/routing.js:692 htdocs/luci-static/resources/view/justclash/routing.js:797 htdocs/luci-static/resources/view/justclash/routing.js:903
+#: htdocs/luci-static/resources/view/justclash/routing.js:164 htdocs/luci-static/resources/view/justclash/routing.js:702 htdocs/luci-static/resources/view/justclash/routing.js:801 htdocs/luci-static/resources/view/justclash/routing.js:907
 msgid "Use with rules:"
 msgstr "使用规则:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:174
+#: htdocs/luci-static/resources/view/justclash/routing.js:168
 msgid "Predefined rule set lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups."
 msgstr "预定义的规则集列表。选择您希望通过代理路由的列表。如果使用代理组，请将其留空。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:177
+#: htdocs/luci-static/resources/view/justclash/routing.js:171
 msgid "Get lists through proxy:"
 msgstr "通过代理获取列表:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:178
+#: htdocs/luci-static/resources/view/justclash/routing.js:172
 msgid "If selected, rule set lists will be updated through the proxy."
 msgstr "如果选中，将通过代理更新规则集列表。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:183 htdocs/luci-static/resources/view/justclash/routing.js:705 htdocs/luci-static/resources/view/justclash/routing.js:817 htdocs/luci-static/resources/view/justclash/routing.js:920
+#: htdocs/luci-static/resources/view/justclash/routing.js:177 htdocs/luci-static/resources/view/justclash/routing.js:715 htdocs/luci-static/resources/view/justclash/routing.js:821 htdocs/luci-static/resources/view/justclash/routing.js:924
 msgid "List update interval:"
 msgstr "列表更新间隔:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:184 htdocs/luci-static/resources/view/justclash/routing.js:706 htdocs/luci-static/resources/view/justclash/routing.js:818 htdocs/luci-static/resources/view/justclash/routing.js:921
+#: htdocs/luci-static/resources/view/justclash/routing.js:178 htdocs/luci-static/resources/view/justclash/routing.js:716 htdocs/luci-static/resources/view/justclash/routing.js:822 htdocs/luci-static/resources/view/justclash/routing.js:925
 msgid "How often remote lists should be checked for updates, in seconds."
 msgstr "远程列表应多久检查一次更新（秒）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:196 htdocs/luci-static/resources/view/justclash/routing.js:331 htdocs/luci-static/resources/view/justclash/routing.js:718 htdocs/luci-static/resources/view/justclash/routing.js:830 htdocs/luci-static/resources/view/justclash/routing.js:933
+#: htdocs/luci-static/resources/view/justclash/routing.js:190 htdocs/luci-static/resources/view/justclash/routing.js:325 htdocs/luci-static/resources/view/justclash/routing.js:728 htdocs/luci-static/resources/view/justclash/routing.js:834 htdocs/luci-static/resources/view/justclash/routing.js:937
 msgid "Size limit:"
 msgstr "大小限制:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:197 htdocs/luci-static/resources/view/justclash/routing.js:332 htdocs/luci-static/resources/view/justclash/routing.js:719 htdocs/luci-static/resources/view/justclash/routing.js:831 htdocs/luci-static/resources/view/justclash/routing.js:934
+#: htdocs/luci-static/resources/view/justclash/routing.js:191 htdocs/luci-static/resources/view/justclash/routing.js:326 htdocs/luci-static/resources/view/justclash/routing.js:729 htdocs/luci-static/resources/view/justclash/routing.js:835 htdocs/luci-static/resources/view/justclash/routing.js:938
 msgid "Maximum download size in bytes. Use 0 to disable the limit."
 msgstr "最大下载大小（字节）。使用 0 禁用限制。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:208 htdocs/luci-static/resources/view/justclash/routing.js:730 htdocs/luci-static/resources/view/justclash/routing.js:842 htdocs/luci-static/resources/view/justclash/routing.js:945
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/routing.js:202 htdocs/luci-static/resources/view/justclash/routing.js:740 htdocs/luci-static/resources/view/justclash/routing.js:846 htdocs/luci-static/resources/view/justclash/routing.js:949
 msgid "Geodata rules"
-msgstr "更新规则集"
+msgstr "地理数据规则"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:210 htdocs/luci-static/resources/view/justclash/routing.js:732 htdocs/luci-static/resources/view/justclash/routing.js:844 htdocs/luci-static/resources/view/justclash/routing.js:947
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/routing.js:204 htdocs/luci-static/resources/view/justclash/routing.js:742 htdocs/luci-static/resources/view/justclash/routing.js:848 htdocs/luci-static/resources/view/justclash/routing.js:951
 msgid "Use with geosite:"
-msgstr "使用规则:"
+msgstr "配合 geosite 使用:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:211 htdocs/luci-static/resources/view/justclash/routing.js:217 htdocs/luci-static/resources/view/justclash/routing.js:733 htdocs/luci-static/resources/view/justclash/routing.js:739 htdocs/luci-static/resources/view/justclash/routing.js:845 htdocs/luci-static/resources/view/justclash/routing.js:851 htdocs/luci-static/resources/view/justclash/routing.js:948 htdocs/luci-static/resources/view/justclash/routing.js:954
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/routing.js:205 htdocs/luci-static/resources/view/justclash/routing.js:211 htdocs/luci-static/resources/view/justclash/routing.js:743 htdocs/luci-static/resources/view/justclash/routing.js:749 htdocs/luci-static/resources/view/justclash/routing.js:849 htdocs/luci-static/resources/view/justclash/routing.js:855 htdocs/luci-static/resources/view/justclash/routing.js:952 htdocs/luci-static/resources/view/justclash/routing.js:958
 msgid "Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups."
-msgstr "预定义的规则集列表。选择您希望通过代理路由的列表。如果使用代理组，请将其留空。"
+msgstr "选中的 geosite 列表。选择您希望通过代理路由的列表。如果使用代理组，请将其留空。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:216 htdocs/luci-static/resources/view/justclash/routing.js:738 htdocs/luci-static/resources/view/justclash/routing.js:850 htdocs/luci-static/resources/view/justclash/routing.js:953
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/routing.js:210 htdocs/luci-static/resources/view/justclash/routing.js:748 htdocs/luci-static/resources/view/justclash/routing.js:854 htdocs/luci-static/resources/view/justclash/routing.js:957
 msgid "Use with geoip:"
-msgstr "使用规则:"
+msgstr "配合 geoip 使用:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:224 htdocs/luci-static/resources/view/justclash/routing.js:746 htdocs/luci-static/resources/view/justclash/routing.js:858 htdocs/luci-static/resources/view/justclash/routing.js:961
+#: htdocs/luci-static/resources/view/justclash/routing.js:218 htdocs/luci-static/resources/view/justclash/routing.js:756 htdocs/luci-static/resources/view/justclash/routing.js:862 htdocs/luci-static/resources/view/justclash/routing.js:965
 msgid "Manual rules"
 msgstr "手动规则"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:226 htdocs/luci-static/resources/view/justclash/routing.js:748 htdocs/luci-static/resources/view/justclash/routing.js:860 htdocs/luci-static/resources/view/justclash/routing.js:963
+#: htdocs/luci-static/resources/view/justclash/routing.js:220 htdocs/luci-static/resources/view/justclash/routing.js:758 htdocs/luci-static/resources/view/justclash/routing.js:864 htdocs/luci-static/resources/view/justclash/routing.js:967
 msgid "Domain suffix:"
 msgstr "域名后缀:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:227
+#: htdocs/luci-static/resources/view/justclash/routing.js:221
 msgid "Traffic to domains matching this suffix will go through this proxy (example: google.com)."
 msgstr "发往匹配此后缀的域名的流量将通过此代理（例如：google.com）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:235 htdocs/luci-static/resources/view/justclash/routing.js:758 htdocs/luci-static/resources/view/justclash/routing.js:878 htdocs/luci-static/resources/view/justclash/routing.js:973
+#: htdocs/luci-static/resources/view/justclash/routing.js:229 htdocs/luci-static/resources/view/justclash/routing.js:768 htdocs/luci-static/resources/view/justclash/routing.js:882 htdocs/luci-static/resources/view/justclash/routing.js:977
 msgid "IPv4 CIDR:"
 msgstr "IPv4 CIDR:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:236
+#: htdocs/luci-static/resources/view/justclash/routing.js:230
 msgid "Traffic to this IPv4 address or subnet will go through this proxy (example: 1.1.1.1/32)."
 msgstr "发往此 IPv4 地址或子网的流量将通过此代理（例如：1.1.1.1/32）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:242 htdocs/luci-static/resources/view/justclash/routing.js:766 htdocs/luci-static/resources/view/justclash/routing.js:870
+#: htdocs/luci-static/resources/view/justclash/routing.js:236 htdocs/luci-static/resources/view/justclash/routing.js:776 htdocs/luci-static/resources/view/justclash/routing.js:874
 msgid "Source IPv4 CIDR:"
 msgstr "源 IPv4 CIDR:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:243
+#: htdocs/luci-static/resources/view/justclash/routing.js:237
 msgid "Traffic from this local IPv4 address or subnet will go through this proxy (example: 192.168.31.212/32)."
 msgstr "来自此本地 IPv4 地址或子网的流量将通过此代理（例如：192.168.31.212/32）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:250
+#: htdocs/luci-static/resources/view/justclash/routing.js:244
 msgid "Proxy provider:"
 msgstr "代理提供商 (Provider):"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:250
+#: htdocs/luci-static/resources/view/justclash/routing.js:244
 msgid "Proxy providers are external subscription URLs that dynamically load a list of proxies."
 msgstr "代理提供商是动态加载代理列表的外部订阅 URL。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:261
+#: htdocs/luci-static/resources/view/justclash/routing.js:255
 msgid "Enable or disable this proxy provider without removing it."
 msgstr "启用或禁用此代理提供商而不删除它。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:267
+#: htdocs/luci-static/resources/view/justclash/routing.js:261
 msgid "Proxy provider name."
 msgstr "代理提供商名称。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:280
+#: htdocs/luci-static/resources/view/justclash/routing.js:274
 msgid "Subscription URL:"
 msgstr "订阅 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:286
+#: htdocs/luci-static/resources/view/justclash/routing.js:280
 msgid "Your complete subscription URL with http:// or https://."
 msgstr "您完整的包含 http:// 或 https:// 的订阅 URL。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:290
+#: htdocs/luci-static/resources/view/justclash/routing.js:284
 msgid "Apply this dialer-proxy to nodes loaded from this provider. Leave empty to connect directly."
 msgstr "将此拨号代理应用于从此提供商加载的节点。留空直接连接。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:302
+#: htdocs/luci-static/resources/view/justclash/routing.js:296
 msgid "Apply this interface binding to nodes loaded from this provider. Leave empty to use the system-selected interface."
 msgstr "将此接口绑定应用于从此提供商加载的节点。留空使用系统选择的接口。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:312
+#: htdocs/luci-static/resources/view/justclash/routing.js:306
 msgid "Optional Linux fwmark applied to nodes loaded from this provider through Mihomo provider override. Leave empty to use node or global settings."
 msgstr "通过 Mihomo 提供商覆盖应用于从此提供商加载的节点的可选 Linux fwmark。留空以使用节点或全局设置。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:328
+#: htdocs/luci-static/resources/view/justclash/routing.js:322
 msgid "Time interval for subscription update check in seconds."
 msgstr "订阅更新检查的时间间隔（秒）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:341
+#: htdocs/luci-static/resources/view/justclash/routing.js:335
 msgid "Get subscription with:"
 msgstr "通过此获取订阅:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:342
+#: htdocs/luci-static/resources/view/justclash/routing.js:336
 msgid "Use the selected proxy to get subscription data from the server."
 msgstr "使用选择的代理从服务器获取订阅数据。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:352
+#: htdocs/luci-static/resources/view/justclash/routing.js:346
 msgid "Security"
-msgstr ""
+msgstr "安全"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:354
+#: htdocs/luci-static/resources/view/justclash/routing.js:348
 msgid "HWID support:"
 msgstr "硬件 ID 支持:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:356
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/routing.js:350
 msgid "Send HWID data headers to server with proxy provider request. Leave it unchecked if you don't need it."
-msgstr "使用代理提供商请求将 HWID 数据发送到服务器。"
+msgstr "伴随代理提供商请求向服务器发送 HWID 数据头。如果不需要，请取消勾选。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:361
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/routing.js:355
 msgid "Authorization header:"
-msgstr "认证"
+msgstr "Authorization 请求头:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:362
+#: htdocs/luci-static/resources/view/justclash/routing.js:356
 msgid "Send custom Authorization header to server with proxy provider request. Leave it empty if you don't need it."
-msgstr ""
+msgstr "发送自定义 Authorization 请求头给代理提供商。如果不需要请留空。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:371 htdocs/luci-static/resources/view/justclash/routing.js:387
+#: htdocs/luci-static/resources/view/justclash/routing.js:365 htdocs/luci-static/resources/view/justclash/routing.js:380
 msgid "Newlines (CR/LF) are not allowed in HTTP headers."
-msgstr ""
+msgstr "HTTP 请求头中不允许换行符 (CR/LF)。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:377
+#: htdocs/luci-static/resources/view/justclash/routing.js:370
 msgid "User agent header:"
-msgstr ""
+msgstr "User Agent 请求头:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:378
-#, fuzzy
+#: htdocs/luci-static/resources/view/justclash/routing.js:371
 msgid "Send custom useragent header to server with proxy provider request. Leave it empty if you don't need it."
-msgstr "使用代理提供商请求将 HWID 数据发送到服务器。"
+msgstr "伴随代理提供商请求向服务器发送自定义 User-Agent 请求头。如果不需要，请留空。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:393 htdocs/luci-static/resources/view/justclash/routing.js:574
+#: htdocs/luci-static/resources/view/justclash/routing.js:385
+msgid "AGE private key:"
+msgstr "AGE 私钥:"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:386
+msgid "Private key for AGE encryption. Optional."
+msgstr "用于 AGE 加密的私钥。可选。"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:394
+msgid "AGE public key:"
+msgstr "AGE 公钥:"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:395
+msgid "Public key for AGE encryption. Optional."
+msgstr "用于 AGE 加密的公钥。可选。"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:403 htdocs/luci-static/resources/view/justclash/routing.js:578
 msgid "Health check"
 msgstr "健康检查"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:395
+#: htdocs/luci-static/resources/view/justclash/routing.js:405
 msgid "Health check:"
 msgstr "健康检查:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:398
+#: htdocs/luci-static/resources/view/justclash/routing.js:408
 msgid "Enable availability checks for nodes from this proxy provider."
 msgstr "启用来自此代理提供商的节点的可用性检查。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:401 htdocs/luci-static/resources/view/justclash/routing.js:576
+#: htdocs/luci-static/resources/view/justclash/routing.js:411 htdocs/luci-static/resources/view/justclash/routing.js:580
 msgid "Check URL:"
 msgstr "检查 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:408 htdocs/luci-static/resources/view/justclash/routing.js:583
+#: htdocs/luci-static/resources/view/justclash/routing.js:418 htdocs/luci-static/resources/view/justclash/routing.js:587
 msgid "Only http:// or https:// URLs are allowed."
 msgstr "只允许 http:// 或 https:// URL。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:410
+#: htdocs/luci-static/resources/view/justclash/routing.js:420
 msgid "URL for node availability check (required for proxy provider functionality)."
 msgstr "节点可用性检查 URL（代理提供商功能所必需）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:415 htdocs/luci-static/resources/view/justclash/routing.js:588
+#: htdocs/luci-static/resources/view/justclash/routing.js:425 htdocs/luci-static/resources/view/justclash/routing.js:592
 msgid "Check status:"
 msgstr "检查状态:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:424
+#: htdocs/luci-static/resources/view/justclash/routing.js:434
 msgid "Required response status for node availability check (required for proxy provider functionality)."
 msgstr "节点可用性检查所需的响应状态（代理提供商功能所必需）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:430 htdocs/luci-static/resources/view/justclash/routing.js:601
+#: htdocs/luci-static/resources/view/justclash/routing.js:440 htdocs/luci-static/resources/view/justclash/routing.js:605
 msgid "Check interval:"
 msgstr "检查间隔:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:438 htdocs/luci-static/resources/view/justclash/routing.js:607
+#: htdocs/luci-static/resources/view/justclash/routing.js:448 htdocs/luci-static/resources/view/justclash/routing.js:611
 msgid "Time interval between health checks in seconds."
 msgstr "健康检查之间的时间间隔（秒）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:444 htdocs/luci-static/resources/view/justclash/routing.js:626
+#: htdocs/luci-static/resources/view/justclash/routing.js:454 htdocs/luci-static/resources/view/justclash/routing.js:636
 msgid "Check timeout:"
 msgstr "检查超时:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:452 htdocs/luci-static/resources/view/justclash/routing.js:632
+#: htdocs/luci-static/resources/view/justclash/routing.js:462 htdocs/luci-static/resources/view/justclash/routing.js:642
 msgid "Timeout for each individual health check in milliseconds."
 msgstr "每次单独健康检查的超时时间（毫秒）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:458 htdocs/luci-static/resources/view/justclash/routing.js:651
+#: htdocs/luci-static/resources/view/justclash/routing.js:468 htdocs/luci-static/resources/view/justclash/routing.js:661
 msgid "Lazy:"
 msgstr "惰性 (Lazy):"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:460
+#: htdocs/luci-static/resources/view/justclash/routing.js:470
 msgid "Run provider health checks only when needed instead of probing on every interval."
 msgstr "仅在需要时运行提供商健康检查，而不是在每个间隔进行探测。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:464 htdocs/luci-static/resources/view/justclash/routing.js:657
+#: htdocs/luci-static/resources/view/justclash/routing.js:474 htdocs/luci-static/resources/view/justclash/routing.js:667
 msgid "Filters"
 msgstr "过滤器"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:466 htdocs/luci-static/resources/view/justclash/routing.js:659
+#: htdocs/luci-static/resources/view/justclash/routing.js:476 htdocs/luci-static/resources/view/justclash/routing.js:669
 msgid "Filter:"
 msgstr "过滤器 (Filter):"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:467 htdocs/luci-static/resources/view/justclash/routing.js:660
+#: htdocs/luci-static/resources/view/justclash/routing.js:477 htdocs/luci-static/resources/view/justclash/routing.js:670
 msgid "Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe)."
 msgstr "过滤包含关键字或匹配正则表达式的节点。多个模式可以用 | (竖线) 分隔。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:476 htdocs/luci-static/resources/view/justclash/routing.js:669
+#: htdocs/luci-static/resources/view/justclash/routing.js:486 htdocs/luci-static/resources/view/justclash/routing.js:679
 msgid "Exclude filter:"
 msgstr "排除过滤器:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:477 htdocs/luci-static/resources/view/justclash/routing.js:670
+#: htdocs/luci-static/resources/view/justclash/routing.js:487 htdocs/luci-static/resources/view/justclash/routing.js:680
 msgid "Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe)."
 msgstr "排除匹配关键字或正则表达式的节点。多个模式可以用 | (竖线) 分隔。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:486 htdocs/luci-static/resources/view/justclash/routing.js:679
+#: htdocs/luci-static/resources/view/justclash/routing.js:496 htdocs/luci-static/resources/view/justclash/routing.js:689
 msgid "Exclude type:"
 msgstr "排除类型:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:487 htdocs/luci-static/resources/view/justclash/routing.js:680
+#: htdocs/luci-static/resources/view/justclash/routing.js:497 htdocs/luci-static/resources/view/justclash/routing.js:690
 msgid "Exclude nodes by proxy type."
 msgstr "按代理类型排除节点。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:496
+#: htdocs/luci-static/resources/view/justclash/routing.js:506
 msgid "Proxy groups:"
 msgstr "代理组:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:496
+#: htdocs/luci-static/resources/view/justclash/routing.js:506
 msgid "Group proxies for special routing (fallback, load balancing, URL test)."
 msgstr "为特殊路由对代理进行分组（故障转移、负载平衡、URL 测试）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:507
+#: htdocs/luci-static/resources/view/justclash/routing.js:517
 msgid "Enable or disable this proxy group without removing it."
 msgstr "启用或禁用此代理组而不删除它。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:513
-msgid "Generate fake IP mapping rules for this proxy group's domains."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/routing.js:519
+#: htdocs/luci-static/resources/view/justclash/routing.js:523
 msgid "Proxy group name."
 msgstr "代理组名称。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:532
+#: htdocs/luci-static/resources/view/justclash/routing.js:536
 msgid "Group type:"
 msgstr "组类型:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:538
-msgid "Choose how this group selects a proxy, such as fallback, load balancing, or URL test."
-msgstr "选择此组如何选择代理，例如故障转移、负载平衡或 URL 测试。"
+#: htdocs/luci-static/resources/view/justclash/routing.js:542
+msgid "Choose how this group selects a proxy, such as select, fallback, load balancing, or URL test."
+msgstr "选择此组如何选择代理，例如 select（手动选择）、fallback（故障转移）、load-balance（负载均衡）或 url-test（延迟测试）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:541
+#: htdocs/luci-static/resources/view/justclash/routing.js:545
 msgid "Group strategy:"
 msgstr "组策略:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:548
+#: htdocs/luci-static/resources/view/justclash/routing.js:552
 msgid "Choose how the load-balance group distributes traffic across available proxies."
 msgstr "选择负载均衡组如何在可用代理之间分配流量。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:551
+#: htdocs/luci-static/resources/view/justclash/routing.js:555
 msgid "Proxies:"
 msgstr "代理列表:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:552
+#: htdocs/luci-static/resources/view/justclash/routing.js:556
 msgid "List proxy entries that belong to this group."
 msgstr "列出属于此组的代理条目。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:562
+#: htdocs/luci-static/resources/view/justclash/routing.js:566
 msgid "Providers:"
 msgstr "提供商列表:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:563
+#: htdocs/luci-static/resources/view/justclash/routing.js:567
 msgid "List proxy providers whose nodes should be included in this group."
 msgstr "列出应将其节点包含在此组中的代理提供商。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:585
+#: htdocs/luci-static/resources/view/justclash/routing.js:589
 msgid "URL for node availability check (required for proxy group functionality)."
 msgstr "节点可用性检查 URL（代理组功能所必需）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:595
+#: htdocs/luci-static/resources/view/justclash/routing.js:599
 msgid "Required response status for node availability check (required for proxy group functionality)."
 msgstr "节点可用性检查所需的响应状态（代理组功能所必需）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:613
+#: htdocs/luci-static/resources/view/justclash/routing.js:617
 msgid "Tolerance:"
 msgstr "容差 (Tolerance):"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:619
+#: htdocs/luci-static/resources/view/justclash/routing.js:623
 msgid "Proxies switch tolerance, measured in milliseconds (ms)."
 msgstr "代理切换容差，以毫秒（ms）为单位。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:638
+#: htdocs/luci-static/resources/view/justclash/routing.js:630
+msgid "Default selected:"
+msgstr "默认选中项:"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:631
+msgid "Name of the proxy/group that should be selected by default."
+msgstr "默认选中的代理/策略组名称。"
+
+#: htdocs/luci-static/resources/view/justclash/routing.js:648
 msgid "Max failed times:"
 msgstr "最大失败次数:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:645
+#: htdocs/luci-static/resources/view/justclash/routing.js:655
 msgid "How many failed health checks are allowed before the node is treated as unavailable."
 msgstr "在节点被视为不可用之前允许进行多少次失败的健康检查。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:653
+#: htdocs/luci-static/resources/view/justclash/routing.js:663
 msgid "Run group health checks only when needed instead of probing on every interval."
 msgstr "仅在需要时运行组健康检查，而不是在每个间隔进行探测。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:696
+#: htdocs/luci-static/resources/view/justclash/routing.js:706
 msgid "Predefined rule set lists. Select the ones you want to route through the proxy group."
 msgstr "预定义规则集列表。选择您希望通过代理组路由的列表。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:699
+#: htdocs/luci-static/resources/view/justclash/routing.js:709
 msgid "Get lists through proxy group:"
 msgstr "通过代理组获取列表:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:700
+#: htdocs/luci-static/resources/view/justclash/routing.js:710
 msgid "If selected, rule set lists will be updated through the proxy group."
 msgstr "如果选中，规则集列表将通过代理组进行更新。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:749
+#: htdocs/luci-static/resources/view/justclash/routing.js:759
 msgid "Traffic to domains matching this suffix will go through the selected proxy group (example: google.com)."
 msgstr "发往匹配此后缀的域名的流量将通过所选代理组（例如：google.com）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:759
+#: htdocs/luci-static/resources/view/justclash/routing.js:769
 msgid "Traffic to this IPv4 address or subnet will go through the selected proxy group (example: 1.1.1.1/32)."
 msgstr "发往此 IPv4 地址或子网的流量将通过选定的代理组（例如：1.1.1.1/32）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:767
+#: htdocs/luci-static/resources/view/justclash/routing.js:777
 msgid "Traffic from this local IPv4 address or subnet will go through the selected proxy group (example: 192.168.31.212/32)."
 msgstr "来自此本地 IPv4 地址或子网的流量将通过选定的代理组（例如：192.168.31.212/32）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:774
+#: htdocs/luci-static/resources/view/justclash/routing.js:784
 msgid "Direct rules:"
 msgstr "直连规则:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:774
+#: htdocs/luci-static/resources/view/justclash/routing.js:784
 msgid "Extra direct rules. These are applied before proxy rules, proxy groups, and block rules."
 msgstr "额外的直连规则。这些将在代理规则、代理组和拦截规则之前应用。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:786
+#: htdocs/luci-static/resources/view/justclash/routing.js:796
 msgid "Enable or disable direct rules."
 msgstr "启用或禁用直连规则。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:792
-msgid "Generate fake IP mapping rules for this direct rule section's domains."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/routing.js:802
+#: htdocs/luci-static/resources/view/justclash/routing.js:806
 msgid "Ready-made lists for traffic that should bypass the proxy."
 msgstr "预置的流量直连列表。匹配这些列表的流量将绕过代理。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:807 htdocs/luci-static/resources/view/justclash/routing.js:910
+#: htdocs/luci-static/resources/view/justclash/routing.js:811 htdocs/luci-static/resources/view/justclash/routing.js:914
 msgid "Download lists through:"
 msgstr "下载列表通过:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:808 htdocs/luci-static/resources/view/justclash/routing.js:911
+#: htdocs/luci-static/resources/view/justclash/routing.js:812 htdocs/luci-static/resources/view/justclash/routing.js:915
 msgid "Choose which proxy or group should be used when downloading these lists from the internet."
 msgstr "选择从互联网下载这些列表时应使用的代理或组。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:861
+#: htdocs/luci-static/resources/view/justclash/routing.js:865
 msgid "Traffic to domains matching this suffix will bypass the proxy (example: google.com)."
 msgstr "发往匹配此后缀的域名的流量将绕过代理（例如：google.com）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:871
+#: htdocs/luci-static/resources/view/justclash/routing.js:875
 msgid "Traffic from this local IPv4 address or subnet will bypass the proxy (example: 192.168.31.212/32)."
 msgstr "来自此本地 IPv4 地址或子网的流量将绕过代理（例如：192.168.31.212/32）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:879
+#: htdocs/luci-static/resources/view/justclash/routing.js:883
 msgid "Traffic to this IPv4 address or subnet will bypass the proxy (example: 1.1.1.1/32)."
 msgstr "发往此 IPv4 地址或子网的流量将绕过代理（例如：1.1.1.1/32）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:886
+#: htdocs/luci-static/resources/view/justclash/routing.js:890
 msgid "Block rules:"
 msgstr "拦截 (Block) 规则:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:886
+#: htdocs/luci-static/resources/view/justclash/routing.js:890
 msgid "Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."
 msgstr "额外的拦截规则。这些将在代理规则和代理组之前应用，以优先停止匹配的流量。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:898
+#: htdocs/luci-static/resources/view/justclash/routing.js:902
 msgid "Enable or disable block rules."
 msgstr "启用或禁用拦截规则。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:907
+#: htdocs/luci-static/resources/view/justclash/routing.js:911
 msgid "Ready-made blocklists for ads and harmful sites. Matching traffic will be blocked. Choose the ones you want to use, or leave this empty."
 msgstr "预置的拦截列表，用于广告和有害网站。匹配的流量将被拦截。选择您想要使用的，或者留空。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:964
+#: htdocs/luci-static/resources/view/justclash/routing.js:968
 msgid "Traffic to domains matching this suffix will be blocked (example: google.com)."
 msgstr "发往匹配此后缀的域名的流量将被拦截（例如：google.com）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:974
+#: htdocs/luci-static/resources/view/justclash/routing.js:978
 msgid "Traffic to this IPv4 address or subnet will be blocked (example: 1.1.1.1/32)."
 msgstr "发往此 IPv4 地址或子网的流量将被拦截（例如：1.1.1.1/32）。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:981
+#: htdocs/luci-static/resources/view/justclash/routing.js:985
 msgid "Mihomo mixed port rule:"
 msgstr "Mihomo 混合端口规则:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:981
+#: htdocs/luci-static/resources/view/justclash/routing.js:985
 msgid "Extra settings for traffic that arrives through the Mihomo mixed port. Use this when that port should behave differently from the default route."
 msgstr "为通过 Mihomo 混合端口到达的流量进行额外设置。当该端口应表现出与默认路由不同的行为时使用此项。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:986 htdocs/luci-static/resources/view/justclash/routing.js:1002
+#: htdocs/luci-static/resources/view/justclash/routing.js:990 htdocs/luci-static/resources/view/justclash/routing.js:1006
 msgid "Send traffic to:"
 msgstr "将流量发送至:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:992
+#: htdocs/luci-static/resources/view/justclash/routing.js:996
 msgid "Choose which proxy, group, or action handles traffic that comes in through the Mihomo mixed port."
 msgstr "选择哪个代理、组或操作处理通过 Mihomo 混合端口进入的流量。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:997
+#: htdocs/luci-static/resources/view/justclash/routing.js:1001
 msgid "Default rule:"
 msgstr "默认规则:"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:997
+#: htdocs/luci-static/resources/view/justclash/routing.js:1001
 msgid "Used when no other rule matches. This is the fallback action for the remaining traffic."
 msgstr "在没有其他规则匹配时使用。这是其余流量的备用操作。"
 
-#: htdocs/luci-static/resources/view/justclash/routing.js:1007
+#: htdocs/luci-static/resources/view/justclash/routing.js:1011
 msgid "Choose the fallback action for traffic that does not match any earlier rule."
 msgstr "选择不匹配任何较早规则的流量的备用操作。"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:40
+#: htdocs/luci-static/resources/view/justclash/rules.js:38
 msgid "Failed to load Mihomo rules"
 msgstr "加载 Mihomo 规则失败"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:72
+#: htdocs/luci-static/resources/view/justclash/rules.js:70
 msgid "Search rules by type, payload or proxy..."
 msgstr "按类型、内容或代理搜索规则..."
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:96 htdocs/luci-static/resources/view/justclash/system_logs.js:67 htdocs/luci-static/resources/view/justclash/system_logs.js:102
+#: htdocs/luci-static/resources/view/justclash/rules.js:97 htdocs/luci-static/resources/view/justclash/system_logs.js:67 htdocs/luci-static/resources/view/justclash/system_logs.js:102
 msgid "Last updated: "
-msgstr "最后更新:"
+msgstr "最后更新: "
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:116 htdocs/luci-static/resources/view/justclash/system_logs.js:107
+#: htdocs/luci-static/resources/view/justclash/rules.js:117 htdocs/luci-static/resources/view/justclash/system_logs.js:107
 msgid "Refresh"
 msgstr "刷新"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:130 htdocs/luci-static/resources/view/justclash/rules.js:185
+#: htdocs/luci-static/resources/view/justclash/rules.js:131 htdocs/luci-static/resources/view/justclash/rules.js:186
 msgid "Active"
 msgstr "启用"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:131 htdocs/luci-static/resources/view/justclash/rules.js:150 htdocs/luci-static/resources/view/justclash/rulesets.js:136 htdocs/luci-static/resources/view/justclash/rulesets.js:190 htdocs/luci-static/resources/view/justclash/rulesets.js:245
+#: htdocs/luci-static/resources/view/justclash/rules.js:132 htdocs/luci-static/resources/view/justclash/rules.js:151 htdocs/luci-static/resources/view/justclash/rulesets.js:136 htdocs/luci-static/resources/view/justclash/rulesets.js:190 htdocs/luci-static/resources/view/justclash/rulesets.js:245
 msgid "Type"
 msgstr "类型"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:132 htdocs/luci-static/resources/view/justclash/rules.js:153
+#: htdocs/luci-static/resources/view/justclash/rules.js:133 htdocs/luci-static/resources/view/justclash/rules.js:154
 msgid "Payload"
 msgstr "内容"
 
-#: htdocs/luci-static/resources/view/justclash/rules.js:133 htdocs/luci-static/resources/view/justclash/rules.js:154
+#: htdocs/luci-static/resources/view/justclash/rules.js:134 htdocs/luci-static/resources/view/justclash/rules.js:155
 msgid "Proxy / Group"
 msgstr "代理 / 代理组"
 
@@ -2148,79 +2137,123 @@ msgstr "更新计划:"
 msgid "Use cron format to choose when rules and databases should update automatically."
 msgstr "使用 cron 格式选择规则和数据库应在何时自动更新。"
 
+#: htdocs/luci-static/resources/view/justclash/service.js:274
+msgid "Enable scheduled work:"
+msgstr "启用计划任务:"
+
 #: htdocs/luci-static/resources/view/justclash/service.js:275
+msgid "Start and stop the proxy core on a daily schedule."
+msgstr "按每日计划启动和停止代理核心。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:279
+msgid "Start schedule:"
+msgstr "启动计划:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:285
+msgid "Use cron format to choose when the core should start."
+msgstr "使用 cron 格式选择核心应在何时启动。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:287 htdocs/luci-static/resources/view/justclash/service.js:298
+msgid "Invalid schedule format."
+msgstr "无效的计划任务格式。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:290
+msgid "Stop schedule:"
+msgstr "停止计划:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:296
+msgid "Use cron format to choose when the core should stop."
+msgstr "使用 cron 格式选择核心应在何时停止。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:302
 msgid "External resources"
 msgstr "外部资源"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:277
+#: htdocs/luci-static/resources/view/justclash/service.js:304
 msgid "Core update source:"
 msgstr "核心更新源:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:278
+#: htdocs/luci-static/resources/view/justclash/service.js:305
 msgid "Github"
 msgstr "Github"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:279
+#: htdocs/luci-static/resources/view/justclash/service.js:306
 msgid "Custom URL"
 msgstr "自定义 URL"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:280
+#: htdocs/luci-static/resources/view/justclash/service.js:307
 msgid "Choose where Mihomo core should be downloaded from. 'Github' will automatically fetch the latest release, 'Custom URL' allows downloading directly from your specified link."
 msgstr "选择 Mihomo 核心应从何处下载。“Github” 将自动获取最新版本，“自定义 URL”允许直接从您指定的链接下载。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:285
+#: htdocs/luci-static/resources/view/justclash/service.js:312
 msgid "GitHub repository:"
 msgstr "GitHub 仓库:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:286
+#: htdocs/luci-static/resources/view/justclash/service.js:313
 msgid "GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'."
 msgstr "Mihomo 核心更新的 GitHub 仓库。必须采用 “用户名/仓库” 格式。示例：“MetaCubeX/mihomo”。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:293
+#: htdocs/luci-static/resources/view/justclash/service.js:320
 msgid "Update channel:"
 msgstr "更新渠道:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:297
+#: htdocs/luci-static/resources/view/justclash/service.js:324
 msgid "Choose which release channel to use for Mihomo updates. Stable is safer, while newer channels may include newer features and newer bugs."
 msgstr "选择用于 Mihomo 更新的发布渠道。正式版 (Stable) 更安全，而较新的渠道可能包含新功能但也可能包含新的错误。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:303
+#: htdocs/luci-static/resources/view/justclash/service.js:330
 msgid "Custom core base URL:"
 msgstr "自定义核心基本 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:304
+#: htdocs/luci-static/resources/view/justclash/service.js:331
 msgid "Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'"
 msgstr "托管核心文件的服务器的基本 URL（类似于 GitHub releases）。服务器必须包含“version.txt”文件和相应的“mihomo-linux-arch-version.gz”存档。示例：“https://example.com/mihomo/”"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:313
+#: htdocs/luci-static/resources/view/justclash/service.js:340
 msgid "Rulesets download URL:"
 msgstr "规则集下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:314
+#: htdocs/luci-static/resources/view/justclash/service.js:341
 msgid "URL to download inbuild rulesets from. Leave empty to use the default."
 msgstr "下载内置规则集的 URL。留空以使用默认值。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:320
+#: htdocs/luci-static/resources/view/justclash/service.js:347
+msgid "Geosite download URL:"
+msgstr "Geosite 下载 URL:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:348
+msgid "URL to download geosite.dat from. Leave empty to use the default."
+msgstr "下载 geosite.dat 的 URL。留空以使用默认值。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:354
+msgid "GeoIP download URL:"
+msgstr "GeoIP 下载 URL:"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:355
+msgid "URL to download geoip.dat from. Leave empty to use the default."
+msgstr "下载 geoip.dat 的 URL。留空以使用默认值。"
+
+#: htdocs/luci-static/resources/view/justclash/service.js:361
 msgid "Zashboard download URL:"
 msgstr "Zashboard 下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:321
+#: htdocs/luci-static/resources/view/justclash/service.js:362
 msgid "URL to download Zashboard dashboard from. Leave empty to use the default."
 msgstr "下载 Zashboard 面板的 URL。留空以使用默认值。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:327
+#: htdocs/luci-static/resources/view/justclash/service.js:368
 msgid "Metacubexd download URL:"
 msgstr "Metacubexd 下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:328
+#: htdocs/luci-static/resources/view/justclash/service.js:369
 msgid "URL to download Metacubexd dashboard from. Leave empty to use the default."
 msgstr "下载 Metacubexd 面板的 URL。留空以使用默认值。"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:334
+#: htdocs/luci-static/resources/view/justclash/service.js:375
 msgid "YACD-meta download URL:"
 msgstr "YACD-meta 下载 URL:"
 
-#: htdocs/luci-static/resources/view/justclash/service.js:335
+#: htdocs/luci-static/resources/view/justclash/service.js:376
 msgid "URL to download YACD-meta dashboard from. Leave empty to use the default."
 msgstr "下载 YACD-meta 面板的 URL。留空以使用默认值。"
 
@@ -2304,7 +2337,7 @@ msgstr "Mihomo 版本"
 msgid "Stop"
 msgstr "停止"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:248 htdocs/luci-static/resources/view/justclash/status.js:543
+#: htdocs/luci-static/resources/view/justclash/status.js:248 htdocs/luci-static/resources/view/justclash/status.js:541
 msgid "Start"
 msgstr "启动"
 
@@ -2312,7 +2345,7 @@ msgstr "启动"
 msgid "Disable on boot"
 msgstr "禁用开机自启"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:263 htdocs/luci-static/resources/view/justclash/status.js:545
+#: htdocs/luci-static/resources/view/justclash/status.js:263 htdocs/luci-static/resources/view/justclash/status.js:543
 msgid "Enable on boot"
 msgstr "启用开机自启"
 
@@ -2340,7 +2373,7 @@ msgstr "无响应"
 msgid "Run"
 msgstr "运行"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:421 htdocs/luci-static/resources/view/justclash/status.js:603
+#: htdocs/luci-static/resources/view/justclash/status.js:421 htdocs/luci-static/resources/view/justclash/status.js:601
 msgid "Update rulesets"
 msgstr "更新规则集"
 
@@ -2376,107 +2409,107 @@ msgstr "状态"
 msgid "Getting rulesets..."
 msgstr "正在获取规则集..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:507 htdocs/luci-static/resources/view/justclash/status.js:508
+#: htdocs/luci-static/resources/view/justclash/status.js:505 htdocs/luci-static/resources/view/justclash/status.js:506
 msgid "Loading..."
 msgstr "加载中..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:519
+#: htdocs/luci-static/resources/view/justclash/status.js:517
 msgid "Running command..."
 msgstr "正在运行命令..."
 
-#: htdocs/luci-static/resources/view/justclash/status.js:519
+#: htdocs/luci-static/resources/view/justclash/status.js:517
 msgid "Please wait."
 msgstr "请稍候。"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:544
+#: htdocs/luci-static/resources/view/justclash/status.js:542
 msgid "Restart"
 msgstr "重启"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:574
+#: htdocs/luci-static/resources/view/justclash/status.js:572
 msgid "Current status"
 msgstr "当前状态"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:575
+#: htdocs/luci-static/resources/view/justclash/status.js:573
 msgid "Overview of the running Mihomo service status, core version, and active traffic usage."
 msgstr "运行中的 Mihomo 服务状态、核心版本以及当前流量使用情况的概述。"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:580
+#: htdocs/luci-static/resources/view/justclash/status.js:578
 msgid "Service actions"
 msgstr "服务操作"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:581
+#: htdocs/luci-static/resources/view/justclash/status.js:579
 msgid "Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot."
 msgstr "控制 Mihomo 守护进程。您可以启动、停止或重启服务，以及启用或禁用开机自启。"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:587
+#: htdocs/luci-static/resources/view/justclash/status.js:585
 msgid "Run diagnostics"
 msgstr "运行诊断"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:587
+#: htdocs/luci-static/resources/view/justclash/status.js:585
 msgid "Diagnostic report"
 msgstr "诊断报告"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:588
+#: htdocs/luci-static/resources/view/justclash/status.js:586
 msgid "Update core"
 msgstr "更新核心"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:588
+#: htdocs/luci-static/resources/view/justclash/status.js:586
 msgid "Update Mihomo core"
 msgstr "更新 Mihomo 核心"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:588
+#: htdocs/luci-static/resources/view/justclash/status.js:586
 msgid "Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."
 msgstr "目前更新 Mihomo 核心不是原子操作。如果路由器可用空间太小或中途下载失败，当前核心可能会在完全安装新核心之前被移除。"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:604
+#: htdocs/luci-static/resources/view/justclash/status.js:602
 msgid "Update service data"
 msgstr "更新服务数据"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:604
+#: htdocs/luci-static/resources/view/justclash/status.js:602
 msgid "This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."
 msgstr "此操作将下载并替换本地服务数据文件。如果下载失败或远程源返回错误数据，服务行为可能会发生改变，直到下一次成功更新。"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:609
+#: htdocs/luci-static/resources/view/justclash/status.js:607
 msgid "Maintenance"
 msgstr "维护"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:610
+#: htdocs/luci-static/resources/view/justclash/status.js:608
 msgid "Perform diagnostic tests, update the core binary, and update downloaded rulesets or service data files."
 msgstr "运行诊断测试、更新核心二进制文件，以及更新已下载的规则集或服务数据文件。"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:616
+#: htdocs/luci-static/resources/view/justclash/status.js:614
 msgid "Show Mihomo config"
 msgstr "显示 Mihomo 配置"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:616
+#: htdocs/luci-static/resources/view/justclash/status.js:614
 msgid "Mihomo config"
 msgstr "Mihomo 配置"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:617
+#: htdocs/luci-static/resources/view/justclash/status.js:615
 msgid "Show service config"
 msgstr "显示服务配置"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:617
+#: htdocs/luci-static/resources/view/justclash/status.js:615
 msgid "Service config"
 msgstr "服务配置"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:618
+#: htdocs/luci-static/resources/view/justclash/status.js:616
 msgid "Reset config"
 msgstr "重置配置"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:618
+#: htdocs/luci-static/resources/view/justclash/status.js:616
 msgid "Reset configuration"
 msgstr "重置配置"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:618
+#: htdocs/luci-static/resources/view/justclash/status.js:616
 msgid "This will reset the JustClash configuration. Use with care."
 msgstr "这将重置 JustClash 配置。请谨慎使用。"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:623
+#: htdocs/luci-static/resources/view/justclash/status.js:621
 msgid "Configuration"
 msgstr "配置"
 
-#: htdocs/luci-static/resources/view/justclash/status.js:624
+#: htdocs/luci-static/resources/view/justclash/status.js:622
 msgid "Inspect the generated Mihomo or JustClash settings, or reset the configuration back to default values."
 msgstr "查看生成的 Mihomo 或 JustClash 设置，或将配置重置为默认值。"
 
@@ -2495,9 +2528,3 @@ msgstr "系统日志"
 #: htdocs/luci-static/resources/view/justclash/system_logs.js:181
 msgid "View system logs related to the JustClash service and its startup scripts."
 msgstr "查看与 JustClash 服务及其启动脚本相关的系统日志。"
-
-#~ msgid "Force real IP rulesets:"
-#~ msgstr "强制真实 IP 规则集:"
-
-#~ msgid "Ruleset names that should resolve through real IP before fake-IP matches are applied. Values are treated as RULE-SET selectors, for example youtube or custom_domain_list."
-#~ msgstr "应在应用 fake-IP 匹配前通过真实 IP 解析的规则集名称。值将被视为 RULE-SET 选择器，例如 youtube 或 custom_domain_list。"
