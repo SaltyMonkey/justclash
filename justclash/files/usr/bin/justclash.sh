@@ -179,7 +179,7 @@ ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 B4_FILEPATH="/etc/init.d/b4"
-REQUIRED_TOOLS="jq nft curl md5sum ntpd"
+REQUIRED_TOOLS="jq nft curl md5sum ntpd conntrack base64"
 
 
 is_pattern_in_file() {
@@ -2365,9 +2365,11 @@ core_generate_yaml() {
     # Clean up global buffers and caches to free memory on low-RAM routers
     unset _RULESETS_CONTENT _BLOCK_RULESETS_CONTENT \
           OUT_RULES OUT_RULESETS OUT_FAKE_IP_RULES OUT_PROXY_GROUPS OUT_PROXIES \
-          OUT_NAMES_RULESETS OUT_NAMES_SUFFIXES OUT_TEMPLATE OUT_PROXY_PROVIDERS \
-          OUT_MIXED_RULES OUT_FINAL_RULES OUT_BUNDLE_IP_RULES OUT_BUNDLE_RULES \
-          OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES OUT_BUNDLE_FAKEIPRULES OUT_NAMES_GEOSITE
+          OUT_NAMES_RULESETS OUT_NAMES_SUFFIXES OUT_NAMES_GEOSITE OUT_TEMPLATE \
+          OUT_PROXY_PROVIDERS OUT_MIXED_RULES OUT_FINAL_RULES \
+          OUT_BUNDLE_IP_RULES OUT_BUNDLE_RULES OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES \
+          OUT_BUNDLE_FAKEIPRULES \
+          GLOBAL_FAKE_IP_EXCLUDE_RULES GLOBAL_FAKE_IP_EXCLUDE_GEOSITES GLOBAL_FAKE_IP_EXCLUDE_DOMAINS
 
     return 0
 }
@@ -2967,11 +2969,10 @@ diag_service_config_unsafe() {
 diag_report() {
     local running_status autoload_status hw_model os_ver
 
-    local c_green="" c_red="" c_yellow="" c_gray="" c_reset=""
+    local c_green="" c_red="" c_gray="" c_reset=""
     if [ -t 1 ]; then
         c_green="\033[1;32m"
         c_red="\033[1;31m"
-        c_yellow="\033[1;33m"
         c_gray="\033[90m"
         c_reset="\033[0m"
     fi
