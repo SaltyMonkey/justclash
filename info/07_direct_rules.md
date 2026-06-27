@@ -19,7 +19,7 @@ This is managed via the **Direct Rules** configuration section.
 
 When enabled, The service generates `RULE-SET`, `DOMAIN-SUFFIX`, and `IP-CIDR` rules targeting the `DIRECT` action. These rules are placed very high up in the routing table, ensuring they trigger before any of your standard proxy groups or default fallback routes.
 
-Additionally, you can control whether direct rules generate Fake-IP addresses. By default, the `fake_ip` option is enabled (`1`), mapping these domains to Fake-IPs for seamless rule matching inside the routing engine. If you want direct rules to bypass Fake-IP entirely and resolve using the router's real DNS (preventing connection failures for devices bypassed at the firewall level), you can disable the `fake_ip` option.
+
 
 ## 2. Configuration
 
@@ -28,7 +28,7 @@ If you still need to use Direct Rules, you can configure them via the web interf
 ### Via LuCI Web Interface
 Navigate to *Services -> JustClash -> Routing Tab -> Direct Rules*. 
 * Enable the section.
-* Toggle the **Fake IP** option (enabled by default) depending on whether you want these domains to resolve to Fake-IPs or Real IPs.
+
 * Select built-in or user-defined RuleSets from the dropdown menu (if really needed).
 * Add specific domains or IPs to the **Additional Domains** and **Additional Destination IPs** lists.
 * Add specific device IPs to the **Additional Source IPs** list if you want to bypass the proxy for a whole device but still have Mihomo evaluate its traffic (for a complete bypass that saves router CPU, use the main settings **Client bypassed MAC/IP addresses** instead).
@@ -38,7 +38,7 @@ Navigate to *Services -> JustClash -> Routing Tab -> Direct Rules*.
 # 1. Enable the direct rules section and configure Fake-IP behavior
 uci set justclash.direct_rules=direct_rules
 uci set justclash.direct_rules.enabled='1'
-uci set justclash.direct_rules.fake_ip='1'  # Set to '0' to disable Fake-IP for direct rules
+
 
 # 2. Add RuleSets from the catalog (using their identifiers)
 uci add_list justclash.direct_rules.enabled_list='ru-hosts'

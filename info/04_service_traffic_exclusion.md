@@ -1,67 +1,34 @@
 # Traffic Exclusions Reference
 
-This document explains how to exclude specific network traffic from being intercepted and processed by the JustClash routing engine. 
+This document explains how to exclude specific network traffic from being intercepted and processed by the JustClash routing engine.
 
 ---
 
-## 1. Excluding Traffic by Ports
+## 0. Default Bypassed Traffic (Private IPs)
 
-The service allows you to bypass transparent routing for specific ports (both TCP and UDP, matching destination or source ports). This is useful for keeping latency-sensitive or administrative protocols (like SSH on port 22 or NTP on port 123) out of the interception engine.
-
-### Configuration Options
-You can configure exclusions separately for local LAN clients and the router itself:
-
-* **Client Exclusions (`nft_ports_exclude`)**:
-  Bypasses traffic originating from LAN devices connected to the router.
-  * **Via Console (UCI)**:
-    ```bash
-    uci add_list justclash.settings.nft_ports_exclude='22'
-    uci add_list justclash.settings.nft_ports_exclude='123'
-    uci commit justclash
-    service justclash restart
-    ```
-  * **Via LuCI Web Interface**:  
-    Go to *Services -> JustClash -> Settings -> Client bypassed ports* and add the ports.
-
-* **Router Exclusions (`nft_ports_exclude_router`)**:
-  Bypasses traffic originating from processes running directly on the router itself.
-  * **Via LuCI Web Interface**:  
-    Go to *Services -> JustClash -> Settings -> Router bypassed ports* and add the ports.
-  * **Via Console (UCI)**:
-     ```bash
-     uci add_list justclash.settings.nft_ports_exclude_router='22'
-     uci commit justclash
-     service justclash restart
-     ```
-
-### How it Works (nftables Rules)
-When these options are populated, JustClash dynamically generates the following `return` (bypass) rules inside the `justclash_tproxy` nftables table:
-
-```nginx
-# For LAN clients (prerouting chain):
-add rule inet justclash_tproxy prerouting meta l4proto { tcp, udp } th dport { 22, 123 } return comment "Bypass excluded destination ports"
-add rule inet justclash_tproxy prerouting meta l4proto { tcp, udp } th sport { 22, 123 } return comment "Bypass excluded source ports"
-
-# For local router output (output chain):
-add rule inet justclash_tproxy output meta l4proto { tcp, udp } th dport { 22 } return comment "Bypass excluded router destination ports"
-add rule inet justclash_tproxy output meta l4proto { tcp, udp } th sport { 22 } return comment "Bypass excluded router source ports"
-```
-
+By design, JustClash automatically bypasses all **Private IP traffic** (Local LAN to LAN traffic). This means any connections between devices on your local network (e.g., from `192.168.1.10` to `192.168.1.20`, or accessing your router's web interface at `192.168.1.1`) are never intercepted by the routing engine.
+You only need to configure manual exclusions for traffic destined for the public internet (WAN).
 
 ---
 
-## 2. Exclusion Methods (UID, MAC, IP)
+## 1. Router Traffic Exclusion
 
-JustClash supports bypassing traffic for specific system users on the router, or specific client devices on the LAN using MAC or IP addresses.
+This section covers how to bypass traffic originating from processes running directly on the router itself (e.g., DNS resolvers, SSH, tunnel clients, NTP).
 
-### 2.1 Router-Originated Traffic by User ID (`skuid`)
+### 1.1 Method A: By fwmark (SO_MARK) [Recommended]
+By default, JustClash configures Mihomo to mark all its outbound connections with a specific routing mark (fwmark `255` / `0xFF`). The nftables firewall uses this mark to bypass the transparent redirection and send the traffic directly to the WAN gateway, preventing an infinite routing loop.
 
-Unlike ports or IP addresses, you can bypass local traffic based on the system user (UID) that owns the network socket. This is configured using the `nft_skuid_exclude_router` option.
+You can leverage this exact same mechanism to bypass any local daemon on the router. Simply configure the daemon to set `SO_MARK=255` (or fwmark `255`) on its outbound sockets.
+Because the packets originate with the `255` mark, nftables will immediately accept them in the `output` chain and route them outside of JustClash.
 
-#### Configuration Option
-Specify the system user name or numeric UID running the process you want to bypass:
-* **Via LuCI Web Interface**:  
-  Go to *Services -> JustClash -> Settings -> Exclude Router Users (UID)* and enter the user name: `skipped_skuid`.
+*Note on Custom Outbound Marks (routing-mark):*
+JustClash also supports configuring custom `fwmark` values on individual Mihomo outbound connections or providers. This allows you to tag the traffic of specific outbounds with custom marks (e.g., `0x800`) so that other router services like `mwan3` or policy-based routing (PBR) can intercept those specific outbound connections and route them to specific WAN interfaces. These custom marks automatically bypass the internal redirection loop just like the default `255` mark.
+
+### 1.2 Method B: By User ID (`skuid`)
+If the daemon you want to exclude does not support configuring `SO_MARK` or `fwmark`, you can bypass it based on the system user (UID) running the process. This is configured using the `nft_skuid_exclude_router` option.
+
+* **Via LuCI Web Interface**:
+  Go to *Services -> JustClash -> Service* (on the **Traffic rules** tab) -> Exclude Router Users (UID)* and enter the user name: `skipped_skuid`.
 * **Via Console (UCI)**:
   ```bash
   uci add_list justclash.settings.nft_skuid_exclude_router='skipped_skuid'
@@ -69,116 +36,122 @@ Specify the system user name or numeric UID running the process you want to bypa
   service justclash restart
   ```
 
-#### Why `skuid` Exclusions Only Apply to Router Traffic
-In nftables, the `meta skuid` expression extracts the Socket User ID (UID) associated with the network packet. 
+*Note on `skuid` Exclusions:*
+In nftables, the `meta skuid` expression extracts the Socket User ID associated with the network packet. Forwarded LAN traffic does not have a local socket owner, so this rule is completely invalid for LAN clients and only works in the router's local `output` chain.
 
-1. **Client LAN Traffic (Forwarded)**:  
-   When a client device (like a phone or laptop) sends packets through the router, the router merely forwards them. There is no local socket owned by the router for this traffic. Therefore, there is **no socket owner UID** associated with forwarded packets. The `meta skuid` expression is blank/invalid for this traffic.
-   
-2. **Router Local Traffic (Output)**:  
-   When a process running on the router (e.g., an encrypted DNS client, a backup daemon, or an SSH server) initiates an outbound connection, it creates a local socket. This socket is owned by a system user (like `root`, `nobody`, or a dedicated service user). 
+### 1.3 Method C: By Ports
+The service allows you to bypass transparent routing for specific ports (both TCP and UDP, matching destination or source ports) originating from the router itself.
 
-Because of this difference, **`skuid` exclusions can only be used in the `output` chain** (for traffic generated by the router itself).
-
-#### Why `skuid` Exclusions are Critical
-* **Preventing Infinite Loops**:  
-  When an outbound daemon (like a tunnel client) makes an outgoing connection to its remote server, that connection must go directly to the WAN. If the connection is intercepted and routed back into the tunnel client, it creates an infinite loop. Excluding the tunnel client's system user UID is the most robust way to prevent this.
-* **Isolating Helper Services**:  
-  By running secure DNS helpers (such as `https-dns-proxy`) or secure tunnel tools under dedicated system users, you can bypass the main routing engine entirely, ensuring they always resolve and connect directly via WAN.
+* **Via LuCI Web Interface**:
+  Go to *Services -> JustClash -> Service* (on the **Traffic rules** tab) -> Router bypassed ports* and add the ports (e.g., `22`, `123`).
+* **Via Console (UCI)**:
+   ```bash
+   uci add_list justclash.settings.nft_ports_exclude_router='22'
+   uci commit justclash
+   service justclash restart
+   ```
 
 ---
 
-### 2.2 Client LAN Traffic by MAC or IP Address
+## 2. LAN Client Traffic Exclusion
 
-You can bypass transparent routing for specific local devices based on their MAC or IP addresses (including CIDR subnets). This is especially useful for excluding entire local devices (e.g., smart TVs, game consoles, or servers) from the proxy redirection hook entirely.
+This section covers how to bypass traffic originating from specific devices on your local network (LAN) such as phones, TVs, or servers.
 
-#### Configuration Options
-You can configure MAC and IP exclusions for LAN client devices:
+### 2.1 By MAC Address
+You can bypass transparent routing for specific local devices based on their MAC address. This ensures the device is completely excluded from the redirection hook at Layer 2.
 
-* **MAC Address Exclusions (`nft_mac_exclude`)**:
-  Bypasses traffic originating from devices with specified MAC addresses.
-  * **Via Console (UCI)**:
-    ```bash
-    uci add_list justclash.settings.nft_mac_exclude='00:11:22:33:44:55'
-    uci commit justclash
-    service justclash restart
-    ```
-  * **Via LuCI Web Interface**:  
-    Go to *Services -> JustClash -> Settings -> Client bypassed MAC addresses* and add the MAC addresses.
+* **Via LuCI Web Interface**:
+  Go to *Services -> JustClash -> Service* (on the **Traffic rules** tab) -> Client bypassed MAC addresses*.
+* **Via Console (UCI)**:
+  ```bash
+  uci add_list justclash.settings.nft_mac_exclude='00:11:22:33:44:55'
+  uci commit justclash
+  ```
 
-* **IP Address Exclusions (`nft_ips_exclude`)**:
-  Bypasses traffic originating from specified client IP addresses or entire subnets.
-  * **Via Console (UCI)**:
-    ```bash
-    uci add_list justclash.settings.nft_ips_exclude='192.168.1.100'
-    uci add_list justclash.settings.nft_ips_exclude='192.168.2.0/24'
-    uci commit justclash
-    service justclash restart
-    ```
-  * **Via LuCI Web Interface**:  
-    Go to *Services -> JustClash -> Settings -> Client bypassed IP addresses* and add the IPs or subnets.
+### 2.2 By IP Address
+You can bypass traffic originating from specified client IP addresses or entire subnets.
 
-#### How it Works (nftables Rules)
-When these options are populated, JustClash dynamically generates the following `return` (bypass) rules in the `prerouting` chain:
+* **Via LuCI Web Interface**:
+  Go to *Services -> JustClash -> Service* (on the **Traffic rules** tab) -> Client bypassed IP addresses*.
+* **Via Console (UCI)**:
+  ```bash
+  uci add_list justclash.settings.nft_ips_exclude='192.168.1.100'
+  uci add_list justclash.settings.nft_ips_exclude='192.168.2.0/24'
+  uci commit justclash
+  ```
 
-```nginx
-# For excluded MAC addresses:
-add rule inet justclash prerouting ether saddr { 00:11:22:33:44:55 } return comment "Bypass excluded MACs"
+### 2.3 By Ports
+Bypass traffic originating from LAN devices connected to the router on specific destination or source ports.
 
-# For excluded client IP addresses:
-add rule inet justclash prerouting ip saddr { 192.168.1.100, 192.168.2.0/24 } return comment "Bypass excluded client IPs"
-```
+* **Via LuCI Web Interface**:
+  Go to *Services -> JustClash -> Service* (on the **Traffic rules** tab) -> Client bypassed ports*.
+* **Via Console (UCI)**:
+  ```bash
+  uci add_list justclash.settings.nft_ports_exclude='22'
+  uci commit justclash
+  ```
 
 ---
 
 ## 3. The DNS & Fake-IP Conflict Nuance (Bypass Issues)
 
-When you exclude traffic from transparent redirection (either via **User ID** on the router, or **MAC/IP address** on LAN clients), you create a routing bypass. However, if the bypassed entity still resolves hostnames using the router's default DNS server, a critical conflict occurs with **Fake-IP addresses**:
+When you exclude traffic from transparent redirection (either via **fwmark/User ID** on the router, or **MAC/IP address** on LAN clients), you create a routing bypass. However, if the bypassed entity still resolves hostnames using the router's default DNS server, a critical conflict occurs with **Fake-IP addresses**:
 
 ### The Core Problem
 1. The firewall is configured to bypass/return the entity's direct traffic (Layer 3).
 2. However, the bypassed entity still sends its DNS queries to the router's local resolver (e.g., `dnsmasq` -> Mihomo).
-3. If the domain resolved matches any proxy rules, Mihomo returns a **Fake-IP** (e.g., `198.18.x.x`).
+3. If the domain resolved matches any routing rules, Mihomo returns a **Fake-IP** (e.g., `198.18.x.x`).
 4. The bypassed entity then tries to connect to `198.18.x.x` directly over the WAN gateway.
 5. Since Fake-IPs are non-routable on the public internet, **the connection fails**.
 
 To prevent this, you must ensure that bypassed entities resolve **Real IPs** instead of Fake-IPs.
 
-### Solutions for Router-Originated Traffic (User ID / `skuid`)
+### Solutions for Router-Originated Traffic
 
 #### Solution 1: Configure Real IP Issuance in the Service
-Configure JustClash to resolve and return the Real IP instead of a Fake-IP for the specific domains queried by the bypassed processes. This can be achieved by:
-* Adding domains to the `fake_ip_exclude_domains` list under the `proxy` config section.
+Configure JustClash to resolve and return the Real IP instead of a Fake-IP for the specific domains queried by the bypassed processes. This can be achieved by adding the target domains, rulesets, or geosites to the exclusion lists.
 
-##### Configuration Syntax Rules:
-* **Individual Domains**: Specify plain domain names (do not prefix with legacy symbols like `+.` or `*.`, e.g., `dns.cloudflare.com`).
-* **Wildcard Domains**: Use a literal `*` (e.g., `*.example.com`).
+##### Configuration Options:
+* **`fake_ip_exclude_domains`**: Excludes specific domain suffixes (e.g., `dns.cloudflare.com` or `*.example.com`).
+* **`fake_ip_exclude_rulesets`**: Excludes all domains contained within a specific active RULE-SET.
+* **`fake_ip_exclude_geosites`**: Excludes all domains contained within a specific active GEOSITE.
 
-##### Example UCI Commands:
-```bash
-# Exclude Cloudflare DoH domain for an excluded secure DNS daemon
-uci add_list justclash.proxy.fake_ip_exclude_domains='dns.cloudflare.com'
+* **Via LuCI Web Interface**:
+  Go to *Services -> JustClash -> Proxies* and look for the **DNS settings** tab:
+  * **Force real IP domains**: Add specific domain suffixes (e.g., `dns.cloudflare.com` or `*.example.com`).
+  * **Force real IP rulesets**: Select from your active RULE-SETs (e.g., `(Set) telegram`).
+  * **Force real IP geosites**: Select from your active GEOSITEs (e.g., `(Geo) youtube`).
+
+* **Via Console (UCI)**:
+  ```bash
+  # Exclude Cloudflare DoH domain for an excluded secure DNS daemon
+  uci add_list justclash.proxy.fake_ip_exclude_domains='dns.cloudflare.com'
+uci add_list justclash.proxy.fake_ip_exclude_rulesets='telegram'
 uci commit justclash
 service justclash restart
 ```
 
 ##### How it Works Under the Hood:
-JustClash translates these entries into the core engine configuration's `fake-ip-filter` array:
+JustClash translates these entries into the core engine configuration's `fake-ip-filter` array as `real-ip` matching rules, ensuring the DNS engine hands out the true WAN IP:
 ```yaml
 dns:
   enhanced-mode: fake-ip
   fake-ip-filter-mode: rule
   fake-ip-filter:
     - DOMAIN-SUFFIX,dns.cloudflare.com,real-ip
+    - RULE-SET,telegram,real-ip
     - MATCH,real-ip
 ```
 
 #### Solution 2: Bootstrap DNS Bypass
-For local daemons (like `https-dns-proxy`), you can configure the daemon to bypass the local `dnsmasq` server entirely by specifying bootstrap DNS IP addresses in the daemon's own configuration:
+For local daemons (like `https-dns-proxy`), you can configure the daemon to bypass the local `dnsmasq` server entirely by specifying bootstrap DNS IP addresses in the daemon's own configuration. At the same time, ensure the daemon runs under a specific user (so you can add that user to the `skuid` exclusion list):
 ```ini
-option bootstrap_dns '8.8.8.8,1.1.1.1'
+# In /etc/config/https-dns-proxy:
+config https-dns-proxy
+    option procd_user 'https-dns-proxy'
+    option bootstrap_dns '8.8.8.8,1.1.1.1'
 ```
-Since the DNS queries are sent directly to public servers on port 53, they bypass the local routing engine via the `skuid` firewall rule, returning real IP addresses over the WAN.
+Since the DNS queries are sent directly to public servers on port 53, they bypass the local routing engine via the `skuid` firewall rule (which you would set to `https-dns-proxy`), returning real IP addresses over the WAN.
 
 ### Solutions for LAN Client Devices (MAC/IP)
 
@@ -208,4 +181,29 @@ Configure dnsmasq to distribute public DNS servers (DHCP Option 6) only to these
    ```
 
 #### Solution 3: Exclude Domains from Fake-IP
-If the client only needs to access specific domains, add those domains to the `fake_ip_exclude_domains` list under the `proxy` config section (as described in the Router section above).
+If the client only needs to access specific domains, add those domains to the `fake_ip_exclude_domains`, `fake_ip_exclude_rulesets`, or `fake_ip_exclude_geosites` lists under the `proxy` config section (as described in the Router section above).
+
+#### Solution 4: Redirect DNS to a Custom Local Daemon
+Instead of issuing a public DNS via DHCP Option 6, you can run a standalone secure DNS daemon (like `https-dns-proxy`) directly on the router on a separate port (e.g., `5053`).
+
+> [!WARNING]
+> You cannot simply change the global `dnsmasq` upstream to point to this daemon, as that would **break Fake-IP resolution for the entire network** (Mihomo would never see the queries). Furthermore, DHCP Option 6 does not support specifying ports.
+
+Therefore, you must use a custom firewall rule to seamlessly redirect only the bypassed client's DNS queries to this custom port:
+
+1. **Configure the Daemon (`https-dns-proxy`)** to listen on a custom port and ensure it runs under a specific user:
+   ```ini
+   config https-dns-proxy
+       option listen_addr '192.168.1.1'
+       option listen_port '5053'
+       option procd_user 'https-dns-proxy'
+       option bootstrap_dns '8.8.8.8,1.1.1.1'
+   ```
+2. **Add the daemon's user (`https-dns-proxy`)** to the router's `skuid` exclusions so it can fetch its upstream DNS over the WAN.
+3. **Add a custom nftables NAT rule** (in `/etc/nftables.d/` or `/etc/firewall.user`) to selectively redirect port 53 traffic from the bypassed MAC/IP to the custom port:
+   ```nginx
+   # Redirect DNS queries from bypassed IP to the custom daemon
+   add rule inet nat prerouting ip saddr 192.168.1.100 udp dport 53 redirect to :5053
+   add rule inet nat prerouting ip saddr 192.168.1.100 tcp dport 53 redirect to :5053
+   ```
+This ensures the bypassed client gets Real IPs securely from the custom daemon, while the rest of the network continues to use Fake-IP via Mihomo.

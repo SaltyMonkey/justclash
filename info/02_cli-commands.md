@@ -13,7 +13,7 @@ OpenWrt supports managing system services using both the `service` utility wrapp
 | `service justclash start` | `/etc/init.d/justclash start` | Starts the JustClash service process in the background under `procd`. |
 | `service justclash stop` | `/etc/init.d/justclash stop` | Stops the running service and cleans up routing rules and firewall tables. |
 | `service justclash restart` | `/etc/init.d/justclash restart` | Performs a full service restart (equivalent to `stop` followed by `start`). |
-| `service justclash reload` | `/etc/init.d/justclash reload` | Instantly reloads rule compilations and configurations. |
+| `service justclash reload` | `/etc/init.d/justclash reload` | Instantly reloads routing rules and configurations. |
 | `service justclash enable` | `/etc/init.d/justclash enable` | Registers JustClash to start automatically at system boot time. |
 | `service justclash disable` | `/etc/init.d/justclash disable` | Prevents JustClash from starting automatically at system boot time. |
 | `service justclash status` | `/etc/init.d/justclash status` | Queries `procd` to check if the service instance is currently active. |

@@ -100,18 +100,19 @@ Secure API access is managed via the `proxy` section in `/etc/config/justclash`.
 | `api_tls_cert` | `/etc/uhttpd.crt` | Path to the PEM-encoded SSL/TLS certificate. Ignored if `api_tls` is `0`. |
 | `api_tls_key` | `/etc/uhttpd.key` | Path to the PEM-encoded SSL/TLS private key. Ignored if `api_tls` is `0`. |
 
-### Backend YAML Compilation Details
-When `api_tls` is enabled, the backend orchestration script (`justclash.sh`) compiles the configuration as follows:
+### Backend YAML Generation Details
+When `api_tls` is enabled, the backend orchestration script (`justclash.sh`) generates the configuration as follows:
 1. It reads the certificate and key paths from UCI.
 2. It validates if the files exist. If they do not, it logs a warning and may fall back to plain HTTP to prevent startup crashes.
-3. It writes the configuration to the compiled Mihomo configuration YAML:
+3. It writes the configuration to the generated Mihomo configuration YAML:
    ```yaml
    external-controller-tls: "192.168.1.1:9090"
    tls:
      certificate: "/etc/uhttpd.crt"
      private-key: "/etc/uhttpd.key"
    ```
-4. If `api_tls` is `0` (disabled), it compiles standard HTTP binding:
+4. If `api_tls` is `0` (disabled), it generates standard HTTP binding:
+
    ```yaml
    external-controller: "192.168.1.1:9090"
    ```
@@ -138,3 +139,19 @@ Mihomo requires a specific IP address or host to bind its `external-controller` 
 * **Loopback (`127.0.0.1`):** Binding to loopback prevents any external devices—including your own PC/phone connected to the LAN—from reaching the Mihomo API. This breaks the LuCI client communication completely.
 * **All Interfaces (`0.0.0.0`):** Binding to `0.0.0.0` opens the API controller on all interfaces, including your WAN (internet) interface. If your WAN port is exposed or the firewall zone rules are misconfigured, anyone on the internet can read your connection logs, shut down your connections, or steal your proxy credentials.
 * **JustClash LAN Binding:** By binding specifically to the resolved IP of the designated local interface (e.g., `lan`), the API controller is securely restricted to the local network zone, protecting it from external internet threats.
+
+---
+
+## 6. Automatic CORS Configuration for External Dashboards
+
+To support connections from web-based dashboards (such as Zashboard or Yacd) hosted on external domains, the service automatically generates the following CORS parameters in the Mihomo configuration:
+
+```yaml
+external-controller-cors:
+  allow-origins:
+    - '*'
+  allow-private-network: true
+```
+
+This configuration ensures that modern browsers do not block Cross-Origin Resource Sharing (CORS) requests when you access external dashboard websites that communicate with your router's local API.
+

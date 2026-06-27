@@ -73,7 +73,7 @@ If you need to block specific domains or IP addresses manually (e.g., blocking a
 ## 4. How It Works Under the Hood
 
 When you enable these settings, The service automatically:
-1. Compiles the selected blocklists into Mihomo `rule-providers`.
+1. Assembles the selected blocklists into Mihomo `rule-providers`.
 2. **Domain-based Blocking (DNS Sinkhole)**: For domain blocklists and manual domain routes, JustClash **does not** generate standard routing rules. Instead, it injects them exclusively into the `nameserver-policy` directed to `rcode://success` (along with Fake-IP exclusions). This means the core routing engine acts as a DNS sinkhole, instantly dropping unwanted queries and returning an empty response before any actual network connection is even attempted, saving CPU cycles.
 3. **IP-based Blocking (Routing REJECT)**: For IP-based blocklists and manual IP block routes, it generates `IP-CIDR` routing rules targeting the `REJECT` action. These are placed at the very top of your routing table so unwanted traffic is dropped immediately.
 
