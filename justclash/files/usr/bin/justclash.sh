@@ -458,7 +458,7 @@ start_core() {
                     # shellcheck disable=SC2030
                     export GOMEMLIMIT="${mihomo_mem_limit}MiB"
                 fi
-                "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | log_piped | logger -t "${PROGNAME}"
+                "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | log_piped
             )
             exit_code=$?
             if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then

@@ -51,7 +51,7 @@ log() {
 }
 
 log_piped() {
-    local line level message lvl_num
+    local line level message lvl_num facility
     local color_start="" color_end="" ts_start="" ts_end=""
 
     while IFS= read -r line || [ -n "$line" ]; do
@@ -83,11 +83,11 @@ log_piped() {
         message="mihomo: $message"
 
         case "$level" in
-            INFO|info)         lvl_num="info"; $IS_TTY && { color_start="\033[1;32m"; color_end="\033[0m"; } ;;
-            WARN|warning|warn) lvl_num="warn"; $IS_TTY && { color_start="\033[1;33m"; color_end="\033[0m"; } ;;
-            ERRO|error|erro)   lvl_num="error"; $IS_TTY && { color_start="\033[1;31m"; color_end="\033[0m"; } ;;
-            DEBG|debug|debg)   lvl_num="debug"; $IS_TTY && { color_start="\033[1;36m"; color_end="\033[0m"; } ;;
-            *)                 lvl_num="info"; $IS_TTY && { color_start="\033[1;32m"; color_end="\033[0m"; } ;;
+            INFO|info)         lvl_num="info";  facility="user.info";    $IS_TTY && { color_start="\033[1;32m"; color_end="\033[0m"; } ;;
+            WARN|warning|warn) lvl_num="warn";  facility="user.warning"; $IS_TTY && { color_start="\033[1;33m"; color_end="\033[0m"; } ;;
+            ERRO|error|erro)   lvl_num="error"; facility="user.err";     $IS_TTY && { color_start="\033[1;31m"; color_end="\033[0m"; } ;;
+            DEBG|debug|debg)   lvl_num="debug"; facility="user.debug";   $IS_TTY && { color_start="\033[1;36m"; color_end="\033[0m"; } ;;
+            *)                 lvl_num="info";  facility="user.info";    $IS_TTY && { color_start="\033[1;32m"; color_end="\033[0m"; } ;;
         esac
 
         if $IS_TTY; then
@@ -96,7 +96,7 @@ log_piped() {
             ts_start="\033[90m" ts_end="\033[0m"
             printf '%b%s ::%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$lvl_num" "$color_end" "$message"
         else
-            printf '%s: %s\n' "$lvl_num" "$message"
+            logger -p "$facility" -t "$PROGNAME" "$message"
         fi
     done
 }
