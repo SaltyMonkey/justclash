@@ -1,3 +1,50 @@
+## [0.60.0] - 27062026
+
+### Features & Enhancements
+- **Service:** Added full support for AGE encryption (parsing keys and injecting headers into provider requests).
+- **Service:** Added customizable GeoData database download source URLs and options.
+- **Service:** Added a scheduled start and stop feature governed by custom cron string configurations.
+- **Service:** Refactored service start process: implemented validation check for port configurations and a dynamic waiting loop to check when busy ports become available.
+- **Service:** Added package conflict resolution checks to automatically remove standard JSON processing tools before installing extended versions.
+- **Service:** Rolled back per-section custom Fake-IP logic, removing obsolete parameters and introducing simplified global Fake-IP exclusions.
+- **Service:** Added controlled Fake-IP generation logic based on excluded rulesets in the DNS configuration section.
+- **Service:** Added default node fallback routing logic and controls for proxy groups.
+- **Service:** Refactored and optimized request headers generation (supporting HWID, Authorization token, User-Agent, and AGE public keys).
+- **Service:** Simplified temporary file and directory management in configuration generation.
+- **Service:** Added base64 utility dependency validation to the required tools checks.
+- **Service:** Optimized the diagnostic report viewer, adding detailed descriptions for other active DPI bypass tools.
+- **Helpers:** Optimized list formatting in helpers to run completely in-memory without spawning subprocesses.
+- **URI:** Optimized proxy link parsing by replacing external command subprocesses and forks with native shell string expansion methods.
+- **Logging:** Aligned Mihomo log severity and facility levels directly with syslog priorities (`user.info`, `user.warning`, `user.err`, `user.debug`), formatting them to match the standard JustClash syslog style and enabling native LuCI status badge color mapping.
+- **Logging:** Implemented a unified streaming pipeline `log_piped` supporting both logrus key-value formats (`time="..." msg="..."`) and standard bracket formats (`INFO[...]`) for robust log parsing under any runtime mode.
+- **Logging:** Added automatic error and warning keyword classification for fallback log lines.
+- **LuCI:** Added user interface controls, input fields, and validation rules for AGE encryption keys.
+- **LuCI:** Added new interface options for scheduled cron tasks (start, stop, and updates schedules).
+- **LuCI:** Added input fields for custom GeoData database URLs in the service settings tab.
+- **LuCI:** Added default node selection controls for proxy groups.
+- **LuCI:** Added a group type selector for proxy group settings.
+- **LuCI:** Redesigned the connections page layout: grouped control options on the left, changed test delay button color to green, and improved readability of the "Current" status badges.
+- **LuCI:** Refactored main navigation tab positions and adjusted layout designs for consistency across screens.
+- **LuCI:** Enhanced search logic and result matching filters on the rules tab.
+- **LuCI:** Fixed mobile responsive layout rendering, aligning font sizes and visual elements for consistent viewing on mobile browsers.
+- **LuCI:** Disabled inline editing for proxies, proxy providers, and proxy group names in routing tables to prevent accidental reference breaks.
+- **Makefile:** Corrected install filenames and file copy procedures.
+- **Migration:** Added migrations to clean up reverted Fake-IP configurations and automatically remove obsolete UCI ruleset exclusions.
+- **Translations:** Refactored translation scripts and updated Russian (`ru`) and Chinese (`zh_Hans`) translation files.
+- **Docs:** Updated all documentation manuals, normalizing terminologies to refer to "generating" configurations rather than "compiling" them.
+
+### Bug Fixes
+- **Service:** Fixed system log reading filters in diagnostics.
+- **Service:** Fixed fake trigger checking logic for `/etc/resolv.conf` file changes.
+- **Service:** Fixed incorrect exit behavior on nftables errors and resolved redundant firewall stop calls.
+- **Service:** Resolved a "ruleset not found" warning message in configuration generation.
+- **InitD:** Silenced console output verbosity during service stop commands.
+- **Makefile:** Fixed `/postrm` post-removal script to ensure `/tmp` directories are cleaned up correctly.
+- **LuCI:** Fixed a bug where a disabled state would get stuck in the nodes tab.
+- **LuCI:** Fixed form input validators to properly allow empty/optional fields.
+- **LuCI:** Fixed visibility conditional dependencies on the realtime logs page and preserved hidden GeoData/TLS configuration options on save.
+- **LuCI:** Solved input validation bugs in the security tab.
+
 ## [0.50.3] - 14062026
 
 ### Bug Fixes
