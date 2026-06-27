@@ -158,6 +158,7 @@ return baseclass.extend({
         "https://g.cn/generate_204",
     ],
     defaultProxyGroupsTypes: [
+        { value: "select", text: _("Select") },
         { value: "fallback", text: _("Fallback") },
         { value: "load-balance", text: _("Load balancer") },
         { value: "url-test", text: _("URL Test") }
