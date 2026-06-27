@@ -22,7 +22,7 @@ MIN_SPACE=40960
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
-TMP_DOWNLOAD_PATH=$(mktemp -d -p /tmp justclash.downloads.XXXXXX)
+TMP_DOWNLOAD_PATH=$(mktemp -d /tmp/justclash.downloads.XXXXXX)
 
 cleanup() {
     [ -n "$TMP_DOWNLOAD_PATH" ] && [ -d "$TMP_DOWNLOAD_PATH" ] && rm -rf "$TMP_DOWNLOAD_PATH"
