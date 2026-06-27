@@ -31,7 +31,7 @@ clog() {
     ts=$(date '+%Y-%m-%d %H:%M:%S')
     $IS_TTY && ts_start="\033[90m" ts_end="\033[0m" # Dimmed Gray
 
-    printf '%b%s ::%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$level_label" "$color_end" "$message"
+    printf '%b%s%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$level_label" "$color_end" "$message"
 }
 
 log() {
@@ -94,7 +94,7 @@ log_piped() {
             local ts
             ts=$(date '+%Y-%m-%d %H:%M:%S')
             ts_start="\033[90m" ts_end="\033[0m"
-            printf '%b%s ::%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$lvl_num" "$color_end" "$message"
+            printf '%b%s%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$lvl_num" "$color_end" "$message"
         else
             logger -p "$facility" -t "$PROGNAME" "$message"
         fi
