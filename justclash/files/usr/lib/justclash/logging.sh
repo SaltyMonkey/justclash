@@ -12,29 +12,28 @@ PROGNAME="justclash"
 clog() {
     local level="$1"
     local message="$2"
-    local emoji="${3:-}"
 
     # shellcheck disable=SC2154
     [ "$JUSTCLASH_ENV" = "procd" ] && return
 
-    local facility
+    local color_start="" color_end="" level_label
     case "$level" in
-        0|err|error)   facility="user.err"     ;;
-        2|info)        facility="user.info"    ;;
-        3|debug)       facility="user.debug"   ;;
-        *)             facility="user.warning" ;;
+        0|err|error) level_label="error"; [ -t 1 ] && color_start="\033[1;31m" color_end="\033[0m" ;; # Bold Red
+        2|info)      level_label="info";  [ -t 1 ] && color_start="\033[1;32m" color_end="\033[0m" ;; # Bold Green
+        3|debug)     level_label="debug"; [ -t 1 ] && color_start="\033[1;36m" color_end="\033[0m" ;; # Bold Cyan
+        *)           level_label="warn";  [ -t 1 ] && color_start="\033[1;33m" color_end="\033[0m" ;; # Bold Yellow
     esac
 
-    local ts
+    local ts ts_start="" ts_end=""
     ts=$(date '+%Y-%m-%d %H:%M:%S')
+    [ -t 1 ] && ts_start="\033[90m" ts_end="\033[0m" # Dimmed Gray
 
-    printf '[%s] [%s] %s\n' "$ts" "$facility" "${emoji:+$emoji }$message"
+    printf '%b%s ::%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$level_label" "$color_end" "$message"
 }
 
 log() {
     local level="$1"
     local message="$2"
-    local emoji="${3:-}"
 
     local facility lvl_num
     case "$level" in
@@ -45,5 +44,5 @@ log() {
     esac
 
     logger -p "$facility" -t "$PROGNAME" "$message"
-    clog "$lvl_num" "$message" "$emoji"
+    clog "$lvl_num" "$message"
 }
