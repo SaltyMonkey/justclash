@@ -12,22 +12,22 @@ return view.extend({
         let activeGeosites = new Set();
 
         try {
-            await uci.load('justclash');
+            await uci.load("justclash");
 
-            const sections = uci.sections('justclash');
+            const sections = uci.sections("justclash");
             for (const sec of sections) {
-                if (['proxies', 'proxy_group', 'direct_rules'].includes(sec['.type']) && uci.get('justclash', sec['.name'], 'enabled') !== '0') {
-                    const list = uci.get('justclash', sec['.name'], 'enabled_list');
+                if (["proxies", "proxy_group", "direct_rules"].includes(sec[".type"]) && uci.get("justclash", sec[".name"], "enabled") !== "0") {
+                    const list = uci.get("justclash", sec[".name"], "enabled_list");
                     if (list) (Array.isArray(list) ? list : [list]).forEach(i => i && activeRulesets.add(i));
 
-                    const geositeList = uci.get('justclash', sec['.name'], 'enabled_geosite_list');
+                    const geositeList = uci.get("justclash", sec[".name"], "enabled_geosite_list");
                     if (geositeList) (Array.isArray(geositeList) ? geositeList : [geositeList]).forEach(i => i && activeGeosites.add(i));
                 }
-                if (sec['.type'] === 'block_rules' && uci.get('justclash', sec['.name'], 'enabled') !== '0') {
-                    const blocklist = uci.get('justclash', sec['.name'], 'enabled_blocklist');
+                if (sec[".type"] === "block_rules" && uci.get("justclash", sec[".name"], "enabled") !== "0") {
+                    const blocklist = uci.get("justclash", sec[".name"], "enabled_blocklist");
                     if (blocklist) (Array.isArray(blocklist) ? blocklist : [blocklist]).forEach(i => i && activeRulesets.add(i));
 
-                    const geositeBlocklist = uci.get('justclash', sec['.name'], 'enabled_geosite_blocklist');
+                    const geositeBlocklist = uci.get("justclash", sec[".name"], "enabled_geosite_blocklist");
                     if (geositeBlocklist) (Array.isArray(geositeBlocklist) ? geositeBlocklist : [geositeBlocklist]).forEach(i => i && activeGeosites.add(i));
                 }
             }

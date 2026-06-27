@@ -125,11 +125,9 @@ return view.extend({
     handleReset: null,
 
     load: async function () {
-        let token = "";
-
         try {
             await uci.load(common.binName);
-            token = uci.get(common.binName, "proxy", "api_password") || "";
+            const token = uci.get(common.binName, "proxy", "api_password") || "";
             mihomoApi.setTls(uci.get(common.binName, "proxy", "api_tls") === "1");
             return { token, configLoadFailed: false };
         } catch (e) {
