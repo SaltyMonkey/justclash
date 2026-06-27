@@ -179,7 +179,7 @@ ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 B4_FILEPATH="/etc/init.d/b4"
-REQUIRED_TOOLS="jq nft curl md5sum ntpd conntrack base64"
+REQUIRED_TOOLS="jq nft curl md5sum ntpd base64"
 
 
 is_pattern_in_file() {
@@ -458,7 +458,7 @@ start_core() {
                     # shellcheck disable=SC2030
                     export GOMEMLIMIT="${mihomo_mem_limit}MiB"
                 fi
-                "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | sed 's/time="[^"]*"/mihomo/' | logger -t "${PROGNAME}"
+                "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | log_piped | logger -t "${PROGNAME}"
             )
             exit_code=$?
             if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then
@@ -484,7 +484,7 @@ start_core() {
                 # shellcheck disable=SC2031
                 export GOMEMLIMIT="${mihomo_mem_limit}MiB"
             fi
-            "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1
+            "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | log_piped
         )
         exit_code=$?
         if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 143 ] || [ "$exit_code" -eq 137 ]; then
@@ -518,7 +518,6 @@ cleanup_fwmark() {
     while ip rule show | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; do
         ip rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
     done
-    conntrack -D --mark "$NF_TABLE_FWMARK_FINAL" 2>/dev/null || true
 }
 
 build_nft_skuid_exclusions() {
@@ -694,7 +693,6 @@ nf_table_add() {
             echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
-            echo "add rule inet $NF_TABLE_NAME prerouting ct mark $NF_TABLE_FWMARK_FINAL meta mark set ct mark counter accept comment \"Fast-path established tproxy connections\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
 
@@ -745,14 +743,13 @@ nf_table_add() {
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL ct mark set meta mark tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept to TProxy\""
+            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept to TProxy\""
         fi
 
         if [ "$nft_apply_changes_router" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME output { type route hook output priority mangle; policy accept; }"
             echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
             echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
-            echo "add rule inet $NF_TABLE_NAME output ct mark $NF_TABLE_FWMARK_FINAL meta mark set ct mark counter accept comment \"Fast-path established tproxy connections\""
             if [ -n "$proxy_routing_marks" ]; then
                 echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
             fi
@@ -782,7 +779,7 @@ nf_table_add() {
                 echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL ct mark set meta mark comment \"Mark router traffic for interception\""
+            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router traffic for interception\""
         fi
     } | nft -f -
     if [ $? -ne 0 ]; then
@@ -1008,7 +1005,7 @@ info_mihomo() {
 
 systemlogs() {
     local lines=${1:-40}
-    logread -e "$PROGNAME|mihomo" | tail -n "$lines"
+    logread -e "$PROGNAME" | tail -n "$lines"
     return 0
 }
 
