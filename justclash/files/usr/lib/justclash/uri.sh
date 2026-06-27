@@ -2,6 +2,7 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version (kind of similar)
 # shellcheck shell=dash
+# shellcheck disable=SC3060
 
 # --------------------------------------------
 # External justclash parsers/generators part
@@ -59,7 +60,7 @@ parse_sudoku_url() {
         return 1
     }
 
-    echo "$payload" | jq -c \
+    printf '%s\n' "$payload" | jq -c \
         --arg name "$name" \
         --arg dialer_proxy "$dialer_proxy" \
         --arg interface_name "$interface_name" \
@@ -171,18 +172,18 @@ parse_ss_url() {
 
     case "$link" in *\?*) query_part="${link#*\?}"; link="${link%%\?*}"; esac
 
-    if echo "$link" | grep -q '@'; then
+    if printf '%s\n' "$link" | grep -q '@'; then
         userinfo="${link%@*}"
         hostport="${link#*@}"
 
         # Check if starts with 2022- (plain text)
-        if echo "$userinfo" | grep -q '^2022-'; then
+        if printf '%s\n' "$userinfo" | grep -q '^2022-'; then
             # Plain text format for 2022 ciphers
             method="${userinfo%%:*}"
             local pass_part="${userinfo#*:}"
 
             # Check for second password (EIH) presence
-            if echo "$pass_part" | grep -q ':.*:'; then
+            if printf '%s\n' "$pass_part" | grep -q ':.*:'; then
                 # Format: method:serverPass:clientPass
                 password="${pass_part}"
             else
@@ -190,8 +191,8 @@ parse_ss_url() {
             fi
         else
             # Try base64
-            decoded="$(echo "$userinfo" | base64 -d 2>/dev/null)"
-            if [ -n "$decoded" ] && echo "$decoded" | grep -q ':'; then
+            decoded="$(printf '%s' "$userinfo" | base64 -d 2>/dev/null)"
+            if [ -n "$decoded" ] && printf '%s\n' "$decoded" | grep -q ':'; then
                 method="$(url_decode "${decoded%%:*}")"
                 password="$(url_decode "${decoded#*:}")"
             else
@@ -202,7 +203,7 @@ parse_ss_url() {
         fi
     else
         # Fully base64-encoded
-        decoded="$(echo "$link" | base64 -d 2>/dev/null)"
+        decoded="$(printf '%s' "$link" | base64 -d 2>/dev/null)"
         userinfo="${decoded%@*}"
         hostport="${decoded#*@}"
         method="$(url_decode "${userinfo%%:*}")"
@@ -212,7 +213,7 @@ parse_ss_url() {
     server="$(url_decode "${hostport%%:*}")"
     port="${hostport##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
-    port=$(echo "$port" | tr -cd '0-9')
+    port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
     proxy_obj=$(
@@ -252,11 +253,11 @@ parse_simple_proxy_url() {
     local server="" port="" username="" password=""
     local userinfo="" hostport="" proxy_obj
 
-    if echo "$raw" | grep -q '@'; then
+    if printf '%s\n' "$raw" | grep -q '@'; then
         userinfo="${raw%@*}"
         hostport="${raw#*@}"
 
-        if echo "$userinfo" | grep -q ':'; then
+        if printf '%s\n' "$userinfo" | grep -q ':'; then
             username="$(url_decode "${userinfo%%:*}")"
             password="$(url_decode "${userinfo#*:}")"
         else
@@ -271,7 +272,7 @@ parse_simple_proxy_url() {
 
     port="${hostport##*:}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
-    port=$(echo "$port" | tr -cd '0-9')
+    port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
     proxy_obj=$(
@@ -312,14 +313,14 @@ parse_trojan_url() {
     local userinfo="${raw%@*}"
     local hostport="${raw#*@}"
     local password
-    password="$(printf '%b' "$(echo "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
+    password="$(printf '%b' "$(printf '%s' "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
 
     local host="${hostport%%\?*}"
     local server
     server="$(url_decode "${host%%:*}")"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port="$DEFAULT_TLS_PORT"
-    port=$(echo "$port" | tr -cd '0-9')
+    port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
 
     local query_part=""
@@ -366,7 +367,7 @@ parse_trojan_url() {
             host) ws_host="$(url_decode "$v")" ;;
             serviceName|service-name) grpc_service="$v" ;;
             grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
-            ping-interval|pingInterval) grpc_ping_interval="$(echo "$v" | tr -cd '0-9')" ;;
+            ping-interval|pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
             ss) ss_enabled="$v" ;;
             ss-method) ss_method="$v" ;;
             ss-password) ss_password="$v" ;;
@@ -466,7 +467,7 @@ parse_vless_url() {
     server="$(url_decode "${host%%:*}")"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
-    port=$(echo "$port" | tr -cd '0-9')
+    port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
 
     local query_part=""
@@ -523,7 +524,7 @@ parse_vless_url() {
                 fi ;;
             serviceName|service-name) sn="$v" ;;
             grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
-            ping-interval|pingInterval) grpc_ping_interval="$(echo "$v" | tr -cd '0-9')" ;;
+            ping-interval|pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
             packetEncoding|packet-encoding) penc="$v" ;;
             ech) ech="$(url_decode "$v")" ;;
             mode) xhttp_mode="$(url_decode "$v")" ;;
@@ -921,7 +922,7 @@ parse_hysteria2_url() {
 
     case "$raw" in *\?*) query_part="${raw#*\?}"; raw="${raw%%\?*}"; esac
 
-    if echo "$raw" | grep -q '@'; then
+    if printf '%s\n' "$raw" | grep -q '@'; then
         userinfo="${raw%@*}"
         hostport="${raw#*@}"
         password="$(url_decode "$userinfo")"
@@ -933,7 +934,7 @@ parse_hysteria2_url() {
     server="${hostport%%:*}"
     port="${hostport##*:}"
     [ "$server" = "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
-    port=$(echo "$port" | tr -cd '0-9')
+    port="${port//[!0-9]/}"
     [ -z "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
 
     local sni="" insecure=0 obfs="" obfs_password="" up="" down="" ports="" alpn="" fingerprint="" ech=""
@@ -964,11 +965,11 @@ parse_hysteria2_url() {
     done
 
     [ -n "$up" ] && {
-        up_value=$(echo "$up" | tr -cd '0-9')
+        up_value="${up//[!0-9]/}"
         is_uint "$up_value" || return 1
     }
     [ -n "$down" ] && {
-        down_value=$(echo "$down" | tr -cd '0-9')
+        down_value="${down//[!0-9]/}"
         is_uint "$down_value" || return 1
     }
     alpn_json=$(json_array_from_csv "$alpn") || return 1
@@ -1082,7 +1083,7 @@ parse_mieru_url() {
     local proxy_obj
 
     if [ -n "$port" ]; then
-        port=$(echo "$port" | tr -cd '0-9')
+        port="${port//[!0-9]/}"
         [ -z "$port" ] && port=""
     fi
 
