@@ -40,6 +40,7 @@ make_po() {
         echo "Creating new $po_path using msginit"
         msginit --no-translator --locale="$locale_code" --width="$WIDTH" --no-wrap --input="$OUT_POT" --output-file="${po_path}"
     fi
+    msgattrib --no-obsolete --width="$WIDTH" "${po_path}" --output-file="${po_path}"
     echo "PO file generated: ${po_path}"
 }
 
