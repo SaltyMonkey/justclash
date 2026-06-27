@@ -59,7 +59,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/etc/uci-defaults/99_jс-uci-migration $(1)/etc/uci-defaults/
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99_jc-uci-migration $(1)/etc/uci-defaults/
 
 	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/bin/justclash.sh
 
