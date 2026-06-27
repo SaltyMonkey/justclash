@@ -28,6 +28,7 @@
 - **LuCI:** Enhanced search logic and result matching filters on the rules tab.
 - **LuCI:** Fixed mobile responsive layout rendering, aligning font sizes and visual elements for consistent viewing on mobile browsers.
 - **LuCI:** Disabled inline editing for proxies, proxy providers, and proxy group names in routing tables to prevent accidental reference breaks.
+- **Makefile:** Added `zoneinfo-all` dependency to ensure correct timezone and local time resolution inside the Go binary.
 - **Makefile:** Corrected install filenames and file copy procedures.
 - **Migration:** Added migrations to clean up reverted Fake-IP configurations and automatically remove obsolete UCI ruleset exclusions.
 - **Translations:** Refactored translation scripts and updated Russian (`ru`) and Chinese (`zh_Hans`) translation files.
