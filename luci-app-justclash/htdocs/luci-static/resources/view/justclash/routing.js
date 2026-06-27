@@ -82,7 +82,6 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
         o.rmempty = false;
-        o.editable = true;
         o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
@@ -260,7 +259,6 @@ return view.extend({
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy provider name.");
         o.rmempty = false;
-        o.editable = true;
         o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
@@ -522,7 +520,6 @@ return view.extend({
         o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
         o.rmempty = false;
-        o.editable = true;
         o.cfgvalue = function (section_id) {
             const val = uci.get(common.binName, section_id, "name");
             if (val)
