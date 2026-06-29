@@ -193,6 +193,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
+        o.rmempty = false;
         o.optional = true;
         o.modalonly = true;
 
@@ -327,6 +328,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
+        o.rmempty = false;
         o.optional = true;
         o.modalonly = true;
 
@@ -465,6 +467,7 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Flag, "health_check_lazy", _("Lazy:"));
         o.default = primitives.TRUE;
+        o.rmempty = false;
         o.description = _("Run provider health checks only when needed instead of probing on every interval.");
         o.modalonly = true;
 
@@ -605,6 +608,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultProxyGroupIntervalSec[2].value;
+        o.rmempty = false;
         o.description = _("Time interval between health checks in seconds.");
         o.validate = function (section_id, value) {
             return common.validateSecondsInterval(value);
@@ -617,6 +621,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultUrlTestToleranceMs[4].value;
+        o.rmempty = false;
         o.description = _("Proxies switch tolerance, measured in milliseconds (ms).");
         o.depends("group_type", "url-test");
         o.validate = function (section_id, value) {
@@ -657,6 +662,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Flag, "lazy", _("Lazy:"));
         o.default = primitives.TRUE;
+        o.rmempty = false;
         o.description = _("Run group health checks only when needed instead of probing on every interval.");
         o.modalonly = true;
 
@@ -729,6 +735,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
+        o.rmempty = false;
         o.optional = true;
         o.modalonly = true;
 
@@ -835,6 +842,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
+        o.rmempty = false;
         o.optional = true;
         o.modalonly = true;
 
@@ -938,6 +946,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
+        o.rmempty = false;
         o.optional = true;
         o.modalonly = true;
 
