@@ -40,7 +40,8 @@ parse_direct_url() {
         {
             name: $name,
             type: "direct",
-            udp: true
+            udp: true,
+            tfo: true
         }
         + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
         + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
