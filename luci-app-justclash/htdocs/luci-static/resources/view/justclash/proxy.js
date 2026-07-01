@@ -16,7 +16,7 @@ return view.extend({
 
             const sections = uci.sections("justclash");
             for (const sec of sections) {
-                if (["proxies", "proxy_group", "direct_rules"].includes(sec[".type"]) && uci.get("justclash", sec[".name"], "enabled") !== "0") {
+                if (["proxies", "proxy_group"].includes(sec[".type"]) && uci.get("justclash", sec[".name"], "enabled") !== "0") {
                     const list = uci.get("justclash", sec[".name"], "enabled_list");
                     if (list) (Array.isArray(list) ? list : [list]).forEach(i => i && activeRulesets.add(i));
 

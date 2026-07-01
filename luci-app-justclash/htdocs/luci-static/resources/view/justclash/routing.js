@@ -785,113 +785,6 @@ return view.extend({
         o.datatype = datatypes.CIDR4;
         o.modalonly = true;
 
-        s3 = m.section(form.GridSection, "direct_rules", _("Direct rules:"), _("Extra direct rules. These are applied before proxy rules, proxy groups, and block rules."));
-        s3.anonymous = true;
-        s3.addremove = false;
-        s3.nodescriptions = true;
-        s3.filter = function (section_id) {
-            return section_id === "direct_rules";
-        };
-
-        tabname = "directruleslist_tab";
-        s3.tab(tabname, _("Lists"));
-
-        o = s3.taboption(tabname, form.Flag, "enabled", _("Enabled"));
-        o.description = _("Enable or disable direct rules.");
-        o.default = primitives.TRUE;
-        o.rmempty = false;
-        o.editable = true;
-
-        o = s3.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
-        o.optional = true;
-        result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, item.name);
-        });
-        o.description = _("Ready-made lists for traffic that should bypass the proxy.");
-        o.modalonly = true;
-
-
-
-        o = s3.taboption(tabname, form.Value, "proxy", _("Download lists through:"));
-        o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");
-        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
-        o.default = common.endRuleOptions[0].value;
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
-            return common.validateExitRule(value);
-        };
-        o.modalonly = true;
-
-        o = s3.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.description = _("How often remote lists should be checked for updates, in seconds.");
-        o.datatype = datatypes.UINTEGER;
-        o.optional = true;
-        common.defaultRuleSetUpdateIntervalSec.forEach(item => {
-            o.value(item.value, item.text);
-        });
-        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
-        o.validate = function (section_id, value) {
-            return common.validateListUpdateInterval(value);
-        };
-        o.modalonly = true;
-
-        o = s3.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
-        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
-        o.datatype = datatypes.UINTEGER;
-        common.defaultDownloadSizeLimits.forEach(item => {
-            o.value(item.value, item.text);
-        });
-        o.default = common.defaultDownloadSizeLimits[5].value;
-        o.rmempty = false;
-        o.optional = true;
-        o.modalonly = true;
-
-        if (result.geoDataMode) {
-            tabname = "directgeodatarules_tab";
-            s3.tab(tabname, _("Geodata rules"));
-
-            o = s3.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
-            o.modalonly = true;
-            o.optional = true;
-            o.editable = true;
-
-            o = s3.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
-            o.modalonly = true;
-            o.optional = true;
-            o.editable = true;
-        }
-
-        tabname = "directbasic_tab";
-        s3.tab(tabname, _("Manual rules"));
-
-        o = s3.taboption(tabname, form.DynamicList, "additional_domain_direct", _("Domain suffix:"));
-        o.description = _("Traffic to domains matching this suffix will bypass the proxy (example: google.com).");
-        o.placeholder = "domain.tld";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            return (common.isValidDomainSuffix(value));
-        };
-        o.modalonly = true;
-
-        o = s3.taboption(tabname, form.DynamicList, "additional_srcip_direct", _("Source IPv4 CIDR:"));
-        o.description = _("Traffic from this local IPv4 address or subnet will bypass the proxy (example: 192.168.31.212/32).");
-        o.placeholder = "192.168.31.212/32";
-        o.optional = true;
-        o.editable = true;
-        o.datatype = datatypes.CIDR4;
-        o.modalonly = true;
-
-        o = s3.taboption(tabname, form.DynamicList, "additional_destip_direct", _("IPv4 CIDR:"));
-        o.description = _("Traffic to this IPv4 address or subnet will bypass the proxy (example: 1.1.1.1/32).");
-        o.placeholder = "8.8.8.8/32";
-        o.optional = true;
-        o.editable = true;
-        o.datatype = datatypes.CIDR4;
-        o.modalonly = true;
-
         s4 = m.section(form.GridSection, "block_rules", _("Block rules:"), _("Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."));
         s4.anonymous = true;
         s4.addremove = false;
@@ -1037,7 +930,6 @@ return view.extend({
             .cbi-value[data-name="enabled_blocklist"] .cbi-value-title,
             .cbi-value[data-name="use_proxy_for_list_update"] .cbi-value-title,
             .cbi-value[data-name="additional_domain_route"] .cbi-value-title,
-            .cbi-value[data-name="additional_domain_direct"] .cbi-value-title,
             .cbi-value[data-name="additional_domain_blockroute"] .cbi-value-title,
             .cbi-value[data-name="health_check"] .cbi-value-title,
             .cbi-value[data-name="filter"] .cbi-value-title {
