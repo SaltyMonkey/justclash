@@ -101,10 +101,11 @@ DEFAULT_EXTERNAL_PANEL="metacubexd"
 DEFAULT_RULESET_PROXY_DIRECT_SECTION="DIRECT"
 DEFAULT_PROXY="DIRECT"
 DEFAULT_HEALTHCHECK_INTERVAL=360
+DEFAULT_GROUP_HEALTHCHECK_INTERVAL=180
 DEFAULT_PROVIDERUPDATE_INTERVAL=7200
 DEFAULT_HEALTHCHECK_TIMEOUT=5000
 DEFAULT_RULESET_INTERVAL="86400"
-DEFAULT_HEALTHCHECK_URL="http://www.gstatic.com/generate_204"
+DEFAULT_HEALTHCHECK_URL="https://www.gstatic.com/generate_204"
 DEFAULT_HEALTHCHECK_RESULT=204
 DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES=5
 DEFAULT_EXTERNAL_CONTROLLER_PORT=9090
@@ -1498,10 +1499,10 @@ handle_proxy_group_section() {
             log warn "Invalid expected health check status for proxy group '$name': '$expected_status', using default: '$DEFAULT_HEALTHCHECK_RESULT'"
             expected_status="$DEFAULT_HEALTHCHECK_RESULT"
         }
-        config_get interval "$section" interval "$DEFAULT_HEALTHCHECK_INTERVAL"
+        config_get interval "$section" interval "$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
         is_uint "$interval" || {
-            log warn "Invalid health check interval for proxy group '$name': '$interval', using default: '$DEFAULT_HEALTHCHECK_INTERVAL'"
-            interval="$DEFAULT_HEALTHCHECK_INTERVAL"
+            log warn "Invalid health check interval for proxy group '$name': '$interval', using default: '$DEFAULT_GROUP_HEALTHCHECK_INTERVAL'"
+            interval="$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
         }
         config_get check_timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
         is_uint "$check_timeout" || {
