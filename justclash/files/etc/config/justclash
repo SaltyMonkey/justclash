@@ -318,8 +318,6 @@ config proxy 'proxy'
 config block_rules 'block_rules'
     option enabled '1'
 
-config direct_rules 'direct_rules'
-    option enabled '1'
 
 config mixed_port_rules 'mixed_port_rules'
     option exit_rule 'BY RULES'
