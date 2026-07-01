@@ -81,7 +81,7 @@ All outbound connection endpoints must be added on the **[Routing](../luci-app-j
   2. Enter a **Name** (e.g., `my_node`).
   3. Select **Mode** (`uri` or `object`). Paste the node's connection URI or JSON configuration object.
   4. Click **Save** in the modal.
-  * **Tip (MultiWAN / Direct Outbounds)**: If you have multiple WAN interfaces and want to load-balance or failover direct (non-tunneled) traffic, you can define them as direct endpoints by setting **Link** to `direct://` and selecting the corresponding physical interface under **Bind to interface**. (See [MultiWAN Balancing and Failover](10_multiwan_balancing_failover.md) for full instructions).
+  * **Tip (MultiWAN / Direct Outbounds)**: If you have multiple WAN interfaces and want to load-balance or failover direct (non-tunneled) traffic, you can define them as direct endpoints by setting **Link** to `direct://` and selecting the corresponding physical interface under **Bind to interface**. (See [MultiWAN Balancing and Failover](09_multiwan_balancing_failover.md) for full instructions).
 
 ### Step 2: Set Up Proxy Groups
 You must group your nodes in a **Proxy Group** to control how the traffic is routed or balanced.
@@ -93,7 +93,7 @@ You must group your nodes in a **Proxy Group** to control how the traffic is rou
 
 ### Step 3: Configure Direct and Block Rules
 Define what traffic should bypass alternative routing or be blocked globally:
-* **Direct Rules (Bypasses)**: Under **Direct rules**, check **Enabled**. Select rulesets to bypass (e.g., local/domestic domains/IPs under **Use with rules**) or add manual domain suffixes/CIDRs under the **Manual rules** tab. *(See [Direct Rules Reference](07_direct_rules.md) for more details).*
+* **Direct Routing (Bypasses)**: To bypass the proxy for specific domains or IPs, create a Proxy Group targeting a `direct://` outbound node, and configure its rulesets or manual domains under the **Lists** and **Manual rules** tabs.
 * **Block Rules (Ad-blocking)**: Under **Block rules**, check **Enabled**. Select ad-blocking lists (like `adblock` or `trackers`) under **Use with rules** to prevent matched requests from connecting. *(See [Block Rules Reference](06_block_rules.md) for more details).*
 
 ### Step 4: Configure the Fallback (Default) Rule
@@ -143,16 +143,15 @@ JustClash utilizes Mihomo's internal DNS engine with **Fake-IP** capabilities to
 
 ### Core Architecture & Rules Configuration
 * [Routing Architecture and Design Choices](00_routing_architecture_and_design.md) - Learn how JustClash's Full Route architecture handles transparent redirection and DNS hijacking.
-* [Direct Rules Reference](07_direct_rules.md) - A detailed guide on managing global bypass lists and custom direct domain suffixes.
 * [Block Rules Reference](06_block_rules.md) - How block/reject lists and manual ad-blocking rules are processed.
-* [Mixed Port Rules Reference](08_mixed_port.md) - Configuring specific exit rules for the Mihomo mixed port.
+* [Mixed Port Rules Reference](07_mixed_port.md) - Configuring specific exit rules for the Mihomo mixed port.
 * [Managing User-Defined RuleSets](05_user_defined_rulesets.md) - How to add, format, and load custom MRS ruleset files via LuCI or CLI.
-* [Geodata and GeoIP Configuration](12_geodata_and_geoip.md) - Using `geosite.dat`/`geoip.dat` databases instead of modular rulesets.
+* [Geodata and GeoIP Configuration](11_geodata_and_geoip.md) - Using `geosite.dat`/`geoip.dat` databases instead of modular rulesets.
 
 ### Traffic Redirection & Network Integration
 * [Traffic Exclusions Reference](04_service_traffic_exclusion.md) - A comprehensive guide on bypassing LAN clients (MAC/IP), router-originated processes, and configuring custom DNS daemons.
-* [Guest Network Redirection](09_use_guest_network.md) - Intercepting and routing client traffic from guest or secondary network interfaces.
-* [MultiWAN Balancing and Failover](10_multiwan_balancing_failover.md) - How to configure JustClash to work concurrently with MultiWAN (`mwan3`) gateways.
+* [Guest Network Redirection](08_use_guest_network.md) - Intercepting and routing client traffic from guest or secondary network interfaces.
+* [MultiWAN Balancing and Failover](09_multiwan_balancing_failover.md) - How to configure JustClash to work concurrently with MultiWAN (`mwan3`) gateways.
 
 ### CLI, Scripting & Configuration
 * [UCI Configuration Structure Reference](01_uci-structure.md) - A complete reference for all UCI settings under `/etc/config/justclash`.

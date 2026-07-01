@@ -2,7 +2,7 @@
 
 The service allows you to add your own custom routing lists (RuleSets) via the LuCI web interface. For advanced users and automation, these lists can also be managed manually in the filesystem via SSH.
 
-These custom catalogs can then be used in `block_rules` to drop traffic, or in `direct_rules` / `proxy_groups` to selectively route traffic.
+These custom catalogs can then be used in `block_rules` to drop traffic, or in `proxy_groups` to selectively route traffic.
 
 ---
 
@@ -23,14 +23,14 @@ Advanced users can manually define custom catalogs directly in the filesystem vi
 
 ### File Locations
 * **Blocking RuleSets**: `/etc/justclash/user.block.rulesets.txt`
-* **Routing RuleSets (Proxies/Direct)**: `/etc/justclash/user.rulesets.txt`
+* **Routing RuleSets (Proxies/Bypasses)**: `/etc/justclash/user.rulesets.txt`
 
 ### Format Syntax
 Each list must be defined on a new line using the following pipe-separated (`|`) format:
 `Name|ID|Type|Format|URL_or_Path[|Authorization]`
 
 * **Name**: A human-readable display name (e.g., `My Custom Blocklist`).
-* **ID**: A unique, alphanumeric internal identifier (e.g., `my-custom-list`). This is the ID you use in the `block_rules` or `direct_rules` UCI sections.
+* **ID**: A unique, alphanumeric internal identifier (e.g., `my-custom-list`). This is the ID you use in the `block_rules` or `proxy_groups` UCI sections.
 * **Type**: The behavior type. Use `domain` for domain-based lists or `ipcidr` for IP subnets.
 * **Format**: The format of the source file. Currently, JustClash **only** supports the `mrs` (Mihomo rule-set) format.
 * **URL_or_Path**: The `http://` / `https://` download link, or an absolute path to a local file on the router (e.g., `/etc/justclash/my_local_list.mrs`).

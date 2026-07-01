@@ -163,15 +163,6 @@ config proxy_group
     list   additional_destip_route        '8.8.8.8/32'
     list   additional_srcip_route         '192.168.1.0/24'
 
-config direct_rules 'direct_rules'
-    option enabled                        '1'
-    list   enabled_list                   'rule_set_2'
-    option list_update_interval           '43200'
-    option size_limit                     '0'
-    option proxy                          'DIRECT'
-    list   additional_domain_direct       'example.com'
-    list   additional_srcip_direct        '192.168.2.0/24'
-    list   additional_destip_direct       '8.8.4.4/32'
 
 config block_rules 'block_rules'
     option enabled                        '1'
