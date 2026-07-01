@@ -88,7 +88,7 @@ done
 for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_group$/\1/p'); do
     uci -q delete "justclash.$section.fake_ip"
 done
-uci -q delete justclash.direct_rules.fake_ip
+uci -q delete justclash.direct_rules
 
 for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_provider$/\1/p'); do
     uci -q rename "justclash.$section.subscription_useragent_support=header_user_agent"
