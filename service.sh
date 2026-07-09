@@ -86,10 +86,12 @@ check_icmp() {
 }
 
 get_os_arch() {
+    # shellcheck disable=SC1091
     (. /etc/openwrt_release 2>/dev/null && echo "${DISTRIB_ARCH:-$NO_DATA_STRING}") || echo "${NO_DATA_STRING}"
 }
 
 get_os_version() {
+    # shellcheck disable=SC1091
     (. /etc/os-release 2>/dev/null && echo "${VERSION:-$VERSION_ID}") || echo "${NO_DATA_STRING}"
 }
 
