@@ -133,6 +133,29 @@ format_uci_list_as_json_array() {
     [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
 }
 
+build_custom_slash_map() {
+    local section_name="$1"
+    local list_name="$2"
+    local delim="${3:-,}"
+    local result=""
+
+    # shellcheck disable=SC2329
+    __append_slash_item() {
+        local entry="$1"
+        local key="${entry%%/*}"
+        local val="${entry#*/}"
+
+        [ "$key" = "$entry" ] || [ -z "$key" ] || [ -z "$val" ] && return
+
+        local item
+        item="$(yaml_quote "$key"): $(yaml_quote "$val")"
+        [ -z "$result" ] && result="$item" || result="$result$delim$item"
+    }
+
+    config_list_foreach "$section_name" "$list_name" __append_slash_item
+    printf '%s' "$result"
+}
+
 md5_str() {
     local res
     res=$(md5sum)
@@ -199,6 +222,10 @@ is_ifname() {
         ''|*[!A-Za-z0-9_.:-]*) return 1 ;;
         *) return 0 ;;
     esac
+}
+
+sanitize_nft_name() {
+    echo "$1" | sed 'y/-./__/' | tr -cd 'a-zA-Z0-9_' | cut -c1-31
 }
 
 is_choice() {

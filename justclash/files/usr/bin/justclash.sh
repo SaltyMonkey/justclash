@@ -64,6 +64,9 @@ CORE_WORKDIR_RULES_PATH="${CORE_WORKDIR_PATH}/rules"
 CORE_WORKDIR_CACHE_DB_PATH="${CORE_WORKDIR_PATH}/cache.db"
 CORE_WORKDIR_UCI_HASH_PATH="${CORE_WORKDIR_PATH}/uci.hash"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}/config.yaml"
+ACTIVE_IPCIDR_RULESETS_PATH="${CORE_WORKDIR_PATH}/active_ipcidr_rulesets.txt"
+ACTIVE_STATIC_IPS_PATH="${CORE_WORKDIR_PATH}/active_static_ips.txt"
+ASYNC_WORKER_PID_PATH="/var/run/${PROGNAME}_async_worker.pid"
 
 PROG_ETC_DIR="/etc/${PROGNAME}"
 RULESETS_BLOCKS_FILENAME="block.rulesets.txt"
@@ -98,7 +101,6 @@ DEFAULT_MIHOMO_UPDATE_CHANNEL="stable"
 DEFAULT_MIHOMO_GITHUB_REPO="MetaCubeX/mihomo"
 DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL="https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
 DEFAULT_EXTERNAL_PANEL="metacubexd"
-DEFAULT_RULESET_PROXY_DIRECT_SECTION="DIRECT"
 DEFAULT_PROXY="DIRECT"
 DEFAULT_HEALTHCHECK_INTERVAL=360
 DEFAULT_GROUP_HEALTHCHECK_INTERVAL=180
@@ -162,6 +164,8 @@ OUT_BUNDLE_RULES=""    # Stores domain and other routing rules from build_builti
 OUT_BUNDLE_RULESETS="" # Stores rule-provider templates from build_builtin_rules_bundle to define rule-providers in configuration
 OUT_BUNDLE_NAMES=""    # Stores active ruleset names from build_builtin_rules_bundle, used to build blocklist name lists
 OUT_BUNDLE_FAKEIPRULES="" # Stores rules mapping domains to fake-ip from build_builtin_rules_bundle for correct DNS routing
+_IPCIDR_RULESETS_BUFFER="" # Global buffer accumulating ipcidr ruleset entries during YAML generation
+_STATIC_IPS_BUFFER=""      # Global buffer accumulating static IP entries during YAML generation
 
 # Global in-memory caches storing the contents of ruleset/blocklist databases.
 # Loaded once at the start of core_generate_yaml to prevent multiple slow file reads.
@@ -180,7 +184,7 @@ ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 B4_FILEPATH="/etc/init.d/b4"
-REQUIRED_TOOLS="jq nft curl md5sum ntpd base64"
+REQUIRED_TOOLS="jq nft curl md5sum ntpd base64 inotifywait"
 
 
 is_pattern_in_file() {
@@ -225,7 +229,7 @@ ntp_force_sync() {
 
 core_validate_yaml() {
     local test_output app_exit_code
-    test_output="$("$CORE_PATH" -t -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
+    test_output="$("$CORE_PATH" -t -d "$CORE_WORKDIR_PATH" -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
     app_exit_code=$?
     case "$test_output" in
         *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
@@ -419,9 +423,17 @@ start() {
     log info "Updating scheduled tasks"
     cron_update
 
+    local _async_routing_mode _async_nft_lan _async_nft_router
+    config_get _async_routing_mode settings routing_mode 'full'
+    config_get _async_nft_lan settings nft_apply_changes 0
+    config_get _async_nft_router settings nft_apply_changes_router 0
+    populate_nft_sets_async "$_async_routing_mode" "$_async_nft_lan" "$_async_nft_router"
+
     log info "Starting Mihomo core"
     start_core "$mihomo_mem_limit"
     core_exit_code=$?
+
+    stop_async_worker
 
     log warn "Mihomo core exited; restoring networking changes."
     dnsmasq_restore
@@ -432,6 +444,8 @@ start() {
 
 stop() {
     log info "Stopping JustClash service..."
+
+    stop_async_worker
 
     log info "Removing tproxy routing and NFTables table"
     nf_table_remove
@@ -586,7 +600,116 @@ get_routing_mark() {
     printf '%s ' "$routing_mark"
 }
 
-nf_table_add() {
+# populate_ruleset_file NAME FILE_PATH [SAFE_NAME]
+# Flushes and repopulates an nftables ipcidr set from a plain-text IP list file.
+# Accepts an optional pre-computed SAFE_NAME to avoid a redundant fork.
+populate_ruleset_file() {
+    local name="$1" file_path="$2" safe_name="${3:-}"
+    [ -n "$safe_name" ] || safe_name=$(sanitize_nft_name "$name")
+
+    # Fast check: ensure the file contains at least one IP/CIDR line before touching nftables
+    grep -q '^[[:space:]]*[0-9]' "$file_path" 2>/dev/null || return 1
+
+    # Stream awk output directly into nftables without intermediate RAM variable buffering
+    local err_msg
+    if err_msg=$(awk -v table="$NF_TABLE_NAME" -v set="ruleset_${safe_name}" '
+        BEGIN {
+            print "flush set inet " table " " set
+            print "add element inet " table " " set " {"
+        }
+        !/^[[:space:]]*(#|\/\/|$)/ && /^[[:space:]]*[0-9]/ {
+            gsub(/[[:space:]]*/, "")
+            print $0 ","
+        }
+        END { print "}" }
+    ' "$file_path" 2>/dev/null | nft -f - 2>&1); then
+        log info "Partial Routing: Populated ruleset_${safe_name} from $(basename "$file_path")"
+        return 0
+    else
+        err_msg=$(echo "$err_msg" | tr '\n\r' '  ' | cut -c1-150)
+        log error "Partial Routing: Failed to populate ruleset_${safe_name} from $(basename "$file_path"): $err_msg"
+        return 1
+    fi
+}
+
+stop_async_worker() {
+    if [ -f "$ASYNC_WORKER_PID_PATH" ]; then
+        local pid child_pid
+        pid=$(cat "$ASYNC_WORKER_PID_PATH" 2>/dev/null)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            for child_pid in $(pgrep -P "$pid" 2>/dev/null); do
+                kill "$child_pid" 2>/dev/null
+            done
+            kill "$pid" 2>/dev/null
+            log info "Partial routing worker stopped"
+        else
+            log info "Partial routing worker is not running"
+        fi
+        rm -f "$ASYNC_WORKER_PID_PATH"
+    fi
+}
+
+populate_nft_sets_async() {
+    local routing_mode="$1"
+    local nft_apply_changes="${2:-0}"
+    local nft_apply_changes_router="${3:-0}"
+
+    [ "$routing_mode" = "partial" ] || return 0
+    if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
+        return 0
+    fi
+    [ -s "$ACTIVE_IPCIDR_RULESETS_PATH" ] || return 0
+
+    log info "Starting async population of nftables sets from rulesets"
+
+    # Ensure the directory exists so Mihomo can write to it
+    mkdir -p "$CORE_WORKDIR_RULES_PATH"
+
+    (
+        local name rpath file_path safe_name changed_path watch_targets real_rules_path real_rpath changed_name
+        real_rules_path=$(readlink -f "$CORE_WORKDIR_RULES_PATH" 2>/dev/null || realpath "$CORE_WORKDIR_RULES_PATH" 2>/dev/null || echo "$CORE_WORKDIR_RULES_PATH")
+        watch_targets="$real_rules_path"
+        while read -r line; do
+            [ -z "$line" ] && continue
+            rpath="${line##*|}"
+            if [ "${rpath#/}" != "$rpath" ] && [ -e "$rpath" ]; then
+                real_rpath=$(readlink -f "$rpath" 2>/dev/null || realpath "$rpath" 2>/dev/null || echo "$rpath")
+                watch_targets="$watch_targets $real_rpath"
+            fi
+        done < "$ACTIVE_IPCIDR_RULESETS_PATH"
+
+        # shellcheck disable=SC2086
+        inotifywait -m -q -e close_write,moved_to --format "%w%f" $watch_targets 2>/dev/null | while read -r changed_path; do
+            [ -z "$changed_path" ] && continue
+            [ ! -f "$ACTIVE_IPCIDR_RULESETS_PATH" ] && continue
+            changed_name="${changed_path##*/}"
+            changed_name="${changed_name%.list}"
+            grep -q -F "$changed_name" "$ACTIVE_IPCIDR_RULESETS_PATH" 2>/dev/null || continue
+            log info "Partial Routing: Update event triggered for ${changed_path##*/}, updating nftables ruleset"
+
+            while read -r line; do
+                [ -z "$line" ] && continue
+                name="${line%%|*}"
+                rpath="${line##*|}"
+
+                if [ "${rpath#/}" != "$rpath" ]; then
+                    file_path="$rpath"
+                else
+                    file_path="${CORE_WORKDIR_RULES_PATH}/${name}.list"
+                fi
+
+                if [ "${file_path##*/}" = "${changed_path##*/}" ] && [ -f "$file_path" ]; then
+                    safe_name=$(sanitize_nft_name "$name")
+                    populate_ruleset_file "$name" "$file_path" "$safe_name"
+                    break
+                fi
+            done < "$ACTIVE_IPCIDR_RULESETS_PATH"
+        done
+    ) &
+    echo "$!" > "$ASYNC_WORKER_PID_PATH"
+}
+
+nf_table_add_full() {
     local nft_apply_changes nft_apply_changes_router
     local tproxy_port fake_ip_range tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router nft_doh_mode
@@ -664,16 +787,9 @@ nf_table_add() {
         done
     fi
 
-    local table_exists=0
-    if nft list table inet "$NF_TABLE_NAME" >/dev/null 2>&1; then
-        table_exists=1
-    fi
+    nft delete table inet "$NF_TABLE_NAME" 2>/dev/null
 
     {
-        if [ "$table_exists" -eq 1 ]; then
-            echo "delete table inet $NF_TABLE_NAME"
-        fi
-
         echo "add table inet $NF_TABLE_NAME"
         echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
@@ -783,12 +899,275 @@ nf_table_add() {
             echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router traffic for interception\""
         fi
     } | nft -f -
+    # shellcheck disable=SC2181
     if [ $? -ne 0 ]; then
-        log error "Failed to apply NFTables rules. Transaction rolled back."
+        log error "Failed to apply Full NFTables rules. Transaction rolled back."
         return 1
     fi
 
     cleanup_fwmark
+    return 0
+}
+
+nf_table_add_partial() {
+    local nft_apply_changes nft_apply_changes_router
+    local tproxy_port fake_ip_range tproxy_input_interfaces
+    local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router nft_doh_mode
+    local pbr_priority iface skuid_values skuid_list skuid_resolved proxy_routing_marks provider_routing_marks
+    local nft_ports_exclude nft_ports_exclude_router nft_mac_exclude nft_ips_exclude
+
+    config_get nft_apply_changes settings nft_apply_changes 0
+    config_get nft_apply_changes_router settings nft_apply_changes_router 0
+    if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
+        log warn "Firewall rules generation is disabled for both LAN and router"
+        return 0
+    fi
+
+    config_get tproxy_port proxy tproxy_port
+    if [ -z "$tproxy_port" ]; then
+        log error "TProxy port is not configured"
+        return 1
+    fi
+    if ! is_port "$tproxy_port"; then
+        log error "Invalid TProxy port: $tproxy_port"
+        return 1
+    fi
+
+    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
+    if ! is_uint "$pbr_priority"; then
+        log error "Invalid policy routing priority: $pbr_priority"
+        return 1
+    fi
+
+    proxy_routing_marks=$(trim "$(config_foreach get_routing_mark proxies routing_mark)")
+    case "$proxy_routing_marks" in
+        *-1*)
+            log error "Invalid routing mark detected in proxies configuration"
+            return 1
+            ;;
+    esac
+
+    provider_routing_marks=$(trim "$(config_foreach get_routing_mark proxy_provider override_routing_mark)")
+    case "$provider_routing_marks" in
+        *-1*)
+            log error "Invalid override routing mark detected in proxy providers configuration"
+            return 1
+            ;;
+    esac
+
+    config_get fake_ip_range proxy fake_ip_range
+    config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
+    config_get nft_quic_mode settings nft_quic_mode
+    config_get nft_dot_mode settings nft_dot_mode
+    config_get nft_dot_quic_mode settings nft_dot_quic_mode
+    config_get nft_doh_mode settings nft_doh_mode
+    config_get nft_ntp_mode settings nft_ntp_mode
+    config_get nft_ntp_mode_router settings nft_ntp_mode_router
+    config_get nft_ports_exclude settings nft_ports_exclude
+    config_get nft_ports_exclude_router settings nft_ports_exclude_router
+    config_get nft_mac_exclude settings nft_mac_exclude
+    config_get nft_ips_exclude settings nft_ips_exclude
+    config_get skuid_values settings nft_skuid_exclude_router
+
+    if [ "$nft_apply_changes" = "1" ]; then
+        if [ -z "$fake_ip_range" ]; then
+            log error "Fake IP range is not configured"
+            return 1
+        fi
+        if [ -z "$tproxy_input_interfaces" ]; then
+            log error "TProxy inbound interfaces are not configured"
+            return 1
+        fi
+
+        for iface in $tproxy_input_interfaces; do
+            if ! is_ifname "$iface"; then
+                log error "Inbound interfaces contain an invalid interface name: $iface"
+                return 1
+            fi
+        done
+    fi
+
+    local ipcidr_safe_names="" ipcidr_cold_start_list=""
+    if [ -s "$ACTIVE_IPCIDR_RULESETS_PATH" ]; then
+        local rname rpath rsafe rfile
+        while read -r line; do
+            [ -z "$line" ] && continue
+            rname="${line%%|*}"
+            rpath="${line##*|}"
+            rsafe=$(sanitize_nft_name "$rname")
+            if [ "${rpath#/}" != "$rpath" ]; then
+                rfile="$rpath"
+            else
+                rfile="${CORE_WORKDIR_RULES_PATH}/${rname}.list"
+            fi
+            ipcidr_safe_names="${ipcidr_safe_names:+$ipcidr_safe_names }$rsafe"
+            if [ -s "$rfile" ]; then
+                ipcidr_cold_start_list="${ipcidr_cold_start_list:+$ipcidr_cold_start_list }$rname|$rfile|$rsafe"
+            fi
+        done < "$ACTIVE_IPCIDR_RULESETS_PATH"
+    fi
+
+    nft delete table inet "$NF_TABLE_NAME" 2>/dev/null
+
+    {
+        echo "add table inet $NF_TABLE_NAME"
+        echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
+        echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
+
+        echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
+        echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
+        echo "add set inet $NF_TABLE_NAME inbound_interfaces { type ifname; }"
+        for iface in $tproxy_input_interfaces; do
+            echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
+        done
+        echo "add set inet $NF_TABLE_NAME ruleset_static_ips { type ipv4_addr; flags interval; }"
+        # Create ipcidr sets (populated after the main transaction via populate_ruleset_file)
+        for safe_rname in $ipcidr_safe_names; do
+            echo "add set inet $NF_TABLE_NAME ruleset_${safe_rname} { type ipv4_addr; flags interval; }"
+        done
+
+        if [ "$nft_apply_changes" = "1" ]; then
+            echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
+            echo "add chain inet $NF_TABLE_NAME filter_input { type filter hook input priority filter; policy accept; }"
+            echo "add chain inet $NF_TABLE_NAME filter_forward { type filter hook forward priority filter; policy accept; }"
+
+            echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
+            echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
+            echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
+            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+
+            if [ -n "$nft_mac_exclude" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | spaces_to_commas) } return comment \"Bypass excluded MACs\""
+            fi
+
+            if [ -n "$nft_ips_exclude" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip saddr { $(echo "$nft_ips_exclude" | spaces_to_commas) } return comment \"Bypass excluded client IPs\""
+            fi
+
+            if [ -n "$nft_ports_exclude" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded destination ports\""
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded source ports\""
+            fi
+
+            if [ "$nft_quic_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } drop comment \"Drop QUIC traffic\""
+            elif [ "$nft_quic_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject comment \"Reject QUIC traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_TLS_PORT, $DEFAULT_SECONDARY_TLS_PORT } reject comment \"Reject QUIC traffic\""
+            fi
+
+            if [ "$nft_dot_quic_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } drop comment \"Drop DNS-over-QUIC traffic\""
+            elif [ "$nft_dot_quic_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject comment \"Reject DNS-over-QUIC traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto udp udp dport { $DEFAULT_DOT_PORT, $DEFAULT_SECONDARY_DOQ_PORT_SECOND, $DEFAULT_SECONDARY_DOQ_PORT_THIRD } reject comment \"Reject DNS-over-QUIC traffic\""
+            fi
+
+            if [ "$nft_dot_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } drop comment \"Drop DNS-over-TLS traffic\""
+            elif [ "$nft_dot_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject comment \"Reject DNS-over-TLS traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces meta l4proto tcp tcp dport { $DEFAULT_DOT_PORT } reject comment \"Reject DNS-over-TLS traffic\""
+            fi
+
+            if [ "$nft_doh_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS traffic\""
+            elif [ "$nft_doh_mode" = "REJECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
+                echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
+            fi
+
+            if [ "$nft_ntp_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop comment \"Drop NTP traffic\""
+            elif [ "$nft_ntp_mode" = "DIRECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
+            fi
+
+            echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept Fake-IP to TProxy\""
+            echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @ruleset_static_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept Static IPs to TProxy\""
+            for safe_rname in $ipcidr_safe_names; do
+                echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @ruleset_${safe_rname} meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept ${safe_rname} to TProxy\""
+            done
+        fi
+
+        if [ "$nft_apply_changes_router" = "1" ]; then
+            echo "add chain inet $NF_TABLE_NAME output { type route hook output priority mangle; policy accept; }"
+            echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
+            if [ -n "$proxy_routing_marks" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
+            fi
+            if [ -n "$provider_routing_marks" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
+            fi
+
+            echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
+
+            if [ -n "$nft_ports_exclude_router" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router source ports\""
+            fi
+
+            if [ -n "$skuid_values" ]; then
+                skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
+                for skuid_resolved in $skuid_list; do
+                    echo "add rule inet $NF_TABLE_NAME output meta skuid $skuid_resolved return comment \"Bypass excluded user (skuid)\""
+                done
+            fi
+
+            if [ "$nft_ntp_mode_router" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } drop comment \"Drop NTP traffic\""
+            elif [ "$nft_ntp_mode_router" = "DIRECT" ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
+            fi
+
+            echo "add rule inet $NF_TABLE_NAME output ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router Fake-IP for interception\""
+            echo "add rule inet $NF_TABLE_NAME output ip daddr @ruleset_static_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router Static IPs for interception\""
+            for safe_rname in $ipcidr_safe_names; do
+                echo "add rule inet $NF_TABLE_NAME output ip daddr @ruleset_${safe_rname} meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router ${safe_rname} for interception\""
+            done
+        fi
+    } | nft -f -
+    # shellcheck disable=SC2181
+    if [ $? -ne 0 ]; then
+        log error "Failed to apply Partial NFTables rules. Transaction rolled back."
+        return 1
+    fi
+
+    # Populate sets from cached files (cold start).
+    # Sets were just created above; populate_ruleset_file uses flush+add so it's safe to call now.
+    [ -s "$ACTIVE_STATIC_IPS_PATH" ] && populate_ruleset_file "static_ips" "$ACTIVE_STATIC_IPS_PATH" "static_ips"
+
+    if [ -n "$ipcidr_cold_start_list" ]; then
+        local item cs_name cs_file cs_safe
+        for item in $ipcidr_cold_start_list; do
+            cs_name="${item%%|*}"
+            cs_safe="${item##*|}"
+            cs_file="${item#*|}"
+            cs_file="${cs_file%|*}"
+            populate_ruleset_file "$cs_name" "$cs_file" "$cs_safe"
+        done
+    fi
+
+    cleanup_fwmark
+    return 0
+}
+
+nf_table_add() {
+    local routing_mode pbr_priority
+    config_get routing_mode settings routing_mode 'full'
+    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
+
+    if [ "$routing_mode" = "partial" ]; then
+        nf_table_add_partial || return 1
+    else
+        nf_table_add_full || return 1
+    fi
 
     # PBR
     ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" priority "$pbr_priority"
@@ -797,7 +1176,7 @@ nf_table_add() {
         ip route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE"
     fi
 
-    log warn "Tproxy: port=$tproxy_port, fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority"
+    log warn "Tproxy: fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority"
 }
 
 nf_table_remove() {
@@ -931,8 +1310,18 @@ dnsmasq_restore() {
 }
 
 check_is_already_running() {
+    local self_pid="$$"
+    local pid
+
+    for pid in $(pgrep -f "justclash.sh start" 2>/dev/null); do
+        if [ "$pid" != "$self_pid" ]; then
+            log warn "Another instance of JustClash script is already running (PID $pid)."
+            return 0
+        fi
+    done
+
     if pgrep -f "$(basename "$CORE_PATH")" >/dev/null 2>&1; then
-        log warn "JustClash is already running."
+        log warn "JustClash core is already running."
         return 0
     fi
     return 1
@@ -1026,6 +1415,7 @@ lookup_many_rulesets_full() {
                 }
             }
         }
+        { gsub(/\r/, "") }
         $1 !~ /^#/ && ($2 in need) {
             print $0
         }
@@ -1121,7 +1511,7 @@ build_builtin_rules_bundle() {
                     template_headers "0" "$ruleset_auth" ""
                     headers="$OUT_TEMPLATE"
                 fi
-                template_ruleset_http "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$headers"
+                template_ruleset_http "$ruleset_name" "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$headers"
                 rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
             *)
@@ -1139,6 +1529,7 @@ build_builtin_rules_bundle() {
                 # IP-based rulesets emitted separately so callers place them before domain rules.
                 if [ "$ruleset_behavior" = "ipcidr" ]; then
                     ip_rules_fragment="${ip_rules_fragment:+$ip_rules_fragment,}\"$generated_rule\""
+                    _IPCIDR_RULESETS_BUFFER="${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}$ruleset_name|$ruleset_url"
                 else
                     rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
                 fi
@@ -1289,12 +1680,15 @@ template_headers() {
     fi
 }
 
-# Helper to build HTTP ruleset JSON fragment in memory without subshell forks
 template_ruleset_http() {
-    local url="$1" behavior="$2" format="$3" proxy="$4" interval="$5" size_limit="$6" headers="$7"
+    local name="$1" url="$2" behavior="$3" format="$4" proxy="$5" interval="$6" size_limit="$7" headers="$8"
     local out
+    local ext="$format"
+    if [ "$behavior" = "ipcidr" ] && [ "$format" = "text" ]; then
+        ext="list"
+    fi
 
-    out="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$interval,\"size-limit\":$size_limit"
+    out="\"type\":\"http\",\"path\":\"$(json_escape "${CORE_WORKDIR_RULES_PATH}/${name}.${ext}")\",\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$interval,\"size-limit\":$size_limit"
     [ -n "$headers" ] && out="$out,$headers"
 
     OUT_TEMPLATE="{$out}"
@@ -1439,6 +1833,9 @@ handle_proxy_section() {
         # --- 3. IP-based Destination Rules (at the bottom) ---
         # Custom Destination IPs
         config_get route_entries "$section" additional_destip_route
+        for ip_cidr in $route_entries; do
+            [ -n "$ip_cidr" ] && _STATIC_IPS_BUFFER="${_STATIC_IPS_BUFFER:+$_STATIC_IPS_BUFFER$NL}$ip_cidr"
+        done
         rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
@@ -1591,6 +1988,9 @@ handle_proxy_group_section() {
         # --- 3. IP-based Destination Rules (at the bottom) ---
         # Custom Destination IPs
         config_get route_entries "$section" additional_destip_route
+        for ip_cidr in $route_entries; do
+            [ -n "$ip_cidr" ] && _STATIC_IPS_BUFFER="${_STATIC_IPS_BUFFER:+$_STATIC_IPS_BUFFER$NL}$ip_cidr"
+        done
         rules_fragment=$(build_manual_rules_array "$route_entries" "IP-CIDR" "$name" "no-resolve")
         [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
@@ -1613,6 +2013,7 @@ handle_proxy_group_section() {
     OUT_PROXY_GROUPS="[${proxy_groups:-}]"
     OUT_FAKE_IP_RULES="[${fake_ip_rules:-}]"
 }
+
 handle_proxy_provider_section() {
     local result=""
 
@@ -1775,6 +2176,9 @@ handle_block_rule_section() {
 
     # --- 2. IP-based Block Rules (at the bottom) ---
     config_get additional_destip_blockroute block_rules additional_destip_blockroute
+    for ip_cidr in $additional_destip_blockroute; do
+        [ -n "$ip_cidr" ] && _STATIC_IPS_BUFFER="${_STATIC_IPS_BUFFER:+$_STATIC_IPS_BUFFER$NL}$ip_cidr"
+    done
     rules_fragment=$(build_manual_rules_array "$additional_destip_blockroute" "IP-CIDR" "REJECT" "no-resolve")
     [ -n "$rules_fragment" ] && rules_array="${rules_array:+$rules_array,}$rules_fragment"
 
@@ -1844,16 +2248,6 @@ get_dashboard_url() {
     esac
 }
 
-build_hosts_section() {
-    echo "hosts:"
-    echo "  'cloudflare-dns.com': [1.1.1.1, 1.0.0.1]"
-    echo "  'one.one.one.one': [1.1.1.1, 1.0.0.1]"
-    echo "  'dns.google': [8.8.8.8, 8.8.4.4]"
-    echo "  'common.dot.dns.yandex.net': [77.88.8.8, 77.88.8.1]"
-    echo "  'safe.dot.dns.yandex.net': [77.88.8.88, 77.88.8.2]"
-    echo "  'family.dot.dns.yandex.net': [77.88.8.7, 77.88.8.3]"
-}
-
 # Main config generator; fills global caches (_*_CONTENT) and reads from global buffer (OUT_*)
 core_generate_yaml() {
     local router_selected_ipaddr
@@ -1868,7 +2262,7 @@ core_generate_yaml() {
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_filter_data
     local fake_ip_exclude_domain_values
     local fake_ip_exclude_ruleset_values fake_ip_exclude_geosite_values
-    local nameserver_policy_custom
+    local nameserver_policy_custom hosts_content
     local rules_proxies rules_proxygroups rules_block rule_final rule_mixed
     local proxies proxy_groups rule_providers proxy_providers
     local names_rulesets_block_policy names_suffixes_block_policy
@@ -1879,6 +2273,10 @@ core_generate_yaml() {
     # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls
     local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
+
+    mkdir -p "$CORE_WORKDIR_PATH"
+    _STATIC_IPS_BUFFER=""
+    _IPCIDR_RULESETS_BUFFER=""
 
     config_get controller_bind_interface proxy controller_bind_interface
     config_get use_dashboard_raw proxy use_dashboard
@@ -1984,7 +2382,8 @@ core_generate_yaml() {
     direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
     nameserver=$(format_uci_list_as_json_array proxy nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
-    nameserver_policy_custom=$(format_uci_list_as_json_array proxy nameserver_policy "" "    ")
+    hosts_content=$(build_custom_slash_map proxy hosts)
+    nameserver_policy_custom=$(build_custom_slash_map proxy nameserver_policy)
     sniffer_force_domain=$(format_uci_list_as_json_array proxy sniffer_force_domain "" "    ")
     sniffer_exclude_domain=$(format_uci_list_as_json_array proxy sniffer_exclude_domain "" "    ")
     sniffer_skip_src_address=$(format_uci_list_as_json_array proxy sniffer_skip_src_address "" "    ")
@@ -2024,7 +2423,6 @@ core_generate_yaml() {
     GLOBAL_FAKE_IP_EXCLUDE_GEOSITES=" $fake_ip_exclude_geosite_values "
     GLOBAL_FAKE_IP_EXCLUDE_DOMAINS=" $fake_ip_exclude_domain_values "
 
-
     # BLOCK section
     # Optimization: Temporarily swap the global rulesets database to use blocklist rulesets database.
     # This allows downstream functions (like build_builtin_rules_bundle) to transparently use block ruleset definitions.
@@ -2053,24 +2451,12 @@ core_generate_yaml() {
     fake_ip_rules_proxies="$OUT_FAKE_IP_RULES"
 
     nameserver_policy=$(jq --indent 4 -n \
-        --arg custom_entries "$nameserver_policy_custom" \
+        --argjson custom_entries "{$nameserver_policy_custom}" \
         --arg rulesets "$names_rulesets_block_policy" \
         --arg suffixes "$names_suffixes_block_policy" \
         --arg geosite "$names_geosite_block_policy" \
         '
-        {} |
-        if $custom_entries != "[]" then
-            . + (
-                reduce ($custom_entries | fromjson)[] as $item ({};
-                    ($item | split("/")) as $parts |
-                    if ($parts | length) < 2 then
-                        .
-                    else
-                        . + { ($parts[0]): ($parts[1:] | join("/")) }
-                    end
-                )
-            )
-        else . end |
+        $custom_entries |
         if $rulesets != "" then
             . + {($rulesets): "rcode://success"}
         else . end |
@@ -2193,7 +2579,7 @@ core_generate_yaml() {
             echo "  asn: false"
         fi
         echo ""
-        build_hosts_section
+        echo "hosts: {$hosts_content}"
         echo ""
         echo "ntp:"
         echo "  enable: $(format_uci_bool_as_yaml "$core_ntp_enabled")"
@@ -2250,6 +2636,16 @@ core_generate_yaml() {
         printf '%s\n' "rules: $rules"
     } > "$OUTPUT_YAML_CONFIG_PATH"
 
+    printf '%s' "${_STATIC_IPS_BUFFER:+$_STATIC_IPS_BUFFER$NL}" > "$ACTIVE_STATIC_IPS_PATH"
+    printf '%s' "${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}" > "$ACTIVE_IPCIDR_RULESETS_PATH"
+    if [ -s "$ACTIVE_IPCIDR_RULESETS_PATH" ]; then
+        sort -u -o "$ACTIVE_IPCIDR_RULESETS_PATH" "$ACTIVE_IPCIDR_RULESETS_PATH"
+    fi
+
+    if [ -s "$ACTIVE_STATIC_IPS_PATH" ]; then
+        sort -u -o "$ACTIVE_STATIC_IPS_PATH" "$ACTIVE_STATIC_IPS_PATH"
+    fi
+
     # Clean up global buffers and caches to free memory on low-RAM routers
     unset _RULESETS_CONTENT _BLOCK_RULESETS_CONTENT \
           OUT_RULES OUT_RULESETS OUT_FAKE_IP_RULES OUT_PROXY_GROUPS OUT_PROXIES \
@@ -2257,7 +2653,8 @@ core_generate_yaml() {
           OUT_PROXY_PROVIDERS OUT_MIXED_RULES OUT_FINAL_RULES \
           OUT_BUNDLE_IP_RULES OUT_BUNDLE_RULES OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES \
           OUT_BUNDLE_FAKEIPRULES \
-          GLOBAL_FAKE_IP_EXCLUDE_RULES GLOBAL_FAKE_IP_EXCLUDE_GEOSITES GLOBAL_FAKE_IP_EXCLUDE_DOMAINS
+          GLOBAL_FAKE_IP_EXCLUDE_RULES GLOBAL_FAKE_IP_EXCLUDE_GEOSITES GLOBAL_FAKE_IP_EXCLUDE_DOMAINS \
+          _STATIC_IPS_BUFFER _IPCIDR_RULESETS_BUFFER
 
     return 0
 }
@@ -2330,11 +2727,14 @@ core_prepare_workdir() {
         current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str)
         saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null)
 
-        if [ ! -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
+        if [ ! -f "$OUTPUT_YAML_CONFIG_PATH" ] || \
+           [ ! -f "$ACTIVE_IPCIDR_RULESETS_PATH" ] || \
+           [ ! -f "$ACTIVE_STATIC_IPS_PATH" ]; then
+            rm -f "$OUTPUT_YAML_CONFIG_PATH" "$ACTIVE_IPCIDR_RULESETS_PATH" "$ACTIVE_STATIC_IPS_PATH"
             echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
         elif [ "$current_hash" != "$saved_hash" ]; then
             log info "Existing $OUTPUT_YAML_CONFIG_PATH is outdated and will be regenerated."
-            rm -f "$OUTPUT_YAML_CONFIG_PATH"
+            rm -f "$OUTPUT_YAML_CONFIG_PATH" "$ACTIVE_IPCIDR_RULESETS_PATH" "$ACTIVE_STATIC_IPS_PATH"
             echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
         else
             log info "Existing $OUTPUT_YAML_CONFIG_PATH is up to date and will be reused."
