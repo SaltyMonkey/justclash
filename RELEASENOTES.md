@@ -1,3 +1,19 @@
+## [0.72.13] - 07072026
+
+### Features & Enhancements
+- **Service:** Added support for Partial Interception Mode (Partial Route), selectively redirecting only Fake-IP ranges and matched IP-CIDR rulesets to the proxy.
+- **Service:** Implemented an event-driven ruleset synchronizer using `inotifywait` to monitor changes in the ruleset cache folder and dynamically stream IP updates to active `nftables` sets in under 1ms.
+- **Service:** Added physical symlink resolution support to the ruleset monitor to ensure `inotify` correctly tracks updates when persistent flash rulesets are enabled.
+- **Service:** Added script-level checking to prevent starting multiple duplicate instances of `justclash.sh start` and recursive termination of background monitoring processes on stop.
+- **LuCI:** Redesigned the realtime logs and system logs pages to cap terminal heights at `65vh` with scroll-lock prevention logic.
+- **LuCI:** Added "Routing mode" selector (Full vs. Partial Interception) in service settings and restructured interface option dependencies for router-level traffic rules.
+- **Service:** Updated default ruleset URLs in `rulesets.txt` and `block.rulesets.txt` to explicitly target the `@main` branch on jsdelivr CDN.
+- **Service:** Added support for configuring custom DNS hosts maps (`hosts` UCI list) in the proxy configuration and pre-populated bootstrap mappings for major DNS providers.
+- **Docs:** Updated internal documentation guides and README compatibility statements to explicitly guarantee support only for OpenWrt 25.x or newer.
+- **Docs:** Deprecated the standalone `direct_rules` configuration section, consolidating all direct bypass routing rules under the standard `DIRECT` outbound in the Routing tab.
+- **Service:** Suppressed ShellCheck linting warnings (`SC2086` and `SC2181`) inside the main controller script to ensure 100% clean static analysis.
+- **Service:** Fixed `/etc/openwrt_release` and `/etc/os-release` sourcing warnings (`SC1091`) inside the maintenance utility script.
+
 ## [0.60.0] - 27062026
 
 ### Features & Enhancements

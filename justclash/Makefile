@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.60.0
+PKG_VERSION:=0.72.13
 
 PKG_RELEASE:=1
 
@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=$(PKG_NAME)
-	DEPENDS:=+nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +ca-bundle +zoneinfo-all
+	DEPENDS:=+nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
 	CONFLICTS:=banip mihomo podkop sing-box sing-box-tiny luci-app-passwall luci-app-passwall2 dns-failsafe-proxy netshift luci-app-netshift nikki luci-app-nikki luci-app-ssclash
 	PKGARCH:=all
 endef
