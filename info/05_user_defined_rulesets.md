@@ -32,7 +32,9 @@ Each list must be defined on a new line using the following pipe-separated (`|`)
 * **Name**: A human-readable display name (e.g., `My Custom Blocklist`).
 * **ID**: A unique, alphanumeric internal identifier (e.g., `my-custom-list`). This is the ID you use in the `block_rules` or `proxy_groups` UCI sections.
 * **Type**: The behavior type. Use `domain` for domain-based lists or `ipcidr` for IP subnets.
-* **Format**: The format of the source file. Currently, JustClash **only** supports the `mrs` (Mihomo rule-set) format.
+* **Format**: The format of the source file. Use `mrs` for binary Mihomo rule-sets. For `ipcidr` rulesets, JustClash **only** supports `text` format (a plain text file containing one IP address or CIDR range per line).
+  > [!NOTE]
+  > The `text` format is **strictly limited to `ipcidr` rulesets** to allow direct parsing and injection into firewall `nftables` sets (the synchronizer cannot parse compiled binary `.mrs` files). Domain-based rulesets must continue to use `mrs` format.
 * **URL_or_Path**: The `http://` / `https://` download link, or an absolute path to a local file on the router (e.g., `/etc/justclash/my_local_list.mrs`).
 * **Authorization** *(Optional)*: An authorization header or Bearer token if the download URL requires authentication.
 
@@ -40,21 +42,31 @@ Each list must be defined on a new line using the following pipe-separated (`|`)
 
 **Example 1: Remote URL (Domain list)**
 ```text
-# Name|ID|Type|mrs|URL_or_Path[|Authorization]
+# Name|ID|Type|Format|URL_or_Path[|Authorization]
 My Privacy List|my-privacy|domain|mrs|https://example.com/privacy.mrs
 ```
 
 **Example 2: Local File (IP list)**
 ```text
-# Name|ID|Type|mrs|URL_or_Path[|Authorization]
-Local Drop IPs|local-drop|ipcidr|mrs|/etc/justclash/drop.mrs
+# Name|ID|Type|Format|URL_or_Path[|Authorization]
+Local Drop IPs|local-drop|ipcidr|text|/etc/justclash/drop.list
 ```
 
 **Example 3: Remote URL with Authorization**
 ```text
-# Name|ID|Type|mrs|URL_or_Path[|Authorization]
+# Name|ID|Type|Format|URL_or_Path[|Authorization]
 Premium Tracker Block|premium-track|domain|mrs|https://example.com/premium.mrs|Bearer my_secret_token
 ```
 
 ### Applying Changes
 After modifying the `.txt` files via CLI, the new `ID` will instantly be available to enable in your UCI configuration or LuCI interface. Note that to fully apply routing changes, you must save and apply settings in the Routing or Proxy tabs, or reload the service from the Status tab.
+
+---
+
+## 3. Why Ruleset Downloading and Caching is Delegated to Mihomo
+Instead of writing custom shell scripts with `curl` or `wget` to download and update rulesets, JustClash delegates the entire downloading, updating, and caching lifecycle of rulesets to the **Mihomo Core:**
+
+* **Safety & Integrity Checks:** Mihomo validates the downloaded file format (`mrs` or `text`) before writing it to the cache directory. This prevents corrupted downloads from crashing the transparent proxy or breaking the firewall.
+* **HTTP/ETag and Caching Optimizations:** Mihomo supports standard HTTP caching headers and ETag validation. If a remote ruleset has not changed, Mihomo will not download it again, saving WAN bandwidth and flash write cycles.
+* **Robust Authentication & Headers:** Mihomo natively handles complex HTTP headers (including private token authorizations) securely, without leaking credentials in process lists (as `wget` command line arguments would).
+* **Native Update Scheduling:** Mihomo runs a highly optimized scheduler that pulls updates in background threads without blocking main network routing threads or spawning shell subprocesses on low-powered routers.

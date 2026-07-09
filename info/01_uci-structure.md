@@ -4,6 +4,7 @@ This is a compact reference showcasing the default UCI structure for sections an
 
 ```ini
 config main 'settings'
+    option routing_mode                   'full'
     option wait_for_wan                   '0'
     option wait_for_wan_max               '90'
     option delayed_boot                   '0'
@@ -69,6 +70,8 @@ config proxy 'proxy'
     option dns_cache_max_size             '2048'
     option fake_ip_range                  '198.18.0.1/16'
     option fake_ip_ttl                    '60'
+    list   hosts                          'cloudflare-dns.com/1.1.1.1'
+    list   hosts                          'dns.google/8.8.4.4'
     list   nameserver_policy              '+.gosuslugi.ru/195.208.4.1'
     list   nameserver_policy              '+.rutube.ru/77.88.8.8'
     list   default_nameserver             'tls://185.222.222.222'

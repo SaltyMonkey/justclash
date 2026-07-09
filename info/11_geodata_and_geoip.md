@@ -60,7 +60,6 @@ service justclash restart
 Once Geodata Mode is enabled, the Web UI will hide the standard RuleSets tabs and display **Geodata rules** tabs instead in the following sections:
 * **Proxies** (Rules for specific proxy nodes)
 * **Proxy Groups** (Rules for proxy selector groups)
-* **Direct Rules** (Exclusions/Bypass rules)
 * **Block Rules** (Adblocking/Blocking rules)
 
 ### Adding Geosite and Geoip Rules

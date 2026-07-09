@@ -47,11 +47,13 @@ This provides a reliable buffer that helps bypass minor network instability at s
 
 ## 3. Time Synchronization (NTP)
 
-Routers often do not have hardware clocks (RTC) and boot with the year set to 1970 until time is synced. While Mihomo (the core engine) has its own built-in NTP client to validate TLS certificates independently, JustClash forces a synchronous system-wide NTP update (`ntpd -q`) before starting the core.
+Routers often do not have hardware clocks (RTC) and boot with the year set to 1970 until time is synced.
 
-This guarantees that your router's overall system time is correct for logs and firewall rules right from the start. However, because this command runs **synchronously**, it will block the startup process until the time is successfully resolved.
+While Mihomo has its own built-in NTP client to validate TLS certificates independently, JustClash provides an option to force a synchronous system-wide NTP update (`ntpd -q`) before starting the core. This is left for the entire router to ensure correct system logs, cron tasks, and firewall rules right from startup.
 
-If your network is slow to connect or you want to shave a few seconds off your boot time, you can disable this forced sync.
+By default, it is **recommended to leave this enabled** to ensure system-wide time consistency. However, because this command runs **synchronously**, it will block the startup process until the time is successfully resolved.
+
+If your network is slow to connect or you want to shave a few seconds off your boot time, you can disable this forced sync:
 
 * **Via LuCI**: Go to *Services -> JustClash -> Startup Tab* and disable the NTP synchronization option.
 * **Via UCI**:

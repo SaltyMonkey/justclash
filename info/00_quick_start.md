@@ -54,7 +54,7 @@ Unlike generic alternative routing dashboard apps, JustClash separates configura
 * **[Service](../luci-app-justclash/htdocs/luci-static/resources/view/justclash/service.js)**: Main service settings. The **Traffic rules** tab handles transparent redirection, exclusions (by MAC, IP, or Port), and protocols like QUIC, DoT, DoH, and NTP.
 * **[Proxy](../luci-app-justclash/htdocs/luci-static/resources/view/justclash/proxy.js)**: Global core settings (API TLS, mixed port, log level). The **DNS settings** tab allows customizing DNS upstreams and managing Fake-IP settings.
 * **[RuleSets](../luci-app-justclash/htdocs/luci-static/resources/view/justclash/rulesets.js)**: Predefined and user-defined rule files (in `.mrs` format). You define lists here (e.g., ads, search engines) so they can be associated with routing categories.
-* **[Routing](../luci-app-justclash/htdocs/luci-static/resources/view/justclash/routing.js)**: **The single control panel for outbound routing configuration**. All outbounds (individual nodes, subscriptions), proxy groups (load-balancing, speed test groups), direct rules, block rules, and the default fallback rule are managed here.
+* **[Routing](../luci-app-justclash/htdocs/luci-static/resources/view/justclash/routing.js)**: **The single control panel for outbound routing configuration**. All outbounds (individual nodes, subscriptions), proxy groups (load-balancing, speed test groups), block rules, and the default fallback rule are managed here.
 
 ### Real-Time Diagnostic Views (No settings are saved here)
 * **[Nodes](../luci-app-justclash/htdocs/luci-static/resources/view/justclash/nodes.js)**: Real-time latency checking, provider updating, and switching the active outbound node for manual `select` groups.

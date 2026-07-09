@@ -2,6 +2,11 @@
 
 This document explains how to exclude specific network traffic from being intercepted and processed by the JustClash routing engine.
 
+> [!NOTE]
+> **Necessity of Exclusions: Full Route vs. Partial Route**
+> * **In Full Interception Mode:** Traffic exclusions are **highly recommended** for heavy LAN clients (like game consoles, smart TVs, or local backup servers) and heavy protocols (P2P/BitTorrent ports) to prevent them from being forwarded to the userspace proxy, saving valuable router CPU and RAM.
+> * **In Partial Interception Mode:** There is **no huge necessity** to configure manual client or port exclusions. Since the firewall only intercepts traffic matching your active rulesets (like blocked sites or specified IP CIDRs), all other heavy traffic (domestic streaming, torrents, direct IP downloads, and unmatched client devices) naturally and automatically bypasses the proxy at the kernel level, consuming zero proxy resources.
+
 ---
 
 ## 0. Default Bypassed Traffic (Private IPs)
@@ -105,6 +110,13 @@ When you exclude traffic from transparent redirection (either via **fwmark/User 
 5. Since Fake-IPs are non-routable on the public internet, **the connection fails**.
 
 To prevent this, you must ensure that bypassed entities resolve **Real IPs** instead of Fake-IPs.
+
+> [!WARNING]
+> **Crucial Warning: Fake-IP Exclusions Break Proxy Routing in Partial Interception Mode**
+> * Under **Full Interception** mode, excluding a domain from Fake-IP (using `fake_ip_exclude_domains` / `real-ip` rules) still allows Mihomo to proxy the domain because all traffic to the resolved Real IP is still intercepted by TProxy.
+> * Under **Partial Interception** mode, the firewall *only* redirects Fake-IPs and active IP-CIDR lists. If you exclude a domain from Fake-IP, the client receives a **Real IP** which bypasses firewall interception completely.
+> * As a result, the connection goes directly via the WAN gateway, and Mihomo never sees it. Therefore, any routing rules configured in Mihomo to proxy that domain (e.g., `DOMAIN-SUFFIX,example.com,Proxy`) will be **completely ignored and bypassed**.
+> * Consequently, **do not use Fake-IP exclusions** in Partial Interception mode for any domains that you intend to route through a proxy.
 
 ### Solutions for Router-Originated Traffic
 
