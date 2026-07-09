@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-01 21:33+0300\n"
+"POT-Creation-Date: 2026-07-01 22:09+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -32,12 +32,12 @@ msgstr "全部关闭"
 msgid "Cancel"
 msgstr "取消"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:102 htdocs/luci-static/resources/view/justclash/connections.js:136 htdocs/luci-static/resources/view/justclash/connections.js:216 htdocs/luci-static/resources/view/justclash/connections.js:243 htdocs/luci-static/resources/view/justclash/connections.js:318 htdocs/luci-static/resources/view/justclash/nodes.js:124 htdocs/luci-static/resources/view/justclash/realtime_logs.js:193 htdocs/luci-static/resources/view/justclash/rules.js:37 htdocs/luci-static/resources/view/justclash/rules.js:112 htdocs/luci-static/resources/view/justclash/rules.js:179 htdocs/luci-static/resources/view/justclash/status.js:137 htdocs/luci-static/resources/view/justclash/status.js:324 htdocs/luci-static/resources/view/justclash/status.js:354 htdocs/luci-static/resources/view/justclash/status.js:435 htdocs/luci-static/resources/view/justclash/status.js:467
-#: htdocs/luci-static/resources/view/justclash/status.js:468 htdocs/luci-static/resources/view/justclash/status.js:470 htdocs/luci-static/resources/view/justclash/status.js:474 htdocs/luci-static/resources/view/justclash/status.js:523 htdocs/luci-static/resources/view/justclash/status.js:596 htdocs/luci-static/resources/view/justclash/status.js:599 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:122
+#: htdocs/luci-static/resources/view/justclash/connections.js:102 htdocs/luci-static/resources/view/justclash/connections.js:136 htdocs/luci-static/resources/view/justclash/connections.js:216 htdocs/luci-static/resources/view/justclash/connections.js:243 htdocs/luci-static/resources/view/justclash/connections.js:318 htdocs/luci-static/resources/view/justclash/nodes.js:124 htdocs/luci-static/resources/view/justclash/realtime_logs.js:229 htdocs/luci-static/resources/view/justclash/rules.js:37 htdocs/luci-static/resources/view/justclash/rules.js:112 htdocs/luci-static/resources/view/justclash/rules.js:179 htdocs/luci-static/resources/view/justclash/status.js:137 htdocs/luci-static/resources/view/justclash/status.js:324 htdocs/luci-static/resources/view/justclash/status.js:354 htdocs/luci-static/resources/view/justclash/status.js:435 htdocs/luci-static/resources/view/justclash/status.js:467
+#: htdocs/luci-static/resources/view/justclash/status.js:468 htdocs/luci-static/resources/view/justclash/status.js:470 htdocs/luci-static/resources/view/justclash/status.js:474 htdocs/luci-static/resources/view/justclash/status.js:523 htdocs/luci-static/resources/view/justclash/status.js:596 htdocs/luci-static/resources/view/justclash/status.js:599 htdocs/luci-static/resources/view/justclash/system_logs.js:76 htdocs/luci-static/resources/view/justclash/system_logs.js:117
 msgid "Error"
 msgstr "错误"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:106 htdocs/luci-static/resources/view/justclash/connections.js:247 htdocs/luci-static/resources/view/justclash/realtime_logs.js:197
+#: htdocs/luci-static/resources/view/justclash/connections.js:106 htdocs/luci-static/resources/view/justclash/connections.js:247 htdocs/luci-static/resources/view/justclash/realtime_logs.js:233
 msgid "Copy JSON"
 msgstr "复制 JSON"
 
@@ -105,7 +105,7 @@ msgstr "所有活动连接已关闭"
 msgid "No active connections to copy"
 msgstr "没有可复制的活动连接"
 
-#: htdocs/luci-static/resources/view/justclash/connections.js:247 htdocs/luci-static/resources/view/justclash/realtime_logs.js:197
+#: htdocs/luci-static/resources/view/justclash/connections.js:247 htdocs/luci-static/resources/view/justclash/realtime_logs.js:233
 msgid "Copy Text"
 msgstr "复制文本"
 
@@ -1135,23 +1135,19 @@ msgstr "允许 Mihomo 将更正后的时间写入系统时钟。"
 msgid "No log entries"
 msgstr "没有日志条目"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:175 htdocs/luci-static/resources/view/justclash/system_logs.js:112
-msgid "Scroll to bottom"
-msgstr "滚动到底部"
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:252 htdocs/luci-static/resources/view/justclash/system_logs.js:123
+msgid "Newest first"
+msgstr "最新的排在前面"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:205 htdocs/luci-static/resources/view/justclash/system_logs.js:131
-msgid "Scroll to top"
-msgstr "滚动到顶部"
-
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:207
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:254
 msgid "Level:"
 msgstr "级别:"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:289
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:335
 msgid "Realtime logs"
 msgstr "实时日志"
 
-#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:290
+#: htdocs/luci-static/resources/view/justclash/realtime_logs.js:336
 msgid "View realtime traffic logs and debug information from the Mihomo core."
 msgstr "查看来自 Mihomo 核心的实时流量日志和调试信息。"
 
@@ -2485,18 +2481,14 @@ msgstr "配置"
 msgid "Inspect the generated Mihomo or JustClash settings, or reset the configuration back to default values."
 msgstr "查看生成的 Mihomo 或 JustClash 设置，或将配置重置为默认值。"
 
-#: htdocs/luci-static/resources/view/justclash/system_logs.js:126
+#: htdocs/luci-static/resources/view/justclash/system_logs.js:121
 msgid "Copy log"
 msgstr "复制日志"
 
-#: htdocs/luci-static/resources/view/justclash/system_logs.js:133
-msgid "Newest first"
-msgstr "最新的排在前面"
-
-#: htdocs/luci-static/resources/view/justclash/system_logs.js:180
+#: htdocs/luci-static/resources/view/justclash/system_logs.js:166
 msgid "System logs"
 msgstr "系统日志"
 
-#: htdocs/luci-static/resources/view/justclash/system_logs.js:181
+#: htdocs/luci-static/resources/view/justclash/system_logs.js:167
 msgid "View system logs related to the JustClash service and its startup scripts."
 msgstr "查看与 JustClash 服务及其启动脚本相关的系统日志。"
