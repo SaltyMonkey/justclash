@@ -49,6 +49,7 @@ const renderLogLines = (container, rawText, isReversed) => {
     });
 
     container.replaceChildren(fragment);
+    container.scrollTop = isReversed ? 0 : container.scrollHeight;
 };
 
 const updateLogs = async (logContainer, btn, reverseCheckbox, setRawLogs, lastFetchLabel) => {
@@ -106,11 +107,6 @@ return view.extend({
             click: () => updateLogs(logContainer, refreshBtn, reverseCheckbox, (value) => { rawLogs = value; }, lastFetchLabel)
         }, [_("Refresh")]);
 
-        const tailBtn = E("button", {
-            class: "cbi-button cbi-button-neutral",
-            click: () => { logContainer.scrollTop = logContainer.scrollHeight; }
-        }, [_("Scroll to bottom")]);
-
         const copyBtn = E("button", {
             class: "cbi-button cbi-button-action",
             click: async () => {
@@ -125,11 +121,6 @@ return view.extend({
             }
         }, [_("Copy log")]);
 
-        const topBtn = E("button", {
-            class: "cbi-button cbi-button-neutral",
-            click: () => { logContainer.scrollTop = 0; }
-        }, [_("Scroll to top")]);
-
         const reverseLabel = E("label", { for: "reverseLogs", class: "cbi-checkbox-label" }, [_("Newest first")]);
         const settingsBar = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions jc-settings-actions" }, [
@@ -141,12 +132,8 @@ return view.extend({
         const buttonBar = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 refreshBtn,
-                tailBtn,
                 copyBtn
             ])
-        ]);
-        const buttonBottomBar = E("div", { class: "jc-actions-wrap" }, [
-            E("div", { class: "cbi-section-actions jc-primary-actions" }, [topBtn])
         ]);
 
         requestAnimationFrame(() => updateLogs(logContainer, refreshBtn, reverseCheckbox, (value) => { rawLogs = value; }, lastFetchLabel));
@@ -155,7 +142,7 @@ return view.extend({
             .jc-ml{margin-left:.5em !important;}
             .jc-log-fetch-label,.jc-settings-actions .cbi-checkbox-label,.jc-primary-actions{align-items:center;}
             .jc-log-fetch-label{color:#999;font-size:.9em;}
-            .jc-logs-terminal{width:100%;font-family:'Menlo', 'Consolas', 'Monaco', monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-y:auto;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;margin-bottom:10px !important;height:500px;resize:vertical;}
+            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:'Menlo', 'Consolas', 'Monaco', monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;margin-bottom:10px !important;padding:10px;}
             .log-line{padding:1px 0;border-bottom:1px solid transparent;}
             .log-line:hover{background-color:#2a2d2e;}
             .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:2px 6px;border:1px solid transparent;border-radius:4px;font-size:0.8em;font-weight:bold;line-height:1.2;vertical-align:middle;box-sizing:border-box;}
@@ -181,8 +168,7 @@ return view.extend({
             E("div", { class: "cbi-section-descr" }, _("View system logs related to the JustClash service and its startup scripts.")),
             buttonBar,
             settingsBar,
-            logContainer,
-            buttonBottomBar
+            logContainer
         ]);
     }
 });

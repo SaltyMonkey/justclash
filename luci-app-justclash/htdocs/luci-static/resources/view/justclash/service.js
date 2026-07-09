@@ -101,10 +101,22 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
+        o = s.taboption(tabname, form.ListValue, "routing_mode", _("Routing mode:"));
+        o.description = _("Select the traffic interception mode. 'Full Interception' intercepts all WAN traffic. 'Partial Interception' only intercepts Fake-IP domains and enabled IP CIDR rulesets, allowing direct traffic to bypass the proxy at kernel speed.");
+        o.value("full", _("Full Interception"));
+        o.value("partial", _("Partial Interception"));
+        o.default = "full";
+        o.rmempty = false;
+
         o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Set traffic rules at startup:"));
         o.description = _("Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash.");
         o.rmempty = false;
         o.default = primitives.TRUE;
+
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Set router traffic rules at startup:"));
+        o.description = _("Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too.");
+        o.rmempty = false;
+        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "pbr_priority", _("PBR priority:"));
         o.description = _("Priority for the policy routing rule that sends marked traffic to the local TPROXY table. Lower numbers run earlier.");
@@ -113,14 +125,10 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("nft_apply_changes", primitives.TRUE);
+        o.depends("nft_apply_changes_router", primitives.TRUE);
         o.validate = function (section_id, value) {
             return common.validateIntegerRange(value, 1, 32766);
         };
-
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Set router traffic rules at startup:"));
-        o.description = _("Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too.");
-        o.rmempty = false;
-        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.DynamicList, "nft_skuid_exclude_router", _("Router socket owner exclusions:"));
         o.description = _("User names or numeric UIDs for router-originated sockets that should bypass proxy redirection rules. Useful for services like byedpi or https-dns-proxy that must reach the internet directly.");
@@ -140,7 +148,6 @@ return view.extend({
         o.datatype = datatypes.PORT;
         o.depends("nft_apply_changes_router", primitives.TRUE);
 
-        // copypasted from Podkop devs
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interfaces:"));
         o.default = "br-lan";
         o.depends("nft_apply_changes", primitives.TRUE);
@@ -381,6 +388,7 @@ return view.extend({
 
         const style = E("style", {}, `
             .cbi-value { margin-bottom:14px !important; }
+            .cbi-value[data-name="routing_mode"] .cbi-value-title,
             .cbi-value[data-name="ntpd_start"] .cbi-value-title,
             .cbi-value[data-name="nft_apply_changes_router"] .cbi-value-title,
             .cbi-value[data-name="dnsmasq_apply_changes"] .cbi-value-title,

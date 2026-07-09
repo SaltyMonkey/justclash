@@ -17,6 +17,7 @@ let wsCleanup = null;
 let logEntries = [];
 let visibilityChangeHandler = null;
 let beforeUnloadHandler = null;
+let isReversed = false;
 
 const normalizeLogMessage = (rawMessage) => {
     const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
@@ -75,10 +76,55 @@ const appendLogEntry = (container, entry) => {
 
     children.push(E("span", { class: "log-message" }, entry?.text || ""));
 
-    container.appendChild(E("div", { class: lineClass }, children));
+    const newRow = E("div", { class: lineClass }, children);
 
-    while (container.childNodes.length > MAX_LOG_ENTRIES)
-        container.removeChild(container.firstChild);
+    if (isReversed) {
+        container.insertBefore(newRow, container.firstChild);
+    } else {
+        container.appendChild(newRow);
+    }
+
+    while (container.childNodes.length > MAX_LOG_ENTRIES) {
+        if (isReversed) {
+            container.removeChild(container.lastChild);
+        } else {
+            container.removeChild(container.firstChild);
+        }
+    }
+
+    if (!isReversed) {
+        const isScrolledToBottom = container.scrollHeight - container.clientHeight - container.scrollTop < 50;
+        if (isScrolledToBottom) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+};
+
+const reRenderLogs = (container) => {
+    container.replaceChildren();
+    if (logEntries.length === 0) {
+        container.appendChild(document.createTextNode(NO_LOGS));
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    const items = isReversed ? [...logEntries].reverse() : logEntries;
+
+    items.forEach(entry => {
+        const type = entry?.type || "";
+        const lineClass = `log-line${type ? ` log-line-${type}` : ""}`;
+        const children = [];
+
+        if (type)
+            children.push(E("span", { class: `log-type-badge log-type-badge-${type}` }, type.toUpperCase()));
+
+        children.push(E("span", { class: "log-message" }, entry?.text || ""));
+
+        fragment.appendChild(E("div", { class: lineClass }, children));
+    });
+
+    container.appendChild(fragment);
+    container.scrollTop = isReversed ? 0 : container.scrollHeight;
 };
 
 const resetLogEntries = (container) => {
@@ -126,7 +172,7 @@ const connectLogsStream = async (container, token, level, resetState = true) => 
             if (!entry)
                 return;
 
-            logEntries.push(entry.raw || entry.text);
+            logEntries.push(entry);
             if (logEntries.length > MAX_LOG_ENTRIES)
                 logEntries.shift();
 
@@ -169,10 +215,7 @@ return view.extend({
             }
         }, LOG_LEVEL_OPTIONS.map((level) => E("option", { value: level }, level)));
 
-        const tailBtn = E("button", {
-            class: "cbi-button cbi-button-neutral",
-            click: () => { logContainer.scrollTop = logContainer.scrollHeight; }
-        }, [_("Scroll to bottom")]);
+
 
         const createCopyBtn = (isJson) => E("button", {
             class: "cbi-button cbi-button-action",
@@ -180,14 +223,15 @@ return view.extend({
                 if (!logEntries.length) return;
                 try {
                     const content = isJson
-                        ? JSON.stringify(logEntries.map(entryStr => {
+                        ? JSON.stringify(logEntries.map(entry => {
+                            const val = entry.raw || entry.text;
                             try {
-                                return JSON.parse(entryStr);
+                                return JSON.parse(val);
                             } catch (e) {
-                                return entryStr;
+                                return val;
                             }
                         }), null, 4)
-                        : logEntries.map(entryStr => common.formatLogEntryText(entryStr)).join("\n");
+                        : logEntries.map(entry => common.formatLogEntryText(entry.raw || entry.text)).join("\n");
                     await clipboard.copy(content);
                 } catch (e) {
                     ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
@@ -199,10 +243,21 @@ return view.extend({
         const copyTextBtnTop = createCopyBtn(false);
         const copyJsonBtnTop = createCopyBtn(true);
 
-        const topBtn = E("button", {
-            class: "cbi-button cbi-button-neutral",
-            click: () => { logContainer.scrollTop = 0; }
-        }, [_("Scroll to top")]);
+
+
+        const reverseCheckbox = E("input", {
+            type: "checkbox",
+            id: "reverseLogs",
+            class: "jc-ml",
+            checked: false,
+            change: () => {
+                isReversed = reverseCheckbox.checked;
+                reRenderLogs(logContainer);
+            }
+        });
+        isReversed = reverseCheckbox.checked;
+
+        const reverseLabel = E("label", { for: "reverseLogs", class: "jc-ml cbi-checkbox-label" }, [_("Newest first")]);
 
         const levelLabel = E("label", { class: "jc-level-label", for: "jcRealtimeLogLevel" }, [_("Level:")]);
         levelSelect.id = "jcRealtimeLogLevel";
@@ -210,18 +265,16 @@ return view.extend({
 
         const levelControl = E("div", { class: "jc-level-control" }, [levelLabel, levelSelect]);
         const settingsBar = E("div", { class: "jc-actions-wrap" }, [
-            E("div", { class: "cbi-section-actions jc-primary-actions jc-settings-actions" }, [levelControl])
+            E("div", { class: "cbi-section-actions jc-primary-actions jc-settings-actions" }, [
+                levelControl,
+                reverseLabel,
+                reverseCheckbox
+            ])
         ]);
         const buttonBar = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                tailBtn,
                 copyTextBtnTop,
                 copyJsonBtnTop
-            ])
-        ]);
-        const buttonBottomBar = E("div", { class: "jc-actions-wrap" }, [
-            E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                topBtn
             ])
         ]);
 
@@ -264,7 +317,7 @@ return view.extend({
             .jc-level-control{display:inline-flex;gap:.75em;flex-wrap:nowrap;}
             .jc-level-label{margin:0;white-space:nowrap;}
             .jc-level-select{width:auto !important;min-width:220px;margin:0 !important;flex:0 0 auto;}
-            .jc-logs-terminal{width:100%;font-family:'Menlo', 'Consolas', 'Monaco', monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-y:auto;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;margin-bottom:10px !important;height:500px;resize:vertical;}
+            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:'Menlo', 'Consolas', 'Monaco', monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;margin-bottom:10px !important;padding:10px;}
             .log-line{padding:1px 0;border-bottom:1px solid transparent;}
             .log-line:hover{background-color:#2a2d2e;}
             .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:2px 6px;border:1px solid transparent;border-radius:4px;font-size:0.8em;font-weight:bold;line-height:1.2;vertical-align:middle;box-sizing:border-box;}
@@ -280,7 +333,8 @@ return view.extend({
             .jc-actions-wrap{padding:.7em .8em;margin-bottom:10px;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;background:var(--background-color-medium, #f6f6f6);}
             .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
             .jc-primary-actions .cbi-button{margin:0 !important;}
-            .jc-settings-actions{justify-content:flex-start;}
+            .jc-settings-actions{justify-content:flex-start;align-items:center;}
+            .jc-settings-actions .cbi-checkbox-label{margin:0;display:inline-flex;align-items:center;}
             [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
         `);
 
@@ -290,8 +344,7 @@ return view.extend({
             E("div", { class: "cbi-section-descr" }, _("View realtime traffic logs and debug information from the Mihomo core.")),
             buttonBar,
             settingsBar,
-            logContainer,
-            buttonBottomBar
+            logContainer
         ]);
     }
 });

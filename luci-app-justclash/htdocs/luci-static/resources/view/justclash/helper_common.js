@@ -560,6 +560,26 @@ return baseclass.extend({
 
         return this.validateDnsServer(nameserver);
     },
+    validateHostsEntry: function (value) {
+        const val = String(value || "").trim();
+
+        if (!val)
+            return true;
+
+        const separatorIndex = val.indexOf("/");
+        if (separatorIndex <= 0 || separatorIndex === val.length - 1)
+            return _("Invalid host format. Use domain/ip.");
+
+        const matcher = val.slice(0, separatorIndex).trim();
+        const ip = val.slice(separatorIndex + 1).trim();
+
+        const matcherValidation = this.isValidDomainMatcher(matcher);
+        if (matcherValidation !== true)
+            return matcherValidation;
+
+        const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$/;
+        return ipPattern.test(ip) ? true : _("Invalid IP address");
+    },
 
     validateProxyJsonObject: function (value) {
         let parsed;

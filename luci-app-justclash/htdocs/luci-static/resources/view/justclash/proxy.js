@@ -259,11 +259,6 @@ return view.extend({
         o.default = "7894";
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
-        o.description = _("Load DNS entries from the system hosts file when possible.");
-        o.rmempty = false;
-        o.default = primitives.TRUE;
-
         o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
         o.description = _("Maximum number of DNS cache entries kept by Mihomo.");
         o.default = common.defaultIPDnsCache[0].value;
@@ -365,6 +360,22 @@ return view.extend({
         o.optional = true;
         o.validate = function (section_id, value) {
             return common.isValidDomainSuffix(value);
+        };
+
+        tabname = "hostssettings_tab";
+        s.tab(tabname, _("Hosts settings"));
+
+        o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
+        o.description = _("Load DNS entries from the system hosts file when possible.");
+        o.rmempty = false;
+        o.default = primitives.TRUE;
+
+        o = s.taboption(tabname, form.DynamicList, "hosts", _("Hosts mapping:"));
+        o.description = _("Domain-specific IP mapping in the format domain/ip (example: cloudflare-dns.com/1.1.1.1).");
+        o.rmempty = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateHostsEntry(value);
         };
 
         tabname = "sniffersettings_tab";

@@ -113,6 +113,7 @@ return view.extend({
             .map(line => line.trim())
             .filter(line => line && !line.startsWith("#"))
             .map(line => {
+                // Pipe-separated format structure: Name|ID|Type|Format|URL_or_Path[|Authorization]
                 const parts = line.split("|").map(p => p.trim());
                 return {
                     name: parts[0] || "",
@@ -349,12 +350,13 @@ return view.extend({
                 const name = row.nameInput.value.trim();
                 const id = row.idInput.value.trim();
                 const type = row.typeSelect.value;
+                const format = (type === "ipcidr") ? "text" : "mrs";
                 const url = row.urlInput.value.trim();
                 const auth = row.authInput.value.trim();
                 if (auth) {
-                    routingData.push(`${name}|${id}|${type}|mrs|${url}|${auth}`);
+                    routingData.push(`${name}|${id}|${type}|${format}|${url}|${auth}`);
                 } else {
-                    routingData.push(`${name}|${id}|${type}|mrs|${url}`);
+                    routingData.push(`${name}|${id}|${type}|${format}|${url}`);
                 }
             }
         });
@@ -381,12 +383,13 @@ return view.extend({
                 const name = row.nameInput.value.trim();
                 const id = row.idInput.value.trim();
                 const type = row.typeSelect.value;
+                const format = (type === "ipcidr") ? "text" : "mrs";
                 const url = row.urlInput.value.trim();
                 const auth = row.authInput.value.trim();
                 if (auth) {
-                    blockingData.push(`${name}|${id}|${type}|mrs|${url}|${auth}`);
+                    blockingData.push(`${name}|${id}|${type}|${format}|${url}|${auth}`);
                 } else {
-                    blockingData.push(`${name}|${id}|${type}|mrs|${url}`);
+                    blockingData.push(`${name}|${id}|${type}|${format}|${url}`);
                 }
             }
         });
