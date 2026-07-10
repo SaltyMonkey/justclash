@@ -1,3 +1,12 @@
+## [0.73.0] - 10072026
+
+### Bug Fixes
+- **Service:** Fixed missing `SAFE_PATHS` registration for user-defined local rulesets and API TLS keys when startup configuration regeneration is skipped.
+
+### Refactoring
+- **Service:** Centralized safe path resolution into a single startup routine (`core_prepare_safe_paths`) that dynamically resolves paths from UCI configurations and user ruleset databases on startup, removing redundant directory resolution logic from ruleset compilation.
+- **LuCI:** Cleaned up the main status page layout by commenting out redundant section titles and description texts.
+
 ## [0.72.13] - 07072026
 
 ### Features & Enhancements
