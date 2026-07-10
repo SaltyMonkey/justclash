@@ -332,6 +332,44 @@ check_ports_occupancy() {
     return 0
 }
 
+core_prepare_safe_paths() {
+    local api_tls api_tls_cert api_tls_key cert_dir key_dir
+    local mihomo_persistent_ext_rules
+    local ruleset_url safe_path rulesets_files=""
+
+    safe_paths_clear
+    safe_paths_add "$DASHBOARD_PATH"
+
+    # 1. API TLS Cert/Key Paths from UCI
+    config_get_bool api_tls proxy api_tls 0
+    if [ "$api_tls" -eq 1 ]; then
+        config_get api_tls_cert proxy api_tls_cert "/etc/uhttpd.crt"
+        config_get api_tls_key proxy api_tls_key "/etc/uhttpd.key"
+        cert_dir=$(readlink -f "$(dirname "$api_tls_cert")" 2>/dev/null || realpath "$(dirname "$api_tls_cert")" 2>/dev/null)
+        key_dir=$(readlink -f "$(dirname "$api_tls_key")" 2>/dev/null || realpath "$(dirname "$api_tls_key")" 2>/dev/null)
+        [ -n "$cert_dir" ] && safe_paths_add "$cert_dir"
+        [ -n "$key_dir" ] && safe_paths_add "$key_dir"
+    fi
+
+    # 2. Persistent rulesets path from UCI settings
+    config_get_bool mihomo_persistent_ext_rules settings mihomo_persistent_ext_rules 0
+    if [ "$mihomo_persistent_ext_rules" -eq 1 ]; then
+        safe_paths_add "$SYMLINKDIR_RULESETS"
+    fi
+
+    # 3. Custom local ruleset paths from user ruleset text files
+    [ -f "$USER_RULESETS_FILE" ] && rulesets_files="$rulesets_files $USER_RULESETS_FILE"
+    [ -f "$USER_RULESETS_BLOCKS_FILE" ] && rulesets_files="$rulesets_files $USER_RULESETS_BLOCKS_FILE"
+
+    if [ -n "$rulesets_files" ]; then
+        # shellcheck disable=SC2086
+        awk -F'|' '$2 ~ /^\// { print $2 }' $rulesets_files 2>/dev/null | while read -r ruleset_url; do
+            [ -n "$ruleset_url" ] || continue
+            safe_path=$(readlink -f "$(dirname "$ruleset_url")" 2>/dev/null || realpath "$(dirname "$ruleset_url")" 2>/dev/null)
+            [ -n "$safe_path" ] && safe_paths_add "$safe_path"
+        done
+    fi
+}
 
 start() {
     local skip_environment_checks core_exit_code mihomo_mem_limit
@@ -396,7 +434,7 @@ start() {
     ntp_force_sync
 
     log info "Updating SAFE_PATHS environment variable"
-    safe_paths_add "$DASHBOARD_PATH"
+    core_prepare_safe_paths
 
     log info "Preparing Mihomo working directory"
     core_prepare_workdir
@@ -1515,9 +1553,6 @@ build_builtin_rules_bundle() {
                 rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
             *)
-                local safe_path
-                safe_path=$(readlink -f "$(dirname "$ruleset_url")" 2>/dev/null || realpath "$(dirname "$ruleset_url")" 2>/dev/null)
-                [ -n "$safe_path" ] && safe_paths_add "$safe_path"
                 template_ruleset_file "$ruleset_url" "$ruleset_behavior" "$ruleset_format"
                 rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
