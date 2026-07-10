@@ -569,14 +569,14 @@ return view.extend({
         ]);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Current status")),
-            E("div", { class: "cbi-section-descr" }, _("Overview of the running Mihomo service status, core version, and active traffic usage.")),
+            //E("h3", { class: "cbi-section-title" }, _("Current status")),
+            //E("div", { class: "cbi-section-descr" }, _("Overview of the running Mihomo service status, core version, and active traffic usage.")),
             statusGrid
         ]);
 
         const serviceActionSection = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Service actions")),
-            E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
+            //E("h3", { class: "cbi-section-title" }, _("Service actions")),
+            //E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
             serviceActionContainer
         ]);
 
