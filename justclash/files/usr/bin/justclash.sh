@@ -2557,6 +2557,9 @@ core_generate_yaml() {
             echo "allow-lan: true"
             echo "mixed-port: $mixed_port"
             printf '%s\n' "authentication: $proxy_authentication"
+            echo "skip-auth-prefixes:"
+            echo "  - 127.0.0.1/8"
+            echo "  - ::1/128"
             echo ""
         fi
 
