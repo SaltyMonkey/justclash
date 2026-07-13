@@ -146,6 +146,23 @@ return view.extend({
         o.depends("mode", "uri");
         o.modalonly = true;
 
+        o = s.taboption(tabname, form.ListValue, "ip_version", _("IP version (outbound):"));
+        o.description = _(
+            "IP version used by outbound proxy connections when server is a domain name.<br>" +
+            "<b>dual</b> — Default dual-stack resolution.<br>" +
+            "<b>ipv4</b> — Use IPv4 only.<br>" +
+            "<b>ipv6</b> — Use IPv6 only.<br>" +
+            "<b>ipv4-prefer</b> — Dual-stack resolution, race connections with IPv4 preference.<br>" +
+            "<b>ipv6-prefer</b> — Dual-stack resolution, race connections with IPv6 preference."
+        );
+        common.defaultIPVersionValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultIPVersionValues[0].value;
+        o.rmempty = false;
+        o.depends("mode", "uri");
+        o.modalonly = true;
+
         o = s.taboption(tabname, form.Value, "routing_mark", _("Routing mark:"));
         o.description = _("Optional Linux fwmark applied by Mihomo to outbound connections of this proxy. Leave empty to use the global mark.");
         o.optional = true;
@@ -309,6 +326,17 @@ return view.extend({
         o.validate = function (section_id, value) {
             return common.validateRoutingMark(value);
         };
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.ListValue, "override_ip_version", _("IP version override:"));
+        o.description = _(
+            "Override ip-version for all proxy nodes loaded from this provider."
+        );
+        common.defaultIPVersionValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultIPVersionValues[0].value;
+        o.rmempty = false;
         o.modalonly = true;
 
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
@@ -550,6 +578,27 @@ return view.extend({
         o.depends("group_type", "load-balance");
         o.depends("group_type", "load-balancer");
         o.description = _("Choose how the load-balance group distributes traffic across available proxies.");
+        o.modalonly = true;
+
+        o = s2.taboption(tabname, widgets.DeviceSelect, "interface_name", _("Bind to interface:"));
+        o.description = _("Bind this proxy group to a specific network device. Leave empty to let the system choose the outgoing interface.");
+        o.optional = true;
+        o.noaliases = true;
+        o.nobridges = true;
+        o.noinactive = false;
+        o.multiple = false;
+        o.filter = common.filterOutboundDeviceSelect;
+        o.modalonly = true;
+
+        o = s2.taboption(tabname, form.ListValue, "ip_version", _("IP version (group):"));
+        o.description = _(
+            "IP version preference for this proxy group when connecting to endpoints."
+        );
+        common.defaultIPVersionValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.default = common.defaultIPVersionValues[0].value;
+        o.rmempty = false;
         o.modalonly = true;
 
         o = s2.taboption(tabname, form.DynamicList, "proxies", _("Proxies:"));

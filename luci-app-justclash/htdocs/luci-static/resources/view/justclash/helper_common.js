@@ -168,6 +168,13 @@ return baseclass.extend({
         { value: "round-robin", text: _("Round robin") },
         { value: "sticky-sessions", text: _("Sticky sessions") }
     ],
+    defaultIPVersionValues: [
+        { value: "dual", text: "dual" },
+        { value: "ipv4", text: "ipv4" },
+        { value: "ipv6", text: "ipv6" },
+        { value: "ipv4-prefer", text: "ipv4-prefer" },
+        { value: "ipv6-prefer", text: "ipv6-prefer" }
+    ],
     defaultNftOptions: [
         { value: "BY RULES", text: _("By rules") },
         { value: "DROP", text: _("Drop") },
