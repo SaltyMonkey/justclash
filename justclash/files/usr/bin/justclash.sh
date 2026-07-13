@@ -461,11 +461,12 @@ start() {
     log info "Updating scheduled tasks"
     cron_update
 
-    local _async_routing_mode _async_nft_lan _async_nft_router
+    local _async_routing_mode _async_nft_lan _async_nft_router _async_ipv6_enabled
     config_get _async_routing_mode settings routing_mode 'full'
     config_get _async_nft_lan settings nft_apply_changes 0
     config_get _async_nft_router settings nft_apply_changes_router 0
-    populate_nft_sets_async "$_async_routing_mode" "$_async_nft_lan" "$_async_nft_router"
+    config_get_bool _async_ipv6_enabled settings ipv6_enabled 0
+    populate_nft_sets_async "$_async_routing_mode" "$_async_nft_lan" "$_async_nft_router" "$_async_ipv6_enabled"
 
     log info "Starting Mihomo core"
     start_core "$mihomo_mem_limit"
@@ -638,28 +639,45 @@ get_routing_mark() {
     printf '%s ' "$routing_mark"
 }
 
-# populate_ruleset_file NAME FILE_PATH [SAFE_NAME]
+# populate_ruleset_file NAME FILE_PATH [SAFE_NAME] [IPV6_ENABLED]
 # Flushes and repopulates an nftables ipcidr set from a plain-text IP list file.
 # Accepts an optional pre-computed SAFE_NAME to avoid a redundant fork.
 populate_ruleset_file() {
-    local name="$1" file_path="$2" safe_name="${3:-}"
+    local name="$1" file_path="$2" safe_name="${3:-}" ipv6_enabled="${4:-0}"
     [ -n "$safe_name" ] || safe_name=$(sanitize_nft_name "$name")
 
     # Fast check: ensure the file contains at least one IP/CIDR line before touching nftables
-    grep -q '^[[:space:]]*[0-9]' "$file_path" 2>/dev/null || return 1
+    grep -qE '^[[:space:]]*[0-9a-fA-F:]' "$file_path" 2>/dev/null || return 1
 
     # Stream awk output directly into nftables without intermediate RAM variable buffering
     local err_msg
-    if err_msg=$(awk -v table="$NF_TABLE_NAME" -v set="ruleset_${safe_name}" '
-        BEGIN {
-            print "flush set inet " table " " set
-            print "add element inet " table " " set " {"
+    if err_msg=$(awk -v table="$NF_TABLE_NAME" -v set4="ruleset_${safe_name}" -v set6="ruleset6_${safe_name}" -v ipv6="$ipv6_enabled" '
+        !/^[[:space:]]*(#|\/\/|$)/ && /^[[:space:]]*[0-9a-fA-F:]/ {
+            line = $0
+            gsub(/[[:space:]]+/, "", line)
+            if (line == "") next
+            if (index(line, ".")) {
+                v4[n4++] = line
+            } else if (ipv6 == 1 && index(line, ":")) {
+                v6[n6++] = line
+            }
         }
-        !/^[[:space:]]*(#|\/\/|$)/ && /^[[:space:]]*[0-9]/ {
-            gsub(/[[:space:]]*/, "")
-            print $0 ","
+        END {
+            print "flush set inet " table " " set4
+            if (n4 > 0) {
+                print "add element inet " table " " set4 " {"
+                for (i = 0; i < n4; i++) print "  " v4[i] ","
+                print "}"
+            }
+            if (ipv6 == 1) {
+                print "flush set inet " table " " set6
+                if (n6 > 0) {
+                    print "add element inet " table " " set6 " {"
+                    for (i = 0; i < n6; i++) print "  " v6[i] ","
+                    print "}"
+                }
+            }
         }
-        END { print "}" }
     ' "$file_path" 2>/dev/null | nft -f - 2>&1); then
         log info "Partial Routing: Populated ruleset_${safe_name} from $(basename "$file_path")"
         return 0
@@ -691,6 +709,7 @@ populate_nft_sets_async() {
     local routing_mode="$1"
     local nft_apply_changes="${2:-0}"
     local nft_apply_changes_router="${3:-0}"
+    local ipv6_enabled="${4:-0}"
 
     [ "$routing_mode" = "partial" ] || return 0
     if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
@@ -738,7 +757,7 @@ populate_nft_sets_async() {
 
                 if [ "${file_path##*/}" = "${changed_path##*/}" ] && [ -f "$file_path" ]; then
                     safe_name=$(sanitize_nft_name "$name")
-                    populate_ruleset_file "$name" "$file_path" "$safe_name"
+                    populate_ruleset_file "$name" "$file_path" "$safe_name" "$ipv6_enabled"
                     break
                 fi
             done < "$ACTIVE_IPCIDR_RULESETS_PATH"
@@ -833,8 +852,6 @@ nf_table_add_full() {
         echo "add table inet $NF_TABLE_NAME"
         echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
-        echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
-        echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fe80::/10, fc00::/7, ff00::/8, 2001:db8::/32, ::ffff:0:0/96, 64:ff9b::/96 }"
 
         if [ "$nft_apply_changes" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
@@ -863,7 +880,6 @@ nf_table_add_full() {
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
-            echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
             echo "add rule inet $NF_TABLE_NAME prerouting icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
@@ -916,7 +932,8 @@ nf_table_add_full() {
 
             echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv4 meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept IPv4 to TProxy\""
             if [ "$ipv6_enabled" -eq 1 ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port comment \"Intercept IPv6 to TProxy\""
+                echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @fake_ip6s meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept Fake-IP6 to TProxy\""
+                echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr 2000::/3 meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept Global IPv6 to TProxy\""
             fi
         fi
 
@@ -935,7 +952,6 @@ nf_table_add_full() {
 
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
-            echo "add rule inet $NF_TABLE_NAME output ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
             echo "add rule inet $NF_TABLE_NAME output icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
@@ -958,7 +974,11 @@ nf_table_add_full() {
                 echo "add rule inet $NF_TABLE_NAME output meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router traffic for interception\""
+            echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv4 meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router IPv4 traffic for interception\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME output ip6 daddr @fake_ip6s meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router Fake-IP6 for interception\""
+                echo "add rule inet $NF_TABLE_NAME output ip6 daddr 2000::/3 meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router Global IPv6 for interception\""
+            fi
         fi
     } | nft -f -
     # shellcheck disable=SC2181
@@ -1077,8 +1097,6 @@ nf_table_add_partial() {
         echo "add table inet $NF_TABLE_NAME"
         echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
-        echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
-        echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fe80::/10, fc00::/7, ff00::/8, 2001:db8::/32, ::ffff:0:0/96, 64:ff9b::/96 }"
 
         echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
@@ -1091,9 +1109,15 @@ nf_table_add_partial() {
             echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
         done
         echo "add set inet $NF_TABLE_NAME ruleset_static_ips { type ipv4_addr; flags interval; }"
+        if [ "$ipv6_enabled" -eq 1 ]; then
+            echo "add set inet $NF_TABLE_NAME ruleset6_static_ips { type ipv6_addr; flags interval; }"
+        fi
         # Create ipcidr sets (populated after the main transaction via populate_ruleset_file)
         for safe_rname in $ipcidr_safe_names; do
             echo "add set inet $NF_TABLE_NAME ruleset_${safe_rname} { type ipv4_addr; flags interval; }"
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add set inet $NF_TABLE_NAME ruleset6_${safe_rname} { type ipv6_addr; flags interval; }"
+            fi
         done
 
         if [ "$nft_apply_changes" = "1" ]; then
@@ -1113,7 +1137,6 @@ nf_table_add_partial() {
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
-            echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
             echo "add rule inet $NF_TABLE_NAME prerouting icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
@@ -1169,8 +1192,14 @@ nf_table_add_partial() {
                 echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @fake_ip6s meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept Fake-IP6 to TProxy\""
             fi
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @ruleset_static_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept Static IPs to TProxy\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @ruleset6_static_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept Static IPv6s to TProxy\""
+            fi
             for safe_rname in $ipcidr_safe_names; do
                 echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @ruleset_${safe_rname} meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept ${safe_rname} to TProxy\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @ruleset6_${safe_rname} meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept ${safe_rname} IPv6 to TProxy\""
+                fi
             done
         fi
 
@@ -1189,7 +1218,6 @@ nf_table_add_partial() {
 
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
-            echo "add rule inet $NF_TABLE_NAME output ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
             echo "add rule inet $NF_TABLE_NAME output icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
@@ -1214,8 +1242,14 @@ nf_table_add_partial() {
 
             echo "add rule inet $NF_TABLE_NAME output ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router Fake-IP for interception\""
             echo "add rule inet $NF_TABLE_NAME output ip daddr @ruleset_static_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router Static IPs for interception\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME output ip6 daddr @ruleset6_static_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router Static IPv6s for interception\""
+            fi
             for safe_rname in $ipcidr_safe_names; do
                 echo "add rule inet $NF_TABLE_NAME output ip daddr @ruleset_${safe_rname} meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router ${safe_rname} for interception\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME output ip6 daddr @ruleset6_${safe_rname} meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL comment \"Mark router ${safe_rname} IPv6 for interception\""
+                fi
             done
         fi
     } | nft -f -
@@ -1227,7 +1261,7 @@ nf_table_add_partial() {
 
     # Populate sets from cached files (cold start).
     # Sets were just created above; populate_ruleset_file uses flush+add so it's safe to call now.
-    [ -s "$ACTIVE_STATIC_IPS_PATH" ] && populate_ruleset_file "static_ips" "$ACTIVE_STATIC_IPS_PATH" "static_ips"
+    [ -s "$ACTIVE_STATIC_IPS_PATH" ] && populate_ruleset_file "static_ips" "$ACTIVE_STATIC_IPS_PATH" "static_ips" "$ipv6_enabled"
 
     if [ -n "$ipcidr_cold_start_list" ]; then
         local item cs_name cs_file cs_safe
@@ -1236,7 +1270,7 @@ nf_table_add_partial() {
             cs_safe="${item##*|}"
             cs_file="${item#*|}"
             cs_file="${cs_file%|*}"
-            populate_ruleset_file "$cs_name" "$cs_file" "$cs_safe"
+            populate_ruleset_file "$cs_name" "$cs_file" "$cs_safe" "$ipv6_enabled"
         done
     fi
 
