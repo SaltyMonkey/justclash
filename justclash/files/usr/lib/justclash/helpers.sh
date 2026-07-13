@@ -68,6 +68,13 @@ parse_routing_mark() {
     echo "$dec_val"
 }
 
+parse_ip_version() {
+    case "$1" in
+        dual|ipv4|ipv6|ipv4-prefer|ipv6-prefer) printf '%s' "$1" ;;
+        *) printf 'dual' ;;
+    esac
+}
+
 json_escape() {
     local val="$1"
     # shellcheck disable=SC3060
