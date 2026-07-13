@@ -108,6 +108,15 @@ return view.extend({
         o.default = "full";
         o.rmempty = false;
 
+        o = s.taboption(tabname, form.Flag, "ipv6_enabled", _("Enable IPv6 support:"));
+        o.description = _(
+            "Allow Mihomo to process IPv6 traffic and resolve AAAA records via Fake-IP. " +
+            "If your WAN interface has no global IPv6 address at startup, this is silently " +
+            "ignored and the system operates in IPv4-only mode."
+        );
+        o.default = primitives.FALSE;
+        o.rmempty = false;
+
         o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Set traffic rules at startup:"));
         o.description = _("Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash.");
         o.rmempty = false;
