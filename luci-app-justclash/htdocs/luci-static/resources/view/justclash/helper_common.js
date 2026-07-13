@@ -336,8 +336,23 @@ return baseclass.extend({
         if (!val || /\s/.test(val) || this.hasControlChars(val))
             return false;
 
-        if (this.isValidIpv4(val))
+        if (this.isValidIpv4(val) || this.isValidIpv6(val))
             return true;
+
+        const ipv4PortMatch = val.match(/^([^:]+):(\d+)$/);
+        if (ipv4PortMatch && this.isValidIpv4(ipv4PortMatch[1])) {
+            const port = Number(ipv4PortMatch[2]);
+            return Number.isInteger(port) && port >= 1 && port <= 65535;
+        }
+
+        const ipv6BracketMatch = val.match(/^\[([a-fA-F0-9:]+)\](?::(\d+))?$/);
+        if (ipv6BracketMatch && this.isValidIpv6(ipv6BracketMatch[1])) {
+            if (ipv6BracketMatch[2]) {
+                const port = Number(ipv6BracketMatch[2]);
+                return Number.isInteger(port) && port >= 1 && port <= 65535;
+            }
+            return true;
+        }
 
         try {
             const url = new URL(val);
@@ -346,8 +361,7 @@ return baseclass.extend({
             if (!allowedProtocols.includes(url.protocol)
                 || !url.hostname
                 || url.username
-                || url.password
-                || url.hash)
+                || url.password)
                 return false;
 
             if (url.port) {
@@ -364,12 +378,17 @@ return baseclass.extend({
     validateDnsServer: function (value) {
         return this.isValidDnsServer(value)
             ? true
-            : _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp:// or IPv4.");
+            : _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4/IPv6 address or [IPv6]:port.");
     },
     isValidIpv4: function (value) {
         const val = String(value || "").trim();
         const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
         return ipv4Regex.test(val);
+    },
+    isValidIpv6: function (value) {
+        const val = String(value || "").trim();
+        const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$/;
+        return ipv6Regex.test(val);
     },
     isValidCronString: function (value) {
         const val = String(value || "").trim();
