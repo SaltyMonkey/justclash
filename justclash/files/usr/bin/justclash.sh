@@ -749,10 +749,10 @@ populate_nft_sets_async() {
 
 nf_table_add_full() {
     local nft_apply_changes nft_apply_changes_router
-    local tproxy_port fake_ip_range tproxy_input_interfaces
+    local tproxy_port fake_ip_range fake_ip_range6 tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router nft_doh_mode
     local pbr_priority iface skuid_values skuid_list skuid_resolved proxy_routing_marks provider_routing_marks
-    local nft_ports_exclude nft_ports_exclude_router nft_mac_exclude nft_ips_exclude
+    local nft_ports_exclude nft_ports_exclude_router nft_mac_exclude nft_ips_exclude ipv6_enabled
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -794,6 +794,7 @@ nf_table_add_full() {
     esac
 
     config_get fake_ip_range proxy fake_ip_range
+    config_get fake_ip_range6 proxy fake_ip_range6
     config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
     config_get nft_quic_mode settings nft_quic_mode
     config_get nft_dot_mode settings nft_dot_mode
@@ -806,6 +807,7 @@ nf_table_add_full() {
     config_get nft_mac_exclude settings nft_mac_exclude
     config_get nft_ips_exclude settings nft_ips_exclude
     config_get skuid_values settings nft_skuid_exclude_router
+    config_get_bool ipv6_enabled settings ipv6_enabled 0
 
     if [ "$nft_apply_changes" = "1" ]; then
         if [ -z "$fake_ip_range" ]; then
@@ -831,6 +833,8 @@ nf_table_add_full() {
         echo "add table inet $NF_TABLE_NAME"
         echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
+        echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
+        echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fe80::/10, fc00::/7, ff00::/8, 2001:db8::/32, ::ffff:0:0/96, 64:ff9b::/96 }"
 
         if [ "$nft_apply_changes" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
@@ -839,17 +843,29 @@ nf_table_add_full() {
 
             echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add set inet $NF_TABLE_NAME fake_ip6s { type ipv6_addr; flags interval; }"
+                echo "add element inet $NF_TABLE_NAME fake_ip6s { $fake_ip_range6 }"
+            fi
             echo "add set inet $NF_TABLE_NAME inbound_interfaces { type ifname; }"
             for iface in $tproxy_input_interfaces; do
                 echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
             done
             echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
-            echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
-            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router traffic\""
+            if [ "$ipv6_enabled" -eq 0 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            fi
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv4 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router IPv4 traffic\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv6 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip6 to [::1]:$tproxy_port accept comment \"Accept marked router IPv6 traffic\""
+            fi
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
+            echo "add rule inet $NF_TABLE_NAME prerouting icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | spaces_to_commas) } return comment \"Bypass excluded MACs\""
@@ -898,12 +914,17 @@ nf_table_add_full() {
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
-            echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept to TProxy\""
+            echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv4 meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port comment \"Intercept IPv4 to TProxy\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port comment \"Intercept IPv6 to TProxy\""
+            fi
         fi
 
         if [ "$nft_apply_changes_router" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME output { type route hook output priority mangle; policy accept; }"
-            echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            if [ "$ipv6_enabled" -eq 0 ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            fi
             echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
             if [ -n "$proxy_routing_marks" ]; then
                 echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
@@ -914,7 +935,10 @@ nf_table_add_full() {
 
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            echo "add rule inet $NF_TABLE_NAME output ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
+            echo "add rule inet $NF_TABLE_NAME output icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
                 echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
@@ -949,10 +973,10 @@ nf_table_add_full() {
 
 nf_table_add_partial() {
     local nft_apply_changes nft_apply_changes_router
-    local tproxy_port fake_ip_range tproxy_input_interfaces
+    local tproxy_port fake_ip_range fake_ip_range6 tproxy_input_interfaces
     local nft_quic_mode nft_dot_mode nft_dot_quic_mode nft_ntp_mode nft_ntp_mode_router nft_doh_mode
     local pbr_priority iface skuid_values skuid_list skuid_resolved proxy_routing_marks provider_routing_marks
-    local nft_ports_exclude nft_ports_exclude_router nft_mac_exclude nft_ips_exclude
+    local nft_ports_exclude nft_ports_exclude_router nft_mac_exclude nft_ips_exclude ipv6_enabled
 
     config_get nft_apply_changes settings nft_apply_changes 0
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
@@ -994,6 +1018,7 @@ nf_table_add_partial() {
     esac
 
     config_get fake_ip_range proxy fake_ip_range
+    config_get fake_ip_range6 proxy fake_ip_range6
     config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
     config_get nft_quic_mode settings nft_quic_mode
     config_get nft_dot_mode settings nft_dot_mode
@@ -1006,6 +1031,7 @@ nf_table_add_partial() {
     config_get nft_mac_exclude settings nft_mac_exclude
     config_get nft_ips_exclude settings nft_ips_exclude
     config_get skuid_values settings nft_skuid_exclude_router
+    config_get_bool ipv6_enabled settings ipv6_enabled 0
 
     if [ "$nft_apply_changes" = "1" ]; then
         if [ -z "$fake_ip_range" ]; then
@@ -1051,9 +1077,15 @@ nf_table_add_partial() {
         echo "add table inet $NF_TABLE_NAME"
         echo "add set inet $NF_TABLE_NAME private_ips { type ipv4_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME private_ips { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.88.99.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 240.0.0.0/4 }"
+        echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
+        echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fe80::/10, fc00::/7, ff00::/8, 2001:db8::/32, ::ffff:0:0/96, 64:ff9b::/96 }"
 
         echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
         echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
+        if [ "$ipv6_enabled" -eq 1 ]; then
+            echo "add set inet $NF_TABLE_NAME fake_ip6s { type ipv6_addr; flags interval; }"
+            echo "add element inet $NF_TABLE_NAME fake_ip6s { $fake_ip_range6 }"
+        fi
         echo "add set inet $NF_TABLE_NAME inbound_interfaces { type ifname; }"
         for iface in $tproxy_input_interfaces; do
             echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
@@ -1071,11 +1103,19 @@ nf_table_add_partial() {
 
             echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
-            echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
-            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router traffic\""
+            if [ "$ipv6_enabled" -eq 0 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            fi
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv4 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router IPv4 traffic\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv6 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip6 to [::1]:$tproxy_port accept comment \"Accept marked router IPv6 traffic\""
+            fi
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
+            echo "add rule inet $NF_TABLE_NAME prerouting icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | spaces_to_commas) } return comment \"Bypass excluded MACs\""
@@ -1125,6 +1165,9 @@ nf_table_add_partial() {
             fi
 
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept Fake-IP to TProxy\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @fake_ip6s meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept Fake-IP6 to TProxy\""
+            fi
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @ruleset_static_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept Static IPs to TProxy\""
             for safe_rname in $ipcidr_safe_names; do
                 echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @ruleset_${safe_rname} meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept ${safe_rname} to TProxy\""
@@ -1133,7 +1176,9 @@ nf_table_add_partial() {
 
         if [ "$nft_apply_changes_router" = "1" ]; then
             echo "add chain inet $NF_TABLE_NAME output { type route hook output priority mangle; policy accept; }"
-            echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            if [ "$ipv6_enabled" -eq 0 ]; then
+                echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
+            fi
             echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
             if [ -n "$proxy_routing_marks" ]; then
                 echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
@@ -1144,7 +1189,10 @@ nf_table_add_partial() {
 
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            echo "add rule inet $NF_TABLE_NAME output ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
+            echo "add rule inet $NF_TABLE_NAME output icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
                 echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
@@ -1598,6 +1646,7 @@ build_builtin_rules_bundle() {
 template_proxy_group() {
     local name="$1" type="$2" url="$3" status="$4" interval="$5" timeout="$6" max_failed="$7" lazy="$8"
     local tolerance="$9" strategy="${10}" proxies="${11}" providers="${12}" filter="${13}" exclude_filter="${14}" exclude_type="${15}" default_selected="${16}"
+    local interface_name="${17}" ip_version="${18}"
     local out
 
     out="\"name\":\"$(json_escape "$name")\""
@@ -1622,6 +1671,8 @@ template_proxy_group() {
     [ -n "$filter" ] && out="$out,\"filter\":\"$(json_escape "$filter")\""
     [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
     [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+    [ -n "$interface_name" ] && out="$out,\"interface-name\":\"$(json_escape "$interface_name")\""
+    out="$out,\"ip-version\":\"$ip_version\""
 
     OUT_TEMPLATE="{$out}"
 }
@@ -1629,9 +1680,9 @@ template_proxy_group() {
 # Helper to build proxy provider JSON fragment in memory without subshell forks
 template_proxy_provider() {
     local url="$1" interval="$2" size_limit="$3" proxy="$4" filter="$5" exclude_filter="$6" exclude_type="$7"
-    local override_dialer="$8" override_ifname="$9" override_fwmark="${10}" hwid_header="${11}"
-    local hc_enabled="${12}" hc_url="${13}" hc_status="${14}" hc_interval="${15}" hc_timeout="${16}" hc_lazy="${17}"
-    local age_priv="${18}"
+    local override_dialer="$8" override_ifname="$9" override_fwmark="${10}" override_ip_version="${11}" hwid_header="${12}"
+    local hc_enabled="${13}" hc_url="${14}" hc_status="${15}" hc_interval="${16}" hc_timeout="${17}" hc_lazy="${18}"
+    local age_priv="${19}"
     local out override_json hc_json
 
     out="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
@@ -1643,6 +1694,7 @@ template_proxy_provider() {
     override_json="\"udp\":true"
     [ -n "$override_dialer" ] && override_json="$override_json,\"dialer-proxy\":\"$(json_escape "$override_dialer")\""
     [ -n "$override_ifname" ] && override_json="$override_json,\"interface-name\":\"$(json_escape "$override_ifname")\""
+    [ -n "$override_ip_version" ] && override_json="$override_json,\"ip-version\":\"$override_ip_version\""
     [ -n "$override_fwmark" ] && override_json="$override_json,\"routing-mark\":$override_fwmark"
     out="$out,\"override\":{$override_json}"
 
@@ -1800,18 +1852,21 @@ handle_proxy_section() {
             [ -n "$dialer_proxy" ] && dialer_proxy=$(trim "$dialer_proxy")
             [ -n "$interface_name" ] && interface_name=$(trim "$interface_name")
 
+            config_get ip_version "$section" ip_version "dual"
+            ip_version=$(parse_ip_version "$ip_version")
+
             case "$proxy_link_uri" in
-                direct://*) proxy_obj=$(parse_direct_url "$name" "$interface_name" "$routing_mark") ;;
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
-                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark") ;;
+                direct://*) proxy_obj=$(parse_direct_url "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 *) log warn "Unknown proxy link type: $proxy_link_uri"; return ;;
             esac
 
@@ -1969,9 +2024,14 @@ handle_proxy_group_section() {
         [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(trim "$providers_list" | list_to_json_array)
 
+        config_get interface_name "$section" interface_name
+        config_get ip_version "$section" ip_version "dual"
+        ip_version=$(parse_ip_version "$ip_version")
+
         template_proxy_group \
             "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$(format_uci_bool_as_yaml "$lazy")" \
-            "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type" "$default_selected"
+            "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type" "$default_selected" \
+            "$interface_name" "$ip_version"
         group_json="$OUT_TEMPLATE"
 
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
@@ -2079,6 +2139,9 @@ handle_proxy_provider_section() {
             return 0
         fi
 
+        config_get override_ip_version "$section" override_ip_version "dual"
+        override_ip_version=$(parse_ip_version "$override_ip_version")
+
         config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
         is_uint "$interval" || {
             log warn "Invalid update interval for proxy provider '$name': '$interval', using default: '$DEFAULT_PROVIDERUPDATE_INTERVAL'"
@@ -2134,7 +2197,7 @@ handle_proxy_provider_section() {
 
         template_proxy_provider \
             "$url" "$interval" "$size_limit" "$proxy" "$filter" "$exclude_filter" "$exclude_type" \
-            "$override_dialer_proxy" "$override_interface_name" "$override_routing_mark" "$headers" \
+            "$override_dialer_proxy" "$override_interface_name" "$override_routing_mark" "$override_ip_version" "$headers" \
             "$health_check" "$hc_url" "$hc_expected_status" "$hc_interval" "$hc_timeout" "$hc_lazy" \
             "$age_private_key"
         provider_json="$OUT_TEMPLATE"
@@ -2292,7 +2355,7 @@ core_generate_yaml() {
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
     local api_tls api_tls_cert api_tls_key
     local core_ntp_enabled core_ntp_interval core_ntp_server core_ntp_port core_ntp_write_system
-    local dns_listen_port use_system_hosts fake_ip_range fake_ip_ttl dns_cache_max_size
+    local dns_listen_port use_system_hosts fake_ip_range fake_ip_range6 fake_ip_ttl dns_cache_max_size
     local etag_support global_ua
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver fake_ip_filter_data
     local fake_ip_exclude_domain_values
@@ -2304,7 +2367,7 @@ core_generate_yaml() {
     local fake_ip_rules_proxy_groups fake_ip_rules_proxies
     local custom_real_ip_rules custom_real_ip_rulesets custom_real_ip_geosites
     local rulesets_block rulesets_proxygroup rulesets_proxies
-    local mihomo_geoip_url mihomo_geosite_url geodata_mode geodata_autoupdate geodata_autoupdate_interval
+    local mihomo_geoip_url mihomo_geosite_url geodata_mode geodata_autoupdate geodata_autoupdate_interval ipv6_enabled
     # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls
     local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
@@ -2313,6 +2376,7 @@ core_generate_yaml() {
     _STATIC_IPS_BUFFER=""
     _IPCIDR_RULESETS_BUFFER=""
 
+    config_get_bool ipv6_enabled settings ipv6_enabled 0
     config_get controller_bind_interface proxy controller_bind_interface
     config_get use_dashboard_raw proxy use_dashboard
     if [ -n "$use_dashboard_raw" ]; then
@@ -2375,6 +2439,7 @@ core_generate_yaml() {
     }
     config_get_bool use_system_hosts proxy use_system_hosts
     config_get fake_ip_range proxy fake_ip_range
+    config_get fake_ip_range6 proxy fake_ip_range6
     config_get fake_ip_ttl proxy fake_ip_ttl "$DEFAULT_FAKE_IP_TTL"
     is_uint "$fake_ip_ttl" || {
         log warn "Invalid Fake IP TTL: '$fake_ip_ttl', using default: '$DEFAULT_FAKE_IP_TTL'"
@@ -2413,10 +2478,10 @@ core_generate_yaml() {
     fi
 
     dashboard_url=$(get_dashboard_url "$dashboard_repo")
-    default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
-    direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
-    proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
-    nameserver=$(format_uci_list_as_json_array proxy nameserver "#disable-ipv6=true&disable-qtype-65=true" "    ")
+    default_nameserver=$(format_uci_list_as_json_array proxy default_nameserver "" "    ")
+    direct_nameserver=$(format_uci_list_as_json_array proxy direct_nameserver "" "    ")
+    proxy_server_nameserver=$(format_uci_list_as_json_array proxy proxy_server_nameserver "" "    ")
+    nameserver=$(format_uci_list_as_json_array proxy nameserver "" "    ")
     hosts_content=$(build_custom_slash_map proxy hosts)
     nameserver_policy_custom=$(build_custom_slash_map proxy nameserver_policy)
     sniffer_force_domain=$(format_uci_list_as_json_array proxy sniffer_force_domain "" "    ")
@@ -2573,7 +2638,7 @@ core_generate_yaml() {
         fi
 
         echo "mode: rule"
-        echo "ipv6: false"
+        printf 'ipv6: %s\n' "$(format_uci_bool_as_yaml "$ipv6_enabled")"
         if [ "$api_tls" -eq 1 ]; then
             echo "external-controller-tls: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")"
         else
@@ -2634,7 +2699,7 @@ core_generate_yaml() {
         echo "  cache-max-size: $dns_cache_max_size"
         echo "  listen: $(yaml_quote "127.0.0.1:$dns_listen_port")"
         echo "  prefer-h3: false"
-        echo "  ipv6: false"
+        printf '  ipv6: %s\n' "$(format_uci_bool_as_yaml "$ipv6_enabled")"
         echo "  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")"
         echo "  use-hosts: true"
         printf '%s\n' "  nameserver-policy: $nameserver_policy"
@@ -2648,6 +2713,7 @@ core_generate_yaml() {
         echo "  respect-rules: true"
         echo "  enhanced-mode: fake-ip"
         echo "  fake-ip-range: $fake_ip_range"
+        [ "$ipv6_enabled" -eq 1 ] && echo "  fake-ip-range6: $fake_ip_range6"
         echo "  fake-ip-filter-mode: rule"
         echo "  fake-ip-ttl: $fake_ip_ttl"
         printf '%s\n' "  fake-ip-filter: $fake_ip_filter_data"
