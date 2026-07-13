@@ -278,6 +278,13 @@ return view.extend({
         o.readonly = true;
         o.datatype = "cidr4";
 
+        o = s.taboption(tabname, form.Value, "fake_ip_range6", _("Fake IP range (IPv6):"));
+        o.description = _("IPv6 CIDR range used for fake-IP responses.");
+        o.default = "fdfe:dcba:9876::1/64";
+        o.rmempty = false;
+        o.readonly = true;
+        o.datatype = "cidr6";
+
         o = s.taboption(tabname, form.Value, "fake_ip_ttl", _("Fake IP TTL:"));
         o.description = _("TTL for fake-IP DNS responses (in seconds).");
         o.datatype = datatypes.UINTEGER;
