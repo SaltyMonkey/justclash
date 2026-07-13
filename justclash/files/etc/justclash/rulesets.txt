@@ -103,23 +103,23 @@ Whatsapp|whatsapp|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-
 X|x|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/services/x.mrs
 Xbox|xbox|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/services/xbox.mrs
 Youtube|youtube|domain|mrs|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/services/youtube.mrs
-Akamai CIDR|akamai-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/akamai.list
-Antifilter community CIDR|antifilter-community-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/antifilter-community.list
-Apple CIDR|apple-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/apple.list
-Bunny CIDR|bunny-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/bunny.list
-Cdn77 CIDR|cdn77-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/cdn77.list
-Cloudflare CIDR|cloudflare-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/cloudflare.list
-Cloudfront CIDR|cloudfront-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/cloudfront.list
-Contabo CIDR|contabo-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/contabo.list
-Datacamp CIDR|datacamp-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/datacamp.list
-Digitalocean CIDR|digitalocean-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/digitalocean.list
-Discord voice CIDR|discord-voice-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/discord-voice.list
-Fastly CIDR|fastly-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/fastly.list
-Gcore CIDR|gcore-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/gcore.list
-Hetzner CIDR|hetzner-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/hetzner.list
-Meta CIDR|meta-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/meta.list
-OVH CIDR|ovh-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/ovh.list
-Roblox CIDR|roblox-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/roblox.list
-Scalaxy CIDR|scalaxy-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/scalaxy.list
-Scaleway CIDR|scaleway-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/scaleway.list
-Telegram CIDR|telegram-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/ipv4/telegram.list
+Akamai CIDR|akamai-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/akamai.list
+Antifilter community CIDR|antifilter-community-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/antifilter-community.list
+Apple CIDR|apple-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/apple.list
+Bunny CIDR|bunny-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/bunny.list
+Cdn77 CIDR|cdn77-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/cdn77.list
+Cloudflare CIDR|cloudflare-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/cloudflare.list
+Cloudfront CIDR|cloudfront-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/cloudfront.list
+Contabo CIDR|contabo-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/contabo.list
+Datacamp CIDR|datacamp-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/datacamp.list
+Digitalocean CIDR|digitalocean-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/digitalocean.list
+Discord voice CIDR|discord-voice-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/discord-voice.list
+Fastly CIDR|fastly-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/fastly.list
+Gcore CIDR|gcore-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/gcore.list
+Hetzner CIDR|hetzner-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/hetzner.list
+Meta CIDR|meta-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/meta.list
+OVH CIDR|ovh-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/ovh.list
+Roblox CIDR|roblox-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/roblox.list
+Scalaxy CIDR|scalaxy-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/scalaxy.list
+Scaleway CIDR|scaleway-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/scaleway.list
+Telegram CIDR|telegram-ipcidr|ipcidr|text|https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data@main/subnets/dual/telegram.list
