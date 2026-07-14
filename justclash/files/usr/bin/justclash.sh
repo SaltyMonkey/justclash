@@ -384,7 +384,8 @@ start() {
         log info "Waiting for WAN (max ${JUSTCLASH_WAIT_WAN_MAX}s)..."
         local waited=0
         while [ "$waited" -lt "$JUSTCLASH_WAIT_WAN_MAX" ]; do
-            if ip route show default 2>/dev/null | grep -q default; then
+            if ip -4 route show default 2>/dev/null | grep -q default || \
+               ip -6 route show default 2>/dev/null | grep -q default; then
                 break
             fi
             sleep 2
@@ -569,8 +570,11 @@ stop_core() {
 cleanup_fwmark() {
     local hex_mark
     hex_mark=$(printf "0x%x" "$NF_TABLE_FWMARK_FINAL")
-    while ip rule show | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; do
-        ip rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
+    while ip -4 rule show 2>/dev/null | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; do
+        ip -4 rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
+    done
+    while ip -6 rule show 2>/dev/null | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; do
+        ip -6 rule del fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" 2>/dev/null || true
     done
 }
 
@@ -777,7 +781,7 @@ nf_table_add_full() {
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
     if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
         log warn "Firewall rules generation is disabled for both LAN and router"
-        return 0
+        return 2
     fi
 
     config_get tproxy_port proxy tproxy_port
@@ -1002,7 +1006,7 @@ nf_table_add_partial() {
     config_get nft_apply_changes_router settings nft_apply_changes_router 0
     if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
         log warn "Firewall rules generation is disabled for both LAN and router"
-        return 0
+        return 2
     fi
 
     config_get tproxy_port proxy tproxy_port
@@ -1279,21 +1283,38 @@ nf_table_add_partial() {
 }
 
 nf_table_add() {
-    local routing_mode pbr_priority
+    local routing_mode pbr_priority ipv6_enabled nft_res=0
     config_get routing_mode settings routing_mode 'full'
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
+    config_get_bool ipv6_enabled settings ipv6_enabled 0
 
     if [ "$routing_mode" = "partial" ]; then
-        nf_table_add_partial || return 1
+        nf_table_add_partial
+        nft_res=$?
     else
-        nf_table_add_full || return 1
+        nf_table_add_full
+        nft_res=$?
+    fi
+
+    if [ "$nft_res" -eq 2 ]; then
+        log info "Skipping PBR routing setup (disabled in configuration)"
+        return 0
+    elif [ "$nft_res" -ne 0 ]; then
+        return "$nft_res"
     fi
 
     # PBR
-    ip rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" priority "$pbr_priority"
+    ip -4 rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" priority "$pbr_priority" 2>/dev/null || true
 
-    if ! ip route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
-        ip route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE"
+    if ! ip -4 route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0|any) dev lo"; then
+        ip -4 route add local 0.0.0.0/0 dev lo table "$NF_ROUTE_TABLE" 2>/dev/null || true
+    fi
+
+    if [ "$ipv6_enabled" -eq 1 ]; then
+        ip -6 rule add fwmark "$NF_TABLE_FWMARK_FINAL" table "$NF_ROUTE_TABLE" priority "$pbr_priority" 2>/dev/null || true
+        if ! ip -6 route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|::/0|any) dev lo"; then
+            ip -6 route add local ::/0 dev lo table "$NF_ROUTE_TABLE" 2>/dev/null || true
+        fi
     fi
 
     log warn "Tproxy: fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority"
@@ -1303,7 +1324,8 @@ nf_table_remove() {
     cleanup_fwmark
     nft flush table inet "$NF_TABLE_NAME" 2>/dev/null || true
     nft delete table inet "$NF_TABLE_NAME" 2>/dev/null || true
-    ip route flush table "$NF_ROUTE_TABLE" 2>/dev/null || true
+    ip -4 route flush table "$NF_ROUTE_TABLE" 2>/dev/null || true
+    ip -6 route flush table "$NF_ROUTE_TABLE" 2>/dev/null || true
 
     log info "Tproxy rules and routing were removed"
 }
@@ -1433,7 +1455,7 @@ check_is_already_running() {
     local self_pid="$$"
     local pid
 
-    for pid in $(pgrep -f "justclash.sh start" 2>/dev/null); do
+    for pid in $(pgrep -f "justclash start" 2>/dev/null); do
         if [ "$pid" != "$self_pid" ]; then
             log warn "Another instance of JustClash script is already running (PID $pid)."
             return 0
@@ -3261,23 +3283,42 @@ diag_nft() {
 }
 
 diag_route() {
-    local pbr_priority
-
-    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
-
-    clog info "Verifying existence of route rule..."
-    local hex_mark
+    local ipv6_enabled hex_mark
+    config_get_bool ipv6_enabled settings ipv6_enabled 0
     hex_mark=$(printf "0x%x" "$NF_TABLE_FWMARK_FINAL")
-    if ! ip rule list | awk -v priority="${pbr_priority}:" -v mark="$hex_mark" -v table="$NF_ROUTE_TABLE" \
-        '$1 == priority && $0 ~ ("fwmark " mark) && $0 ~ ("lookup " table "([[:space:]]|$)") { found=1 } END { exit !found }'; then
-        clog error "Required route rule is missing: ip rule add fwmark $NF_TABLE_FWMARK_FINAL table $NF_ROUTE_TABLE priority $pbr_priority"
-    fi
-    ip rule list
 
-    if ! ip route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0) dev lo"; then
-         clog error "Route table $NF_ROUTE_TABLE is incorrect"
+    clog info "Verifying existence of IPv4 policy routing rules and table '$NF_ROUTE_TABLE'..."
+    if ! ip -4 rule list | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; then
+        clog error "Required IPv4 policy route rule is missing (fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE})"
+        return 1
     fi
-    ip route show table "$NF_ROUTE_TABLE" 2>/dev/null
+    if ! ip -4 route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0|any) dev lo"; then
+        clog error "Route table '$NF_ROUTE_TABLE' is incorrect or missing for IPv4"
+        return 1
+    fi
+
+    if [ "$ipv6_enabled" -eq 1 ]; then
+        clog info "Verifying existence of IPv6 policy routing rules and table '$NF_ROUTE_TABLE'..."
+        if ! ip -6 rule list 2>/dev/null | grep -qF "fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE}"; then
+            clog error "Required IPv6 policy route rule is missing (fwmark ${hex_mark} lookup ${NF_ROUTE_TABLE})"
+            return 1
+        fi
+        if ! ip -6 route show table "$NF_ROUTE_TABLE" 2>/dev/null | grep -Eq "local (default|::/0|any) dev lo"; then
+            clog error "Route table '$NF_ROUTE_TABLE' is incorrect or missing for IPv6"
+            return 1
+        fi
+    fi
+
+    clog info "Displaying current policy routing configuration:"
+    ip -4 rule list
+    ip -4 route show table "$NF_ROUTE_TABLE" 2>/dev/null
+    if [ "$ipv6_enabled" -eq 1 ]; then
+        ip -6 rule list 2>/dev/null
+        ip -6 route show table "$NF_ROUTE_TABLE" 2>/dev/null
+    fi
+
+    clog info "Policy routing check completed successfully."
+    return 0
 }
 
 diag_proxy_resolver() {
