@@ -70,8 +70,8 @@ return baseclass.extend({
         { value: "16384", text: _("16384 entries") },
     ],
     defaultRuleSetUpdateIntervalSec: [
-        { value: "86400", text: _("Every 24 hours") },
         { value: "43200", text: _("Every 12 hours") },
+        { value: "86400", text: _("Every 24 hours") },
         { value: "172800", text: _("Every 48 hours") },
         { value: "259200", text: _("Every 72 hours") },
     ],
