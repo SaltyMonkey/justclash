@@ -14,7 +14,7 @@ services:
         mkdir -p package/feeds/utilities/ package/feeds/luci/ &&
         rm -rf package/feeds/utilities/justclash && cp -r /src/justclash package/feeds/utilities/justclash &&
         rm -rf package/feeds/luci/luci-app-justclash && cp -r /src/luci-app-justclash package/feeds/luci/luci-app-justclash &&
-        sed -i 's/^[[:space:]]*DEPENDS:=.*/	EXTRA_DEPENDS:=nftables (>=0), coreutils-base64 (>=0), jq-full (>=0), curl (>=0), kmod-nft-tproxy (>=0), kmod-nf-tproxy (>=0), inotifywait (>=0), libinotifytools (>=0)\\n	DEPENDS:=/' package/feeds/utilities/justclash/Makefile &&
+        sed -i 's/^[[:space:]]*DEPENDS:=.*/	EXTRA_DEPENDS:=nftables (>=0), coreutils-base64 (>=0), jq-full (>=0), curl (>=0), kmod-nft-tproxy (>=0), kmod-nf-tproxy (>=0), ca-bundle (>=0), zoneinfo-all (>=0), inotifywait (>=0), libinotifytools (>=0)\\n	DEPENDS:=/' package/feeds/utilities/justclash/Makefile &&
         sed -i 's/^[[:space:]]*LUCI_DEPENDS:=.*/	EXTRA_DEPENDS:=luci-base (>=0), justclash (>=0)\\nLUCI_DEPENDS:=/' package/feeds/luci/luci-app-justclash/Makefile &&
         rm -f bin/packages/x86_64/utilities/justclash*.ipk &&
         rm -f bin/packages/x86_64/luci/luci-app-justclash*.ipk &&
@@ -46,7 +46,7 @@ services:
         mkdir -p package/feeds/utilities/ package/feeds/luci/ &&
         rm -rf package/feeds/utilities/justclash && cp -r /src/justclash package/feeds/utilities/justclash &&
         rm -rf package/feeds/luci/luci-app-justclash && cp -r /src/luci-app-justclash package/feeds/luci/luci-app-justclash &&
-        sed -i 's/^[[:space:]]*DEPENDS:=.*/	EXTRA_DEPENDS:=nftables (>=0), coreutils-base64 (>=0), jq-full (>=0), curl (>=0), kmod-nft-tproxy (>=0), kmod-nf-tproxy (>=0), inotifywait (>=0), libinotifytools (>=0)\\n	DEPENDS:=/' package/feeds/utilities/justclash/Makefile &&
+        sed -i 's/^[[:space:]]*DEPENDS:=.*/	EXTRA_DEPENDS:=nftables (>=0), coreutils-base64 (>=0), jq-full (>=0), curl (>=0), kmod-nft-tproxy (>=0), kmod-nf-tproxy (>=0), ca-bundle (>=0), zoneinfo-all (>=0), inotifywait (>=0), libinotifytools (>=0)\\n	DEPENDS:=/' package/feeds/utilities/justclash/Makefile &&
         sed -i 's/^[[:space:]]*LUCI_DEPENDS:=.*/	EXTRA_DEPENDS:=luci-base (>=0), justclash (>=0)\\nLUCI_DEPENDS:=/' package/feeds/luci/luci-app-justclash/Makefile &&
         rm -f bin/packages/x86_64/utilities/justclash*.apk &&
         rm -f bin/packages/x86_64/luci/luci-app-justclash*.apk &&
