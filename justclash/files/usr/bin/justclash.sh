@@ -64,8 +64,8 @@ CORE_WORKDIR_RULES_PATH="${CORE_WORKDIR_PATH}/rules"
 CORE_WORKDIR_CACHE_DB_PATH="${CORE_WORKDIR_PATH}/cache.db"
 CORE_WORKDIR_UCI_HASH_PATH="${CORE_WORKDIR_PATH}/uci.hash"
 OUTPUT_YAML_CONFIG_PATH="${CORE_WORKDIR_PATH}/config.yaml"
-ACTIVE_IPCIDR_RULESETS_PATH="${CORE_WORKDIR_PATH}/active_ipcidr_rulesets.txt"
-ACTIVE_STATIC_IPS_PATH="${CORE_WORKDIR_PATH}/active_static_ips.txt"
+ACTIVE_IPCIDR_RULESETS_PATH="${CORE_WORKDIR_PATH}/active_ipcidr_rulesets.cache"
+ACTIVE_STATIC_IPS_PATH="${CORE_WORKDIR_PATH}/active_static_ips.cache"
 ASYNC_WORKER_PID_PATH="/var/run/${PROGNAME}_async_worker.pid"
 
 PROG_ETC_DIR="/etc/${PROGNAME}"
@@ -1702,7 +1702,6 @@ build_builtin_rules_bundle() {
 template_proxy_group() {
     local name="$1" type="$2" url="$3" status="$4" interval="$5" timeout="$6" max_failed="$7" lazy="$8"
     local tolerance="$9" strategy="${10}" proxies="${11}" providers="${12}" filter="${13}" exclude_filter="${14}" exclude_type="${15}" default_selected="${16}"
-    local interface_name="${17}" ip_version="${18}"
     local out
 
     out="\"name\":\"$(json_escape "$name")\""
@@ -1727,8 +1726,6 @@ template_proxy_group() {
     [ -n "$filter" ] && out="$out,\"filter\":\"$(json_escape "$filter")\""
     [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
     [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(json_escape "$exclude_type")\""
-    [ -n "$interface_name" ] && out="$out,\"interface-name\":\"$(json_escape "$interface_name")\""
-    out="$out,\"ip-version\":\"$ip_version\""
 
     OUT_TEMPLATE="{$out}"
 }
@@ -1912,7 +1909,7 @@ handle_proxy_section() {
             ip_version=$(parse_ip_version "$ip_version")
 
             case "$proxy_link_uri" in
-                direct://*) proxy_obj=$(parse_direct_url "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                direct://*) proxy_obj=$(parse_direct_url "$name" "$dialer_proxy" "$interface_name" "$routing_mark" "$ip_version") ;;
                 ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
@@ -2080,14 +2077,9 @@ handle_proxy_group_section() {
         [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
         [ -n "$providers_list" ] && escaped_providers=$(trim "$providers_list" | list_to_json_array)
 
-        config_get interface_name "$section" interface_name
-        config_get ip_version "$section" ip_version "dual"
-        ip_version=$(parse_ip_version "$ip_version")
-
         template_proxy_group \
             "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$(format_uci_bool_as_yaml "$lazy")" \
-            "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type" "$default_selected" \
-            "$interface_name" "$ip_version"
+            "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type" "$default_selected"
         group_json="$OUT_TEMPLATE"
 
         proxy_groups="${proxy_groups:+$proxy_groups,}$group_json"
@@ -3403,7 +3395,7 @@ diag_icmp() {
 
 diag_mihomo_config() {
     if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-        sed -E 's/^([[:space:]]*"?(secret|password|obfs-password|tls-password|uuid|public-key|short-id|private-key|certificate|preshared-key|username|server|servername|token|auth|authentication)"?:).*/\1 "***REDACTED***"/gI' "$OUTPUT_YAML_CONFIG_PATH"
+        sed -E 's/^([[:space:]]*"?[a-zA-Z0-9_-]*(password|secret|key|uuid|short-id|certificate|token|username|server|auth)[a-zA-Z0-9_-]*"?:).*/\1 "***REDACTED***"/' "$OUTPUT_YAML_CONFIG_PATH"
     else
         clog error "Config file not found."
     fi
@@ -3419,7 +3411,7 @@ diag_mihomo_config_unsafe() {
 
 diag_service_config() {
     if [ -f "$CONFIG_PATH" ]; then
-        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+(password|obfs_password|tls_password|key|private_key|preshared_key|api_password|username|uuid|public_key|short_id|certificate|server|servername|token|auth|authentication|subscription|proxy_link_uri|proxy_link_object)[[:space:]]+).*/\1'***REDACTED***'/gI" "$CONFIG_PATH"
+        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+[a-zA-Z0-9_]*(password|secret|key|uuid|short_id|certificate|token|username|server|auth|subscription|proxy_link)[a-zA-Z0-9_]*[[:space:]]+).*/\1'***REDACTED***'/" "$CONFIG_PATH"
     else
         clog error "Service config file not found."
     fi
@@ -3519,7 +3511,7 @@ diag_report() {
     sed 's/^/    /' /etc/resolv.conf
     echo ""
     echo "  [ Network Config ]"
-    uci show network | sed -E "s/(\.(password|key|private_key|preshared_key|secret|passphrase))=('.*'|[^ ]*)/\1='***REDACTED***'/gI" | sed 's/^/    /'
+    uci show network | sed -E -e "s/(\.[a-zA-Z0-9_]*(password|secret|key|psk|token|passphrase)[a-zA-Z0-9_]*)=.*/\1='***REDACTED***'/" -e 's/^/    /'
     echo ""
     echo "  [ DHCP Config ]"
     uci show dhcp | sed 's/^/    /'
