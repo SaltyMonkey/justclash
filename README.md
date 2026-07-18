@@ -173,7 +173,7 @@ JustClash supports two distinct traffic routing architectures, configurable in t
 ## Requirements
 
 ### Dependencies
-*   **Core packages:** `nftables`, `jq`, `curl`, `coreutils-base64`
+*   **Core packages:** `nftables`, `jq-full`, `curl`, `coreutils-base64`, `ca-bundle`, `zoneinfo-all`
 *   **File monitoring packages:** `inotifywait`, `libinotifytools`
 *   **Kernel modules:** `kmod-nft-tproxy`, `kmod-nf-tproxy`
 *   **Web UI:** `luci-base`
