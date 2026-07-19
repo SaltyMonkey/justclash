@@ -205,17 +205,26 @@ return view.extend({
 
     render(results) {
         const logContainer = E("div", { class: "jc-logs-terminal", id: "realtimeLogContainer" }, [NO_LOGS]);
-        const levelSelect = E("select", {
-            class: "cbi-input-select jc-level-select",
-            change: () => {
-                if (!document.hidden)
-                    connectLogsStream(logContainer, results.apiToken, levelSelect.value);
-                else
-                    resetLogEntries(logContainer);
-            }
-        }, LOG_LEVEL_OPTIONS.map((level) => E("option", { value: level }, level)));
+        const levelChoices = {};
+        LOG_LEVEL_OPTIONS.forEach((level) => {
+            levelChoices[level] = level;
+        });
 
+        const levelDropdown = new ui.Dropdown(results.logLevel || DEFAULT_LOG_LEVEL, levelChoices, {
+            sort: false,
+            optional: false
+        });
+        const levelDropdownNode = levelDropdown.render();
+        levelDropdownNode.id = "jcRealtimeLogLevel";
+        levelDropdownNode.classList.add("jc-level-select");
 
+        levelDropdownNode.addEventListener("cbi-dropdown-change", () => {
+            const nextLevel = levelDropdown.getValue();
+            if (!document.hidden)
+                connectLogsStream(logContainer, results.apiToken, nextLevel);
+            else
+                resetLogEntries(logContainer);
+        });
 
         const createCopyBtn = (isJson) => E("button", {
             class: "cbi-button cbi-button-action",
@@ -260,10 +269,7 @@ return view.extend({
         const reverseLabel = E("label", { for: "reverseLogs", class: "jc-ml cbi-checkbox-label" }, [_("Newest first")]);
 
         const levelLabel = E("label", { class: "jc-level-label", for: "jcRealtimeLogLevel" }, [_("Level:")]);
-        levelSelect.id = "jcRealtimeLogLevel";
-        levelSelect.value = results.logLevel || DEFAULT_LOG_LEVEL;
-
-        const levelControl = E("div", { class: "jc-level-control" }, [levelLabel, levelSelect]);
+        const levelControl = E("div", { class: "jc-level-control" }, [levelLabel, levelDropdownNode]);
         const settingsBar = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions jc-settings-actions" }, [
                 levelControl,
@@ -280,7 +286,7 @@ return view.extend({
 
         requestAnimationFrame(() => {
             if (!document.hidden)
-                connectLogsStream(logContainer, results.apiToken, levelSelect.value);
+                connectLogsStream(logContainer, results.apiToken, levelDropdown.getValue());
         });
 
         if (visibilityChangeHandler) {
@@ -295,7 +301,7 @@ return view.extend({
                     wsCleanup = null;
                 }
             } else {
-                connectLogsStream(logContainer, results.apiToken, levelSelect.value, false);
+                connectLogsStream(logContainer, results.apiToken, levelDropdown.getValue(), false);
             }
         };
 
@@ -312,27 +318,28 @@ return view.extend({
         window.addEventListener("beforeunload", beforeUnloadHandler);
 
         const style = E("style", {}, `
-            .jc-ml{margin-left:.5em !important;}
+            .jc-ml{margin-left:.5em;}
             .jc-level-control,.jc-primary-actions{align-items:center;}
             .jc-level-control{display:inline-flex;gap:.75em;flex-wrap:nowrap;}
             .jc-level-label{margin:0;white-space:nowrap;}
-            .jc-level-select{width:auto !important;min-width:220px;margin:0 !important;flex:0 0 auto;}
-            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:'Menlo', 'Consolas', 'Monaco', monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;margin-bottom:10px !important;padding:10px;}
+            .jc-level-select{width:auto;min-width:220px;margin:0;flex:0 0 auto;}
+            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:ui-monospace,monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:var(--background-color-low, #fff);border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;margin-bottom:10px;padding:10px;}
+            [data-theme="dark"] .jc-logs-terminal{background-color:rgba(0,0,0,.1);}
             .log-line{padding:1px 0;border-bottom:1px solid transparent;}
-            .log-line:hover{background-color:#2a2d2e;}
+            .log-line:hover{background-color:var(--background-color-medium, rgba(0,0,0,.04));}
+            [data-theme="dark"] .log-line:hover{background-color:rgba(255,255,255,.04);}
             .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:2px 6px;border:1px solid transparent;border-radius:4px;font-size:0.8em;font-weight:bold;line-height:1.2;vertical-align:middle;box-sizing:border-box;}
-            .log-type-badge-error{color:#ff7b72;border-color:rgba(255,123,114,.35);background:rgba(255,123,114,.12);}
-            .log-type-badge-warning{color:#f2cc60;border-color:rgba(242,204,96,.35);background:rgba(242,204,96,.12);}
-            .log-type-badge-info{color:#7ee787;border-color:rgba(126,231,135,.35);background:rgba(126,231,135,.12);}
-            .log-type-badge-debug{color:#79c0ff;border-color:rgba(121,192,255,.35);background:rgba(121,192,255,.12);}
-            .log-line-error .log-message{color:#ffb4ab;}
-            .log-line-warning .log-message{color:#f6d98b;}
-            .log-line-info .log-message{color:#9dd9a6;}
-            .log-line-debug .log-message{color:#9ecbff;}
+            .log-type-badge-error{color:var(--error-color-medium, #f44336);border-color:rgba(244,67,54,.2);background:rgba(244,67,54,.1);}
+            .log-type-badge-warning{color:var(--warning-color-medium, #fd7e14);border-color:rgba(253,126,20,.2);background:rgba(253,126,20,.1);}
+            .log-type-badge-info{color:var(--success-color-medium, #2f9e44);border-color:rgba(40,167,69,.2);background:rgba(40,167,69,.1);}
+            .log-type-badge-debug{color:var(--primary-color-medium, #4f8cff);border-color:rgba(16,96,255,.2);background:rgba(16,96,255,.1);}
+            .log-line-error .log-message{color:var(--error-color-medium, #f44336);}
+            .log-line-warning .log-message{color:var(--warning-color-medium, #fd7e14);}
+            .log-line-info .log-message{color:var(--success-color-medium, #2f9e44);}
+            .log-line-debug .log-message{color:var(--primary-color-medium, #4f8cff);}
             .cbi-section-actions + .cbi-section-actions{margin-top:8px;}
             .jc-actions-wrap{padding:.7em .8em;margin-bottom:10px;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;background:var(--background-color-medium, #f6f6f6);}
             .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
-            .jc-primary-actions .cbi-button{margin:0 !important;}
             .jc-settings-actions{justify-content:flex-start;align-items:center;}
             .jc-settings-actions .cbi-checkbox-label{margin:0;display:inline-flex;align-items:center;}
             [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}

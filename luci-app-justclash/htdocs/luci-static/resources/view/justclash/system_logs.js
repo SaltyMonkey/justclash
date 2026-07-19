@@ -139,25 +139,26 @@ return view.extend({
         requestAnimationFrame(() => updateLogs(logContainer, refreshBtn, reverseCheckbox, (value) => { rawLogs = value; }, lastFetchLabel));
 
         const style = E("style", {}, `
-            .jc-ml{margin-left:.5em !important;}
+            .jc-ml{margin-left:.5em;}
             .jc-log-fetch-label,.jc-settings-actions .cbi-checkbox-label,.jc-primary-actions{align-items:center;}
-            .jc-log-fetch-label{color:#999;font-size:.9em;}
-            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:'Menlo', 'Consolas', 'Monaco', monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:#1e1e1e;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:6px;margin-bottom:10px !important;padding:10px;}
+            .jc-log-fetch-label{color:var(--text-color-medium, #888);font-size:.9em;}
+            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:ui-monospace,monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:var(--background-color-low, #fff);border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;margin-bottom:10px;padding:10px;}
+            [data-theme="dark"] .jc-logs-terminal{background-color:rgba(0,0,0,.1);}
             .log-line{padding:1px 0;border-bottom:1px solid transparent;}
-            .log-line:hover{background-color:#2a2d2e;}
+            .log-line:hover{background-color:var(--background-color-medium, rgba(0,0,0,.04));}
+            [data-theme="dark"] .log-line:hover{background-color:rgba(255,255,255,.04);}
             .log-type-badge{display:inline-flex;align-items:center;justify-content:center;min-width:5.8em;margin-right:.6em;padding:2px 6px;border:1px solid transparent;border-radius:4px;font-size:0.8em;font-weight:bold;line-height:1.2;vertical-align:middle;box-sizing:border-box;}
-            .log-type-badge-error{color:#ff7b72;border-color:rgba(255,123,114,.35);background:rgba(255,123,114,.12);}
-            .log-type-badge-warning{color:#f2cc60;border-color:rgba(242,204,96,.35);background:rgba(242,204,96,.12);}
-            .log-type-badge-info{color:#7ee787;border-color:rgba(126,231,135,.35);background:rgba(126,231,135,.12);}
-            .log-type-badge-debug{color:#79c0ff;border-color:rgba(121,192,255,.35);background:rgba(121,192,255,.12);}
-            .log-line-error .log-message{color:#ffb4ab;}
-            .log-line-warning .log-message{color:#f6d98b;}
-            .log-line-info .log-message{color:#9dd9a6;}
-            .log-line-debug .log-message{color:#9ecbff;}
+            .log-type-badge-error{color:var(--error-color-medium, #f44336);border-color:rgba(244,67,54,.2);background:rgba(244,67,54,.1);}
+            .log-type-badge-warning{color:var(--warning-color-medium, #fd7e14);border-color:rgba(253,126,20,.2);background:rgba(253,126,20,.1);}
+            .log-type-badge-info{color:var(--success-color-medium, #2f9e44);border-color:rgba(40,167,69,.2);background:rgba(40,167,69,.1);}
+            .log-type-badge-debug{color:var(--primary-color-medium, #4f8cff);border-color:rgba(16,96,255,.2);background:rgba(16,96,255,.1);}
+            .log-line-error .log-message{color:var(--error-color-medium, #f44336);}
+            .log-line-warning .log-message{color:var(--warning-color-medium, #fd7e14);}
+            .log-line-info .log-message{color:var(--success-color-medium, #2f9e44);}
+            .log-line-debug .log-message{color:var(--primary-color-medium, #4f8cff);}
             .cbi-section-actions + .cbi-section-actions{margin-top:8px;}
             .jc-actions-wrap{padding:.7em .8em;margin-bottom:10px;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;background:var(--background-color-medium, #f6f6f6);}
             .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
-            .jc-primary-actions .cbi-button{margin:0 !important;}
             .jc-settings-actions .cbi-checkbox-label{margin:0;display:inline-flex;}
             [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
         `);

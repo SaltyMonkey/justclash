@@ -396,18 +396,18 @@ return view.extend({
         };
 
         const style = E("style", {}, `
-            .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="routing_mode"] .cbi-value-title,
-            .cbi-value[data-name="ntpd_start"] .cbi-value-title,
             .cbi-value[data-name="nft_apply_changes_router"] .cbi-value-title,
             .cbi-value[data-name="dnsmasq_apply_changes"] .cbi-value-title,
             .cbi-value[data-name="nft_apply_changes"] .cbi-value-title,
             .cbi-value[data-name="tproxy_input_interfaces"] .cbi-value-title,
             .cbi-value[data-name="mihomo_github_channel"] .cbi-value-title,
             .cbi-value[data-name="wait_for_wan"] .cbi-value-title,
+            .cbi-value[data-name="wait_for_wan_max"] .cbi-value-title,
+            .cbi-value[data-name="ipv6_enabled"] .cbi-value-title,
+            .cbi-value[data-name="mihomo_core_source_type"] .cbi-value-title,
             .cbi-value[data-name="delayed_boot"] .cbi-value-title {
-                border-left: 4px solid var(--error-color-medium, #f44336) !important;
-                padding-left: 12px !important;
+                color: var(--error-color-medium, #f44336) !important;
             }
         `);
 

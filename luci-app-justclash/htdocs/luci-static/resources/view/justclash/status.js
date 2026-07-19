@@ -38,101 +38,6 @@ const buttons = {
     ACTION: "cbi-button-action"
 };
 
-const buttonIcons = {
-    start: [
-        { tag: "path", attrs: { d: "M5.5 4.5 10.75 8 5.5 11.5Z", fill: "none" } }
-    ],
-    stop: [
-        { tag: "rect", attrs: { x: "5", y: "5", width: "6", height: "6", rx: "1", fill: "none" } }
-    ],
-    restart: [
-        { tag: "path", attrs: { d: "M12 5.25V3m0 0H9.75m2.25 0L9.9 5.1M12.2 7.3A4.5 4.5 0 1 1 8 3.5", fill: "none" } }
-    ],
-    enable: [
-        { tag: "path", attrs: { d: "M8 2.75v4.1M5.15 4.15A4.75 4.75 0 1 0 10.85 4.15", fill: "none" } }
-    ],
-    disable: [
-        { tag: "path", attrs: { d: "M8 2.75v4.1M5.15 4.15A4.75 4.75 0 1 0 10.85 4.15M4.5 11.5l7-7", fill: "none" } }
-    ],
-    diagnostic: [
-        { tag: "circle", attrs: { cx: "7", cy: "7", r: "3.25", fill: "none" } },
-        { tag: "path", attrs: { d: "M9.4 9.4 12 12", fill: "none" } }
-    ],
-    config: [
-        { tag: "path", attrs: { d: "M5 2.75h4l2.25 2.25v8.25H5zM9 2.75V5h2.25M7.15 8.2 5.9 9.5l1.25 1.3M9.1 8.2l1.25 1.3-1.25 1.3", fill: "none" } }
-    ],
-    update: [
-        { tag: "path", attrs: { d: "M8 4v5.5M5.75 7.75 8 10l2.25-2.25M4.5 12h7", fill: "none" } }
-    ],
-    reset: [
-        { tag: "path", attrs: { d: "M5 5h6M6 5V4h4v1M6 7.25v3.25M8 7.25v3.25M10 7.25v3.25M5.5 5l.5 6h4l.5-6", fill: "none" } }
-    ],
-    serviceData: [
-        { tag: "path", attrs: { d: "M11.5 6V4h-2M4.5 10v2h2M11.3 6A4 4 0 0 0 5 4.9M4.7 10A4 4 0 0 0 11 11.1", fill: "none" } }
-    ]
-};
-
-const cardIcons = {
-    service: [
-        { tag: "rect", attrs: { x: "3", y: "3", width: "10", height: "3", rx: "1", fill: "none" } },
-        { tag: "rect", attrs: { x: "3", y: "8", width: "10", height: "5", rx: "1", fill: "none" } },
-        { tag: "path", attrs: { d: "M5 4.5h3M5 10.5h3M5 12h3", fill: "none" } }
-    ],
-    traffic: [
-        { tag: "path", attrs: { d: "M5.25 11.5V4.75", fill: "none" } },
-        { tag: "path", attrs: { d: "M3.75 6.25 5.25 4.75 6.75 6.25", fill: "none" } },
-        { tag: "path", attrs: { d: "M10.75 4.5v6.75", fill: "none" } },
-        { tag: "path", attrs: { d: "M9.25 9.75 10.75 11.25 12.25 9.75", fill: "none" } }
-    ],
-    trafficTotal: [
-        { tag: "path", attrs: { d: "M4 11.5h8", fill: "none" } },
-        { tag: "path", attrs: { d: "M5.25 11.5V8.75", fill: "none" } },
-        { tag: "path", attrs: { d: "M8 11.5V6.75", fill: "none" } },
-        { tag: "path", attrs: { d: "M10.75 11.5V4.75", fill: "none" } },
-        { tag: "path", attrs: { d: "M4.75 4.5h6.5", fill: "none" } }
-    ],
-    platform: [
-        { tag: "rect", attrs: { x: "3.5", y: "4", width: "9", height: "6.5", rx: "1", fill: "none" } },
-        { tag: "path", attrs: { d: "M6.5 11v1.75M9.5 11v1.75M5 12.75h6", fill: "none" } },
-        { tag: "path", attrs: { d: "M5.5 6.25h5M5.5 8.25h2.5", fill: "none" } }
-    ],
-    system: [
-        { tag: "rect", attrs: { x: "4.25", y: "4.25", width: "7.5", height: "7.5", rx: "1", fill: "none" } },
-        { tag: "path", attrs: { d: "M6.5 2.5v1.75M9.5 2.5v1.75M6.5 11.75v1.75M9.5 11.75v1.75M2.5 6.5h1.75M2.5 9.5h1.75M11.75 6.5h1.75M11.75 9.5h1.75M6.25 6.25h3.5v3.5h-3.5z", fill: "none" } }
-    ],
-    luci: [
-        { tag: "rect", attrs: { x: "3.5", y: "4", width: "9", height: "8", rx: "1.2", fill: "none" } },
-        { tag: "path", attrs: { d: "M6.5 4v8M6.5 6.5h6", fill: "none" } }
-    ]
-};
-
-const createSvgElement = (tag, attrs) => {
-    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    Object.keys(attrs || {}).forEach((key) => el.setAttribute(key, attrs[key]));
-    return el;
-};
-
-const createIcon = (iconSet, iconKey, spanClass, svgClass) => {
-    const iconDef = iconSet[iconKey] || [];
-    const shapes = Array.isArray(iconDef) ? iconDef : (iconDef.shapes || []);
-    const span = E("span", { class: spanClass, "aria-hidden": "true" });
-    const svg = createSvgElement("svg", {
-        class: svgClass,
-        viewBox: Array.isArray(iconDef) ? "0 0 16 16" : (iconDef.viewBox || "0 0 16 16"),
-        focusable: "false"
-    });
-
-    shapes.forEach((shape) => {
-        svg.appendChild(createSvgElement(shape.tag, shape.attrs));
-    });
-
-    span.appendChild(svg);
-    return span;
-};
-
-const createButtonIcon = (iconKey) => createIcon(buttonIcons, iconKey, "jc-button-icon", "jc-button-icon-svg");
-const createHeaderIcon = (iconKey) => createIcon(cardIcons, iconKey, "jc-card-icon", "jc-card-icon-svg");
-
 const cleanStdout = (val) =>
     val && val.stdout ? val.stdout.replace(/[\r\n]+/g, "").trim() : _("Error");
 
@@ -150,7 +55,6 @@ const createActionButton = (action, cssClass, label, handler, iconKey) =>
         "aria-label": label
     }, [
         E("span", { class: "jc-button-content" }, [
-            createButtonIcon(iconKey),
             E("span", { class: "jc-button-label" }, label)
         ])
     ]);
@@ -187,43 +91,40 @@ const createSummaryRow = (label, valueNode, extraNode) => {
 };
 
 const createSummaryCard = (title, rows, iconKey) => {
-    const headerChildren = [];
-
-    if (iconKey)
-        headerChildren.push(createHeaderIcon(iconKey));
-
-    headerChildren.push(E("span", { class: "jc-card-label" }, title));
-
-    return E("div", { class: "jc-card jc-summary-card" }, [
-        E("div", { class: "jc-card-header" }, headerChildren),
+    return E("div", { class: "jc-card" }, [
+        E("strong", { class: "jc-card-title" }, title),
         E("div", { class: "jc-summary-body" }, rows)
     ]);
 };
 
+const createInlineTrafficNode = (upNode, downNode) => E("span", { class: "jc-traffic-inline" }, [
+    E("span", { class: "jc-traffic-item jc-traffic-up" }, [
+        E("span", { class: "jc-traffic-arrow" }, "↑"),
+        upNode
+    ]),
+    E("span", { class: "jc-traffic-sep" }, "/"),
+    E("span", { class: "jc-traffic-item jc-traffic-down" }, [
+        E("span", { class: "jc-traffic-arrow" }, "↓"),
+        downNode
+    ])
+]);
+
 const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-summary-grid" }, [
     createSummaryCard(_("Service"), [
         createSummaryRow(_("Running"), dynamicElements.serviceBadge),
-        createSummaryRow(_("Start on boot"), dynamicElements.autoBadge)
-    ], "service"),
-    createSummaryCard(_("Platform"), [
-        createSummaryRow(_("Router model"), results.infoDevice),
-        createSummaryRow(_("OpenWrt version"), results.infoOpenWrt)
-    ], "platform"),
-    createSummaryCard(_("Packages"), [
-        createSummaryRow(_("LuCI version"), common.justclashLuciVersion),
-        createSummaryRow(_("Installed version"), dynamicElements.packageValue)
-    ], "luci"),
-    createSummaryCard(_("Traffic"), [
-        createSummaryRow(_("Up"), dynamicElements.upValue),
-        createSummaryRow(_("Down"), dynamicElements.downValue)
-    ], "traffic"),
-    createSummaryCard(_("Traffic total"), [
-        createSummaryRow(_("Up total"), dynamicElements.upTotalValue),
-        createSummaryRow(_("Down total"), dynamicElements.downTotalValue)
-    ], "trafficTotal"),
-    createSummaryCard(_("System"), [
+        createSummaryRow(_("Start on boot"), dynamicElements.autoBadge),
         createSummaryRow(_("RAM"), dynamicElements.ramValue),
         createSummaryRow(_("Mihomo version"), dynamicElements.coreValue)
+    ], "service"),
+    createSummaryCard(_("Traffic"), [
+        createSummaryRow(_("Speed"), createInlineTrafficNode(dynamicElements.upValue, dynamicElements.downValue)),
+        createSummaryRow(_("Total"), createInlineTrafficNode(dynamicElements.upTotalValue, dynamicElements.downTotalValue))
+    ], "traffic"),
+    createSummaryCard(_("System"), [
+        createSummaryRow(_("Router model"), results.infoDevice),
+        createSummaryRow(_("OpenWrt version"), results.infoOpenWrt),
+        createSummaryRow(_("LuCI version"), common.justclashLuciVersion),
+        createSummaryRow(_("Installed version"), dynamicElements.packageValue)
     ], "system")
 ]);
 
@@ -246,11 +147,8 @@ const updateUI = (dynamicElements, isAutostarting, isRunning) => {
 
     if (runningChanged && dynamicElements.btnToggle) {
         const label = isRunning ? _("Stop") : _("Start");
-        const toggleIcon = dynamicElements.btnToggle.querySelector(".jc-button-icon");
         const text = dynamicElements.btnToggle.querySelector(".jc-button-label");
 
-        if (toggleIcon)
-            toggleIcon.replaceWith(createButtonIcon(isRunning ? "stop" : "start"));
         if (text)
             text.textContent = label;
 
@@ -261,10 +159,7 @@ const updateUI = (dynamicElements, isAutostarting, isRunning) => {
 
     if (autostartChanged && dynamicElements.btnAutoToggle) {
         const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
-        const autoIcon = dynamicElements.btnAutoToggle.querySelector(".jc-button-icon");
         const text = dynamicElements.btnAutoToggle.querySelector(".jc-button-label");
-        if (autoIcon)
-            autoIcon.replaceWith(createButtonIcon(isAutostarting ? "disable" : "enable"));
         if (text)
             text.textContent = label;
         dynamicElements.btnAutoToggle.className = `cbi-button ${isAutostarting ? buttons.NEGATIVE : buttons.POSITIVE}`;
@@ -569,21 +464,21 @@ return view.extend({
         ]);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            //E("h3", { class: "cbi-section-title" }, _("Current status")),
-            //E("div", { class: "cbi-section-descr" }, _("Overview of the running Mihomo service status, core version, and active traffic usage.")),
+            E("h3", { class: "cbi-section-title" }, _("Current status")),
+            E("div", { class: "cbi-section-descr" }, _("Overview of the running Mihomo service status, core version, and active traffic usage.")),
             statusGrid
         ]);
 
         const serviceActionSection = E("div", { class: "cbi-section fade-in" }, [
-            //E("h3", { class: "cbi-section-title" }, _("Service actions")),
-            //E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
+            E("h3", { class: "cbi-section-title" }, _("Service actions")),
+            E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
             serviceActionContainer
         ]);
 
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.NEUTRAL, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), false, common.binPath, ["diag_report"]), "diagnostic"),
-                createActionButton(buttonsIDs.UPDATE, buttons.NEUTRAL, _("Update core"), showConfirmExecModalHandler(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), common.binPath, ["core_update"], async () => {
+                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), false, common.binPath, ["diag_report"]), "diagnostic"),
+                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), showConfirmExecModalHandler(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), common.binPath, ["core_update"], async () => {
                     const res = await fs.exec(common.binPath, ["_luci_call"]);
                     const [infoPackage, fallbackCoreVersion] = cleanStdout(res).split(",");
                     let infoCore = fallbackCoreVersion;
@@ -598,8 +493,8 @@ return view.extend({
                     if (dynamicElements.coreValue)
                         dynamicElements.coreValue.textContent = infoCore || _("Error");
                 }), "update"),
-                createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.NEUTRAL, _("Update rulesets"), showUpdateRulesetsModalHandler(results.apiToken), "update"),
-                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.NEUTRAL, _("Update service data"), showConfirmExecModalHandler(_("Update service data"), _("This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), common.binPath, ["service_data_update"]), "serviceData")
+                createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update rulesets"), showUpdateRulesetsModalHandler(results.apiToken), "update"),
+                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update service data"), showConfirmExecModalHandler(_("Update service data"), _("This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), common.binPath, ["service_data_update"]), "serviceData")
             ])
         ]);
 
@@ -611,8 +506,8 @@ return view.extend({
 
         const configActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.CONFIG_SHOW, buttons.NEUTRAL, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), false, common.binPath, ["diag_mihomo_config"]), "config"),
-                createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.NEUTRAL, _("Show service config"), showExecModalHandler(_("Service config"), false, common.binPath, ["diag_service_config"]), "config"),
+                createActionButton(buttonsIDs.CONFIG_SHOW, buttons.POSITIVE, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), false, common.binPath, ["diag_mihomo_config"]), "config"),
+                createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.POSITIVE, _("Show service config"), showExecModalHandler(_("Service config"), false, common.binPath, ["diag_service_config"]), "config"),
                 createActionButton(buttonsIDs.CONFIG_RESET, buttons.NEGATIVE, _("Reset config"), showConfirmExecModalHandler(_("Reset configuration"), _("This will reset the JustClash configuration. Use with care."), common.binPath, ["diag_service_config_reset"]), "reset")
             ])
         ]);
@@ -658,31 +553,32 @@ return view.extend({
         };
 
         const style = E("style", {}, `
-            .jc-status-text { color:var(--text-color-high, inherit); font-weight:700; line-height:1.3; }
-            .jc-status-text-active { color:var(--success-color-medium, #4caf50); }
-            .jc-status-text-inactive { color:var(--error-color-medium, #f44336); }
-            .jc-summary-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.9375rem; margin-bottom:1.25rem; align-items:start; }
+            .jc-status-text { font-weight:700; }
+            .jc-status-text-active { color:var(--success-color-high, #2f9e44); }
+            .jc-status-text-inactive { color:var(--error-color-high, #f44336); }
+            .jc-summary-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:1fr; gap:0.9375rem; margin-bottom:1.25rem; align-items:stretch; }
             .jc-card, .jc-summary-body, .jc-summary-row, .jc-primary-actions { display:flex; }
             .jc-card, .jc-summary-body, .jc-summary-row { flex-direction:column; }
-            .jc-card { padding:0.75em; border:1px solid var(--border-color-medium, #bfbfbf); border-radius:0.25rem; box-sizing:border-box; }
-            .jc-card-header, .jc-status-text, .jc-summary-value, .jc-button-content, .jc-card-icon, .jc-button-icon { display:inline-flex; align-items:center; }
-            .jc-card-header, .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); }
-            .jc-card-header { align-self:flex-start; gap:0.45em; margin-bottom:0.7em; padding:0.2em 0.45em; color:var(--text-color, inherit); opacity:0.88; }
-            .jc-card-icon { justify-content:center; width:1.75em; height:1.75em; flex:0 0 1.25em; }
-            .jc-button-icon { justify-content:center; width:1.25em; height:1.25em; line-height:1; }
-            .jc-card-icon-svg, .jc-button-icon-svg { width:100%; height:100%; stroke:currentColor; stroke-width:1; stroke-linecap:round; stroke-linejoin:round; }
+            .jc-card { height:100%; padding:0.85em 1em; border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); box-sizing:border-box; min-width:0; }
+            .jc-card-title { display:block; margin-bottom:0.7em; padding-bottom:0.35em; border-bottom:1px solid var(--border-color-medium, rgba(0,0,0,0.12)); font-size:0.88em; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+            .jc-status-text, .jc-summary-value, .jc-button-content { display:inline-flex; align-items:center; }
             .jc-summary-body { gap:0.45em; }
             .jc-summary-row { gap:0.18em; min-width:0; }
-            .jc-summary-key { color:var(--text-color, inherit); opacity:0.78; }
-            .jc-summary-value { gap:0.45em; min-width:0; font-weight:600; text-align:left; white-space:nowrap; }
-            .cbi-section-actions + .cbi-section-actions { margin-top:0.5rem; }
-            .jc-actions-wrap { padding:0.7em 0.8em; }
+            .jc-summary-key { color:var(--text-color-medium, #888); }
+            .jc-summary-value { gap:0.45em; min-width:0; min-height:1.5em; font-weight:600; text-align:left; white-space:nowrap; }
+            .jc-traffic-inline { display:inline-flex; align-items:center; gap:0.4em; flex-wrap:wrap; }
+            .jc-traffic-item { display:inline-flex; align-items:center; gap:0.2em; }
+            .jc-traffic-arrow { font-weight:700; opacity:0.85; }
+            .jc-traffic-up .jc-traffic-arrow { color:var(--error-color-medium, #f44336); }
+            .jc-traffic-down .jc-traffic-arrow { color:var(--success-color-medium, #2f9e44); }
+            .jc-traffic-sep { opacity:0.45; }
+            .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); padding:0.7em 0.8em; margin-bottom:1.25rem; }
             .jc-primary-actions { flex-wrap:wrap; gap:0.65em; margin:0; }
-            .jc-primary-actions .cbi-button, .jc-actions-wrap .cbi-button {
-                margin:0 !important;
-                height: 1.9375rem !important;
-                padding-top: 0 !important;
-                padding-bottom: 0 !important;
+            .jc-actions-wrap .jc-primary-actions button.cbi-button, .jc-actions-wrap button.cbi-button {
+                margin:0;
+                height: 1.9375rem;
+                padding-top: 0;
+                padding-bottom: 0;
                 display: inline-flex;
                 align-items: center;
                 box-sizing: border-box;
@@ -690,12 +586,13 @@ return view.extend({
             .jc-button-content { justify-content:center; gap:0.45em; vertical-align:middle; }
             .jc-modal-warning, .jc-modal-warning-text { color:var(--error-color-medium); }
             .jc-modal-warning-text, .jc-modal-actions { margin-top:1em; }
-            .jc-modal-pre { max-height:28rem; overflow:auto; }
+            .jc-modal-pre { max-height:28rem; overflow:auto; font-weight:normal; font-family:ui-monospace,monospace; }
             .jc-modal-actions { text-align:right; }
-            [data-theme="dark"] .jc-card-header,
+            [data-theme="dark"] .jc-card,
             [data-theme="dark"] .jc-actions-wrap { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.04); }
+            [data-theme="dark"] .jc-card-title { border-color:rgba(255,255,255,0.08); }
             @media (max-width:62.5rem) { .jc-summary-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-            @media (max-width:37.5rem) { .jc-summary-grid { grid-template-columns:1fr; } }
+            @media (max-width:37.5rem) { .jc-summary-grid { grid-template-columns:1fr; grid-auto-rows:auto; } }
         `);
 
         startPolling(dynamicElements);

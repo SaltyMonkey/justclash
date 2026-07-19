@@ -147,14 +147,7 @@ return view.extend({
         o.modalonly = true;
 
         o = s.taboption(tabname, form.ListValue, "ip_version", _("IP version (outbound):"));
-        o.description = _(
-            "IP version used by outbound proxy connections when server is a domain name.<br>" +
-            "<b>dual</b> — Default dual-stack resolution.<br>" +
-            "<b>ipv4</b> — Use IPv4 only.<br>" +
-            "<b>ipv6</b> — Use IPv6 only.<br>" +
-            "<b>ipv4-prefer</b> — Dual-stack resolution, race connections with IPv4 preference.<br>" +
-            "<b>ipv6-prefer</b> — Dual-stack resolution, race connections with IPv6 preference."
-        );
+        o.description = _("Address resolution strategy for proxy domain names.");
         common.defaultIPVersionValues.forEach(item => {
             o.value(item.value, item.text);
         });
@@ -580,27 +573,6 @@ return view.extend({
         o.description = _("Choose how the load-balance group distributes traffic across available proxies.");
         o.modalonly = true;
 
-        o = s2.taboption(tabname, widgets.DeviceSelect, "interface_name", _("Bind to interface:"));
-        o.description = _("Bind this proxy group to a specific network device. Leave empty to let the system choose the outgoing interface.");
-        o.optional = true;
-        o.noaliases = true;
-        o.nobridges = true;
-        o.noinactive = false;
-        o.multiple = false;
-        o.filter = common.filterOutboundDeviceSelect;
-        o.modalonly = true;
-
-        o = s2.taboption(tabname, form.ListValue, "ip_version", _("IP version (group):"));
-        o.description = _(
-            "IP version preference for this proxy group when connecting to endpoints."
-        );
-        common.defaultIPVersionValues.forEach(item => {
-            o.value(item.value, item.text);
-        });
-        o.default = common.defaultIPVersionValues[0].value;
-        o.rmempty = false;
-        o.modalonly = true;
-
         o = s2.taboption(tabname, form.DynamicList, "proxies", _("Proxies:"));
         o.description = _("List proxy entries that belong to this group.");
         o.placeholder = "proxy-name";
@@ -970,7 +942,6 @@ return view.extend({
         //.cbi-section { border:0 !important; border-bottom:1px solid #595959 !important; }
         const style = E("style", {}, `
             ul.dropdown { max-height:320px !important; }
-            .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="enabled"] .cbi-value-title,
             .cbi-value[data-name="proxy_link_uri"] .cbi-value-title,
             .cbi-value[data-name="subscription"] .cbi-value-title,
@@ -982,8 +953,7 @@ return view.extend({
             .cbi-value[data-name="additional_domain_blockroute"] .cbi-value-title,
             .cbi-value[data-name="health_check"] .cbi-value-title,
             .cbi-value[data-name="filter"] .cbi-value-title {
-                border-left: 4px solid var(--error-color-medium, #f44336) !important;
-                padding-left: 12px !important;
+                color: var(--error-color-medium, #f44336) !important;
             }
         `);
         return m.render().then(formEl => E("div", {}, [style, formEl]));

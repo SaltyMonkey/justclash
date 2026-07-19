@@ -200,6 +200,14 @@ return view.extend({
         o.multiple = false;
         o.description = _("Select which network will allow access to the API controller and dashboard.");
 
+        o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
+        o.password = true;
+        o.description = _("Password or token required to access the API controller.");
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return common.validateApiSecret(value);
+        };
+
         o = s.taboption(tabname, form.Flag, "use_dashboard", _("Enable dashboard:"));
         o.description = _("Enable an additional external web dashboard for Mihomo. Turn this on only if you need a separate dashboard interface.");
         o.default = primitives.FALSE;
@@ -219,14 +227,6 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("use_dashboard", primitives.TRUE);
-
-        o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
-        o.password = true;
-        o.description = _("Password or token required to access the API controller.");
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
-            return common.validateApiSecret(value);
-        };
 
         o = s.taboption(tabname, form.Flag, "api_tls", _("Enable API TLS"));
         o.description = _("Enable secure HTTPS/WSS protocol for the Mihomo API controller.");
@@ -476,7 +476,6 @@ return view.extend({
 
         const style = E("style", {}, `
              ul.dropdown { max-height:320px !important; }
-            .cbi-value { margin-bottom:14px !important; }
             .cbi-value[data-name="tproxy_port"] .cbi-value-title,
             .cbi-value[data-name="use_mixed_port"] .cbi-value-title,
             .cbi-value[data-name="mixed_port"] .cbi-value-title,
@@ -485,11 +484,9 @@ return view.extend({
             .cbi-value[data-name="dns_listen_port"] .cbi-value-title,
             .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
             .cbi-value[data-name="core_ntp_enabled"] .cbi-value-title,
-            .cbi-value[data-name="core_ntp_write_system"] .cbi-value-title,
-            .cbi-value[data-name="fake_ip_exclude_rulesets"] .cbi-value-title,
-            .cbi-value[data-name="fake_ip_exclude_geosites"] .cbi-value-title {
-                border-left: 4px solid var(--error-color-medium, #f44336) !important;
-                padding-left: 12px !important;
+            .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
+            .cbi-value[data-name="core_ntp_write_system"] .cbi-value-title {
+                color: var(--error-color-medium, #f44336) !important;
             }
         `);
 
