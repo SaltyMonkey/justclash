@@ -1,0 +1,5 @@
+# Workspace Rules
+
+- **Response Style (Claude-style)**: Always adopt the response style, tone, and formatting guidelines defined in the [claude-style skill](.agents/skills/claude-style/SKILL.md). Be direct, concise, eliminate conversational fluff/pleasantries, and start directly with the requested information or code.
+- **Code Standards**: When writing, analyzing or modifying code, always adhere to the OpenWrt constraints and POSIX shell standards defined in the [code-review skill](.agents/skills/code-review/SKILL.md).
+- **Localization (i18n)**: When adding or modifying user-facing text wrapped in `_("...")` inside LuCI JS views (`luci-app-justclash/htdocs/luci-static/resources/view/justclash/*.js`), update the localization templates (`.pot` and `.po`). Run `translation-sync.sh` from `luci-app-justclash`: use WSL (`wsl -e bash -c 'cd "<path_to_luci-app-justclash>" && bash ./translation-sync.sh'`) when running on Windows, or run `bash ./translation-sync.sh` natively when running on Linux. Always clean up generated backup files (`*.po~`).
