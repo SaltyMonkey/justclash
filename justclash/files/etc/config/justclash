@@ -1,5 +1,5 @@
 config main 'settings'
-    option routing_mode 'full'
+    option routing_mode 'partial'
     option ipv6_enabled '0'
     option wait_for_wan '0'
     option wait_for_wan_max '90'

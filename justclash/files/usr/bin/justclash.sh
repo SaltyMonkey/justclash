@@ -463,7 +463,7 @@ start() {
     cron_update
 
     local _async_routing_mode _async_nft_lan _async_nft_router _async_ipv6_enabled
-    config_get _async_routing_mode settings routing_mode 'full'
+    config_get _async_routing_mode settings routing_mode 'partial'
     config_get _async_nft_lan settings nft_apply_changes 0
     config_get _async_nft_router settings nft_apply_changes_router 0
     config_get_bool _async_ipv6_enabled settings ipv6_enabled 0
@@ -1284,7 +1284,7 @@ nf_table_add_partial() {
 
 nf_table_add() {
     local routing_mode pbr_priority ipv6_enabled nft_res=0
-    config_get routing_mode settings routing_mode 'full'
+    config_get routing_mode settings routing_mode 'partial'
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
     config_get_bool ipv6_enabled settings ipv6_enabled 0
 

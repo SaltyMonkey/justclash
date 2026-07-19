@@ -36,7 +36,7 @@ clean_fake_ip_list() {
     done
 }
 
-add_missing_option "justclash.settings.routing_mode" "full"
+add_missing_option "justclash.settings.routing_mode" "partial"
 add_missing_option "justclash.settings.mihomo_core_source_type" "github"
 add_missing_option "justclash.settings.mihomo_github_repo" "MetaCubeX/mihomo"
 add_missing_option "justclash.settings.mihomo_github_channel" "alpha"

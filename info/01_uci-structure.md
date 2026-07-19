@@ -4,7 +4,7 @@ This is a compact reference showcasing the default UCI structure for sections an
 
 ```ini
 config main 'settings'
-    option routing_mode                   'full'
+    option routing_mode                   'partial'
     option wait_for_wan                   '0'
     option wait_for_wan_max               '90'
     option delayed_boot                   '0'

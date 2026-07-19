@@ -105,7 +105,7 @@ return view.extend({
         o.description = _("Select the traffic interception mode. 'Full Interception' intercepts all WAN traffic. 'Partial Interception' only intercepts Fake-IP domains and enabled IP CIDR rulesets, allowing direct traffic to bypass the proxy at kernel speed.");
         o.value("full", _("Full Interception"));
         o.value("partial", _("Partial Interception"));
-        o.default = "full";
+        o.default = "partial";
         o.rmempty = false;
 
         o = s.taboption(tabname, form.Flag, "ipv6_enabled", _("Enable IPv6 support:"));
