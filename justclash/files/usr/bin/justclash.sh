@@ -44,6 +44,7 @@ import /lib/functions.sh
 import /lib/config/uci.sh
 import /usr/lib/justclash/logging.sh
 import /usr/lib/justclash/compat.sh
+import /usr/lib/justclash/user_agents.sh
 import /usr/lib/justclash/uri.sh
 import /usr/lib/justclash/helpers.sh
 
@@ -1766,17 +1767,40 @@ template_proxy_provider() {
     OUT_TEMPLATE="{$out}"
 }
 
+resolve_user_agent() {
+    local ua="$1"
+    if [ "$ua" = "__random__" ]; then
+        rand_user_agent
+    elif [ "$ua" = "__justclash__" ]; then
+        local jc_ver="${JUSTCLASH_VERSION:-unknown}"
+        printf '%s\n' "JustClash/${jc_ver}"
+    elif [ "$ua" = "__mihomo__" ]; then
+        local core_ver
+        core_ver=$(info_mihomo)
+        printf '%s\n' "Mihomo/${core_ver}"
+    else
+        printf '%s\n' "$ua"
+    fi
+}
+
 template_headers() {
     local hwid_enabled="$1"
     local auth_token="$2"
     local user_agent="$3"
     local age_pub_key="$4"
+    local hwid_custom="$5"
     local headers_fragment=""
 
     # 1. Build HWID headers as arrays if enabled
-    if [ "$hwid_enabled" = "1" ]; then
+    if [ "$hwid_enabled" = "1" ] || [ "$hwid_enabled" = "real" ] || [ "$hwid_enabled" = "spoofed" ]; then
         local hwid device_os version_os device_model
-        hwid=$(hwid_generate)
+        
+        if [ "$hwid_enabled" = "spoofed" ] && [ -n "$hwid_custom" ]; then
+            hwid="$hwid_custom"
+        else
+            hwid=$(hwid_generate)
+        fi
+        
         device_os=$(get_os_name)
         version_os=$(get_os_version)
         device_model=$(get_hw_model)
@@ -1913,11 +1937,12 @@ handle_proxy_section() {
                 ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(rand_user_agent)") ;;
+                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(rand_user_agent)") ;;
                 hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+                vmess://*)  proxy_obj=$(parse_vmess_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
                 *) log warn "Unknown proxy link type: $proxy_link_uri"; return ;;
@@ -2209,12 +2234,14 @@ handle_proxy_provider_section() {
 
         headers=""
         config_get header_authorization "$section" header_authorization ""
+        config_get header_hwid "$section" header_hwid ""
+        config_get header_hwid_custom "$section" header_hwid_custom ""
         config_get header_user_agent "$section" header_user_agent ""
+        header_user_agent=$(resolve_user_agent "$header_user_agent")
         config_get age_private_key "$section" age_private_key ""
         config_get header_age_public_key "$section" header_age_public_key ""
-        config_get_bool header_hwid "$section" header_hwid "0"
 
-        template_headers "$header_hwid" "$header_authorization" "$header_user_agent" "$header_age_public_key"
+        template_headers "$header_hwid" "$header_authorization" "$header_user_agent" "$header_age_public_key" "$header_hwid_custom"
         headers="$OUT_TEMPLATE"
 
 
@@ -2459,6 +2486,7 @@ core_generate_yaml() {
         keep_alive_interval="$DEFAULT_KEEP_ALIVE_INTERVAL"
     }
     config_get global_ua proxy global_ua
+    global_ua=$(resolve_user_agent "$global_ua")
     config_get_bool etag_support proxy etag_support
     config_get_bool profile_store_selected proxy profile_store_selected
     config_get_bool profile_store_fake_ip proxy profile_store_fake_ip
@@ -3395,7 +3423,7 @@ diag_icmp() {
 
 diag_mihomo_config() {
     if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-        sed -E 's/^([[:space:]]*"?[a-zA-Z0-9_-]*(password|secret|key|uuid|short-id|certificate|token|username|server|auth)[a-zA-Z0-9_-]*"?:).*/\1 "***REDACTED***"/' "$OUTPUT_YAML_CONFIG_PATH"
+        sed -E -e 's/^([[:space:]]*"?[a-zA-Z0-9_-]*(password|secret|key|uuid|short-id|certificate|token|username|server|auth|url|header|age)[a-zA-Z0-9_-]*"?:).*/\1 "***REDACTED***"/' -e 's/AGE-SECRET-KEY-1[A-Z0-9]*/***REDACTED***/g' "$OUTPUT_YAML_CONFIG_PATH"
     else
         clog error "Config file not found."
     fi
@@ -3411,7 +3439,7 @@ diag_mihomo_config_unsafe() {
 
 diag_service_config() {
     if [ -f "$CONFIG_PATH" ]; then
-        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+[a-zA-Z0-9_]*(password|secret|key|uuid|short_id|certificate|token|username|server|auth|subscription|proxy_link)[a-zA-Z0-9_]*[[:space:]]+).*/\1'***REDACTED***'/" "$CONFIG_PATH"
+        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+[a-zA-Z0-9_]*(password|secret|key|uuid|short_id|certificate|token|username|server|auth|subscription|proxy_link|url|header|age)[a-zA-Z0-9_]*[[:space:]]+).*/\1'***REDACTED***'/" "$CONFIG_PATH"
     else
         clog error "Service config file not found."
     fi
