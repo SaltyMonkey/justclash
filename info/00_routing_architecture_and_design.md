@@ -22,6 +22,12 @@ In this setup, the proxy engine only intercepts traffic destined for a specific 
 *   **Pros:** Saves massive amounts of router CPU and RAM because only matched/intercepted traffic goes through the proxy process.
 *   **Cons:** Non-DNS connections (raw IP connections) must be intercepted using IP lists (`nftables` sets) manually loaded into the firewall.
 
+#### IPv4 & IPv6 Dual-Stack Support:
+JustClash supports both IPv4 and IPv6 traffic interception (controlled via `ipv6_enabled` setting):
+* **Fake-IP IPv6:** When enabled, Mihomo manages `fake_ip_range6` (`fdfe:dcba:9876::1/64`) alongside IPv4 `198.18.0.1/16`, creating a `fake_ip6s` nftables set for IPv6 TProxy redirection.
+* **Dual-Stack Ruleset Sync:** The dynamic firewall worker creates paired sets (`ruleset_*` for IPv4 and `ruleset6_*` for IPv6), streaming both IPv4 subnets and IPv6 subnets parsed from IP-CIDR list files into kernel sets simultaneously.
+* **IPv6 Bypass:** When `ipv6_enabled` is set to `0`, all IPv6 traffic is explicitly passed through native Linux routing (`meta nfproto ipv6 return`), preventing proxy leaks or broken IPv6 connectivity.
+
 #### JustClash's Dynamic Partial Routing Implementation:
 To solve the issue of loading raw IP lists without CPU bottlenecking, JustClash implements an **event-driven ruleset synchronizer**:
 1. When the firewall starts, it creates empty `nftables` sets (e.g., `ruleset_custom_ipcidr`) and starts a background worker.
