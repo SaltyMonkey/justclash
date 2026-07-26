@@ -48,6 +48,8 @@ add_missing_option "justclash.settings.mihomo_dashboard_yacd_meta_url" "https://
 add_missing_option "justclash.settings.wait_for_wan" "0"
 add_missing_option "justclash.settings.wait_for_wan_max" "90"
 add_missing_option "justclash.settings.mihomo_mem_limit" "0"
+add_missing_option "justclash.settings.mihomo_gogc" "0"
+add_missing_option "justclash.settings.mihomo_gomaxprocs" "0"
 add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
 add_missing_option "justclash.settings.mihomo_service_data_autoupdate" "0"
 add_missing_option "justclash.settings.mihomo_cron_service_data_update_string" "0 4 * * 0"
@@ -98,6 +100,13 @@ for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_prov
     uci -q rename "justclash.$section.subscription_authorization_support=header_authorization"
     uci -q rename "justclash.$section.subscription_hwid_support=header_hwid"
     uci -q rename "justclash.$section.age_public_key=header_age_public_key"
+
+    hwid_val=$(uci -q get "justclash.$section.header_hwid")
+    if [ "$hwid_val" = "1" ]; then
+        uci set "justclash.$section.header_hwid=real"
+    elif [ "$hwid_val" = "0" ]; then
+        uci set "justclash.$section.header_hwid="
+    fi
 done
 
 uci commit justclash
