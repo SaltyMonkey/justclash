@@ -90,7 +90,8 @@ CONFIG_BAK_PATH="${ETC_CONFIG_DIR}/${PROGNAME}.bak"
 
 # List of NTP server IP addresses:
 DEFAULT_NTP_IPS="194.190.168.1 89.109.251.22 89.109.251.23 216.239.35.4 216.239.35.8"
-DEFAULT_DOH_IPS="223.5.5.5, 223.6.6.6, 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 94.140.14.14, 94.140.15.15, 208.67.222.222, 208.67.220.220, 76.76.2.0, 76.76.10.0, 77.88.8.8, 77.88.8.1"
+DEFAULT_DOH_IPS4="223.5.5.5, 223.6.6.6, 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 94.140.14.14, 94.140.15.15, 208.67.222.222, 208.67.220.220, 76.76.2.0, 76.76.10.0, 77.88.8.8, 77.88.8.1"
+DEFAULT_DOH_IPS6="2400:3200::1, 2400:3200:baba::1, 2001:4860:4860::8888, 2001:4860:4860::8844, 2606:4700:4700::1111, 2606:4700:4700::1001, 2620:fe::fe, 2620:fe::9, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff, 2620:0:ccc::2, 2620:0:ccd::2, 2606:1a40::, 2606:1a40:1::, 2a02:6b8::feed:0ff, 2a02:6b8::feed:a11"
 DEFAULT_DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
 DEFAULT_DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
 DEFAULT_DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
@@ -121,6 +122,8 @@ DEFAULT_CORE_NTP_INTERVAL=30
 DEFAULT_DNS_CACHE_MAX_SIZE=10000
 DEFAULT_FAKE_IP_TTL=60
 DEFAULT_MIHOMO_MEM_LIMIT=0
+DEFAULT_MIHOMO_GOGC=0
+DEFAULT_MIHOMO_GOMAXPROCS=0
 
 DEFAULT_TLS_PORT=443
 DEFAULT_SECONDARY_TLS_PORT=8443
@@ -373,7 +376,7 @@ core_prepare_safe_paths() {
 }
 
 start() {
-    local skip_environment_checks core_exit_code mihomo_mem_limit
+    local skip_environment_checks core_exit_code mihomo_mem_limit mihomo_gogc mihomo_gomaxprocs
 
     if check_is_already_running; then
         return 0
@@ -381,22 +384,22 @@ start() {
 
     log info "Initializing JustClash service..."
 
-    if [ -n "$JUSTCLASH_WAIT_WAN_MAX" ] && [ "$JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
-        log info "Waiting for WAN (max ${JUSTCLASH_WAIT_WAN_MAX}s)..."
+    if [ -n "$ENV_JUSTCLASH_WAIT_WAN_MAX" ] && [ "$ENV_JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
+        log info "Waiting for WAN (max ${ENV_JUSTCLASH_WAIT_WAN_MAX}s)..."
         local waited=0
-        while [ "$waited" -lt "$JUSTCLASH_WAIT_WAN_MAX" ]; do
+        while [ "$waited" -lt "$ENV_JUSTCLASH_WAIT_WAN_MAX" ]; do
             if ip -4 route show default 2>/dev/null | grep -q default || \
                ip -6 route show default 2>/dev/null | grep -q default; then
                 break
             fi
-            sleep 2
-            waited=$((waited + 2))
+            sleep 1
+            waited=$((waited + 1))
         done
     fi
 
-    if [ -n "$JUSTCLASH_BOOT_DELAY" ] && [ "$JUSTCLASH_BOOT_DELAY" -gt 0 ]; then
-        log info "Delaying start by ${JUSTCLASH_BOOT_DELAY}s..."
-        sleep "$JUSTCLASH_BOOT_DELAY"
+    if [ -n "$ENV_JUSTCLASH_BOOT_DELAY" ] && [ "$ENV_JUSTCLASH_BOOT_DELAY" -gt 0 ]; then
+        log info "Delaying start by ${ENV_JUSTCLASH_BOOT_DELAY}s..."
+        sleep "$ENV_JUSTCLASH_BOOT_DELAY"
     fi
 
     check_requirement || {
@@ -421,6 +424,18 @@ start() {
         log warn "Invalid Mihomo memory limit: '$mihomo_mem_limit', using default: '$DEFAULT_MIHOMO_MEM_LIMIT'"
         mihomo_mem_limit="$DEFAULT_MIHOMO_MEM_LIMIT"
     }
+
+    config_get mihomo_gogc settings mihomo_gogc "$DEFAULT_MIHOMO_GOGC"
+    if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "$DEFAULT_MIHOMO_GOGC" ] && ! is_uint "$mihomo_gogc"; then
+        log warn "Invalid GOGC: '$mihomo_gogc', ignoring"
+        mihomo_gogc="$DEFAULT_MIHOMO_GOGC"
+    fi
+
+    config_get mihomo_gomaxprocs settings mihomo_gomaxprocs "$DEFAULT_MIHOMO_GOMAXPROCS"
+    if [ -n "$mihomo_gomaxprocs" ] && [ "$mihomo_gomaxprocs" != "$DEFAULT_MIHOMO_GOMAXPROCS" ] && ! is_uint "$mihomo_gomaxprocs"; then
+        log warn "Invalid GOMAXPROCS: '$mihomo_gomaxprocs', ignoring"
+        mihomo_gomaxprocs="$DEFAULT_MIHOMO_GOMAXPROCS"
+    fi
     config_get_bool skip_environment_checks settings skip_environment_checks 0
 
     if [ "$skip_environment_checks" -eq 0 ]; then
@@ -471,7 +486,7 @@ start() {
     populate_nft_sets_async "$_async_routing_mode" "$_async_nft_lan" "$_async_nft_router" "$_async_ipv6_enabled"
 
     log info "Starting Mihomo core"
-    start_core "$mihomo_mem_limit"
+    start_core "$mihomo_mem_limit" "$mihomo_gogc" "$mihomo_gomaxprocs"
     core_exit_code=$?
 
     stop_async_worker
@@ -501,18 +516,28 @@ stop() {
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
 start_core() {
     local mihomo_mem_limit="$1"
+    local mihomo_gogc="$2"
+    local mihomo_gomaxprocs="$3"
     local attempt=0
     local exit_code=0
     log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries"
 
     # shellcheck disable=SC2154
-    if [ "$JUSTCLASH_ENV" = "procd" ]; then
+    if [ "$ENV_JUSTCLASH_RUN_CONTEXT" = "procd" ]; then
         while [ "$attempt" -lt "$DEFAULT_CORE_RESTART_RETRIES" ]; do
             (
                 set -o pipefail
                 if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
                     # shellcheck disable=SC2030
                     export GOMEMLIMIT="${mihomo_mem_limit}MiB"
+                fi
+                if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "$DEFAULT_MIHOMO_GOGC" ]; then
+                    # shellcheck disable=SC2030
+                    export GOGC="$mihomo_gogc"
+                fi
+                if [ -n "$mihomo_gomaxprocs" ] && [ "$mihomo_gomaxprocs" != "$DEFAULT_MIHOMO_GOMAXPROCS" ]; then
+                    # shellcheck disable=SC2030
+                    export GOMAXPROCS="$mihomo_gomaxprocs"
                 fi
                 "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | log_piped
             )
@@ -536,9 +561,16 @@ start_core() {
     else
         (
             if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
-                # shellcheck disable=SC2030
-                # shellcheck disable=SC2031
+                # shellcheck disable=SC2031,SC2030
                 export GOMEMLIMIT="${mihomo_mem_limit}MiB"
+            fi
+            if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "$DEFAULT_MIHOMO_GOGC" ]; then
+                # shellcheck disable=SC2030,SC2031
+                export GOGC="$mihomo_gogc"
+            fi
+            if [ -n "$mihomo_gomaxprocs" ] && [ "$mihomo_gomaxprocs" != "$DEFAULT_MIHOMO_GOMAXPROCS" ]; then
+                # shellcheck disable=SC2030,SC2031
+                export GOMAXPROCS="$mihomo_gomaxprocs"
             fi
             "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | log_piped
         )
@@ -838,6 +870,10 @@ nf_table_add_full() {
             log error "Fake IP range is not configured"
             return 1
         fi
+        if [ "$ipv6_enabled" -eq 1 ] && [ -z "$fake_ip_range6" ]; then
+            log error "Fake IP6 range is not configured while IPv6 is enabled"
+            return 1
+        fi
         if [ -z "$tproxy_input_interfaces" ]; then
             log error "TProxy inbound interfaces are not configured"
             return 1
@@ -874,7 +910,11 @@ nf_table_add_full() {
                 echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
             done
             echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
-            echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
+            echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS4 }"
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add set inet $NF_TABLE_NAME doh_ip6s { type ipv6_addr; flags interval; }"
+                echo "add element inet $NF_TABLE_NAME doh_ip6s { $DEFAULT_DOH_IPS6 }"
+            fi
             if [ "$ipv6_enabled" -eq 0 ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
             fi
@@ -924,9 +964,16 @@ nf_table_add_full() {
 
             if [ "$nft_doh_mode" = "DROP" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS traffic\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @doh_ip6s meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS IPv6 traffic\""
+                fi
             elif [ "$nft_doh_mode" = "REJECT" ]; then
                 echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
                 echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip6 daddr @doh_ip6s meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS IPv6 traffic\""
+                    echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip6 daddr @doh_ip6s meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS IPv6 traffic\""
+                fi
             fi
 
             if [ "$nft_ntp_mode" = "DROP" ]; then
@@ -1063,6 +1110,10 @@ nf_table_add_partial() {
             log error "Fake IP range is not configured"
             return 1
         fi
+        if [ "$ipv6_enabled" -eq 1 ] && [ -z "$fake_ip_range6" ]; then
+            log error "Fake IP6 range is not configured while IPv6 is enabled"
+            return 1
+        fi
         if [ -z "$tproxy_input_interfaces" ]; then
             log error "TProxy inbound interfaces are not configured"
             return 1
@@ -1131,7 +1182,13 @@ nf_table_add_partial() {
             echo "add chain inet $NF_TABLE_NAME filter_forward { type filter hook forward priority filter; policy accept; }"
 
             echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
-            echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS }"
+            echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS4 }"
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add set inet $NF_TABLE_NAME doh_ip6s { type ipv6_addr; flags interval; }"
+                echo "add element inet $NF_TABLE_NAME doh_ip6s { $DEFAULT_DOH_IPS6 }"
+                echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
+                echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fe80::/10, fc00::/7, ff00::/8 }"
+            fi
             if [ "$ipv6_enabled" -eq 0 ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
             fi
@@ -1181,9 +1238,16 @@ nf_table_add_partial() {
 
             if [ "$nft_doh_mode" = "DROP" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS traffic\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @doh_ip6s meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS IPv6 traffic\""
+                fi
             elif [ "$nft_doh_mode" = "REJECT" ]; then
                 echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
                 echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS traffic\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME filter_input iifname @inbound_interfaces ip6 daddr @doh_ip6s meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS IPv6 traffic\""
+                    echo "add rule inet $NF_TABLE_NAME filter_forward iifname @inbound_interfaces ip6 daddr @doh_ip6s meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT reject comment \"Reject DNS-over-HTTPS IPv6 traffic\""
+                fi
             fi
 
             if [ "$nft_ntp_mode" = "DROP" ]; then
@@ -1331,7 +1395,6 @@ nf_table_remove() {
     log info "Tproxy rules and routing were removed"
 }
 
-# Thx Podkop, feels so annoyed already by shell scripting
 save_dnsmasq_config() {
     local key="$1"
     local backup_key="$2"
@@ -1794,13 +1857,13 @@ template_headers() {
     # 1. Build HWID headers as arrays if enabled
     if [ "$hwid_enabled" = "1" ] || [ "$hwid_enabled" = "real" ] || [ "$hwid_enabled" = "spoofed" ]; then
         local hwid device_os version_os device_model
-        
+
         if [ "$hwid_enabled" = "spoofed" ] && [ -n "$hwid_custom" ]; then
             hwid="$hwid_custom"
         else
             hwid=$(hwid_generate)
         fi
-        
+
         device_os=$(get_os_name)
         version_os=$(get_os_version)
         device_model=$(get_hw_model)
@@ -2192,7 +2255,7 @@ handle_proxy_provider_section() {
         local name enabled url override_dialer_proxy override_interface_name override_routing_mark header_hwid interval size_limit proxy filter exclude_filter exclude_type
         local health_check hc_expected_status hc_url hc_interval hc_timeout hc_lazy
         local provider_json headers age_private_key header_age_public_key
-        local header_authorization header_user_agent
+        local header_authorization header_user_agent header_hwid_custom override_ip_version
 
         config_get name "$section" name
         config_get url "$section" subscription
@@ -2402,29 +2465,18 @@ get_dashboard_url() {
     local url
 
     case "$dashboard_repo" in
-        metacubexd)
-            config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL"
-            printf '%s\n' "$url"
-            ;;
-        yacd-meta)
-            config_get url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL"
-            printf '%s\n' "$url"
-            ;;
-        zashboard)
-            config_get url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL"
-            printf '%s\n' "$url"
-            ;;
-        *)
-            config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL"
-            printf '%s\n' "$url"
-            ;;
+        yacd-meta) config_get url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL" ;;
+        zashboard) config_get url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL" ;;
+        *)         config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL" ;;
     esac
+
+    printf '%s\n' "$url"
 }
 
 # Main config generator; fills global caches (_*_CONTENT) and reads from global buffer (OUT_*)
 core_generate_yaml() {
     local router_selected_ipaddr
-    local controller_bind_interface use_dashboard use_dashboard_raw dashboard_repo dashboard_url api_password log_level interface_name tproxy_port unified_delay
+    local controller_bind_interface use_dashboard dashboard_repo dashboard_url api_password log_level interface_name tproxy_port unified_delay
     local use_mixed_port mixed_port proxy_authentication
     local tcp_concurrent
     local keep_alive_idle keep_alive_interval profile_store_selected profile_store_fake_ip
@@ -2443,7 +2495,6 @@ core_generate_yaml() {
     local custom_real_ip_rules custom_real_ip_rulesets custom_real_ip_geosites
     local rulesets_block rulesets_proxygroup rulesets_proxies
     local mihomo_geoip_url mihomo_geosite_url geodata_mode geodata_autoupdate geodata_autoupdate_interval ipv6_enabled
-    # !!! _RULESETS_CONTENT and _BLOCK_RULESETS_CONTENT are module-level globals set before handle_* calls
     local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address sniffer_force_domain
     local nameserver_policy
 
@@ -2453,12 +2504,7 @@ core_generate_yaml() {
 
     config_get_bool ipv6_enabled settings ipv6_enabled 0
     config_get controller_bind_interface proxy controller_bind_interface
-    config_get use_dashboard_raw proxy use_dashboard
-    if [ -n "$use_dashboard_raw" ]; then
-        config_get_bool use_dashboard proxy use_dashboard
-    else
-        config_get_bool use_dashboard proxy use_zashboard 0
-    fi
+    config_get_bool use_dashboard proxy use_dashboard 0
     config_get dashboard_repo proxy dashboard_repo "$DEFAULT_EXTERNAL_PANEL"
     config_get api_password proxy api_password
     config_get log_level proxy log_level
@@ -3635,7 +3681,7 @@ help() {
 
 case "$1" in
     start|run|up|u)
-        [ "$JUSTCLASH_ENV" != "procd" ] && trap 'stop; exit 0' INT TERM HUP
+        [ "$ENV_JUSTCLASH_RUN_CONTEXT" != "procd" ] && trap 'stop; exit 0' INT TERM HUP
         start
         ;;
     stop|down|d)
