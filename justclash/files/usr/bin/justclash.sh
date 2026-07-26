@@ -925,7 +925,6 @@ nf_table_add_full() {
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
-            echo "add rule inet $NF_TABLE_NAME prerouting icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
@@ -1005,7 +1004,6 @@ nf_table_add_full() {
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
-            echo "add rule inet $NF_TABLE_NAME output icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
@@ -1199,7 +1197,6 @@ nf_table_add_partial() {
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
-            echo "add rule inet $NF_TABLE_NAME prerouting icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
@@ -1288,7 +1285,6 @@ nf_table_add_partial() {
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 67, 68 } udp dport { 67, 68 } return comment \"Bypass DHCP traffic\""
-            echo "add rule inet $NF_TABLE_NAME output icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } return comment \"Bypass ICMPv6 NDP traffic\""
             echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
@@ -2759,8 +2755,21 @@ core_generate_yaml() {
             echo "interface-name: $(yaml_quote "$interface_name")"
         fi
 
+        echo "listeners:"
+        echo "  - name: tproxy-v4"
+        echo "    type: tproxy"
+        echo "    port: $tproxy_port"
+        echo "    listen: 127.0.0.1"
+        if [ "$ipv6_enabled" -eq 1 ]; then
+            echo "  - name: tproxy-v6"
+            echo "    type: tproxy"
+            echo "    port: $tproxy_port"
+            echo "    listen: \"::1\""
+        fi
+
         echo "mode: rule"
         printf 'ipv6: %s\n' "$(format_uci_bool_as_yaml "$ipv6_enabled")"
+
         if [ "$api_tls" -eq 1 ]; then
             echo "external-controller-tls: $(yaml_quote "$router_selected_ipaddr:$DEFAULT_EXTERNAL_CONTROLLER_PORT")"
         else
@@ -2777,7 +2786,6 @@ core_generate_yaml() {
             echo "  private-key: $(yaml_quote "$api_tls_key")"
         fi
         echo "log-level: $(yaml_quote "$log_level")"
-        echo "tproxy-port: $tproxy_port"
         echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
         echo "tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")"
         echo "routing-mark: $NF_TABLE_FWMARK_PROXY"
@@ -2950,7 +2958,7 @@ core_prepare_workdir() {
     fi
 
     if [ -d "$CORE_WORKDIR_PATH" ]; then
-        current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings." | md5_str)
+        current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings\.(wait_for_wan|delayed_boot|skip_environment_checks|ntpd_start|mihomo_autorestart|mihomo_cron_|mihomo_service_data_|mihomo_core_|mihomo_github_|mihomo_custom_core_url|mihomo_dashboard_|mihomo_rulesets_files_download_url)" | md5_str)
         saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null)
 
         if [ ! -f "$OUTPUT_YAML_CONFIG_PATH" ] || \
@@ -3469,7 +3477,7 @@ diag_icmp() {
 
 diag_mihomo_config() {
     if [ -f "$OUTPUT_YAML_CONFIG_PATH" ]; then
-        sed -E -e 's/^([[:space:]]*"?[a-zA-Z0-9_-]*(password|secret|key|uuid|short-id|certificate|token|username|server|auth|url|header|age)[a-zA-Z0-9_-]*"?:).*/\1 "***REDACTED***"/' -e 's/AGE-SECRET-KEY-1[A-Z0-9]*/***REDACTED***/g' "$OUTPUT_YAML_CONFIG_PATH"
+        sed -E -e '/nameserver/!s/^([[:space:]]*"?[a-zA-Z0-9_-]*(password|secret|key|uuid|short-id|certificate|token|username|server|auth|url|header|age)[a-zA-Z0-9_-]*"?:).*/\1 "***REDACTED***"/' -e 's/AGE-SECRET-KEY-1[A-Z0-9]*/***REDACTED***/g' "$OUTPUT_YAML_CONFIG_PATH"
     else
         clog error "Config file not found."
     fi
@@ -3485,7 +3493,7 @@ diag_mihomo_config_unsafe() {
 
 diag_service_config() {
     if [ -f "$CONFIG_PATH" ]; then
-        sed -E "s/^([[:space:]]*(option|list)[[:space:]]+[a-zA-Z0-9_]*(password|secret|key|uuid|short_id|certificate|token|username|server|auth|subscription|proxy_link|url|header|age)[a-zA-Z0-9_]*[[:space:]]+).*/\1'***REDACTED***'/" "$CONFIG_PATH"
+        sed -E -e "/nameserver/!s/^([[:space:]]*(option|list)[[:space:]]+[a-zA-Z0-9_]*(password|secret|key|uuid|short_id|certificate|token|username|server|auth|subscription|proxy_link|url|header|age)[a-zA-Z0-9_]*[[:space:]]+).*/\1'***REDACTED***'/" "$CONFIG_PATH"
     else
         clog error "Service config file not found."
     fi
