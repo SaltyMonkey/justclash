@@ -30,6 +30,8 @@ json_array_from_csv() {
     '
 }
 
+
+
 parse_direct_url() {
     local name="$1" dialer_proxy="$2" interface_name="$3" routing_mark="$4" ip_version="$5"
 
@@ -55,12 +57,19 @@ parse_direct_url() {
 parse_sudoku_url() {
     local link="$1" dialer_proxy="$2" name="$3" interface_name="$4" routing_mark="$5" ip_version="$6"
     local padding_min="${7:-5}" padding_max="${8:-15}"
-    local raw payload
-
     raw="$link"
     raw="${raw#sudoku://}"
 
-    payload="$(printf '%s' "$raw" | base64 -d 2>/dev/null)" || {
+    local b64
+    b64="$(printf '%s' "$raw" | tr -- '-_' '+/')"
+    local rem=$(( ${#b64} % 4 ))
+    if [ "$rem" -eq 2 ]; then
+        b64="${b64}=="
+    elif [ "$rem" -eq 3 ]; then
+        b64="${b64}="
+    fi
+
+    payload="$(printf '%s' "$b64" | base64 -d 2>/dev/null)" || {
         echo "Error: failed to decode sudoku:// link" >&2
         return 1
     }
@@ -200,15 +209,48 @@ parse_ss_url() {
                 password="${pass_part}"
             fi
         else
-            # Try base64
+            # Try base64 on entire userinfo
             decoded="$(printf '%s' "$userinfo" | base64 -d 2>/dev/null)"
             if [ -n "$decoded" ] && printf '%s\n' "$decoded" | grep -q ':'; then
                 method="$(url_decode "${decoded%%:*}")"
                 password="$(url_decode "${decoded#*:}")"
             else
-                # Plain text fallback
-                method="$(url_decode "${userinfo%%:*}")"
-                password="$(url_decode "${userinfo#*:}")"
+                # Check for segmented base64 (Base64(method):Base64(pass) or Base64(method):Base64(psk1):Base64(psk2))
+                local method_part="${userinfo%%:*}"
+                local pass_part="${userinfo#*:}"
+                local decoded_method=""
+                decoded_method="$(printf '%s' "$method_part" | base64 -d 2>/dev/null)"
+
+                case "$decoded_method" in
+                    aes-*|chacha20-*|xchacha20-*|2022-*|rc4-*|blake3-*)
+                        method="$decoded_method"
+                        if printf '%s\n' "$pass_part" | grep -q ':'; then
+                            local psk1_part="${pass_part%%:*}"
+                            local psk2_part="${pass_part#*:}"
+                            local psk1_dec="" psk2_dec=""
+                            psk1_dec="$(printf '%s' "$psk1_part" | base64 -d 2>/dev/null)"
+                            psk2_dec="$(printf '%s' "$psk2_part" | base64 -d 2>/dev/null)"
+                            if [ -n "$psk1_dec" ] && [ -n "$psk2_dec" ]; then
+                                password="${psk1_dec}:${psk2_dec}"
+                            else
+                                password="$(url_decode "$pass_part")"
+                            fi
+                        else
+                            local pass_dec=""
+                            pass_dec="$(printf '%s' "$pass_part" | base64 -d 2>/dev/null)"
+                            if [ -n "$pass_dec" ]; then
+                                password="$pass_dec"
+                            else
+                                password="$(url_decode "$pass_part")"
+                            fi
+                        fi
+                        ;;
+                    *)
+                        # Plain text fallback
+                        method="$(url_decode "$method_part")"
+                        password="$(url_decode "$pass_part")"
+                        ;;
+                esac
             fi
         fi
     else
@@ -226,6 +268,92 @@ parse_ss_url() {
     port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
+    # Parse query parameters for plugins
+    local plugin_param=""
+    local client_fingerprint=""
+
+    local temp_query="$query_part"
+    while [ -n "$temp_query" ]; do
+        local param="${temp_query%%&*}"
+        temp_query="${temp_query#"$param"}"
+        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+
+        local k="${param%%=*}"
+        local v="${param#*=}"
+        [ -z "$k" ] && continue
+
+        case "$k" in
+            plugin) plugin_param="$(url_decode "$v")" ;;
+            client-fingerprint|clientFingerprint|fp) client_fingerprint="$(url_decode "$v")" ;;
+        esac
+    done
+
+    local plugin_name=""
+    local plugin_host="" plugin_password="" plugin_version="" plugin_mode="" plugin_username=""
+    local plugin_path="" plugin_tls="" plugin_mux="" plugin_skip_cert_verify=""
+    local plugin_name_cert_verify="" plugin_fingerprint="" plugin_cert="" plugin_key=""
+    local plugin_alpn=""
+
+    if [ -n "$plugin_param" ]; then
+        plugin_name="${plugin_param%%;*}"
+        case "$plugin_name" in
+            obfs-local|simple-obfs) plugin_name="obfs" ;;
+            v2ray) plugin_name="v2ray-plugin" ;;
+            gost) plugin_name="gost-plugin" ;;
+        esac
+
+        local opts_part="${plugin_param#*;}"
+        [ "$opts_part" = "$plugin_param" ] && opts_part=""
+
+        local OIFS="$IFS"
+        IFS=";"
+        for opt in $opts_part; do
+            IFS="$OIFS"
+            [ -z "$opt" ] && continue
+            local opt_k="${opt%%=*}"
+            local opt_v="${opt#*=}"
+
+            if [ "$opt_k" = "$opt" ]; then
+                case "$opt_k" in
+                    tls) plugin_tls="true" ;;
+                    mux) plugin_mux="true" ;;
+                    skip-cert-verify|allowInsecure|insecure) plugin_skip_cert_verify="true" ;;
+                esac
+            else
+                case "$opt_k" in
+                    host|obfs-host) plugin_host="$opt_v" ;;
+                    password|shadow-tls-password|jls-password) plugin_password="$opt_v" ;;
+                    version|shadow-tls-version) plugin_version="$opt_v" ;;
+                    obfs|mode|obfs-mode) plugin_mode="$opt_v" ;;
+                    username|jls-username) plugin_username="$opt_v" ;;
+                    path) plugin_path="$opt_v" ;;
+                    tls) if is_truthy "$opt_v"; then plugin_tls="true"; else plugin_tls="false"; fi ;;
+                    mux) if is_truthy "$opt_v"; then plugin_mux="true"; else plugin_mux="false"; fi ;;
+                    skip-cert-verify|allowInsecure|insecure) if is_truthy "$opt_v"; then plugin_skip_cert_verify="true"; else plugin_skip_cert_verify="false"; fi ;;
+                    name-cert-verify|nameCertVerify|peer) plugin_name_cert_verify="$opt_v" ;;
+                    fingerprint|pinSHA256) plugin_fingerprint="$opt_v" ;;
+                    client-fingerprint|clientFingerprint|fp) client_fingerprint="$opt_v" ;;
+                    certificate) plugin_cert="$opt_v" ;;
+                    private-key|privateKey) plugin_key="$opt_v" ;;
+                    alpn) plugin_alpn="$opt_v" ;;
+                esac
+            fi
+            IFS=";"
+        done
+        IFS="$OIFS"
+
+        # For v2ray-plugin: mihomo detects tls by checking if "tls" appears
+        # anywhere in the raw plugin string (strings.Contains(plugin, "tls"))
+        if [ "$plugin_name" = "v2ray-plugin" ] && [ -z "$plugin_tls" ]; then
+            case "$plugin_param" in *tls*) plugin_tls="true" ;; esac
+        fi
+    fi
+
+    local alpn_json="[]"
+    if [ -n "$plugin_alpn" ]; then
+        alpn_json=$(json_array_from_csv "$plugin_alpn") || return 1
+    fi
+
     proxy_obj=$(
         jq -nc \
             --arg name "$name" \
@@ -236,6 +364,22 @@ parse_ss_url() {
             --arg interface_name "$interface_name" \
             --arg routing_mark "$routing_mark" \
             --arg ip_version "$ip_version" \
+            --arg plugin_name "$plugin_name" \
+            --arg plugin_host "$plugin_host" \
+            --arg plugin_password "$plugin_password" \
+            --arg plugin_version "$plugin_version" \
+            --arg plugin_mode "$plugin_mode" \
+            --arg plugin_username "$plugin_username" \
+            --arg plugin_path "$plugin_path" \
+            --arg plugin_tls "$plugin_tls" \
+            --arg plugin_mux "$plugin_mux" \
+            --arg plugin_skip_cert_verify "$plugin_skip_cert_verify" \
+            --arg plugin_name_cert_verify "$plugin_name_cert_verify" \
+            --arg plugin_fingerprint "$plugin_fingerprint" \
+            --arg plugin_cert "$plugin_cert" \
+            --arg plugin_key "$plugin_key" \
+            --argjson plugin_alpn "$alpn_json" \
+            --arg client_fingerprint "$client_fingerprint" \
             --argjson port "$port" '
             {
                 name: $name,
@@ -250,6 +394,86 @@ parse_ss_url() {
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
             + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $ip_version != "" then {"ip-version": $ip_version} else {} end)
+            + (if $plugin_name == "obfs" then
+                    {
+                        plugin: "obfs",
+                        "plugin-opts": (
+                            {}
+                            + (if $plugin_mode != "" then {mode: $plugin_mode} else {mode: "http"} end)
+                            + (if $plugin_host != "" then {host: $plugin_host} else {} end)
+                        )
+                    }
+                else {} end)
+            + (if $plugin_name == "v2ray-plugin" then
+                    {
+                        plugin: "v2ray-plugin",
+                        "plugin-opts": (
+                            {}
+                            + (if $plugin_mode != "" then {mode: $plugin_mode} else {mode: "websocket"} end)
+                            + (if $plugin_tls == "true" then {tls: true} else {} end)
+                            + (if $plugin_host != "" then {host: $plugin_host} else {} end)
+                            + (if $plugin_path != "" then {path: $plugin_path} else {} end)
+                            + (if $plugin_mux == "true" then {mux: true} elif $plugin_mux == "false" then {mux: false} else {} end)
+                            + (if $plugin_skip_cert_verify == "true" then {"skip-cert-verify": true} else {} end)
+                            + (if $plugin_name_cert_verify != "" then {"name-cert-verify": $plugin_name_cert_verify} else {} end)
+                            + (if $plugin_fingerprint != "" then {fingerprint: $plugin_fingerprint} else {} end)
+                            + (if $plugin_cert != "" then {certificate: $plugin_cert} else {} end)
+                            + (if $plugin_key != "" then {"private-key": $plugin_key} else {} end)
+                            + (if ($plugin_mode == "" or $plugin_mode == "websocket" or $plugin_mode == "ws") then
+                                    {headers: (
+                                        {"User-Agent": $ws_user_agent}
+                                        + (if $plugin_host != "" then {Host: $plugin_host} else {} end)
+                                    )}
+                                else {} end)
+                        )
+                    }
+                else {} end)
+            + (if $plugin_name == "gost-plugin" then
+                    {
+                        plugin: "gost-plugin",
+                        "plugin-opts": (
+                            {}
+                            + (if $plugin_mode != "" then {mode: $plugin_mode} else {mode: "websocket"} end)
+                            + (if $plugin_tls == "true" then {tls: true} else {} end)
+                            + (if $plugin_host != "" then {host: $plugin_host} else {} end)
+                            + (if $plugin_path != "" then {path: $plugin_path} else {} end)
+                            + (if $plugin_mux == "true" then {mux: true} elif $plugin_mux == "false" then {mux: false} else {} end)
+                            + (if $plugin_skip_cert_verify == "true" then {"skip-cert-verify": true} else {} end)
+                            + (if $plugin_name_cert_verify != "" then {"name-cert-verify": $plugin_name_cert_verify} else {} end)
+                            + (if $plugin_fingerprint != "" then {fingerprint: $plugin_fingerprint} else {} end)
+                            + (if $plugin_cert != "" then {certificate: $plugin_cert} else {} end)
+                            + (if $plugin_key != "" then {"private-key": $plugin_key} else {} end)
+                            + (if ($plugin_mode == "" or $plugin_mode == "websocket" or $plugin_mode == "ws") and $plugin_host != "" then
+                                    {headers: {Host: $plugin_host}}
+                                else {} end)
+                        )
+                    }
+                else {} end)
+            + (if $plugin_name == "shadow-tls" then
+                    {
+                        plugin: "shadow-tls",
+                        "plugin-opts": (
+                            {}
+                            + (if $plugin_host != "" then {host: $plugin_host} else {} end)
+                            + (if $plugin_password != "" then {password: $plugin_password} else {} end)
+                            + (if $plugin_version != "" then {version: ($plugin_version | tonumber)} else {version: 2} end)
+                            + (if ($plugin_alpn | length) > 0 then {alpn: $plugin_alpn} else {} end)
+                        )
+                    }
+                    + (if $client_fingerprint != "" then {"client-fingerprint": $client_fingerprint} else {} end)
+                else {} end)
+            + (if $plugin_name == "jls" then
+                    {
+                        plugin: "jls",
+                        "plugin-opts": (
+                            {}
+                            + (if $plugin_host != "" then {host: $plugin_host} else {} end)
+                            + (if $plugin_username != "" then {username: $plugin_username} else {} end)
+                            + (if $plugin_password != "" then {password: $plugin_password} else {} end)
+                        )
+                    }
+                    + (if $client_fingerprint != "" then {"client-fingerprint": $client_fingerprint} else {} end)
+                else {} end)
         '
     ) || return 1
 
@@ -318,7 +542,7 @@ parse_simple_proxy_url() {
 }
 
 parse_trojan_url() {
-    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
+    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7" random_ua="$8"
 
     local raw="${url#trojan://}"
     raw="${raw#trojan-go://}"
@@ -342,7 +566,11 @@ parse_trojan_url() {
 
     local sni="" insecure=0 net="tcp" httpupgrade=0 fp="" alpn="" ws_path="" ws_host="" grpc_service="" grpc_ua="" grpc_ping_interval=""
     local ss_enabled="" ss_method="" ss_password=""
-    local security="" pbk="" sid="" spx="" ech=""
+    local security="" pbk="" sid="" spx="" ech="" flow="" pin_sha256="" name_cert_verify=""
+    local shadow_tls_password="" shadow_tls_version=""
+    local restls_password="" restls_version_hint="" restls_script=""
+    local jls_username="" jls_password=""
+    local support_x25519mlkem768=""
     local alpn_json proxy_obj
 
     local temp_query="$query_part"
@@ -356,8 +584,8 @@ parse_trojan_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-            sni|peer) sni="$(url_decode "$v")" ;;
-            insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
+            sni) sni="$(url_decode "$v")" ;;
+            insecure|allowInsecure|skip-cert-verify|skipCertVerify) is_truthy "$v" && insecure=1 ;;
             type)
                 if [ "$v" = "httpupgrade" ]; then
                     net="ws"
@@ -369,8 +597,19 @@ parse_trojan_url() {
             pbk|public-key) pbk="$v" ;;
             sid|short-id) sid="$v" ;;
             spx) spx="$(url_decode "$v")" ;;
+            flow) flow="$v" ;;
+            pinSHA256|fingerprint) pin_sha256="$(url_decode "$v")" ;;
+            name-cert-verify|nameCertVerify|peer) name_cert_verify="$(url_decode "$v")" ;;
+            shadow-tls-password|shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
+            shadow-tls-version|shadowTlsVersion) shadow_tls_version="$v" ;;
+            restls-password|restlsPassword) restls_password="$(url_decode "$v")" ;;
+            restls-version-hint|restlsVersionHint|restlsVersion) restls_version_hint="$v" ;;
+            restls-script|restlsScript) restls_script="$(url_decode "$v")" ;;
+            jls-username|jlsUsername|jlsUser) jls_username="$(url_decode "$v")" ;;
+            jls-password|jlsPassword) jls_password="$(url_decode "$v")" ;;
+            support-x25519mlkem768|x25519mlkem768|support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
             ech) ech="$(url_decode "$v")" ;;
-            fp|client-fingerprint) fp="$v" ;;
+            fp|client-fingerprint|clientFingerprint) fp="$v" ;;
             alpn) alpn="$(url_decode "$v")" ;;
             path)
                 if [ -n "$v" ]; then
@@ -379,7 +618,7 @@ parse_trojan_url() {
                     ws_path="/"
                 fi ;;
             host) ws_host="$(url_decode "$v")" ;;
-            serviceName|service-name) grpc_service="$v" ;;
+            serviceName|service-name) grpc_service="$(url_decode "$v")" ;;
             grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
             ping-interval|pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
             ss) ss_enabled="$v" ;;
@@ -416,13 +655,25 @@ parse_trojan_url() {
             --arg sid "$sid" \
             --arg spx "$spx" \
             --arg ech "$ech" \
+            --arg flow "$flow" \
+            --arg pin_sha256 "$pin_sha256" \
+            --arg name_cert_verify "$name_cert_verify" \
+            --arg shadow_tls_password "$shadow_tls_password" \
+            --arg shadow_tls_version "$shadow_tls_version" \
+            --arg restls_password "$restls_password" \
+            --arg restls_version_hint "$restls_version_hint" \
+            --arg restls_script "$restls_script" \
+            --arg jls_username "$jls_username" \
+            --arg jls_password "$jls_password" \
+            --arg support_x25519mlkem768 "$support_x25519mlkem768" \
             --arg ss_method "$ss_method" \
             --arg ss_password "$ss_password" \
             --arg ss_enabled "$ss_enabled" \
             --argjson port "$port" \
             --argjson httpupgrade "$httpupgrade" \
             --argjson insecure "$insecure" \
-            --argjson alpn "$alpn_json" '
+            --argjson alpn "$alpn_json" \
+            --arg ws_user_agent "$random_ua" '
             {
                 name: $name,
                 type: "trojan",
@@ -436,38 +687,72 @@ parse_trojan_url() {
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
             + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $ip_version != "" then {"ip-version": $ip_version} else {} end)
-            + (if $sni != "" then {sni: $sni} else {} end)
-            + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
-            + {"client-fingerprint": (if $fp != "" then $fp else "random" end)}
-            + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
             + (if $net == "ws" then
-                    {"ws-opts": (
+                    {network: "ws"}
+                    + {"ws-opts": (
                         {path: $ws_path}
-                        + (if $ws_host != "" then {headers: {Host: $ws_host}} else {} end)
+                        + {headers: (
+                            {"User-Agent": $ws_user_agent}
+                            + (if $ws_host != "" then {Host: $ws_host} else {} end)
+                          )}
                         + (if $httpupgrade == 1 then {"v2ray-http-upgrade": true} else {} end)
                     )}
-                else {} end)
-            + (if $net == "grpc" then
-                    {"grpc-opts": (
+                elif $net == "grpc" then
+                    {network: "grpc"}
+                    + {"grpc-opts": (
                         {"grpc-service-name": $grpc_service}
                         + (if $grpc_ua != "" then {"grpc-user-agent": $grpc_ua} else {} end)
                         + (if $grpc_ping_interval != "" then {"ping-interval": ($grpc_ping_interval | tonumber)} else {} end)
                     )}
-                else {} end)
+                else
+                    (if $net != "" and $net != "tcp" then {network: $net} else {} end)
+                end)
+            + (if $security == "none" and $shadow_tls_password == "" and $restls_password == "" and $jls_password == "" then
+                    {tls: false}
+                else
+                    {tls: true}
+                    + (if $sni != "" then {sni: $sni} else {} end)
+                    + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
+                    + (if $name_cert_verify != "" then {"name-cert-verify": $name_cert_verify} else {} end)
+                    + (if $pin_sha256 != "" then {fingerprint: $pin_sha256} else {} end)
+                    + (if $flow != "" and $net != "ws" and $net != "grpc" then {flow: $flow} else {} end)
+                    + {"client-fingerprint": (if $fp != "" then $fp else "random" end)}
+                    + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
+                    + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
+                    + (if $shadow_tls_password != "" then
+                            {"shadow-tls-opts": {
+                                version: (if ($shadow_tls_version | test("^[0-9]+$")) then ($shadow_tls_version | tonumber) else 2 end),
+                                password: $shadow_tls_password
+                            }}
+                        else {} end)
+                    + (if $restls_password != "" then
+                            {"restls-opts": (
+                                {password: $restls_password}
+                                + (if $restls_version_hint != "" then {"version-hint": $restls_version_hint} else {} end)
+                                + (if $restls_script != "" then {"restls-script": $restls_script} else {} end)
+                            )}
+                        else {} end)
+                    + (if $jls_password != "" then
+                            {"jls-opts": (
+                                {password: $jls_password}
+                                + (if $jls_username != "" then {username: $jls_username} else {} end)
+                            )}
+                        else {} end)
+                end)
             + (if $security == "reality" then
                     {"reality-opts": (
                         (if $pbk != "" then {"public-key": $pbk} else {} end)
                         + (if $sid != "" then {"short-id": $sid} else {} end)
                         + (if $spx != "" then {"spider-x": $spx} else {} end)
+                        + (if $support_x25519mlkem768 == "1" then {"support-x25519mlkem768": true} else {} end)
                     )}
                 else {} end)
-            + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
             + (if $ss_enabled != "" and $ss_method != "" and $ss_password != "" then
                     {"ss-opts": {enabled: true, method: $ss_method, password: $ss_password}}
                 else {} end)
         '
     ) || return 1
-
+ 
     printf '%s' "$proxy_obj"
 }
 
@@ -495,6 +780,11 @@ parse_vless_url() {
     local transport_host="" xhttp_mode="" xhttp_extra=""
     local tfo_value=0 alpn_json proxy_obj xhttp_extra_json='{}'
     local tls_servername=""
+    local pin_sha256="" name_cert_verify="" certificate="" private_key=""
+    local shadow_tls_password="" shadow_tls_version=""
+    local restls_password="" restls_version_hint="" restls_script=""
+    local jls_username="" jls_password=""
+    local support_x25519mlkem768=""
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -523,8 +813,20 @@ parse_vless_url() {
             alpn) alpn="$(url_decode "$v")" ;;
             flow) flow="$v" ;;
             tfo) is_truthy "$v" && tfo_value=1 ;;
-            insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
+            insecure|allowInsecure|skip-cert-verify|skipCertVerify) is_truthy "$v" && insecure=1 ;;
             pbk|public-key) pbk="$v" ;;
+            pinSHA256|fingerprint) pin_sha256="$(url_decode "$v")" ;;
+            name-cert-verify|nameCertVerify|peer) name_cert_verify="$(url_decode "$v")" ;;
+            certificate) certificate="$(url_decode "$v")" ;;
+            privateKey|private-key) private_key="$(url_decode "$v")" ;;
+            shadow-tls-password|shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
+            shadow-tls-version|shadowTlsVersion) shadow_tls_version="$v" ;;
+            restls-password|restlsPassword) restls_password="$(url_decode "$v")" ;;
+            restls-version-hint|restlsVersionHint|restlsVersion) restls_version_hint="$v" ;;
+            restls-script|restlsScript) restls_script="$(url_decode "$v")" ;;
+            jls-username|jlsUsername|jlsUser) jls_username="$(url_decode "$v")" ;;
+            jls-password|jlsPassword) jls_password="$(url_decode "$v")" ;;
+            support-x25519mlkem768|x25519mlkem768|support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
             sid|short-id) sid="$v" ;;
             spx)
                 if [ -n "$v" ]; then
@@ -538,7 +840,7 @@ parse_vless_url() {
                 else
                     path="/"
                 fi ;;
-            serviceName|service-name) sn="$v" ;;
+            serviceName|service-name) sn="$(url_decode "$v")" ;;
             grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
             ping-interval|pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
             packetEncoding|packet-encoding) penc="$v" ;;
@@ -591,6 +893,18 @@ parse_vless_url() {
             --arg path "${path:-/}" \
             --arg ech "$ech" \
             --arg flow "$flow" \
+            --arg pin_sha256 "$pin_sha256" \
+            --arg name_cert_verify "$name_cert_verify" \
+            --arg certificate "$certificate" \
+            --arg private_key "$private_key" \
+            --arg shadow_tls_password "$shadow_tls_password" \
+            --arg shadow_tls_version "$shadow_tls_version" \
+            --arg restls_password "$restls_password" \
+            --arg restls_version_hint "$restls_version_hint" \
+            --arg restls_script "$restls_script" \
+            --arg jls_username "$jls_username" \
+            --arg jls_password "$jls_password" \
+            --arg support_x25519mlkem768 "$support_x25519mlkem768" \
             --arg sn "$sn" \
             --arg grpc_ua "$grpc_ua" \
             --arg grpc_ping_interval "$grpc_ping_interval" \
@@ -612,32 +926,64 @@ parse_vless_url() {
                 network: $net,
                 udp: true
             }
-            + (if $penc != "" then {"packet-encoding": $penc} else {} end)
+            + (if $penc == "none" then {}
+               elif $penc == "packet" then {"packet-addr": true}
+               else {xudp: true} end)
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
             + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
             + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $ip_version != "" then {"ip-version": $ip_version} else {} end)
             + (if $tfo == 1 then {tfo: true} else {} end)
-            + (if $sec == "tls" or $sec == "reality" then
+            + (if $sec == "tls" or $sec == "reality" or $shadow_tls_password != "" or $restls_password != "" or $jls_password != "" then
                     {tls: true}
                     + (if $sni != "" then {servername: $sni} else {} end)
                     + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
+                    + (if $name_cert_verify != "" then {"name-cert-verify": $name_cert_verify} else {} end)
+                    + (if $pin_sha256 != "" then {fingerprint: $pin_sha256} else {} end)
+                    + (if $certificate != "" then {certificate: $certificate} else {} end)
+                    + (if $private_key != "" then {"private-key": $private_key} else {} end)
                     + {"client-fingerprint": (if $fp != "" then $fp else "random" end)}
                     + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
+                    + (if $shadow_tls_password != "" then
+                            {"shadow-tls-opts": {
+                                version: (if ($shadow_tls_version | test("^[0-9]+$")) then ($shadow_tls_version | tonumber) else 2 end),
+                                password: $shadow_tls_password
+                            }}
+                        else {} end)
+                    + (if $restls_password != "" then
+                            {"restls-opts": (
+                                {password: $restls_password}
+                                + (if $restls_version_hint != "" then {"version-hint": $restls_version_hint} else {} end)
+                                + (if $restls_script != "" then {"restls-script": $restls_script} else {} end)
+                            )}
+                        else {} end)
+                    + (if $jls_password != "" then
+                            {"jls-opts": (
+                                {password: $jls_password}
+                                + (if $jls_username != "" then {username: $jls_username} else {} end)
+                            )}
+                        else {} end)
                 else {} end)
             + (if $sec == "reality" then
                     {"reality-opts": (
                         (if $pbk != "" then {"public-key": $pbk} else {} end)
                         + (if $sid != "" then {"short-id": $sid} else {} end)
                         + (if $spx != "" then {"spider-x": $spx} else {} end)
+                        + (if $support_x25519mlkem768 == "1" then {"support-x25519mlkem768": true} else {} end)
                     )}
                 else {} end)
             + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
             + (if $net == "tcp" and $flow != "" then {flow: $flow} else {} end)
             + (if $net == "ws" then
-                    {"ws-opts": (
+                    ($xhttp_extra | if type == "object" then . else {} end) as $xe
+                    | {"ws-opts": (
                         {path: $path}
-                        + (if $transport_host != "" then {headers: {Host: $transport_host}} else {} end)
+                        + (if $transport_host != "" or ($xe.headers // null) != null then
+                                {headers: (
+                                    (if $transport_host != "" then {Host: $transport_host} else {} end)
+                                    + (if ($xe.headers // null) != null then $xe.headers else {} end)
+                                )}
+                           else {} end)
                         + (if $httpupgrade == 1 then {"v2ray-http-upgrade": true} else {} end)
                     )}
                 else {} end)
@@ -928,14 +1274,258 @@ parse_vless_url() {
     printf '%s' "$proxy_obj"
 }
 
+# Parse vmess:// URI (VMessAEAD format: vmess://uuid@host:port?security=...&type=...)
+parse_vmess_url() {
+    local link="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
+    local body="${link#vmess://}"
+    body="${body%%#*}"
+
+    local raw="$body"
+    local uuid="${raw%%@*}"
+    local hostport="${raw#*@}"
+    local host="${hostport%%\?*}"
+    local server
+    server="$(url_decode "${host%%:*}")"
+    local port="${host##*:}"
+    [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
+    port="${port//[!0-9]/}"
+    [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
+
+    local query_part=""
+    case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
+
+    local net="tcp" httpupgrade=0 sec="" sni="" fp="" alpn="" penc="" insecure=0
+    local pbk="" sid="" spx="" sn="" grpc_ua="" enc="" ech="" path=""
+    local grpc_ping_interval=""
+    local transport_host=""
+    local tfo_value=0 alpn_json proxy_obj
+    local tls_servername=""
+    local pin_sha256="" name_cert_verify="" certificate="" private_key=""
+    local shadow_tls_password="" shadow_tls_version=""
+    local restls_password="" restls_version_hint="" restls_script=""
+    local jls_username="" jls_password=""
+    local support_x25519mlkem768=""
+
+    local temp_query="$query_part"
+    while [ -n "$temp_query" ]; do
+        local param="${temp_query%%&*}"
+        temp_query="${temp_query#"$param"}"
+        [ -n "$temp_query" ] && temp_query="${temp_query#&}"
+
+        local k="${param%%=*}"
+        local v="${param#*=}"
+        [ -z "$k" ] && continue
+
+        case "$k" in
+            type)
+                if [ "$v" = "httpupgrade" ]; then
+                    net="ws"
+                    httpupgrade=1
+                else
+                    net="$v"
+                fi ;;
+            security) sec="$v" ;;
+            encryption|cipher) enc="$v" ;;
+            sni) sni="$(url_decode "$v")" ;;
+            host)
+                transport_host="$(url_decode "$v")" ;;
+            fp|client-fingerprint) fp="$v" ;;
+            alpn) alpn="$(url_decode "$v")" ;;
+            tfo) is_truthy "$v" && tfo_value=1 ;;
+            insecure|allowInsecure|skip-cert-verify|skipCertVerify) is_truthy "$v" && insecure=1 ;;
+            pbk|public-key) pbk="$v" ;;
+            pinSHA256|fingerprint) pin_sha256="$(url_decode "$v")" ;;
+            name-cert-verify|nameCertVerify|peer) name_cert_verify="$(url_decode "$v")" ;;
+            certificate) certificate="$(url_decode "$v")" ;;
+            privateKey|private-key) private_key="$(url_decode "$v")" ;;
+            shadow-tls-password|shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
+            shadow-tls-version|shadowTlsVersion) shadow_tls_version="$v" ;;
+            restls-password|restlsPassword) restls_password="$(url_decode "$v")" ;;
+            restls-version-hint|restlsVersionHint|restlsVersion) restls_version_hint="$v" ;;
+            restls-script|restlsScript) restls_script="$(url_decode "$v")" ;;
+            jls-username|jlsUsername|jlsUser) jls_username="$(url_decode "$v")" ;;
+            jls-password|jlsPassword) jls_password="$(url_decode "$v")" ;;
+            support-x25519mlkem768|x25519mlkem768|support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
+            sid|short-id) sid="$v" ;;
+            spx)
+                if [ -n "$v" ]; then
+                    spx="$(url_decode "$v")"
+                else
+                    spx="/"
+                fi ;;
+            path)
+                if [ -n "$v" ]; then
+                    path="$(url_decode "$v")"
+                else
+                    path="/"
+                fi ;;
+            serviceName|service-name) sn="$(url_decode "$v")" ;;
+            grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
+            ping-interval|pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
+            packetEncoding|packet-encoding) penc="$v" ;;
+            ech) ech="$(url_decode "$v")" ;;
+        esac
+    done
+
+    if [ -n "$path" ]; then
+        case "$path" in
+            /*) ;;
+            *) path="/$path" ;;
+        esac
+    fi
+
+    tls_servername="$sni"
+    if [ -z "$tls_servername" ] && [ "$net" = "ws" ] && [ -n "$transport_host" ]; then
+        tls_servername="$transport_host"
+    fi
+
+    if [ "$net" = "grpc" ] && [ -z "$sn" ]; then
+        sn="/"
+    fi
+
+    alpn_json=$(json_array_from_csv "$alpn") || return 1
+
+    proxy_obj=$(
+        jq -nc \
+            --arg name "$name" \
+            --arg uuid "$uuid" \
+            --arg server "$server" \
+            --arg cipher "${enc:-auto}" \
+            --arg net "$net" \
+            --arg penc "$penc" \
+            --arg dialer_proxy "$dialer_proxy" \
+            --arg interface_name "$interface_name" \
+            --arg routing_mark "$routing_mark" \
+            --arg ip_version "$ip_version" \
+            --arg sec "$sec" \
+            --arg sni "$tls_servername" \
+            --arg fp "$fp" \
+            --arg pbk "$pbk" \
+            --arg sid "$sid" \
+            --arg spx "${spx:-/}" \
+            --arg path "${path:-/}" \
+            --arg ech "$ech" \
+            --arg pin_sha256 "$pin_sha256" \
+            --arg name_cert_verify "$name_cert_verify" \
+            --arg certificate "$certificate" \
+            --arg private_key "$private_key" \
+            --arg shadow_tls_password "$shadow_tls_password" \
+            --arg shadow_tls_version "$shadow_tls_version" \
+            --arg restls_password "$restls_password" \
+            --arg restls_version_hint "$restls_version_hint" \
+            --arg restls_script "$restls_script" \
+            --arg jls_username "$jls_username" \
+            --arg jls_password "$jls_password" \
+            --arg support_x25519mlkem768 "$support_x25519mlkem768" \
+            --arg sn "$sn" \
+            --arg grpc_ua "$grpc_ua" \
+            --arg grpc_ping_interval "$grpc_ping_interval" \
+            --arg transport_host "$transport_host" \
+            --argjson port "$port" \
+            --argjson tfo "$tfo_value" \
+            --argjson httpupgrade "$httpupgrade" \
+            --argjson insecure "$insecure" \
+            --argjson alpn "$alpn_json" '
+            {
+                name: $name,
+                type: "vmess",
+                uuid: $uuid,
+                server: $server,
+                port: $port,
+                alterId: 0,
+                cipher: (if $cipher != "" then $cipher else "auto" end),
+                network: $net,
+                udp: true
+            }
+            + (if $penc == "none" then {}
+               elif $penc == "packet" then {"packet-addr": true}
+               else {xudp: true} end)
+            + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
+            + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)
+            + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
+            + (if $ip_version != "" then {"ip-version": $ip_version} else {} end)
+            + (if $tfo == 1 then {tfo: true} else {} end)
+            + (if $sec == "tls" or $sec == "reality" or $shadow_tls_password != "" or $restls_password != "" or $jls_password != "" then
+                    {tls: true}
+                    + (if $sni != "" then {servername: $sni} else {} end)
+                    + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
+                    + (if $name_cert_verify != "" then {"name-cert-verify": $name_cert_verify} else {} end)
+                    + (if $pin_sha256 != "" then {fingerprint: $pin_sha256} else {} end)
+                    + (if $certificate != "" then {certificate: $certificate} else {} end)
+                    + (if $private_key != "" then {"private-key": $private_key} else {} end)
+                    + {"client-fingerprint": (if $fp != "" then $fp else "random" end)}
+                    + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
+                    + (if $shadow_tls_password != "" then
+                            {"shadow-tls-opts": {
+                                version: (if ($shadow_tls_version | test("^[0-9]+$")) then ($shadow_tls_version | tonumber) else 2 end),
+                                password: $shadow_tls_password
+                            }}
+                        else {} end)
+                    + (if $restls_password != "" then
+                            {"restls-opts": (
+                                {password: $restls_password}
+                                + (if $restls_version_hint != "" then {"version-hint": $restls_version_hint} else {} end)
+                                + (if $restls_script != "" then {"restls-script": $restls_script} else {} end)
+                            )}
+                        else {} end)
+                    + (if $jls_password != "" then
+                            {"jls-opts": (
+                                {password: $jls_password}
+                                + (if $jls_username != "" then {username: $jls_username} else {} end)
+                            )}
+                        else {} end)
+                else {} end)
+            + (if $sec == "reality" then
+                    {"reality-opts": (
+                        (if $pbk != "" then {"public-key": $pbk} else {} end)
+                        + (if $sid != "" then {"short-id": $sid} else {} end)
+                        + (if $spx != "" then {"spider-x": $spx} else {} end)
+                        + (if $support_x25519mlkem768 == "1" then {"support-x25519mlkem768": true} else {} end)
+                    )}
+                else {} end)
+            + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
+            + (if $net == "ws" then
+                    {"ws-opts": (
+                        {path: $path}
+                        + (if $transport_host != "" then {headers: {Host: $transport_host}} else {} end)
+                        + (if $httpupgrade == 1 then {"v2ray-http-upgrade": true} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "grpc" then
+                    {"grpc-opts": (
+                        {"grpc-service-name": $sn}
+                        + (if $grpc_ua != "" then {"grpc-user-agent": $grpc_ua} else {} end)
+                        + (if $grpc_ping_interval != "" then {"ping-interval": ($grpc_ping_interval | tonumber)} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "h2" then
+                    {"h2-opts": (
+                        {path: $path}
+                        + (if $transport_host != "" then {host: [$transport_host]} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "http" then
+                    {"http-opts": (
+                        {path: [$path]}
+                        + (if $transport_host != "" then {headers: {Host: [$transport_host]}} else {} end)
+                    )}
+                else {} end)
+        '
+    ) || return 1
+    printf '%s' "$proxy_obj"
+}
+
+
 parse_hysteria2_url() {
     local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
+
 
     local raw="${url#hysteria2://}"
     raw="${raw#hy2://}"
     raw="${raw%%#*}"
 
-    local userinfo hostport password server port query_part
+    local userinfo hostport password server port ports query_part
+    ports=""
     query_part=""
 
     case "$raw" in *\?*) query_part="${raw#*\?}"; raw="${raw%%\?*}"; esac
@@ -952,11 +1542,20 @@ parse_hysteria2_url() {
     server="${hostport%%:*}"
     port="${hostport##*:}"
     [ "$server" = "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
+
+    case "$port" in
+        *[,-]*)
+            ports="$port"
+            port="${ports%%[,-]*}"
+            ;;
+    esac
     port="${port//[!0-9]/}"
     [ -z "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
 
-    local sni="" insecure=0 obfs="" obfs_password="" up="" down="" ports="" alpn="" fingerprint="" ech=""
-    local up_value="" down_value="" alpn_json proxy_obj
+    local sni="" insecure=0 obfs="" obfs_password="" obfs_min="" obfs_max="" bbr_profile=""
+    local up="" down="" alpn="" pin_sha256="" ech="" handshake_timeout="" hop_interval="" name_cert_verify=""
+    local obfs_min_value="" obfs_max_value="" handshake_timeout_value=""
+    local alpn_json proxy_obj
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -970,26 +1569,27 @@ parse_hysteria2_url() {
 
         case "$k" in
             sni) sni="$(url_decode "$v")" ;;
-            insecure|allowInsecure) is_truthy "$v" && insecure=1 ;;
+            insecure|allowInsecure|skip-cert-verify|skipCertVerify) is_truthy "$v" && insecure=1 ;;
             obfs) obfs="$(url_decode "$v")" ;;
             obfs-password|obfsPassword) obfs_password="$(url_decode "$v")" ;;
-            up|upmbps) up="$v" ;;
-            down|downmbps) down="$v" ;;
+            obfs-min-packet-size|obfs-min|obfsMinPacketSize|obfsMin) obfs_min="$v" ;;
+            obfs-max-packet-size|obfs-max|obfsMaxPacketSize|obfsMax) obfs_max="$v" ;;
+            bbr-profile|bbrProfile|bbr) bbr_profile="$(url_decode "$v")" ;;
+            up|upmbps) up="$(url_decode "$v")" ;;
+            down|downmbps) down="$(url_decode "$v")" ;;
             ports) ports="$(url_decode "$v")" ;;
+            hop-interval|hop_interval|hopInterval) hop_interval="$(url_decode "$v")" ;;
+            handshake-timeout|handshakeTimeout) handshake_timeout="$v" ;;
             alpn) alpn="$(url_decode "$v")" ;;
-            fingerprint|fp) fingerprint="$v" ;;
+            pinSHA256|fingerprint|fp|client-fingerprint|clientFingerprint) pin_sha256="$v" ;;
             ech) ech="$(url_decode "$v")" ;;
+            name-cert-verify|nameCertVerify|peer) name_cert_verify="$(url_decode "$v")" ;;
         esac
     done
 
-    [ -n "$up" ] && {
-        up_value="${up//[!0-9]/}"
-        is_uint "$up_value" || return 1
-    }
-    [ -n "$down" ] && {
-        down_value="${down//[!0-9]/}"
-        is_uint "$down_value" || return 1
-    }
+    [ -n "$obfs_min" ] && obfs_min_value="${obfs_min//[!0-9]/}"
+    [ -n "$obfs_max" ] && obfs_max_value="${obfs_max//[!0-9]/}"
+    [ -n "$handshake_timeout" ] && handshake_timeout_value="${handshake_timeout//[!0-9]/}"
     alpn_json=$(json_array_from_csv "$alpn") || return 1
 
     proxy_obj=$(
@@ -1004,14 +1604,20 @@ parse_hysteria2_url() {
             --arg sni "$sni" \
             --arg obfs "$obfs" \
             --arg obfs_password "$obfs_password" \
+            --arg obfs_min "$obfs_min_value" \
+            --arg obfs_max "$obfs_max_value" \
+            --arg bbr_profile "$bbr_profile" \
             --arg ports "$ports" \
-            --arg fingerprint "$fingerprint" \
+            --arg hop_interval "$hop_interval" \
+            --arg pin_sha256 "$pin_sha256" \
             --arg ech "$ech" \
+            --arg handshake_timeout "$handshake_timeout_value" \
+            --arg name_cert_verify "$name_cert_verify" \
             --argjson port "$port" \
             --argjson insecure "$insecure" \
             --argjson alpn "$alpn_json" \
-            --arg up "$up_value" \
-            --arg down "$down_value" '
+            --arg up "$up" \
+            --arg down "$down" '
             {
                 name: $name,
                 type: "hysteria2",
@@ -1026,15 +1632,21 @@ parse_hysteria2_url() {
             + (if $ip_version != "" then {"ip-version": $ip_version} else {} end)
             + (if $sni != "" then {sni: $sni} else {} end)
             + (if $insecure == 1 then {"skip-cert-verify": true} else {} end)
+            + (if $name_cert_verify != "" then {"name-cert-verify": $name_cert_verify} else {} end)
             + (if $obfs != "" and $obfs != "none" then
                     {obfs: $obfs}
                     + (if $obfs_password != "" then {"obfs-password": $obfs_password} else {} end)
+                    + (if $obfs_min != "" then {"obfs-min-packet-size": ($obfs_min | tonumber)} else {} end)
+                    + (if $obfs_max != "" then {"obfs-max-packet-size": ($obfs_max | tonumber)} else {} end)
                 else {} end)
-            + (if $up != "" then {up: ($up | tonumber)} else {} end)
-            + (if $down != "" then {down: ($down | tonumber)} else {} end)
+            + (if $up != "" then {up: (if ($up | test("^[0-9]+$")) then ($up | tonumber) else $up end)} else {} end)
+            + (if $down != "" then {down: (if ($down | test("^[0-9]+$")) then ($down | tonumber) else $down end)} else {} end)
+            + (if $bbr_profile != "" then {"bbr-profile": $bbr_profile} else {} end)
             + (if $ports != "" then {ports: $ports} else {} end)
+            + (if $hop_interval != "" then {"hop-interval": (if ($hop_interval | test("^[0-9]+$")) then ($hop_interval | tonumber) else $hop_interval end)} else {} end)
             + (if ($alpn | length) > 0 then {alpn: $alpn} else {} end)
-            + {"fingerprint": (if $fingerprint != "" then $fingerprint else "random" end)}
+            + (if $pin_sha256 != "" then {fingerprint: $pin_sha256} else {} end)
+            + (if $handshake_timeout != "" then {"handshake-timeout": ($handshake_timeout | tonumber)} else {} end)
             + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
         '
     ) || return 1
@@ -1074,11 +1686,11 @@ parse_mieru_url() {
         *)
             username="$(url_decode "$auth")"
             ;;
-    esac
+        esac
     fi
 
-    local multiplexing transport handshake_mode port
-    multiplexing="" transport="" handshake_mode="" port=""
+    local multiplexing="" transport="" handshake_mode="" traffic_pattern=""
+    local port_val="" port_range=""
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -1091,22 +1703,32 @@ parse_mieru_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-            # Seems MTU aren't there in mihomo
-            #mtu) mtu="$v" ;;
             multiplexing) multiplexing="$v" ;;
-            protocol) transport="$v" ;;
             handshake-mode) handshake_mode="$v" ;;
-            port) port="$v" ;;
+            traffic-pattern) traffic_pattern="$(url_decode "$v")" ;;
+            port)
+                local decoded_port
+                decoded_port="$(url_decode "$v")"
+                case "$decoded_port" in
+                    *-*)
+                        port_range="$decoded_port"
+                        port_val=""
+                        ;;
+                    *)
+                        port_val="$decoded_port"
+                        port_range=""
+                        ;;
+                esac
+                ;;
+            protocol)
+                local decoded_proto
+                decoded_proto="$(url_decode "$v")"
+                transport=$(printf '%s' "$decoded_proto" | tr '[:upper:]' '[:lower:]')
+                ;;
         esac
     done
 
     local proxy_obj
-
-    if [ -n "$port" ]; then
-        port="${port//[!0-9]/}"
-        [ -z "$port" ] && port=""
-    fi
-
     proxy_obj=$(
         jq -nc \
             --arg name "$name" \
@@ -1120,7 +1742,9 @@ parse_mieru_url() {
             --arg routing_mark "$routing_mark" \
             --arg ip_version "$ip_version" \
             --arg multiplexing "$multiplexing" \
-            --arg port "$port" '
+            --arg traffic_pattern "$traffic_pattern" \
+            --arg port_range "$port_range" \
+            --arg port_val "$port_val" '
             {
                 name: $name,
                 type: "mieru",
@@ -1136,7 +1760,9 @@ parse_mieru_url() {
             + (if $routing_mark != "" then {"routing-mark": ($routing_mark | tonumber)} else {} end)
             + (if $ip_version != "" then {"ip-version": $ip_version} else {} end)
             + (if $multiplexing != "" then {multiplexing: $multiplexing} else {} end)
-            + (if $port != "" then {port: ($port | tonumber)} else {} end)
+            + (if $traffic_pattern != "" then {"traffic-pattern": $traffic_pattern} else {} end)
+            + (if $port_range != "" then {"port-range": $port_range} else {} end)
+            + (if $port_val != "" then {port: ($port_val | tonumber)} else {} end)
         '
     ) || return 1
 
