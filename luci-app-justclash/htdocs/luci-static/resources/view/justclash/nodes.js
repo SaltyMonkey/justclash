@@ -77,6 +77,7 @@ const normalizeProvidersState = (response) => {
             name: provider.name,
             vehicleType: provider.vehicleType || provider.type || "",
             updatedAt: provider.updatedAt || "",
+            subscriptionUserinfo: provider.subscriptionUserinfo || provider.subscriptionInfo || null,
             proxies: Array.isArray(provider.proxies)
                 ? provider.proxies.filter((proxy) => lower(proxy?.type) !== "compatible")
                 : []
@@ -268,7 +269,7 @@ return view.extend({
         };
 
         const handleProviderDelay = async (provider) => {
-            if (state.loading || state.delayLoadingGroup || state.delayLoadingProvider)
+            if (state.loading || state.delayLoadingGroup || state.delayLoadingProvider || state.updatingProvider)
                 return;
 
             state.delayLoadingProvider = provider.name;
@@ -286,6 +287,26 @@ return view.extend({
                 state.delayLoadingProvider = "";
                 syncModeSelect();
                 rerenderProviderSection(provider.name);
+            }
+        };
+
+        const handleProviderUpdate = async (provider) => {
+            if (state.loading || state.delayLoadingGroup || state.delayLoadingProvider || state.updatingProvider)
+                return;
+
+            state.updatingProvider = provider.name;
+            syncModeSelect();
+            rerenderProviderSection(provider.name);
+
+            try {
+                await mihomoApi.updateProxyProvider(provider.name, state.token, 30000);
+                await fetchNodesState();
+            } catch (e) {
+                ui.addNotification(null, E("p", _("Failed to update provider %s: %s").format(provider.name, e.message)), "error");
+            } finally {
+                state.updatingProvider = "";
+                syncModeSelect();
+                renderNodes();
             }
         };
 
@@ -384,9 +405,33 @@ return view.extend({
             ]);
         };
 
+        const formatSubscriptionInfo = (info) => {
+            if (!info || typeof info !== "object") return null;
+
+            const d = info.Download || info.download || 0;
+            const u = info.Upload || info.upload || 0;
+            const t = info.Total || info.total || 0;
+            const e = info.Expire || info.expire || 0;
+
+            if (!d && !u && !t && !e) return null;
+
+            const usedStr = common.formatBytes(d + u);
+            const totalStr = t === 0 ? "∞" : common.formatBytes(t);
+
+            let text = `${_("Traffic")}: ${usedStr} / ${totalStr}`;
+
+            if (e) {
+                const date = new Date(e * 1000);
+                text += ` | ${_("Expire")}: ${date.toLocaleDateString()}`;
+            }
+
+            return text;
+        };
+
         const createProviderSection = (provider) => {
             const updatedText = formatProviderUpdatedAt(provider.updatedAt);
             const isDelayLoading = state.delayLoadingProvider === provider.name;
+            const isUpdating = state.updatingProvider === provider.name;
             const delayButton = E("button", {
                 type: "button",
                 class: "cbi-button cbi-button-neutral jc-group-delay-button",
@@ -398,18 +443,39 @@ return view.extend({
                     await handleProviderDelay(provider);
                 }
             }, isDelayLoading ? _("Testing...") : _("Test delay"));
+            
+            const updateButton = E("button", {
+                type: "button",
+                class: "cbi-button cbi-button-action jc-group-delay-button",
+                title: _("Update"),
+                "aria-label": _("Update"),
+                click: async (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    await handleProviderUpdate(provider);
+                }
+            }, isUpdating ? _("Updating...") : _("Update"));
 
-            delayButton.disabled = !!state.loading || !!state.delayLoadingGroup || !!state.delayLoadingProvider;
+            const isDisabled = !!state.loading || !!state.delayLoadingGroup || !!state.delayLoadingProvider || !!state.updatingProvider;
+            delayButton.disabled = isDisabled;
+            updateButton.disabled = isDisabled;
+
+            const subInfoText = formatSubscriptionInfo(provider.subscriptionUserinfo || provider.subscriptionInfo);
+            const subInfoNode = subInfoText ? E("div", { class: "jc-provider-subinfo", style: "font-size:0.85em;opacity:0.75;" }, subInfoText) : "";
 
             return E("section", { class: "jc-group-section jc-provider-section" }, [
                 E("div", { class: "jc-group-header" }, [
-                    E("h4", { class: "jc-group-title" }, provider.name),
+                    E("div", { style: "display:flex;flex-direction:column;gap:0.15rem;" }, [
+                        E("h4", { class: "jc-group-title" }, provider.name),
+                        subInfoNode
+                    ]),
                     E("div", { class: "jc-group-header-actions" }, [
                         E("div", { class: "jc-group-badges" }, [
                             provider.vehicleType ? E("span", { class: "jc-group-badge" }, provider.vehicleType) : "",
                             E("span", { class: "jc-group-badge" }, String((provider.proxies || []).length)),
                             updatedText ? E("span", { class: "jc-group-badge" }, updatedText) : ""
                         ]),
+                        updateButton,
                         delayButton
                     ])
                 ]),
@@ -609,20 +675,20 @@ return view.extend({
             .jc-provider-section .jc-group-title{font-weight:500;}
             .jc-group-header-actions{justify-content:flex-end;gap:0.5rem;}
             .jc-group-badges{gap:0.25rem;}
-            .jc-group-badge{display:inline-flex;align-items:center;padding:0.1rem 0.55rem;border-radius:9999px;font-size:0.8em;line-height:1.25;font-family:inherit;box-sizing:border-box;color:var(--primary-color-medium, #4f8cff);border:1px solid rgba(79,140,255,0.25);background:rgba(79,140,255,0.1);font-weight:600;}
-            .jc-group-badge-current{color:var(--warning-color-medium, #fd7e14);border-color:rgba(253,126,20,0.25);background:rgba(253,126,20,0.1);font-weight:600;}
-            .jc-option-meta-current{color:var(--warning-color-medium, #fd7e14);font-weight:600;}
-            button.cbi-button.jc-group-delay-button{display:inline-flex;align-items:center;font:inherit;font-family:inherit;font-size:0.88em;font-weight:500;line-height:1.2;margin:0;min-width:0;min-height:0;height:auto;padding:0.18rem 0.5rem;border-radius:0.25rem;box-sizing:border-box;color:var(--success-color-medium, #2f9e44);border:1px solid rgba(47, 158, 68, 0.3);background:rgba(47, 158, 68, 0.05);appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
-            button.cbi-button.jc-group-delay-button:hover:not(:disabled),button.cbi-button.jc-group-delay-button:focus-visible:not(:disabled){border-color:var(--success-color-medium, #2f9e44);background:rgba(47, 158, 68, 0.12);transform:translateY(-0.0625rem);}
+            .jc-group-badge{display:inline-flex;align-items:center;padding:0.1rem 0.55rem;border-radius:9999px;font-size:0.8em;line-height:1.25;font-family:inherit;box-sizing:border-box;color:var(--primary-color-medium, #4f8cff);border:1px solid color-mix(in srgb, var(--primary-color-medium, #4f8cff) 25%, transparent);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 10%, transparent);font-weight:600;}
+            .jc-group-badge-current{color:var(--warn-color-medium, #fd7e14);border-color:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 25%, transparent);background:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 10%, transparent);font-weight:600;}
+            .jc-option-meta-current{color:var(--warn-color-medium, #fd7e14);font-weight:600;}
+            button.cbi-button.jc-group-delay-button{display:inline-flex;align-items:center;font:inherit;font-family:inherit;font-size:0.88em;font-weight:500;line-height:1.2;margin:0;min-width:0;min-height:0;height:auto;padding:0.18rem 0.5rem;border-radius:0.25rem;box-sizing:border-box;color:var(--success-color-medium, #2f9e44);border:1px solid color-mix(in srgb, var(--success-color-medium, #2f9e44) 30%, transparent);background:color-mix(in srgb, var(--success-color-medium, #2f9e44) 6%, transparent);appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
+            button.cbi-button.jc-group-delay-button:hover:not(:disabled),button.cbi-button.jc-group-delay-button:focus-visible:not(:disabled){border-color:var(--success-color-medium, #2f9e44);background:color-mix(in srgb, var(--success-color-medium, #2f9e44) 12%, transparent);transform:translateY(-0.0625rem);}
             button.cbi-button.jc-group-delay-button:disabled,.jc-option-card:disabled{opacity:.7;transform:none;}
-            .jc-option-card:hover:not(:disabled),.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:rgba(79, 140, 255, .06);transform:translateY(-0.0625rem);}
+            .jc-option-card:hover:not(:disabled),.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 6%, transparent);transform:translateY(-0.0625rem);}
             .jc-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(10.3125rem, 1fr));gap:0.75rem;}
             .jc-card{padding:.75em;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.25rem;box-sizing:border-box;}
             .jc-card-header{align-self:flex-start;margin-bottom:.7em;padding:.2em .45em;border-radius:0.375rem;}
-            .jc-provider-card{cursor:default;background:rgba(240, 140, 0, .08);transform:none;border:1px solid rgba(240, 140, 0, .35);transition:none;}
+            .jc-provider-card{cursor:default;background:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 8%, transparent);transform:none;border:1px solid color-mix(in srgb, var(--warn-color-medium, #fd7e14) 35%, transparent);transition:none;}
             .jc-option-card{width:100%;align-items:flex-start;gap:.35em;text-align:left;cursor:pointer;background:transparent;color:inherit;font:inherit;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
             .jc-option-card:disabled{cursor:default;}
-            .jc-option-card-active{border-color:var(--primary-color-medium, #4f8cff);background:rgba(79, 140, 255, .08);}
+            .jc-option-card-active{border-color:var(--primary-color-medium, #4f8cff);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 8%, transparent);}
             .jc-option-card-top,.jc-option-card-bottom{width:100%;display:flex;align-items:flex-start;justify-content:space-between;}
             .jc-option-card-top{gap:0.5rem;}
             .jc-option-card-bottom{gap:0.75rem;}
@@ -634,11 +700,9 @@ return view.extend({
             .jc-option-meta-timeout{color:var(--error-color-medium, #f44336);}
             .jc-empty-card{min-height:11.25rem;}
             .jc-empty-text{margin:0;color:var(--text-color-medium, #888);white-space:normal;}
-            [data-theme="dark"] .jc-card-header,[data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
-            [data-theme="dark"] .jc-group-badge{color:#66a1ff;border-color:rgba(102,161,255,0.3);background:rgba(79,140,255,0.16);}
-            [data-theme="dark"] .jc-group-badge-current{color:var(--warning-color-medium, #fd7e14);border-color:rgba(253,126,20,0.3);background:rgba(253,126,20,0.14);}
-            [data-theme="dark"] .jc-option-card:hover:not(:disabled),[data-theme="dark"] .jc-option-card:focus-visible:not(:disabled){background:rgba(79, 140, 255, .12);}
-            [data-theme="dark"] .jc-option-card-active{background:rgba(79, 140, 255, .14);}
+            :root[data-darkmode="true"] .jc-card-header,:root[data-darkmode="true"] .jc-actions-wrap{border-color:var(--border-color-medium, rgba(255,255,255,.08));background:var(--background-color-high, rgba(255,255,255,.04));}
+            :root[data-darkmode="true"] .jc-option-card:hover:not(:disabled),:root[data-darkmode="true"] .jc-option-card:focus-visible:not(:disabled){background:color-mix(in srgb, var(--primary-color-medium, #66a1ff) 12%, transparent);}
+            :root[data-darkmode="true"] .jc-option-card-active{background:color-mix(in srgb, var(--primary-color-medium, #66a1ff) 14%, transparent);}
             @media (max-width:43.75rem){.jc-group-header{align-items:flex-start;}.jc-option-grid{grid-template-columns:1fr 1fr;}}
             @media (max-width:32.5rem){.jc-option-grid{grid-template-columns:1fr;}}
         `);

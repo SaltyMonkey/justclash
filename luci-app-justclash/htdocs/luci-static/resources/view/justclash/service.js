@@ -71,15 +71,6 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.ListValue, "mihomo_mem_limit", _("GOMEMLIMIT (Memory limit):"));
-        common.defaultGoMemLimitValues.forEach(item => {
-            o.value(item.value, item.text);
-        });
-        o.description = _("Limit the Go garbage collector memory usage (in MiB). Select a predefined limit or 0 to disable.");
-        o.datatype = datatypes.STRING;
-        o.rmempty = false;
-        o.default = common.defaultGoMemLimitValues[0].value;
-
         tabname = "servicestorage_tab";
         s.tab(tabname, _("Storage"));
 
@@ -347,14 +338,16 @@ return view.extend({
         o.description = _("Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'");
         o.placeholder = "https://example.com/mihomo";
         o.depends("mihomo_core_source_type", "custom");
-        o.rmempty = false;
+        o.rmempty = true;
         o.retain = true;
         o.validate = function (section_id, value) {
+            if (!value) return true;
             return common.validateHttpUrl(value);
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_rulesets_files_download_url", _("Rulesets download URL:"));
         o.description = _("URL to download inbuild rulesets from. Leave empty to use the default.");
+        o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpUrl(value);
@@ -362,6 +355,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_geosite_url", _("Geosite download URL:"));
         o.description = _("URL to download geosite.dat from. Leave empty to use the default.");
+        o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpUrl(value);
@@ -369,6 +363,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_geoip_url", _("GeoIP download URL:"));
         o.description = _("URL to download geoip.dat from. Leave empty to use the default.");
+        o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpUrl(value);
@@ -376,6 +371,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_zashboard_url", _("Zashboard download URL:"));
         o.description = _("URL to download Zashboard dashboard from. Leave empty to use the default.");
+        o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpZipUrl(value);
@@ -383,6 +379,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_metacubexd_url", _("Metacubexd download URL:"));
         o.description = _("URL to download Metacubexd dashboard from. Leave empty to use the default.");
+        o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpZipUrl(value);
@@ -390,10 +387,42 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_yacd_meta_url", _("YACD-meta download URL:"));
         o.description = _("URL to download YACD-meta dashboard from. Leave empty to use the default.");
+        o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpZipUrl(value);
         };
+
+        tabname = "serviceresources_tab";
+        s.tab(tabname, _("Kernel limits"));
+
+        o = s.taboption(tabname, form.Value, "mihomo_mem_limit", _("GOMEMLIMIT (Memory limit):"));
+        common.defaultGoMemLimitValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.description = _("Limit the Go garbage collector memory usage (in MiB). Select a predefined limit or 0 to disable.");
+        o.datatype = datatypes.UINTEGER;
+        o.rmempty = false;
+        o.default = common.defaultGoMemLimitValues[0].value;
+
+        o = s.taboption(tabname, form.Value, "mihomo_gogc", _("GOGC (GC Target):"));
+        common.defaultGoGCValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.description = _("Set the Go garbage collector target percentage. Lower values (e.g., 25 or 50) reduce RAM usage but increase CPU load. Select 0 for default (100).");
+        o.datatype = datatypes.UINTEGER;
+        o.placeholder = "100";
+        o.rmempty = false;
+        o.default = common.defaultGoGCValues[0].value;
+
+        o = s.taboption(tabname, form.Value, "mihomo_gomaxprocs", _("GOMAXPROCS (CPU Threads):"));
+        common.defaultGoMaxProcsValues.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.description = _("Limit the number of CPU threads Mihomo can use. Set to 1 or 2 on multi-core routers to leave CPU available for system routing. Select 0 for default (all cores).");
+        o.datatype = datatypes.UINTEGER;
+        o.rmempty = false;
+        o.default = common.defaultGoMaxProcsValues[0].value;
 
         const style = E("style", {}, `
             .cbi-value[data-name="routing_mode"] .cbi-value-title,

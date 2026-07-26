@@ -10,34 +10,12 @@
 const DEFAULT_CONNECTIONS_INTERVAL = 1000;
 const CONNECTIONS_INTERVAL_OPTIONS = [250, 500, 1000, 2000, 5000];
 
-let wsCleanups = [];
-let noConnectionsMsg = null;
-let visibilityChangeHandler = null;
-let beforeUnloadHandler = null;
-
-const connectionsData = new Map();
-
 const formatConnection = (conn) => ({
     src: conn.metadata.sourceIP + ":" + conn.metadata.sourcePort,
     dest: conn.metadata.destinationIP
         ? conn.metadata.destinationIP + ":" + conn.metadata.destinationPort
         : (conn.metadata.remoteDestination || "")
 });
-
-const cleanup = () => {
-    wsCleanups.forEach(fn => fn());
-    wsCleanups = [];
-    if (visibilityChangeHandler) {
-        document.removeEventListener("visibilitychange", visibilityChangeHandler);
-        visibilityChangeHandler = null;
-    }
-    if (beforeUnloadHandler) {
-        window.removeEventListener("beforeunload", beforeUnloadHandler);
-        beforeUnloadHandler = null;
-    }
-    noConnectionsMsg = null;
-    connectionsData.clear();
-};
 
 const normalizeFilterValue = (value) => String(value || "").trim().toLowerCase();
 const buildNormalizedConnection = (conn) => {
@@ -85,44 +63,11 @@ const showCloseAllConnectionsModal = (onConfirm) => {
     ]);
 };
 
-const showConnectionDetails = (connId) => {
-    const connData = connectionsData.get(connId);
-    if (!connData) return;
-    const jsonString = JSON.stringify(connData.raw, null, 2);
-
-    const createModalCopyBtn = (isJson) => E("button", {
-        class: "cbi-button cbi-button-action",
-        style: isJson ? "margin-left: 0.3125rem;" : "",
-        click: async () => {
-            try {
-                const content = isJson ? jsonString : common.formatConnectionSummary(connData.raw);
-                await clipboard.copy(content || "");
-                ui.hideModal();
-            } catch (e) {
-                ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
-                console.error("Failed to copy connection details to clipboard", e);
-            }
-        }
-    }, [isJson ? _("Copy JSON") : _("Copy Summary")]);
-
-    ui.showModal(_("Connection details"), [
-        E("pre", { class: "jc-modal-pre" }, jsonString),
-        E("div", { class: "jc-modal-actions" }, [
-            createModalCopyBtn(false),
-            createModalCopyBtn(true),
-            E("button", {
-                class: "cbi-button",
-                style: "margin-left: 0.3125rem;",
-                click: ui.hideModal
-            }, [_("Close")])
-        ])
-    ]);
-};
-
 return view.extend({
     handleSave: null,
     handleSaveApply: null,
     handleReset: null,
+
 
     load: async function () {
         try {
@@ -142,7 +87,61 @@ return view.extend({
     },
 
     render: function (result) {
-        cleanup();
+        let wsCleanups = [];
+        let noConnectionsMsg = null;
+        let visibilityChangeHandler = null;
+        let beforeUnloadHandler = null;
+
+        const connectionsData = new Map();
+
+        const cleanup = () => {
+            wsCleanups.forEach(fn => fn());
+            wsCleanups = [];
+            if (visibilityChangeHandler) {
+                document.removeEventListener("visibilitychange", visibilityChangeHandler);
+                visibilityChangeHandler = null;
+            }
+            if (beforeUnloadHandler) {
+                window.removeEventListener("beforeunload", beforeUnloadHandler);
+                beforeUnloadHandler = null;
+            }
+            noConnectionsMsg = null;
+            connectionsData.clear();
+        };
+
+        const showConnectionDetails = (connId) => {
+            const connData = connectionsData.get(connId);
+            if (!connData) return;
+            const jsonString = JSON.stringify(connData.raw, null, 2);
+
+            const createModalCopyBtn = (isJson) => E("button", {
+                class: "cbi-button cbi-button-action",
+                style: isJson ? "margin-left: 0.3125rem;" : "",
+                click: async () => {
+                    try {
+                        const content = isJson ? jsonString : common.formatConnectionSummary(connData.raw);
+                        await clipboard.copy(content || "");
+                        ui.hideModal();
+                    } catch (e) {
+                        ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
+                        console.error("Failed to copy connection details to clipboard", e);
+                    }
+                }
+            }, [isJson ? _("Copy JSON") : _("Copy Summary")]);
+
+            ui.showModal(_("Connection details"), [
+                E("pre", { class: "jc-modal-pre" }, jsonString),
+                E("div", { class: "jc-modal-actions" }, [
+                    createModalCopyBtn(false),
+                    createModalCopyBtn(true),
+                    E("button", {
+                        class: "cbi-button",
+                        style: "margin-left: 0.3125rem;",
+                        click: ui.hideModal
+                    }, [_("Close")])
+                ])
+            ]);
+        };
 
         const container = E("div", { class: "cbi-section fade-in" });
         container.appendChild(E("h3", { class: "cbi-section-title" }, _("Active Connections")));
@@ -158,15 +157,15 @@ return view.extend({
             rule: ""
         };
 
-        const table = E("div", { class: "jc-table compact-table" });
+        const table = E("div", { class: "jc-table jc-compact-table" });
 
-        const header = E("div", { class: "flex-header" }, [
-            E("div", { class: "c-proto" }, _("Proto")),
-            E("div", { class: "c-conn" }, _("Connection")),
-            E("div", { class: "c-host" }, _("Host/Sniff")),
-            E("div", { class: "c-chains" }, _("Chains")),
-            E("div", { class: "c-rule" }, _("Rule")),
-            E("div", { class: "c-action" }, _("Action"))
+        const header = E("div", { class: "jc-flex-header" }, [
+            E("div", { class: "jc-c-proto" }, _("Proto")),
+            E("div", { class: "jc-c-conn" }, _("Connection")),
+            E("div", { class: "jc-c-host" }, _("Host/Sniff")),
+            E("div", { class: "jc-c-chains" }, _("Chains")),
+            E("div", { class: "jc-c-rule" }, _("Rule")),
+            E("div", { class: "jc-c-action" }, _("Action"))
         ]);
 
         const hostSniffFilterInput = E("input", {
@@ -290,15 +289,15 @@ return view.extend({
 
         function createRow(conn) {
             const key = conn.id;
-            const row = E("div", { class: "flex-row clickable", "data-key": key, click: () => showConnectionDetails(key) });
-            row.appendChild(E("div", { class: "c-proto", "data-label": _("Proto") }, ""));
-            row.appendChild(E("div", { class: "c-conn hide-mobile", "data-label": _("Connection") }, ""));
-            row.appendChild(E("div", { class: "c-src show-mobile", "data-label": _("Source") }, ""));
-            row.appendChild(E("div", { class: "c-dest show-mobile", "data-label": _("Destination") }, ""));
-            row.appendChild(E("div", { class: "c-host", "data-label": _("Host/Sniff") }, ""));
-            row.appendChild(E("div", { class: "c-chains", "data-label": _("Chains") }, ""));
-            row.appendChild(E("div", { class: "c-rule", "data-label": _("Rule") }, ""));
-            row.appendChild(E("div", { class: "c-action c-action-cell", "data-label": _("Action") }, [
+            const row = E("div", { class: "jc-flex-row jc-clickable", "data-key": key, click: () => showConnectionDetails(key) });
+            row.appendChild(E("div", { class: "jc-c-proto", "data-label": _("Proto") }, ""));
+            row.appendChild(E("div", { class: "jc-c-conn jc-hide-mobile", "data-label": _("Connection") }, ""));
+            row.appendChild(E("div", { class: "jc-c-src jc-show-mobile", "data-label": _("Source") }, ""));
+            row.appendChild(E("div", { class: "jc-c-dest jc-show-mobile", "data-label": _("Destination") }, ""));
+            row.appendChild(E("div", { class: "jc-c-host", "data-label": _("Host/Sniff") }, ""));
+            row.appendChild(E("div", { class: "jc-c-chains", "data-label": _("Chains") }, ""));
+            row.appendChild(E("div", { class: "jc-c-rule", "data-label": _("Rule") }, ""));
+            row.appendChild(E("div", { class: "jc-c-action jc-c-action-cell", "data-label": _("Action") }, [
                 E("button", {
                     class: "jc-connection-close",
                     title: _("Close connection"),
@@ -461,6 +460,10 @@ return view.extend({
         };
 
         const handleConnectionsMessage = (event) => {
+            if (!document.body.contains(table)) {
+                cleanup();
+                return;
+            }
             try {
                 const data = JSON.parse(event.data);
                 const conns = Array.isArray(data.connections) ? data.connections : [];
@@ -620,6 +623,7 @@ return view.extend({
             };
 
             window.addEventListener("beforeunload", beforeUnloadHandler);
+
             wsCleanups.push(() => {
                 stopConnectionsSocket();
             });
@@ -627,14 +631,14 @@ return view.extend({
 
         const style = E("style", {}, `
             .jc-table{display:flex;flex-direction:column;width:100%;font-size:0.9em;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.5rem;overflow:hidden;background-color:var(--background-color-low, #fff);margin-bottom:1rem;}
-            [data-theme="dark"] .jc-table{background-color:rgba(0,0,0,.1);}
-            .flex-header,.flex-row{display:grid;grid-template-columns:4rem minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 0.6fr) minmax(0, 0.6fr) 3rem;align-items:center;}
-            .jc-connections-actions,.jc-connections-filters,.jc-interval-control,.c-action{display:flex;align-items:center;}
-            .flex-header{border-bottom:1px solid var(--border-color-medium, #d9d9d9);font-weight:bold;background-color:var(--background-color-medium, #f6f6f6);padding:0.25rem 0.9375rem;}
-            .flex-row{padding:0.1875rem 0.9375rem;border-bottom:1px solid transparent;transition:background-color .15s ease;}
-            .flex-row:nth-child(odd){background:var(--background-color-medium, #fafafa);}
-            .flex-row.clickable:hover{background-color:rgba(180,180,180,.2);cursor:pointer;}
-            [data-theme="dark"] .flex-row.clickable:hover{background-color:rgba(100,100,100,.2);}
+            :root[data-darkmode="true"] .jc-table{background-color:var(--background-color-low, rgba(0,0,0,.1));}
+            .jc-flex-header,.jc-flex-row{display:grid;grid-template-columns:4rem minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 0.6fr) minmax(0, 0.6fr) 3rem;align-items:center;}
+            .jc-connections-actions,.jc-connections-filters,.jc-interval-control,.jc-c-action{display:flex;align-items:center;}
+            .jc-flex-header{border-bottom:1px solid var(--border-color-medium, #d9d9d9);font-weight:bold;background-color:var(--background-color-medium, #f6f6f6);padding:0.25rem 0.9375rem;}
+            .jc-flex-row{padding:0.1875rem 0.9375rem;border-bottom:1px solid transparent;transition:background-color .15s ease;}
+            .jc-flex-row:nth-child(odd){background:var(--background-color-medium, #fafafa);}
+            .jc-flex-row.jc-clickable:hover{background-color:var(--background-color-high, rgba(180,180,180,.2));cursor:pointer;}
+            :root[data-darkmode="true"] .jc-flex-row.jc-clickable:hover{background-color:var(--background-color-high, rgba(100,100,100,.2));}
             .jc-actions-wrap{padding:.7em .8em;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.375rem;background:var(--background-color-medium, #f6f6f6);margin-bottom:0.75rem;}
             .jc-primary-actions{display:flex;flex-wrap:wrap;gap:.65em;margin:0;}
             .jc-left-group{display:flex;gap:.65em;align-items:center;flex-wrap:wrap;}
@@ -642,45 +646,47 @@ return view.extend({
             .jc-interval-control{gap:0.625rem;flex-wrap:wrap;}
             .jc-interval-select{width:auto;min-width:11.25rem;margin:0;}
             .jc-filter-input{flex:1 1 11.25rem;min-width:10rem;margin:0;}
-            .flex-header > div, .flex-row > div { min-width: 0; word-break: break-all; }
-            .c-action{justify-content:flex-end;}
-            .c-action-cell{padding-right:0.25rem;}
+            .jc-flex-header > div, .jc-flex-row > div { min-width: 0; word-break: break-all; }
+            .jc-c-action{justify-content:flex-end;}
+            .jc-c-action-cell{padding-right:0.25rem;}
             .jc-connection-close{appearance:none;background:none;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.375rem;min-width:1.75rem;width:1.75rem;height:1.75rem;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:1.1em;font-weight:700;line-height:1;color:var(--error-color-medium, #f44336);cursor:pointer;transition:background-color .15s ease, border-color .15s ease;}
-            .jc-connection-close:hover:not(:disabled){background-color:rgba(203,10,18,.1);border-color:var(--error-color-medium, #f44336);}
-            .jc-connection-close:active:not(:disabled){background-color:rgba(203,10,18,.2);}
+            .jc-connection-close:hover:not(:disabled){background-color:color-mix(in srgb, var(--error-color-medium, #f44336) 10%, transparent);border-color:var(--error-color-medium, #f44336);}
+            .jc-connection-close:active:not(:disabled){background-color:color-mix(in srgb, var(--error-color-medium, #f44336) 20%, transparent);}
             .jc-connection-close:disabled{opacity:.4;cursor:default;}
-            .show-mobile{display:none;}
+            .jc-show-mobile{display:none;}
             .jc-hidden-row{display:none !important;}
             .jc-modal-pre{max-height:28rem;overflow:auto;font-weight:normal;font-family:ui-monospace,monospace;}
             .jc-modal-actions{text-align:right;margin-top:0.625rem;}
             .jc-modal-actions .cbi-button+.cbi-button{margin-left:0.3125rem;}
-            [data-theme="dark"] .jc-actions-wrap{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
-            [data-theme="dark"] .jc-connection-close{border-color:rgba(255,255,255,.12);}
+            :root[data-darkmode="true"] .jc-actions-wrap{border-color:var(--border-color-medium, rgba(255,255,255,.08));background:var(--background-color-high, rgba(255,255,255,.04));}
+            :root[data-darkmode="true"] .jc-connection-close{border-color:var(--border-color-medium, rgba(255,255,255,.12));}
             .jc-badge-proto,.jc-badge-builtin,.jc-badge-rule{display:inline-block;padding:0.12rem 0.55rem;border-radius:9999px;font-size:0.8em;font-weight:bold;text-transform:uppercase;line-height:1.2;box-sizing:border-box;}
             .jc-badge-proto{min-width:2.6rem;text-align:center;background-color:var(--background-color-medium, #f6f6f6);color:var(--text-color-medium, #888);border:1px solid var(--border-color-medium, #d9d9d9);}
-            .jc-badge-builtin{background-color:rgba(0,0,0,0.05);color:var(--text-color-medium, #888);border:1px solid transparent;font-weight:500;text-transform:none;}
-            .jc-badge-chain-last{background-color:rgba(79,140,255,.12);color:var(--primary-color-medium, #4f8cff);border:1px solid rgba(79,140,255,.25);font-weight:600;}
+            .jc-badge-builtin{background-color:var(--background-color-high, rgba(0,0,0,0.05));color:var(--text-color-medium, #888);border:1px solid transparent;font-weight:500;text-transform:none;}
+            .jc-badge-chain-last{background-color:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 12%, transparent);color:var(--primary-color-medium, #4f8cff);border:1px solid color-mix(in srgb, var(--primary-color-medium, #4f8cff) 25%, transparent);font-weight:600;}
+            .jc-badge-chain{border-color:var(--border-color-medium, #d9d9d9);}
             .jc-chain-arrow{color:var(--text-color-medium, #888);opacity:.6;margin:0 0.15rem;font-size:0.8em;}
-            .jc-badge-rule{margin-right:0.375rem;background-color:rgba(253,126,20,.1);color:var(--warning-color-medium, #fd7e14);border:1px solid rgba(253,126,20,.2);min-width:5rem;text-align:center;text-transform:none;border-radius:0.25rem;}
-            [data-theme="dark"] .jc-badge-builtin{background-color:rgba(255,255,255,.08);color:rgba(255,255,255,.85);border-color:transparent;}
-            [data-theme="dark"] .jc-badge-builtin.jc-badge-chain-last{background-color:rgba(79,140,255,.2);color:#689fff;border-color:rgba(79,140,255,.35);}
-            [data-theme="dark"] .jc-chain-arrow{color:rgba(255,255,255,.5);}
+            .jc-badge-rule{margin-right:0.375rem;background-color:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 10%, transparent);color:var(--warn-color-medium, #fd7e14);border:1px solid color-mix(in srgb, var(--warn-color-medium, #fd7e14) 20%, transparent);min-width:5rem;text-align:center;text-transform:none;border-radius:0.25rem;}
+            :root[data-darkmode="true"] .jc-badge-builtin{background-color:rgba(255,255,255,.06);color:var(--text-color-high, rgba(255,255,255,.85));border-color:transparent;}
+            :root[data-darkmode="true"] .jc-badge-builtin.jc-badge-chain{background-color:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);}
+            :root[data-darkmode="true"] .jc-badge-builtin.jc-badge-chain-last{background-color:color-mix(in srgb, var(--primary-color-medium, #689fff) 20%, transparent);color:var(--primary-color-medium, #689fff);border-color:color-mix(in srgb, var(--primary-color-medium, #689fff) 35%, transparent);}
+            :root[data-darkmode="true"] .jc-chain-arrow{color:rgba(255,255,255,.5);}
             @media (max-width:56rem){
                 .jc-table{font-size:1em;}
-                .flex-header{display:none;}
-                .flex-row{display:flex;flex-direction:column;align-items:flex-start;padding:1rem;border-bottom:1px solid var(--border-color-medium, #d9d9d9);}
-                .flex-row:last-child{border-bottom:none;}
-                .flex-row>div{display:flex;flex-direction:column;align-items:flex-start;width:100%;max-width:none;white-space:normal;padding:0;margin-bottom:0.625rem;}
-                .flex-row>div:last-child{margin-bottom:0;}
-                .flex-row>div::before{content:attr(data-label);font-size:0.8em;font-weight:bold;color:var(--text-color-medium, #888);margin-bottom:0.25rem;text-transform:uppercase;display:inline-block;}
-                .flex-row>.c-action{align-items:flex-end;margin-top:0.3125rem;margin-bottom:0;}
-                .flex-row>.c-action::before{display:none;}
+                .jc-flex-header{display:none;}
+                .jc-flex-row{display:flex;flex-direction:column;align-items:flex-start;padding:1rem;border-bottom:1px solid var(--border-color-medium, #d9d9d9);}
+                .jc-flex-row:last-child{border-bottom:none;}
+                .jc-flex-row>div{display:flex;flex-direction:column;align-items:flex-start;width:100%;max-width:none;white-space:normal;padding:0;margin-bottom:0.625rem;}
+                .jc-flex-row>div:last-child{margin-bottom:0;}
+                .jc-flex-row>div::before{content:attr(data-label);font-size:0.8em;font-weight:bold;color:var(--text-color-medium, #888);margin-bottom:0.25rem;text-transform:uppercase;display:inline-block;}
+                .jc-flex-row>.jc-c-action{align-items:flex-end;margin-top:0.3125rem;margin-bottom:0;}
+                .jc-flex-row>.jc-c-action::before{display:none;}
                 .jc-connections-actions{justify-content:flex-start;}
                 .jc-connections-filters{justify-content:stretch;}
-                .hide-mobile{display:none !important;}
-                .show-mobile{display:flex !important;}
-                .c-proto,.c-host,.c-chains,.c-rule,.c-action{flex:auto;max-width:none;}
-                .c-action-cell{padding-right:0;}
+                .jc-hide-mobile{display:none !important;}
+                .jc-show-mobile{display:flex !important;}
+                .jc-c-proto,.jc-c-host,.jc-c-chains,.jc-c-rule,.jc-c-action{flex:auto;max-width:none;}
+                .jc-c-action-cell{padding-right:0;}
                 .jc-connection-close{margin-top:0.25rem;}
                 .jc-filter-input{min-width:100%;}
             }

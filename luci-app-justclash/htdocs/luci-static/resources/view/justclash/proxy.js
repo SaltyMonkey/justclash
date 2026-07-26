@@ -120,9 +120,19 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "global_ua", _("User-Agent for downloads:"));
-        o.description = _("User-Agent sent when downloading external files such as subscriptions or rule lists.");
-        o.default = common.defaultUserAgent;
+        o.placeholder = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...";
+        o.description = _("User-Agent sent when downloading external files such as subscriptions or rule lists. Select a preset or type your own. Choose \"Random\" to pick a different browser UA on every service start.");
+        o.default = common.defaultUaPresets[0].value;
         o.rmempty = false;
+        common.defaultUaPresets.forEach(p => o.value(p.value, p.label));
+        o.validate = function (section_id, value) {
+            if (!value || value.trim() === "")
+                return _("User-Agent cannot be empty.");
+            if (/[\r\n]/.test(value))
+                return _("Newlines (CR/LF) are not allowed in HTTP headers.");
+            return true;
+        };
+
 
         o = s.taboption(tabname, form.Flag, "etag_support", _("Check whether files changed:"));
         o.description = _("Only download external files again when the server says they changed. This saves bandwidth and avoids unnecessary updates.");
@@ -130,6 +140,7 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "keep_alive_idle", _("Idle time before connection check:"));
+        o.placeholder = "600";
         o.description = _("How long to wait with no activity before checking whether the connection is still alive. Shorter values detect dead connections sooner.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
@@ -142,6 +153,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Connection check interval:"));
+        o.placeholder = "15";
         o.description = _("How often to repeat that check after the connection becomes idle.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
@@ -187,7 +199,7 @@ return view.extend({
         });
         o.rmempty = false;
         o.retain = true;
-        o.depends("geodata_mode", primitives.TRUE);
+        o.depends("geodata_autoupdate", primitives.TRUE);
 
         tabname = "apicontrollersettings_tab";
         s.tab(tabname, _("Controller/API settings"));
@@ -212,11 +224,6 @@ return view.extend({
         o.description = _("Enable an additional external web dashboard for Mihomo. Turn this on only if you need a separate dashboard interface.");
         o.default = primitives.FALSE;
         o.rmempty = false;
-        o.cfgvalue = function (section_id) {
-            return uci.get(common.binName, section_id, "use_dashboard")
-                ?? uci.get(common.binName, section_id, "use_zashboard")
-                ?? primitives.FALSE;
-        };
 
         o = s.taboption(tabname, form.ListValue, "dashboard_repo", _("Web dashboard:"));
         o.description = _("Choose which web dashboard Mihomo should download and serve.");

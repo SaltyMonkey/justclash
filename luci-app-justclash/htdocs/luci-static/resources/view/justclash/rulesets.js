@@ -67,23 +67,23 @@ return view.extend({
 
         const style = E("style", {}, `
             .jc-badge-type { display: inline-block; padding: 0.15rem 0.45rem; border-radius: 0.25rem; font-size: 0.8em; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
-            .jc-badge-type.domain { background-color: rgba(16, 96, 255, 0.1); color: var(--primary-color-medium, #4f8cff); border: 1px solid rgba(16, 96, 255, 0.2); }
-            .jc-badge-type.ipcidr { background-color: rgba(40, 167, 69, 0.1); color: var(--success-color-medium, #2f9e44); border: 1px solid rgba(40, 167, 69, 0.2); }
-            .jc-badge-type.classical { background-color: rgba(253, 126, 20, 0.1); color: var(--warning-color-medium, #fd7e14); border: 1px solid rgba(253, 126, 20, 0.2); }
+            .jc-badge-type.jc-type-domain { background-color: rgba(16, 96, 255, 0.1); color: var(--primary-color-medium, #4f8cff); border: 1px solid rgba(16, 96, 255, 0.2); }
+            .jc-badge-type.jc-type-ipcidr { background-color: rgba(40, 167, 69, 0.1); color: var(--success-color-medium, #2f9e44); border: 1px solid rgba(40, 167, 69, 0.2); }
+            .jc-badge-type.jc-type-classical { background-color: rgba(253, 126, 20, 0.1); color: var(--warn-color-medium, #fd7e14); border: 1px solid rgba(253, 126, 20, 0.2); }
             .jc-badge-builtin { display: inline-block; min-width: 4.8rem; padding: 0.18rem 0.6rem; border-radius: 0.25rem; font-size: 0.8em; background-color: var(--background-color-medium, #f6f6f6); color: var(--text-color-medium, #888); border: 1px solid var(--border-color-medium, #d9d9d9); font-weight: 500; text-align: center; white-space: nowrap; box-sizing: border-box; line-height: 1.2; }
             .jc-actions-wrap { display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; padding: 0.625rem 0.9375rem; border: 1px solid var(--border-color-medium, #d9d9d9); border-radius: 0.375rem; background: var(--background-color-medium, #f6f6f6); margin-bottom: 1rem; }
             .jc-action-label { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; margin: 0; }
             .jc-error-list { margin: 0; padding-left: 1.25rem; text-align: left; }
-            [data-theme="dark"] .jc-actions-wrap { border-color: rgba(255, 255, 255, .08); background: rgba(255, 255, 255, .04); }
+            :root[data-darkmode="true"] .jc-actions-wrap { border-color: var(--border-color-medium, rgba(255, 255, 255, .08)); background: var(--background-color-high, rgba(255, 255, 255, .04)); }
             .jc-hidden-row { display: none !important; }
             .jc-grid-container:not(:has(.jc-grid-row:not(.jc-hidden-row))) .jc-grid-header { display: none; }
             .jc-grid-container { display: flex; flex-direction: column; border: 1px solid var(--border-color-medium, #d9d9d9); border-radius: 0.5rem; overflow: hidden; background-color: var(--background-color-low, #fff); margin-bottom: 1rem; }
-            [data-theme="dark"] .jc-grid-container { background-color: rgba(0, 0, 0, 0.1); }
+            :root[data-darkmode="true"] .jc-grid-container { background-color: var(--background-color-low, rgba(0, 0, 0, 0.1)); }
             .jc-grid-header { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 1.8fr) minmax(4.8rem, auto); gap: 0.75rem; padding: 0.625rem 0.9375rem; background-color: var(--background-color-medium, #f6f6f6); border-bottom: 1px solid var(--border-color-medium, #d9d9d9); font-weight: bold; }
             .jc-grid-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 1.8fr) minmax(4.8rem, auto); gap: 0.75rem; padding: 0.625rem 0.9375rem; align-items: center; border-bottom: 1px solid var(--border-color-low, #f0f0f0); transition: background-color 0.15s ease; }
             .jc-grid-row:last-child { border-bottom: none; }
             .jc-grid-row:hover { background-color: var(--background-color-medium, rgba(0, 0, 0, 0.02)); }
-            [data-theme="dark"] .jc-grid-row:hover { background-color: rgba(255, 255, 255, 0.03); }
+            :root[data-darkmode="true"] .jc-grid-row:hover { background-color: var(--background-color-high, rgba(255, 255, 255, 0.03)); }
             .jc-grid-col { min-width: 0; display: flex; align-items: center; }
             .jc-url-cell { word-break: break-all; overflow: hidden; text-overflow: ellipsis; }
             .jc-grid-col input, .jc-grid-col select { width: 100% !important; box-sizing: border-box !important; height: 1.875rem !important; padding: 0.25rem 0.375rem !important; margin: 0 !important; }
@@ -187,7 +187,7 @@ return view.extend({
         if (isBuiltIn) {
             row.appendChild(E("div", { class: "jc-grid-col jc-col-name", "data-label": _("Readable name") }, rule.name));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-id", "data-label": _("Name") }, rule.id));
-            row.appendChild(E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, E("span", { class: "jc-badge-type " + rule.type }, rule.type.toUpperCase())));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, E("span", { class: "jc-badge-type jc-type-" + rule.type }, rule.type.toUpperCase())));
 
             const isHttp = rule.url.startsWith("http://") || rule.url.startsWith("https://");
             const urlNode = isHttp

@@ -74,6 +74,7 @@ return view.extend({
         s.tab(tabname, _("Basic"));
 
         o = s.taboption(tabname, form.Flag, "enabled", _("Enabled"));
+        o.width = "15%";
         o.description = _("Enable or disable this proxy entry without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
@@ -262,6 +263,7 @@ return view.extend({
         spp.tab(tabname, _("Basic"));
 
         o = spp.taboption(tabname, form.Flag, "enabled", _("Enabled"));
+        o.width = "15%";
         o.description = _("Enable or disable this proxy provider without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
@@ -366,11 +368,19 @@ return view.extend({
         tabname = "proxyproviderheaders_tab";
         spp.tab(tabname, _("Security"));
 
-        o = spp.taboption(tabname, form.Flag, "header_hwid", _("HWID support:"));
-        o.default = primitives.FALSE;
-        o.description = _("Send HWID data headers to server with proxy provider request. Leave it unchecked if you don't need it.");
+        o = spp.taboption(tabname, form.ListValue, "header_hwid", _("HWID support:"));
+        o.value("", _("Disable"));
+        o.value("real", _("Real HWID"));
+        o.value("spoofed", _("Spoofed HWID"));
+        o.description = _("Send HWID data headers to server with proxy provider request. Leave it empty if you don't need it.");
         o.editable = true;
-        o.rmempty = false;
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.Value, "header_hwid_custom", _("Spoofed HWID:"));
+        o.depends("header_hwid", "spoofed");
+        o.description = _("Enter your custom fake HWID here.");
+        o.editable = true;
+        o.rmempty = true;
         o.modalonly = true;
 
         o = spp.taboption(tabname, form.Value, "header_authorization", _("Authorization header:"));
@@ -389,10 +399,11 @@ return view.extend({
         };
 
         o = spp.taboption(tabname, form.Value, "header_user_agent", _("User agent header:"));
-        o.description = _("Send custom useragent header to server with proxy provider request. Leave it empty if you don't need it.");
+        o.description = _("User-Agent header sent to the server with each proxy provider request. Select a preset or type your own. Choose \"Random\" to pick a different browser UA on every service start. Leave empty to use the global UA.");
         o.editable = true;
         o.rmempty = true;
         o.modalonly = true;
+        common.defaultUaPresets.forEach(p => o.value(p.value, p.label));
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") {
                 return true;
@@ -402,6 +413,7 @@ return view.extend({
             }
             return true;
         };
+
 
         o = spp.taboption(tabname, form.Value, "age_private_key", _("AGE private key:"));
         o.description = _("Private key for AGE encryption. Optional.");
@@ -536,6 +548,7 @@ return view.extend({
         s2.tab(tabname, _("Basic"));
 
         o = s2.taboption(tabname, form.Flag, "enabled", _("Enabled"));
+        o.width = "15%";
         o.description = _("Enable or disable this proxy group without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
@@ -818,6 +831,7 @@ return view.extend({
         s4.tab(tabname, _("Lists"));
 
         o = s4.taboption(tabname, form.Flag, "enabled", _("Enabled"));
+        o.width = "15%";
         o.description = _("Enable or disable block rules.");
         o.default = primitives.TRUE;
         o.rmempty = false;

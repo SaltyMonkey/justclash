@@ -22,6 +22,7 @@ return baseclass.extend({
         proxy: (name) => `/proxies/${encodeURIComponent(name)}`,
         proxyDelay: (name) => `/proxies/${encodeURIComponent(name)}/delay`,
         proxyProviders: "/providers/proxies",
+        proxyProvider: (name) => `/providers/proxies/${encodeURIComponent(name)}`,
         connections: "/connections",
         connection: (id) => `/connections/${encodeURIComponent(id)}`,
         ruleProviders: "/providers/rules",
@@ -228,6 +229,19 @@ return baseclass.extend({
 
         try {
             detail = (await res.text()).trim();
+        } catch (e) {}
+
+        throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
+    },
+    async updateProxyProvider(providerName, token, timeout = this.fetchTimeout) {
+        const res = await this.fetch(this.paths.proxyProvider(providerName), token, { method: "PUT" }, timeout);
+
+        if (res.ok) return;
+
+        let detail = "";
+        try {
+            const data = await res.json();
+            detail = data.message || "";
         } catch (e) {}
 
         throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);

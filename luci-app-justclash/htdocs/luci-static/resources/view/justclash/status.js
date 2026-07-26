@@ -11,13 +11,6 @@
 const POLL_TIMEOUT = 3000;
 const ACTION_DELAY_TIMEOUT = 5000;
 
-let pollInterval = null;
-let pollingInProgress = false;
-let actionInProgress = false;
-let visibilityChangeHandler = null;
-let beforeUnloadHandler = null;
-let wsCleanups = [];
-
 const buttonsIDs = {
     START: "button-start",
     RESTART: "button-restart",
@@ -61,24 +54,6 @@ const createActionButton = (action, cssClass, label, handler, iconKey) =>
 
 const formatSpeed = (bytesPerSec) => common.formatBytes(bytesPerSec) + "/s";
 
-const cleanupWs = () => {
-    wsCleanups.forEach(fn => fn());
-    wsCleanups = [];
-};
-
-const cleanup = () => {
-    stopPolling();
-    cleanupWs();
-    if (visibilityChangeHandler) {
-        document.removeEventListener("visibilitychange", visibilityChangeHandler);
-        visibilityChangeHandler = null;
-    }
-    if (beforeUnloadHandler) {
-        window.removeEventListener("beforeunload", beforeUnloadHandler);
-        beforeUnloadHandler = null;
-    }
-};
-
 const createSummaryRow = (label, valueNode, extraNode) => {
     const valueChildren = [valueNode];
     if (extraNode)
@@ -116,104 +91,19 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
         createSummaryRow(_("RAM"), dynamicElements.ramValue),
         createSummaryRow(_("Mihomo version"), dynamicElements.coreValue)
     ], "service"),
-    createSummaryCard(_("Traffic"), [
+    createSummaryCard(_("Kernel"), [
+        createSummaryRow(_("Connections"), dynamicElements.connValue),
+        createSummaryRow(_("Mode"), dynamicElements.modeValue),
         createSummaryRow(_("Speed"), createInlineTrafficNode(dynamicElements.upValue, dynamicElements.downValue)),
         createSummaryRow(_("Total"), createInlineTrafficNode(dynamicElements.upTotalValue, dynamicElements.downTotalValue))
     ], "traffic"),
     createSummaryCard(_("System"), [
         createSummaryRow(_("Router model"), results.infoDevice),
         createSummaryRow(_("OpenWrt version"), results.infoOpenWrt),
-        createSummaryRow(_("LuCI version"), common.justclashLuciVersion),
-        createSummaryRow(_("Installed version"), dynamicElements.packageValue)
+        createSummaryRow(_("App LuCI version"), common.justclashLuciVersion),
+        createSummaryRow(_("App version"), dynamicElements.packageValue)
     ], "system")
 ]);
-
-const updateUI = (dynamicElements, isAutostarting, isRunning) => {
-    const runningChanged = dynamicElements.lastRunning !== isRunning;
-    const autostartChanged = dynamicElements.lastAutostarting !== isAutostarting;
-
-    dynamicElements.currentRunning = isRunning;
-    dynamicElements.currentAutostarting = isAutostarting;
-
-    if (runningChanged && dynamicElements.serviceBadge) {
-        dynamicElements.serviceBadge.textContent = boolToWordRunning(isRunning);
-        dynamicElements.serviceBadge.className = `jc-status-text ${isRunning ? "jc-status-text-active" : "jc-status-text-inactive"}`;
-    }
-
-    if (autostartChanged && dynamicElements.autoBadge) {
-        dynamicElements.autoBadge.textContent = boolToWordAutostart(isAutostarting);
-        dynamicElements.autoBadge.className = `jc-status-text ${isAutostarting ? "jc-status-text-active" : "jc-status-text-inactive"}`;
-    }
-
-    if (runningChanged && dynamicElements.btnToggle) {
-        const label = isRunning ? _("Stop") : _("Start");
-        const text = dynamicElements.btnToggle.querySelector(".jc-button-label");
-
-        if (text)
-            text.textContent = label;
-
-        dynamicElements.btnToggle.className = `cbi-button ${isRunning ? buttons.NEGATIVE : buttons.POSITIVE}`;
-        dynamicElements.btnToggle.title = label;
-        dynamicElements.btnToggle.setAttribute("aria-label", label);
-    }
-
-    if (autostartChanged && dynamicElements.btnAutoToggle) {
-        const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
-        const text = dynamicElements.btnAutoToggle.querySelector(".jc-button-label");
-        if (text)
-            text.textContent = label;
-        dynamicElements.btnAutoToggle.className = `cbi-button ${isAutostarting ? buttons.NEGATIVE : buttons.POSITIVE}`;
-        dynamicElements.btnAutoToggle.title = label;
-        dynamicElements.btnAutoToggle.setAttribute("aria-label", label);
-    }
-
-    dynamicElements.lastRunning = isRunning;
-    dynamicElements.lastAutostarting = isAutostarting;
-};
-
-const updateServiceStatus = async (dynamicElements) => {
-    if (pollingInProgress) return;
-    pollingInProgress = true;
-
-    try {
-        if (!await ubusApi.isSessionAlive()) {
-            stopPolling();
-            cleanupWs();
-            return;
-        }
-
-        const [isRunning, isAutostarting] = await Promise.all([
-            ubusApi.isServiceRunning().catch(() => false),
-            ubusApi.isServiceAutoStartEnabled().catch(() => false)
-        ]);
-        requestAnimationFrame(() => updateUI(dynamicElements, isAutostarting, isRunning));
-    } finally {
-        pollingInProgress = false;
-    }
-};
-
-const stopPolling = () => {
-    if (pollInterval) {
-        clearTimeout(pollInterval);
-        pollInterval = null;
-    }
-};
-
-const scheduleNextPoll = (dynamicElements) => {
-    if (pollInterval || document.hidden)
-        return;
-
-    pollInterval = setTimeout(async () => {
-        pollInterval = null;
-        await updateServiceStatus(dynamicElements);
-        scheduleNextPoll(dynamicElements);
-    }, POLL_TIMEOUT);
-};
-
-const startPolling = (dynamicElements) => {
-    stopPolling();
-    scheduleNextPoll(dynamicElements);
-};
 
 const showErrorModal = (message) => {
     ui.showModal(_("Error"), [
@@ -376,12 +266,17 @@ return view.extend({
             ubusApi.isServiceAutoStartEnabled().catch(() => false)
         ]);
 
+        const mihomoModePromise = mihomoApi.fetchConfigs(apiToken)
+            .then(configs => configs.mode || "")
+            .catch(() => "");
+
         const [
             [infoDevice, infoOpenWrt],
             [infoPackage, fallbackCoreVersion],
             infoMihomoVersion,
-            [infoIsRunning, infoIsAutostarting]
-        ] = await Promise.all([boardPromise, packagePromise, mihomoVersionPromise, statusPromise]);
+            [infoIsRunning, infoIsAutostarting],
+            infoMode
+        ] = await Promise.all([boardPromise, packagePromise, mihomoVersionPromise, statusPromise, mihomoModePromise]);
 
         return {
             infoDevice,
@@ -390,12 +285,147 @@ return view.extend({
             infoCore: infoMihomoVersion || fallbackCoreVersion,
             infoIsRunning,
             infoIsAutostarting,
+            infoMode,
             apiToken
         };
     },
 
     async render(results) {
-        stopPolling();
+        let pollInterval = null;
+        let pollingInProgress = false;
+        let actionInProgress = false;
+        let visibilityChangeHandler = null;
+        let beforeUnloadHandler = null;
+        let wsCleanups = [];
+
+        const dynamicElements = {
+            currentRunning: !!results.infoIsRunning,
+            currentAutostarting: !!results.infoIsAutostarting,
+            lastRunning: null,
+            lastAutostarting: null
+        };
+
+        const cleanupWs = () => {
+            wsCleanups.forEach(fn => fn());
+            wsCleanups = [];
+        };
+
+        const stopPolling = () => {
+            if (pollInterval) {
+                clearTimeout(pollInterval);
+                pollInterval = null;
+            }
+        };
+
+        const cleanup = () => {
+            stopPolling();
+            cleanupWs();
+            if (visibilityChangeHandler) {
+                document.removeEventListener("visibilitychange", visibilityChangeHandler);
+                visibilityChangeHandler = null;
+            }
+            if (beforeUnloadHandler) {
+                window.removeEventListener("beforeunload", beforeUnloadHandler);
+                beforeUnloadHandler = null;
+            }
+        };
+
+        const updateUI = (isAutostarting, isRunning, currentMode) => {
+            const runningChanged = dynamicElements.lastRunning !== isRunning;
+            const autostartChanged = dynamicElements.lastAutostarting !== isAutostarting;
+
+            dynamicElements.currentRunning = isRunning;
+            dynamicElements.currentAutostarting = isAutostarting;
+
+            if (runningChanged && dynamicElements.serviceBadge) {
+                dynamicElements.serviceBadge.textContent = boolToWordRunning(isRunning);
+                dynamicElements.serviceBadge.className = `jc-status-text ${isRunning ? "jc-status-text-active" : "jc-status-text-inactive"}`;
+            }
+
+            if (autostartChanged && dynamicElements.autoBadge) {
+                dynamicElements.autoBadge.textContent = boolToWordAutostart(isAutostarting);
+                dynamicElements.autoBadge.className = `jc-status-text ${isAutostarting ? "jc-status-text-active" : "jc-status-text-inactive"}`;
+            }
+
+            if (runningChanged && dynamicElements.btnToggle) {
+                const label = isRunning ? _("Stop") : _("Start");
+                const text = dynamicElements.btnToggle.querySelector(".jc-button-label");
+                if (text) text.textContent = label;
+                dynamicElements.btnToggle.className = `cbi-button ${isRunning ? buttons.NEGATIVE : buttons.POSITIVE}`;
+                dynamicElements.btnToggle.title = label;
+                dynamicElements.btnToggle.setAttribute("aria-label", label);
+            }
+
+            if (dynamicElements.modeValue) {
+                if (isRunning && currentMode) {
+                    dynamicElements.modeValue.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+                } else {
+                    dynamicElements.modeValue.textContent = _("Unknown");
+                }
+            }
+
+            if (autostartChanged && dynamicElements.btnAutoToggle) {
+                const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
+                const text = dynamicElements.btnAutoToggle.querySelector(".jc-button-label");
+                if (text) text.textContent = label;
+                dynamicElements.btnAutoToggle.className = `cbi-button ${isAutostarting ? buttons.NEGATIVE : buttons.POSITIVE}`;
+                dynamicElements.btnAutoToggle.title = label;
+                dynamicElements.btnAutoToggle.setAttribute("aria-label", label);
+            }
+
+            dynamicElements.lastRunning = isRunning;
+            dynamicElements.lastAutostarting = isAutostarting;
+        };
+
+        const updateServiceStatus = async () => {
+            if (pollingInProgress) return;
+            pollingInProgress = true;
+            try {
+                if (!await ubusApi.isSessionAlive()) {
+                    cleanup();
+                    return;
+                }
+                const [isRunning, isAutostarting] = await Promise.all([
+                    ubusApi.isServiceRunning().catch(() => false),
+                    ubusApi.isServiceAutoStartEnabled().catch(() => false)
+                ]);
+                
+                let currentMode = "";
+                if (isRunning) {
+                    try {
+                        const configs = await mihomoApi.fetchConfigs(results.apiToken);
+                        currentMode = configs.mode || "";
+                    } catch (e) {}
+                }
+
+                requestAnimationFrame(() => updateUI(isAutostarting, isRunning, currentMode));
+            } finally {
+                pollingInProgress = false;
+            }
+        };
+
+        const scheduleNextPoll = () => {
+            if (pollInterval || document.hidden) return;
+
+            pollInterval = setTimeout(async () => {
+                pollInterval = null;
+
+                // Check if unmounted (wait until timeout fires so DOM is definitely attached)
+                if (!document.body.contains(dynamicElements.serviceBadge)) {
+                    cleanup();
+                    return;
+                }
+
+                await updateServiceStatus();
+                scheduleNextPoll();
+            }, POLL_TIMEOUT);
+        };
+
+        const startPolling = () => {
+            stopPolling();
+            scheduleNextPoll();
+        };
+
 
         const serviceBadge = E("span", { class: "jc-status-text" }, _("Loading..."));
         const autoBadge = E("span", { class: "jc-status-text" }, _("Loading..."));
@@ -406,6 +436,8 @@ return view.extend({
         const upTotalValue = E("span", {}, "0 B");
         const downTotalValue = E("span", {}, "0 B");
         const ramValue = E("span", {}, "0 B");
+        const connValue = E("span", {}, "0");
+        const modeValue = E("span", {}, _("Unknown"));
         const actionHandler = (action, timeoutMs) => async () => {
             if (actionInProgress) return;
             actionInProgress = true;
@@ -413,7 +445,7 @@ return view.extend({
             try {
                 await fs.exec(common.initdPath, [action]);
                 if (timeoutMs) await asyncTimeout(timeoutMs);
-                await updateServiceStatus(dynamicElements);
+                await updateServiceStatus();
             } catch (e) {
                 ui.addTimeLimitedNotification(_("Error"), E("p", e.message), common.notificationTimeout, "danger");
                 console.error(e);
@@ -436,7 +468,7 @@ return view.extend({
         const btnToggle = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), toggleHandler, "start");
         const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", ACTION_DELAY_TIMEOUT), "restart");
         const btnAutoToggle = createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable on boot"), autoToggleHandler, "enable");
-        const dynamicElements = {
+        Object.assign(dynamicElements, {
             serviceBadge,
             autoBadge,
             packageValue,
@@ -446,13 +478,11 @@ return view.extend({
             upTotalValue,
             downTotalValue,
             ramValue,
+            connValue,
+            modeValue,
             btnToggle,
-            btnAutoToggle,
-            currentRunning: !!results.infoIsRunning,
-            currentAutostarting: !!results.infoIsAutostarting,
-            lastRunning: null,
-            lastAutostarting: null
-        };
+            btnAutoToggle
+        });
 
         const statusGrid = createStatusGrid(results, dynamicElements);
         const serviceActionContainer = E("div", { class: "jc-actions-wrap" }, [
@@ -540,6 +570,18 @@ return view.extend({
                 }
             }));
 
+            wsCleanups.push(mihomoApi.createConnectionsWebSocket({
+                token: results.apiToken,
+                interval: 1000,
+                containerCheck: () => document.body.contains(statusContainer),
+                onMessage: (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        dynamicElements.connValue.textContent = String(data.connections.length);
+                    } catch (e) {}
+                }
+            }));
+
             wsCleanups.push(mihomoApi.createMemoryWebSocket({
                 token: results.apiToken,
                 containerCheck: () => document.body.contains(statusContainer),
@@ -556,13 +598,15 @@ return view.extend({
             .jc-status-text { font-weight:700; }
             .jc-status-text-active { color:var(--success-color-high, #2f9e44); }
             .jc-status-text-inactive { color:var(--error-color-high, #f44336); }
-            .jc-summary-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:1fr; gap:0.9375rem; margin-bottom:1.25rem; align-items:stretch; }
+            .jc-summary-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:1fr; gap:0.75rem; margin-bottom:1rem; align-items:stretch; }
             .jc-card, .jc-summary-body, .jc-summary-row, .jc-primary-actions { display:flex; }
-            .jc-card, .jc-summary-body, .jc-summary-row { flex-direction:column; }
-            .jc-card { height:100%; padding:0.85em 1em; border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); box-sizing:border-box; min-width:0; }
-            .jc-card-title { display:block; margin-bottom:0.7em; padding-bottom:0.35em; border-bottom:1px solid var(--border-color-medium, rgba(0,0,0,0.12)); font-size:0.88em; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+            .jc-card, .jc-summary-body { flex-direction:column; }
+            .jc-summary-row { flex-direction:row; justify-content:space-between; align-items:center; padding-bottom: 0.3em; }
+            .jc-summary-row:not(:last-child) { border-bottom: 1px solid var(--border-color-medium, rgba(0,0,0,0.08)); margin-bottom: 0.1em; }
+            .jc-card { height:100%; padding:0.5em 0.6em; border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); box-sizing:border-box; min-width:0; }
+            .jc-card-title { display:block; margin-bottom:0.5em; padding-bottom:0.25em; border-bottom:1px solid var(--border-color-medium, rgba(0,0,0,0.12)); font-size:1em; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
             .jc-status-text, .jc-summary-value, .jc-button-content { display:inline-flex; align-items:center; }
-            .jc-summary-body { gap:0.45em; }
+            .jc-summary-body { gap:0.25em; }
             .jc-summary-row { gap:0.18em; min-width:0; }
             .jc-summary-key { color:var(--text-color-medium, #888); }
             .jc-summary-value { gap:0.45em; min-width:0; min-height:1.5em; font-weight:600; text-align:left; white-space:nowrap; }
@@ -572,7 +616,7 @@ return view.extend({
             .jc-traffic-up .jc-traffic-arrow { color:var(--error-color-medium, #f44336); }
             .jc-traffic-down .jc-traffic-arrow { color:var(--success-color-medium, #2f9e44); }
             .jc-traffic-sep { opacity:0.45; }
-            .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); padding:0.7em 0.8em; margin-bottom:1.25rem; }
+            .jc-actions-wrap { border:1px solid var(--border-color-medium, #d9d9d9); border-radius:0.375rem; background:var(--background-color-medium, #f6f6f6); padding:0.5em 0.6em; margin-bottom:1rem; }
             .jc-primary-actions { flex-wrap:wrap; gap:0.65em; margin:0; }
             .jc-actions-wrap .jc-primary-actions button.cbi-button, .jc-actions-wrap button.cbi-button {
                 margin:0;
@@ -588,14 +632,14 @@ return view.extend({
             .jc-modal-warning-text, .jc-modal-actions { margin-top:1em; }
             .jc-modal-pre { max-height:28rem; overflow:auto; font-weight:normal; font-family:ui-monospace,monospace; }
             .jc-modal-actions { text-align:right; }
-            [data-theme="dark"] .jc-card,
-            [data-theme="dark"] .jc-actions-wrap { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.04); }
-            [data-theme="dark"] .jc-card-title { border-color:rgba(255,255,255,0.08); }
+            :root[data-darkmode="true"] .jc-card,
+            :root[data-darkmode="true"] .jc-actions-wrap { border-color:var(--border-color-medium, rgba(255,255,255,0.08)); background:var(--background-color-high, rgba(255,255,255,0.04)); }
+            :root[data-darkmode="true"] .jc-card-title { border-color:var(--border-color-medium, rgba(255,255,255,0.08)); }
             @media (max-width:62.5rem) { .jc-summary-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
             @media (max-width:37.5rem) { .jc-summary-grid { grid-template-columns:1fr; grid-auto-rows:auto; } }
         `);
 
-        startPolling(dynamicElements);
+        startPolling();
         connectStatusSockets();
 
         if (visibilityChangeHandler) {
@@ -609,7 +653,7 @@ return view.extend({
                 cleanupWs();
             } else {
                 connectStatusSockets();
-                updateServiceStatus(dynamicElements).finally(() => scheduleNextPoll(dynamicElements));
+                updateServiceStatus().finally(() => scheduleNextPoll());
             }
         };
 
@@ -626,7 +670,7 @@ return view.extend({
         window.addEventListener("beforeunload", beforeUnloadHandler);
 
         requestAnimationFrame(() => {
-            updateUI(dynamicElements, results.infoIsAutostarting, results.infoIsRunning);
+            updateUI(results.infoIsAutostarting, !!results.infoIsRunning, results.infoMode);
         });
 
         return E("div", { class: "cbi-map" }, [

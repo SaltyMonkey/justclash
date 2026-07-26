@@ -14,7 +14,7 @@ return baseclass.extend({
     logsCount: "400",
     realtimeLogsCount: "4000",
 
-    // Default option values
+    // ntp.server
     defaultNtpServers: [
         { value: "194.190.168.1", text: "ntp.msk-ix.ru" },
         { value: "89.109.251.22", text: "ntp2.vniiftri.ru" },
@@ -22,127 +22,71 @@ return baseclass.extend({
         { value: "216.239.35.4", text: "time2.google.com" },
         { value: "216.239.35.8", text: "time3.google.com" },
     ],
-    defaultKeepAliveSec: [
-        { value: "15", text: _("Every 15 seconds") },
-        { value: "25", text: _("Every 25 seconds") },
-        { value: "35", text: _("Every 35 seconds") },
-        { value: "45", text: _("Every 45 seconds") },
-        { value: "60", text: _("Every 1 minute") },
-    ],
-    defaultNtpIntervalValuesMin: [
-        { value: "30", text: _("Every 30 minutes") },
-        { value: "60", text: _("Every 60 minutes") },
-        { value: "120", text: _("Every 120 minutes") },
-        { value: "180", text: _("Every 180 minutes") }
-    ],
-    defaultBootDelayValuesSec: [
-        { value: "5", text: _("5 seconds") },
-        { value: "10", text: _("10 seconds") },
-        { value: "20", text: _("20 seconds") },
-        { value: "40", text: _("40 seconds") }
-    ],
-    defaultWaitForWanMaxValues: [
-        { value: "10", text: _("10 seconds") },
-        { value: "20", text: _("20 seconds") },
-        { value: "30", text: _("30 seconds") },
-        { value: "60", text: _("60 seconds") },
-        { value: "90", text: _("90 seconds") },
-        { value: "120", text: _("120 seconds") },
-        { value: "180", text: _("180 seconds") }
-    ],
-    defaultFakeIPTtlValues: [
-        { value: "60", text: _("60 seconds") },
-        { value: "120", text: _("120 seconds") },
-        { value: "180", text: _("180 seconds") },
-    ],
-    defaultGeoDataIntervalH: [
-        { value: "12", text: _("12 hours") },
-        { value: "24", text: _("24 hours") },
-        { value: "48", text: _("48 hours") },
-        { value: "96", text: _("96 hours") },
-        { value: "168", text: _("168 hours") },
-    ],
-    defaultIPDnsCache: [
-        { value: "1024", text: _("1024 entries") },
-        { value: "2048", text: _("2048 entries") },
-        { value: "4096", text: _("4096 entries") },
-        { value: "8192", text: _("8192 entries") },
-        { value: "16384", text: _("16384 entries") },
-    ],
-    defaultRuleSetUpdateIntervalSec: [
-        { value: "43200", text: _("Every 12 hours") },
-        { value: "86400", text: _("Every 24 hours") },
-        { value: "172800", text: _("Every 48 hours") },
-        { value: "259200", text: _("Every 72 hours") },
-    ],
+    // keep-alive-interval (Seconds)
+    defaultKeepAliveSec: [15, 25, 35, 45, 60].map(v => ({ value: String(v), text: v === 60 ? _("Every 1 minute") : _("Every %d seconds").format(v) })),
+    // OpenWrt NTP cron job interval (Minutes)
+    defaultNtpIntervalValuesMin: [30, 60, 120, 180].map(v => ({ value: String(v), text: _("Every %d minutes").format(v) })),
+    // OpenWrt init.d boot delay (Seconds)
+    defaultBootDelayValuesSec: [5, 10, 20, 40].map(v => ({ value: String(v), text: _("%d seconds").format(v) })),
+    // OpenWrt init.d wait for WAN (Seconds)
+    defaultWaitForWanMaxValues: [10, 20, 30, 60, 90, 120, 180].map(v => ({ value: String(v), text: _("%d seconds").format(v) })),
+    // dns.fake-ip-ttl (Seconds)
+    defaultFakeIPTtlValues: [60, 120, 180].map(v => ({ value: String(v), text: _("%d seconds").format(v) })),
+    // geo-update-interval (Hours)
+    defaultGeoDataIntervalH: [12, 24, 48, 96, 168].map(v => ({ value: String(v), text: _("%d hours").format(v) })),
+    // JustClash/Mihomo DNS cache limit
+    defaultIPDnsCache: [1024, 2048, 4096, 8192, 16384].map(v => ({ value: String(v), text: _("%d entries").format(v) })),
+    // rule-providers.[*].interval (Seconds)
+    defaultRuleSetUpdateIntervalSec: [12, 24, 48, 72].map(v => ({ value: String(v * 3600), text: _("Every %d hours").format(v) })),
+    // OpenWrt init.d Go runtime GOMEMLIMIT (Bytes/MiB string passed to env)
     defaultGoMemLimitValues: [
         { value: "0", text: _("Disabled") },
-        { value: "48", text: _("48 MiB") },
-        { value: "64", text: _("64 MiB") },
-        { value: "96", text: _("96 MiB") },
-        { value: "128", text: _("128 MiB") },
-        { value: "160", text: _("160 MiB") },
-        { value: "192", text: _("192 MiB") },
-        { value: "224", text: _("224 MiB") },
+        ...[48, 64, 96, 128, 160, 192, 224, 256, 384, 512, 768, 1024, 2048].map(v => ({
+            value: String(v),
+            text: _("%d MiB").format(v)
+        }))
     ],
-    defaultProxyGroupIntervalSec: [
-        { value: "60", text: _("Every 1 minute") },
-        { value: "120", text: _("Every 2 minutes") },
-        { value: "180", text: _("Every 3 minutes") },
-        { value: "360", text: _("Every 6 minutes") },
+    // OpenWrt init.d Go runtime GOGC (Percentage)
+    defaultGoGCValues: [
+        { value: "0", text: _("Default (100)") },
+        { value: "25", text: _("25 (Aggressive memory saving)") },
+        { value: "50", text: _("50 (Balanced)") },
+        { value: "100", text: _("100 (Standard)") },
+        { value: "200", text: _("200 (Relaxed GC)") },
     ],
-    defaultUrlTestToleranceMs: [
-        { value: "10", text: _("10 milliseconds") },
-        { value: "20", text: _("20 milliseconds") },
-        { value: "30", text: _("30 milliseconds") },
-        { value: "40", text: _("40 milliseconds") },
-        { value: "50", text: _("50 milliseconds") },
-        { value: "100", text: _("100 milliseconds") },
+    // OpenWrt init.d Go runtime GOMAXPROCS (Threads)
+    defaultGoMaxProcsValues: [
+        { value: "0", text: _("Default (All CPU cores)") },
+        { value: "1", text: _("1 Thread") },
+        { value: "2", text: _("2 Threads") },
+        { value: "3", text: _("3 Threads") },
+        { value: "4", text: _("4 Threads") },
     ],
+    // proxy-groups.[*].interval (Seconds)
+    defaultProxyGroupIntervalSec: [60, 120, 180, 360].map(v => ({ value: String(v), text: v === 60 ? _("Every 1 minute") : _("Every %d minutes").format(v / 60) })),
+    // proxy-groups.[*].tolerance (Milliseconds)
+    defaultUrlTestToleranceMs: [10, 20, 30, 40, 50, 100].map(v => ({ value: String(v), text: _("%d milliseconds").format(v) })),
+    // proxy-groups.[*].expected-status & proxy-providers.[*].health-check.expected-status
     defaultHealthCheckResultCode: [
         { value: "200", text: _("Response code 200") },
         { value: "204", text: _("Response code 204") },
     ],
-    defaultHealthCheckTimeoutMs: [
-        { value: "1000", text: _("1 second") },
-        { value: "2000", text: _("2 seconds") },
-        { value: "3000", text: _("3 seconds") },
-        { value: "5000", text: _("5 seconds") },
-        { value: "10000", text: _("10 seconds") },
-    ],
-    defaultMaxFailedTimes: [
-        { value: "1", text: "1" },
-        { value: "2", text: "2" },
-        { value: "3", text: "3" },
-        { value: "4", text: "4" },
-        { value: "5", text: "5" },
-        { value: "10", text: "10" },
-    ],
-    defaultProxyProviderHealthCheckSec: [
-        { value: "60", text: _("Every 1 minute") },
-        { value: "120", text: _("Every 2 minutes") },
-        { value: "180", text: _("Every 3 minutes") },
-        { value: "360", text: _("Every 6 minutes") },
-        { value: "720", text: _("Every 12 minutes") },
-    ],
-    defaultProxyProviderUpdateIntervalSec: [
-        { value: "1800", text: _("Every 30 minutes") },
-        { value: "3600", text: _("Every hour") },
-        { value: "10800", text: _("Every 3 hour") }
-    ],
-    defaultDownloadSizeLimits: [
-        { value: "0", text: "0 MiB" },
-        { value: "1048576", text: "1 MiB" },
-        { value: "2097152", text: "2 MiB" },
-        { value: "3145728", text: "3 MiB" },
-        { value: "5242880", text: "5 MiB" },
-        { value: "10485760", text: "10 MiB" },
-        { value: "26214400", text: "25 MiB" }
-    ],
+    // proxy-groups.[*].timeout & proxy-providers.[*].health-check.timeout (Milliseconds)
+    defaultHealthCheckTimeoutMs: [1000, 2000, 3000, 5000, 10000].map(v => ({ value: String(v), text: v === 1000 ? _("1 second") : _("%d seconds").format(v / 1000) })),
+    // Proxy groups max failed times before marking as unhealthy
+    defaultMaxFailedTimes: [1, 2, 3, 4, 5, 10].map(v => ({ value: String(v), text: String(v) })),
+    // proxy-providers.[*].health-check.interval (Seconds)
+    defaultProxyProviderHealthCheckSec: [60, 120, 180, 360, 720].map(v => ({ value: String(v), text: v === 60 ? _("Every 1 minute") : _("Every %d minutes").format(v / 60) })),
+    // proxy-providers.[*].interval (Seconds)
+    defaultProxyProviderUpdateIntervalSec: [0.5, 1, 3].map(v => ({ value: String(v * 3600), text: v === 0.5 ? _("Every 30 minutes") : v === 1 ? _("Every hour") : _("Every %d hours").format(v) })),
+    // rule-providers.[*].size-limit & proxy-providers.[*].size-limit (Bytes)
+    defaultDownloadSizeLimits: [0, 1, 2, 3, 5, 10, 25].map(v => ({ value: String(v === 0 ? 0 : v * 1048576), text: v + " MiB" })),
+    // proxy-groups.[*].type (List of modes)
     defaultProxiesModes: [
         { value: "object", text: _("Object") },
         { value: "uri", text: _("URL") }
     ],
+    // log-level
     defaultLoggingLevels: [
         "info",
         "warning",
@@ -150,6 +94,7 @@ return baseclass.extend({
         "debug",
         "silent"
     ],
+    // proxy-groups.[*].url & proxy-providers.[*].health-check.url
     defaultHealthCheckUrls: [
         "https://www.gstatic.com/generate_204",
         "https://clients3.google.com/generate_204",
@@ -157,17 +102,20 @@ return baseclass.extend({
         "https://www.gstatic.cn/generate_204",
         "https://g.cn/generate_204",
     ],
+    // proxy-groups.[*].type
     defaultProxyGroupsTypes: [
         { value: "select", text: _("Select") },
         { value: "fallback", text: _("Fallback") },
         { value: "load-balance", text: _("Load balancer") },
         { value: "url-test", text: _("URL Test") }
     ],
+    // proxy-groups.[*].strategy
     defaultProxyGroupsBalanceModeStrategies: [
         { value: "consistent-hashing", text: _("Consistent hashing") },
         { value: "round-robin", text: _("Round robin") },
         { value: "sticky-sessions", text: _("Sticky sessions") }
     ],
+    // proxies.[*].ip-version
     defaultIPVersionValues: [
         { value: "dual", text: "dual" },
         { value: "ipv4", text: "ipv4" },
@@ -175,17 +123,32 @@ return baseclass.extend({
         { value: "ipv4-prefer", text: "ipv4-prefer" },
         { value: "ipv6-prefer", text: "ipv6-prefer" }
     ],
+    // OpenWrt NFTables QUIC and Encrypted DNS (DoT/DoH/DoQ) handling (JustClash UI specific)
     defaultNftOptions: [
         { value: "BY RULES", text: _("By rules") },
         { value: "DROP", text: _("Drop") },
         { value: "REJECT", text: _("Reject") }
     ],
+    // OpenWrt NFTables NTP interception mode (JustClash UI specific)
     defaultNftNtpOptions: [
         { value: "BY RULES", text: _("By rules") },
         { value: "DROP", text: _("Drop") },
         { value: "DIRECT", text: _("Direct") }
     ],
-    defaultUserAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    // global-ua (User-Agent string for Mihomo downloads)
+    defaultUaPresets: [
+        { value: "__random__",   label: _("Random popular") },
+        { value: "__justclash__", label: _("JustClash") },
+        { value: "__mihomo__",    label: _("Mihomo") },
+        { value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36", label: _("Chrome (Windows)") },
+        { value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36", label: _("Chrome (macOS)") },
+        { value: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36", label: _("Chrome (Linux)") },
+        { value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0", label: _("Firefox (Windows)") },
+        { value: "Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0", label: _("Firefox (Linux)") },
+        { value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Safari/605.1.15", label: _("Safari (macOS)") },
+        { value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0", label: _("Edge (Windows)") }
+    ],
+    // global-client-fingerprint & proxies.[*].client-fingerprint
     defaultFingerprints: [
         "chrome",
         "firefox",
@@ -197,6 +160,7 @@ return baseclass.extend({
         "randomized",
         "edge"
     ],
+    // JustClash/Mihomo binary update channel (JustClash UI specific)
     defaultUpdateChannelOptions: [
         { value: "stable", text: _("Stable") },
         { value: "alpha", text: _("Alpha") }
@@ -603,8 +567,7 @@ return baseclass.extend({
         if (matcherValidation !== true)
             return matcherValidation;
 
-        const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$/;
-        return ipPattern.test(ip) ? true : _("Invalid IP address");
+        return (this.isValidIpv4(ip) || this.isValidIpv6(ip)) ? true : _("Invalid IP address");
     },
 
     validateProxyJsonObject: function (value) {
