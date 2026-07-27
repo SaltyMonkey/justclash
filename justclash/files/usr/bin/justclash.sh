@@ -146,11 +146,11 @@ DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB="github.com"
 
 # Global buffer variables used by handle_*_section functions to return values
 # to core_generate_yaml, avoiding filesystem I/O (mktemp/cat/rm) and eval.
-OUT_RULES="[]"           # Generated routing rules array (JSON)
-OUT_RULESETS="{}"        # Generated rule-providers object (JSON)
-OUT_FAKE_IP_RULES="[]"   # Generated fake-ip filtering rules array (JSON)
-OUT_PROXY_GROUPS="[]"    # Generated proxy groups array (JSON)
-OUT_PROXIES="[]"         # Generated proxies array (JSON)
+OUT_RULES="[]"         # Generated routing rules array (JSON)
+OUT_RULESETS="{}"      # Generated rule-providers object (JSON)
+OUT_FAKE_IP_RULES="[]" # Generated fake-ip filtering rules array (JSON)
+OUT_PROXY_GROUPS="[]"  # Generated proxy groups array (JSON)
+OUT_PROXIES="[]"       # Generated proxies array (JSON)
 OUT_NAMES_RULESETS=""  # Generated block ruleset names list (plain text)
 OUT_NAMES_SUFFIXES=""  # Generated block suffix names list (plain text)
 OUT_NAMES_GEOSITE=""   # Generated block geosite names list (plain text)
@@ -161,20 +161,20 @@ OUT_PROXY_PROVIDERS="" # Generated proxy providers object (JSON)
 GLOBAL_FAKE_IP_EXCLUDE_RULES=""
 GLOBAL_FAKE_IP_EXCLUDE_GEOSITES=""
 GLOBAL_FAKE_IP_EXCLUDE_DOMAINS=""
-OUT_MIXED_RULES=""     # Generated mixed-port rules array (JSON)
-OUT_FINAL_RULES=""     # Generated final rules array (JSON)
-OUT_BUNDLE_IP_RULES="" # Stores IP-based routing rules from build_builtin_rules_bundle (placed before domain rules to optimize DNS)
-OUT_BUNDLE_RULES=""    # Stores domain and other routing rules from build_builtin_rules_bundle to construct clash rules
-OUT_BUNDLE_RULESETS="" # Stores rule-provider templates from build_builtin_rules_bundle to define rule-providers in configuration
-OUT_BUNDLE_NAMES=""    # Stores active ruleset names from build_builtin_rules_bundle, used to build blocklist name lists
-OUT_BUNDLE_FAKEIPRULES="" # Stores rules mapping domains to fake-ip from build_builtin_rules_bundle for correct DNS routing
+OUT_MIXED_RULES=""         # Generated mixed-port rules array (JSON)
+OUT_FINAL_RULES=""         # Generated final rules array (JSON)
+OUT_BUNDLE_IP_RULES=""     # Stores IP-based routing rules from build_builtin_rules_bundle (placed before domain rules to optimize DNS)
+OUT_BUNDLE_RULES=""        # Stores domain and other routing rules from build_builtin_rules_bundle to construct clash rules
+OUT_BUNDLE_RULESETS=""     # Stores rule-provider templates from build_builtin_rules_bundle to define rule-providers in configuration
+OUT_BUNDLE_NAMES=""        # Stores active ruleset names from build_builtin_rules_bundle, used to build blocklist name lists
+OUT_BUNDLE_FAKEIPRULES=""  # Stores rules mapping domains to fake-ip from build_builtin_rules_bundle for correct DNS routing
 _IPCIDR_RULESETS_BUFFER="" # Global buffer accumulating ipcidr ruleset entries during YAML generation
 _STATIC_IPS_BUFFER=""      # Global buffer accumulating static IP entries during YAML generation
 
 # Global in-memory caches storing the contents of ruleset/blocklist databases.
 # Loaded once at the start of core_generate_yaml to prevent multiple slow file reads.
-_RULESETS_CONTENT=""        # Cache of rulesets.txt content
-_BLOCK_RULESETS_CONTENT=""  # Cache of block.rulesets.txt content
+_RULESETS_CONTENT=""       # Cache of rulesets.txt content
+_BLOCK_RULESETS_CONTENT="" # Cache of block.rulesets.txt content
 
 NF_TABLE_NAME="${PROGNAME}_tproxy"
 NF_TABLE_FWMARK_FINAL=3
@@ -189,7 +189,6 @@ BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 B4_FILEPATH="/etc/init.d/b4"
 REQUIRED_TOOLS="jq nft curl md5sum ntpd base64 inotifywait"
-
 
 is_pattern_in_file() {
     local file="$1"
@@ -236,7 +235,7 @@ core_validate_yaml() {
     test_output="$("$CORE_PATH" -t -d "$CORE_WORKDIR_PATH" -f "$OUTPUT_YAML_CONFIG_PATH" 2>&1)"
     app_exit_code=$?
     case "$test_output" in
-        *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
+    *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
     esac
     if [ "$app_exit_code" -ne 0 ]; then
         log error "Generated YAML configuration is invalid."
@@ -388,8 +387,8 @@ start() {
         log info "Waiting for WAN (max ${ENV_JUSTCLASH_WAIT_WAN_MAX}s)..."
         local waited=0
         while [ "$waited" -lt "$ENV_JUSTCLASH_WAIT_WAN_MAX" ]; do
-            if ip -4 route show default 2>/dev/null | grep -q default || \
-               ip -6 route show default 2>/dev/null | grep -q default; then
+            if ip -4 route show default 2>/dev/null | grep -q default ||
+                ip -6 route show default 2>/dev/null | grep -q default; then
                 break
             fi
             sleep 1
@@ -619,11 +618,7 @@ build_nft_skuid_exclusions() {
         skuid_value=$(trim "$skuid_raw")
         [ -n "$skuid_value" ] || continue
 
-        if is_uint "$skuid_value"; then
-            skuid_resolved="$skuid_value"
-        else
-            skuid_resolved=$(id -u "$skuid_value" 2>/dev/null)
-        fi
+        is_uint "$skuid_value" && skuid_resolved="$skuid_value" || skuid_resolved=$(id -u "$skuid_value" 2>/dev/null)
 
         if [ -n "$skuid_resolved" ] && is_uint "$skuid_resolved"; then
             skuid_list="${skuid_list:+$skuid_list }$skuid_resolved"
@@ -648,7 +643,7 @@ build_fake_ip_rule_array() {
         # Auto-detect DOMAIN-WILDCARD if entry contains *
         if [ "$rt" = "DOMAIN-SUFFIX" ]; then
             case "$entry" in
-                *[*]* ) rt="DOMAIN-WILDCARD" ;;
+            *[*]*) rt="DOMAIN-WILDCARD" ;;
             esac
         fi
 
@@ -770,7 +765,7 @@ populate_nft_sets_async() {
                 real_rpath=$(readlink -f "$rpath" 2>/dev/null || realpath "$rpath" 2>/dev/null || echo "$rpath")
                 watch_targets="$watch_targets $real_rpath"
             fi
-        done < "$ACTIVE_IPCIDR_RULESETS_PATH"
+        done <"$ACTIVE_IPCIDR_RULESETS_PATH"
 
         # shellcheck disable=SC2086
         inotifywait -m -q -e close_write,moved_to --format "%w%f" $watch_targets 2>/dev/null | while read -r changed_path; do
@@ -786,21 +781,17 @@ populate_nft_sets_async() {
                 name="${line%%|*}"
                 rpath="${line##*|}"
 
-                if [ "${rpath#/}" != "$rpath" ]; then
-                    file_path="$rpath"
-                else
-                    file_path="${CORE_WORKDIR_RULES_PATH}/${name}.list"
-                fi
+                [ "${rpath#/}" != "$rpath" ] && file_path="$rpath" || file_path="${CORE_WORKDIR_RULES_PATH}/${name}.list"
 
                 if [ "${file_path##*/}" = "${changed_path##*/}" ] && [ -f "$file_path" ]; then
                     safe_name=$(sanitize_nft_name "$name")
                     populate_ruleset_file "$name" "$file_path" "$safe_name" "$ipv6_enabled"
                     break
                 fi
-            done < "$ACTIVE_IPCIDR_RULESETS_PATH"
+            done <"$ACTIVE_IPCIDR_RULESETS_PATH"
         done
     ) &
-    echo "$!" > "$ASYNC_WORKER_PID_PATH"
+    echo "$!" >"$ASYNC_WORKER_PID_PATH"
 }
 
 nf_table_add_full() {
@@ -835,18 +826,18 @@ nf_table_add_full() {
 
     proxy_routing_marks=$(trim "$(config_foreach get_routing_mark proxies routing_mark)")
     case "$proxy_routing_marks" in
-        *-1*)
-            log error "Invalid routing mark detected in proxies configuration"
-            return 1
-            ;;
+    *-1*)
+        log error "Invalid routing mark detected in proxies configuration"
+        return 1
+        ;;
     esac
 
     provider_routing_marks=$(trim "$(config_foreach get_routing_mark proxy_provider override_routing_mark)")
     case "$provider_routing_marks" in
-        *-1*)
-            log error "Invalid override routing mark detected in proxy providers configuration"
-            return 1
-            ;;
+    *-1*)
+        log error "Invalid override routing mark detected in proxy providers configuration"
+        return 1
+        ;;
     esac
 
     config_get fake_ip_range proxy fake_ip_range
@@ -1073,18 +1064,18 @@ nf_table_add_partial() {
 
     proxy_routing_marks=$(trim "$(config_foreach get_routing_mark proxies routing_mark)")
     case "$proxy_routing_marks" in
-        *-1*)
-            log error "Invalid routing mark detected in proxies configuration"
-            return 1
-            ;;
+    *-1*)
+        log error "Invalid routing mark detected in proxies configuration"
+        return 1
+        ;;
     esac
 
     provider_routing_marks=$(trim "$(config_foreach get_routing_mark proxy_provider override_routing_mark)")
     case "$provider_routing_marks" in
-        *-1*)
-            log error "Invalid override routing mark detected in proxy providers configuration"
-            return 1
-            ;;
+    *-1*)
+        log error "Invalid override routing mark detected in proxy providers configuration"
+        return 1
+        ;;
     esac
 
     config_get fake_ip_range proxy fake_ip_range
@@ -1133,16 +1124,12 @@ nf_table_add_partial() {
             rname="${line%%|*}"
             rpath="${line##*|}"
             rsafe=$(sanitize_nft_name "$rname")
-            if [ "${rpath#/}" != "$rpath" ]; then
-                rfile="$rpath"
-            else
-                rfile="${CORE_WORKDIR_RULES_PATH}/${rname}.list"
-            fi
+            [ "${rpath#/}" != "$rpath" ] && rfile="$rpath" || rfile="${CORE_WORKDIR_RULES_PATH}/${rname}.list"
             ipcidr_safe_names="${ipcidr_safe_names:+$ipcidr_safe_names }$rsafe"
             if [ -s "$rfile" ]; then
                 ipcidr_cold_start_list="${ipcidr_cold_start_list:+$ipcidr_cold_start_list }$rname|$rfile|$rsafe"
             fi
-        done < "$ACTIVE_IPCIDR_RULESETS_PATH"
+        done <"$ACTIVE_IPCIDR_RULESETS_PATH"
     fi
 
     nft delete table inet "$NF_TABLE_NAME" 2>/dev/null
@@ -1439,7 +1426,7 @@ dnsmasq_update() {
 
         uci commit dhcp
         log info "DNS configuration updated."
-        /etc/init.d/dnsmasq restart > /dev/null 2>&1
+        /etc/init.d/dnsmasq restart >/dev/null 2>&1
         log info "Dnsmasq restarted to apply DNS changes."
     else
         log info "Skip Dnsmasq changes because Dnsmasq rules application is disabled."
@@ -1504,7 +1491,7 @@ dnsmasq_restore() {
 
         uci commit dhcp
         log info "DNS configuration restored."
-        /etc/init.d/dnsmasq restart > /dev/null 2>&1
+        /etc/init.d/dnsmasq restart >/dev/null 2>&1
         log info "Dnsmasq restarted to apply DNS changes."
     else
         log info "Skip Dnsmasq restore because Dnsmasq rules application is disabled."
@@ -1643,11 +1630,7 @@ build_manual_rules_array() {
     for route_entry in $route_entries; do
         [ -n "$route_entry" ] || continue
 
-        if [ -n "$extra_suffix" ]; then
-            generated_rule="$rule_prefix,$route_entry,$target_name,$extra_suffix"
-        else
-            generated_rule="$rule_prefix,$route_entry,$target_name"
-        fi
+        [ -n "$extra_suffix" ] && generated_rule="$rule_prefix,$route_entry,$target_name,$extra_suffix" || generated_rule="$rule_prefix,$route_entry,$target_name"
 
         rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
     done
@@ -1681,7 +1664,10 @@ build_builtin_rules_bundle() {
         ruleset_name="${ruleset_name%%|*}"
 
         case "$added_rulesets" in
-            *"|$ruleset_name|"*) log warn "Skip duplicated ruleset: $ruleset_name"; continue ;;
+        *"|$ruleset_name|"*)
+            log warn "Skip duplicated ruleset: $ruleset_name"
+            continue
+            ;;
         esac
 
         ruleset_fields="${ruleset_line#*|}"
@@ -1695,56 +1681,52 @@ build_builtin_rules_bundle() {
         # Extract optional Authorization header field (6th field)
         ruleset_auth=""
         case "$ruleset_url" in
-            *\|*)
-                ruleset_auth=$(trim "${ruleset_url#*|}")
-                ruleset_url="${ruleset_url%%|*}"
+        *\|*)
+            ruleset_auth=$(trim "${ruleset_url#*|}")
+            ruleset_url="${ruleset_url%%|*}"
             ;;
         esac
 
-        if [ "$ruleset_behavior" = "ipcidr" ]; then
-            generated_rule="RULE-SET,$ruleset_name,$target_name,no-resolve"
-        else
-            generated_rule="RULE-SET,$ruleset_name,$target_name"
-        fi
+        [ "$ruleset_behavior" = "ipcidr" ] && generated_rule="RULE-SET,$ruleset_name,$target_name,no-resolve" || generated_rule="RULE-SET,$ruleset_name,$target_name"
         case "$ruleset_url" in
-            http://*|https://*)
-                local headers=""
-                if [ -n "$ruleset_auth" ]; then
-                    template_headers "0" "$ruleset_auth" ""
-                    headers="$OUT_TEMPLATE"
-                fi
-                template_ruleset_http "$ruleset_name" "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$headers"
-                rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
+        http://* | https://*)
+            local headers=""
+            if [ -n "$ruleset_auth" ]; then
+                template_headers "0" "$ruleset_auth" ""
+                headers="$OUT_TEMPLATE"
+            fi
+            template_ruleset_http "$ruleset_name" "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$headers"
+            rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
-            *)
-                template_ruleset_file "$ruleset_url" "$ruleset_behavior" "$ruleset_format"
-                rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
+        *)
+            template_ruleset_file "$ruleset_url" "$ruleset_behavior" "$ruleset_format"
+            rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
         esac
         added_rulesets="$added_rulesets$ruleset_name|"
 
         case "$rule_mode" in
-            all)
-                # IP-based rulesets emitted separately so callers place them before domain rules.
-                if [ "$ruleset_behavior" = "ipcidr" ]; then
-                    ip_rules_fragment="${ip_rules_fragment:+$ip_rules_fragment,}\"$generated_rule\""
-                    _IPCIDR_RULESETS_BUFFER="${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}$ruleset_name|$ruleset_url"
-                else
-                    rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
-                fi
+        all)
+            # IP-based rulesets emitted separately so callers place them before domain rules.
+            if [ "$ruleset_behavior" = "ipcidr" ]; then
+                ip_rules_fragment="${ip_rules_fragment:+$ip_rules_fragment,}\"$generated_rule\""
+                _IPCIDR_RULESETS_BUFFER="${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}$ruleset_name|$ruleset_url"
+            else
+                rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
+            fi
             ;;
-            non-domain-only)
-                if [ "$ruleset_behavior" != "domain" ]; then
-                    rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
-                fi
+        non-domain-only)
+            if [ "$ruleset_behavior" != "domain" ]; then
+                rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
+            fi
             ;;
         esac
 
         if [ "$ruleset_behavior" = "domain" ]; then
             names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$ruleset_name\""
             case "$GLOBAL_FAKE_IP_EXCLUDE_RULES" in
-                *" $ruleset_name "*) ;;
-                *) fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\"" ;;
+            *" $ruleset_name "*) ;;
+            *) fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\"" ;;
             esac
         fi
         IFS="$NL"
@@ -1854,11 +1836,7 @@ template_headers() {
     if [ "$hwid_enabled" = "1" ] || [ "$hwid_enabled" = "real" ] || [ "$hwid_enabled" = "spoofed" ]; then
         local hwid device_os version_os device_model
 
-        if [ "$hwid_enabled" = "spoofed" ] && [ -n "$hwid_custom" ]; then
-            hwid="$hwid_custom"
-        else
-            hwid=$(hwid_generate)
-        fi
+        [ "$hwid_enabled" = "spoofed" ] && [ -n "$hwid_custom" ] && hwid="$hwid_custom" || hwid=$(hwid_generate)
 
         device_os=$(get_os_name)
         version_os=$(get_os_version)
@@ -1896,11 +1874,7 @@ template_headers() {
     fi
 
     # Final output generation
-    if [ -n "$headers_fragment" ]; then
-        OUT_TEMPLATE=$(printf '"header":{%s}' "$headers_fragment")
-    else
-        OUT_TEMPLATE=""
-    fi
+    [ -n "$headers_fragment" ] && OUT_TEMPLATE=$(printf '"header":{%s}' "$headers_fragment") || OUT_TEMPLATE=""
 }
 
 template_ruleset_http() {
@@ -1946,10 +1920,16 @@ handle_proxy_section() {
         local download_proxy generated_rule
 
         config_get name "$section" name
-        [ -z "$name" ] && { log warn "Skip proxy without name: $section"; return; }
+        [ -z "$name" ] && {
+            log warn "Skip proxy without name: $section"
+            return
+        }
 
         config_get_bool enabled "$section" enabled 1
-        [ "$enabled" -ne 1 ] && { log warn "Skip disabled proxy: $section"; return; }
+        [ "$enabled" -ne 1 ] && {
+            log warn "Skip disabled proxy: $section"
+            return
+        }
 
         config_get routing_mark "$section" routing_mark
         routing_mark=$(parse_routing_mark "$routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
@@ -1976,13 +1956,22 @@ handle_proxy_section() {
         config_get_bool use_proxy_for_list_update "$section" use_proxy_for_list_update 0
 
         if [ "$mode" = "object" ]; then
-            [ -z "$proxy_link_object" ] && { log warn "Skip empty proxy '$name'" ; return; }
+            [ -z "$proxy_link_object" ] && {
+                log warn "Skip empty proxy '$name'"
+                return
+            }
 
             proxy_obj=$(printf '%s' "$proxy_link_object" | jq -c --arg name "$name" '. + {name: $name}')
 
-            [ -z "$proxy_obj" ] && { log warn "Failed to process object for '$name'"; return; }
+            [ -z "$proxy_obj" ] && {
+                log warn "Failed to process object for '$name'"
+                return
+            }
         else
-            [ -z "$proxy_link_uri" ] && { log warn "Skip empty '$name'"; return; }
+            [ -z "$proxy_link_uri" ] && {
+                log warn "Skip empty '$name'"
+                return
+            }
             proxy_link_uri=$(trim "$proxy_link_uri")
 
             [ -n "$dialer_proxy" ] && dialer_proxy=$(trim "$dialer_proxy")
@@ -1992,22 +1981,28 @@ handle_proxy_section() {
             ip_version=$(parse_ip_version "$ip_version")
 
             case "$proxy_link_uri" in
-                direct://*) proxy_obj=$(parse_direct_url "$name" "$dialer_proxy" "$interface_name" "$routing_mark" "$ip_version") ;;
-                ss://*)     proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                socks://*)  proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(rand_user_agent)") ;;
-                trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(rand_user_agent)") ;;
-                hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                vless://*)  proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                vmess://*)  proxy_obj=$(parse_vmess_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-                *) log warn "Unknown proxy link type: $proxy_link_uri"; return ;;
+            direct://*) proxy_obj=$(parse_direct_url "$name" "$dialer_proxy" "$interface_name" "$routing_mark" "$ip_version") ;;
+            ss://*) proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            socks://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(rand_user_agent)") ;;
+            trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(rand_user_agent)") ;;
+            hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            vless://*) proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            vmess://*) proxy_obj=$(parse_vmess_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+            *)
+                log warn "Unknown proxy link type: $proxy_link_uri"
+                return
+                ;;
             esac
 
-            [ -z "$proxy_obj" ] && { log warn "Failed to parse proxy link: $proxy_link_uri"; return; }
+            [ -z "$proxy_obj" ] && {
+                log warn "Failed to parse proxy link: $proxy_link_uri"
+                return
+            }
         fi
 
         proxies="${proxies:+$proxies,}$proxy_obj"
@@ -2033,8 +2028,8 @@ handle_proxy_section() {
                 generated_rule="DOMAIN-SUFFIX,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
                 case "$GLOBAL_FAKE_IP_EXCLUDE_DOMAINS" in
-                    *" $route_entry "*) ;;
-                    *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\"" ;;
+                *" $route_entry "*) ;;
+                *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\"" ;;
                 esac
             }
         done
@@ -2046,8 +2041,8 @@ handle_proxy_section() {
                 generated_rule="GEOSITE,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
                 case "$GLOBAL_FAKE_IP_EXCLUDE_GEOSITES" in
-                    *" $route_entry "*) ;;
-                    *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\"" ;;
+                *" $route_entry "*) ;;
+                *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\"" ;;
                 esac
             }
         done
@@ -2106,14 +2101,23 @@ handle_proxy_group_section() {
         local download_proxy generated_rule
 
         config_get name "$section" name
-        [ -z "$name" ] && { log warn "Skip proxy group without a name: $section"; return; }
+        [ -z "$name" ] && {
+            log warn "Skip proxy group without a name: $section"
+            return
+        }
 
         config_get_bool enabled "$section" enabled 1
-        [ "$enabled" -ne 1 ] && { log warn "Skip disabled proxy group: $section"; return; }
+        [ "$enabled" -ne 1 ] && {
+            log warn "Skip disabled proxy group: $section"
+            return
+        }
 
         config_get proxies_list "$section" proxies
         config_get providers_list "$section" providers
-        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && { log warn "Skip empty proxy group: $name"; return; }
+        [ -z "$proxies_list" ] && [ -z "$providers_list" ] && {
+            log warn "Skip empty proxy group: $name"
+            return
+        }
 
         config_get group_type "$section" group_type
         config_get strategy "$section" strategy
@@ -2188,8 +2192,8 @@ handle_proxy_group_section() {
                 generated_rule="DOMAIN-SUFFIX,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
                 case "$GLOBAL_FAKE_IP_EXCLUDE_DOMAINS" in
-                    *" $route_entry "*) ;;
-                    *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\"" ;;
+                *" $route_entry "*) ;;
+                *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"DOMAIN-SUFFIX,$route_entry,fake-ip\"" ;;
                 esac
             }
         done
@@ -2201,8 +2205,8 @@ handle_proxy_group_section() {
                 generated_rule="GEOSITE,$route_entry,$name"
                 rules_array="${rules_array:+$rules_array,}\"$generated_rule\""
                 case "$GLOBAL_FAKE_IP_EXCLUDE_GEOSITES" in
-                    *" $route_entry "*) ;;
-                    *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\"" ;;
+                *" $route_entry "*) ;;
+                *) fake_ip_rules="${fake_ip_rules:+$fake_ip_rules,}\"GEOSITE,$route_entry,fake-ip\"" ;;
                 esac
             }
         done
@@ -2256,12 +2260,15 @@ handle_proxy_provider_section() {
         config_get name "$section" name
         config_get url "$section" subscription
         { [ -z "$name" ] || [ -z "$url" ]; } && {
-        log warn "Skip proxy provider without a name or subscription"
+            log warn "Skip proxy provider without a name or subscription"
             return
         }
 
         config_get_bool enabled "$section" enabled 1
-        [ "$enabled" -ne 1 ] && { log warn "Skip disabled proxy provider: $section"; return; }
+        [ "$enabled" -ne 1 ] && {
+            log warn "Skip disabled proxy provider: $section"
+            return
+        }
 
         config_get override_routing_mark "$section" override_routing_mark
         override_routing_mark=$(parse_routing_mark "$override_routing_mark" "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY")
@@ -2302,7 +2309,6 @@ handle_proxy_provider_section() {
 
         template_headers "$header_hwid" "$header_authorization" "$header_user_agent" "$header_age_public_key" "$header_hwid_custom"
         headers="$OUT_TEMPLATE"
-
 
         config_get_bool health_check "$section" health_check 0
         hc_expected_status="$DEFAULT_HEALTHCHECK_RESULT" hc_url="$DEFAULT_HEALTHCHECK_URL" hc_interval="$DEFAULT_HEALTHCHECK_INTERVAL" hc_timeout="$DEFAULT_HEALTHCHECK_TIMEOUT" hc_lazy="false"
@@ -2429,7 +2435,6 @@ handle_block_rule_section() {
     OUT_NAMES_SUFFIXES="$list_suffix_names"
 }
 
-
 handle_mixed_port_rules_section() {
     local exit_rule
     local rules rule_str
@@ -2461,9 +2466,9 @@ get_dashboard_url() {
     local url
 
     case "$dashboard_repo" in
-        yacd-meta) config_get url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL" ;;
-        zashboard) config_get url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL" ;;
-        *)         config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL" ;;
+    yacd-meta) config_get url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL" ;;
+    zashboard) config_get url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL" ;;
+    *) config_get url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL" ;;
     esac
 
     printf '%s\n' "$url"
@@ -2691,13 +2696,14 @@ core_generate_yaml() {
     custom_real_ip_rulesets=$(build_fake_ip_rule_array "$fake_ip_exclude_ruleset_values" "RULE-SET" "real-ip")
     custom_real_ip_geosites=$(build_fake_ip_rule_array "$fake_ip_exclude_geosite_values" "GEOSITE" "real-ip")
 
-    fake_ip_filter_data=$(jq --indent 4 -n \
-        --arg custom_real "$custom_real_ip_rules" \
-        --arg custom_real_rulesets "$custom_real_ip_rulesets" \
-        --arg custom_real_ip_geosites "$custom_real_ip_geosites" \
-        --arg proxy_groups "$fake_ip_rules_proxy_groups" \
-        --arg proxies "$fake_ip_rules_proxies" \
-        '
+    fake_ip_filter_data=$(
+        jq --indent 4 -n \
+            --arg custom_real "$custom_real_ip_rules" \
+            --arg custom_real_rulesets "$custom_real_ip_rulesets" \
+            --arg custom_real_ip_geosites "$custom_real_ip_geosites" \
+            --arg proxy_groups "$fake_ip_rules_proxy_groups" \
+            --arg proxies "$fake_ip_rules_proxies" \
+            '
         (
             ($custom_real | fromjson)
             + ($custom_real_rulesets | fromjson)
@@ -2715,22 +2721,23 @@ core_generate_yaml() {
 
     rule_providers=$(
         jq -n \
-        --argjson rulesets_block "$rulesets_block" \
-        --argjson rulesets_proxygroup "$rulesets_proxygroup" \
-        --argjson rulesets_proxies "$rulesets_proxies" \
-        'reduce [ $rulesets_block, $rulesets_proxygroup, $rulesets_proxies ][] as $item ({}; . * $item)'
+            --argjson rulesets_block "$rulesets_block" \
+            --argjson rulesets_proxygroup "$rulesets_proxygroup" \
+            --argjson rulesets_proxies "$rulesets_proxies" \
+            'reduce [ $rulesets_block, $rulesets_proxygroup, $rulesets_proxies ][] as $item ({}; . * $item)'
     )
 
-    rules=$(jq -n \
-        --arg rule_mixed "$rule_mixed" \
-        --arg block "$rules_block" \
-        --arg proxygroups "$rules_proxygroups" \
-        --arg proxies "$rules_proxies" \
-        --arg final "$rule_final" \
-        '($rule_mixed | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
+    rules=$(
+        jq -n \
+            --arg rule_mixed "$rule_mixed" \
+            --arg block "$rules_block" \
+            --arg proxygroups "$rules_proxygroups" \
+            --arg proxies "$rules_proxies" \
+            --arg final "$rule_final" \
+            '($rule_mixed | fromjson) + ($block | fromjson) + ($proxygroups | fromjson) + ($proxies | fromjson) + ($final | fromjson) | map(select(length > 0))'
     )
 
-    : > "$OUTPUT_YAML_CONFIG_PATH"
+    : >"$OUTPUT_YAML_CONFIG_PATH"
     chmod 600 "$OUTPUT_YAML_CONFIG_PATH"
 
     {
@@ -2753,18 +2760,6 @@ core_generate_yaml() {
 
         if [ -n "$interface_name" ]; then
             echo "interface-name: $(yaml_quote "$interface_name")"
-        fi
-
-        echo "listeners:"
-        echo "  - name: tproxy-v4"
-        echo "    type: tproxy"
-        echo "    port: $tproxy_port"
-        echo "    listen: 127.0.0.1"
-        if [ "$ipv6_enabled" -eq 1 ]; then
-            echo "  - name: tproxy-v6"
-            echo "    type: tproxy"
-            echo "    port: $tproxy_port"
-            echo "    listen: \"::1\""
         fi
 
         echo "mode: rule"
@@ -2810,6 +2805,18 @@ core_generate_yaml() {
             echo "  geosite: $(yaml_quote "$mihomo_geosite_url")"
             echo "  mmdb: false"
             echo "  asn: false"
+        fi
+        echo ""
+        echo "listeners:"
+        echo "  - name: tproxy-v4"
+        echo "    type: tproxy"
+        echo "    port: $tproxy_port"
+        echo "    listen: 127.0.0.1"
+        if [ "$ipv6_enabled" -eq 1 ]; then
+            echo "  - name: tproxy-v6"
+            echo "    type: tproxy"
+            echo "    port: $tproxy_port"
+            echo "    listen: \"::1\""
         fi
         echo ""
         echo "hosts: {$hosts_content}"
@@ -2868,10 +2875,10 @@ core_generate_yaml() {
         printf '%s\n' "proxy-groups: $proxy_groups"
         printf '%s\n' "proxy-providers: $proxy_providers"
         printf '%s\n' "rules: $rules"
-    } > "$OUTPUT_YAML_CONFIG_PATH"
+    } >"$OUTPUT_YAML_CONFIG_PATH"
 
-    printf '%s' "${_STATIC_IPS_BUFFER:+$_STATIC_IPS_BUFFER$NL}" > "$ACTIVE_STATIC_IPS_PATH"
-    printf '%s' "${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}" > "$ACTIVE_IPCIDR_RULESETS_PATH"
+    printf '%s' "${_STATIC_IPS_BUFFER:+$_STATIC_IPS_BUFFER$NL}" >"$ACTIVE_STATIC_IPS_PATH"
+    printf '%s' "${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}" >"$ACTIVE_IPCIDR_RULESETS_PATH"
     if [ -s "$ACTIVE_IPCIDR_RULESETS_PATH" ]; then
         sort -u -o "$ACTIVE_IPCIDR_RULESETS_PATH" "$ACTIVE_IPCIDR_RULESETS_PATH"
     fi
@@ -2882,13 +2889,13 @@ core_generate_yaml() {
 
     # Clean up global buffers and caches to free memory on low-RAM routers
     unset _RULESETS_CONTENT _BLOCK_RULESETS_CONTENT \
-          OUT_RULES OUT_RULESETS OUT_FAKE_IP_RULES OUT_PROXY_GROUPS OUT_PROXIES \
-          OUT_NAMES_RULESETS OUT_NAMES_SUFFIXES OUT_NAMES_GEOSITE OUT_TEMPLATE \
-          OUT_PROXY_PROVIDERS OUT_MIXED_RULES OUT_FINAL_RULES \
-          OUT_BUNDLE_IP_RULES OUT_BUNDLE_RULES OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES \
-          OUT_BUNDLE_FAKEIPRULES \
-          GLOBAL_FAKE_IP_EXCLUDE_RULES GLOBAL_FAKE_IP_EXCLUDE_GEOSITES GLOBAL_FAKE_IP_EXCLUDE_DOMAINS \
-          _STATIC_IPS_BUFFER _IPCIDR_RULESETS_BUFFER
+        OUT_RULES OUT_RULESETS OUT_FAKE_IP_RULES OUT_PROXY_GROUPS OUT_PROXIES \
+        OUT_NAMES_RULESETS OUT_NAMES_SUFFIXES OUT_NAMES_GEOSITE OUT_TEMPLATE \
+        OUT_PROXY_PROVIDERS OUT_MIXED_RULES OUT_FINAL_RULES \
+        OUT_BUNDLE_IP_RULES OUT_BUNDLE_RULES OUT_BUNDLE_RULESETS OUT_BUNDLE_NAMES \
+        OUT_BUNDLE_FAKEIPRULES \
+        GLOBAL_FAKE_IP_EXCLUDE_RULES GLOBAL_FAKE_IP_EXCLUDE_GEOSITES GLOBAL_FAKE_IP_EXCLUDE_DOMAINS \
+        _STATIC_IPS_BUFFER _IPCIDR_RULESETS_BUFFER
 
     return 0
 }
@@ -2961,15 +2968,15 @@ core_prepare_workdir() {
         current_hash=$(uci show "$PROGNAME" | grep -vE "^${PROGNAME}\.settings\.(wait_for_wan|delayed_boot|skip_environment_checks|ntpd_start|mihomo_autorestart|mihomo_cron_|mihomo_service_data_|mihomo_core_|mihomo_github_|mihomo_custom_core_url|mihomo_dashboard_|mihomo_rulesets_files_download_url)" | md5_str)
         saved_hash=$(cat "$CORE_WORKDIR_UCI_HASH_PATH" 2>/dev/null)
 
-        if [ ! -f "$OUTPUT_YAML_CONFIG_PATH" ] || \
-           [ ! -f "$ACTIVE_IPCIDR_RULESETS_PATH" ] || \
-           [ ! -f "$ACTIVE_STATIC_IPS_PATH" ]; then
+        if [ ! -f "$OUTPUT_YAML_CONFIG_PATH" ] ||
+            [ ! -f "$ACTIVE_IPCIDR_RULESETS_PATH" ] ||
+            [ ! -f "$ACTIVE_STATIC_IPS_PATH" ]; then
             rm -f "$OUTPUT_YAML_CONFIG_PATH" "$ACTIVE_IPCIDR_RULESETS_PATH" "$ACTIVE_STATIC_IPS_PATH"
-            echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
+            echo "$current_hash" >"$CORE_WORKDIR_UCI_HASH_PATH"
         elif [ "$current_hash" != "$saved_hash" ]; then
             log info "Existing $OUTPUT_YAML_CONFIG_PATH is outdated and will be regenerated."
             rm -f "$OUTPUT_YAML_CONFIG_PATH" "$ACTIVE_IPCIDR_RULESETS_PATH" "$ACTIVE_STATIC_IPS_PATH"
-            echo "$current_hash" > "$CORE_WORKDIR_UCI_HASH_PATH"
+            echo "$current_hash" >"$CORE_WORKDIR_UCI_HASH_PATH"
         else
             log info "Existing $OUTPUT_YAML_CONFIG_PATH is up to date and will be reused."
             res=0
@@ -2980,9 +2987,9 @@ core_prepare_workdir() {
         log info "Creating symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
         mkdir -p "$PROG_ETC_DIR"
-        [ ! -d "$SYMLINKDIR_RULESETS" ] &&  mkdir -p "$SYMLINKDIR_RULESETS"
+        [ ! -d "$SYMLINKDIR_RULESETS" ] && mkdir -p "$SYMLINKDIR_RULESETS"
         ln -sf "$SYMLINKDIR_RULESETS" "$CORE_WORKDIR_RULES_PATH"
-    elif  [ "$mihomo_persistent_ext_rules" -eq 0 ] && [ -L "$CORE_WORKDIR_RULES_PATH" ]; then
+    elif [ "$mihomo_persistent_ext_rules" -eq 0 ] && [ -L "$CORE_WORKDIR_RULES_PATH" ]; then
         log info "Removing old symlink $SYMLINKDIR_RULESETS -> $CORE_WORKDIR_RULES_PATH"
         rm -rf "$SYMLINKDIR_RULESETS"
         rm -rf "$CORE_WORKDIR_RULES_PATH"
@@ -3007,31 +3014,23 @@ detect_arch() {
     arch_raw=$(get_os_arch)
 
     case "$arch_raw" in
-        aarch64_*) echo "arm64" ;;
-        mips_*)
-            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
-                echo "mips-hardfloat"
-            else
-                echo "mips-softfloat"
-            fi
-            ;;
-        mipsel_*)
-            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
-                echo "mipsle-hardfloat"
-            else
-                echo "mipsle-softfloat"
-            fi
-            ;;
-        mips64_*) echo "mips64" ;;
-        mips64el_*) echo "mips64le" ;;
-        x86_64) echo "amd64" ;;
-        i386_*) echo "386" ;;
-        riscv64_*) echo "riscv64" ;;
-        loongarch64_*) echo "loong64-abi2" ;;
-        *_neon-vfp*) echo "armv7" ;;
-        *_neon* | *_vfp*) echo "armv6" ;;
-        arm_*) echo "armv5" ;;
-        *) echo "amd64" ;;
+    aarch64_*) echo "arm64" ;;
+    mips_*)
+        [ "${arch_raw#*hardfloat}" != "$arch_raw" ] && echo "mips-hardfloat" || echo "mips-softfloat"
+        ;;
+    mipsel_*)
+        [ "${arch_raw#*hardfloat}" != "$arch_raw" ] && echo "mipsle-hardfloat" || echo "mipsle-softfloat"
+        ;;
+    mips64_*) echo "mips64" ;;
+    mips64el_*) echo "mips64le" ;;
+    x86_64) echo "amd64" ;;
+    i386_*) echo "386" ;;
+    riscv64_*) echo "riscv64" ;;
+    loongarch64_*) echo "loong64-abi2" ;;
+    *_neon-vfp*) echo "armv7" ;;
+    *_neon* | *_vfp*) echo "armv6" ;;
+    arm_*) echo "armv5" ;;
+    *) echo "amd64" ;;
     esac
 }
 
@@ -3099,9 +3098,9 @@ core_update() {
     latest_ver=$(
         set -o pipefail
         curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
-        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
-        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$version_txt_url" | sed -n 1p | tr -d '\r\n'
+            --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+            --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
+            -sL "$version_txt_url" | sed -n 1p | tr -d '\r\n'
     ) || {
         log error "Failed to download version.txt."
         return 1
@@ -3172,7 +3171,7 @@ core_download() {
 
     log info "Extracting to $CORE_PATH"
     if gzip -t "$tmp_archive_path" 2>/dev/null; then
-        gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
+        gunzip -c "$tmp_archive_path" >"$CORE_PATH" || {
             rm -f "$tmp_archive_path"
             log error "Failed to extract the Mihomo archive."
             return 1
@@ -3249,7 +3248,7 @@ cron_job_add() {
     sed -i "\|${pattern}|d" /etc/crontabs/root
 
     # Append new entry
-    echo "$expected_entry" >> /etc/crontabs/root
+    echo "$expected_entry" >>/etc/crontabs/root
     if /etc/init.d/cron enabled; then
         /etc/init.d/cron restart
         log info "$name cron job added and cron service restarted"
@@ -3510,25 +3509,8 @@ diag_service_config_unsafe() {
 diag_report() {
     local running_status autoload_status hw_model os_ver
 
-    local c_green="" c_red="" c_gray="" c_reset=""
-    if [ -t 1 ]; then
-        c_green="\033[1;32m"
-        c_red="\033[1;31m"
-        c_gray="\033[90m"
-        c_reset="\033[0m"
-    fi
-
-    if service "$PROGNAME" running; then
-        running_status="${c_green}active${c_reset}"
-    else
-        running_status="${c_red}inactive${c_reset}"
-    fi
-
-    if service "$PROGNAME" enabled; then
-        autoload_status="${c_green}enabled${c_reset}"
-    else
-        autoload_status="${c_red}disabled${c_reset}"
-    fi
+    service "$PROGNAME" running && running_status="active" || running_status="inactive"
+    service "$PROGNAME" enabled && autoload_status="enabled" || autoload_status="disabled"
 
     os_ver=$(get_os_version)
     hw_model=$(get_hw_model)
@@ -3537,14 +3519,14 @@ diag_report() {
         local name="$1"
         local filepath="$2"
         if [ -f "$filepath" ]; then
-            printf "  %-15s :: %bInstalled%b\n" "$name" "$c_green" "$c_reset"
+            printf "  %-15s :: Installed\n" "$name"
         else
-            printf "  %-15s :: %bNot installed%b\n" "$name" "$c_gray" "$c_reset"
+            printf "  %-15s :: Not installed\n" "$name"
         fi
     }
 
     echo ""
-    echo "${c_gray}-- JustClash Diagnostic Report ---------------------------------${c_reset}"
+    echo "-- JustClash Diagnostic Report ---------------------------------"
     echo ""
     echo "  [ Device Info ]"
     printf "  %-15s :: %s\n" "Device" "${hw_model:-$NO_DATA_STRING}"
@@ -3554,8 +3536,8 @@ diag_report() {
     printf "  %-15s :: %s\n" "HWID" "$(hwid_generate)"
     echo ""
     echo "  [ Service Status ]"
-    printf "  %-15s :: %b\n" "Active" "$running_status"
-    printf "  %-15s :: %b\n" "Autoload" "$autoload_status"
+    printf "  %-15s :: %s\n" "Active" "$running_status"
+    printf "  %-15s :: %s\n" "Autoload" "$autoload_status"
     echo ""
     echo "  [ ICMP Pings ]"
     echo "  Yandex ($DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
@@ -3604,7 +3586,7 @@ diag_report() {
     echo "  [ Mihomo Config ]"
     diag_mihomo_config | sed 's/^/    /'
     echo ""
-    echo "${c_gray}----------------------------------------------------------------${c_reset}"
+    echo "----------------------------------------------------------------"
     echo ""
 }
 
@@ -3654,17 +3636,6 @@ help() {
     echo ""
     echo "  cron_update                     Update all scheduled tasks from UCI settings"
     echo ""
-    echo "  core_autorestart_cron_check     Check if a scheduled Mihomo auto-restart task exists"
-    echo "  core_autorestart_cron_add       Add a scheduled task to automatically restart Mihomo periodically"
-    echo "  core_autorestart_cron_remove    Remove the scheduled Mihomo auto-restart task"
-    echo ""
-    echo "  service_data_cron_check         Check if a scheduled service data update task exists"
-    echo "  service_data_cron_add           Add a scheduled task to automatically update rules/databases"
-    echo "  service_data_cron_remove        Remove the scheduled service data update task"
-    echo ""
-    echo "  scheduled_work_cron_add         Add scheduled tasks to start/stop Mihomo daily"
-    echo "  scheduled_work_cron_remove      Remove the scheduled start/stop tasks"
-    echo ""
     echo "Diagnostics:"
     echo "  show_hwid                   Show Hardware ID (HWID)"
     echo "  diag_report                 Run diagnostic"
@@ -3688,111 +3659,92 @@ help() {
 }
 
 case "$1" in
-    start|run|up|u)
-        [ "$ENV_JUSTCLASH_RUN_CONTEXT" != "procd" ] && trap 'stop; exit 0' INT TERM HUP
-        start
-        ;;
-    stop|down|d)
-        stop
-        ;;
-    core_update|cu)
-        core_update
-        ;;
-    core_remove|cr)
-        core_remove
-        ;;
-    core_autorestart_cron_check|cacc)
-        core_autorestart_cron_check
-        ;;
-    core_autorestart_cron_add|caca)
-        core_autorestart_cron_add
-        ;;
-    core_autorestart_cron_remove|cacr)
-        core_autorestart_cron_remove
-        ;;
-    cron_update|cru)
-        cron_update
-        ;;
-    service_data_cron_check|sdcc)
-        service_data_cron_check
-        ;;
-    service_data_cron_add|sdca)
-        service_data_cron_add
-        ;;
-    service_data_cron_remove|sdcr)
-        service_data_cron_remove
-        ;;
-    scheduled_work_cron_add|swca)
-        scheduled_work_cron_add
-        ;;
-    scheduled_work_cron_remove|swcr)
-        scheduled_work_cron_remove
-        ;;
-    service_data_update|sdu)
-        service_data_update
-        ;;
-    logs|systemlogs|log|l)
-        case "$2" in
-            *[!0-9]* | '')
-                systemlogs
-                ;;
-            *)
-                systemlogs "$2"
-                ;;
-        esac
-        ;;
-    info_core|info_mihomo|version_core|vc|--vc)
-        info_mihomo
-        ;;
-    info_package|version|v|-v|--version)
-        echo "$JUSTCLASH_VERSION"
-        ;;
-    diag_nft|dn)
-        diag_nft
-        ;;
-    diag_route|dr)
-        diag_route
-        ;;
-    diag_report|diag|dg)
-        diag_report
-        ;;
-    diag_proxy_resolver|dpr)
-        diag_proxy_resolver "$2"
-        ;;
-    diag_external_resolver|der)
-        diag_external_resolver "$2" "$3"
-        ;;
-    diag_icmp|di)
-        diag_icmp "$2" "${3:-3}"
-        ;;
-    diag_mihomo_config|dmc)
-        diag_mihomo_config
-        ;;
-    diag_mihomo_config_unsafe|dmcu)
-        diag_mihomo_config_unsafe
-        ;;
-    diag_service_config|dsc)
-        diag_service_config
-        ;;
-    diag_service_config_unsafe|dscu)
-        diag_service_config_unsafe
-        ;;
-    diag_service_config_reset|dscr)
-        diag_service_config_reset
-        ;;
-    show_hwid|hwid)
-        hwid_generate
-        echo ""
-        ;;
-    help|'?'|command|h|-h|--help)
-        help
-        ;;
-    _luci_call)
-        echo "$JUSTCLASH_VERSION,$(info_mihomo)"
+start | run | up | u)
+    [ "$ENV_JUSTCLASH_RUN_CONTEXT" != "procd" ] && trap 'stop; exit 0' INT TERM HUP
+    start
+    ;;
+stop | down | d)
+    stop
+    ;;
+core_update | cu)
+    core_update
+    ;;
+core_remove | cr)
+    core_remove
+    ;;
+
+cron_update | cru)
+    cron_update
+    ;;
+
+service_data_update | sdu)
+    service_data_update
+    ;;
+add_proxy | ap)
+    cli_add_proxy "$2" "$3"
+    ;;
+logs | systemlogs | log | l)
+    case "$2" in
+    *[!0-9]* | '')
+        systemlogs
         ;;
     *)
-        clog info "Unknown command: $1"
-        clog info "Type 'justclash.sh help' for a list of available commands."
-        exit 1
+        systemlogs "$2"
         ;;
+    esac
+    ;;
+info_core | info_mihomo | version_core | vc | --vc)
+    info_mihomo
+    ;;
+info_package | version | v | -v | --version)
+    echo "$JUSTCLASH_VERSION"
+    ;;
+diag_nft | dn)
+    diag_nft
+    ;;
+diag_route | dr)
+    diag_route
+    ;;
+diag_report | diag | dg)
+    diag_report
+    ;;
+diag_proxy_resolver | dpr)
+    diag_proxy_resolver "$2"
+    ;;
+diag_external_resolver | der)
+    diag_external_resolver "$2" "$3"
+    ;;
+diag_icmp | di)
+    diag_icmp "$2" "${3:-3}"
+    ;;
+diag_mihomo_config | dmc)
+    diag_mihomo_config
+    ;;
+diag_mihomo_config_unsafe | dmcu)
+    diag_mihomo_config_unsafe
+    ;;
+diag_service_config | dsc)
+    diag_service_config
+    ;;
+diag_service_config_unsafe | dscu)
+    diag_service_config_unsafe
+    ;;
+diag_service_config_reset | dscr)
+    diag_service_config_reset
+    ;;
+show_hwid | hwid)
+    hwid_generate
+    echo ""
+    ;;
+help | '?' | command | h | -h | --help)
+    help
+    ;;
+_luci_call)
+    echo "$JUSTCLASH_VERSION,$(info_mihomo)"
+    ;;
+*)
+    clog info "Unknown command: $1"
+    clog info "Type 'justclash.sh help' for a list of available commands."
+    exit 1
+    ;;
 esac
