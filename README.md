@@ -242,6 +242,16 @@ The output files will be copied to `./output/ipk/` or `./output/apk/`.
 
 ---
 
+### Installing a specific release
+
+By default, the installer downloads the latest stable release. To install an exact stable or release candidate version, pass its package version through `--custom_version`:
+
+```sh
+sh service.sh --custom_version 0.90.13_rc1
+```
+
+The optional leading `v` is accepted. The requested version must match an existing release tag exactly.
+
 ## Usage
 
 *   **Access Web Interface:** Navigate to **Services → JustClash** in your OpenWrt admin panel.
