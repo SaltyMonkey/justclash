@@ -4,6 +4,7 @@
 # shellcheck shell=dash
 MIHOMO_GITHUB_REPO="MetaCubeX/mihomo"
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash/releases/latest"
+JUSTCLASH_CUSTOM_VERSION=""
 
 CURL_CONNECT_TIMEOUT=15
 CURL_MIN_SPEED_LIMIT_BYTES=5000
@@ -673,8 +674,20 @@ justclash_uninstall() {
     fi
 }
 
+justclash_release_json_get() {
+    local releases_url
+
+    if [ -z "$JUSTCLASH_CUSTOM_VERSION" ]; then
+        wget -qO- "$JUSTCLASH_RELEASE_URL_API"
+    else
+        releases_url="${JUSTCLASH_RELEASE_URL_API%/latest}"
+        wget -qO- "${releases_url}/tags/v${JUSTCLASH_CUSTOM_VERSION}"
+    fi
+}
+
 packages_download() {
     local install_lang="$1"
+    local file release_json release_label urls
     if [ -z "$JUSTCLASH_RELEASE_URL_API" ] || [ -z "$TMP_DOWNLOAD_PATH" ]; then
         print_red "Usage: packages_download requires JUSTCLASH_RELEASE_URL_API and TMP_DOWNLOAD_PATH to be set."
         return 1
@@ -682,29 +695,36 @@ packages_download() {
 
     print_bold_green "Downloading JustClash packages..."
     mkdir -p "$TMP_DOWNLOAD_PATH"
-    local urls
-    local file
+    release_label="${JUSTCLASH_CUSTOM_VERSION:-latest}"
+
+    release_json=$(justclash_release_json_get) || {
+        print_red "Failed to fetch JustClash release information (release: $release_label)."
+        return 1
+    }
+    if [ -z "$release_json" ]; then
+        print_red "No JustClash release found: $release_label."
+        return 1
+    fi
 
     if is_bin_installed apk; then
-        echo " - Fetching .apk links from latest JustClash release" "🔍"
-        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.apk')
+        echo " - Fetching .apk links from JustClash release (release: $release_label)" "🔍"
+        urls=$(printf '%s\n' "$release_json" | grep -o 'https://[^"[:space:]]*\.apk')
         if [ -z "$urls" ]; then
-            print_red "No .apk files found in the latest release."
+            print_red "No .apk files found in the selected release."
             return 1
         fi
         echo " - Found the following .apk files: ${urls}"
     else
-        echo " - Fetching .ipk links from latest JustClash release" "🔍"
-        urls=$(wget -qO- "$JUSTCLASH_RELEASE_URL_API" | grep -o 'https://[^"[:space:]]*\.ipk')
+        echo " - Fetching .ipk links from JustClash release (release: $release_label)" "🔍"
+        urls=$(printf '%s\n' "$release_json" | grep -o 'https://[^"[:space:]]*\.ipk')
         if [ -z "$urls" ]; then
-            print_red "No .ipk files found in the latest release."
+            print_red "No .ipk files found in the selected release."
             return 1
         fi
         echo " - Found the following .ipk files:"
         echo "${urls}"
     fi
 
-    local file
     for file in $urls; do
         echo " - Downloading $file"
 
@@ -876,6 +896,19 @@ while [ $# -gt 0 ]; do
             UPDATE_CORE=1
             AUTOMATED=1
             shift
+            ;;
+        --custom_version)
+            if [ $# -lt 2 ]; then
+                echo "Option --custom_version requires a version, for example: 0.90.13_rc1" >&2
+                exit 2
+            fi
+            JUSTCLASH_CUSTOM_VERSION="${2#v}"
+            if ! printf '%s\n' "$JUSTCLASH_CUSTOM_VERSION" |
+                grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(_rc[0-9]+)?$'; then
+                echo "Invalid custom version: $2" >&2
+                exit 2
+            fi
+            shift 2
             ;;
         *)
             echo "Unknown option: $1"
