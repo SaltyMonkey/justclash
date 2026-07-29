@@ -3,7 +3,7 @@ name: Build OpenWRT packages
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v*.*.*'
 
 permissions:
   contents: write
@@ -17,7 +17,13 @@ jobs:
 
       - name: Check version match
         run: |
-          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+
+          if ! printf '%s\n' "$TAG_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(_rc[0-9]+)?$'; then
+            echo "Error: Unsupported release tag: $GITHUB_REF_NAME"
+            exit 1
+          fi
+
           JUSTCLASH_VERSION=$(grep '^PKG_VERSION:=' justclash/Makefile | cut -d '=' -f 2)
           LUCI_APP_JUSTCLASH_VERSION=$(grep '^PKG_VERSION:=' luci-app-justclash/Makefile | cut -d '=' -f 2)
 
@@ -138,6 +144,6 @@ jobs:
           files: ./output/release/*.*
           body_path: ./tmp.md
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '_rc') }}
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
