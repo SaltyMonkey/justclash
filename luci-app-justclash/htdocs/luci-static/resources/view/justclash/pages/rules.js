@@ -1,8 +1,9 @@
 "use strict";
 "require view";
 "require ui";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_mihomo_api as mihomoApi";
+"require view.justclash.common as common";
+"require view.justclash.api.mihomo as mihomoApi";
+"require view.justclash.lib.rules as rulesModel";
 "require uci";
 
 return view.extend({
@@ -27,7 +28,7 @@ return view.extend({
             const rulesData = await mihomoApi.fetchRules(token);
             return {
                 token,
-                rules: rulesData?.rules || [],
+                rules: rulesModel.normalizeList(rulesData),
                 configLoadFailed,
                 fetchFailed: false
             };
@@ -53,17 +54,6 @@ return view.extend({
 
         const token = result.token;
 
-        const getRuleTypeClass = (type) => {
-            const t = String(type || "").toLowerCase();
-            if (t.includes("domain") || t.includes("host") || t.includes("keyword") || t.includes("regex")) {
-                return "domain";
-            }
-            if (t.includes("ip") || t.includes("cidr") || t.includes("geoip")) {
-                return "ipcidr";
-            }
-            return "classical";
-        };
-
         const searchInput = E("input", {
             type: "text",
             class: "cbi-input-text jc-search-input",
@@ -72,16 +62,7 @@ return view.extend({
                 const query = ev.target.value.toLowerCase().trim();
                 const rows = grid.querySelectorAll(".jc-rule-row");
                 rows.forEach(row => {
-                    if (row.classList.contains("jc-no-rules")) return;
-                    const typeText = row.querySelector(".jc-col-type").textContent.toLowerCase();
-                    const payloadText = row.querySelector(".jc-col-payload").textContent.toLowerCase();
-                    const proxyText = row.querySelector(".jc-col-proxy").textContent.toLowerCase();
-
-                    if (typeText.includes(query) || payloadText.includes(query) || proxyText.includes(query)) {
-                        row.style.display = "";
-                    } else {
-                        row.style.display = "none";
-                    }
+                    row.style.display = rulesModel.matchesSearch(row.dataset.search || "", query) ? "" : "none";
                 });
             }
         });
@@ -103,7 +84,7 @@ return view.extend({
                 refreshBtn.disabled = true;
                 try {
                     const rulesData = await mihomoApi.fetchRules(token);
-                    const rulesList = rulesData?.rules || [];
+                    const rulesList = rulesModel.normalizeList(rulesData);
                     renderRulesList(rulesList);
                     searchInput.value = "";
                     updateLastFetchTime();
@@ -144,11 +125,12 @@ return view.extend({
 
             rulesList.forEach((rule, index) => {
                 const row = E("div", {
-                    class: "jc-grid-row jc-rule-row" + (rule.disabled ? " jc-disabled-rule" : "")
+                    class: "jc-grid-row jc-rule-row" + (rule.disabled ? " jc-disabled-rule" : ""),
+                    "data-search": rulesModel.createSearchText(rule)
                 });
 
                 const typeCol = E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, [
-                    E("span", { class: "jc-badge-type " + getRuleTypeClass(rule.type) }, (rule.type || "").toUpperCase())
+                    E("span", { class: "jc-badge-type " + rulesModel.getTypeClass(rule.type) }, (rule.type || "").toUpperCase())
                 ]);
                 const payloadCol = E("div", { class: "jc-grid-col jc-col-payload jc-payload-cell", "data-label": _("Payload") }, rule.payload || "");
                 const proxyCol = E("div", { class: "jc-grid-col jc-col-proxy", "data-label": _("Proxy / Group") }, [

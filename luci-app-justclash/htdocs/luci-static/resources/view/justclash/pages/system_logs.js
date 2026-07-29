@@ -2,86 +2,9 @@
 "require view";
 "require fs";
 "require ui";
-"require view.justclash.helper_clipboard as clipboard";
-"require view.justclash.helper_common as common";
-
-const NO_LOGS = _("No log entries");
-
-let logsUpdating = false;
-const LOG_LEVEL_RULES = [
-    { type: "error", tokens: ["error", "level=error", "daemon.err", "user.err"] },
-    { type: "warning", tokens: ["warn", "level=warn", "warning", "daemon.warn"] },
-    { type: "info", tokens: ["info", "level=info"] },
-    { type: "debug", tokens: ["debug", "level=debug"] }
-];
-
-const classifyLogLine = (lowerLine) => {
-    const matchedRule = LOG_LEVEL_RULES.find(rule =>
-        rule.tokens.some(token => lowerLine.includes(token))
-    );
-
-    return matchedRule ? matchedRule.type : "";
-};
-
-const renderLogLines = (container, rawText, isReversed) => {
-    if (!rawText) {
-        container.replaceChildren(document.createTextNode(NO_LOGS));
-        return;
-    }
-
-    const lines = isReversed
-        ? rawText.split("\n").filter(line => line.trim()).reverse()
-        : rawText.split("\n").filter(line => line.trim());
-    const fragment = document.createDocumentFragment();
-
-    lines.forEach(line => {
-        const lowerLine = line.toLowerCase();
-        const type = classifyLogLine(lowerLine);
-        const lineClass = `jc-log-line${type ? ` jc-log-line-${type}` : ""}`;
-        const children = [];
-
-        if (type)
-            children.push(E("span", { class: `jc-log-type-badge jc-log-type-badge-${type}` }, type.toUpperCase()));
-
-        children.push(E("span", { class: "jc-log-message" }, line));
-
-        fragment.appendChild(E("div", { class: lineClass }, children));
-    });
-
-    container.replaceChildren(fragment);
-    container.scrollTop = isReversed ? 0 : container.scrollHeight;
-};
-
-const updateLogs = async (logContainer, btn, reverseCheckbox, setRawLogs, lastFetchLabel) => {
-    if (logsUpdating) return;
-    logsUpdating = true;
-
-    if (btn)
-        btn.disabled = true;
-
-    try {
-        const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
-        let rawLogs = res.stdout || NO_LOGS;
-
-        if (lastFetchLabel) {
-            const now = new Date();
-            lastFetchLabel.textContent = _("Last updated: ") + now.toLocaleString();
-        }
-
-        if (rawLogs.endsWith("\n"))
-            rawLogs = rawLogs.slice(0, -1);
-
-        setRawLogs(rawLogs);
-        renderLogLines(logContainer, rawLogs, reverseCheckbox.checked);
-    } catch (e) {
-        ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
-        console.error("Error:", e);
-    } finally {
-        if (btn)
-            btn.disabled = false;
-        logsUpdating = false;
-    }
-};
+"require view.justclash.lib.clipboard as clipboard";
+"require view.justclash.common as common";
+"require view.justclash.lib.logs as logs";
 
 return view.extend({
     handleSave: null,
@@ -89,28 +12,55 @@ return view.extend({
     handleReset: null,
 
     render: function () {
-        const logContainer = E("div", { class: "jc-logs-terminal", id: "logContainer" }, [NO_LOGS]);
-        let rawLogs = NO_LOGS;
+        const logContainer = E("div", { class: "jc-logs-terminal", id: "logContainer" }, [logs.emptyText]);
+        let rawLogs = "";
+        let logsUpdating = false;
+
+        const renderLogs = (reversed) => {
+            logs.renderEntries(logContainer, logs.parseSystemText(rawLogs), reversed);
+        };
 
         const reverseCheckbox = E("input", {
             type: "checkbox",
             id: "reverseLogs",
             class: "jc-ml",
             checked: true,
-            change: () => renderLogLines(logContainer, rawLogs, reverseCheckbox.checked)
+            change: () => renderLogs(reverseCheckbox.checked)
         });
 
-        const lastFetchLabel = E("span", { class: "jc-ml jc-log-fetch-label" }, [_("Last updated: ") + NO_LOGS]);
+        const lastFetchLabel = E("span", { class: "jc-ml jc-log-fetch-label" }, [_("Last updated: ") + logs.emptyText]);
+
+        const updateLogs = async () => {
+            if (logsUpdating)
+                return;
+
+            logsUpdating = true;
+            refreshBtn.disabled = true;
+
+            try {
+                const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
+                rawLogs = (res.stdout || "").replace(/\r?\n$/, "");
+                lastFetchLabel.textContent = _("Last updated: ") + new Date().toLocaleString();
+                renderLogs(reverseCheckbox.checked);
+            } catch (e) {
+                ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
+                console.error("Error:", e);
+            } finally {
+                refreshBtn.disabled = false;
+                logsUpdating = false;
+            }
+        };
 
         const refreshBtn = E("button", {
             class: "cbi-button cbi-button-positive",
-            click: () => updateLogs(logContainer, refreshBtn, reverseCheckbox, (value) => { rawLogs = value; }, lastFetchLabel)
+            click: updateLogs
         }, [_("Refresh")]);
 
         const copyBtn = E("button", {
             class: "cbi-button cbi-button-action",
             click: async () => {
-                if (rawLogs === NO_LOGS) return;
+                if (!rawLogs)
+                    return;
 
                 try {
                     await clipboard.copy(rawLogs);
@@ -136,13 +86,13 @@ return view.extend({
             ])
         ]);
 
-        requestAnimationFrame(() => updateLogs(logContainer, refreshBtn, reverseCheckbox, (value) => { rawLogs = value; }, lastFetchLabel));
+        requestAnimationFrame(updateLogs);
 
         const style = E("style", {}, `
             .jc-ml{margin-left:.5em;}
             .jc-log-fetch-label,.jc-settings-actions .cbi-checkbox-label,.jc-primary-actions{align-items:center;}
             .jc-log-fetch-label{color:var(--text-color-medium, #888);font-size:.9em;}
-            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:ui-monospace,monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:var(--background-color-low, #fff);border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;margin-bottom:10px;padding:10px;}
+            .jc-logs-terminal{width:100%;font-family:ui-monospace,monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;background-color:var(--background-color-low, #fff);border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;margin-bottom:10px;padding:10px;}
             :root[data-darkmode="true"] .jc-logs-terminal{background-color:var(--background-color-low, rgba(0,0,0,.1));}
             .jc-log-line{padding:1px 0;border-bottom:1px solid transparent;}
             .jc-log-line:hover{background-color:var(--background-color-medium, rgba(0,0,0,.04));}

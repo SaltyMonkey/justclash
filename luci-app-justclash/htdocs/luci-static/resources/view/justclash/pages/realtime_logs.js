@@ -2,14 +2,13 @@
 "require view";
 "require ui";
 "require uci";
-"require view.justclash.helper_clipboard as clipboard";
-"require view.justclash.helper_ubus as luciSession";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_mihomo_api as mihomoApi";
+"require view.justclash.lib.clipboard as clipboard";
+"require view.justclash.common as common";
+"require view.justclash.lib.logs as logs";
+"require view.justclash.api.mihomo as mihomoApi";
+"require view.justclash.lib.socket as socketRuntime";
 
-const NO_LOGS = _("No log entries");
 const MAX_LOG_ENTRIES = parseInt(common.realtimeLogsCount, 10);
-const LOG_BADGE_TYPES = new Set(common.defaultLoggingLevels.filter((level) => level !== "silent"));
 const LOG_LEVEL_OPTIONS = common.defaultLoggingLevels.slice(0, -1);
 const DEFAULT_LOG_LEVEL = "warning";
 
@@ -37,123 +36,16 @@ return view.extend({
     },
 
     render(results) {
-        let wsCleanup = null;
-        let logEntries = [];
+        let stream = null;
+        let requestedLevel = results.logLevel;
+        const logEntries = [];
         let visibilityChangeHandler = null;
         let beforeUnloadHandler = null;
         let isReversed = false;
 
-        const normalizeLogMessage = (rawMessage) => {
-            const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
-
-            if (!message)
-                return null;
-
-            try {
-                const parsed = JSON.parse(message);
-
-                if (parsed && typeof parsed === "object" && parsed.payload !== undefined && parsed.payload !== null) {
-                    const text = typeof parsed.payload === "string"
-                        ? parsed.payload.trim()
-                        : JSON.stringify(parsed.payload);
-
-                    if (!text)
-                        return null;
-
-                    return {
-                        text,
-                        type: normalizeLogType(parsed.type),
-                        raw: message
-                    };
-                }
-            } catch (e) {}
-
-            return {
-                text: message,
-                type: "",
-                raw: message
-            };
-        };
-
-        const normalizeLogType = (value) => {
-            const type = typeof value === "string" ? value.trim().toLowerCase() : "";
-
-            if (!type)
-                return "";
-
-            if (type === "warn")
-                return "warning";
-
-            return LOG_BADGE_TYPES.has(type) ? type : "";
-        };
-
-        const appendLogEntry = (container, entry) => {
-            if (container.childNodes.length === 1 && container.firstChild?.nodeType === Node.TEXT_NODE)
-                container.replaceChildren();
-
-            const type = entry?.type || "";
-            const lineClass = `jc-log-line${type ? ` jc-log-line-${type}` : ""}`;
-            const children = [];
-
-            if (type)
-                children.push(E("span", { class: `jc-log-type-badge jc-log-type-badge-${type}` }, type.toUpperCase()));
-
-            children.push(E("span", { class: "jc-log-message" }, entry?.text || ""));
-
-            const newRow = E("div", { class: lineClass }, children);
-
-            if (isReversed) {
-                container.insertBefore(newRow, container.firstChild);
-            } else {
-                container.appendChild(newRow);
-            }
-
-            while (container.childNodes.length > MAX_LOG_ENTRIES) {
-                if (isReversed) {
-                    container.removeChild(container.lastChild);
-                } else {
-                    container.removeChild(container.firstChild);
-                }
-            }
-
-            if (!isReversed) {
-                const isScrolledToBottom = container.scrollHeight - container.clientHeight - container.scrollTop < 50;
-                if (isScrolledToBottom) {
-                    container.scrollTop = container.scrollHeight;
-                }
-            }
-        };
-
-        const reRenderLogs = (container) => {
-            container.replaceChildren();
-            if (logEntries.length === 0) {
-                container.appendChild(document.createTextNode(NO_LOGS));
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            const items = isReversed ? [...logEntries].reverse() : logEntries;
-
-            items.forEach(entry => {
-                const type = entry?.type || "";
-                const lineClass = `jc-log-line${type ? ` jc-log-line-${type}` : ""}`;
-                const children = [];
-
-                if (type)
-                    children.push(E("span", { class: `jc-log-type-badge jc-log-type-badge-${type}` }, type.toUpperCase()));
-
-                children.push(E("span", { class: "jc-log-message" }, entry?.text || ""));
-
-                fragment.appendChild(E("div", { class: lineClass }, children));
-            });
-
-            container.appendChild(fragment);
-            container.scrollTop = isReversed ? 0 : container.scrollHeight;
-        };
-
         const resetLogEntries = (container) => {
-            logEntries = [];
-            container.replaceChildren(document.createTextNode(NO_LOGS));
+            logEntries.length = 0;
+            logs.renderEntries(container, logEntries);
         };
 
         const cleanup = () => {
@@ -165,47 +57,38 @@ return view.extend({
                 window.removeEventListener("beforeunload", beforeUnloadHandler);
                 beforeUnloadHandler = null;
             }
-            if (wsCleanup) {
-                wsCleanup();
-                wsCleanup = null;
-            }
+            stream?.stop();
         };
 
-        const connectLogsStream = async (container, token, level, resetState = true) => {
-            if (wsCleanup) {
-                wsCleanup();
-                wsCleanup = null;
-            }
+        const connectLogsStream = (level, resetState = true) => {
+            requestedLevel = level;
 
             if (resetState)
-                resetLogEntries(container);
+                resetLogEntries(logContainer);
 
-            if (document.hidden)
-                return;
+            return stream.connect();
+        };
 
-            if (!await luciSession.isSessionAlive())
-                return;
+        const logContainer = E("div", { class: "jc-logs-terminal", id: "realtimeLogContainer" }, [logs.emptyText]);
 
-            wsCleanup = mihomoApi.createLogsWebSocket({
-                token,
-                level,
-                containerCheck: () => document.body.contains(container),
-                onMessage: (event) => {
-                    const entry = normalizeLogMessage(event.data);
+        stream = socketRuntime.createConnector({
+            isMounted: () => document.body.contains(logContainer),
+            onInactive: cleanup,
+            open: ({ guard }) => mihomoApi.createLogsWebSocket({
+                token: results.apiToken,
+                level: requestedLevel,
+                containerCheck: () => document.body.contains(logContainer),
+                onMessage: guard((event) => {
+                    const entry = logs.normalizeRealtimeMessage(event.data);
 
                     if (!entry)
                         return;
 
-                    logEntries.push(entry);
-                    if (logEntries.length > MAX_LOG_ENTRIES)
-                        logEntries.shift();
-
-                    appendLogEntry(container, entry);
-                }
-            });
-        };
-
-        const logContainer = E("div", { class: "jc-logs-terminal", id: "realtimeLogContainer" }, [NO_LOGS]);
+                    logs.appendToBuffer(logEntries, entry, MAX_LOG_ENTRIES);
+                    logs.appendEntry(logContainer, entry, isReversed, MAX_LOG_ENTRIES);
+                })
+            })
+        });
         const levelChoices = {};
         LOG_LEVEL_OPTIONS.forEach((level) => {
             levelChoices[level] = level;
@@ -222,7 +105,7 @@ return view.extend({
         levelDropdownNode.addEventListener("cbi-dropdown-change", () => {
             const nextLevel = levelDropdown.getValue();
             if (!document.hidden)
-                connectLogsStream(logContainer, results.apiToken, nextLevel);
+                connectLogsStream(nextLevel);
             else
                 resetLogEntries(logContainer);
         });
@@ -233,15 +116,8 @@ return view.extend({
                 if (!logEntries.length) return;
                 try {
                     const content = isJson
-                        ? JSON.stringify(logEntries.map(entry => {
-                            const val = entry.raw || entry.text;
-                            try {
-                                return JSON.parse(val);
-                            } catch (e) {
-                                return val;
-                            }
-                        }), null, 4)
-                        : logEntries.map(entry => common.formatLogEntryText(entry.raw || entry.text)).join("\n");
+                        ? logs.formatJson(logEntries)
+                        : logs.formatText(logEntries);
                     await clipboard.copy(content);
                 } catch (e) {
                     ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
@@ -262,7 +138,7 @@ return view.extend({
             checked: false,
             change: () => {
                 isReversed = reverseCheckbox.checked;
-                reRenderLogs(logContainer);
+                logs.renderEntries(logContainer, logEntries, isReversed);
             }
         });
         isReversed = reverseCheckbox.checked;
@@ -287,29 +163,19 @@ return view.extend({
 
         requestAnimationFrame(() => {
             if (!document.hidden)
-                connectLogsStream(logContainer, results.apiToken, levelDropdown.getValue());
+                connectLogsStream(levelDropdown.getValue());
         });
-
-        if (visibilityChangeHandler) {
-            document.removeEventListener("visibilitychange", visibilityChangeHandler);
-        }
 
         visibilityChangeHandler = () => {
             console.debug(`[realtime_logs] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
             if (document.hidden) {
-                if (wsCleanup) {
-                    wsCleanup();
-                    wsCleanup = null;
-                }
+                stream.stop();
             } else {
-                connectLogsStream(logContainer, results.apiToken, levelDropdown.getValue(), false);
+                connectLogsStream(levelDropdown.getValue(), false);
             }
         };
 
         document.addEventListener("visibilitychange", visibilityChangeHandler);
-
-        if (beforeUnloadHandler)
-            window.removeEventListener("beforeunload", beforeUnloadHandler);
 
         beforeUnloadHandler = () => {
             console.debug("[realtime_logs] beforeunload: cleanup");
@@ -325,7 +191,7 @@ return view.extend({
             .jc-level-control{display:inline-flex;gap:.75em;flex-wrap:nowrap;}
             .jc-level-label{margin:0;white-space:nowrap;}
             .jc-level-select{width:auto;min-width:220px;margin:0;flex:0 0 auto;}
-            .jc-logs-terminal{width:100%;max-height:65vh;overflow-y:auto;font-family:ui-monospace,monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;overflow-x:hidden;background-color:var(--background-color-low, #fff);border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;margin-bottom:10px;padding:10px;}
+            .jc-logs-terminal{width:100%;font-family:ui-monospace,monospace;line-height:1.4;white-space:pre-wrap;word-break:break-all;background-color:var(--background-color-low, #fff);border:1px solid var(--border-color-medium, #d9d9d9);border-radius:6px;margin-bottom:10px;padding:10px;}
             :root[data-darkmode="true"] .jc-logs-terminal{background-color:var(--background-color-low, rgba(0,0,0,.1));}
             .jc-log-line{padding:1px 0;border-bottom:1px solid transparent;}
             .jc-log-line:hover{background-color:var(--background-color-medium, rgba(0,0,0,.04));}

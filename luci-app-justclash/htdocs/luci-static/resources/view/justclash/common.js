@@ -455,6 +455,7 @@ return baseclass.extend({
             "ss://",
             "socks5://",
             "socks://",
+            "ssh://",
             "mierus://",
             "sudoku://"
         ];
@@ -622,7 +623,7 @@ return baseclass.extend({
         if (val.startsWith("|") || val.endsWith("|") || val.includes("||"))
             return _("Empty proxy types are not allowed");
 
-        const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5", "mieru"];
+        const allowedTypes = ["vmess", "vless", "ss", "ssr", "trojan", "hysteria2", "snell", "http", "socks5", "ssh", "mieru"];
         const types = val.split("|");
 
         for (let i = 0; i < types.length; i++) {
@@ -742,16 +743,6 @@ return baseclass.extend({
         }
 
         return lines.join("\n");
-    },
-    formatLogEntryText: function (entryStr) {
-        try {
-            const parsed = JSON.parse(entryStr);
-            if (parsed && typeof parsed === "object" && parsed.payload !== undefined) {
-                const typeStr = parsed.type ? `[${parsed.type.toUpperCase()}] ` : "";
-                return `${typeStr}${parsed.payload}`;
-            }
-        } catch (e) {}
-        return entryStr;
     },
     // Keep menu-only titles translatable for luci-app-justclash.json.
     stub_nodes_tab: _("Nodes"),

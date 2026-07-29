@@ -3,13 +3,16 @@
 "require view";
 "require fs";
 "require uci";
-"require view.justclash.helper_clipboard as clipboard";
-"require view.justclash.helper_ubus as ubusApi";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_mihomo_api as mihomoApi";
+"require view.justclash.api.ubus as ubusApi";
+"require view.justclash.common as common";
+"require view.justclash.api.mihomo as mihomoApi";
+"require view.justclash.lib.status_actions as statusActions";
+"require view.justclash.lib.status_runtime as statusRuntime";
 
-const POLL_TIMEOUT = 3000;
 const ACTION_DELAY_TIMEOUT = 5000;
+const actions = statusActions.create({
+    notificationTimeout: common.notificationTimeout
+});
 
 const buttonsIDs = {
     START: "button-start",
@@ -105,133 +108,50 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
     ], "system")
 ]);
 
-const showErrorModal = (message) => {
-    ui.showModal(_("Error"), [
-        E("div", { class: "alert-message error" }, message),
-        E("div", { class: "jc-modal-actions" }, [
-            E("button", { class: "cbi-button", click: () => ui.hideModal() }, [_("Dismiss")])
-        ])
-    ]);
-};
+const updateStatusUI = (elements, isAutostarting, isRunning, currentMode) => {
+    const runningChanged = elements.lastRunning !== isRunning;
+    const autostartChanged = elements.lastAutostarting !== isAutostarting;
 
-const showTextModalHandler = (title, warning, task, options = {}) => async () => {
-    const warn = warning ? [
-        E("strong", { class: "jc-modal-warning" }, _("Dangerous action!")),
-        E("div", { class: "jc-modal-warning-text" }, warning)
-    ] : [];
-    const loadingText = options.loadingText || _("Please wait...");
-    const allowCopy = options.allowCopy !== false;
+    elements.currentRunning = isRunning;
+    elements.currentAutostarting = isAutostarting;
 
-    ui.showModal(title, [E("p", loadingText)]);
-
-    try {
-        const output = await task();
-        const actions = [];
-
-        if (allowCopy) {
-            actions.push(E("button", {
-                class: `cbi-button ${buttons.ACTION}`,
-                click: async () => {
-                    try {
-                        await clipboard.copy(output || "");
-                        ui.hideModal();
-                    } catch (e) {
-                        ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
-                        console.error("Failed to copy modal output to clipboard", e);
-                    }
-                }
-            }, [_("Copy to clipboard")]));
-        }
-
-        actions.push(E("button", {
-            class: "cbi-button",
-            style: allowCopy ? "margin-left: 0.3125rem;" : "",
-            click: () => ui.hideModal()
-        }, [_("Dismiss")]));
-
-        ui.showModal(title, [
-            ...warn,
-            E("pre", { class: "jc-modal-pre" }, output || _("No response")),
-            E("div", { class: "jc-modal-actions" }, actions)
-        ]);
-    } catch (e) {
-        showErrorModal(e.message);
+    if (runningChanged && elements.serviceBadge) {
+        elements.serviceBadge.textContent = boolToWordRunning(isRunning);
+        elements.serviceBadge.className = `jc-status-text ${isRunning ? "jc-status-text-active" : "jc-status-text-inactive"}`;
     }
+
+    if (autostartChanged && elements.autoBadge) {
+        elements.autoBadge.textContent = boolToWordAutostart(isAutostarting);
+        elements.autoBadge.className = `jc-status-text ${isAutostarting ? "jc-status-text-active" : "jc-status-text-inactive"}`;
+    }
+
+    if (runningChanged && elements.btnToggle) {
+        const label = isRunning ? _("Stop") : _("Start");
+        const text = elements.btnToggle.querySelector(".jc-button-label");
+        if (text) text.textContent = label;
+        elements.btnToggle.className = `cbi-button ${isRunning ? buttons.NEGATIVE : buttons.POSITIVE}`;
+        elements.btnToggle.title = label;
+        elements.btnToggle.setAttribute("aria-label", label);
+    }
+
+    if (elements.modeValue) {
+        elements.modeValue.textContent = isRunning && currentMode
+            ? currentMode.charAt(0).toUpperCase() + currentMode.slice(1)
+            : _("Unknown");
+    }
+
+    if (autostartChanged && elements.btnAutoToggle) {
+        const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
+        const text = elements.btnAutoToggle.querySelector(".jc-button-label");
+        if (text) text.textContent = label;
+        elements.btnAutoToggle.className = `cbi-button ${isAutostarting ? buttons.NEGATIVE : buttons.POSITIVE}`;
+        elements.btnAutoToggle.title = label;
+        elements.btnAutoToggle.setAttribute("aria-label", label);
+    }
+
+    elements.lastRunning = isRunning;
+    elements.lastAutostarting = isAutostarting;
 };
-
-const showExecModalHandler = (title, warning, command, args, afterExec) =>
-    showTextModalHandler(title, warning, async () => {
-        const res = await ubusApi.exec(command, args);
-        if (afterExec)
-            await afterExec(res);
-        return res.stdout || _("No response");
-    });
-
-const showConfirmExecModalHandler = (title, warning, command, args, afterExec) => async () => {
-    ui.showModal(title, [
-        E("strong", { class: "jc-modal-warning" }, _("Dangerous action!")),
-        E("div", { class: "jc-modal-warning-text" }, warning),
-        E("div", { class: "jc-modal-actions" }, [
-            E("button", {
-                class: `cbi-button ${buttons.NEGATIVE}`,
-                click: async () => {
-                    ui.hideModal();
-                    await showExecModalHandler(title, false, command, args, afterExec)();
-                }
-            }, [_("Run")]),
-            E("button", {
-                class: "cbi-button",
-                style: "margin-left: 0.3125rem;",
-                click: () => ui.hideModal()
-            }, [_("Cancel")])
-        ])
-    ]);
-};
-
-const normalizeRuleProviders = (payload) => {
-    const providers = payload && typeof payload === "object" && payload.providers && typeof payload.providers === "object"
-        ? payload.providers
-        : payload;
-
-    if (!providers || typeof providers !== "object")
-        return [];
-
-    return Object.keys(providers)
-        .filter((name) => name && typeof name === "string")
-        .map((name) => ({ name, data: providers[name] || {} }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-};
-
-const showUpdateRulesetsModalHandler = (token) =>
-    showTextModalHandler(_("Update rulesets"), false, async () => {
-        const payload = await mihomoApi.fetchRuleProviders(token);
-        const rulesets = normalizeRuleProviders(payload);
-        const rows = rulesets.map((ruleset) => ({
-            name: ruleset.name,
-            status: _("Updated")
-        }));
-        let hasErrors = false;
-
-        for (const entry of rows) {
-            try {
-                await mihomoApi.updateRulesetProvider(entry.name, token);
-            } catch (e) {
-                hasErrors = true;
-                entry.status = `${_("Failed")}: ${e.message || _("Error")}`;
-            }
-        }
-
-        const finalStatus = rows.length === 0
-            ? _("No rulesets returned by API.")
-            : (hasErrors ? _("Completed with errors") : _("Completed"));
-        const listText = rows.length > 0
-            ? rows.map((entry) => `${entry.name}: ${entry.status}`).join("\n")
-            : _("No rulesets returned by API.");
-        return `${_("Received rulesets:")}\n${listText}\n\n${_("Status")}\n${finalStatus}`;
-    }, {
-        allowCopy: false,
-        loadingText: _("Getting rulesets...")
-    });
 
 return view.extend({
     handleSave: null,
@@ -291,12 +211,11 @@ return view.extend({
     },
 
     async render(results) {
-        let pollInterval = null;
-        let pollingInProgress = false;
         let actionInProgress = false;
         let visibilityChangeHandler = null;
         let beforeUnloadHandler = null;
-        let wsCleanups = [];
+        let poller = null;
+        let sockets = null;
 
         const dynamicElements = {
             currentRunning: !!results.infoIsRunning,
@@ -305,21 +224,10 @@ return view.extend({
             lastAutostarting: null
         };
 
-        const cleanupWs = () => {
-            wsCleanups.forEach(fn => fn());
-            wsCleanups = [];
-        };
-
-        const stopPolling = () => {
-            if (pollInterval) {
-                clearTimeout(pollInterval);
-                pollInterval = null;
-            }
-        };
-
         const cleanup = () => {
-            stopPolling();
-            cleanupWs();
+            poller?.stop();
+            sockets?.stop();
+
             if (visibilityChangeHandler) {
                 document.removeEventListener("visibilitychange", visibilityChangeHandler);
                 visibilityChangeHandler = null;
@@ -330,102 +238,14 @@ return view.extend({
             }
         };
 
-        const updateUI = (isAutostarting, isRunning, currentMode) => {
-            const runningChanged = dynamicElements.lastRunning !== isRunning;
-            const autostartChanged = dynamicElements.lastAutostarting !== isAutostarting;
-
-            dynamicElements.currentRunning = isRunning;
-            dynamicElements.currentAutostarting = isAutostarting;
-
-            if (runningChanged && dynamicElements.serviceBadge) {
-                dynamicElements.serviceBadge.textContent = boolToWordRunning(isRunning);
-                dynamicElements.serviceBadge.className = `jc-status-text ${isRunning ? "jc-status-text-active" : "jc-status-text-inactive"}`;
-            }
-
-            if (autostartChanged && dynamicElements.autoBadge) {
-                dynamicElements.autoBadge.textContent = boolToWordAutostart(isAutostarting);
-                dynamicElements.autoBadge.className = `jc-status-text ${isAutostarting ? "jc-status-text-active" : "jc-status-text-inactive"}`;
-            }
-
-            if (runningChanged && dynamicElements.btnToggle) {
-                const label = isRunning ? _("Stop") : _("Start");
-                const text = dynamicElements.btnToggle.querySelector(".jc-button-label");
-                if (text) text.textContent = label;
-                dynamicElements.btnToggle.className = `cbi-button ${isRunning ? buttons.NEGATIVE : buttons.POSITIVE}`;
-                dynamicElements.btnToggle.title = label;
-                dynamicElements.btnToggle.setAttribute("aria-label", label);
-            }
-
-            if (dynamicElements.modeValue) {
-                if (isRunning && currentMode) {
-                    dynamicElements.modeValue.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
-                } else {
-                    dynamicElements.modeValue.textContent = _("Unknown");
-                }
-            }
-
-            if (autostartChanged && dynamicElements.btnAutoToggle) {
-                const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
-                const text = dynamicElements.btnAutoToggle.querySelector(".jc-button-label");
-                if (text) text.textContent = label;
-                dynamicElements.btnAutoToggle.className = `cbi-button ${isAutostarting ? buttons.NEGATIVE : buttons.POSITIVE}`;
-                dynamicElements.btnAutoToggle.title = label;
-                dynamicElements.btnAutoToggle.setAttribute("aria-label", label);
-            }
-
-            dynamicElements.lastRunning = isRunning;
-            dynamicElements.lastAutostarting = isAutostarting;
-        };
-
-        const updateServiceStatus = async () => {
-            if (pollingInProgress) return;
-            pollingInProgress = true;
-            try {
-                if (!await ubusApi.isSessionAlive()) {
-                    cleanup();
-                    return;
-                }
-                const [isRunning, isAutostarting] = await Promise.all([
-                    ubusApi.isServiceRunning().catch(() => false),
-                    ubusApi.isServiceAutoStartEnabled().catch(() => false)
-                ]);
-                
-                let currentMode = "";
-                if (isRunning) {
-                    try {
-                        const configs = await mihomoApi.fetchConfigs(results.apiToken);
-                        currentMode = configs.mode || "";
-                    } catch (e) {}
-                }
-
-                requestAnimationFrame(() => updateUI(isAutostarting, isRunning, currentMode));
-            } finally {
-                pollingInProgress = false;
-            }
-        };
-
-        const scheduleNextPoll = () => {
-            if (pollInterval || document.hidden) return;
-
-            pollInterval = setTimeout(async () => {
-                pollInterval = null;
-
-                // Check if unmounted (wait until timeout fires so DOM is definitely attached)
-                if (!document.body.contains(dynamicElements.serviceBadge)) {
-                    cleanup();
-                    return;
-                }
-
-                await updateServiceStatus();
-                scheduleNextPoll();
-            }, POLL_TIMEOUT);
-        };
-
-        const startPolling = () => {
-            stopPolling();
-            scheduleNextPoll();
-        };
-
+        poller = statusRuntime.createPoller({
+            token: results.apiToken,
+            isMounted: () => document.body.contains(dynamicElements.serviceBadge),
+            onUpdate: ({ isRunning, isAutostarting, currentMode }) => {
+                updateStatusUI(dynamicElements, isAutostarting, isRunning, currentMode);
+            },
+            onInactive: cleanup
+        });
 
         const serviceBadge = E("span", { class: "jc-status-text" }, _("Loading..."));
         const autoBadge = E("span", { class: "jc-status-text" }, _("Loading..."));
@@ -445,7 +265,7 @@ return view.extend({
             try {
                 await fs.exec(common.initdPath, [action]);
                 if (timeoutMs) await asyncTimeout(timeoutMs);
-                await updateServiceStatus();
+                await poller.refresh();
             } catch (e) {
                 ui.addTimeLimitedNotification(_("Error"), E("p", e.message), common.notificationTimeout, "danger");
                 console.error(e);
@@ -499,6 +319,24 @@ return view.extend({
             statusGrid
         ]);
 
+        sockets = statusRuntime.createSockets({
+            token: results.apiToken,
+            containerCheck: () => document.body.contains(statusContainer),
+            onInactive: cleanup,
+            onTraffic: (data) => {
+                dynamicElements.upValue.textContent = formatSpeed(data.up);
+                dynamicElements.downValue.textContent = formatSpeed(data.down);
+                dynamicElements.upTotalValue.textContent = common.formatBytes(data.upTotal);
+                dynamicElements.downTotalValue.textContent = common.formatBytes(data.downTotal);
+            },
+            onConnections: (data) => {
+                dynamicElements.connValue.textContent = String(data.connections.length);
+            },
+            onMemory: (data) => {
+                dynamicElements.ramValue.textContent = common.formatBytes(data.inuse);
+            }
+        });
+
         const serviceActionSection = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Service actions")),
             E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
@@ -507,8 +345,8 @@ return view.extend({
 
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), showExecModalHandler(_("Diagnostic report"), false, common.binPath, ["diag_report"]), "diagnostic"),
-                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), showConfirmExecModalHandler(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), common.binPath, ["core_update"], async () => {
+                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showExec(_("Diagnostic report"), false, common.binPath, ["diag_report"]), "diagnostic"),
+                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmExec(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), common.binPath, ["core_update"], async () => {
                     const res = await fs.exec(common.binPath, ["_luci_call"]);
                     const [infoPackage, fallbackCoreVersion] = cleanStdout(res).split(",");
                     let infoCore = fallbackCoreVersion;
@@ -523,8 +361,8 @@ return view.extend({
                     if (dynamicElements.coreValue)
                         dynamicElements.coreValue.textContent = infoCore || _("Error");
                 }), "update"),
-                createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update rulesets"), showUpdateRulesetsModalHandler(results.apiToken), "update"),
-                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update service data"), showConfirmExecModalHandler(_("Update service data"), _("This action downloads and replaces local service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), common.binPath, ["service_data_update"]), "serviceData")
+                createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update active rulesets"), actions.showUpdateRulesets(results.apiToken), "update"),
+                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update built-in data"), actions.showConfirmExec(_("Update built-in data"), _("This action downloads and replaces built-in service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), common.binPath, ["service_data_update"]), "serviceData")
             ])
         ]);
 
@@ -536,9 +374,9 @@ return view.extend({
 
         const configActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.CONFIG_SHOW, buttons.POSITIVE, _("Show Mihomo config"), showExecModalHandler(_("Mihomo config"), false, common.binPath, ["diag_mihomo_config"]), "config"),
-                createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.POSITIVE, _("Show service config"), showExecModalHandler(_("Service config"), false, common.binPath, ["diag_service_config"]), "config"),
-                createActionButton(buttonsIDs.CONFIG_RESET, buttons.NEGATIVE, _("Reset config"), showConfirmExecModalHandler(_("Reset configuration"), _("This will reset the JustClash configuration. Use with care."), common.binPath, ["diag_service_config_reset"]), "reset")
+                createActionButton(buttonsIDs.CONFIG_SHOW, buttons.POSITIVE, _("Show Mihomo config"), actions.showExec(_("Mihomo config"), false, common.binPath, ["diag_mihomo_config"]), "config"),
+                createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.POSITIVE, _("Show service config"), actions.showExec(_("Service config"), false, common.binPath, ["diag_service_config"]), "config"),
+                createActionButton(buttonsIDs.CONFIG_RESET, buttons.NEGATIVE, _("Reset config"), actions.showConfirmExec(_("Reset configuration"), _("This will reset the JustClash configuration. Use with care."), common.binPath, ["diag_service_config_reset"]), "reset")
             ])
         ]);
 
@@ -547,52 +385,6 @@ return view.extend({
             E("div", { class: "cbi-section-descr" }, _("Inspect the generated Mihomo or JustClash settings, or reset the configuration back to default values.")),
             configActionContainer
         ]);
-
-        const connectStatusSockets = async () => {
-            if (document.hidden)
-                return;
-
-            cleanupWs();
-            if (!await ubusApi.isSessionAlive())
-                return;
-
-            wsCleanups.push(mihomoApi.createTrafficWebSocket({
-                token: results.apiToken,
-                containerCheck: () => document.body.contains(statusContainer),
-                onMessage: (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        dynamicElements.upValue.textContent = formatSpeed(data.up);
-                        dynamicElements.downValue.textContent = formatSpeed(data.down);
-                        dynamicElements.upTotalValue.textContent = common.formatBytes(data.upTotal);
-                        dynamicElements.downTotalValue.textContent = common.formatBytes(data.downTotal);
-                    } catch (e) {}
-                }
-            }));
-
-            wsCleanups.push(mihomoApi.createConnectionsWebSocket({
-                token: results.apiToken,
-                interval: 1000,
-                containerCheck: () => document.body.contains(statusContainer),
-                onMessage: (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        dynamicElements.connValue.textContent = String(data.connections.length);
-                    } catch (e) {}
-                }
-            }));
-
-            wsCleanups.push(mihomoApi.createMemoryWebSocket({
-                token: results.apiToken,
-                containerCheck: () => document.body.contains(statusContainer),
-                onMessage: (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        dynamicElements.ramValue.textContent = common.formatBytes(data.inuse);
-                    } catch (e) {}
-                }
-            }));
-        };
 
         const style = E("style", {}, `
             .jc-status-text { font-weight:700; }
@@ -639,28 +431,23 @@ return view.extend({
             @media (max-width:37.5rem) { .jc-summary-grid { grid-template-columns:1fr; grid-auto-rows:auto; } }
         `);
 
-        startPolling();
-        connectStatusSockets();
-
-        if (visibilityChangeHandler) {
-            document.removeEventListener("visibilitychange", visibilityChangeHandler);
-        }
+        poller.start();
 
         visibilityChangeHandler = () => {
             console.debug(`[status] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
             if (document.hidden) {
-                stopPolling();
-                cleanupWs();
+                poller.stop();
+                sockets.stop();
             } else {
-                connectStatusSockets();
-                updateServiceStatus().finally(() => scheduleNextPoll());
+                sockets.connect();
+                poller.refresh().then((shouldContinue) => {
+                    if (shouldContinue)
+                        poller.schedule();
+                });
             }
         };
 
         document.addEventListener("visibilitychange", visibilityChangeHandler);
-
-        if (beforeUnloadHandler)
-            window.removeEventListener("beforeunload", beforeUnloadHandler);
 
         beforeUnloadHandler = () => {
             console.debug("[status] beforeunload");
@@ -670,7 +457,8 @@ return view.extend({
         window.addEventListener("beforeunload", beforeUnloadHandler);
 
         requestAnimationFrame(() => {
-            updateUI(results.infoIsAutostarting, !!results.infoIsRunning, results.infoMode);
+            updateStatusUI(dynamicElements, results.infoIsAutostarting, !!results.infoIsRunning, results.infoMode);
+            sockets.connect();
         });
 
         return E("div", { class: "cbi-map" }, [

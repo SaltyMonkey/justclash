@@ -1,8 +1,9 @@
 "use strict";
 "require view";
 "require ui";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_fs as fsApi";
+"require view.justclash.common as common";
+"require view.justclash.api.fs as fsApi";
+"require view.justclash.lib.rulesets as rulesetsCodec";
 
 return view.extend({
     builtInRoutingIds: [],
@@ -28,14 +29,14 @@ return view.extend({
     },
 
     render: function (result) {
-        const builtInRouting = this.parseRules(result.rulesets);
-        const builtInBlocking = this.parseRules(result.blockRulesets);
+        const builtInRouting = rulesetsCodec.parse(result.rulesets);
+        const builtInBlocking = rulesetsCodec.parse(result.blockRulesets);
 
         this.builtInRoutingIds = builtInRouting.map(r => r.id);
         this.builtInBlockingIds = builtInBlocking.map(r => r.id);
 
-        const userRouting = this.parseRules(result.userRulesets);
-        const userBlocking = this.parseRules(result.userBlockRulesets);
+        const userRouting = rulesetsCodec.parse(result.userRulesets);
+        const userBlocking = rulesetsCodec.parse(result.userBlockRulesets);
 
 
         const hideBuiltInCheckbox = E("input", {
@@ -106,26 +107,6 @@ return view.extend({
         ]);
     },
 
-    parseRules: function (content) {
-        if (!content) return [];
-        return content.split("\n")
-            .map(line => line.trim())
-            .filter(line => line && !line.startsWith("#"))
-            .map(line => {
-                // Pipe-separated format structure: Name|ID|Type|Format|URL_or_Path[|Authorization]
-                const parts = line.split("|").map(p => p.trim());
-                return {
-                    name: parts[0] || "",
-                    id: parts[1] || "",
-                    type: parts[2] || "domain",
-                    format: parts[3] || "mrs",
-                    url: parts[4] || "",
-                    auth: parts[5] || ""
-                };
-            })
-            .filter(item => item.name && item.id);
-    },
-
     renderPanel: function (builtInRules, userRules, isBlock) {
         const sectionTitle = isBlock ? _("Blocking Rulesets") : _("Routing Rulesets");
 
@@ -160,7 +141,7 @@ return view.extend({
             type: "button",
             class: "cbi-button cbi-button-add",
             click: () => {
-                const newRow = this.createRowElement({ name: "", id: "", type: "domain", format: "mrs", url: "", auth: "" }, false, isBlock);
+                const newRow = this.createRowElement(rulesetsCodec.createEmptyRule(), false, isBlock);
                 grid.appendChild(newRow);
             }
         }, _("Add Custom Ruleset"));
@@ -179,7 +160,7 @@ return view.extend({
         return panel;
     },
 
-    createRowElement: function (rule = { name: "", id: "", type: "domain", format: "mrs", url: "", auth: "" }, isBuiltIn = false, isBlock = false) {
+    createRowElement: function (rule = rulesetsCodec.createEmptyRule(), isBuiltIn = false, isBlock = false) {
         const row = E("div", {
             class: isBuiltIn ? "jc-grid-row jc-builtin-row jc-hidden-row" : "jc-grid-row jc-custom-row"
         });
@@ -255,13 +236,7 @@ return view.extend({
 
             // Apply validation rules using LuCI's ui.addValidator
             ui.addValidator(nameInput, "string", false, function(value) {
-                if (!value || value.trim() === "") {
-                    return _("Readable name is required.");
-                }
-                if (!/^[a-zA-Zа-яА-ЯёЁ0-9_\s-]+$/.test(value)) {
-                    return _("Readable name contains invalid characters. Only letters, numbers, spaces, underscores, and dashes are allowed.");
-                }
-                return true;
+                return rulesetsCodec.validateReadableName(value);
             }, "blur", "keyup");
 
             ui.addValidator(idInput, "string", false, function(value) {
@@ -295,103 +270,67 @@ return view.extend({
             }.bind(this), "blur", "keyup");
 
             ui.addValidator(urlInput, "string", false, function(value) {
-                if (!value || value.trim() === "") {
-                    return _("URL / Local Path is required.");
-                }
-                if (value.includes("|") || value.includes("\n")) {
-                    return _("URL / Local Path cannot contain pipe (|) or newlines.");
-                }
-                if (!/^(https?:\/\/|\/)/.test(value)) {
-                    return _("URL / Local Path must start with http://, https://, or /");
-                }
-                return true;
+                return rulesetsCodec.validateLocation(value);
             }, "blur", "keyup");
 
             ui.addValidator(authInput, "string", true, function(value) {
-                if (value && (value.includes("|") || value.includes("\n"))) {
-                    return _("Authorization cannot contain pipe (|) or newlines.");
-                }
-                return true;
+                return rulesetsCodec.validateAuth(value);
             }, "blur", "keyup");
         }
 
         return row;
     },
 
+    collectRows: function (rows, messages) {
+        const data = [];
+        const errors = [];
+
+        rows.forEach((row, index) => {
+            const inputs = [row.nameInput, row.idInput, row.urlInput, row.authInput];
+            inputs.forEach(input => input.dispatchEvent(new window.Event("blur")));
+
+            const fieldErrors = {
+                name: row.nameInput.getAttribute("data-tooltip"),
+                id: row.idInput.getAttribute("data-tooltip"),
+                url: row.urlInput.getAttribute("data-tooltip"),
+                auth: row.authInput.getAttribute("data-tooltip")
+            };
+
+            Object.keys(fieldErrors).forEach((field) => {
+                if (fieldErrors[field])
+                    errors.push(messages[field].format(index + 1, fieldErrors[field]));
+            });
+
+            if (!Object.values(fieldErrors).some(Boolean)) {
+                data.push({
+                    name: row.nameInput.value,
+                    id: row.idInput.value,
+                    type: row.typeSelect.value,
+                    url: row.urlInput.value,
+                    auth: row.authInput.value
+                });
+            }
+        });
+
+        return { data, errors };
+    },
+
     saveData: async function (_apply) {
         const routingRows = this.routingGrid.querySelectorAll(".jc-custom-row");
         const blockingRows = this.blockingGrid.querySelectorAll(".jc-custom-row");
-
-        const routingData = [];
-        const blockingData = [];
-
-        const errors = [];
-
-        // Validate Routing Rulesets
-        routingRows.forEach((row, i) => {
-            // Trigger real-time validation via blur events
-            row.nameInput.dispatchEvent(new window.Event("blur"));
-            row.idInput.dispatchEvent(new window.Event("blur"));
-            row.urlInput.dispatchEvent(new window.Event("blur"));
-            row.authInput.dispatchEvent(new window.Event("blur"));
-
-            const nameErr = row.nameInput.getAttribute("data-tooltip");
-            const idErr = row.idInput.getAttribute("data-tooltip");
-            const urlErr = row.urlInput.getAttribute("data-tooltip");
-            const authErr = row.authInput.getAttribute("data-tooltip");
-
-            if (nameErr) errors.push(_("Routing Ruleset #%d (Readable name): %s").format(i + 1, nameErr));
-            if (idErr) errors.push(_("Routing Ruleset #%d (Name): %s").format(i + 1, idErr));
-            if (urlErr) errors.push(_("Routing Ruleset #%d (URL / Local Path): %s").format(i + 1, urlErr));
-            if (authErr) errors.push(_("Routing Ruleset #%d (Authorization): %s").format(i + 1, authErr));
-
-            if (!nameErr && !idErr && !urlErr && !authErr) {
-                const name = row.nameInput.value.trim();
-                const id = row.idInput.value.trim();
-                const type = row.typeSelect.value;
-                const format = (type === "ipcidr") ? "text" : "mrs";
-                const url = row.urlInput.value.trim();
-                const auth = row.authInput.value.trim();
-                if (auth) {
-                    routingData.push(`${name}|${id}|${type}|${format}|${url}|${auth}`);
-                } else {
-                    routingData.push(`${name}|${id}|${type}|${format}|${url}`);
-                }
-            }
+        const routing = this.collectRows(routingRows, {
+            name: _("Routing Ruleset #%d (Readable name): %s"),
+            id: _("Routing Ruleset #%d (Name): %s"),
+            url: _("Routing Ruleset #%d (URL / Local Path): %s"),
+            auth: _("Routing Ruleset #%d (Authorization): %s")
         });
-
-        // Validate Blocking Rulesets
-        blockingRows.forEach((row, i) => {
-            // Trigger real-time validation via blur events
-            row.nameInput.dispatchEvent(new window.Event("blur"));
-            row.idInput.dispatchEvent(new window.Event("blur"));
-            row.urlInput.dispatchEvent(new window.Event("blur"));
-            row.authInput.dispatchEvent(new window.Event("blur"));
-
-            const nameErr = row.nameInput.getAttribute("data-tooltip");
-            const idErr = row.idInput.getAttribute("data-tooltip");
-            const urlErr = row.urlInput.getAttribute("data-tooltip");
-            const authErr = row.authInput.getAttribute("data-tooltip");
-
-            if (nameErr) errors.push(_("Blocking Ruleset #%d (Readable name): %s").format(i + 1, nameErr));
-            if (idErr) errors.push(_("Blocking Ruleset #%d (Name): %s").format(i + 1, idErr));
-            if (urlErr) errors.push(_("Blocking Ruleset #%d (URL / Local Path): %s").format(i + 1, urlErr));
-            if (authErr) errors.push(_("Blocking Ruleset #%d (Authorization): %s").format(i + 1, authErr));
-
-            if (!nameErr && !idErr && !urlErr && !authErr) {
-                const name = row.nameInput.value.trim();
-                const id = row.idInput.value.trim();
-                const type = row.typeSelect.value;
-                const format = (type === "ipcidr") ? "text" : "mrs";
-                const url = row.urlInput.value.trim();
-                const auth = row.authInput.value.trim();
-                if (auth) {
-                    blockingData.push(`${name}|${id}|${type}|${format}|${url}|${auth}`);
-                } else {
-                    blockingData.push(`${name}|${id}|${type}|${format}|${url}`);
-                }
-            }
+        const blocking = this.collectRows(blockingRows, {
+            name: _("Blocking Ruleset #%d (Readable name): %s"),
+            id: _("Blocking Ruleset #%d (Name): %s"),
+            url: _("Blocking Ruleset #%d (URL / Local Path): %s"),
+            auth: _("Blocking Ruleset #%d (Authorization): %s")
         });
+        const errors = [...routing.errors, ...blocking.errors];
 
         if (errors.length > 0) {
             const errorContent = E("ul", { class: "jc-error-list" },
@@ -401,8 +340,8 @@ return view.extend({
             return false;
         }
 
-        const routingContent = routingData.length > 0 ? routingData.join("\n") + "\n" : "";
-        const blockingContent = blockingData.length > 0 ? blockingData.join("\n") + "\n" : "";
+        const routingContent = rulesetsCodec.serializeList(routing.data);
+        const blockingContent = rulesetsCodec.serializeList(blocking.data);
 
         try {
             await fsApi.saveFileSafe(routingContent, blockingContent);

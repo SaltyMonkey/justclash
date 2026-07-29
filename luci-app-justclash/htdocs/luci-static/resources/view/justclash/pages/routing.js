@@ -1,8 +1,10 @@
 "use strict";
 "require view";
 "require uci";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_fs as fsApi";
+"require view.justclash.common as common";
+"require view.justclash.api.fs as fsApi";
+"require view.justclash.lib.form as formConstants";
+"require view.justclash.lib.routing as routingOptions";
 "require form";
 "require tools.widgets as widgets";
 
@@ -50,17 +52,8 @@ return view.extend({
     render(result) {
         let m, s, s2, spp, s3, s4, s5, smp, o, optionFinal, tabname;
 
-        const primitives = {
-            TRUE: "1",
-            FALSE: "0"
-        };
-
-        const datatypes = {
-            PORT: "port",
-            UINTEGER: "uinteger",
-            IPADDR: "ipaddr",
-            CIDR4: "cidr4"
-        };
+        const primitives = formConstants.boolean;
+        const datatypes = formConstants.datatypes;
 
         m = new form.Map(common.binName);
         s = m.section(form.GridSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
@@ -262,6 +255,9 @@ return view.extend({
         tabname = "proxyprovidersbasic_tab";
         spp.tab(tabname, _("Basic"));
 
+        const proxyProviderOverrideTab = "proxyprovideroverride_tab";
+        spp.tab(proxyProviderOverrideTab, _("Override"));
+
         o = spp.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.width = "15%";
         o.description = _("Enable or disable this proxy provider without removing it.");
@@ -291,7 +287,7 @@ return view.extend({
         o.description = _("Your complete subscription URL with http:// or https://.");
         o.modalonly = true;
 
-        o = spp.taboption(tabname, form.Value, "override_dialer_proxy", _("Connect through:"));
+        o = spp.taboption(proxyProviderOverrideTab, form.Value, "override_dialer_proxy", _("Connect through:"));
         o.description = _("Apply this dialer-proxy to nodes loaded from this provider. Leave empty to connect directly.");
         o.optional = true;
         o.placeholder = "proxyname_";
@@ -303,7 +299,7 @@ return view.extend({
         };
         o.modalonly = true;
 
-        o = spp.taboption(tabname, widgets.DeviceSelect, "override_interface_name", _("Bind to interface:"));
+        o = spp.taboption(proxyProviderOverrideTab, widgets.DeviceSelect, "override_interface_name", _("Bind to interface:"));
         o.description = _("Apply this interface binding to nodes loaded from this provider. Leave empty to use the system-selected interface.");
         o.optional = true;
         o.noaliases = true;
@@ -313,7 +309,7 @@ return view.extend({
         o.filter = common.filterOutboundDeviceSelect;
         o.modalonly = true;
 
-        o = spp.taboption(tabname, form.Value, "override_routing_mark", _("Routing mark:"));
+        o = spp.taboption(proxyProviderOverrideTab, form.Value, "override_routing_mark", _("Routing mark:"));
         o.description = _("Optional Linux fwmark applied to nodes loaded from this provider through Mihomo provider override. Leave empty to use node or global settings.");
         o.optional = true;
         o.rmempty = true;
@@ -323,7 +319,7 @@ return view.extend({
         };
         o.modalonly = true;
 
-        o = spp.taboption(tabname, form.ListValue, "override_ip_version", _("IP version override:"));
+        o = spp.taboption(proxyProviderOverrideTab, form.ListValue, "override_ip_version", _("IP version override:"));
         o.description = _(
             "Override ip-version for all proxy nodes loaded from this provider."
         );
@@ -363,6 +359,7 @@ return view.extend({
         o.validate = function (section_id, value) {
             return common.validateExitRule(value);
         };
+        routingOptions.makeDynamic(o, common.binName, common.endRuleOptions);
         o.modalonly = true;
 
         tabname = "proxyproviderheaders_tab";
@@ -404,6 +401,7 @@ return view.extend({
         o.rmempty = true;
         o.modalonly = true;
         common.defaultUaPresets.forEach(p => o.value(p.value, p.label));
+        o.default = "__mihomo__";
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") {
                 return true;
@@ -852,6 +850,7 @@ return view.extend({
         o.validate = function (section_id, value) {
             return common.validateExitRule(value);
         };
+        routingOptions.makeDynamic(o, common.binName, common.endRuleOptions);
         o.modalonly = true;
 
         o = s4.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
@@ -931,6 +930,7 @@ return view.extend({
         o.validate = function (section_id, value) {
             return common.validateExitRule(value);
         };
+        routingOptions.makeDynamic(o, common.binName, common.endRuleOptions);
 
         s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Default rule:"), _("Used when no other rule matches. This is the fallback action for the remaining traffic."));
 
@@ -946,6 +946,10 @@ return view.extend({
         optionFinal.validate = function (section_id, value) {
             return common.validateExitRule(value);
         };
+        routingOptions.makeDynamic(optionFinal, common.binName, [
+            common.endRuleOptions[0],
+            common.endRuleOptions[2]
+        ]);
 
         //            .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:395px; min-height:395px; overflow-y:auto; }
         //

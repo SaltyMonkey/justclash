@@ -1,41 +1,13 @@
 "use strict";
 "require view";
 "require ui";
-"require view.justclash.helper_clipboard as clipboard";
-"require view.justclash.helper_ubus as luciSession";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_mihomo_api as mihomoApi";
+"require view.justclash.lib.clipboard as clipboard";
+"require view.justclash.common as common";
+"require view.justclash.api.mihomo as mihomoApi";
+"require view.justclash.lib.connections as connectionsModel";
+"require view.justclash.lib.socket as socketRuntime";
 "require uci";
 
-const DEFAULT_CONNECTIONS_INTERVAL = 1000;
-const CONNECTIONS_INTERVAL_OPTIONS = [250, 500, 1000, 2000, 5000];
-
-const formatConnection = (conn) => ({
-    src: conn.metadata.sourceIP + ":" + conn.metadata.sourcePort,
-    dest: conn.metadata.destinationIP
-        ? conn.metadata.destinationIP + ":" + conn.metadata.destinationPort
-        : (conn.metadata.remoteDestination || "")
-});
-
-const normalizeFilterValue = (value) => String(value || "").trim().toLowerCase();
-const buildNormalizedConnection = (conn) => {
-    const metadata = conn?.metadata || {};
-    const host = normalizeFilterValue(metadata.host);
-    const sniffHost = normalizeFilterValue(metadata.sniffHost);
-    const sourceIP = normalizeFilterValue(metadata.sourceIP);
-    const endpointIP = normalizeFilterValue(metadata.destinationIP || metadata.remoteDestination);
-
-    return {
-        hostSniff: [host, sniffHost].filter(Boolean).join(" "),
-        sourceEndpointIP: [sourceIP, endpointIP].filter(Boolean).join(" "),
-        chains: normalizeFilterValue((conn?.chains || []).join(", ")),
-        rule: normalizeFilterValue(conn?.rulePayload || conn?.rule)
-    };
-};
-
-const renderIntervalOptionLabel = (interval) => interval >= 1000
-    ? `${interval / 1000} s`
-    : `${interval} ms`;
 const setRowCloseButtonState = (button, isClosing) => {
     if (!button)
         return;
@@ -87,7 +59,7 @@ return view.extend({
     },
 
     render: function (result) {
-        let wsCleanups = [];
+        let connectionsSocket = null;
         let noConnectionsMsg = null;
         let visibilityChangeHandler = null;
         let beforeUnloadHandler = null;
@@ -95,8 +67,7 @@ return view.extend({
         const connectionsData = new Map();
 
         const cleanup = () => {
-            wsCleanups.forEach(fn => fn());
-            wsCleanups = [];
+            connectionsSocket?.stop();
             if (visibilityChangeHandler) {
                 document.removeEventListener("visibilitychange", visibilityChangeHandler);
                 visibilityChangeHandler = null;
@@ -147,8 +118,7 @@ return view.extend({
         container.appendChild(E("h3", { class: "cbi-section-title" }, _("Active Connections")));
         container.appendChild(E("div", { class: "cbi-section-descr" }, _("Monitor and manage active network connections established through Mihomo.")));
 
-        let currentInterval = DEFAULT_CONNECTIONS_INTERVAL;
-        let connectionsWsCleanup = null;
+        let currentInterval = connectionsModel.DEFAULT_INTERVAL;
         const rowMap = new Map();
         const appliedFilters = {
             hostSniff: "",
@@ -194,8 +164,8 @@ return view.extend({
         }, _("Apply"));
 
         const intervalChoices = {};
-        CONNECTIONS_INTERVAL_OPTIONS.forEach((interval) => {
-            intervalChoices[String(interval)] = renderIntervalOptionLabel(interval);
+        connectionsModel.INTERVAL_OPTIONS.forEach((interval) => {
+            intervalChoices[String(interval)] = connectionsModel.formatIntervalLabel(interval);
         });
 
         const intervalDropdown = new ui.Dropdown(String(currentInterval), intervalChoices, {
@@ -326,29 +296,30 @@ return view.extend({
             return row;
         }
 
-        function updateRow(conn) {
+        function updateRow(conn, appendTarget = table) {
             const key = conn.id;
             connectionsData.set(key, {
                 raw: conn,
-                normalized: buildNormalizedConnection(conn)
+                normalized: connectionsModel.normalizeConnection(conn)
             });
             let row = rowMap.get(key);
 
             if (!row) {
                 row = createRow(conn);
-                table.appendChild(row);
+                appendTarget.appendChild(row);
                 rowMap.set(key, row);
             }
 
-            const connObj = formatConnection(conn);
-            const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
+            const metadata = conn.metadata || {};
+            const connObj = connectionsModel.formatEndpoints(conn);
+            const hostStr = [metadata.host, metadata.sniffHost].filter(Boolean).join(", ");
             const desktopConnStr = connObj.src + (connObj.dest ? " -> " + connObj.dest : "");
 
             const cells = row.childNodes;
 
             const protoSpan = E("span", {
-                class: "jc-badge-proto " + String(conn.metadata.network || "").toLowerCase()
-            }, (conn.metadata.network || "").toUpperCase());
+                class: "jc-badge-proto " + String(metadata.network || "").toLowerCase()
+            }, (metadata.network || "").toUpperCase());
             cells[0].replaceChildren(protoSpan);
 
             cells[1].textContent = desktopConnStr;
@@ -382,21 +353,6 @@ return view.extend({
                 setRowCloseButtonState(actionButton, false);
         }
 
-        const matchesFilters = (connData) => {
-            const normalized = connData?.normalized || {};
-
-            if (appliedFilters.hostSniff && !normalized.hostSniff?.includes(appliedFilters.hostSniff))
-                return false;
-            if (appliedFilters.sourceEndpointIP && !normalized.sourceEndpointIP?.includes(appliedFilters.sourceEndpointIP))
-                return false;
-            if (appliedFilters.chains && !normalized.chains?.includes(appliedFilters.chains))
-                return false;
-            if (appliedFilters.rule && !normalized.rule?.includes(appliedFilters.rule))
-                return false;
-
-            return true;
-        };
-
         const updateEmptyState = () => {
             if (noConnectionsMsg) {
                 noConnectionsMsg.parentNode?.removeChild(noConnectionsMsg);
@@ -407,17 +363,17 @@ return view.extend({
         const applyFilters = () => {
             for (const [key, row] of rowMap.entries()) {
                 const connData = connectionsData.get(key);
-                row.classList.toggle("jc-hidden-row", !matchesFilters(connData));
+                row.classList.toggle("jc-hidden-row", !connectionsModel.matchesFilters(connData?.normalized, appliedFilters));
             }
 
             updateEmptyState();
         };
 
         const getDraftFilters = () => ({
-            hostSniff: normalizeFilterValue(hostSniffFilterInput.value),
-            sourceEndpointIP: normalizeFilterValue(sourceEndpointIpFilterInput.value),
-            chains: normalizeFilterValue(chainsFilterInput.value),
-            rule: normalizeFilterValue(ruleFilterInput.value)
+            hostSniff: connectionsModel.normalizeFilterValue(hostSniffFilterInput.value),
+            sourceEndpointIP: connectionsModel.normalizeFilterValue(sourceEndpointIpFilterInput.value),
+            chains: connectionsModel.normalizeFilterValue(chainsFilterInput.value),
+            rule: connectionsModel.normalizeFilterValue(ruleFilterInput.value)
         });
 
         const syncFilterButtons = () => {
@@ -460,10 +416,6 @@ return view.extend({
         };
 
         const handleConnectionsMessage = (event) => {
-            if (!document.body.contains(table)) {
-                cleanup();
-                return;
-            }
             try {
                 const data = JSON.parse(event.data);
                 const conns = Array.isArray(data.connections) ? data.connections : [];
@@ -471,64 +423,11 @@ return view.extend({
                 const fragment = document.createDocumentFragment();
 
                 for (const conn of conns) {
+                    if (!conn?.id)
+                        continue;
+
                     seenKeys.add(conn.id);
-
-                    const key = conn.id;
-                    connectionsData.set(key, {
-                        raw: conn,
-                        normalized: buildNormalizedConnection(conn)
-                    });
-                    let row = rowMap.get(key);
-                    const isNew = !row;
-
-                    if (isNew) {
-                        row = createRow(conn);
-                        rowMap.set(key, row);
-                    }
-
-                    const connObj = formatConnection(conn);
-                    const hostStr = [conn.metadata.host, conn.metadata.sniffHost].filter(Boolean).join(", ");
-                    const desktopConnStr = connObj.src + (connObj.dest ? " -> " + connObj.dest : "");
-
-                    const cells = row.childNodes;
-
-                    const protoSpan = E("span", {
-                        class: "jc-badge-proto " + String(conn.metadata.network || "").toLowerCase()
-                    }, (conn.metadata.network || "").toUpperCase());
-                    cells[0].replaceChildren(protoSpan);
-
-                    cells[1].textContent = desktopConnStr;
-                    cells[2].textContent = connObj.src;
-                    cells[3].textContent = connObj.dest;
-                    cells[4].textContent = hostStr;
-
-                    const chainNodes = [];
-                    (conn.chains || []).forEach((chainItem, index) => {
-                        if (index > 0) {
-                            chainNodes.push(E("span", { class: "jc-chain-arrow" }, " → "));
-                        }
-                        const isLast = index === conn.chains.length - 1;
-                        chainNodes.push(E("span", {
-                            class: isLast ? "jc-badge-builtin jc-badge-chain-last" : "jc-badge-builtin jc-badge-chain"
-                        }, chainItem));
-                    });
-                    cells[5].replaceChildren(...chainNodes);
-
-                    const ruleNodes = [];
-                    const ruleText = conn.rulePayload || conn.rule;
-                    if (ruleText) {
-                        ruleNodes.push(E("span", {
-                            class: "jc-badge-rule"
-                        }, ruleText));
-                    }
-                    cells[6].replaceChildren(...ruleNodes);
-
-                    const actionButton = cells[7]?.querySelector("button");
-                    if (actionButton && !actionButton.disabled)
-                        setRowCloseButtonState(actionButton, false);
-
-                    if (isNew)
-                        fragment.appendChild(row);
+                    updateRow(conn, fragment);
                 }
 
                 for (const key of rowMap.keys()) {
@@ -549,30 +448,18 @@ return view.extend({
             }
         };
 
-        const reconnectConnectionsSocket = async () => {
-            if (connectionsWsCleanup)
-                connectionsWsCleanup();
+        connectionsSocket = socketRuntime.createConnector({
+            isMounted: () => document.body.contains(table),
+            onInactive: cleanup,
+            open: ({ guard }) => mihomoApi.createConnectionsWebSocket({
+                    token: result.token,
+                    interval: currentInterval,
+                    containerCheck: () => document.body.contains(table),
+                    onMessage: guard(handleConnectionsMessage)
+                })
+        });
 
-            if (document.hidden)
-                return;
-
-            if (!await luciSession.isSessionAlive())
-                return;
-
-            connectionsWsCleanup = mihomoApi.createConnectionsWebSocket({
-                token: result.token,
-                interval: currentInterval,
-                containerCheck: () => document.body.contains(table),
-                onMessage: handleConnectionsMessage
-            });
-        };
-
-        const stopConnectionsSocket = () => {
-            if (connectionsWsCleanup) {
-                connectionsWsCleanup();
-                connectionsWsCleanup = null;
-            }
-        };
+        const reconnectConnectionsSocket = () => connectionsSocket.connect();
 
         intervalDropdownNode.addEventListener("cbi-dropdown-change", () => {
             const nextInterval = Number(intervalDropdown.getValue());
@@ -597,8 +484,10 @@ return view.extend({
         syncFilterButtons();
 
         if (!result.configLoadFailed) {
-            if (!document.hidden)
-                reconnectConnectionsSocket();
+            requestAnimationFrame(() => {
+                if (!document.hidden)
+                    reconnectConnectionsSocket();
+            });
 
             if (visibilityChangeHandler) {
                 document.removeEventListener("visibilitychange", visibilityChangeHandler);
@@ -607,7 +496,7 @@ return view.extend({
             visibilityChangeHandler = () => {
                 console.debug(`[connections] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
                 if (document.hidden)
-                    stopConnectionsSocket();
+                    connectionsSocket.stop();
                 else
                     reconnectConnectionsSocket();
             };
@@ -623,10 +512,6 @@ return view.extend({
             };
 
             window.addEventListener("beforeunload", beforeUnloadHandler);
-
-            wsCleanups.push(() => {
-                stopConnectionsSocket();
-            });
         }
 
         const style = E("style", {}, `

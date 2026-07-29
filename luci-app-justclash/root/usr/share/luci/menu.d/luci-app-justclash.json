@@ -20,7 +20,7 @@
         "order": 10,
         "action": {
             "type": "view",
-            "path": "justclash/status"
+            "path": "justclash/pages/status"
         },
         "depends": {
             "acl": [
@@ -36,7 +36,7 @@
         "order": 20,
         "action": {
             "type": "view",
-            "path": "justclash/nodes"
+            "path": "justclash/pages/nodes"
         },
         "depends": {
             "acl": [
@@ -52,7 +52,7 @@
         "order": 25,
         "action": {
             "type": "view",
-            "path": "justclash/rules"
+            "path": "justclash/pages/rules"
         },
         "depends": {
             "acl": [
@@ -68,7 +68,7 @@
         "order": 30,
         "action": {
             "type": "view",
-            "path": "justclash/system_logs"
+            "path": "justclash/pages/system_logs"
         },
         "depends": {
             "acl": [
@@ -84,7 +84,7 @@
         "order": 40,
         "action": {
             "type": "view",
-            "path": "justclash/realtime_logs"
+            "path": "justclash/pages/realtime_logs"
         },
         "depends": {
             "acl": [
@@ -100,7 +100,7 @@
         "order": 50,
         "action": {
             "type": "view",
-            "path": "justclash/connections"
+            "path": "justclash/pages/connections"
         },
         "depends": {
             "acl": [
@@ -116,7 +116,7 @@
         "order": 80,
         "action": {
             "type": "view",
-            "path": "justclash/rulesets"
+            "path": "justclash/pages/rulesets"
         },
         "depends": {
             "acl": [
@@ -132,7 +132,7 @@
         "order": 90,
         "action": {
             "type": "view",
-            "path": "justclash/routing"
+            "path": "justclash/pages/routing"
         },
         "depends": {
             "acl": [
@@ -148,7 +148,7 @@
         "order": 60,
         "action": {
             "type": "view",
-            "path": "justclash/service"
+            "path": "justclash/pages/service"
         },
         "depends": {
             "acl": [
@@ -164,7 +164,7 @@
         "order": 70,
         "action": {
             "type": "view",
-            "path": "justclash/proxy"
+            "path": "justclash/pages/proxy"
         },
         "depends": {
             "acl": [

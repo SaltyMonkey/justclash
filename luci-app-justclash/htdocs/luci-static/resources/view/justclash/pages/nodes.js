@@ -2,88 +2,9 @@
 "require view";
 "require ui";
 "require uci";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_mihomo_api as mihomoApi";
-
-const GROUP_TYPES_WITH_RESET = new Set(["urltest", "fallback", "loadbalance", "load-balance"]);
-
-const lower = (value) => String(value || "").toLowerCase();
-const isAutoGroup = (type) => GROUP_TYPES_WITH_RESET.has(lower(type));
-
-const unique = (arr) => {
-    const seen = new Set();
-    return (arr || []).filter((item) => {
-        if (!item || seen.has(item))
-            return false;
-        seen.add(item);
-        return true;
-    });
-};
-
-const normalizeNodesState = (response) => {
-    const proxies = response && typeof response.proxies === "object" ? response.proxies : {};
-    const groups = [];
-
-    for (const [name, item] of Object.entries(proxies)) {
-        if (!item || !Array.isArray(item.all) || item.all.length === 0)
-            continue;
-
-        const options = unique(item.all);
-        const current = item.now || item.current || options[0] || "";
-        if (current && !options.includes(current))
-            options.unshift(current);
-
-        groups.push({
-            name,
-            type: item.type || "",
-            current,
-            options
-        });
-    }
-
-    const globalGroup = groups.find((group) => group.name === "GLOBAL");
-    const globalOrder = new Map((globalGroup?.options || []).map((name, index) => [name, index]));
-
-    groups.sort((a, b) => {
-        if (a.name === "GLOBAL") return -1;
-        if (b.name === "GLOBAL") return 1;
-
-        const aOrder = globalOrder.has(a.name) ? globalOrder.get(a.name) : Number.MAX_SAFE_INTEGER;
-        const bOrder = globalOrder.has(b.name) ? globalOrder.get(b.name) : Number.MAX_SAFE_INTEGER;
-
-        if (aOrder !== bOrder)
-            return aOrder - bOrder;
-
-        return a.name.localeCompare(b.name);
-    });
-
-    return {
-        proxyMap: proxies,
-        groups
-    };
-};
-
-const normalizeProvidersState = (response) => {
-    const providers = response && typeof response.providers === "object" ? response.providers : {};
-
-    return Object.values(providers)
-        .filter((provider) => {
-            return provider &&
-                provider.name &&
-                lower(provider.vehicleType || provider.type) !== "compatible" &&
-                Array.isArray(provider.proxies);
-        })
-        .map((provider) => ({
-            name: provider.name,
-            vehicleType: provider.vehicleType || provider.type || "",
-            updatedAt: provider.updatedAt || "",
-            subscriptionUserinfo: provider.subscriptionUserinfo || provider.subscriptionInfo || null,
-            proxies: Array.isArray(provider.proxies)
-                ? provider.proxies.filter((proxy) => lower(proxy?.type) !== "compatible")
-                : []
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-};
+"require view.justclash.common as common";
+"require view.justclash.api.mihomo as mihomoApi";
+"require view.justclash.lib.nodes as nodesModel";
 
 return view.extend({
     handleSave: null,
@@ -109,13 +30,13 @@ return view.extend({
                 mihomoApi.fetchConfigs(token),
                 mihomoApi.fetchProxyProviders(token)
             ]);
-            const nodesState = normalizeNodesState(proxies);
+            const nodesState = nodesModel.normalizeNodesState(proxies);
 
             return {
                 token,
                 mode: configs?.mode || "rule",
                 nodesState,
-                providersState: normalizeProvidersState(proxyProviders),
+                providersState: nodesModel.normalizeProvidersState(proxyProviders),
                 configLoadFailed,
                 fetchFailed: false
             };
@@ -129,8 +50,8 @@ return view.extend({
             return {
                 token,
                 mode: "rule",
-                nodesState: normalizeNodesState(null),
-                providersState: normalizeProvidersState(null),
+                nodesState: nodesModel.normalizeNodesState(null),
+                providersState: nodesModel.normalizeProvidersState(null),
                 configLoadFailed,
                 fetchFailed: true,
                 fetchError: e.message || String(e)
@@ -140,8 +61,6 @@ return view.extend({
 
     render: function (result) {
         const DELAY_TEST_CONCURRENCY = 3;
-        const NON_TESTABLE_PROXY_TYPES = new Set(["reject", "rejectdrop", "pass", "compatible"]);
-
         const container = E("div", { class: "cbi-section fade-in" });
         const modeWrap = E("div", { class: "jc-actions-wrap" });
         const content = E("div", { class: "jc-nodes-layout" });
@@ -168,15 +87,7 @@ return view.extend({
         };
         const getProxyEntry = (proxyName) => state.nodesState.proxyMap[proxyName] || null;
         const canTestProxyDelay = (proxyName) => {
-            const proxy = getProxyEntry(proxyName);
-            const proxyType = lower(proxy?.type);
-
-            if (!proxy)
-                return false;
-            if (Array.isArray(proxy.all) && proxy.all.length > 0)
-                return false;
-
-            return !NON_TESTABLE_PROXY_TYPES.has(proxyType);
+            return nodesModel.canTestProxy(getProxyEntry(proxyName));
         };
 
         const getDelayText = (delayMap, optionName) => {
@@ -327,7 +238,7 @@ return view.extend({
 
             delayButton.disabled = !!state.loading || !!state.delayLoadingGroup;
 
-            if (isAutoGroup(group.type)) {
+            if (nodesModel.isAutoGroup(group.type)) {
                 cards.push(createOptionCard(
                     group,
                     _("Auto"),
@@ -443,7 +354,7 @@ return view.extend({
                     await handleProviderDelay(provider);
                 }
             }, isDelayLoading ? _("Testing...") : _("Test delay"));
-            
+
             const updateButton = E("button", {
                 type: "button",
                 class: "cbi-button cbi-button-action jc-group-delay-button",
@@ -565,17 +476,17 @@ return view.extend({
                 mihomoApi.fetchConfigs(state.token),
                 mihomoApi.fetchProxyProviders(state.token)
             ]);
-            const nodesState = normalizeNodesState(proxies);
+            const nodesState = nodesModel.normalizeNodesState(proxies);
 
             state.nodesState = nodesState;
-            state.providersState = normalizeProvidersState(proxyProviders);
+            state.providersState = nodesModel.normalizeProvidersState(proxyProviders);
             state.mode = configs?.mode || state.mode || "rule";
             result.fetchFailed = false;
             result.fetchError = "";
         };
 
         const modeLabel = E("span", { class: "jc-mode-label" }, _("Mode"));
-        const modeDropdown = new ui.Dropdown(lower(state.mode) || "rule", {
+        const modeDropdown = new ui.Dropdown(nodesModel.lower(state.mode) || "rule", {
             "rule": _("Rule"),
             "global": _("Global"),
             "direct": _("Direct")
@@ -587,7 +498,7 @@ return view.extend({
         modeDropdownNode.classList.add("jc-mode-select");
 
         const syncModeSelect = () => {
-            modeDropdown.setValue(lower(state.mode) || "rule");
+            modeDropdown.setValue(nodesModel.lower(state.mode) || "rule");
             if (!!state.loading || !!state.modeLoading || !!state.delayLoadingGroup || !!state.delayLoadingProvider) {
                 modeDropdownNode.setAttribute("disabled", "disabled");
             } else {

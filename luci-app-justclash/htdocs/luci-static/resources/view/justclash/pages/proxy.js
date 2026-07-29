@@ -2,8 +2,9 @@
 "require uci";
 "require form";
 "require view";
-"require view.justclash.helper_common as common";
-"require view.justclash.helper_fs as fsApi";
+"require view.justclash.common as common";
+"require view.justclash.lib.form as formConstants";
+"require view.justclash.api.fs as fsApi";
 "require tools.widgets as widgets";
 
 return view.extend({
@@ -42,17 +43,8 @@ return view.extend({
     render: function (result) {
         let m, s, o, tabname;
 
-        const primitives = {
-            TRUE: "1",
-            FALSE: "0"
-        };
-
-        const datatypes = {
-            PORT: "port",
-            UINTEGER: "uinteger",
-            IPADDR: "ipaddr",
-            CIDR4: "cidr4"
-        };
+        const primitives = formConstants.boolean;
+        const datatypes = formConstants.datatypes;
 
         m = new form.Map(common.binName);
 
@@ -287,7 +279,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "fake_ip_range6", _("Fake IP range (IPv6):"));
         o.description = _("IPv6 CIDR range used for fake-IP responses.");
-        o.default = "fdfe:dcba:9876::1/64";
+        o.default = "2001:2::1/48";
         o.rmempty = false;
         o.readonly = true;
         o.datatype = "cidr6";

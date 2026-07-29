@@ -1,26 +1,16 @@
 "use strict";
 "require form";
 "require view";
-"require view.justclash.helper_common as common";
+"require view.justclash.common as common";
+"require view.justclash.lib.form as formConstants";
 "require tools.widgets as widgets";
 
 return view.extend({
     render: function () {
         let m, s, o, tabname;
 
-        const primitives = {
-            TRUE: "1",
-            FALSE: "0"
-        };
-
-        const datatypes = {
-            PORT: "port",
-            UINTEGER: "uinteger",
-            IPADDR: "ipaddr",
-            CIDR4: "cidr4",
-            MACADDR: "macaddr",
-            IP4ADDR: "ip4addr"
-        };
+        const primitives = formConstants.boolean;
+        const datatypes = formConstants.datatypes;
 
         m = new form.Map(common.binName);
         s = m.section(form.NamedSection, "settings", "main", _("Service settings:"), _("Main service settings and scheduled tasks."));

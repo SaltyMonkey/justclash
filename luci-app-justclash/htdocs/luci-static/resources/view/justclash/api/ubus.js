@@ -1,7 +1,7 @@
 "use strict";
 "require baseclass";
 "require rpc";
-"require view.justclash.helper_common as common";
+"require view.justclash.common as common";
 
 const callServiceList = rpc.declare({
     object: "service",

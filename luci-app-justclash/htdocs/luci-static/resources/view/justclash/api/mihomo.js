@@ -1,6 +1,6 @@
 "use strict";
 "require baseclass";
-"require view.justclash.helper_common as common";
+"require view.justclash.common as common";
 
 return baseclass.extend({
     port: 9090,
