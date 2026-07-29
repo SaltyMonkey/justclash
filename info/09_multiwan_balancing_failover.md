@@ -1,160 +1,140 @@
-# Multi-WAN and Failover Integration Guide
+# Multi-WAN and Failover
 
-This guide describes how to configure The service natively to support multiple WAN interfaces, load balancing, and failover without running any external daemons (like `mwan3`).
+JustClash can bind individual outbounds to specific interfaces and combine them in Mihomo proxy groups. This supports direct-WAN selection, tunnel failover, latency selection, and connection balancing.
 
----
+It does not replace every function of `mwan3` or system policy routing. Mihomo controls traffic that reaches its outbounds; OpenWrt still controls interface availability, addresses, routes, and traffic that bypasses JustClash.
 
-## 1. Why Native Multi-WAN in the service is Superior
+## Prerequisites
 
-In standard OpenWrt environments, routing traffic across multiple physical interfaces (e.g., WAN1 and WAN2) requires kernel-level policy routing via `mwan3`. 
+Before configuring groups:
 
-With JustClash, **an external Multi-WAN daemon is not necessary.** 
+- every WAN must work independently in OpenWrt;
+- the selected interface name must exist when Mihomo starts;
+- each WAN must have a usable route for the destination;
+- health-check destinations must be reachable through every tested outbound;
+- partial-mode traffic must first be intercepted before Mihomo can select a WAN.
 
-Mihomo (the core routing engine) supports user-space multi-WAN management. By intercepting traffic and handling it internally, JustClash can perform interface binding, active-standby failover, and load balancing natively. This avoids routing conflicts, complex iptables/nftables rules, and the processing overhead of system-level policy routing.
+## Bind an Outbound to an Interface
 
----
+### Direct WAN Outbound
 
-## 2. Configuring Native Multi-WAN in the service
+Create one `direct://` proxy for each WAN.
 
-To handle multiple WANs, you define outbound endpoints (either **direct WAN** or **secure tunnel** outbounds) bound to specific physical interfaces, and then group them in a load-balancing or failover outbound group.
+```sh
+uci set justclash.direct_wan_a=proxies
+uci set justclash.direct_wan_a.enabled='1'
+uci set justclash.direct_wan_a.name='Direct_WAN_A'
+uci set justclash.direct_wan_a.mode='uri'
+uci set justclash.direct_wan_a.proxy_link_uri='direct://'
+uci set justclash.direct_wan_a.interface_name='<WAN_A_INTERFACE>'
 
-### Step 1: Define Interface-Bound Endpoints
+uci set justclash.direct_wan_b=proxies
+uci set justclash.direct_wan_b.enabled='1'
+uci set justclash.direct_wan_b.name='Direct_WAN_B'
+uci set justclash.direct_wan_b.mode='uri'
+uci set justclash.direct_wan_b.proxy_link_uri='direct://'
+uci set justclash.direct_wan_b.interface_name='<WAN_B_INTERFACE>'
 
-You must configure separate endpoints for each WAN interface.
+uci commit justclash
+```
 
-#### Scenario A: Direct WAN Outbounds (Bypassing Tunnels)
-If you want to load-balance or failover standard direct (non-tunneled) traffic between your WAN interfaces, define them as `direct` endpoints using the `direct://` URI scheme:
+In LuCI, create the same entries under **Routing -> Proxies** and select **Bind to interface**.
 
-* **Via LuCI Web Interface**:
-  Navigate to *Services -> JustClash -> Outbounds Tab*.
-  * Add a new `direct` proxy for each WAN (e.g., `wan1_direct`, `wan2_direct`).
-  * In the **Interface name** field for each proxy, select the corresponding physical interface (`wan`, `wan2`).
+### Tunnel Outbound
 
-* **Via Console (UCI)**:
-  ```bash
-  # Define Direct Outbound on WAN1
-  uci set justclash.wan1_direct=proxies
-  uci set justclash.wan1_direct.enabled='1'
-  uci set justclash.wan1_direct.name='wan1_direct'
-  uci set justclash.wan1_direct.proxy_link_uri='direct://'
-  uci set justclash.wan1_direct.interface_name='wan'
+To send a proxy connection through a specific WAN, set `interface_name` on that proxy or use the provider override field. Duplicate a tunnel outbound when the same remote service must be available through multiple WANs.
 
-  # Define Direct Outbound on WAN2
-  uci set justclash.wan2_direct=proxies
-  uci set justclash.wan2_direct.enabled='1'
-  uci set justclash.wan2_direct.name='wan2_direct'
-  uci set justclash.wan2_direct.proxy_link_uri='direct://'
-  uci set justclash.wan2_direct.interface_name='wan2'
+Use distinct names such as `Tunnel_A/WAN_A` and `Tunnel_A/WAN_B`. The names are operational labels; they do not change the remote endpoint.
 
-  uci commit justclash
-  ```
+## Build a Group
 
-#### Scenario B: Secure Tunnel Outbounds (Encrypted Endpoints)
-If you have a remote secure tunnel (e.g. custom transport protocols) and want to bind it to a specific WAN interface, set the interface name directly on the outbound configuration:
+### Manual Selection
 
-* **Via Console (UCI)**:
-  ```bash
-  # Configure endpoint 'my_endpoint' to connect exclusively via WAN2
-  uci set justclash.my_endpoint.interface_name='wan2'
-  uci commit justclash
-  ```
+Use `select` when an operator should choose the active WAN from the dashboard.
 
----
+### Ordered Failover
 
-### Step 2: Configure Load-Balancing or Failover Groups
+Use `fallback` when the first healthy outbound should be preferred and later entries are backups.
 
-Once your interface-bound outbounds are defined, group them in a `proxy_group` (outbound group) to specify the routing behavior.
+```sh
+uci set justclash.wan_failover=proxy_group
+uci set justclash.wan_failover.enabled='1'
+uci set justclash.wan_failover.name='WAN_Failover'
+uci set justclash.wan_failover.group_type='fallback'
+uci add_list justclash.wan_failover.proxies='Direct_WAN_A'
+uci add_list justclash.wan_failover.proxies='Direct_WAN_B'
+uci set justclash.wan_failover.check_url='<HEALTH_CHECK_URL>'
+uci set justclash.wan_failover.expected_status='<EXPECTED_STATUS>'
+uci set justclash.wan_failover.check_interval='300'
+uci commit justclash
+```
 
-#### Mode A: Load Balancing (`load-balance`)
-Distributes connections across multiple active WAN interfaces.
+### Latency Selection
 
-* **Via Console (UCI)**:
-  ```bash
-  uci set justclash.balancer=proxy_group
-  uci set justclash.balancer.enabled='1'
-  uci set justclash.balancer.name='WAN_LoadBalancer'
-  uci set justclash.balancer.group_type='load-balance'
-  uci set justclash.balancer.strategy='consistent-hashing'
-  uci add_list justclash.balancer.proxies='wan1_direct'
-  uci add_list justclash.balancer.proxies='wan2_direct'
-  uci commit justclash
-  ```
+Use `url-test` to select the healthy outbound with the best measured response. Configure `tolerance` to avoid switching for insignificant differences.
 
-#### Mode B: Active-Standby Failover (`fallback` or `url-test`)
-Automatically switches to the backup interface if the primary WAN interface goes down or experiences high latency.
+### Load Balancing
 
-* **Via Console (UCI)**:
-  ```bash
-  uci set justclash.failover=proxy_group
-  uci set justclash.failover.enabled='1'
-  uci set justclash.failover.name='WAN_Failover'
-  # 'fallback' switches based on priority; 'url-test' switches to the lowest latency
-  uci set justclash.failover.group_type='fallback'
-  uci set justclash.failover.health_check='1'
-  uci set justclash.failover.health_check_url='http://www.gstatic.com/generate_204'
-  uci set justclash.failover.health_check_interval='300'
-  uci add_list justclash.failover.proxies='wan1_direct'
-  uci add_list justclash.failover.proxies='wan2_direct'
-  uci commit justclash
-  ```
+Use `load-balance` to distribute connections. Choose the strategy in LuCI. Balancing is connection-based; it does not combine WAN bandwidth for a single TCP connection.
 
----
+```sh
+uci set justclash.wan_balance=proxy_group
+uci set justclash.wan_balance.enabled='1'
+uci set justclash.wan_balance.name='WAN_Balance'
+uci set justclash.wan_balance.group_type='load-balance'
+uci set justclash.wan_balance.strategy='consistent-hashing'
+uci add_list justclash.wan_balance.proxies='Direct_WAN_A'
+uci add_list justclash.wan_balance.proxies='Direct_WAN_B'
+uci commit justclash
+```
 
-### Step 3: Multiplexing a Single Remote Endpoint (`endpoint_name/wanX`)
+## Health-Check Fields
 
-If you have a single remote server connection (e.g., `my_server`) and want to load balance or failover its traffic across multiple physical WAN interfaces, duplicate the outbound configuration block in the service and bind each instance to a different physical interface.
+Proxy groups use:
 
-Using the `endpoint_name/wanX` naming format keeps this configuration clear:
+- `check_url`
+- `expected_status`
+- `check_interval`
+- `check_timeout`
+- `max_failed_times`
+- `lazy`
+- `tolerance` where supported
 
-1. **Configure the Endpoint Instances**:
-   * **Via LuCI Web Interface**: In the *Outbounds Tab*, create two copies of your proxy endpoint. Name them `my_server/wan` and `my_server/wan2`, and bind their **Interface name** to `wan` and `wan2` respectively.
-   * **Via Console (UCI)**:
-     * **Instance 1 (`my_server/wan`)**:
-       ```bash
-       uci set justclash.endpoint_wan1=proxies
-       uci set justclash.endpoint_wan1.enabled='1'
-       uci set justclash.endpoint_wan1.name='my_server/wan'
-       uci set justclash.endpoint_wan1.proxy_link_uri='tunnel://...'
-       uci set justclash.endpoint_wan1.interface_name='wan'
-       ```
-     * **Instance 2 (`my_server/wan2`)**:
-       ```bash
-       uci set justclash.endpoint_wan2=proxies
-       uci set justclash.endpoint_wan2.enabled='1'
-       uci set justclash.endpoint_wan2.name='my_server/wan2'
-       uci set justclash.endpoint_wan2.proxy_link_uri='tunnel://...'
-       uci set justclash.endpoint_wan2.interface_name='wan2'
-       ```
+Proxy providers use a different set of names beginning with `health_check_`. Do not copy provider field names into a group section; UCI will happily store them while Mihomo remains entirely unimpressed.
 
-2. **Group them for Load Balancing or Failover**:
-   * **Via LuCI Web Interface**: In the *Proxy Groups Tab*, create a new `fallback` or `load-balance` group and add both instances to it.
-   * **Via Console (UCI)**:
-     ```bash
-     uci set justclash.group_wan=proxy_group
-     uci set justclash.group_wan.enabled='1'
-     uci set justclash.group_wan.name='Endpoint_MultiWAN'
-     uci set justclash.group_wan.group_type='fallback'
-     uci add_list justclash.group_wan.proxies='my_server/wan'
-     uci add_list justclash.group_wan.proxies='my_server/wan2'
-     uci commit justclash
-     ```
+## Route a Policy Through the Group
 
----
+Creating the group does not send traffic to it. Select the group as:
 
-## 3. Loop Prevention (Safety Mechanism)
+- the target of a domain, RuleSet, Geosite, IP, or GEOIP policy;
+- the default rule;
+- the mixed-port override, when appropriate.
 
-To prevent traffic that was sent by the core engine to the physical WAN from looping back into the transparent interception rules, JustClash implements a built-in firewall bypass:
+Remember that a default proxy group cannot capture unmatched traffic in partial mode unless the firewall already intercepted that traffic.
 
-* **Core Engine Traffic (Firewall Mark Bypass)**:
-  Mihomo is configured to automatically mark all of its own outbound packets with the firewall routing mark `255` (hex `0xff`). The nftables rules check for this mark and immediately allow it to bypass interception:
-  ```nginx
-  add rule inet justclash output mark 255 return
-  ```
-  This ensures that the core engine's own outgoing connections directly route to the WAN instead of looping back.
+## Coexistence with System Policy Routing
 
-* **Helper Services (System User UID Exclusions)**:
-  For other services running on the router (like DoH clients or other tunnel clients) that must connect directly to the WAN, you can run them under a dedicated system user and list that user name in the `nft_skuid_exclude_router` setting. The service generates an nftables rule to bypass interception for any packets generated by that user:
-  ```nginx
-  add rule inet justclash output meta skuid <user_id> return
-  ```
+Use `routing_mark` or provider `override_routing_mark` when an external routing system must select the WAN after Mihomo creates an outbound connection. Ensure those marks are recognized by the external rules and excluded from JustClash loop interception.
 
+Avoid configuring both interface binding and conflicting mark-based routing for the same outbound unless the precedence is understood and tested.
+
+## Loop Prevention
+
+Mihomo outbound traffic is marked so JustClash nftables rules bypass it. Router services that create their own WAN connections may need a socket-owner or port exclusion. See [Traffic Exclusions](04_service_traffic_exclusion.md).
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Both outbounds use the same WAN | Interface names, OpenWrt routes, and whether the outbound actually has `interface_name`. |
+| Failover never switches | Health-check URL, expected status, interval, and reachability through each WAN. |
+| Group exists but traffic ignores it | Routing rules or the default rule do not reference the group. |
+| Raw-address traffic bypasses the group | Partial routing did not intercept it. |
+| Connections loop or disappear | Conflicting routing marks or external PBR rules. |
+
+Verify with **Nodes**, **Connections**, and:
+
+```sh
+justclash.sh diag_route
+justclash.sh logs 100
+```

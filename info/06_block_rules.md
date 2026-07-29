@@ -1,82 +1,87 @@
-# Block Rules (Unwanted Domains and IP/CIDR)
+# Block Rules
 
-The service includes a fully integrated, automated system for blocking unwanted domains and network addresses. You do not need to manually configure raw rule providers or external packages like `adblock` or `dnsmasq-full`. 
+Block rules can stop domains through Mihomo DNS policy and stop address ranges through routing rules. Start with a small set of lists, verify the result, and add more only when the router has enough memory and the lists do not overlap unnecessarily.
 
-The core routing engine handles this natively via its built-in block catalogs and the dedicated `block_rules` configuration section.
+## Enable Blocking in LuCI
 
----
+1. Open **Services -> JustClash -> Routing**.
+2. Find **Block rules**.
+3. Enable the section.
+4. Select one or more blocklist IDs.
+5. Keep the action set to `REJECT` unless you intentionally route matches elsewhere.
+6. Save & Apply.
 
-## 1. Built-in and User-Defined Block Catalogs
+Available built-in and user-defined IDs are managed on **RuleSets**. See [User-Defined RuleSets](05_user_defined_rulesets.md).
 
-The service ships with a comprehensive catalog of popular, community-maintained blocklists (such as **Hagezi**, **OISD**, and various category-specific blocking lists). 
+## Minimal UCI Configuration
 
-You can view the available pre-configured blocklists, as well as define your own **User-Defined RuleSets**, directly from the web interface.
+```sh
+uci set justclash.block_rules=block_rules
+uci set justclash.block_rules.enabled='1'
+uci set justclash.block_rules.proxy='REJECT'
+uci add_list justclash.block_rules.enabled_blocklist='<BLOCKLIST_ID>'
+uci commit justclash
+service justclash restart
+```
 
-* **Via LuCI Web Interface**:
-  Navigate to *Services -> JustClash -> RuleSets Tab*. Here you can browse all built-in catalogs and add any custom rule provider URLs via the User-Defined section.
+Remove a selected list with `uci del_list`, or use LuCI to avoid quoting mistakes.
 
----
+## Manual Entries
 
-## 2. Enabling Blocklists (Rule Providers)
+Add a domain suffix:
 
-To enable blocking, simply reference the identifiers from the catalog in the `block_rules` UCI section. The service will automatically generate the rule providers, download the lists, and configure the necessary `REJECT` routing rules and DNS exclusions.
+```sh
+uci add_list justclash.block_rules.additional_domain_blockroute='<DOMAIN_SUFFIX>'
+```
 
-### Configuration
+Add an address or subnet:
 
-* **Via Console (UCI)**:
-  ```bash
-  # 1. Enable the block rules section
-  uci set justclash.block_rules=block_rules
-  uci set justclash.block_rules.enabled='1'
-  
-  # 2. Add desired blocklists from the catalog (using their identifiers)
-  uci add_list justclash.block_rules.enabled_blocklist='hagezi-light-ads'
-  uci add_list justclash.block_rules.enabled_blocklist='oisd-small'
-  uci add_list justclash.block_rules.enabled_blocklist='yandex-ads'
-  
-  # 3. (Optional) Customize the update interval (in seconds)
-  uci set justclash.block_rules.list_update_interval='43200'
-  
-  # 4. Ensure the target action is set to REJECT
-  uci set justclash.block_rules.proxy='REJECT'
-  
-  uci commit justclash
-  service justclash restart
-  ```
+```sh
+uci add_list justclash.block_rules.additional_destip_blockroute='<ADDRESS_OR_CIDR>'
+```
 
-* **Via LuCI Web Interface**:
-  Go to *Services -> JustClash -> Routing Tab -> Block Rules*. Enable the section and select your desired blocklists from the dropdown menu.
+Then commit and restart:
 
----
+```sh
+uci commit justclash
+service justclash restart
+```
 
-## 3. Manual Domain and IP Blocking
+## How Matches Are Applied
 
-If you need to block specific domains or IP addresses manually (e.g., blocking a specific analytics server), you can add them directly to the `block_rules` section without needing to create a separate file.
+### Domain Matches
 
-* **Via Console (UCI)**:
-  ```bash
-  # Block a specific domain and its subdomains
-  uci add_list justclash.block_rules.additional_domain_blockroute='telemetry.example.com'
-  
-  # Block a specific IP or CIDR subnet
-  uci add_list justclash.block_rules.additional_destip_blockroute='198.51.100.50/32'
-  
-  uci commit justclash
-  service justclash restart
-  ```
+Domain blocklists and manual domain entries are added to Mihomo DNS policy. Matching queries receive a successful empty response instead of a routable result. This avoids creating a connection only to reject it later.
 
-* **Via LuCI Web Interface**:
-  In the *Block Rules* section, add your specific domains to the **Additional Domains** list and IPs to the **Additional Destination IPs** list.
+This behavior depends on clients using the JustClash DNS path. A client using an external resolver or encrypted DNS directly may bypass domain-level DNS blocking.
 
----
+### Address Matches
 
-## 4. How It Works Under the Hood
+IP-CIDR blocklists and manual address entries produce high-priority reject rules. In partial mode, supported text IP-CIDR lists can also populate nftables sets so raw-address connections are intercepted before Mihomo evaluates the reject rule.
 
-When you enable these settings, The service automatically:
-1. Assembles the selected blocklists into Mihomo `rule-providers`.
-2. **Domain-based Blocking (DNS Sinkhole)**: For domain blocklists and manual domain routes, JustClash **does not** generate standard routing rules. Instead, it injects them exclusively into the `nameserver-policy` directed to `rcode://success` (along with Fake-IP exclusions). This means the core routing engine acts as a DNS sinkhole, instantly dropping unwanted queries and returning an empty response before any actual network connection is even attempted, saving CPU cycles.
-3. **IP-based Blocking (Routing REJECT)**: For IP-based blocklists and manual IP block routes, it generates `IP-CIDR` routing rules targeting the `REJECT` action. These are placed at the very top of your routing table so unwanted traffic is dropped immediately.
+## Important Limitations
 
-> **Note:** Because domain-based blocking is handled purely at the DNS level and IP-based blocking through top-level `REJECT` rules, unwanted traffic is stopped as efficiently as possible without wasting router resources.
+- A client excluded at the firewall does not reach Mihomo and is not protected by Mihomo block rules.
+- Domain blocking does not control applications that bypass the configured DNS path.
+- In partial mode, raw-address blocking requires an active address list that nftables can match.
+- Very large or overlapping lists increase memory use and startup/update work.
+- Fake-IP exclusions and custom nameserver policies can change which DNS rule sees a domain first.
 
+## Verification
 
+1. Check startup logs:
+
+   ```sh
+   justclash.sh logs 100
+   ```
+
+2. Confirm active rules in **Rules**.
+3. Confirm active providers in **Nodes** or the dashboard.
+4. Test a known entry from the selected list without publishing the domain or result in support logs.
+5. For an IP-CIDR list in partial mode, run:
+
+   ```sh
+   justclash.sh diag_nft
+   ```
+
+If a domain is not blocked, first determine which resolver the client actually used. Adding three more lists before answering that question is a traditional but ineffective debugging technique.

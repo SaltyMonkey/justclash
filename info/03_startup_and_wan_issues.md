@@ -1,78 +1,107 @@
-# Managing Startup and Problematic WAN Connections
+# Startup and WAN Troubleshooting
 
-When OpenWrt boots, multiple services (network, firewall, dnsmasq) start simultaneously. If the service starts before the router has established an active Internet connection (WAN), it might fail to download rulesets, fail to resolve proxy domains, or incorrectly assume all proxies are dead.
+Startup problems are usually timing problems: the service starts while WAN, DNS, system time, or firewall state is still changing. Configure the smallest delay that fixes the actual condition instead of enabling every workaround at once.
 
-This is especially common with:
-* **PPPoE Connections**: They take several seconds to negotiate after the physical link is up.
-* **Cellular/LTE Modems**: They require time to register with the cell tower.
-* **Slow CPU Routers**: Heavy services starting simultaneously can cause race conditions.
+## Symptom Guide
 
-The service provides built-in mechanisms to handle these scenarios gracefully.
+| Symptom | First setting to try |
+| --- | --- |
+| Service works after a manual restart but not after boot | `wait_for_wan` |
+| WAN is reported up, but DNS or routes are not ready | `delayed_boot` |
+| TLS downloads fail immediately after boot | `ntpd_start` and WAN readiness |
+| Startup is slow because warnings and compatibility checks run every time | Review, then optionally enable `skip_environment_checks` |
 
----
+## Wait for WAN
 
-## 1. Wait for WAN (Recommended for PPPoE/Modems)
+Enable **Wait for WAN** when the uplink takes time to establish, especially with PPPoE or cellular modems.
 
-This feature pauses the JustClash startup process until a **default network route** is detected in the system, ensuring the router actually has internet access before launching the core proxy engine.
+LuCI: **Services -> JustClash -> Service -> Startup**.
 
-* **Via LuCI**: Go to *Services -> JustClash -> Startup Tab*.
-  * Enable **Pause the startup process until the router establishes an active Internet connection**.
-  * Set a maximum wait time (e.g., `90` seconds). If the connection isn't established within this time, The service will proceed anyway to avoid hanging forever.
-* **Via UCI**:
-  ```bash
-  uci set justclash.settings.wait_for_wan='1'
-  uci set justclash.settings.wait_for_wan_max='90'
-  uci commit justclash
-  ```
+```sh
+uci set justclash.settings.wait_for_wan='1'
+uci set justclash.settings.wait_for_wan_max='90'
+uci commit justclash
+```
 
----
+`wait_for_wan_max` limits how long startup waits. Reaching the limit does not prove internet access is working; it only prevents startup from waiting forever.
 
-## 2. Delayed Boot (For Minor WAN Glitches and Slow CPUs)
+## Delayed Startup
 
-Even if the router reports the WAN connection as "up", there can be a brief window where traffic isn't actually routing correctly, or OpenWrt's native firewall and network scripts are still settling. You can force JustClash to simply wait a fixed number of seconds after boot before doing anything. 
+Use a fixed delay when the network interface exists but another OpenWrt service still needs time to settle.
 
-This provides a reliable buffer that helps bypass minor network instability at startup, prevents CPU spikes on slower routers, and avoids race conditions in complex setups.
+```sh
+uci set justclash.settings.delayed_boot='1'
+uci set justclash.settings.delayed_boot_value='15'
+uci commit justclash
+```
 
-* **Via LuCI**: Go to *Services -> JustClash -> Startup Tab*.
-  * Enable **Delay startup after boot**.
-  * Enter a **Startup delay** in seconds (e.g., `10` to `20` seconds).
-* **Via UCI**:
-  ```bash
-  uci set justclash.settings.delayed_boot='1'
-  uci set justclash.settings.delayed_boot_value='15'
-  uci commit justclash
-  ```
+Start with a short delay. A very large value hides ordering problems and makes every restart unnecessarily slow.
 
----
+## System Time Synchronization
 
-## 3. Time Synchronization (NTP)
+Routers without a persistent real-time clock may boot with an incorrect date. This can break TLS certificate validation, scheduled jobs, and useful timestamps.
 
-Routers often do not have hardware clocks (RTC) and boot with the year set to 1970 until time is synced.
+When `ntpd_start` is enabled, JustClash runs a synchronous NTP update before continuing:
 
-While Mihomo has its own built-in NTP client to validate TLS certificates independently, JustClash provides an option to force a synchronous system-wide NTP update (`ntpd -q`) before starting the core. This is left for the entire router to ensure correct system logs, cron tasks, and firewall rules right from startup.
+```sh
+uci set justclash.settings.ntpd_start='1'
+uci commit justclash
+```
 
-By default, it is **recommended to leave this enabled** to ensure system-wide time consistency. However, because this command runs **synchronously**, it will block the startup process until the time is successfully resolved.
+Disable it if the router already synchronizes time reliably before JustClash starts. When disabled, an empty NTP server list is ignored as a successful no-op.
 
-If your network is slow to connect or you want to shave a few seconds off your boot time, you can disable this forced sync:
+Mihomo's internal NTP options are separate from system time synchronization. They affect the core configuration and do not replace correct system time for package downloads, cron, or system logs.
 
-* **Via LuCI**: Go to *Services -> JustClash -> Startup Tab* and disable the NTP synchronization option.
-* **Via UCI**:
-  ```bash
-  uci set justclash.settings.ntpd_start='0'
-  uci commit justclash
-  ```
+## Environment Checks
 
-## 4. Skip Environment Checks (For Fast Boot)
+Startup checks detect common conflicts and apply compatibility fixes. They can warn about:
 
-By default, The service performs several non-critical safety checks and compatibility fixes before starting:
-* **Conflict Warnings**: Scans `/etc/config/dhcp` for conflicting leftover DNS patterns from other services, checks `/etc/resolv.conf` for hardcoded external DNS servers, and warns about conflicting installed packages.
-* **Compatibility Fixes**: Adjusts `sysctl` parameters (e.g., disabling `bridge-nf-call-iptables`) to prevent iptables bridging issues.
+- DNS settings left by another service;
+- external resolvers that bypass the intended DNS path;
+- other DPI or proxy services;
+- incompatible network sysctl state;
+- missing commands or the Mihomo binary.
 
-If your configuration is stable and you want the absolute fastest startup time possible, you can disable these checks. **Warning:** This will skip fixing `sysctl` parameters and hide configuration warnings, which may make debugging difficult if network issues occur.
+`skip_environment_checks` skips optional conflict checks and compatibility fixes. It does not skip required binary and tool checks.
 
-* **Via LuCI**: Go to *Services -> JustClash -> Startup Tab* and enable **Skip startup checks**.
-* **Via UCI**:
-  ```bash
-  uci set justclash.settings.skip_environment_checks='1'
-  uci commit justclash
-  ```
+```sh
+uci set justclash.settings.skip_environment_checks='1'
+uci commit justclash
+```
+
+Enable this only after the router starts reliably and you have recorded the working network configuration. Saving a few milliseconds is less exciting when the saved time is spent diagnosing a silent conflict later.
+
+## Recommended Troubleshooting Order
+
+1. Check service state and recent logs:
+
+   ```sh
+   service justclash status
+   justclash.sh logs 100
+   ```
+
+2. Verify the core is installed:
+
+   ```sh
+   justclash.sh info_core
+   ```
+
+3. Confirm WAN and system time outside JustClash.
+4. Enable `wait_for_wan`.
+5. Add a small delayed startup only if WAN readiness is not enough.
+6. Keep environment checks enabled until startup is stable.
+7. Run the diagnostic report:
+
+   ```sh
+   justclash.sh diag_report
+   ```
+
+## Scheduled Restarts and Work Windows
+
+Cron settings are stored in UCI but must be applied to the root crontab:
+
+```sh
+justclash.sh cron_update
+```
+
+Run this after changing autorestart, service-data update, or scheduled start/stop settings outside LuCI. Confirm the resulting schedule before relying on it for unattended operation.

@@ -1,72 +1,104 @@
-# Managing User-Defined RuleSets in the service
+# User-Defined RuleSets
 
-The service allows you to add your own custom routing lists (RuleSets) via the LuCI web interface. For advanced users and automation, these lists can also be managed manually in the filesystem via SSH.
+A RuleSet definition tells JustClash where a list comes from and what it contains. Defining a RuleSet does not activate it by itself. You must also select its ID in a proxy, proxy group, or block-rules section.
 
-These custom catalogs can then be used in `block_rules` to drop traffic, or in `proxy_groups` to selectively route traffic.
+## Add a RuleSet in LuCI
 
----
+1. Open **Services -> JustClash -> RuleSets**.
+2. Choose the user-defined routing or blocking catalog.
+3. Add a row.
+4. Set a display name and a unique ID.
+5. Select the content type and source format.
+6. Enter a remote URL or an absolute local path.
+7. Save the row, then **Save & Apply**.
+8. Open **Routing** and select the new ID where it should be used.
 
-## 1. Managing via LuCI Web Interface
+Use short stable IDs. Renaming an ID requires updating every section that references it.
 
-The easiest way to add custom lists is through the router's web interface:
+## Supported Source Types
 
-1. Navigate to **Services -> JustClash -> RuleSets Tab**.
-2. Scroll to the **User-Defined** sections.
-3. Click the add button to define your custom URL or path.
-4. Save the changes. The new list will immediately become available in dropdowns throughout the JustClash interface (e.g., in the Block Rules or Routing tabs).
+| Content type | Supported format | Used for |
+| --- | --- | --- |
+| `domain` | `mrs` | Domain routing or DNS blocking. |
+| `ipcidr` | `mrs` | Mihomo IP routing in full mode. |
+| `ipcidr` | `text` | Mihomo routing and nftables set synchronization in partial mode. |
 
----
+Text sources are intentionally limited to IP-CIDR content. Domain text files are not converted into Mihomo RuleSet providers by this catalog.
 
-## 2. Advanced: Manually Editing via CLI
+## Manual Catalog Files
 
-Advanced users can manually define custom catalogs directly in the filesystem via SSH. There are two files depending on the intended use:
+Advanced users can edit:
 
-### File Locations
-* **Blocking RuleSets**: `/etc/justclash/user.block.rulesets.txt`
-* **Routing RuleSets (Proxies/Bypasses)**: `/etc/justclash/user.rulesets.txt`
+- `/etc/justclash/user.rulesets.txt` for routing RuleSets;
+- `/etc/justclash/user.block.rulesets.txt` for blocking RuleSets.
 
-### Format Syntax
-Each list must be defined on a new line using the following pipe-separated (`|`) format:
-`Name|ID|Type|Format|URL_or_Path[|Authorization]`
+Each non-comment line uses:
 
-* **Name**: A human-readable display name (e.g., `My Custom Blocklist`).
-* **ID**: A unique, alphanumeric internal identifier (e.g., `my-custom-list`). This is the ID you use in the `block_rules` or `proxy_groups` UCI sections.
-* **Type**: The behavior type. Use `domain` for domain-based lists or `ipcidr` for IP subnets.
-* **Format**: The format of the source file. Use `mrs` for binary Mihomo rule-sets. For `ipcidr` rulesets, JustClash **only** supports `text` format (a plain text file containing one IP address or CIDR range per line).
-  > [!NOTE]
-  > The `text` format is **strictly limited to `ipcidr` rulesets** to allow direct parsing and injection into firewall `nftables` sets (the synchronizer cannot parse compiled binary `.mrs` files). Domain-based rulesets must continue to use `mrs` format.
-* **URL_or_Path**: The `http://` / `https://` download link, or an absolute path to a local file on the router (e.g., `/etc/justclash/my_local_list.mrs`).
-* **Authorization** *(Optional)*: An authorization header or Bearer token if the download URL requires authentication.
-
-### Examples
-
-**Example 1: Remote URL (Domain list)**
 ```text
-# Name|ID|Type|Format|URL_or_Path[|Authorization]
-My Privacy List|my-privacy|domain|mrs|https://example.com/privacy.mrs
+Name|ID|Type|Format|URL_or_Path[|Authorization]
 ```
 
-**Example 2: Local File (IP list)**
+Fields:
+
+| Field | Meaning |
+| --- | --- |
+| `Name` | Human-readable LuCI label. |
+| `ID` | Stable identifier referenced by UCI sections. |
+| `Type` | `domain` or `ipcidr`. |
+| `Format` | `mrs`, or `text` for IP-CIDR sources. |
+| `URL_or_Path` | Remote HTTP(S) source or absolute local path. |
+| `Authorization` | Optional authorization header value. |
+
+Safe templates:
+
 ```text
-# Name|ID|Type|Format|URL_or_Path[|Authorization]
-Local Drop IPs|local-drop|ipcidr|text|/etc/justclash/drop.list
+Remote domains|remote-domains|domain|mrs|<RULESET_URL>
+Local networks|local-networks|ipcidr|text|/etc/justclash/local-networks.list
+Protected source|protected-source|domain|mrs|<RULESET_URL>|<AUTHORIZATION_HEADER>
 ```
 
-**Example 3: Remote URL with Authorization**
-```text
-# Name|ID|Type|Format|URL_or_Path[|Authorization]
-Premium Tracker Block|premium-track|domain|mrs|https://example.com/premium.mrs|Bearer my_secret_token
+> [!WARNING]
+> The optional authorization field is a credential. Protect the catalog file and do not include that line in diagnostic output.
+
+## Activate a RuleSet
+
+After defining the catalog entry, select its ID in one of these places:
+
+- a **Proxy** or **Proxy group** to route matching traffic;
+- **Block rules** to block matching traffic;
+- a Fake-IP exclusion list when matching domains must receive real addresses.
+
+For CLI automation, use the corresponding list option in the target UCI section. The exact option depends on the section type and whether the RuleSet is used for routing, blocking, or Fake-IP filtering.
+
+## Partial Routing Requirements
+
+Partial mode can intercept raw-address traffic only when nftables has an address list to match. Therefore:
+
+- use an `ipcidr|text` source when the list must populate nftables sets;
+- keep one address or CIDR per line;
+- do not expect a binary domain `.mrs` file to produce kernel address sets;
+- verify that the persistent-rules setting points to storage with enough space if downloaded lists must survive reboot.
+
+## Downloading and Caching
+
+Mihomo downloads active remote RuleSets, validates their format, and updates them according to the configured interval. JustClash generates provider definitions and, in partial mode, watches supported text IP-CIDR files so refreshed data reaches nftables.
+
+Enable persistent external rules only when flash wear, storage capacity, and reboot behavior have been considered. RAM-backed rules are downloaded again after reboot but avoid persistent writes.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| ID is not visible in Routing | Validate the catalog line and ensure the ID is unique. |
+| Provider appears but is not downloaded | Confirm the RuleSet is selected by an enabled routing or block section. |
+| Partial mode ignores raw addresses | Use an active `ipcidr|text` source and check `diag_nft`. |
+| Download fails | Check WAN, authorization, URL reachability, and system time. |
+| Updated catalog is not visible | Run `justclash.sh service_data_update` for built-in catalogs, or reload after editing user files. |
+
+Useful commands:
+
+```sh
+service justclash restart
+justclash.sh logs 100
+justclash.sh diag_nft
 ```
-
-### Applying Changes
-After modifying the `.txt` files via CLI, the new `ID` will instantly be available to enable in your UCI configuration or LuCI interface. Note that to fully apply routing changes, you must save and apply settings in the Routing or Proxy tabs, or reload the service from the Status tab.
-
----
-
-## 3. Why Ruleset Downloading and Caching is Delegated to Mihomo
-Instead of writing custom shell scripts with `curl` or `wget` to download and update rulesets, JustClash delegates the entire downloading, updating, and caching lifecycle of rulesets to the **Mihomo Core:**
-
-* **Safety & Integrity Checks:** Mihomo validates the downloaded file format (`mrs` or `text`) before writing it to the cache directory. This prevents corrupted downloads from crashing the transparent proxy or breaking the firewall.
-* **HTTP/ETag and Caching Optimizations:** Mihomo supports standard HTTP caching headers and ETag validation. If a remote ruleset has not changed, Mihomo will not download it again, saving WAN bandwidth and flash write cycles.
-* **Robust Authentication & Headers:** Mihomo natively handles complex HTTP headers (including private token authorizations) securely, without leaking credentials in process lists (as `wget` command line arguments would).
-* **Native Update Scheduling:** Mihomo runs a highly optimized scheduler that pulls updates in background threads without blocking main network routing threads or spawning shell subprocesses on low-powered routers.

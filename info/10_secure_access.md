@@ -1,157 +1,119 @@
-# Secure Access, API Controller & TLS Configuration Nuances
+# Secure API and Dashboard Access
 
-This document provides a detailed breakdown of the security architecture, communication protocols, configuration options, and critical troubleshooting nuances regarding secure access to the Mihomo API controller and the LuCI web interface in JustClash.
+The Mihomo API can expose connection metadata, runtime controls, and proxy information. Protect it with all three layers:
 
----
+1. bind it to the intended local network;
+2. set a strong API password;
+3. restrict access with the OpenWrt firewall.
 
-## 1. The LuCI & API Secure Connection Paradox
+TLS protects the browser connection but does not replace authentication or firewall policy.
 
-When securing your router's administration interface, enabling HTTPS for LuCI (`uhttpd`) introduces specific browser security behaviors that directly affect how the frontend communicates with the Mihomo API core on port `9090`.
+## Recommended Local Setup
 
-### The Mixed Content Block
-Modern web browsers enforce a strict **Mixed Content Policy**:
-* If LuCI is loaded over **HTTPS** (e.g., `https://192.168.1.1/`), the browser **strictly blocks** any active network requests (such as `fetch` or `WebSocket` handshakes) to insecure **HTTP** or **WS** endpoints.
-* Therefore, if LuCI is HTTPS, requests to `http://192.168.1.1:9090` or `ws://192.168.1.1:9090` will fail instantly with a console error: `Mixed Content: The page at '...' was loaded over HTTPS, but requested an insecure resource...`
+For a trusted LAN with LuCI over HTTP:
 
-To resolve this, the communication protocol of the API requests must match the security level of the page hosting LuCI. This can be achieved either by enabling direct TLS on the API controller (Option B, enabling `api_tls`), using a reverse proxy to handle TLS termination (Option C, keeping `api_tls` disabled on the router), or keeping both LuCI and the API on plain HTTP (Option A). 
+- bind the controller to the LAN network;
+- set a strong `api_password`;
+- keep `api_tls` disabled;
+- block controller access from WAN and untrusted zones.
 
-Note that simply enabling `api_tls` is not a magic fix: if you use a self-signed certificate, the browser will still block requests until you manually trust the certificate on the API port (see Section 3).
+For LuCI over HTTPS, use API TLS or a reverse proxy. Browsers block an HTTPS LuCI page from opening insecure HTTP or WebSocket API connections.
 
----
+## Controller Binding
 
-## 2. Architecture Options
+`controller_bind_interface` is an OpenWrt network name. JustClash resolves its current address during configuration generation and binds the Mihomo controller to that address.
 
-Depending on your network setup and security requirements, you can configure access using one of the following deployment architectures:
-
-### Option A: Local HTTP (No TLS - Easiest)
-If you only access your router internally, you can leave both LuCI and the Mihomo API on plain HTTP.
-* **LuCI URL:** `http://192.168.1.1`
-* **Mihomo API:** `http://192.168.1.1:9090`
-* **JustClash Setting:** `api_tls` = `0`
-* **Nuance:** Because the entire connection is HTTP, the browser does not trigger Mixed Content blocks. No certificates or manual overrides are required.
-
-### Option B: Direct HTTPS (Self-Signed / Let's Encrypt)
-You configure both LuCI (`uhttpd`) and the Mihomo API to handle TLS handshakes directly.
-* **LuCI URL:** `https://192.168.1.1`
-* **Mihomo API:** `https://192.168.1.1:9090`
-* **JustClash Setting:** `api_tls` = `1`
-* **Nuance:** If using the router's default self-signed certificates, see **Section 3: The Self-Signed Certificate Trap** below.
-
-### Option C: Reverse Proxy with TLS Termination (Advanced)
-You run a reverse proxy (such as Caddy, Nginx, or HAProxy) on the router or another local server to handle secure client connections.
-* **Client to Proxy:** The browser connects to the reverse proxy over HTTPS (e.g. `https://router.yourdomain.com` and `https://router.yourdomain.com:9090`).
-* **Proxy to Router:** The reverse proxy terminates TLS and forwards the requests to the router's backend ports over plain HTTP:
-  * Proxy `https://router.yourdomain.com` -> local `http://127.0.0.1:80` (LuCI)
-  * Proxy `https://router.yourdomain.com:9090` -> local `http://127.0.0.1:9090` (Mihomo API)
-* **JustClash Setting:** `api_tls` = `0`
-* **Nuance:** Both LuCI and Mihomo themselves remain configured for plain HTTP. Because the browser sees the secure HTTPS connection on both port 443 and port 9090, there are no Mixed Content blocks. This is the cleanest setup for using valid public certificates locally.
-
-#### Using DNS-01 Challenge for Local TLS Certificates
-If you want trusted certificates (no browser warnings) without opening HTTP port 80 to the public internet for Let's Encrypt validation:
-1. Configure your ACME client (Caddy or `acme.sh` package on OpenWrt) to use the **DNS-01 challenge**.
-2. The ACME client writes a temporary TXT record to your DNS provider (e.g., Cloudflare, Route53) to verify domain ownership.
-3. Once the trusted certificate is issued, bind it to your reverse proxy.
-4. You get secure, fully trusted HTTPS access locally without exposing any inbound ports on your firewall.
-
----
-
-## 3. The Self-Signed Certificate Trap (Silent API Failures)
-
-By default, OpenWrt uses self-signed SSL/TLS certificates generated by `px5g` or `ustream-ssl-openssl` (usually stored at `/etc/uhttpd.crt` and `/etc/uhttpd.key`). If you configure JustClash to use these same certificates:
-
-### Why the Dashboard Fails to Connect
-1. When you first open `https://192.168.1.1/`, the browser warns you that the certificate is self-signed. You click **"Advanced" -> "Proceed"** to access LuCI.
-2. However, this exception is granted **only for port 443** (or the port LuCI runs on).
-3. When the LuCI JS application attempts to connect to `https://192.168.1.1:9090/version` in the background via a `fetch` request, the browser sees a self-signed certificate on **port 9090** that has not been trusted yet.
-4. Because this request is made in the background via JavaScript (AJAX), **the browser will NOT display a warning screen** to let you trust the certificate. Instead, the request fails silently, and the LuCI interface shows that the core is stopped or disconnected.
-
-### How to Fix Silent API Failures
-To bypass this restriction, you have three options:
-
-#### Option A: Manually Authorize Port 9090 (Easiest)
-1. Open a new tab in your web browser.
-2. Navigate directly to the Mihomo API version endpoint over HTTPS:
-   `https://192.168.1.1:9090/version`
-3. The browser will display the familiar certificate warning screen (*"Your connection is not private"*).
-4. Click **"Advanced"** and select **"Proceed to 192.168.1.1 (unsafe)"**.
-5. You will see either a JSON string (e.g. `{"version": "..."}`) or a prompt.
-6. Close the tab and reload the LuCI page. The background requests will now succeed because the browser has cached the security exception for port 9090.
-
-#### Option B: Install the Router's Root Certificate Authority (CA)
-If your router uses a local CA to sign its certificates, import that root CA certificate into your operating system's or browser's trusted root certificate store. Once trusted, the browser will validate all certificates signed by it (across all ports) without warnings.
-
-#### Option C: Use a Trusted CA Certificate (Let's Encrypt / ACME)
-If you have a public domain pointing to your router and use `acme` to manage valid Let's Encrypt certificates:
-1. Configure `uhttpd` to use the Let's Encrypt certificate.
-2. Point JustClash to the same certificate files:
-   * **Certificate path:** `/etc/acme/yourdomain.com/fullchain.cer`
-   * **Key path:** `/etc/acme/yourdomain.com/yourdomain.com.key`
-3. Access LuCI using the domain name (e.g., `https://router.yourdomain.com/`). The browser will validate the certificate natively on all ports without requiring manual exceptions.
-
----
-
-## 4. UCI Configuration Details
-
-Secure API access is managed via the `proxy` section in `/etc/config/justclash`.
-
-| UCI Option | Default Value | Description |
-| :--- | :--- | :--- |
-| `api_tls` | `0` (Disabled) | Set to `1` to enable secure HTTPS/WSS protocols on the Mihomo API controller. |
-| `api_tls_cert` | `/etc/uhttpd.crt` | Path to the PEM-encoded SSL/TLS certificate. Ignored if `api_tls` is `0`. |
-| `api_tls_key` | `/etc/uhttpd.key` | Path to the PEM-encoded SSL/TLS private key. Ignored if `api_tls` is `0`. |
-
-### Backend YAML Generation Details
-When `api_tls` is enabled, the backend orchestration script (`justclash.sh`) generates the configuration as follows:
-1. It reads the certificate and key paths from UCI.
-2. It validates if the files exist. If they do not, it logs a warning and may fall back to plain HTTP to prevent startup crashes.
-3. It writes the configuration to the generated Mihomo configuration YAML:
-   ```yaml
-   external-controller-tls: "192.168.1.1:9090"
-   tls:
-     certificate: "/etc/uhttpd.crt"
-     private-key: "/etc/uhttpd.key"
-   ```
-4. If `api_tls` is `0` (disabled), it generates standard HTTP binding:
-
-   ```yaml
-   external-controller: "192.168.1.1:9090"
-   ```
-
----
-
-## 5. API Controller Binding & Interface Nuances
-
-The `controller_bind_interface` option controls which IP address the Mihomo API listens on.
-
-### Dynamic IP Resolution
-Mihomo requires a specific IP address or host to bind its `external-controller` (e.g. `192.168.1.1:9090`). Because interfaces on routers can obtain IPs dynamically via DHCP or PPPoE, JustClash resolves the bind address dynamically during service startup:
-1. The script `/usr/bin/justclash.sh` reads the interface name from `justclash.proxy.controller_bind_interface` (default is `lan`).
-2. It queries the OpenWrt network state using `ubus` or `network_get_ipaddr`:
-   ```bash
-   network_get_ipaddr router_ip "$controller_bind_interface"
-   ```
-3. If resolved successfully (e.g., `192.168.1.1`), it constructs the bind string:
-   * **Insecure:** `external-controller: "192.168.1.1:9090"`
-   * **Secure (TLS):** `external-controller-tls: "192.168.1.1:9090"`
-4. If the interface does not have an IP address yet (e.g. network is starting up), the service script blocks and retries (respecting `wait_for_wan_max` parameters) to ensure it does not bind to an invalid address.
-
-### Security Implications of Bind Addresses
-* **Loopback (`127.0.0.1`):** Binding to loopback prevents any external devices—including your own PC/phone connected to the LAN—from reaching the Mihomo API. This breaks the LuCI client communication completely.
-* **All Interfaces (`0.0.0.0`):** Binding to `0.0.0.0` opens the API controller on all interfaces, including your WAN (internet) interface. If your WAN port is exposed or the firewall zone rules are misconfigured, anyone on the internet can read your connection logs, shut down your connections, or steal your proxy credentials.
-* **JustClash LAN Binding:** By binding specifically to the resolved IP of the designated local interface (e.g., `lan`), the API controller is securely restricted to the local network zone, protecting it from external internet threats.
-
----
-
-## 6. Automatic CORS Configuration for External Dashboards
-
-To support connections from web-based dashboards (such as Zashboard or Yacd) hosted on external domains, the service automatically generates the following CORS parameters in the Mihomo configuration:
-
-```yaml
-external-controller-cors:
-  allow-origins:
-    - '*'
-  allow-private-network: true
+```sh
+uci set justclash.proxy.controller_bind_interface='<TRUSTED_NETWORK>'
+uci set justclash.proxy.api_password='<STRONG_API_PASSWORD>'
+uci commit justclash
+service justclash restart
 ```
 
-This configuration ensures that modern browsers do not block Cross-Origin Resource Sharing (CORS) requests when you access external dashboard websites that communicate with your router's local API.
+> [!WARNING]
+> If the configured network name is invalid or has no usable address, JustClash logs a warning and may generate an all-interface binding. Treat the firewall as mandatory protection, not a decorative second opinion.
 
+Do not deliberately bind the controller to all interfaces unless firewall access has been verified from every zone. Do not expose the controller directly to WAN.
+
+## LuCI Protocol and API Protocol
+
+| LuCI page | Mihomo API | Browser result |
+| --- | --- | --- |
+| HTTP | HTTP/WS | Works without TLS. |
+| HTTPS | HTTP/WS | Blocked as mixed content. |
+| HTTPS | HTTPS/WSS | Works when the certificate is trusted. |
+| HTTPS through reverse proxy | HTTPS through the same trusted proxy | Recommended for centrally managed certificates. |
+
+## Enable Direct API TLS
+
+LuCI: **Services -> JustClash -> Proxy**.
+
+1. Enable **API TLS**.
+2. Set an absolute certificate path.
+3. Set an absolute private-key path.
+4. Ensure the Mihomo process can read both files.
+5. Save & Apply.
+
+UCI template:
+
+```sh
+uci set justclash.proxy.api_tls='1'
+uci set justclash.proxy.api_tls_cert='<ABSOLUTE_CERTIFICATE_PATH>'
+uci set justclash.proxy.api_tls_key='<ABSOLUTE_PRIVATE_KEY_PATH>'
+uci commit justclash
+service justclash restart
+```
+
+The paths are validated as configuration inputs and then written to the generated Mihomo YAML. Do not rely on an automatic fallback to HTTP when a certificate is missing or unreadable; treat startup or controller failure as a configuration error.
+
+## Self-Signed Certificates
+
+Trust granted by a browser for the LuCI origin may not automatically cover a different API port. A background API request can fail without showing an interactive certificate warning.
+
+Options:
+
+- open the API HTTPS endpoint directly and approve the certificate for that origin;
+- install the issuing local CA in the client trust store;
+- use a certificate trusted for the hostname clients use;
+- terminate TLS in a reverse proxy.
+
+The certificate name must match the hostname used by the browser. A certificate trusted for one name does not become valid for another address merely because both lead to the same router.
+
+## Reverse Proxy
+
+A reverse proxy can terminate trusted TLS and forward local HTTP to LuCI and the Mihomo controller. In this design:
+
+- clients connect only to trusted HTTPS endpoints;
+- `api_tls` can remain disabled on the local backend;
+- the backend controller should listen only where the proxy can reach it;
+- the firewall should block direct access from other zones;
+- WebSocket forwarding must be enabled.
+
+Use DNS-based certificate validation when a trusted certificate is needed without exposing an HTTP validation port.
+
+## Dashboard and CORS
+
+JustClash generates permissive CORS settings so supported dashboards can communicate with the local controller. CORS is a browser policy, not an access-control system. A wildcard origin makes the API password and firewall restrictions more important, not less.
+
+Use a unique API password and avoid entering it into untrusted hosted dashboards.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| LuCI is HTTPS and status pages show disconnected | Browser mixed-content errors and `api_tls`. |
+| Direct API page shows a certificate warning | Certificate trust, hostname, and port. |
+| Connection is refused | Controller bind network, generated configuration, service state, and firewall input. |
+| Authentication fails | `api_password` and whether the client sent the expected API secret. |
+| Works on LAN but not guest network | Firewall policy and controller bind network. This may be intentional. |
+| API appears on an unintended network | Invalid bind network or an all-interface fallback; fix the setting and firewall immediately. |
+
+Useful commands:
+
+```sh
+justclash.sh logs 100
+justclash.sh diag_mihomo_config
+service justclash status
+```
+
+Use the redacted diagnostic command. The unsafe variant can expose the API password, endpoints, and proxy credentials.

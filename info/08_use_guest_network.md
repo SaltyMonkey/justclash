@@ -1,148 +1,124 @@
-# Guest Network Configuration with JustClash
+# Guest Network Configuration
 
-This guide describes four different scenarios for integrating a guest network (e.g., interface `br-guest` / firewall zone `guest`) with the JustClash routing engine.
+A guest network needs two independent decisions:
 
----
+1. Should its client traffic be intercepted by JustClash?
+2. Which DNS path should guest clients use?
 
-## Scenario 1: Guest Network with Interception (Default Interception)
+Configuring only one side often produces Fake-IP answers with direct traffic, which is an efficient way to make the network look connected while nothing useful opens.
 
-Use this scenario if you want your guest network clients to use the configured outbound gateways and routing rules of JustClash (exactly like the main `br-lan` network).
+## Choose a Design
 
-### Configuration Steps:
-1. **Add Interface to Interception List**:
-   Add the guest interface name to the network interception list.
-   * **Via Console (UCI)**:
-     ```bash
-     uci add_list justclash.settings.tproxy_input_interfaces='br-guest'
-     uci commit justclash
-     service justclash restart
-     ```
-   * **Via LuCI Web Interface**:  
-     Navigate to *Settings -> Interceptor Interfaces* and select your guest interface.
-2. **Address Resolution**:  
-   No resolution modifications are required. Guest network clients will automatically query the router's global resolution instance, which forwards queries to the local routing engine resolver and returns mapped addresses.
+| Design | Client interface intercepted | DNS behavior |
+| --- | --- | --- |
+| Same policy as the main LAN | Yes | Use the normal router/JustClash DNS path. |
+| Fully direct guest network | No | Give guests a resolver path that returns real addresses. |
+| Direct network with filtered DNS | No | Give guests a selected filtering resolver. |
+| Direct network with a local encrypted resolver | No | Redirect only guest DNS to a dedicated local resolver instance. |
 
----
+Use the OpenWrt device or bridge name in JustClash, not the firewall-zone label. They are often similar and are not interchangeable.
 
-## Scenario 2: Guest Network without Interception (Direct Outbound)
+## Intercept the Guest Network
 
-Use this scenario if you want guest clients to bypass the routing engine completely and connect to the internet directly via your default gateway (WAN).
+Use this when guest clients should follow the same proxy, block, and final rules as the main LAN.
 
-### Configuration Steps:
-1. **Exclude Interface from Interceptor**:  
-   Ensure that your guest interface name is **NOT** listed in the `tproxy_input_interfaces` array in `/etc/config/justclash`.
-2. **Configure Client Resolution Options (Direct IP Resolution)**:  
-   Since JustClash routes resolution queries globally by default, guest devices will receive mapped addresses for managed domains. Because their data packets are not intercepted, they won't be able to connect to these addresses. To solve this, configure the guest client distribution server to distribute public resolver servers directly to guest clients:
-   * **Via Console (UCI)**:
-     ```bash
-     # Replace 'guest' with the client settings section name of your guest interface
-     uci add_list dhcp.guest.dhcp_option='6,1.1.1.1,8.8.8.8'
-     uci commit dhcp
-     /etc/init.d/dnsmasq restart
-     /etc/init.d/odhpcd restart
-     ```
-   * **Via LuCI Web Interface**:  
-     Navigate to *Network -> Interfaces -> [Guest Interface] -> DHCP Server -> Advanced Settings -> DHCP-Options* and add:  
-     `6,1.1.1.1,8.8.8.8`
+LuCI:
 
----
+1. Open **Services -> JustClash -> Service -> Traffic rules**.
+2. Add the guest bridge under **Client traffic interfaces**.
+3. Save & Apply.
 
-## Scenario 3: Guest Network with Custom Filtered Resolution (e.g., Content Filtering)
+UCI template:
 
-Useful for guest networks or restricted devices where you want web filtering, ad blocking, or malware protection powered by public filtered resolution, while keeping all traffic bypassed.
+```sh
+uci add_list justclash.settings.tproxy_input_interfaces='<GUEST_BRIDGE>'
+uci commit justclash
+service justclash restart
+```
 
-### Configuration Steps:
-1. **Exclude Interface from Interceptor**:  
-   Ensure the guest interface is **NOT** included in the `tproxy_input_interfaces` list.
-2. **Configure Client Distribution Options**:  
-   Configure the client distribution server to distribute filtered resolution IP addresses directly to clients. For example, using family-safe public resolution servers:
-   * **Via LuCI Web Interface**:  
-     Navigate to *Network -> Interfaces -> [Guest Interface] -> DHCP Server -> Advanced Settings -> DHCP-Options* and add:  
-     `6,77.88.8.7,77.88.8.3`
-   * **Via Console (UCI)**:
-     ```bash
-     uci add_list dhcp.guest.dhcp_option='6,77.88.8.7,77.88.8.3'
-     uci commit dhcp
-     /etc/init.d/dnsmasq restart
-     /etc/init.d/odhpcd restart
-     ```
+Keep guest DHCP configured to advertise the router as DNS. JustClash will pass those requests through the normal dnsmasq-to-Mihomo path.
 
-> [!NOTE]  
-> You can configure **any** public or private resolution servers of your choice (such as popular family-safe public resolvers). The actual parental controls, content filtering, and ad-blocking capabilities depend entirely on the features provided by the external DNS resolver service you choose.
+Verify both IPv4 and IPv6. When IPv6 is enabled in the guest network but disabled in JustClash, IPv6 traffic is intentionally bypassed.
 
----
+## Keep the Guest Network Direct
 
-## Scenario 4: Guest Network with Encrypted Resolution and User Exclusions
+Use this when guest clients must never enter Mihomo.
 
-An advanced scenario: you want guests to use encrypted address resolution running locally on your router via a dedicated resolution helper (e.g., listening on port `5053`), while their network traffic goes directly to the internet (bypassing the interceptor), and the resolution queries made by the helper bypass the routing engine.
+1. Remove the guest bridge from `tproxy_input_interfaces`.
+2. Ensure no broader firewall rule sends the guest zone into the JustClash TProxy path.
+3. Configure guest DHCP and IPv6 router advertisements to provide resolvers that return real addresses.
+4. Renew the client lease before testing.
 
-### Configuration Steps:
+Remove the interface with LuCI, or:
 
-1. **Create a Dedicated System User and Group**:
-   To prevent conflicts or security overlaps with other processes (which might run as generic low-privilege users), create a dedicated system user and group (e.g., `skipped_skuid` / `skipped_skgid` with UID/GID `65530`) specifically for this resolver:
-   ```bash
-   grep -q '^skipped_skgid:' /etc/group || echo "skipped_skgid:x:65530:" >> /etc/group
-   grep -q '^skipped_skuid:' /etc/passwd || echo "skipped_skuid:x:65530:65530:skipped_skuid:/var:/bin/false" >> /etc/passwd
-   ```
+```sh
+uci del_list justclash.settings.tproxy_input_interfaces='<GUEST_BRIDGE>'
+uci commit justclash
+service justclash restart
+```
 
-2. **Configure the Local Resolution Helper**:
-   Install the package on OpenWrt (using your preferred local resolution client, e.g. `https-dns-proxy` or similar):
-   ```bash
-   opkg update && opkg install https-dns-proxy
-   ```
-   **Critical Configuration**: By default, local resolver clients are configured to hijack your router's resolution system-wide. They do this by updating local resolver configurations and adding firewall rules to force all client port 53 traffic to themselves. This will conflict with JustClash's routing.
-   
-   You must disable all default global interception options and automated modifications in the helper's configuration file. 
-   
-   Ensure that:
-   * Automatic local configurations updates are disabled.
-   * Forced redirection rules are disabled on all firewall interfaces.
-   * No canary domain overrides are active.
+Configure DNS in **Network -> Interfaces -> Guest -> DHCP Server**. The exact DHCP and RDNSS settings depend on whether the guest network uses IPv4, IPv6, or both.
 
-   Then, configure a dedicated, non-hijacked instance running on port `5053` under your custom user and group:
-   ```ini
-   config https-dns-proxy 'config'
-       option dnsmasq_config_update '0'
-       option force_dns '0'
-       option canary_domains_icloud '0'
-       option canary_domains_mozilla '0'
+> [!WARNING]
+> A direct guest client must not receive Fake-IP answers. If it still queries the global JustClash DNS path, domain connections can fail even though raw-address connectivity works.
 
-   config https-dns-proxy
-       option listen_addr '127.0.0.1'
-       option listen_port '5053'
-       option resolver_url 'https://1.1.1.1/dns-query'
-       option user 'skipped_skuid'      # Execute daemon under this custom user
-       option group 'skipped_skgid'    # Execute daemon under this custom group
-   ```
-   Restart the helper service to apply the configuration.
+## Direct Guest Network with Filtered DNS
 
-3. **Exclude the Custom User from Interception**:
-   Since the resolver helper connects to the internet to resolve queries, its outgoing traffic could be intercepted by the routing engine. To prevent this, add your custom system user `skipped_skuid` to the exclusions list:
-   * **Via Console (UCI)**:
-     ```bash
-     uci add_list justclash.settings.nft_skuid_exclude_router='skipped_skuid'
-     uci commit justclash
-     service justclash restart
-     ```
-   * **Via LuCI Web Interface**:  
-     Navigate to *Settings -> Exclude Router Users (UID)* and enter the user name: `skipped_skuid`.
+This design is the same as the fully direct network, but guest DHCP advertises a resolver that provides the required filtering policy.
 
-4. **Redirect Guest Queries to Port 5053**:
-   To prevent guest devices from hitting the router's default resolution port 53 (where global interception runs), configure a port redirection rule from the guest zone to the local port `5053`.
-   
-   Add the following block to `/etc/config/firewall`:
-   ```ini
-   config redirect
-       option name 'Redirect Guest Address Queries'
-       option src 'guest'
-       option proto 'tcp udp'
-       option src_dport '53'
-       option dest_port '5053'
-       option target 'DNAT'
-       option dest_ip '127.0.0.1'
-   ```
-   Apply the firewall configuration changes:
-   ```bash
-   /etc/init.d/firewall restart
-   ```
-   *(With this setup, all address resolution queries from guest devices are encrypted and resolved via the local helper service, bypassing the interceptor, while all guest network data packets route directly to WAN).*
+The filtering service is independent from JustClash:
+
+- JustClash does not enforce its block rules for excluded guests.
+- Availability and privacy depend on the selected resolver.
+- IPv6 clients need equivalent IPv6 resolver advertisement or a deliberate IPv6 policy.
+
+Do not globally replace the router resolver just to change guest behavior. Configure the guest DHCP scope separately.
+
+## Local Encrypted Resolver for Guests
+
+Use a dedicated local resolver instance when guests should go direct but their DNS upstream should be encrypted.
+
+Recommended design:
+
+1. Run the resolver on a dedicated local port.
+2. Disable its automatic global dnsmasq and firewall modifications.
+3. Run it under a dedicated system user.
+4. Add that user to `nft_skuid_exclude_router` so its upstream traffic goes direct.
+5. Redirect DNS from the guest zone only to the dedicated listener.
+6. Keep the guest bridge out of `tproxy_input_interfaces`.
+
+Example user exclusion:
+
+```sh
+uci add_list justclash.settings.nft_skuid_exclude_router='<RESOLVER_USER>'
+uci commit justclash
+service justclash restart
+```
+
+Create the guest-only DNS redirect with standard OpenWrt firewall configuration. Use placeholders for the guest zone, listener address, and listener port; do not copy an example that assumes another router's topology.
+
+## Verification Checklist
+
+### Intercepted Guest
+
+- Guest bridge is in **Client traffic interfaces**.
+- Guest DNS uses the router.
+- Connections appear in the Mihomo **Connections** view.
+- The expected proxy or block rule matches.
+
+### Direct Guest
+
+- Guest bridge is absent from the interception list.
+- Guest DNS returns real addresses.
+- Connections do not appear in Mihomo.
+- IPv4 and IPv6 follow the same intended policy.
+
+Useful commands:
+
+```sh
+justclash.sh diag_nft
+justclash.sh diag_route
+justclash.sh logs 100
+```
+
+For per-client bypass instead of a complete guest-network design, see [Traffic Exclusions](04_service_traffic_exclusion.md).
