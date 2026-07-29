@@ -2,12 +2,13 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version (kind of similar)
 # shellcheck shell=dash
+# shellcheck disable=SC2154
 
 # --------------------------------------------
 # External justclash logging part
 # --------------------------------------------
 
-PROGNAME="justclash"
+: "${JUSTCLASH_CONSTANTS_LOADED:?constants.sh must be loaded before logging.sh}"
 
 IS_TTY=false
 [ -t 1 ] && IS_TTY=true
@@ -99,4 +100,11 @@ log_piped() {
             logger -p "$facility" -t "$PROGNAME" "$message"
         fi
     done
+}
+
+systemlogs() {
+    local program_name="$1"
+    local lines="${2:-40}"
+
+    logread -e "$program_name" | tail -n "$lines"
 }
