@@ -1,3 +1,48 @@
+## [0.90.13_rc1] - 29072026
+
+### Features & Enhancements
+- **IPv6:** Added end-to-end optional IPv6 support across DNS, Fake-IP, policy routing, TProxy interception, nftables sets, static IPs, and IP-CIDR rulesets.
+- **IPv6:** Added IPv6-aware DNS validation and configuration controls, including a dedicated Fake-IP range and IPv4/IPv6 ruleset population.
+- **Routing:** Added per-proxy, proxy-group, and proxy-provider IP version selection together with interface and routing-mark overrides.
+- **Routing:** Changed the default routing mode from full interception to partial interception for new installations.
+- **URI:** Added VMess URI support and substantially expanded Shadowsocks, Trojan, VLESS, Hysteria2, and plugin option compatibility with upstream parser behavior.
+- **URI:** Added support for additional transports and TLS extensions, including WebSocket, gRPC, HTTP upgrade, Reality, ShadowTLS, ReTLS, JLS, ALPN, fingerprints, and packet encoding options.
+- **Headers:** Added dynamic User-Agent presets for random popular browsers, JustClash, and Mihomo, plus real or spoofed provider HWID headers.
+- **Runtime:** Added configurable `GOMEMLIMIT`, `GOGC`, and `GOMAXPROCS` controls for balancing router memory and CPU usage.
+- **Runtime:** Raised the service process priority and improved startup environment variable naming and propagation through procd.
+- **API:** Allowed local loopback clients to bypass mixed-port authentication while preserving authentication for remote clients.
+- **LuCI:** Added IPv6 service, DNS, Fake-IP, outbound, group, and provider controls with client-side validation.
+- **LuCI:** Redesigned status, connections, nodes, routing, rules, rulesets, and log views with responsive layouts and consistent styling.
+- **LuCI:** Added connection detail export, provider traffic and expiry information, manual provider updates, WebSocket-backed live data, and clearer status summaries.
+- **LuCI:** Added kernel tuning controls and standardized interval, timeout, cache, and memory presets.
+- **LuCI:** Changed the default ruleset update interval to 24 hours.
+- **Release:** Added `_rcN` prerelease tag support to the release workflow while keeping package versions synchronized with tags.
+- **Installer:** Replaced release-channel discovery with exact release selection through `--custom_version`, avoiding the need to download and process the full release list.
+- **Service:** Added the synthetic `direct://` outbound parser as an isolated `virtual_direct` URI module.
+- **LuCI:** Added a dedicated Override group for proxy-provider options and made the Mihomo User-Agent preset the default.
+- **LuCI:** Renamed status actions to clearly distinguish active ruleset updates from built-in data updates.
+
+### Bug Fixes
+- **IPv6:** Replaced the default ULA Fake-IP6 pool with the dedicated IPv6 benchmarking prefix to avoid dnsmasq rebind filtering and client routing failures.
+- **URI:** Fixed `dialer-proxy` propagation for direct outbound links and aligned parser edge cases with supported Mihomo fields.
+- **Firewall:** Fixed IPv6 nftables and policy-routing handling and simplified TProxy rule generation for dual-stack operation.
+- **Diagnostics:** Expanded secret redaction for generated YAML and UCI output while preserving non-secret DNS diagnostics.
+- **Service:** Prevented maintenance-only scheduling and update settings from unnecessarily invalidating the generated runtime configuration.
+
+### Refactoring
+- **Service:** Replaced the legacy top-level TProxy port with explicit IPv4 and IPv6 listeners and simplified the associated nftables integration.
+- **Service:** Simplified command dispatch, added the proxy-add command entry point, and removed obsolete standalone cron-management CLI commands.
+- **Service:** Consolidated runtime variable naming, IPv6 resolver handling, diagnostic output, ruleset caches, and generated configuration buffers.
+- **Service:** Split the main shell controller into focused configuration, runtime, YAML, URI, compatibility, and helper modules with shared constants and explicit entry points.
+- **LuCI:** Reorganized views into `pages`, reusable `lib`, and backend `api` modules, reducing page-level coupling and duplicated lifecycle logic.
+- **LuCI:** Centralized realtime and system log normalization, row creation, and bounded buffering in a shared log helper.
+
+### Packaging, Migration & Documentation
+- **Packaging:** Added certificate bundle and timezone data dependencies to containerized IPK and APK builds and installed the shared User-Agent module with the service package.
+- **Migration:** Added upgrade handling for IPv6 defaults, kernel tuning options, provider header renames, and the new real/spoofed HWID modes.
+- **Translations:** Updated Russian, Simplified Chinese, and translation template catalogs for the expanded LuCI interface.
+- **Docs:** Updated routing, UCI, CLI, and installer documentation, including exact stable and release candidate selection.
+
 ## [0.73.0] - 10072026
 
 ### Bug Fixes

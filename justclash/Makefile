@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.73.0
+PKG_VERSION:=0.90.13_rc1
 
 PKG_RELEASE:=1
 
@@ -37,11 +37,28 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/justclash
+	$(INSTALL_DATA) ./files/usr/lib/justclash/constants.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/helpers.sh $(1)/usr/lib/justclash/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/config.sh $(1)/usr/lib/justclash/
+	$(INSTALL_DIR) $(1)/usr/lib/justclash/config
+	$(INSTALL_DATA) ./files/usr/lib/justclash/config/*.sh $(1)/usr/lib/justclash/config/
+	$(INSTALL_DIR) $(1)/usr/lib/justclash/helpers
+	$(INSTALL_DATA) ./files/usr/lib/justclash/helpers/*.sh $(1)/usr/lib/justclash/helpers/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/runtime.sh $(1)/usr/lib/justclash/
+	$(INSTALL_DIR) $(1)/usr/lib/justclash/runtime
+	$(INSTALL_DATA) ./files/usr/lib/justclash/runtime/*.sh $(1)/usr/lib/justclash/runtime/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/yaml.sh $(1)/usr/lib/justclash/
+	$(INSTALL_DIR) $(1)/usr/lib/justclash/yaml
+	$(INSTALL_DATA) ./files/usr/lib/justclash/yaml/*.sh $(1)/usr/lib/justclash/yaml/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/compat.sh $(1)/usr/lib/justclash/
+	$(INSTALL_DIR) $(1)/usr/lib/justclash/compat
+	$(INSTALL_DATA) ./files/usr/lib/justclash/compat/*.sh $(1)/usr/lib/justclash/compat/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/logging.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/user_agents.sh $(1)/usr/lib/justclash/
+	$(INSTALL_BIN) ./files/usr/lib/justclash/help.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/uri.sh $(1)/usr/lib/justclash/
+	$(INSTALL_DIR) $(1)/usr/lib/justclash/uri
+	$(INSTALL_DATA) ./files/usr/lib/justclash/uri/*.sh $(1)/usr/lib/justclash/uri/
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/justclash.sh $(1)/usr/bin/
@@ -62,7 +79,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/99_jc-uci-migration $(1)/etc/uci-defaults/
 
-	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/bin/justclash.sh
+	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/lib/justclash/constants.sh
 
 endef
 

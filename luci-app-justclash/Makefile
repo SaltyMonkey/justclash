@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-justclash
-PKG_VERSION:=0.73.0
+PKG_VERSION:=0.90.13_rc1
 
 PKG_RELEASE:=1
 
@@ -41,7 +41,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/
 	$(CP) $(PKG_BUILD_DIR)/root/* $(1)/
 
-	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/helper_common.js || true
+	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/common.js || true
 endef
 
 # call BuildPackage - OpenWrt buildroot signature
