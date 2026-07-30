@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/GPL-2.0"><img src="https://img.shields.io/badge/License-GPL--2.0-blue.svg" alt="License: GPL-2.0"/></a>
-  <a href="https://openwrt.org"><img src="https://img.shields.io/badge/OpenWrt-25.x%20or%20newer-emerald" alt="OpenWrt Compatibility"/></a>
+  <a href="https://openwrt.org"><img src="https://img.shields.io/badge/OpenWrt-24.x%20%7C%2025.x-emerald" alt="OpenWrt Compatibility"/></a>
   <br/>
   <br/>
   <img src=".github/assets/logo.webp" alt="JustClash Logo" width="350"/>
@@ -179,9 +179,9 @@ JustClash supports two distinct traffic routing architectures, configurable in t
 *   **Web UI:** `luci-base`
 
 ### System
-*   **OpenWrt:** Version 25.12 or newer.
+*   **OpenWrt:** OpenWrt 25.x (APK) and OpenWrt 24.x (OPKG/IPK).
     > [!IMPORTANT]
-    > Compatibility and correct operation are strictly guaranteed only on OpenWrt 25.x or newer. The older OpenWrt 24.x branch is no longer tested or supported.
+    > OpenWrt 25.x (APK) is the primary release target. OpenWrt 24.x is supported via IPK packages for OPKG-based systems.
 *   **Hardware Compatibility:** Works on a wide variety of architectures supported by both OpenWrt and Mihomo:
     *   **x86_64 / 386:** The setup defaults to the standard **`amd64`** (v1) Mihomo build. This ensures out-of-the-box compatibility and avoids `Illegal instruction` crashes caused by `amd64-v3` builds on hypervisors (Proxmox, VMware, Hyper-V, KVM, etc. with default CPU emulation) or older CPUs without AVX2/FMA3 support. On modern systems (e.g., modern bare-metal x86_64 routers, or virtual machines where the CPU type is configured as `host`), it is still recommended to manually download and replace the core binary with the **`amd64-v3`** (or **`amd64-v4`** if the CPU supports AVX-512) build to benefit from instruction set optimizations.
     *   **ARM:** Support for `arm64` (aarch64), `armv7` (neon-vfp), `armv6` (neon/vfp), and `armv5`.
