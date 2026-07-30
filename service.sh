@@ -246,9 +246,9 @@ diagnostic_net() {
 
     printf " - Result: "
     if [ "$ping_res" -eq 0 ]; then
-       print_green "OK"
+        print_green "OK"
     else
-       print_red "FAIL"
+        print_red "FAIL"
     fi
 
     echo "Checking with ${URL_CHECK_PING_BACKUP}..."
@@ -263,7 +263,7 @@ diagnostic_net() {
     fi
 
     echo "  "
-    print_bold_green  "Checking domain resolution..."
+    print_bold_green "Checking domain resolution..."
 
     echo "Testing ${URL_GITHUB} using the default nameserver..."
     check_dns "${URL_GITHUB}"
@@ -283,7 +283,7 @@ diagnostic_net() {
         exit 1
     fi
 
-     if [ "$ping_res" -ne 0 ] && [ "$ping_res_backup" -ne 0 ]; then
+    if [ "$ping_res" -ne 0 ] && [ "$ping_res_backup" -ne 0 ]; then
         print_red "Network connectivity check failed (ICMP unreachable for both primary and backup targets)."
         print_red "Possible causes: no internet access, ISP issues, or ICMP traffic is blocked."
         print_red "Please check your network connection and try restarting this script, or install JustClash manually."
@@ -329,14 +329,14 @@ diagnostic_conflict() {
             read -r inp
             inp=$(echo "$inp" | tr '[:upper:]' '[:lower:]')
             case $inp in
-                yes|y)
-                    pkg_remove "$pkg_name"
-                    break
-                    ;;
-                *)
-                    echo "Exiting."
-                    exit 1
-                    ;;
+            yes | y)
+                pkg_remove "$pkg_name"
+                break
+                ;;
+            *)
+                echo "Exiting."
+                exit 1
+                ;;
             esac
         done
     else
@@ -365,31 +365,31 @@ detect_arch() {
     arch_raw=$(get_os_arch)
 
     case "$arch_raw" in
-        aarch64_*) echo "arm64" ;;
-        mips_*)
-            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
-                echo "mips-hardfloat"
-            else
-                echo "mips-softfloat"
-            fi
-            ;;
-        mipsel_*)
-            if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
-                echo "mipsle-hardfloat"
-            else
-                echo "mipsle-softfloat"
-            fi
-            ;;
-        mips64_*) echo "mips64" ;;
-        mips64el_*) echo "mips64le" ;;
-        x86_64) echo "amd64" ;;
-        i386_*) echo "386" ;;
-        riscv64_*) echo "riscv64" ;;
-        loongarch64_*) echo "loong64-abi2" ;;
-        *_neon-vfp*) echo "armv7" ;;
-        *_neon* | *_vfp*) echo "armv6" ;;
-        arm_*) echo "armv5" ;;
-        *) echo "amd64" ;;
+    aarch64_*) echo "arm64" ;;
+    mips_*)
+        if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
+            echo "mips-hardfloat"
+        else
+            echo "mips-softfloat"
+        fi
+        ;;
+    mipsel_*)
+        if [ "${arch_raw#*hardfloat}" != "$arch_raw" ]; then
+            echo "mipsle-hardfloat"
+        else
+            echo "mipsle-softfloat"
+        fi
+        ;;
+    mips64_*) echo "mips64" ;;
+    mips64el_*) echo "mips64le" ;;
+    x86_64) echo "amd64" ;;
+    i386_*) echo "386" ;;
+    riscv64_*) echo "riscv64" ;;
+    loongarch64_*) echo "loong64-abi2" ;;
+    *_neon-vfp*) echo "armv7" ;;
+    *_neon* | *_vfp*) echo "armv6" ;;
+    arm_*) echo "armv5" ;;
+    *) echo "amd64" ;;
     esac
 }
 
@@ -464,22 +464,22 @@ core_update() {
     }
 
     if [ -z "$latest_ver" ]; then
-       print_red "Failed to retrieve the latest version information."
-       print_red "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
-       return 1
+        print_red "Failed to retrieve the latest version information."
+        print_red "This may be caused by a GitHub API rate limit or a missing release. Please check manually."
+        return 1
     fi
 
     asset_name="mihomo-linux-${arch}-${latest_ver}.gz"
     digest=$(get_release_asset_digest "$check_url" "$channel" "$asset_name")
 
     case "$digest" in
-        sha256:*)
-            expected_sha256="${digest#sha256:}"
-            ;;
-        *)
-            print_red "Release asset digest is missing or unsupported: $asset_name"
-            return 1
-            ;;
+    sha256:*)
+        expected_sha256="${digest#sha256:}"
+        ;;
+    *)
+        print_red "Release asset digest is missing or unsupported: $asset_name"
+        return 1
+        ;;
     esac
 
     if ! printf '%s' "$expected_sha256" | grep -qiE '^[0-9a-f]{64}$'; then
@@ -536,7 +536,7 @@ core_download() {
     base_url="${version_txt_url%/*}"
     download_url="${base_url}/${file_name}"
 
-    echo  "- Downloading mihomo binary"
+    echo "- Downloading mihomo binary"
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
@@ -557,7 +557,7 @@ core_download() {
 
     echo " - Extracting to $CORE_PATH" "⬇️"
     if gzip -t "$tmp_archive_path" 2>/dev/null; then
-        gunzip -c "$tmp_archive_path" > "$CORE_PATH" || {
+        gunzip -c "$tmp_archive_path" >"$CORE_PATH" || {
             rm -f "$tmp_archive_path"
             print_red "Failed to extract the Mihomo archive."
             return 1
@@ -756,14 +756,14 @@ install_translation_interactive() {
     echo "3. Simplified Chinese (ZH-CN)"
 
     while true; do
-            printf "Enter your choice [1-3]: "
-            read -r choice
-            case "$choice" in
-                1) return 1 ;; # en
-                2) return 2 ;; # ru
-                3) return 3 ;; # zh-cn
-                *) echo "Invalid choice. Please enter 1, 2, or 3." >&2 ;;
-            esac
+        printf "Enter your choice [1-3]: "
+        read -r choice
+        case "$choice" in
+        1) return 1 ;; # en
+        2) return 2 ;; # ru
+        3) return 3 ;; # zh-cn
+        *) echo "Invalid choice. Please enter 1, 2, or 3." >&2 ;;
+        esac
     done
 }
 
@@ -801,8 +801,8 @@ install_service() {
     else
         install_translation_interactive
         case "$?" in
-            2) install_lang="ru" ;;
-            3) install_lang="zh-cn" ;;
+        2) install_lang="ru" ;;
+        3) install_lang="zh-cn" ;;
         esac
     fi
 
@@ -846,33 +846,33 @@ run() {
             exit 0
         fi
         case "$choice" in
-            1)
-                echo "Installing JustClash..."
-                install_service
-                ;;
-            2)
-                echo "Uninstalling JustClash..."
-                uninstall_service
-                ;;
-            3)
-                echo "Updating the Mihomo core..."
-                core_update "stable"
-                ;;
-            4)
-                echo "Removing the Mihomo core..."
-                core_remove
-                ;;
-            5)
-                echo "Starting diagnostics..."
-                diagnostic
-                ;;
-            6)
-                echo "Exiting..."
-                exit 0
-                ;;
-            *)
-                echo "Invalid option. Please enter a number between 1 and 6."
-                ;;
+        1)
+            echo "Installing JustClash..."
+            install_service
+            ;;
+        2)
+            echo "Uninstalling JustClash..."
+            uninstall_service
+            ;;
+        3)
+            echo "Updating the Mihomo core..."
+            core_update "stable"
+            ;;
+        4)
+            echo "Removing the Mihomo core..."
+            core_remove
+            ;;
+        5)
+            echo "Starting diagnostics..."
+            diagnostic
+            ;;
+        6)
+            echo "Exiting..."
+            exit 0
+            ;;
+        *)
+            echo "Invalid option. Please enter a number between 1 and 6."
+            ;;
         esac
         printf "\n"
     done
@@ -880,40 +880,40 @@ run() {
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --skip-space-check)
-            CHECK_SPACE=0
-            shift
-            ;;
-        --automated|--auto|-y)
-            AUTOMATED=1
-            shift
-            ;;
-        --silent|-s)
-            SILENT=1
-            shift
-            ;;
-        --update-core|-u)
-            UPDATE_CORE=1
-            AUTOMATED=1
-            shift
-            ;;
-        --custom_version)
-            if [ $# -lt 2 ]; then
-                echo "Option --custom_version requires a version, for example: 0.90.13_rc1" >&2
-                exit 2
-            fi
-            JUSTCLASH_CUSTOM_VERSION="${2#v}"
-            if ! printf '%s\n' "$JUSTCLASH_CUSTOM_VERSION" |
-                grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(_rc[0-9]+)?$'; then
-                echo "Invalid custom version: $2" >&2
-                exit 2
-            fi
-            shift 2
-            ;;
-        *)
-            echo "Unknown option: $1"
-            shift
-            ;;
+    --skip-space-check)
+        CHECK_SPACE=0
+        shift
+        ;;
+    --automated | --auto | -y)
+        AUTOMATED=1
+        shift
+        ;;
+    --silent | -s)
+        SILENT=1
+        shift
+        ;;
+    --update-core | -u)
+        UPDATE_CORE=1
+        AUTOMATED=1
+        shift
+        ;;
+    --custom_version)
+        if [ $# -lt 2 ]; then
+            echo "Option --custom_version requires a version, for example: 0.90.13_rc1" >&2
+            exit 2
+        fi
+        JUSTCLASH_CUSTOM_VERSION="${2#v}"
+        if ! printf '%s\n' "$JUSTCLASH_CUSTOM_VERSION" |
+            grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(_rc[0-9]+)?$'; then
+            echo "Invalid custom version: $2" >&2
+            exit 2
+        fi
+        shift 2
+        ;;
+    *)
+        echo "Unknown option: $1"
+        shift
+        ;;
     esac
 done
 
