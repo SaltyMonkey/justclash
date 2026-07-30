@@ -9,7 +9,11 @@ parse_ss_url() {
     local userinfo hostport method password server port decoded query_part proxy_obj
     query_part=""
 
-    case "$link" in *\?*) query_part="${link#*\?}"; link="${link%%\?*}"; esac
+    case "$link" in *\?*)
+        query_part="${link#*\?}"
+        link="${link%%\?*}"
+        ;;
+    esac
 
     if printf '%s\n' "$link" | grep -q '@'; then
         userinfo="${link%@*}"
@@ -42,34 +46,34 @@ parse_ss_url() {
                 decoded_method="$(printf '%s' "$method_part" | base64 -d 2>/dev/null)"
 
                 case "$decoded_method" in
-                    aes-*|chacha20-*|xchacha20-*|2022-*|rc4-*|blake3-*)
-                        method="$decoded_method"
-                        if printf '%s\n' "$pass_part" | grep -q ':'; then
-                            local psk1_part="${pass_part%%:*}"
-                            local psk2_part="${pass_part#*:}"
-                            local psk1_dec="" psk2_dec=""
-                            psk1_dec="$(printf '%s' "$psk1_part" | base64 -d 2>/dev/null)"
-                            psk2_dec="$(printf '%s' "$psk2_part" | base64 -d 2>/dev/null)"
-                            if [ -n "$psk1_dec" ] && [ -n "$psk2_dec" ]; then
-                                password="${psk1_dec}:${psk2_dec}"
-                            else
-                                password="$(url_decode "$pass_part")"
-                            fi
+                aes-* | chacha20-* | xchacha20-* | 2022-* | rc4-* | blake3-*)
+                    method="$decoded_method"
+                    if printf '%s\n' "$pass_part" | grep -q ':'; then
+                        local psk1_part="${pass_part%%:*}"
+                        local psk2_part="${pass_part#*:}"
+                        local psk1_dec="" psk2_dec=""
+                        psk1_dec="$(printf '%s' "$psk1_part" | base64 -d 2>/dev/null)"
+                        psk2_dec="$(printf '%s' "$psk2_part" | base64 -d 2>/dev/null)"
+                        if [ -n "$psk1_dec" ] && [ -n "$psk2_dec" ]; then
+                            password="${psk1_dec}:${psk2_dec}"
                         else
-                            local pass_dec=""
-                            pass_dec="$(printf '%s' "$pass_part" | base64 -d 2>/dev/null)"
-                            if [ -n "$pass_dec" ]; then
-                                password="$pass_dec"
-                            else
-                                password="$(url_decode "$pass_part")"
-                            fi
+                            password="$(url_decode "$pass_part")"
                         fi
-                        ;;
-                    *)
-                        # Plain text fallback
-                        method="$(url_decode "$method_part")"
-                        password="$(url_decode "$pass_part")"
-                        ;;
+                    else
+                        local pass_dec=""
+                        pass_dec="$(printf '%s' "$pass_part" | base64 -d 2>/dev/null)"
+                        if [ -n "$pass_dec" ]; then
+                            password="$pass_dec"
+                        else
+                            password="$(url_decode "$pass_part")"
+                        fi
+                    fi
+                    ;;
+                *)
+                    # Plain text fallback
+                    method="$(url_decode "$method_part")"
+                    password="$(url_decode "$pass_part")"
+                    ;;
                 esac
             fi
         fi
@@ -103,8 +107,8 @@ parse_ss_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-            plugin) plugin_param="$(url_decode "$v")" ;;
-            client-fingerprint|clientFingerprint|fp) client_fingerprint="$(url_decode "$v")" ;;
+        plugin) plugin_param="$(url_decode "$v")" ;;
+        client-fingerprint | clientFingerprint | fp) client_fingerprint="$(url_decode "$v")" ;;
         esac
     done
 
@@ -117,9 +121,9 @@ parse_ss_url() {
     if [ -n "$plugin_param" ]; then
         plugin_name="${plugin_param%%;*}"
         case "$plugin_name" in
-            obfs-local|simple-obfs) plugin_name="obfs" ;;
-            v2ray) plugin_name="v2ray-plugin" ;;
-            gost) plugin_name="gost-plugin" ;;
+        obfs-local | simple-obfs) plugin_name="obfs" ;;
+        v2ray) plugin_name="v2ray-plugin" ;;
+        gost) plugin_name="gost-plugin" ;;
         esac
 
         local opts_part="${plugin_param#*;}"
@@ -135,27 +139,27 @@ parse_ss_url() {
 
             if [ "$opt_k" = "$opt" ]; then
                 case "$opt_k" in
-                    tls) plugin_tls="true" ;;
-                    mux) plugin_mux="true" ;;
-                    skip-cert-verify|allowInsecure|insecure) plugin_skip_cert_verify="true" ;;
+                tls) plugin_tls="true" ;;
+                mux) plugin_mux="true" ;;
+                skip-cert-verify | allowInsecure | insecure) plugin_skip_cert_verify="true" ;;
                 esac
             else
                 case "$opt_k" in
-                    host|obfs-host) plugin_host="$opt_v" ;;
-                    password|shadow-tls-password|jls-password) plugin_password="$opt_v" ;;
-                    version|shadow-tls-version) plugin_version="$opt_v" ;;
-                    obfs|mode|obfs-mode) plugin_mode="$opt_v" ;;
-                    username|jls-username) plugin_username="$opt_v" ;;
-                    path) plugin_path="$opt_v" ;;
-                    tls) if is_truthy "$opt_v"; then plugin_tls="true"; else plugin_tls="false"; fi ;;
-                    mux) if is_truthy "$opt_v"; then plugin_mux="true"; else plugin_mux="false"; fi ;;
-                    skip-cert-verify|allowInsecure|insecure) if is_truthy "$opt_v"; then plugin_skip_cert_verify="true"; else plugin_skip_cert_verify="false"; fi ;;
-                    name-cert-verify|nameCertVerify|peer) plugin_name_cert_verify="$opt_v" ;;
-                    fingerprint|pinSHA256) plugin_fingerprint="$opt_v" ;;
-                    client-fingerprint|clientFingerprint|fp) client_fingerprint="$opt_v" ;;
-                    certificate) plugin_cert="$opt_v" ;;
-                    private-key|privateKey) plugin_key="$opt_v" ;;
-                    alpn) plugin_alpn="$opt_v" ;;
+                host | obfs-host) plugin_host="$opt_v" ;;
+                password | shadow-tls-password | jls-password) plugin_password="$opt_v" ;;
+                version | shadow-tls-version) plugin_version="$opt_v" ;;
+                obfs | mode | obfs-mode) plugin_mode="$opt_v" ;;
+                username | jls-username) plugin_username="$opt_v" ;;
+                path) plugin_path="$opt_v" ;;
+                tls) if is_truthy "$opt_v"; then plugin_tls="true"; else plugin_tls="false"; fi ;;
+                mux) if is_truthy "$opt_v"; then plugin_mux="true"; else plugin_mux="false"; fi ;;
+                skip-cert-verify | allowInsecure | insecure) if is_truthy "$opt_v"; then plugin_skip_cert_verify="true"; else plugin_skip_cert_verify="false"; fi ;;
+                name-cert-verify | nameCertVerify | peer) plugin_name_cert_verify="$opt_v" ;;
+                fingerprint | pinSHA256) plugin_fingerprint="$opt_v" ;;
+                client-fingerprint | clientFingerprint | fp) client_fingerprint="$opt_v" ;;
+                certificate) plugin_cert="$opt_v" ;;
+                private-key | privateKey) plugin_key="$opt_v" ;;
+                alpn) plugin_alpn="$opt_v" ;;
                 esac
             fi
             IFS=";"

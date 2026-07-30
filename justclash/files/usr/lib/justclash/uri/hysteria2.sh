@@ -7,7 +7,6 @@
 parse_hysteria2_url() {
     local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
 
-
     local raw="${url#hysteria2://}"
     raw="${raw#hy2://}"
     raw="${raw%%#*}"
@@ -16,7 +15,11 @@ parse_hysteria2_url() {
     ports=""
     query_part=""
 
-    case "$raw" in *\?*) query_part="${raw#*\?}"; raw="${raw%%\?*}"; esac
+    case "$raw" in *\?*)
+        query_part="${raw#*\?}"
+        raw="${raw%%\?*}"
+        ;;
+    esac
 
     if printf '%s\n' "$raw" | grep -q '@'; then
         userinfo="${raw%@*}"
@@ -32,10 +35,10 @@ parse_hysteria2_url() {
     [ "$server" = "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
 
     case "$port" in
-        *[,-]*)
-            ports="$port"
-            port="${ports%%[,-]*}"
-            ;;
+    *[,-]*)
+        ports="$port"
+        port="${ports%%[,-]*}"
+        ;;
     esac
     port="${port//[!0-9]/}"
     [ -z "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
@@ -56,22 +59,22 @@ parse_hysteria2_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-            sni) sni="$(url_decode "$v")" ;;
-            insecure|allowInsecure|skip-cert-verify|skipCertVerify) is_truthy "$v" && insecure=1 ;;
-            obfs) obfs="$(url_decode "$v")" ;;
-            obfs-password|obfsPassword) obfs_password="$(url_decode "$v")" ;;
-            obfs-min-packet-size|obfs-min|obfsMinPacketSize|obfsMin) obfs_min="$v" ;;
-            obfs-max-packet-size|obfs-max|obfsMaxPacketSize|obfsMax) obfs_max="$v" ;;
-            bbr-profile|bbrProfile|bbr) bbr_profile="$(url_decode "$v")" ;;
-            up|upmbps) up="$(url_decode "$v")" ;;
-            down|downmbps) down="$(url_decode "$v")" ;;
-            ports) ports="$(url_decode "$v")" ;;
-            hop-interval|hop_interval|hopInterval) hop_interval="$(url_decode "$v")" ;;
-            handshake-timeout|handshakeTimeout) handshake_timeout="$v" ;;
-            alpn) alpn="$(url_decode "$v")" ;;
-            pinSHA256|fingerprint|fp|client-fingerprint|clientFingerprint) pin_sha256="$v" ;;
-            ech) ech="$(url_decode "$v")" ;;
-            name-cert-verify|nameCertVerify|peer) name_cert_verify="$(url_decode "$v")" ;;
+        sni) sni="$(url_decode "$v")" ;;
+        insecure | allowInsecure | skip-cert-verify | skipCertVerify) is_truthy "$v" && insecure=1 ;;
+        obfs) obfs="$(url_decode "$v")" ;;
+        obfs-password | obfsPassword) obfs_password="$(url_decode "$v")" ;;
+        obfs-min-packet-size | obfs-min | obfsMinPacketSize | obfsMin) obfs_min="$v" ;;
+        obfs-max-packet-size | obfs-max | obfsMaxPacketSize | obfsMax) obfs_max="$v" ;;
+        bbr-profile | bbrProfile | bbr) bbr_profile="$(url_decode "$v")" ;;
+        up | upmbps) up="$(url_decode "$v")" ;;
+        down | downmbps) down="$(url_decode "$v")" ;;
+        ports) ports="$(url_decode "$v")" ;;
+        hop-interval | hop_interval | hopInterval) hop_interval="$(url_decode "$v")" ;;
+        handshake-timeout | handshakeTimeout) handshake_timeout="$v" ;;
+        alpn) alpn="$(url_decode "$v")" ;;
+        pinSHA256 | fingerprint | fp | client-fingerprint | clientFingerprint) pin_sha256="$v" ;;
+        ech) ech="$(url_decode "$v")" ;;
+        name-cert-verify | nameCertVerify | peer) name_cert_verify="$(url_decode "$v")" ;;
         esac
     done
 

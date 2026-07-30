@@ -12,7 +12,7 @@ parse_sudoku_url() {
 
     local b64
     b64="$(printf '%s' "$raw" | tr -- '-_' '+/')"
-    local rem=$(( ${#b64} % 4 ))
+    local rem=$((${#b64} % 4))
     if [ "$rem" -eq 2 ]; then
         b64="${b64}=="
     elif [ "$rem" -eq 3 ]; then

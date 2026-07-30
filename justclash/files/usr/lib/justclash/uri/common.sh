@@ -11,8 +11,8 @@
 
 is_truthy() {
     case "$1" in
-        1|true|TRUE|True|yes|YES|on|ON) return 0 ;;
-        *) return 1 ;;
+    1 | true | TRUE | True | yes | YES | on | ON) return 0 ;;
+    *) return 1 ;;
     esac
 }
 

@@ -4,7 +4,8 @@
 # Focused helper module loaded into the main ash process.
 
 # Global constants for ash-native string operations
-NL="$(printf '\n.')"; NL="${NL%.}"
+NL="$(printf '\n.')"
+NL="${NL%.}"
 CR="$(printf '\r')"
 TAB="$(printf '\t')"
 url_decode() {
@@ -55,7 +56,11 @@ build_slash_map_from_values() {
         key="${entry%%/*}"
         val="${entry#*/}"
         [ "$key" = "$entry" ] || [ -z "$key" ] || [ -z "$val" ] && continue
-        item="$(yaml_quote "$key"; printf ': '; yaml_quote "$val")"
+        item="$(
+            yaml_quote "$key"
+            printf ': '
+            yaml_quote "$val"
+        )"
         [ -z "$result" ] && result="$item" || result="$result$delim$item"
     done
     IFS="$old_ifs"
@@ -77,7 +82,11 @@ build_custom_slash_map() {
         [ "$key" = "$entry" ] || [ -z "$key" ] || [ -z "$val" ] && return
 
         local item
-        item="$(yaml_quote "$key"; printf ': '; yaml_quote "$val")"
+        item="$(
+            yaml_quote "$key"
+            printf ': '
+            yaml_quote "$val"
+        )"
         [ -z "$result" ] && result="$item" || result="$result$delim$item"
     }
 

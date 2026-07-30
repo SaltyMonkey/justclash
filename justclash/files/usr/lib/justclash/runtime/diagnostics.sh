@@ -178,37 +178,3 @@ diag_service_config_unsafe() {
         clog error "Service config file not found."
     fi
 }
-
-diag_service_config_reset() {
-    local default_config_path="$1"
-    local config_path="$2"
-    local backup_config_path="$3"
-
-    if [ ! -f "$default_config_path" ]; then
-        clog error "Default configuration file is missing. Restore is unavailable."
-        return 1
-    fi
-
-    clog info "Restoring JustClash settings..."
-
-    rm -f "$backup_config_path"
-
-    if [ ! -f "$config_path" ]; then
-        clog error "Current configuration file was not found; nothing to back up."
-    else
-        if ! mv "$config_path" "$backup_config_path"; then
-            clog error "Failed to back up the current configuration file."
-            return 1
-        else
-            clog info "Previous configuration file was saved to ${backup_config_path}"
-        fi
-    fi
-
-    if ! cp "$default_config_path" "$config_path"; then
-        clog error "Failed to restore the default configuration."
-        return 1
-    fi
-
-    clog info "Default settings will be applied on the next service restart."
-    return 0
-}

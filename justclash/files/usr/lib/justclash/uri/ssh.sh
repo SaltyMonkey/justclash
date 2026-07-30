@@ -13,10 +13,10 @@ parse_ssh_url() {
 
     raw="${raw%%#*}"
     case "$raw" in
-        *\?*)
-            query_part="${raw#*\?}"
-            raw="${raw%%\?*}"
-            ;;
+    *\?*)
+        query_part="${raw#*\?}"
+        raw="${raw%%\?*}"
+        ;;
     esac
 
     # SSH URI paths identify remote resources, while a Mihomo SSH outbound
@@ -24,43 +24,43 @@ parse_ssh_url() {
     authority="${raw%%/*}"
 
     case "$authority" in
-        *@*)
-            userinfo="${authority%@*}"
-            hostport="${authority##*@}"
-            ;;
-        *)
-            hostport="$authority"
-            ;;
+    *@*)
+        userinfo="${authority%@*}"
+        hostport="${authority##*@}"
+        ;;
+    *)
+        hostport="$authority"
+        ;;
     esac
 
     # Ignore SSH URI connection parameters following the user name.
     userinfo="${userinfo%%;*}"
     case "$userinfo" in
-        *:*)
-            username="$(url_decode "${userinfo%%:*}")"
-            password="$(url_decode "${userinfo#*:}")"
-            ;;
-        *)
-            username="$(url_decode "$userinfo")"
-            ;;
+    *:*)
+        username="$(url_decode "${userinfo%%:*}")"
+        password="$(url_decode "${userinfo#*:}")"
+        ;;
+    *)
+        username="$(url_decode "$userinfo")"
+        ;;
     esac
 
     case "$hostport" in
-        \[*\]*)
-            server="${hostport#\[}"
-            server="${server%%\]*}"
-            host_suffix="${hostport#*\]}"
-            case "$host_suffix" in
-                :*) port="${host_suffix#:}" ;;
-            esac
-            ;;
-        *:*)
-            server="${hostport%:*}"
-            port="${hostport##*:}"
-            ;;
-        *)
-            server="$hostport"
-            ;;
+    \[*\]*)
+        server="${hostport#\[}"
+        server="${server%%\]*}"
+        host_suffix="${hostport#*\]}"
+        case "$host_suffix" in
+        :*) port="${host_suffix#:}" ;;
+        esac
+        ;;
+    *:*)
+        server="${hostport%:*}"
+        port="${hostport##*:}"
+        ;;
+    *)
+        server="$hostport"
+        ;;
     esac
     server="$(url_decode "$server")"
 
@@ -74,23 +74,23 @@ parse_ssh_url() {
         [ -n "$key" ] || continue
 
         case "$key" in
-            username|user) username="$(url_decode "$value")" ;;
-            password|pass) password="$(url_decode "$value")" ;;
-            port) port="$(url_decode "$value")" ;;
-            private-key|private_key|privateKey)
-                private_key="$(url_decode "$value")"
-                ;;
-            private-key-passphrase|private_key_passphrase|privateKeyPassphrase)
-                private_key_passphrase="$(url_decode "$value")"
-                ;;
-            host-key|host_key|hostKey)
-                decoded_value="$(url_decode "$value")"
-                host_key="${host_key:+$host_key,}$decoded_value"
-                ;;
-            host-key-algorithms|host_key_algorithms|hostKeyAlgorithms)
-                decoded_value="$(url_decode "$value")"
-                host_key_algorithms="${host_key_algorithms:+$host_key_algorithms,}$decoded_value"
-                ;;
+        username | user) username="$(url_decode "$value")" ;;
+        password | pass) password="$(url_decode "$value")" ;;
+        port) port="$(url_decode "$value")" ;;
+        private-key | private_key | privateKey)
+            private_key="$(url_decode "$value")"
+            ;;
+        private-key-passphrase | private_key_passphrase | privateKeyPassphrase)
+            private_key_passphrase="$(url_decode "$value")"
+            ;;
+        host-key | host_key | hostKey)
+            decoded_value="$(url_decode "$value")"
+            host_key="${host_key:+$host_key,}$decoded_value"
+            ;;
+        host-key-algorithms | host_key_algorithms | hostKeyAlgorithms)
+            decoded_value="$(url_decode "$value")"
+            host_key_algorithms="${host_key_algorithms:+$host_key_algorithms,}$decoded_value"
+            ;;
         esac
     done
 

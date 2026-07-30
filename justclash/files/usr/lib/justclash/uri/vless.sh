@@ -45,63 +45,67 @@ parse_vless_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-            type)
-                if [ "$v" = "httpupgrade" ]; then
-                    net="ws"
-                    httpupgrade=1
-                else
-                    net="$v"
-                fi ;;
-            security) sec="$v" ;;
-            encryption) enc="$v" ;;
-            sni) sni="$(url_decode "$v")" ;;
-            host)
-                transport_host="$(url_decode "$v")" ;;
-            fp|client-fingerprint) fp="$v" ;;
-            alpn) alpn="$(url_decode "$v")" ;;
-            flow) flow="$v" ;;
-            tfo) is_truthy "$v" && tfo_value=1 ;;
-            insecure|allowInsecure|skip-cert-verify|skipCertVerify) is_truthy "$v" && insecure=1 ;;
-            pbk|public-key) pbk="$v" ;;
-            pinSHA256|fingerprint) pin_sha256="$(url_decode "$v")" ;;
-            name-cert-verify|nameCertVerify|peer) name_cert_verify="$(url_decode "$v")" ;;
-            certificate) certificate="$(url_decode "$v")" ;;
-            privateKey|private-key) private_key="$(url_decode "$v")" ;;
-            shadow-tls-password|shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
-            shadow-tls-version|shadowTlsVersion) shadow_tls_version="$v" ;;
-            restls-password|restlsPassword) restls_password="$(url_decode "$v")" ;;
-            restls-version-hint|restlsVersionHint|restlsVersion) restls_version_hint="$v" ;;
-            restls-script|restlsScript) restls_script="$(url_decode "$v")" ;;
-            jls-username|jlsUsername|jlsUser) jls_username="$(url_decode "$v")" ;;
-            jls-password|jlsPassword) jls_password="$(url_decode "$v")" ;;
-            support-x25519mlkem768|x25519mlkem768|support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
-            sid|short-id) sid="$v" ;;
-            spx)
-                if [ -n "$v" ]; then
-                    spx="$(url_decode "$v")"
-                else
-                    spx="/"
-                fi ;;
-            path)
-                if [ -n "$v" ]; then
-                    path="$(url_decode "$v")"
-                else
-                    path="/"
-                fi ;;
-            serviceName|service-name) sn="$(url_decode "$v")" ;;
-            grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
-            ping-interval|pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
-            packetEncoding|packet-encoding) penc="$v" ;;
-            ech) ech="$(url_decode "$v")" ;;
-            mode) xhttp_mode="$(url_decode "$v")" ;;
-            extra) xhttp_extra="$(url_decode "$v")" ;;
+        type)
+            if [ "$v" = "httpupgrade" ]; then
+                net="ws"
+                httpupgrade=1
+            else
+                net="$v"
+            fi
+            ;;
+        security) sec="$v" ;;
+        encryption) enc="$v" ;;
+        sni) sni="$(url_decode "$v")" ;;
+        host)
+            transport_host="$(url_decode "$v")"
+            ;;
+        fp | client-fingerprint) fp="$v" ;;
+        alpn) alpn="$(url_decode "$v")" ;;
+        flow) flow="$v" ;;
+        tfo) is_truthy "$v" && tfo_value=1 ;;
+        insecure | allowInsecure | skip-cert-verify | skipCertVerify) is_truthy "$v" && insecure=1 ;;
+        pbk | public-key) pbk="$v" ;;
+        pinSHA256 | fingerprint) pin_sha256="$(url_decode "$v")" ;;
+        name-cert-verify | nameCertVerify | peer) name_cert_verify="$(url_decode "$v")" ;;
+        certificate) certificate="$(url_decode "$v")" ;;
+        privateKey | private-key) private_key="$(url_decode "$v")" ;;
+        shadow-tls-password | shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
+        shadow-tls-version | shadowTlsVersion) shadow_tls_version="$v" ;;
+        restls-password | restlsPassword) restls_password="$(url_decode "$v")" ;;
+        restls-version-hint | restlsVersionHint | restlsVersion) restls_version_hint="$v" ;;
+        restls-script | restlsScript) restls_script="$(url_decode "$v")" ;;
+        jls-username | jlsUsername | jlsUser) jls_username="$(url_decode "$v")" ;;
+        jls-password | jlsPassword) jls_password="$(url_decode "$v")" ;;
+        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
+        sid | short-id) sid="$v" ;;
+        spx)
+            if [ -n "$v" ]; then
+                spx="$(url_decode "$v")"
+            else
+                spx="/"
+            fi
+            ;;
+        path)
+            if [ -n "$v" ]; then
+                path="$(url_decode "$v")"
+            else
+                path="/"
+            fi
+            ;;
+        serviceName | service-name) sn="$(url_decode "$v")" ;;
+        grpc-user-agent | grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
+        ping-interval | pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
+        packetEncoding | packet-encoding) penc="$v" ;;
+        ech) ech="$(url_decode "$v")" ;;
+        mode) xhttp_mode="$(url_decode "$v")" ;;
+        extra) xhttp_extra="$(url_decode "$v")" ;;
         esac
     done
 
     if [ -n "$path" ]; then
         case "$path" in
-            /*) ;;
-            *) path="/$path" ;;
+        /*) ;;
+        *) path="/$path" ;;
         esac
     fi
 

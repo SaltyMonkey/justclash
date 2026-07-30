@@ -29,7 +29,7 @@ help() {
     echo "  diag_mihomo_config_unsafe   Show raw generated mihomo config (includes passwords)"
     echo "  diag_service_config         Show service config (redacted)"
     echo "  diag_service_config_unsafe  Show raw service config (includes passwords)"
-    echo "  diag_service_config_reset   Reset service configuration to default"
+    echo "  config_reset                Reset service configuration to default"
     echo ""
     echo "Logs:"
     echo "  logs|systemlogs [N]     Show last N lines of system logs (default 40)"

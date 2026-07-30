@@ -10,5 +10,5 @@ _COMPAT_LIBDIR="${JUSTCLASH_COMPAT_LIBDIR:-/usr/lib/justclash/compat}"
 unset _COMPAT_LIBDIR
 
 compat_fixes() {
-   iptables_fix
+    iptables_fix
 }

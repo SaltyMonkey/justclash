@@ -52,28 +52,28 @@ parse_mieru_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-            multiplexing) multiplexing="$v" ;;
-            handshake-mode) handshake_mode="$v" ;;
-            traffic-pattern) traffic_pattern="$(url_decode "$v")" ;;
-            port)
-                local decoded_port
-                decoded_port="$(url_decode "$v")"
-                case "$decoded_port" in
-                    *-*)
-                        port_range="$decoded_port"
-                        port_val=""
-                        ;;
-                    *)
-                        port_val="$decoded_port"
-                        port_range=""
-                        ;;
-                esac
+        multiplexing) multiplexing="$v" ;;
+        handshake-mode) handshake_mode="$v" ;;
+        traffic-pattern) traffic_pattern="$(url_decode "$v")" ;;
+        port)
+            local decoded_port
+            decoded_port="$(url_decode "$v")"
+            case "$decoded_port" in
+            *-*)
+                port_range="$decoded_port"
+                port_val=""
                 ;;
-            protocol)
-                local decoded_proto
-                decoded_proto="$(url_decode "$v")"
-                transport=$(printf '%s' "$decoded_proto" | tr '[:upper:]' '[:lower:]')
+            *)
+                port_val="$decoded_port"
+                port_range=""
                 ;;
+            esac
+            ;;
+        protocol)
+            local decoded_proto
+            decoded_proto="$(url_decode "$v")"
+            transport=$(printf '%s' "$decoded_proto" | tr '[:upper:]' '[:lower:]')
+            ;;
         esac
     done
 

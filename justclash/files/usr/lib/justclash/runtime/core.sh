@@ -12,7 +12,7 @@ core_validate_yaml() {
     app_exit_code=$?
 
     case "$test_output" in
-        *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
+    *[Tt]est\ failed* | *[Ee]rror*) app_exit_code=1 ;;
     esac
 
     if [ "$app_exit_code" -ne 0 ]; then
@@ -43,23 +43,23 @@ detect_arch() {
     local arch_raw="$1"
 
     case "$arch_raw" in
-        aarch64_*) echo "arm64" ;;
-        mips_*)
-            [ "${arch_raw#*hardfloat}" != "$arch_raw" ] && echo "mips-hardfloat" || echo "mips-softfloat"
-            ;;
-        mipsel_*)
-            [ "${arch_raw#*hardfloat}" != "$arch_raw" ] && echo "mipsle-hardfloat" || echo "mipsle-softfloat"
-            ;;
-        mips64_*) echo "mips64" ;;
-        mips64el_*) echo "mips64le" ;;
-        x86_64) echo "amd64" ;;
-        i386_*) echo "386" ;;
-        riscv64_*) echo "riscv64" ;;
-        loongarch64_*) echo "loong64-abi2" ;;
-        *_neon-vfp*) echo "armv7" ;;
-        *_neon* | *_vfp*) echo "armv6" ;;
-        arm_*) echo "armv5" ;;
-        *) echo "amd64" ;;
+    aarch64_*) echo "arm64" ;;
+    mips_*)
+        [ "${arch_raw#*hardfloat}" != "$arch_raw" ] && echo "mips-hardfloat" || echo "mips-softfloat"
+        ;;
+    mipsel_*)
+        [ "${arch_raw#*hardfloat}" != "$arch_raw" ] && echo "mipsle-hardfloat" || echo "mipsle-softfloat"
+        ;;
+    mips64_*) echo "mips64" ;;
+    mips64el_*) echo "mips64le" ;;
+    x86_64) echo "amd64" ;;
+    i386_*) echo "386" ;;
+    riscv64_*) echo "riscv64" ;;
+    loongarch64_*) echo "loong64-abi2" ;;
+    *_neon-vfp*) echo "armv7" ;;
+    *_neon* | *_vfp*) echo "armv6" ;;
+    arm_*) echo "armv5" ;;
+    *) echo "amd64" ;;
     esac
 }
 

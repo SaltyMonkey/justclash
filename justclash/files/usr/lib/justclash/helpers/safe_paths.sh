@@ -7,11 +7,11 @@ safe_paths_add() {
     [ -n "$1" ] || return
 
     case ":$SAFE_PATHS:" in
-        *":$1:"*) ;;
-        *)
-            SAFE_PATHS="${SAFE_PATHS:+$SAFE_PATHS:}$1"
-            export SAFE_PATHS
-            ;;
+    *":$1:"*) ;;
+    *)
+        SAFE_PATHS="${SAFE_PATHS:+$SAFE_PATHS:}$1"
+        export SAFE_PATHS
+        ;;
     esac
 }
 

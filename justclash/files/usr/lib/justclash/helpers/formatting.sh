@@ -5,8 +5,8 @@
 
 format_uci_bool_as_yaml() {
     case "$1" in
-        1|yes|on|true) echo "true" ;;
-        *) echo "false" ;;
+    1 | yes | on | true) echo "true" ;;
+    *) echo "false" ;;
     esac
 }
 

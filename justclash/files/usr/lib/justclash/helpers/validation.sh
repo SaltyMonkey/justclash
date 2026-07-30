@@ -9,11 +9,20 @@ parse_routing_mark() {
     [ -z "$val" ] && return 0
 
     case "$val" in
-        0[xX]*[!0-9a-fA-F]*) echo "-1"; return 0 ;;
-        0[xX]) echo "-1"; return 0 ;;
-        0[xX]*) ;;
-        *[!0-9]*) echo "-1"; return 0 ;;
-        *) ;;
+    0[xX]*[!0-9a-fA-F]*)
+        echo "-1"
+        return 0
+        ;;
+    0[xX])
+        echo "-1"
+        return 0
+        ;;
+    0[xX]*) ;;
+    *[!0-9]*)
+        echo "-1"
+        return 0
+        ;;
+    *) ;;
     esac
 
     local dec_val
@@ -37,8 +46,8 @@ parse_routing_mark() {
 
 parse_ip_version() {
     case "$1" in
-        dual|ipv4|ipv6|ipv4-prefer|ipv6-prefer) printf '%s' "$1" ;;
-        *) printf 'dual' ;;
+    dual | ipv4 | ipv6 | ipv4-prefer | ipv6-prefer) printf '%s' "$1" ;;
+    *) printf 'dual' ;;
     esac
 }
 
@@ -53,10 +62,10 @@ validate_cron_expr() {
 
     for field in "$@"; do
         case "$field" in
-            ''|*[!0-9*/,-]*)
-                return 1
-                ;;
-            *) ;;
+        '' | *[!0-9*/,-]*)
+            return 1
+            ;;
+        *) ;;
         esac
     done
 
@@ -65,8 +74,8 @@ validate_cron_expr() {
 
 is_uint() {
     case "$1" in
-        ''|*[!0-9]*) return 1 ;;
-        *) return 0 ;;
+    '' | *[!0-9]*) return 1 ;;
+    *) return 0 ;;
     esac
 }
 
@@ -76,8 +85,8 @@ is_port() {
 
 is_ifname() {
     case "$1" in
-        ''|*[!A-Za-z0-9_.:-]*) return 1 ;;
-        *) return 0 ;;
+    '' | *[!A-Za-z0-9_.:-]*) return 1 ;;
+    *) return 0 ;;
     esac
 }
 

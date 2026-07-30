@@ -20,13 +20,13 @@ make_pot() {
 
     echo "Generating POT template from JS files in $SRC_DIR"
     xgettext --language=JavaScript \
-            --keyword=_ \
-            --from-code="$ENCODING" \
-            --output="$OUT_POT" \
-            --width="$WIDTH" \
-            --no-wrap \
-            --package-name="$PROGNAME" \
-            "${FILES[@]}"
+        --keyword=_ \
+        --from-code="$ENCODING" \
+        --output="$OUT_POT" \
+        --width="$WIDTH" \
+        --no-wrap \
+        --package-name="$PROGNAME" \
+        "${FILES[@]}"
     echo "POT template generated: $OUT_POT"
 }
 

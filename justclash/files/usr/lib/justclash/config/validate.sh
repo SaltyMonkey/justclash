@@ -11,11 +11,11 @@ config_validate_bool() {
     local option="$2"
 
     case "$value" in
-        0|1) return 0 ;;
-        *)
-            config_validation_error "$option must be 0 or 1"
-            return 1
-            ;;
+    0 | 1) return 0 ;;
+    *)
+        config_validation_error "$option must be 0 or 1"
+        return 1
+        ;;
     esac
 }
 
@@ -68,11 +68,11 @@ config_validate_absolute_path() {
     local option="$2"
 
     case "$value" in
-        /*) return 0 ;;
-        *)
-            config_validation_error "$option must be an absolute path"
-            return 1
-            ;;
+    /*) return 0 ;;
+    *)
+        config_validation_error "$option must be an absolute path"
+        return 1
+        ;;
     esac
 }
 

@@ -47,46 +47,48 @@ parse_trojan_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-            sni) sni="$(url_decode "$v")" ;;
-            insecure|allowInsecure|skip-cert-verify|skipCertVerify) is_truthy "$v" && insecure=1 ;;
-            type)
-                if [ "$v" = "httpupgrade" ]; then
-                    net="ws"
-                    httpupgrade=1
-                else
-                    net="$v"
-                fi ;;
-            security) security="$v" ;;
-            pbk|public-key) pbk="$v" ;;
-            sid|short-id) sid="$v" ;;
-            spx) spx="$(url_decode "$v")" ;;
-            flow) flow="$v" ;;
-            pinSHA256|fingerprint) pin_sha256="$(url_decode "$v")" ;;
-            name-cert-verify|nameCertVerify|peer) name_cert_verify="$(url_decode "$v")" ;;
-            shadow-tls-password|shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
-            shadow-tls-version|shadowTlsVersion) shadow_tls_version="$v" ;;
-            restls-password|restlsPassword) restls_password="$(url_decode "$v")" ;;
-            restls-version-hint|restlsVersionHint|restlsVersion) restls_version_hint="$v" ;;
-            restls-script|restlsScript) restls_script="$(url_decode "$v")" ;;
-            jls-username|jlsUsername|jlsUser) jls_username="$(url_decode "$v")" ;;
-            jls-password|jlsPassword) jls_password="$(url_decode "$v")" ;;
-            support-x25519mlkem768|x25519mlkem768|support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
-            ech) ech="$(url_decode "$v")" ;;
-            fp|client-fingerprint|clientFingerprint) fp="$v" ;;
-            alpn) alpn="$(url_decode "$v")" ;;
-            path)
-                if [ -n "$v" ]; then
-                    ws_path="$(url_decode "$v")"
-                else
-                    ws_path="/"
-                fi ;;
-            host) ws_host="$(url_decode "$v")" ;;
-            serviceName|service-name) grpc_service="$(url_decode "$v")" ;;
-            grpc-user-agent|grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
-            ping-interval|pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
-            ss) ss_enabled="$v" ;;
-            ss-method) ss_method="$v" ;;
-            ss-password) ss_password="$v" ;;
+        sni) sni="$(url_decode "$v")" ;;
+        insecure | allowInsecure | skip-cert-verify | skipCertVerify) is_truthy "$v" && insecure=1 ;;
+        type)
+            if [ "$v" = "httpupgrade" ]; then
+                net="ws"
+                httpupgrade=1
+            else
+                net="$v"
+            fi
+            ;;
+        security) security="$v" ;;
+        pbk | public-key) pbk="$v" ;;
+        sid | short-id) sid="$v" ;;
+        spx) spx="$(url_decode "$v")" ;;
+        flow) flow="$v" ;;
+        pinSHA256 | fingerprint) pin_sha256="$(url_decode "$v")" ;;
+        name-cert-verify | nameCertVerify | peer) name_cert_verify="$(url_decode "$v")" ;;
+        shadow-tls-password | shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
+        shadow-tls-version | shadowTlsVersion) shadow_tls_version="$v" ;;
+        restls-password | restlsPassword) restls_password="$(url_decode "$v")" ;;
+        restls-version-hint | restlsVersionHint | restlsVersion) restls_version_hint="$v" ;;
+        restls-script | restlsScript) restls_script="$(url_decode "$v")" ;;
+        jls-username | jlsUsername | jlsUser) jls_username="$(url_decode "$v")" ;;
+        jls-password | jlsPassword) jls_password="$(url_decode "$v")" ;;
+        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
+        ech) ech="$(url_decode "$v")" ;;
+        fp | client-fingerprint | clientFingerprint) fp="$v" ;;
+        alpn) alpn="$(url_decode "$v")" ;;
+        path)
+            if [ -n "$v" ]; then
+                ws_path="$(url_decode "$v")"
+            else
+                ws_path="/"
+            fi
+            ;;
+        host) ws_host="$(url_decode "$v")" ;;
+        serviceName | service-name) grpc_service="$(url_decode "$v")" ;;
+        grpc-user-agent | grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
+        ping-interval | pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
+        ss) ss_enabled="$v" ;;
+        ss-method) ss_method="$v" ;;
+        ss-password) ss_password="$v" ;;
         esac
     done
 
@@ -215,6 +217,6 @@ parse_trojan_url() {
                 else {} end)
         '
     ) || return 1
- 
+
     printf '%s' "$proxy_obj"
 }
