@@ -19,8 +19,21 @@ const unique = (items) => {
     });
 };
 
-const normalizeNodesState = (response) => {
-    const proxies = response && typeof response.proxies === "object" ? response.proxies : {};
+const normalizeNodesState = (response, rawProvidersResponse) => {
+    const rawProxies = response && typeof response.proxies === "object" ? response.proxies : {};
+    const proxies = Object.assign({}, rawProxies);
+
+    if (rawProvidersResponse && typeof rawProvidersResponse.providers === "object") {
+        for (const provider of Object.values(rawProvidersResponse.providers)) {
+            if (provider && Array.isArray(provider.proxies)) {
+                for (const proxy of provider.proxies) {
+                    if (proxy && proxy.name && !proxies[proxy.name])
+                        proxies[proxy.name] = proxy;
+                }
+            }
+        }
+    }
+
     const groups = [];
 
     for (const [name, item] of Object.entries(proxies)) {

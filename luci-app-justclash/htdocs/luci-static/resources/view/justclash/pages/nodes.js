@@ -30,7 +30,7 @@ return view.extend({
                 mihomoApi.fetchConfigs(token),
                 mihomoApi.fetchProxyProviders(token)
             ]);
-            const nodesState = nodesModel.normalizeNodesState(proxies);
+            const nodesState = nodesModel.normalizeNodesState(proxies, proxyProviders);
 
             return {
                 token,
@@ -50,7 +50,7 @@ return view.extend({
             return {
                 token,
                 mode: "rule",
-                nodesState: nodesModel.normalizeNodesState(null),
+                nodesState: nodesModel.normalizeNodesState(null, null),
                 providersState: nodesModel.normalizeProvidersState(null),
                 configLoadFailed,
                 fetchFailed: true,
@@ -476,7 +476,7 @@ return view.extend({
                 mihomoApi.fetchConfigs(state.token),
                 mihomoApi.fetchProxyProviders(state.token)
             ]);
-            const nodesState = nodesModel.normalizeNodesState(proxies);
+            const nodesState = nodesModel.normalizeNodesState(proxies, proxyProviders);
 
             state.nodesState = nodesState;
             state.providersState = nodesModel.normalizeProvidersState(proxyProviders);
