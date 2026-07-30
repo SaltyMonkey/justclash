@@ -221,31 +221,31 @@ start() {
     workdir_status=$?
 
     case "$workdir_status" in
-        0)
-            log info "Validating cached YAML configuration..."
-            core_validate_yaml \
-                "$CORE_PATH" \
-                "$CORE_WORKDIR_PATH" \
-                "$OUTPUT_YAML_CONFIG_PATH" || {
-                log error "Configuration validation failed. Aborting startup."
-                return 1
-            }
-            ;;
-        1)
-            log info "Generating YAML configuration..."
-            core_generate_yaml || {
-                log error "YAML configuration generation failed. Aborting startup."
-                return 1
-            }
-            workdir_cache_commit "$current_config_hash" "$CORE_WORKDIR_UCI_HASH_PATH" || {
-                log error "Failed to commit the generated configuration cache."
-                return 1
-            }
-            ;;
-        *)
-            log error "Working directory preparation failed. Aborting startup."
+    0)
+        log info "Validating cached YAML configuration..."
+        core_validate_yaml \
+            "$CORE_PATH" \
+            "$CORE_WORKDIR_PATH" \
+            "$OUTPUT_YAML_CONFIG_PATH" || {
+            log error "Configuration validation failed. Aborting startup."
             return 1
-            ;;
+        }
+        ;;
+    1)
+        log info "Generating YAML configuration..."
+        core_generate_yaml || {
+            log error "YAML configuration generation failed. Aborting startup."
+            return 1
+        }
+        workdir_cache_commit "$current_config_hash" "$CORE_WORKDIR_UCI_HASH_PATH" || {
+            log error "Failed to commit the generated configuration cache."
+            return 1
+        }
+        ;;
+    *)
+        log error "Working directory preparation failed. Aborting startup."
+        return 1
+        ;;
     esac
 
     log info "Configuring tproxy routing and creating NFTables table"
@@ -440,14 +440,23 @@ run_nftables_apply() {
         fi
 
         case "$proxy_routing_marks" in
-            *-1*) config_validation_error "proxies.routing_mark contains an invalid or reserved mark"; validation_failed=1 ;;
+        *-1*)
+            config_validation_error "proxies.routing_mark contains an invalid or reserved mark"
+            validation_failed=1
+            ;;
         esac
         case "$provider_routing_marks" in
-            *-1*) config_validation_error "proxy_provider.override_routing_mark contains an invalid or reserved mark"; validation_failed=1 ;;
+        *-1*)
+            config_validation_error "proxy_provider.override_routing_mark contains an invalid or reserved mark"
+            validation_failed=1
+            ;;
         esac
 
         if [ "$nft_apply_changes" = "1" ]; then
-            [ -n "$fake_ip_range" ] || { config_validation_error "proxy.fake_ip_range is required"; validation_failed=1; }
+            [ -n "$fake_ip_range" ] || {
+                config_validation_error "proxy.fake_ip_range is required"
+                validation_failed=1
+            }
             if [ "$ipv6_enabled" = "1" ] && [ -z "$fake_ip_range6" ]; then
                 config_validation_error "proxy.fake_ip_range6 is required when IPv6 is enabled"
                 validation_failed=1
@@ -618,19 +627,34 @@ config_proxy_read() {
     local list_update_interval size_limit mode proxy_link_object use_for_update ip_version
     local src_routes enabled_list domain_routes geosite_list destip_routes geoip_list
     config_get name "$section" name
-    [ -n "$name" ] || { log warn "Skip proxy without name: $section"; return; }
+    [ -n "$name" ] || {
+        log warn "Skip proxy without name: $section"
+        return
+    }
     config_get_bool enabled "$section" enabled 1
-    [ "$enabled" -eq 1 ] || { log warn "Skip disabled proxy: $section"; return; }
+    [ "$enabled" -eq 1 ] || {
+        log warn "Skip disabled proxy: $section"
+        return
+    }
     config_get routing_mark "$section" routing_mark
     routing_mark=$(parse_routing_mark "$routing_mark" "$reserved_marks")
-    [ "$routing_mark" != -1 ] || { log warn "Skip proxy '$section' due to invalid routing mark"; return; }
+    [ "$routing_mark" != -1 ] || {
+        log warn "Skip proxy '$section' due to invalid routing mark"
+        return
+    }
     config_get proxy_link_uri "$section" proxy_link_uri
     config_get dialer_proxy "$section" dialer_proxy
     config_get interface_name "$section" interface_name
     config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
-    is_uint "$list_update_interval" || { log warn "Invalid list update interval for proxy '$name'; using default"; list_update_interval="$DEFAULT_RULESET_INTERVAL"; }
+    is_uint "$list_update_interval" || {
+        log warn "Invalid list update interval for proxy '$name'; using default"
+        list_update_interval="$DEFAULT_RULESET_INTERVAL"
+    }
     config_get size_limit "$section" size_limit 0
-    is_uint "$size_limit" || { log warn "Invalid size limit for proxy '$name'; using zero"; size_limit=0; }
+    is_uint "$size_limit" || {
+        log warn "Invalid size limit for proxy '$name'; using zero"
+        size_limit=0
+    }
     config_get mode "$section" mode uri
     config_get proxy_link_object "$section" proxy_link_object
     config_get_bool use_for_update "$section" use_proxy_for_list_update 0
@@ -651,25 +675,49 @@ config_proxy_group_read() {
     local interval timeout max_failed lazy tolerance selected filter exclude_filter exclude_type
     local enabled_list update_interval size_limit use_for_update src_routes domain_routes geosite_list destip_routes geoip_list
     config_get name "$section" name
-    [ -n "$name" ] || { log warn "Skip proxy group without a name: $section"; return; }
+    [ -n "$name" ] || {
+        log warn "Skip proxy group without a name: $section"
+        return
+    }
     config_get_bool enabled "$section" enabled 1
-    [ "$enabled" -eq 1 ] || { log warn "Skip disabled proxy group: $section"; return; }
-    config_get proxies "$section" proxies; config_get providers "$section" providers
-    [ -n "$proxies" ] || [ -n "$providers" ] || { log warn "Skip empty proxy group: $name"; return; }
-    config_get group_type "$section" group_type; config_get strategy "$section" strategy
+    [ "$enabled" -eq 1 ] || {
+        log warn "Skip disabled proxy group: $section"
+        return
+    }
+    config_get proxies "$section" proxies
+    config_get providers "$section" providers
+    [ -n "$proxies" ] || [ -n "$providers" ] || {
+        log warn "Skip empty proxy group: $name"
+        return
+    }
+    config_get group_type "$section" group_type
+    config_get strategy "$section" strategy
     config_get check_url "$section" check_url "$DEFAULT_HEALTHCHECK_URL"
-    config_get expected_status "$section" expected_status "$DEFAULT_HEALTHCHECK_RESULT"; is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
-    config_get interval "$section" interval "$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"; is_uint "$interval" || interval="$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
-    config_get timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"; is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
-    config_get max_failed "$section" max_failed_times "$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"; is_uint "$max_failed" || max_failed="$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
-    config_get lazy "$section" lazy 0; config_get tolerance "$section" tolerance; config_get selected "$section" default_selected
-    config_get filter "$section" filter; config_get exclude_filter "$section" exclude_filter; config_get exclude_type "$section" exclude_type
+    config_get expected_status "$section" expected_status "$DEFAULT_HEALTHCHECK_RESULT"
+    is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
+    config_get interval "$section" interval "$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
+    is_uint "$interval" || interval="$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
+    config_get timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
+    is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
+    config_get max_failed "$section" max_failed_times "$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
+    is_uint "$max_failed" || max_failed="$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
+    config_get lazy "$section" lazy 0
+    config_get tolerance "$section" tolerance
+    config_get selected "$section" default_selected
+    config_get filter "$section" filter
+    config_get exclude_filter "$section" exclude_filter
+    config_get exclude_type "$section" exclude_type
     config_get enabled_list "$section" enabled_list
-    config_get update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"; is_uint "$update_interval" || update_interval="$DEFAULT_RULESET_INTERVAL"
-    config_get size_limit "$section" size_limit 0; is_uint "$size_limit" || size_limit=0
+    config_get update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
+    is_uint "$update_interval" || update_interval="$DEFAULT_RULESET_INTERVAL"
+    config_get size_limit "$section" size_limit 0
+    is_uint "$size_limit" || size_limit=0
     config_get_bool use_for_update "$section" use_proxy_group_for_list_update 0
-    config_get src_routes "$section" additional_srcip_route; config_get domain_routes "$section" additional_domain_route
-    config_get geosite_list "$section" enabled_geosite_list; config_get destip_routes "$section" additional_destip_route; config_get geoip_list "$section" enabled_geoip_list
+    config_get src_routes "$section" additional_srcip_route
+    config_get domain_routes "$section" additional_domain_route
+    config_get geosite_list "$section" enabled_geosite_list
+    config_get destip_routes "$section" additional_destip_route
+    config_get geoip_list "$section" enabled_geoip_list
     "$callback" "$name" "$proxies" "$providers" "$group_type" "$strategy" "$check_url" "$expected_status" "$interval" "$timeout" "$max_failed" "$lazy" "$tolerance" "$selected" "$filter" "$exclude_filter" "$exclude_type" "$enabled_list" "$update_interval" "$size_limit" "$use_for_update" "$src_routes" "$domain_routes" "$geosite_list" "$destip_routes" "$geoip_list"
 }
 
@@ -678,25 +726,49 @@ config_proxy_provider_read() {
     local name enabled subscription routing_mark ip_version interval size_limit
     local filter exclude_filter exclude_type proxy dialer interface_name auth hwid hwid_custom user_agent private_key public_key
     local health_check expected_status check_url check_interval timeout lazy
-    config_get name "$section" name; config_get subscription "$section" subscription
-    [ -n "$name" ] && [ -n "$subscription" ] || { log warn "Skip proxy provider without a name or subscription"; return; }
+    config_get name "$section" name
+    config_get subscription "$section" subscription
+    [ -n "$name" ] && [ -n "$subscription" ] || {
+        log warn "Skip proxy provider without a name or subscription"
+        return
+    }
     config_get_bool enabled "$section" enabled 1
-    [ "$enabled" -eq 1 ] || { log warn "Skip disabled proxy provider: $section"; return; }
+    [ "$enabled" -eq 1 ] || {
+        log warn "Skip disabled proxy provider: $section"
+        return
+    }
     config_get routing_mark "$section" override_routing_mark
     routing_mark=$(parse_routing_mark "$routing_mark" "$reserved_marks")
-    [ "$routing_mark" != -1 ] || { log warn "Skip proxy provider '$section' due to invalid routing mark"; return; }
-    config_get ip_version "$section" override_ip_version dual; ip_version=$(parse_ip_version "$ip_version")
-    config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"; is_uint "$interval" || interval="$DEFAULT_PROVIDERUPDATE_INTERVAL"
-    config_get size_limit "$section" size_limit 0; is_uint "$size_limit" || size_limit=0
-    config_get filter "$section" filter; config_get exclude_filter "$section" exclude_filter; config_get exclude_type "$section" exclude_type
-    config_get proxy "$section" proxy "$DEFAULT_PROXY"; config_get dialer "$section" override_dialer_proxy; config_get interface_name "$section" override_interface_name
-    config_get auth "$section" header_authorization; config_get hwid "$section" header_hwid; config_get hwid_custom "$section" header_hwid_custom
-    config_get user_agent "$section" header_user_agent; config_get private_key "$section" age_private_key; config_get public_key "$section" header_age_public_key
+    [ "$routing_mark" != -1 ] || {
+        log warn "Skip proxy provider '$section' due to invalid routing mark"
+        return
+    }
+    config_get ip_version "$section" override_ip_version dual
+    ip_version=$(parse_ip_version "$ip_version")
+    config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
+    is_uint "$interval" || interval="$DEFAULT_PROVIDERUPDATE_INTERVAL"
+    config_get size_limit "$section" size_limit 0
+    is_uint "$size_limit" || size_limit=0
+    config_get filter "$section" filter
+    config_get exclude_filter "$section" exclude_filter
+    config_get exclude_type "$section" exclude_type
+    config_get proxy "$section" proxy "$DEFAULT_PROXY"
+    config_get dialer "$section" override_dialer_proxy
+    config_get interface_name "$section" override_interface_name
+    config_get auth "$section" header_authorization
+    config_get hwid "$section" header_hwid
+    config_get hwid_custom "$section" header_hwid_custom
+    config_get user_agent "$section" header_user_agent
+    config_get private_key "$section" age_private_key
+    config_get public_key "$section" header_age_public_key
     config_get_bool health_check "$section" health_check 0
-    config_get expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"; is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
+    config_get expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
+    is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
     config_get check_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
-    config_get check_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"; is_uint "$check_interval" || check_interval="$DEFAULT_HEALTHCHECK_INTERVAL"
-    config_get timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"; is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
+    config_get check_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
+    is_uint "$check_interval" || check_interval="$DEFAULT_HEALTHCHECK_INTERVAL"
+    config_get timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
+    is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
     config_get lazy "$section" health_check_lazy 0
     "$callback" "$name" "$subscription" "$routing_mark" "$ip_version" "$interval" "$size_limit" "$filter" "$exclude_filter" "$exclude_type" "$proxy" "$dialer" "$interface_name" "$auth" "$hwid" "$hwid_custom" "$user_agent" "$private_key" "$public_key" "$health_check" "$expected_status" "$check_url" "$check_interval" "$timeout" "$lazy"
 }
@@ -760,9 +832,9 @@ core_generate_yaml() {
     config_get use_dashboard proxy use_dashboard 0
     config_get dashboard_repo proxy dashboard_repo "$DEFAULT_EXTERNAL_PANEL"
     case "$dashboard_repo" in
-        yacd-meta) config_get dashboard_url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL" ;;
-        zashboard) config_get dashboard_url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL" ;;
-        *) config_get dashboard_url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL" ;;
+    yacd-meta) config_get dashboard_url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL" ;;
+    zashboard) config_get dashboard_url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL" ;;
+    *) config_get dashboard_url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL" ;;
     esac
     config_get api_password proxy api_password
     config_get log_level proxy log_level
@@ -804,17 +876,28 @@ core_generate_yaml() {
     config_get geosite_url settings mihomo_geosite_url "$DEFAULT_GEOSITE_URL"
     config_get geoip_url settings mihomo_geoip_url "$DEFAULT_GEOIP_URL"
 
-    config_load_list proxy default_nameserver; default_nameserver="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy direct_nameserver; direct_nameserver="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy proxy_server_nameserver; proxy_server_nameserver="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy nameserver; nameserver="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy hosts; hosts="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy nameserver_policy; nameserver_policy="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy sniffer_force_domain; sniffer_force_domain="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy sniffer_exclude_domain; sniffer_exclude_domain="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy sniffer_skip_src_address; sniffer_skip_src_address="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy sniffer_skip_dst_address; sniffer_skip_dst_address="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy proxy_authentication; proxy_authentication="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy default_nameserver
+    default_nameserver="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy direct_nameserver
+    direct_nameserver="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy proxy_server_nameserver
+    proxy_server_nameserver="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy nameserver
+    nameserver="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy hosts
+    hosts="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy nameserver_policy
+    nameserver_policy="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy sniffer_force_domain
+    sniffer_force_domain="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy sniffer_exclude_domain
+    sniffer_exclude_domain="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy sniffer_skip_src_address
+    sniffer_skip_src_address="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy sniffer_skip_dst_address
+    sniffer_skip_dst_address="$JC_CONFIG_LIST_VALUE"
+    config_load_list proxy proxy_authentication
+    proxy_authentication="$JC_CONFIG_LIST_VALUE"
 
     config_get block_enabled block_rules enabled 1
     config_get block_enabled_list block_rules enabled_blocklist
@@ -871,8 +954,14 @@ core_generate_yaml() {
         validation_failed=1
     fi
     if [ "$geodata_autoupdate" = 1 ]; then
-        [ -n "$geosite_url" ] || { config_validation_error "settings.mihomo_geosite_url is required when geodata autoupdate is enabled"; validation_failed=1; }
-        [ -n "$geoip_url" ] || { config_validation_error "settings.mihomo_geoip_url is required when geodata autoupdate is enabled"; validation_failed=1; }
+        [ -n "$geosite_url" ] || {
+            config_validation_error "settings.mihomo_geosite_url is required when geodata autoupdate is enabled"
+            validation_failed=1
+        }
+        [ -n "$geoip_url" ] || {
+            config_validation_error "settings.mihomo_geoip_url is required when geodata autoupdate is enabled"
+            validation_failed=1
+        }
     fi
 
     if [ "$validation_failed" -ne 0 ]; then
@@ -1214,7 +1303,10 @@ service_data_update() {
     config_get base_url settings mihomo_rulesets_files_download_url "$DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL"
 
     # Validate before applying any changes.
-    [ -n "$base_url" ] || { config_validation_error "settings.mihomo_rulesets_files_download_url is required"; validation_failed=1; }
+    [ -n "$base_url" ] || {
+        config_validation_error "settings.mihomo_rulesets_files_download_url is required"
+        validation_failed=1
+    }
 
     if [ "$validation_failed" -ne 0 ]; then
         return 1
@@ -1295,10 +1387,19 @@ core_update() {
     fi
 
     if [ "$source_type" = custom ]; then
-        [ -n "$custom_url" ] || { config_validation_error "settings.mihomo_custom_core_url is required for custom core source"; validation_failed=1; }
+        [ -n "$custom_url" ] || {
+            config_validation_error "settings.mihomo_custom_core_url is required for custom core source"
+            validation_failed=1
+        }
     else
-        [ -n "$channel" ] || { config_validation_error "settings.mihomo_github_channel is required for GitHub core source"; validation_failed=1; }
-        [ -n "$repository" ] || { config_validation_error "settings.mihomo_github_repo is required for GitHub core source"; validation_failed=1; }
+        [ -n "$channel" ] || {
+            config_validation_error "settings.mihomo_github_channel is required for GitHub core source"
+            validation_failed=1
+        }
+        [ -n "$repository" ] || {
+            config_validation_error "settings.mihomo_github_repo is required for GitHub core source"
+            validation_failed=1
+        }
     fi
 
     if [ "$validation_failed" -ne 0 ]; then
@@ -1562,6 +1663,58 @@ diag_report() {
     echo ""
 }
 
+diag_report_redacted() {
+    local running_status autoload_status
+
+    service "$PROGNAME" running && running_status="active" || running_status="inactive"
+    service "$PROGNAME" enabled && autoload_status="enabled" || autoload_status="disabled"
+
+    diag_redacted_check() {
+        local label="$1"
+
+        shift
+        if "$@" >/dev/null 2>&1; then
+            printf "  %-24s :: OK\n" "$label"
+        else
+            printf "  %-24s :: Failed\n" "$label"
+        fi
+    }
+
+    echo ""
+    echo "-- JustClash Redacted Diagnostic Report ------------------------"
+    echo ""
+    echo "  [ Versions ]"
+    printf "  %-24s :: %s\n" "Service" "$JUSTCLASH_VERSION"
+    printf "  %-24s :: %s\n" "Mihomo" "$(info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
+    echo ""
+    echo "  [ Service Status ]"
+    printf "  %-24s :: %s\n" "Active" "$running_status"
+    printf "  %-24s :: %s\n" "Autoload" "$autoload_status"
+    echo ""
+    echo "  [ Connectivity ]"
+    diag_redacted_check "ICMP check 1" \
+        diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2 2
+    diag_redacted_check "ICMP check 2" \
+        diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2 2
+    diag_redacted_check "Proxy DNS resolve" \
+        run_diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX"
+    diag_redacted_check "External DNS resolve" \
+        diag_external_resolver \
+        "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" \
+        "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" \
+        "$NSLOOKUP_TIMEOUT"
+    echo ""
+    echo "  [ Runtime ]"
+    diag_redacted_check "NFT state" diag_nft "$NF_TABLE_NAME"
+    diag_redacted_check "Policy routes" run_diag_route
+    echo ""
+    echo "  Configuration, addresses, domains, identifiers and raw network"
+    echo "  state are intentionally omitted from this report."
+    echo ""
+    echo "----------------------------------------------------------------"
+    echo ""
+}
+
 case "$1" in
 start | run | up | u)
     import \
@@ -1687,6 +1840,18 @@ diag_report | diag | dg)
     config_init "$PROGNAME"
     diag_report
     ;;
+diag_redacted | dgr)
+    import \
+        /lib/functions.sh \
+        /lib/config/uci.sh \
+        /usr/lib/justclash/logging.sh \
+        /usr/lib/justclash/helpers.sh \
+        /usr/lib/justclash/config.sh \
+        /usr/lib/justclash/runtime/core.sh \
+        /usr/lib/justclash/runtime/diagnostics.sh
+    config_init "$PROGNAME"
+    diag_report_redacted
+    ;;
 diag_proxy_resolver | dpr)
     import \
         /lib/functions.sh \
@@ -1722,9 +1887,9 @@ diag_service_config_unsafe | dscu)
     import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
     diag_service_config_unsafe "$CONFIG_PATH"
     ;;
-diag_service_config_reset | dscr)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_service_config_reset "$DEFAULT_CONFIG_PATH" "$CONFIG_PATH" "$CONFIG_BAK_PATH"
+config_reset | cfr | diag_service_config_reset | dscr)
+    import /usr/lib/justclash/logging.sh /usr/lib/justclash/config.sh
+    config_reset "$DEFAULT_CONFIG_PATH" "$CONFIG_PATH" "$CONFIG_BAK_PATH"
     ;;
 show_hwid | hwid)
     import /usr/lib/justclash/helpers.sh
