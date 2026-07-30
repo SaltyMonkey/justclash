@@ -37,10 +37,10 @@ const createPoller = ({ token, isMounted, onUpdate, onInactive, interval = POLL_
                 return false;
             }
 
-            const [isRunning, isAutostarting] = await Promise.all([
-                ubusApi.isServiceRunning().catch(() => false),
-                ubusApi.isServiceAutoStartEnabled().catch(() => false)
-            ]);
+            const status = await ubusApi.getStatus()
+                .catch(() => ({ running: false, enabled: false }));
+            const isRunning = !!status.running;
+            const isAutostarting = !!status.enabled;
 
             let currentMode = "";
             if (isRunning) {

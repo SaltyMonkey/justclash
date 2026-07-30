@@ -1,7 +1,6 @@
 "use strict";
 "require ui";
 "require view";
-"require fs";
 "require uci";
 "require view.justclash.api.ubus as ubusApi";
 "require view.justclash.common as common";
@@ -17,13 +16,9 @@ const actions = statusActions.create({
 const buttonsIDs = {
     START: "button-start",
     RESTART: "button-restart",
-    ENABLE: "button-enable",
     DIAGNOSTIC: "button-diagnostic",
-    CONFIG_SHOW: "button-config-show",
-    CONFIG_SHOW_SECOND: "button-config-show-second",
     UPDATE: "button-core-update",
     UPDATE_RULESETS: "button-rulesets-update",
-    CONFIG_RESET: "button-config-reset",
     SERVICE_DATA_UPDATE: "button-service-data"
 };
 
@@ -33,9 +28,6 @@ const buttons = {
     NEUTRAL: "cbi-button-neutral",
     ACTION: "cbi-button-action"
 };
-
-const cleanStdout = (val) =>
-    val && val.stdout ? val.stdout.replace(/[\r\n]+/g, "").trim() : _("Error");
 
 const asyncTimeout = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -140,15 +132,6 @@ const updateStatusUI = (elements, isAutostarting, isRunning, currentMode) => {
             : _("Unknown");
     }
 
-    if (autostartChanged && elements.btnAutoToggle) {
-        const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
-        const text = elements.btnAutoToggle.querySelector(".jc-button-label");
-        if (text) text.textContent = label;
-        elements.btnAutoToggle.className = `cbi-button ${isAutostarting ? buttons.NEGATIVE : buttons.POSITIVE}`;
-        elements.btnAutoToggle.title = label;
-        elements.btnAutoToggle.setAttribute("aria-label", label);
-    }
-
     elements.lastRunning = isRunning;
     elements.lastAutostarting = isAutostarting;
 };
@@ -174,17 +157,16 @@ return view.extend({
             ])
             .catch(() => [_("Error"), _("Error")]);
 
-        const packagePromise = fs.exec(common.binPath, ["_luci_call"])
-            .then(data => cleanStdout(data).split(","))
-            .catch(() => [_("Error"), _("Error")]);
+        const statusPromise = ubusApi.getStatus()
+            .catch(() => ({
+                package_version: _("Error"),
+                core_version: _("Error"),
+                running: false,
+                enabled: false
+            }));
 
         const mihomoVersionPromise = mihomoApi.fetchVersion(apiToken)
             .catch(() => null);
-
-        const statusPromise = Promise.all([
-            ubusApi.isServiceRunning().catch(() => false),
-            ubusApi.isServiceAutoStartEnabled().catch(() => false)
-        ]);
 
         const mihomoModePromise = mihomoApi.fetchConfigs(apiToken)
             .then(configs => configs.mode || "")
@@ -192,19 +174,18 @@ return view.extend({
 
         const [
             [infoDevice, infoOpenWrt],
-            [infoPackage, fallbackCoreVersion],
+            serviceStatus,
             infoMihomoVersion,
-            [infoIsRunning, infoIsAutostarting],
             infoMode
-        ] = await Promise.all([boardPromise, packagePromise, mihomoVersionPromise, statusPromise, mihomoModePromise]);
+        ] = await Promise.all([boardPromise, statusPromise, mihomoVersionPromise, mihomoModePromise]);
 
         return {
             infoDevice,
             infoOpenWrt,
-            infoPackage,
-            infoCore: infoMihomoVersion || fallbackCoreVersion,
-            infoIsRunning,
-            infoIsAutostarting,
+            infoPackage: serviceStatus.package_version,
+            infoCore: infoMihomoVersion || serviceStatus.core_version,
+            infoIsRunning: !!serviceStatus.running,
+            infoIsAutostarting: !!serviceStatus.enabled,
             infoMode,
             apiToken
         };
@@ -258,12 +239,12 @@ return view.extend({
         const ramValue = E("span", {}, "0 B");
         const connValue = E("span", {}, "0");
         const modeValue = E("span", {}, _("Unknown"));
-        const actionHandler = (action, timeoutMs) => async () => {
+        const actionHandler = (task, timeoutMs) => async () => {
             if (actionInProgress) return;
             actionInProgress = true;
             ui.showModal(_("Running command..."), [E("p", _("Please wait."))]);
             try {
-                await fs.exec(common.initdPath, [action]);
+                await task();
                 if (timeoutMs) await asyncTimeout(timeoutMs);
                 await poller.refresh();
             } catch (e) {
@@ -277,17 +258,12 @@ return view.extend({
 
         const toggleHandler = async () => {
             const running = !!dynamicElements.currentRunning;
-            return actionHandler(running ? "stop" : "start", running ? 0 : ACTION_DELAY_TIMEOUT)();
-        };
-
-        const autoToggleHandler = async () => {
-            const enabled = !!dynamicElements.currentAutostarting;
-            return actionHandler(enabled ? "disable" : "enable")();
+            const task = running ? () => ubusApi.stop() : () => ubusApi.start();
+            return actionHandler(task, running ? 0 : ACTION_DELAY_TIMEOUT)();
         };
 
         const btnToggle = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), toggleHandler, "start");
-        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler("restart", ACTION_DELAY_TIMEOUT), "restart");
-        const btnAutoToggle = createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable on boot"), autoToggleHandler, "enable");
+        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler(() => ubusApi.restart(), ACTION_DELAY_TIMEOUT), "restart");
         Object.assign(dynamicElements, {
             serviceBadge,
             autoBadge,
@@ -300,16 +276,14 @@ return view.extend({
             ramValue,
             connValue,
             modeValue,
-            btnToggle,
-            btnAutoToggle
+            btnToggle
         });
 
         const statusGrid = createStatusGrid(results, dynamicElements);
         const serviceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 btnToggle,
-                btnRestart,
-                btnAutoToggle
+                btnRestart
             ])
         ]);
 
@@ -339,17 +313,17 @@ return view.extend({
 
         const serviceActionSection = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Service actions")),
-            E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
+            E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service.")),
             serviceActionContainer
         ]);
 
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showExec(_("Diagnostic report"), false, common.binPath, ["diag_report"]), "diagnostic"),
-                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmExec(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), common.binPath, ["core_update"], async () => {
-                    const res = await fs.exec(common.binPath, ["_luci_call"]);
-                    const [infoPackage, fallbackCoreVersion] = cleanStdout(res).split(",");
-                    let infoCore = fallbackCoreVersion;
+                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showRpc(_("Diagnostic report"), false, () => ubusApi.diagRedacted()), "diagnostic"),
+                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmRpc(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), () => ubusApi.updateCore(), async () => {
+                    const status = await ubusApi.getStatus();
+                    const infoPackage = status.package_version;
+                    let infoCore = status.core_version;
 
                     try {
                         infoCore = await mihomoApi.fetchVersion(results.apiToken);
@@ -362,7 +336,7 @@ return view.extend({
                         dynamicElements.coreValue.textContent = infoCore || _("Error");
                 }), "update"),
                 createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update active rulesets"), actions.showUpdateRulesets(results.apiToken), "update"),
-                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update built-in data"), actions.showConfirmExec(_("Update built-in data"), _("This action downloads and replaces built-in service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), common.binPath, ["service_data_update"]), "serviceData")
+                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update built-in data"), actions.showConfirmRpc(_("Update built-in data"), _("This action downloads and replaces built-in service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), () => ubusApi.updateRulesets()), "serviceData")
             ])
         ]);
 
@@ -372,19 +346,6 @@ return view.extend({
             maintenanceActionContainer
         ]);
 
-        const configActionContainer = E("div", { class: "jc-actions-wrap" }, [
-            E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.CONFIG_SHOW, buttons.POSITIVE, _("Show Mihomo config"), actions.showExec(_("Mihomo config"), false, common.binPath, ["diag_mihomo_config"]), "config"),
-                createActionButton(buttonsIDs.CONFIG_SHOW_SECOND, buttons.POSITIVE, _("Show service config"), actions.showExec(_("Service config"), false, common.binPath, ["diag_service_config"]), "config"),
-                createActionButton(buttonsIDs.CONFIG_RESET, buttons.NEGATIVE, _("Reset config"), actions.showConfirmExec(_("Reset configuration"), _("This will reset the JustClash configuration. Use with care."), common.binPath, ["diag_service_config_reset"]), "reset")
-            ])
-        ]);
-
-        const configActionSection = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Configuration")),
-            E("div", { class: "cbi-section-descr" }, _("Inspect the generated Mihomo or JustClash settings, or reset the configuration back to default values.")),
-            configActionContainer
-        ]);
 
         const style = E("style", {}, `
             .jc-status-text { font-weight:700; }
@@ -467,7 +428,6 @@ return view.extend({
                 statusContainer,
                 serviceActionSection,
                 maintenanceActionSection,
-                configActionSection
             ])
         ]);
     }

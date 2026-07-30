@@ -1,0 +1,124 @@
+#!/bin/sh
+# shellcheck disable=SC1091
+
+. /usr/share/libubox/jshn.sh
+
+emit_result() {
+    jc_result_code="$1"
+    jc_result_message="$2"
+
+    json_init
+    json_add_int code "$jc_result_code"
+    json_add_string stdout "$jc_result_message"
+    json_dump
+}
+
+emit_status() {
+    jc_status_running=0
+    jc_status_enabled=0
+
+    jc_status_package_version=$(/usr/bin/justclash.sh info_package 2>/dev/null)
+    jc_status_core_version=$(/usr/bin/justclash.sh info_core 2>/dev/null)
+
+    /etc/init.d/justclash running >/dev/null 2>&1 && jc_status_running=1
+    /etc/init.d/justclash enabled >/dev/null 2>&1 && jc_status_enabled=1
+
+    json_init
+    json_add_int code 0
+    json_add_string package_version "$jc_status_package_version"
+    json_add_string core_version "$jc_status_core_version"
+    json_add_boolean running "$jc_status_running"
+    json_add_boolean enabled "$jc_status_enabled"
+    json_dump
+}
+
+run_quiet() {
+    jc_run_success_message="$1"
+    jc_run_failure_message="$2"
+
+    shift 2
+    "$@" >/dev/null 2>&1
+    jc_run_code=$?
+
+    if [ "$jc_run_code" -eq 0 ]; then
+        emit_result 0 "$jc_run_success_message"
+    else
+        emit_result "$jc_run_code" "$jc_run_failure_message"
+    fi
+}
+
+run_redacted_diagnostics() {
+    jc_diag_output=$(/usr/bin/justclash.sh diag_redacted 2>/dev/null)
+    jc_diag_code=$?
+
+    if [ "$jc_diag_code" -eq 0 ]; then
+        emit_result 0 "$jc_diag_output"
+    else
+        emit_result "$jc_diag_code" "Redacted diagnostics failed."
+    fi
+}
+
+run_systemlogs() {
+    jc_logs_output=$(/usr/bin/justclash.sh systemlogs 2>/dev/null)
+    jc_logs_code=$?
+
+    if [ "$jc_logs_code" -eq 0 ]; then
+        emit_result 0 "$jc_logs_output"
+    else
+        emit_result "$jc_logs_code" "Failed to fetch system logs."
+    fi
+}
+
+case "$1" in
+list)
+    printf '%s\n' '{
+        "status": {},
+        "start": {},
+        "stop": {},
+        "restart": {},
+        "diag_redacted": {},
+        "systemlogs": {},
+        "update_core": {},
+        "update_rulesets": {}
+    }'
+    ;;
+call)
+    case "$2" in
+    status)
+        emit_status
+        ;;
+    start)
+        run_quiet "Service started." "Failed to start the service." \
+            /etc/init.d/justclash start
+        ;;
+    stop)
+        run_quiet "Service stopped." "Failed to stop the service." \
+            /etc/init.d/justclash stop
+        ;;
+    restart)
+        run_quiet "Service restarted." "Failed to restart the service." \
+            /etc/init.d/justclash restart
+        ;;
+    diag_redacted)
+        run_redacted_diagnostics
+        ;;
+    systemlogs)
+        run_systemlogs
+        ;;
+    update_core)
+        run_quiet "Core update completed." "Core update failed." \
+            /usr/bin/justclash.sh core_update
+        ;;
+    update_rulesets)
+        run_quiet "Rulesets update completed." "Rulesets update failed." \
+            /usr/bin/justclash.sh service_data_update
+        ;;
+    *)
+        exit 1
+        ;;
+    esac
+    ;;
+*)
+    exit 1
+    ;;
+esac

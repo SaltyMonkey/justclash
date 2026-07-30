@@ -3,12 +3,6 @@
         "description": "Grant UCI and RPC access to LuCI app justclash",
         "read": {
             "file": {
-                "/etc/init.d/justclash": [
-                    "exec"
-                ],
-                "/usr/bin/justclash.sh": [
-                    "exec"
-                ],
                 "/etc/justclash/rulesets.txt": [
                     "read"
                 ],
@@ -29,11 +23,10 @@
                 "system": [
                     "board"
                 ],
-                "service": [
-                    "list"
-                ],
-                "luci": [
-                    "getInitList"
+                "justclash": [
+                    "status",
+                    "diag_redacted",
+                    "systemlogs"
                 ]
             }
         },
@@ -48,7 +41,16 @@
             },
             "uci": [
                 "justclash"
-            ]
+            ],
+            "ubus": {
+                "justclash": [
+                    "start",
+                    "stop",
+                    "restart",
+                    "update_core",
+                    "update_rulesets"
+                ]
+            }
         }
     }
 }

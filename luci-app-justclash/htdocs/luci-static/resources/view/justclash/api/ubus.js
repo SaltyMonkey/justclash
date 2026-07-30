@@ -1,21 +1,6 @@
 "use strict";
 "require baseclass";
 "require rpc";
-"require view.justclash.common as common";
-
-const callServiceList = rpc.declare({
-    object: "service",
-    method: "list",
-    params: ["name"],
-    expect: { "": {} }
-});
-
-const callInitList = rpc.declare({
-    object: "luci",
-    method: "getInitList",
-    params: ["name"],
-    expect: { "": {} }
-});
 
 const callSystemBoard = rpc.declare({
     object: "system",
@@ -31,39 +16,69 @@ const callSessionAccess = rpc.declare({
     expect: { access: false }
 });
 
-const callFileExec = rpc.declare({
-    object: "file",
-    method: "exec",
-    params: ["command", "params"],
-    timeout: 300000 // 5 minutes in milliseconds
+const callStatus = rpc.declare({
+    object: "justclash",
+    method: "status",
+    params: []
 });
 
+const declareAction = (method) => rpc.declare({
+    object: "justclash",
+    method,
+    params: [],
+    timeout: 300000
+});
+
+const callStart = declareAction("start");
+const callStop = declareAction("stop");
+const callRestart = declareAction("restart");
+const callDiagRedacted = declareAction("diag_redacted");
+const callSystemLogs = declareAction("systemlogs");
+const callUpdateCore = declareAction("update_core");
+const callUpdateRulesets = declareAction("update_rulesets");
+
+const assertSuccess = (result) => {
+    if (!result || result.code !== 0)
+        throw new Error(result && result.stdout ? result.stdout : _("JustClash RPC call failed."));
+
+    return result;
+};
+
 return baseclass.extend({
-    async exec(command, args) {
-        return callFileExec(command, args);
+    async getStatus() {
+        return assertSuccess(await callStatus());
+    },
+
+    async start() {
+        return assertSuccess(await callStart());
+    },
+
+    async stop() {
+        return assertSuccess(await callStop());
+    },
+
+    async restart() {
+        return assertSuccess(await callRestart());
+    },
+
+    async diagRedacted() {
+        return assertSuccess(await callDiagRedacted());
+    },
+
+    async getSystemLogs() {
+        return assertSuccess(await callSystemLogs());
+    },
+
+    async updateCore() {
+        return assertSuccess(await callUpdateCore());
+    },
+
+    async updateRulesets() {
+        return assertSuccess(await callUpdateRulesets());
     },
 
     async getSystemBoard() {
         return callSystemBoard();
-    },
-
-    async isServiceAutoStartEnabled() {
-        try {
-            const res = await callInitList(common.binName);
-            return !!(res && res[common.binName] && res[common.binName].enabled);
-        } catch {
-            return false;
-        }
-    },
-
-    async isServiceRunning() {
-        try {
-            const res = await callServiceList(common.binName);
-            const instances = (res && res[common.binName] && res[common.binName].instances) ? res[common.binName].instances : {};
-            return Object.values(instances).some(instance => instance.running);
-        } catch {
-            return false;
-        }
     },
 
     async canAccess(scope, object, func) {

@@ -1,10 +1,10 @@
 "use strict";
 "require view";
-"require fs";
 "require ui";
 "require view.justclash.lib.clipboard as clipboard";
 "require view.justclash.common as common";
 "require view.justclash.lib.logs as logs";
+"require view.justclash.api.ubus as ubusApi";
 
 return view.extend({
     handleSave: null,
@@ -38,7 +38,7 @@ return view.extend({
             refreshBtn.disabled = true;
 
             try {
-                const res = await fs.exec(common.binPath, ["systemlogs", common.logsCount]);
+                const res = await ubusApi.getSystemLogs();
                 rawLogs = (res.stdout || "").replace(/\r?\n$/, "");
                 lastFetchLabel.textContent = _("Last updated: ") + new Date().toLocaleString();
                 renderLogs(reverseCheckbox.checked);

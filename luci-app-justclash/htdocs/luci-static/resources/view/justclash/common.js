@@ -5,13 +5,10 @@ return baseclass.extend({
     // Project constants
     justclashLuciVersion: "__COMPILED_VERSION_VARIABLE__",
     binName: "justclash",
-    initdPath: "/etc/init.d/justclash",
-    binPath: "/usr/bin/justclash.sh",
     blockRulesetsFilePath: "/etc/justclash/block.rulesets.txt",
     rulesetsFilePath: "/etc/justclash/rulesets.txt",
     userBlockRulesetsFilePath: "/etc/justclash/user.block.rulesets.txt",
     userRulesetsFilePath: "/etc/justclash/user.rulesets.txt",
-    logsCount: "400",
     realtimeLogsCount: "4000",
 
     // ntp.server

@@ -59,15 +59,15 @@ const showText = (notificationTimeout, title, warning, task, options = {}) => as
     }
 };
 
-const showExec = (notificationTimeout, title, warning, command, args, afterExec) =>
+const showRpc = (notificationTimeout, title, warning, task, afterRpc) =>
     showText(notificationTimeout, title, warning, async () => {
-        const response = await ubusApi.exec(command, args);
-        if (afterExec)
-            await afterExec(response);
+        const response = await task();
+        if (afterRpc)
+            await afterRpc(response);
         return response.stdout || _("No response");
     });
 
-const showConfirmExec = (notificationTimeout, title, warning, command, args, afterExec) => async () => {
+const showConfirmRpc = (notificationTimeout, title, warning, task, afterRpc) => async () => {
     ui.showModal(title, [
         E("strong", { class: "jc-modal-warning" }, _("Dangerous action!")),
         E("div", { class: "jc-modal-warning-text" }, warning),
@@ -76,7 +76,7 @@ const showConfirmExec = (notificationTimeout, title, warning, command, args, aft
                 class: "cbi-button cbi-button-negative",
                 click: async () => {
                     ui.hideModal();
-                    await showExec(notificationTimeout, title, false, command, args, afterExec)();
+                    await showRpc(notificationTimeout, title, false, task, afterRpc)();
                 }
             }, [_("Run")]),
             E("button", {
@@ -134,8 +134,8 @@ const showUpdateRulesets = (notificationTimeout, token) =>
     });
 
 const create = ({ notificationTimeout = 3000 } = {}) => ({
-    showExec: (...args) => showExec(notificationTimeout, ...args),
-    showConfirmExec: (...args) => showConfirmExec(notificationTimeout, ...args),
+    showRpc: (...args) => showRpc(notificationTimeout, ...args),
+    showConfirmRpc: (...args) => showConfirmRpc(notificationTimeout, ...args),
     showUpdateRulesets: (...args) => showUpdateRulesets(notificationTimeout, ...args)
 });
 

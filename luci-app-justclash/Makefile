@@ -40,6 +40,8 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)$(HTDOCS)/
 	$(INSTALL_DIR) $(1)/
 	$(CP) $(PKG_BUILD_DIR)/root/* $(1)/
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/root/usr/libexec/rpcd/justclash $(1)/usr/libexec/rpcd/justclash
 
 	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/common.js || true
 endef
