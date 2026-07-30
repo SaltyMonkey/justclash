@@ -115,8 +115,15 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		if [ -n "$${RANDOM_API_PASSWORD}" ]; then
 			uci set justclash.proxy.api_password="$${RANDOM_API_PASSWORD}"
 			uci commit justclash
-			sed -i -e "s|$${DEFAULT_API_PASSWORD}|$${RANDOM_API_PASSWORD}|g" /etc/justclash/default.config || true
 		fi
+	fi
+	if ! . /usr/lib/justclash/config/reset.sh; then
+		echo "Failed to load the JustClash config reset module." >&2
+		exit 1
+	fi
+	if ! config_api_password_ensure_file /etc/config/justclash; then
+		echo "Failed to initialize the active JustClash API password." >&2
+		exit 1
 	fi
 	# randomize failover mac string if placeholder value detected
 	RANDOM_MAC_REPLACEMENT="$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-' | cut -c1-30)"
