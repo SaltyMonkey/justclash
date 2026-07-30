@@ -198,7 +198,7 @@ return view.extend({
             click: async () => {
                 const conns = [];
                 connectionsData.forEach((connData) => {
-                    if (matchesFilters(connData)) {
+                    if (connectionsModel.matchesFilters(connData.normalized, appliedFilters)) {
                         conns.push(connData.raw);
                     }
                 });
