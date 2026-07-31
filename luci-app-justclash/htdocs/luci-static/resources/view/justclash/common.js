@@ -734,7 +734,7 @@ return baseclass.extend({
             try {
                 const date = new Date(conn.start);
                 lines.push(`Start Time: ${date.toLocaleString()}`);
-            } catch(e) {
+            } catch {
                 lines.push(`Start Time: ${conn.start}`);
             }
         }

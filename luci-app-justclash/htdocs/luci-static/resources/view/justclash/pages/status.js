@@ -34,7 +34,7 @@ const asyncTimeout = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const boolToWordAutostart = (val) => val ? _("Enabled") : _("Disabled");
 const boolToWordRunning = (val) => val ? _("Running") : _("Stopped");
 
-const createActionButton = (action, cssClass, label, handler, iconKey) =>
+const createActionButton = (action, cssClass, label, handler) =>
     E("button", {
         class: `cbi-button ${cssClass}`,
         id: action,
@@ -60,7 +60,7 @@ const createSummaryRow = (label, valueNode, extraNode) => {
     ]);
 };
 
-const createSummaryCard = (title, rows, iconKey) => {
+const createSummaryCard = (title, rows) => {
     return E("div", { class: "jc-card" }, [
         E("strong", { class: "jc-card-title" }, title),
         E("div", { class: "jc-summary-body" }, rows)
@@ -85,19 +85,19 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
         createSummaryRow(_("Start on boot"), dynamicElements.autoBadge),
         createSummaryRow(_("RAM"), dynamicElements.ramValue),
         createSummaryRow(_("Mihomo version"), dynamicElements.coreValue)
-    ], "service"),
+    ]),
     createSummaryCard(_("Kernel"), [
         createSummaryRow(_("Connections"), dynamicElements.connValue),
         createSummaryRow(_("Mode"), dynamicElements.modeValue),
         createSummaryRow(_("Speed"), createInlineTrafficNode(dynamicElements.upValue, dynamicElements.downValue)),
         createSummaryRow(_("Total"), createInlineTrafficNode(dynamicElements.upTotalValue, dynamicElements.downTotalValue))
-    ], "traffic"),
+    ]),
     createSummaryCard(_("System"), [
         createSummaryRow(_("Router model"), results.infoDevice),
         createSummaryRow(_("OpenWrt version"), results.infoOpenWrt),
         createSummaryRow(_("App LuCI version"), common.justclashLuciVersion),
         createSummaryRow(_("App version"), dynamicElements.packageValue)
-    ], "system")
+    ])
 ]);
 
 const updateStatusUI = (elements, isAutostarting, isRunning, currentMode) => {
@@ -148,7 +148,7 @@ return view.extend({
             await uci.load(common.binName);
             apiToken = uci.get(common.binName, "proxy", "api_password") || "";
             mihomoApi.setTls(uci.get(common.binName, "proxy", "api_tls") === "1");
-        } catch (e) {}
+        } catch { /* ignore */ }
 
         const boardPromise = ubusApi.getSystemBoard()
             .then(data => [
@@ -262,8 +262,8 @@ return view.extend({
             return actionHandler(task, running ? 0 : ACTION_DELAY_TIMEOUT)();
         };
 
-        const btnToggle = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), toggleHandler, "start");
-        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler(() => ubusApi.restart(), ACTION_DELAY_TIMEOUT), "restart");
+        const btnToggle = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), toggleHandler);
+        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler(() => ubusApi.restart(), ACTION_DELAY_TIMEOUT));
         Object.assign(dynamicElements, {
             serviceBadge,
             autoBadge,
@@ -319,7 +319,7 @@ return view.extend({
 
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showRpc(_("Diagnostic report"), false, () => ubusApi.diagRedacted()), "diagnostic"),
+                createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showRpc(_("Diagnostic report"), false, () => ubusApi.diagRedacted())),
                 createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmRpc(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), () => ubusApi.updateCore(), async () => {
                     const status = await ubusApi.getStatus();
                     const infoPackage = status.package_version;
@@ -327,16 +327,16 @@ return view.extend({
 
                     try {
                         infoCore = await mihomoApi.fetchVersion(results.apiToken);
-                    } catch (e) {}
+                    } catch { /* ignore */ }
 
                     if (dynamicElements.packageValue)
                         dynamicElements.packageValue.textContent = infoPackage || _("Error");
 
                     if (dynamicElements.coreValue)
                         dynamicElements.coreValue.textContent = infoCore || _("Error");
-                }), "update"),
-                createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update active rulesets"), actions.showUpdateRulesets(results.apiToken), "update"),
-                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update built-in data"), actions.showConfirmRpc(_("Update built-in data"), _("This action downloads and replaces built-in service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), () => ubusApi.updateRulesets()), "serviceData")
+                })),
+                createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update active rulesets"), actions.showUpdateRulesets(results.apiToken)),
+                createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update built-in data"), actions.showConfirmRpc(_("Update built-in data"), _("This action downloads and replaces built-in service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), () => ubusApi.updateRulesets()))
             ])
         ]);
 

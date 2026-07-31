@@ -3,7 +3,7 @@
 
 # Focused helper module loaded into the main ash process.
 
-parse_routing_mark() {
+val_parse_routing_mark() {
     local val="$1"
     local reserved_marks="$2"
     [ -z "$val" ] && return 0
@@ -44,14 +44,14 @@ parse_routing_mark() {
     echo "$dec_val"
 }
 
-parse_ip_version() {
+val_parse_ip_version() {
     case "$1" in
     dual | ipv4 | ipv6 | ipv4-prefer | ipv6-prefer) printf '%s' "$1" ;;
     *) printf 'dual' ;;
     esac
 }
 
-validate_cron_expr() {
+val_cron_expr() {
     local expr="$1"
     local field
 
@@ -72,25 +72,25 @@ validate_cron_expr() {
     return 0
 }
 
-is_uint() {
+val_is_uint() {
     case "$1" in
     '' | *[!0-9]*) return 1 ;;
     *) return 0 ;;
     esac
 }
 
-is_port() {
-    is_uint "$1" && [ "$1" -ge 1 ] && [ "$1" -le 65535 ]
+val_is_port() {
+    val_is_uint "$1" && [ "$1" -ge 1 ] && [ "$1" -le 65535 ]
 }
 
-is_ifname() {
+val_is_ifname() {
     case "$1" in
     '' | *[!A-Za-z0-9_.:-]*) return 1 ;;
     *) return 0 ;;
     esac
 }
 
-sanitize_nft_name() {
+val_sanitize_nft_name() {
     printf '%s\n' "$1" |
         LC_ALL=C awk '{
             gsub(/[-.]/, "_")
@@ -102,7 +102,7 @@ sanitize_nft_name() {
         }'
 }
 
-is_choice() {
+val_is_choice() {
     local value="$1"
     shift
     local item

@@ -61,7 +61,7 @@ cron_job_add() {
         return 2
     fi
 
-    if ! validate_cron_expr "$schedule"; then
+    if ! val_cron_expr "$schedule"; then
         log error "$name cron schedule string is invalid: $schedule. Cron job was not added."
         return 2
     fi

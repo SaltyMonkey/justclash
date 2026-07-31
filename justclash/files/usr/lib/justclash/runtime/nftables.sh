@@ -5,17 +5,17 @@
 
 : "${JUSTCLASH_CONSTANTS_LOADED:?constants.sh must be loaded before runtime/nftables.sh}"
 
-build_nft_skuid_exclusions() {
+nft_build_skuid_exclusions() {
     local skuid_values="$1"
     local skuid_raw skuid_value skuid_resolved skuid_list=""
 
     for skuid_raw in $skuid_values; do
-        skuid_value=$(trim "$skuid_raw")
+        skuid_value=$(str_trim "$skuid_raw")
         [ -n "$skuid_value" ] || continue
 
-        is_uint "$skuid_value" && skuid_resolved="$skuid_value" || skuid_resolved=$(id -u "$skuid_value" 2>/dev/null)
+        val_is_uint "$skuid_value" && skuid_resolved="$skuid_value" || skuid_resolved=$(id -u "$skuid_value" 2>/dev/null)
 
-        if [ -n "$skuid_resolved" ] && is_uint "$skuid_resolved"; then
+        if [ -n "$skuid_resolved" ] && val_is_uint "$skuid_resolved"; then
             skuid_list="${skuid_list:+$skuid_list }$skuid_resolved"
         else
             log warn "Skip router socket owner exclusion due to unresolved user/UID: $skuid_value"
@@ -27,7 +27,7 @@ build_nft_skuid_exclusions() {
 
 nft_ruleset_file_populate() {
     local name="$1" file_path="$2" safe_name="${3:-}" ipv6_enabled="${4:-0}"
-    [ -n "$safe_name" ] || safe_name=$(sanitize_nft_name "$name")
+    [ -n "$safe_name" ] || safe_name=$(val_sanitize_nft_name "$name")
 
     # Fast check: ensure the file contains at least one IP/CIDR line before touching nftables
     grep -qE '^[[:space:]]*[0-9a-fA-F:]' "$file_path" 2>/dev/null || return 1
@@ -139,7 +139,7 @@ nft_sets_watch_start() {
                 [ "${rpath#/}" != "$rpath" ] && file_path="$rpath" || file_path="${workdir_rules_path}/${name}.list"
 
                 if [ "${file_path##*/}" = "${changed_path##*/}" ] && [ -f "$file_path" ]; then
-                    safe_name=$(sanitize_nft_name "$name")
+                    safe_name=$(val_sanitize_nft_name "$name")
                     nft_ruleset_file_populate "$name" "$file_path" "$safe_name" "$ipv6_enabled"
                     break
                 fi
@@ -219,16 +219,16 @@ nft_table_full_apply() {
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | spaces_to_commas) } return comment \"Bypass excluded MACs\""
+                echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded MACs\""
             fi
 
             if [ -n "$nft_ips_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting ip saddr { $(echo "$nft_ips_exclude" | spaces_to_commas) } return comment \"Bypass excluded client IPs\""
+                echo "add rule inet $NF_TABLE_NAME prerouting ip saddr { $(echo "$nft_ips_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded client IPs\""
             fi
 
             if [ -n "$nft_ports_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded destination ports\""
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded source ports\""
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded destination ports\""
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded source ports\""
             fi
 
             if [ "$nft_quic_mode" = "DROP" ]; then
@@ -286,10 +286,10 @@ nft_table_full_apply() {
             fi
             echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
             if [ -n "$proxy_routing_marks" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | str_spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
             fi
             if [ -n "$provider_routing_marks" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | str_spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
             fi
 
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
@@ -298,12 +298,12 @@ nft_table_full_apply() {
             echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router source ports\""
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | str_spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude_router" | str_spaces_to_commas) } return comment \"Bypass excluded router source ports\""
             fi
 
             if [ -n "$skuid_values" ]; then
-                skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
+                skuid_list=$(nft_build_skuid_exclusions "$skuid_values")
                 for skuid_resolved in $skuid_list; do
                     echo "add rule inet $NF_TABLE_NAME output meta skuid $skuid_resolved return comment \"Bypass excluded user (skuid)\""
                 done
@@ -370,7 +370,7 @@ nft_table_partial_apply() {
             [ -z "$line" ] && continue
             rname="${line%%|*}"
             rpath="${line##*|}"
-            rsafe=$(sanitize_nft_name "$rname")
+            rsafe=$(val_sanitize_nft_name "$rname")
             [ "${rpath#/}" != "$rpath" ] && rfile="$rpath" || rfile="${workdir_rules_path}/${rname}.list"
             ipcidr_safe_names="${ipcidr_safe_names:+$ipcidr_safe_names }$rsafe"
             if [ -s "$rfile" ]; then
@@ -434,16 +434,16 @@ nft_table_partial_apply() {
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | spaces_to_commas) } return comment \"Bypass excluded MACs\""
+                echo "add rule inet $NF_TABLE_NAME prerouting ether saddr { $(echo "$nft_mac_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded MACs\""
             fi
 
             if [ -n "$nft_ips_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting ip saddr { $(echo "$nft_ips_exclude" | spaces_to_commas) } return comment \"Bypass excluded client IPs\""
+                echo "add rule inet $NF_TABLE_NAME prerouting ip saddr { $(echo "$nft_ips_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded client IPs\""
             fi
 
             if [ -n "$nft_ports_exclude" ]; then
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded destination ports\""
-                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | spaces_to_commas) } return comment \"Bypass excluded source ports\""
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded destination ports\""
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded source ports\""
             fi
 
             if [ "$nft_quic_mode" = "DROP" ]; then
@@ -510,10 +510,10 @@ nft_table_partial_apply() {
             fi
             echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
             if [ -n "$proxy_routing_marks" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | str_spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
             fi
             if [ -n "$provider_routing_marks" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
+                echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | str_spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
             fi
 
             echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
@@ -522,12 +522,12 @@ nft_table_partial_apply() {
             echo "add rule inet $NF_TABLE_NAME output udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_ports_exclude_router" ]; then
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
-                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude_router" | spaces_to_commas) } return comment \"Bypass excluded router source ports\""
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude_router" | str_spaces_to_commas) } return comment \"Bypass excluded router destination ports\""
+                echo "add rule inet $NF_TABLE_NAME output meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude_router" | str_spaces_to_commas) } return comment \"Bypass excluded router source ports\""
             fi
 
             if [ -n "$skuid_values" ]; then
-                skuid_list=$(build_nft_skuid_exclusions "$skuid_values")
+                skuid_list=$(nft_build_skuid_exclusions "$skuid_values")
                 for skuid_resolved in $skuid_list; do
                     echo "add rule inet $NF_TABLE_NAME output meta skuid $skuid_resolved return comment \"Bypass excluded user (skuid)\""
                 done

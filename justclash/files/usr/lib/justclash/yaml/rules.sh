@@ -23,7 +23,7 @@ build_fake_ip_rule_array() {
         fi
 
         generated_rule="$rt,$entry,$action"
-        rules="${rules:+$rules,}\"$(json_escape "$generated_rule")\""
+        rules="${rules:+$rules,}\"$(str_json_escape "$generated_rule")\""
     done
 
     printf '[%s]' "${rules:-}"
@@ -112,7 +112,7 @@ build_builtin_rules_bundle() {
         ruleset_auth=""
         case "$ruleset_url" in
         *\|*)
-            ruleset_auth=$(trim "${ruleset_url#*|}")
+            ruleset_auth=$(str_trim "${ruleset_url#*|}")
             ruleset_url="${ruleset_url%%|*}"
             ;;
         esac
@@ -126,11 +126,11 @@ build_builtin_rules_bundle() {
                 headers="$OUT_TEMPLATE"
             fi
             template_ruleset_http "$ruleset_name" "$ruleset_url" "$ruleset_behavior" "$ruleset_format" "$download_proxy" "$list_update_interval" "$size_limit" "$headers"
-            rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
+            rulesets_fragment="${rulesets_fragment}\"$(str_json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
         *)
             template_ruleset_file "$ruleset_url" "$ruleset_behavior" "$ruleset_format"
-            rulesets_fragment="${rulesets_fragment}\"$(json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
+            rulesets_fragment="${rulesets_fragment}\"$(str_json_escape "$ruleset_name")\":$OUT_TEMPLATE,"
             ;;
         esac
         added_rulesets="$added_rulesets$ruleset_name|"
@@ -178,7 +178,7 @@ template_ruleset_http() {
         ext="list"
     fi
 
-    out="\"type\":\"http\",\"path\":\"$(json_escape "${CORE_WORKDIR_RULES_PATH}/${name}.${ext}")\",\"url\":\"$(json_escape "$url")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\",\"proxy\":\"$(json_escape "$proxy")\",\"interval\":$interval,\"size-limit\":$size_limit"
+    out="\"type\":\"http\",\"path\":\"$(str_json_escape "${CORE_WORKDIR_RULES_PATH}/${name}.${ext}")\",\"url\":\"$(str_json_escape "$url")\",\"behavior\":\"$(str_json_escape "$behavior")\",\"format\":\"$(str_json_escape "$format")\",\"proxy\":\"$(str_json_escape "$proxy")\",\"interval\":$interval,\"size-limit\":$size_limit"
     [ -n "$headers" ] && out="$out,$headers"
 
     OUT_TEMPLATE="{$out}"
@@ -188,7 +188,7 @@ template_ruleset_file() {
     local path="$1" behavior="$2" format="$3"
     local out
 
-    out="\"type\":\"file\",\"path\":\"$(json_escape "$path")\",\"behavior\":\"$(json_escape "$behavior")\",\"format\":\"$(json_escape "$format")\""
+    out="\"type\":\"file\",\"path\":\"$(str_json_escape "$path")\",\"behavior\":\"$(str_json_escape "$behavior")\",\"format\":\"$(str_json_escape "$format")\""
 
     OUT_TEMPLATE="{$out}"
 }

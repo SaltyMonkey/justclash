@@ -36,8 +36,8 @@ parse_ss_url() {
             # Try base64 on entire userinfo
             decoded="$(printf '%s' "$userinfo" | base64 -d 2>/dev/null)"
             if [ -n "$decoded" ] && printf '%s\n' "$decoded" | grep -q ':'; then
-                method="$(url_decode "${decoded%%:*}")"
-                password="$(url_decode "${decoded#*:}")"
+                method="$(str_url_decode "${decoded%%:*}")"
+                password="$(str_url_decode "${decoded#*:}")"
             else
                 # Check for segmented base64 (Base64(method):Base64(pass) or Base64(method):Base64(psk1):Base64(psk2))
                 local method_part="${userinfo%%:*}"
@@ -57,7 +57,7 @@ parse_ss_url() {
                         if [ -n "$psk1_dec" ] && [ -n "$psk2_dec" ]; then
                             password="${psk1_dec}:${psk2_dec}"
                         else
-                            password="$(url_decode "$pass_part")"
+                            password="$(str_url_decode "$pass_part")"
                         fi
                     else
                         local pass_dec=""
@@ -65,14 +65,14 @@ parse_ss_url() {
                         if [ -n "$pass_dec" ]; then
                             password="$pass_dec"
                         else
-                            password="$(url_decode "$pass_part")"
+                            password="$(str_url_decode "$pass_part")"
                         fi
                     fi
                     ;;
                 *)
                     # Plain text fallback
-                    method="$(url_decode "$method_part")"
-                    password="$(url_decode "$pass_part")"
+                    method="$(str_url_decode "$method_part")"
+                    password="$(str_url_decode "$pass_part")"
                     ;;
                 esac
             fi
@@ -82,11 +82,11 @@ parse_ss_url() {
         decoded="$(printf '%s' "$link" | base64 -d 2>/dev/null)"
         userinfo="${decoded%@*}"
         hostport="${decoded#*@}"
-        method="$(url_decode "${userinfo%%:*}")"
-        password="$(url_decode "${userinfo#*:}")"
+        method="$(str_url_decode "${userinfo%%:*}")"
+        password="$(str_url_decode "${userinfo#*:}")"
     fi
 
-    server="$(url_decode "${hostport%%:*}")"
+    server="$(str_url_decode "${hostport%%:*}")"
     port="${hostport##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
     port="${port//[!0-9]/}"
@@ -107,8 +107,8 @@ parse_ss_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-        plugin) plugin_param="$(url_decode "$v")" ;;
-        client-fingerprint | clientFingerprint | fp) client_fingerprint="$(url_decode "$v")" ;;
+        plugin) plugin_param="$(str_url_decode "$v")" ;;
+        client-fingerprint | clientFingerprint | fp) client_fingerprint="$(str_url_decode "$v")" ;;
         esac
     done
 
@@ -151,9 +151,9 @@ parse_ss_url() {
                 obfs | mode | obfs-mode) plugin_mode="$opt_v" ;;
                 username | jls-username) plugin_username="$opt_v" ;;
                 path) plugin_path="$opt_v" ;;
-                tls) if is_truthy "$opt_v"; then plugin_tls="true"; else plugin_tls="false"; fi ;;
-                mux) if is_truthy "$opt_v"; then plugin_mux="true"; else plugin_mux="false"; fi ;;
-                skip-cert-verify | allowInsecure | insecure) if is_truthy "$opt_v"; then plugin_skip_cert_verify="true"; else plugin_skip_cert_verify="false"; fi ;;
+                tls) if uri_is_truthy "$opt_v"; then plugin_tls="true"; else plugin_tls="false"; fi ;;
+                mux) if uri_is_truthy "$opt_v"; then plugin_mux="true"; else plugin_mux="false"; fi ;;
+                skip-cert-verify | allowInsecure | insecure) if uri_is_truthy "$opt_v"; then plugin_skip_cert_verify="true"; else plugin_skip_cert_verify="false"; fi ;;
                 name-cert-verify | nameCertVerify | peer) plugin_name_cert_verify="$opt_v" ;;
                 fingerprint | pinSHA256) plugin_fingerprint="$opt_v" ;;
                 client-fingerprint | clientFingerprint | fp) client_fingerprint="$opt_v" ;;
@@ -175,7 +175,7 @@ parse_ss_url() {
 
     local alpn_json="[]"
     if [ -n "$plugin_alpn" ]; then
-        alpn_json=$(json_array_from_csv "$plugin_alpn") || return 1
+        alpn_json=$(uri_json_array_from_csv "$plugin_alpn") || return 1
     fi
 
     proxy_obj=$(

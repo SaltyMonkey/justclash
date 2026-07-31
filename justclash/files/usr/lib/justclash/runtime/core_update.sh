@@ -72,7 +72,7 @@ core_download() {
 
     local arch filename base_url download_url archive_path
 
-    arch=$(detect_arch "$(get_os_arch)")
+    arch=$(core_detect_arch "$(sysinfo_get_os_arch)")
     mkdir -p "$core_workdir" || return 5
     archive_path=$(mktemp "${core_workdir}/mihomo.XXXXXX") || return 5
     filename="mihomo-linux-${arch}-${version}.gz"

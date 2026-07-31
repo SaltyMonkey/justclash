@@ -1,7 +1,7 @@
 #!/bin/ash
 # shellcheck shell=dash
 
-is_pattern_in_file() {
+file_is_pattern_in_file() {
     local file="$1"
 
     if [ ! -r "$file" ]; then

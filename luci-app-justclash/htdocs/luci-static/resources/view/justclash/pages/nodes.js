@@ -150,7 +150,7 @@ return view.extend({
                             delayMap[optionName] = result.delay;
                         else
                             delayMap[optionName] = "timeout";
-                    } catch (e) {
+                    } catch {
                         delayMap[optionName] = "timeout";
                     }
                 }
@@ -287,7 +287,7 @@ return view.extend({
 
             try {
                 return new Date(value).toLocaleString();
-            } catch (e) {
+            } catch {
                 return String(value);
             }
         };
@@ -506,7 +506,7 @@ return view.extend({
             }
         };
 
-        const handleModeChange = async (ev) => {
+        const handleModeChange = async () => {
             const nextMode = modeDropdown.getValue();
             const previousMode = state.mode;
 

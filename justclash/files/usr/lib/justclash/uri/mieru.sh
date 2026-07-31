@@ -29,11 +29,11 @@ parse_mieru_url() {
     local username="" password=""
     if [ -n "$auth" ]; then
         case "$auth" in *:*)
-            username="$(url_decode "${auth%%:*}")"
-            password="$(url_decode "${auth#*:}")"
+            username="$(str_url_decode "${auth%%:*}")"
+            password="$(str_url_decode "${auth#*:}")"
             ;;
         *)
-            username="$(url_decode "$auth")"
+            username="$(str_url_decode "$auth")"
             ;;
         esac
     fi
@@ -54,10 +54,10 @@ parse_mieru_url() {
         case "$k" in
         multiplexing) multiplexing="$v" ;;
         handshake-mode) handshake_mode="$v" ;;
-        traffic-pattern) traffic_pattern="$(url_decode "$v")" ;;
+        traffic-pattern) traffic_pattern="$(str_url_decode "$v")" ;;
         port)
             local decoded_port
-            decoded_port="$(url_decode "$v")"
+            decoded_port="$(str_url_decode "$v")"
             case "$decoded_port" in
             *-*)
                 port_range="$decoded_port"
@@ -71,7 +71,7 @@ parse_mieru_url() {
             ;;
         protocol)
             local decoded_proto
-            decoded_proto="$(url_decode "$v")"
+            decoded_proto="$(str_url_decode "$v")"
             transport=$(printf '%s' "$decoded_proto" | tr '[:upper:]' '[:lower:]')
             ;;
         esac

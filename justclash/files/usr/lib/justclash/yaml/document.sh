@@ -40,50 +40,50 @@ yaml_document_write_access() {
     fi
 
     if [ "$use_dashboard" -eq 1 ]; then
-        echo "external-ui: $(yaml_quote "$dashboard_path")"
-        echo "external-ui-url: $(yaml_quote "$dashboard_url")"
+        echo "external-ui: $(str_yaml_quote "$dashboard_path")"
+        echo "external-ui-url: $(str_yaml_quote "$dashboard_url")"
     fi
 
     if [ -n "$interface_name" ]; then
-        echo "interface-name: $(yaml_quote "$interface_name")"
+        echo "interface-name: $(str_yaml_quote "$interface_name")"
     fi
 
     echo "mode: rule"
     echo ""
-    printf 'ipv6: %s\n' "$(format_uci_bool_as_yaml "$ipv6_enabled")"
+    printf 'ipv6: %s\n' "$(fmt_uci_bool_as_yaml "$ipv6_enabled")"
 
     if [ "$api_tls" -eq 1 ]; then
         echo ""
-        echo "external-controller-tls: $(yaml_quote "$router_selected_ipaddr:$controller_port")"
+        echo "external-controller-tls: $(str_yaml_quote "$router_selected_ipaddr:$controller_port")"
     else
         echo ""
-        echo "external-controller: $(yaml_quote "$router_selected_ipaddr:$controller_port")"
+        echo "external-controller: $(str_yaml_quote "$router_selected_ipaddr:$controller_port")"
     fi
 
-    echo "secret: $(yaml_quote "$api_password")"
+    echo "secret: $(str_yaml_quote "$api_password")"
     echo "external-controller-cors:"
     echo "  allow-origins:"
     echo "    - '*'"
     echo "  allow-private-network: true"
     if [ "$api_tls" -eq 1 ]; then
         echo "tls:"
-        echo "  certificate: $(yaml_quote "$api_tls_cert")"
-        echo "  private-key: $(yaml_quote "$api_tls_key")"
+        echo "  certificate: $(str_yaml_quote "$api_tls_cert")"
+        echo "  private-key: $(str_yaml_quote "$api_tls_key")"
     fi
-    echo "log-level: $(yaml_quote "$log_level")"
-    echo "unified-delay: $(format_uci_bool_as_yaml "$unified_delay")"
-    echo "tcp-concurrent: $(format_uci_bool_as_yaml "$tcp_concurrent")"
+    echo "log-level: $(str_yaml_quote "$log_level")"
+    echo "unified-delay: $(fmt_uci_bool_as_yaml "$unified_delay")"
+    echo "tcp-concurrent: $(fmt_uci_bool_as_yaml "$tcp_concurrent")"
     echo "routing-mark: $routing_mark"
-    echo "global-ua: $(yaml_quote "$global_ua")"
+    echo "global-ua: $(str_yaml_quote "$global_ua")"
     echo "find-process-mode: off"
-    echo "etag-support: $(format_uci_bool_as_yaml "$etag_support")"
+    echo "etag-support: $(fmt_uci_bool_as_yaml "$etag_support")"
     echo ""
     echo "keep-alive-idle: $keep_alive_idle"
     echo "keep-alive-interval: $keep_alive_interval"
     echo ""
     echo "profile:"
-    echo "  store-selected: $(format_uci_bool_as_yaml "$profile_store_selected")"
-    echo "  store-fake-ip: $(format_uci_bool_as_yaml "$profile_store_fake_ip")"
+    echo "  store-selected: $(fmt_uci_bool_as_yaml "$profile_store_selected")"
+    echo "  store-fake-ip: $(fmt_uci_bool_as_yaml "$profile_store_fake_ip")"
     echo ""
 }
 yaml_document_write_geodata() {
@@ -96,11 +96,11 @@ yaml_document_write_geodata() {
     if [ "$geodata_mode" -eq 1 ]; then
         echo "geodata-mode: true"
         echo "geodata-loader: memconservative"
-        echo "geo-auto-update: $(format_uci_bool_as_yaml "$geodata_autoupdate")"
+        echo "geo-auto-update: $(fmt_uci_bool_as_yaml "$geodata_autoupdate")"
         echo "geo-autoupdate-interval: $geodata_autoupdate_interval"
         echo "geox-url:"
-        echo "  geoip: $(yaml_quote "$mihomo_geoip_url")"
-        echo "  geosite: $(yaml_quote "$mihomo_geosite_url")"
+        echo "  geoip: $(str_yaml_quote "$mihomo_geoip_url")"
+        echo "  geosite: $(str_yaml_quote "$mihomo_geosite_url")"
         echo "  mmdb: false"
         echo "  asn: false"
     fi
@@ -135,9 +135,9 @@ yaml_document_write_services() {
     echo "hosts: {$hosts_content}"
     echo ""
     echo "ntp:"
-    echo "  enable: $(format_uci_bool_as_yaml "$core_ntp_enabled")"
-    echo "  write-to-system: $(format_uci_bool_as_yaml "$core_ntp_write_system")"
-    echo "  server: $(yaml_quote "$core_ntp_server")"
+    echo "  enable: $(fmt_uci_bool_as_yaml "$core_ntp_enabled")"
+    echo "  write-to-system: $(fmt_uci_bool_as_yaml "$core_ntp_write_system")"
+    echo "  server: $(str_yaml_quote "$core_ntp_server")"
     echo "  port: $core_ntp_port"
     echo "  interval: $core_ntp_interval"
     echo ""
@@ -163,10 +163,10 @@ yaml_document_write_dns() {
     echo "  enable: true"
     echo "  cache-algorithm: arc"
     echo "  cache-max-size: $dns_cache_max_size"
-    echo "  listen: $(yaml_quote "127.0.0.1:$dns_listen_port")"
+    echo "  listen: $(str_yaml_quote "127.0.0.1:$dns_listen_port")"
     echo "  prefer-h3: false"
-    printf '  ipv6: %s\n' "$(format_uci_bool_as_yaml "$ipv6_enabled")"
-    echo "  use-system-hosts: $(format_uci_bool_as_yaml "$use_system_hosts")"
+    printf '  ipv6: %s\n' "$(fmt_uci_bool_as_yaml "$ipv6_enabled")"
+    echo "  use-system-hosts: $(fmt_uci_bool_as_yaml "$use_system_hosts")"
     echo "  use-hosts: true"
     printf '%s\n' "  nameserver-policy: $nameserver_policy"
     printf '%s\n' "  default-nameserver: $default_nameserver"
@@ -200,9 +200,9 @@ yaml_document_write_sniffer() {
     local sniffer_skip_dst_address="${12}"
 
     echo "sniffer:"
-    echo "  enable: $(format_uci_bool_as_yaml "$sniffer_enable")"
-    echo "  parse-pure-ip: $(format_uci_bool_as_yaml "$sniffer_parse_pure_ip")"
-    echo "  override-destination: $(format_uci_bool_as_yaml "$sniffer_override_destination")"
+    echo "  enable: $(fmt_uci_bool_as_yaml "$sniffer_enable")"
+    echo "  parse-pure-ip: $(fmt_uci_bool_as_yaml "$sniffer_parse_pure_ip")"
+    echo "  override-destination: $(fmt_uci_bool_as_yaml "$sniffer_override_destination")"
     echo "  sniff:"
     echo "    HTTP:"
     echo "      ports: [$http_port, $secondary_http_port_start-$secondary_http_port_end]"

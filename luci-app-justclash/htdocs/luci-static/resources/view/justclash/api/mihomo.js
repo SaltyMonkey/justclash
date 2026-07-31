@@ -191,7 +191,7 @@ return baseclass.extend({
 
             try {
                 detail = (await res.text()).trim();
-            } catch (e) {}
+            } catch { /* ignore */ }
 
             throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
         }
@@ -212,7 +212,7 @@ return baseclass.extend({
 
             try {
                 detail = (await res.text()).trim();
-            } catch (e) {}
+            } catch { /* ignore */ }
 
             throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
         }
@@ -229,7 +229,7 @@ return baseclass.extend({
 
         try {
             detail = (await res.text()).trim();
-        } catch (e) {}
+        } catch { /* ignore */ }
 
         throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
     },
@@ -242,7 +242,7 @@ return baseclass.extend({
         try {
             const data = await res.json();
             detail = data.message || "";
-        } catch (e) {}
+        } catch { /* ignore */ }
 
         throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
     },
@@ -254,7 +254,7 @@ return baseclass.extend({
 
             try {
                 detail = (await res.text()).trim();
-            } catch (e) {}
+            } catch { /* ignore */ }
 
             throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
         }
@@ -299,7 +299,7 @@ return baseclass.extend({
             let detail = "";
             try {
                 detail = (await res.text()).trim();
-            } catch (e) {}
+            } catch { /* ignore */ }
             throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
         }
         return res;

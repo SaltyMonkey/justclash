@@ -36,12 +36,12 @@ return view.extend({
                 seenBlock.add(item.yamlName);
                 return true;
             });
-        } catch (e) { }
+        } catch { /* ignore */ }
 
         try {
             await uci.load(common.binName);
             geoDataMode = (uci.get(common.binName, "proxy", "geodata_mode") === "1") || false;
-        } catch (e) { }
+        } catch { /* ignore */ }
 
         return {
             rulesetsItems,
@@ -50,7 +50,7 @@ return view.extend({
         };
     },
     render(result) {
-        let m, s, s2, spp, s3, s4, s5, smp, o, optionFinal, tabname;
+        let m, s, s2, spp, s4, s5, smp, o, optionFinal, tabname;
 
         const primitives = formConstants.boolean;
         const datatypes = formConstants.datatypes;

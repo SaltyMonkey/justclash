@@ -73,7 +73,7 @@ start() {
     local nft_apply_changes_router ntpd_start routing_mode skip_environment_checks tproxy_port
     local core_exit_code preflight_tproxy_port
 
-    if check_is_already_running "$PROGNAME start" "JustClash" "$CORE_PATH" "$$"; then
+    if preflight_check_is_already_running "$PROGNAME start" "JustClash" "$CORE_PATH" "$$"; then
         return 0
     fi
 
@@ -116,7 +116,7 @@ start() {
     config_validate_uint "$mihomo_gogc" "settings.mihomo_gogc" || validation_failed=1
     config_validate_uint "$mihomo_gomaxprocs" "settings.mihomo_gomaxprocs" || validation_failed=1
 
-    if ! is_choice "$routing_mode" full partial; then
+    if ! val_is_choice "$routing_mode" full partial; then
         config_validation_error "settings.routing_mode must be 'full' or 'partial'"
         validation_failed=1
     fi
@@ -155,13 +155,13 @@ start() {
         sleep "$ENV_JUSTCLASH_BOOT_DELAY"
     fi
 
-    check_requirement "$CORE_PATH" "$CORE_BIN_NAME" "$REQUIRED_TOOLS" || {
+    preflight_check_requirement "$CORE_PATH" "$CORE_BIN_NAME" "$REQUIRED_TOOLS" || {
         log error "System requirement checks failed. Aborting startup."
         return 1
     }
 
     log info "Checking port configuration collisions"
-    check_port_collisions \
+    preflight_check_port_collisions \
         "$dns_listen_port" \
         "$preflight_tproxy_port" \
         "$mixed_port" \
@@ -171,7 +171,7 @@ start() {
     }
 
     log info "Checking active ports availability"
-    check_ports_occupancy \
+    preflight_check_ports_occupancy \
         "$dns_listen_port" \
         "$preflight_tproxy_port" \
         "$mixed_port" \
@@ -183,7 +183,7 @@ start() {
     if [ "$skip_environment_checks" -eq 0 ]; then
 
         log info "Checking for non-critical conflicts"
-        check_for_conflicts_warn \
+        preflight_check_conflicts_warn \
             "$DHCP_CONFIG_FILEPATH" \
             "$WARN_PATTERNS_DHCP_CONFIG" \
             "$RESOLVCONF_FILEPATH" \
@@ -197,7 +197,7 @@ start() {
     fi
 
     log info "Synchronizing system time"
-    ntp_force_sync \
+    ntpd_force_sync \
         "$ntpd_start" \
         "$DEFAULT_NTP_IPS"
 
@@ -343,17 +343,15 @@ start_core() {
             sleep 2
         done
     else
+        # shellcheck disable=SC2030,SC2031
         (
             if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
-                # shellcheck disable=SC2031,SC2030
                 export GOMEMLIMIT="${mihomo_mem_limit}MiB"
             fi
             if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "$DEFAULT_MIHOMO_GOGC" ]; then
-                # shellcheck disable=SC2030,SC2031
                 export GOGC="$mihomo_gogc"
             fi
             if [ -n "$mihomo_gomaxprocs" ] && [ "$mihomo_gomaxprocs" != "$DEFAULT_MIHOMO_GOMAXPROCS" ]; then
-                # shellcheck disable=SC2030,SC2031
                 export GOMAXPROCS="$mihomo_gomaxprocs"
             fi
             "$CORE_PATH" -d "$CORE_WORKDIR_PATH" 2>&1 | log_piped
@@ -415,9 +413,9 @@ run_nftables_apply() {
     config_get nft_skuid_exclude_router settings nft_skuid_exclude_router
     config_get ipv6_enabled settings ipv6_enabled "$DEFAULT_IPV6_ENABLED"
 
-    proxy_routing_marks=$(trim "$(config_routing_marks_read \
+    proxy_routing_marks=$(str_trim "$(config_routing_marks_read \
         "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY" proxies routing_mark)")
-    provider_routing_marks=$(trim "$(config_routing_marks_read \
+    provider_routing_marks=$(str_trim "$(config_routing_marks_read \
         "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY" proxy_provider override_routing_mark)")
 
     # Validate before applying any changes.
@@ -425,14 +423,14 @@ run_nftables_apply() {
     config_validate_bool "$nft_apply_changes_router" "settings.nft_apply_changes_router" || validation_failed=1
     config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
 
-    if ! is_choice "$routing_mode" full partial; then
+    if ! val_is_choice "$routing_mode" full partial; then
         config_validation_error "settings.routing_mode must be 'full' or 'partial'"
         validation_failed=1
     fi
 
     if [ "$nft_apply_changes" = "1" ] || [ "$nft_apply_changes_router" = "1" ]; then
         config_validate_port "$tproxy_port" "proxy.tproxy_port" || validation_failed=1
-        if ! is_uint "$pbr_priority" ||
+        if ! val_is_uint "$pbr_priority" ||
             [ "$pbr_priority" -lt 1 ] 2>/dev/null ||
             [ "$pbr_priority" -gt 32766 ] 2>/dev/null; then
             config_validation_error "settings.pbr_priority must be an integer from 1 to 32766"
@@ -637,7 +635,7 @@ config_proxy_read() {
         return
     }
     config_get routing_mark "$section" routing_mark
-    routing_mark=$(parse_routing_mark "$routing_mark" "$reserved_marks")
+    routing_mark=$(val_parse_routing_mark "$routing_mark" "$reserved_marks")
     [ "$routing_mark" != -1 ] || {
         log warn "Skip proxy '$section' due to invalid routing mark"
         return
@@ -646,12 +644,12 @@ config_proxy_read() {
     config_get dialer_proxy "$section" dialer_proxy
     config_get interface_name "$section" interface_name
     config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
-    is_uint "$list_update_interval" || {
+    val_is_uint "$list_update_interval" || {
         log warn "Invalid list update interval for proxy '$name'; using default"
         list_update_interval="$DEFAULT_RULESET_INTERVAL"
     }
     config_get size_limit "$section" size_limit 0
-    is_uint "$size_limit" || {
+    val_is_uint "$size_limit" || {
         log warn "Invalid size limit for proxy '$name'; using zero"
         size_limit=0
     }
@@ -659,7 +657,7 @@ config_proxy_read() {
     config_get proxy_link_object "$section" proxy_link_object
     config_get_bool use_for_update "$section" use_proxy_for_list_update 0
     config_get ip_version "$section" ip_version dual
-    ip_version=$(parse_ip_version "$ip_version")
+    ip_version=$(val_parse_ip_version "$ip_version")
     config_get src_routes "$section" additional_srcip_route
     config_get enabled_list "$section" enabled_list
     config_get domain_routes "$section" additional_domain_route
@@ -694,13 +692,13 @@ config_proxy_group_read() {
     config_get strategy "$section" strategy
     config_get check_url "$section" check_url "$DEFAULT_HEALTHCHECK_URL"
     config_get expected_status "$section" expected_status "$DEFAULT_HEALTHCHECK_RESULT"
-    is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
+    val_is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
     config_get interval "$section" interval "$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
-    is_uint "$interval" || interval="$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
+    val_is_uint "$interval" || interval="$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
     config_get timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
-    is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
+    val_is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
     config_get max_failed "$section" max_failed_times "$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
-    is_uint "$max_failed" || max_failed="$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
+    val_is_uint "$max_failed" || max_failed="$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
     config_get lazy "$section" lazy 0
     config_get tolerance "$section" tolerance
     config_get selected "$section" default_selected
@@ -709,9 +707,9 @@ config_proxy_group_read() {
     config_get exclude_type "$section" exclude_type
     config_get enabled_list "$section" enabled_list
     config_get update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
-    is_uint "$update_interval" || update_interval="$DEFAULT_RULESET_INTERVAL"
+    val_is_uint "$update_interval" || update_interval="$DEFAULT_RULESET_INTERVAL"
     config_get size_limit "$section" size_limit 0
-    is_uint "$size_limit" || size_limit=0
+    val_is_uint "$size_limit" || size_limit=0
     config_get_bool use_for_update "$section" use_proxy_group_for_list_update 0
     config_get src_routes "$section" additional_srcip_route
     config_get domain_routes "$section" additional_domain_route
@@ -738,17 +736,17 @@ config_proxy_provider_read() {
         return
     }
     config_get routing_mark "$section" override_routing_mark
-    routing_mark=$(parse_routing_mark "$routing_mark" "$reserved_marks")
+    routing_mark=$(val_parse_routing_mark "$routing_mark" "$reserved_marks")
     [ "$routing_mark" != -1 ] || {
         log warn "Skip proxy provider '$section' due to invalid routing mark"
         return
     }
     config_get ip_version "$section" override_ip_version dual
-    ip_version=$(parse_ip_version "$ip_version")
+    ip_version=$(val_parse_ip_version "$ip_version")
     config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
-    is_uint "$interval" || interval="$DEFAULT_PROVIDERUPDATE_INTERVAL"
+    val_is_uint "$interval" || interval="$DEFAULT_PROVIDERUPDATE_INTERVAL"
     config_get size_limit "$section" size_limit 0
-    is_uint "$size_limit" || size_limit=0
+    val_is_uint "$size_limit" || size_limit=0
     config_get filter "$section" filter
     config_get exclude_filter "$section" exclude_filter
     config_get exclude_type "$section" exclude_type
@@ -763,12 +761,12 @@ config_proxy_provider_read() {
     config_get public_key "$section" header_age_public_key
     config_get_bool health_check "$section" health_check 0
     config_get expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
-    is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
+    val_is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
     config_get check_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
     config_get check_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
-    is_uint "$check_interval" || check_interval="$DEFAULT_HEALTHCHECK_INTERVAL"
+    val_is_uint "$check_interval" || check_interval="$DEFAULT_HEALTHCHECK_INTERVAL"
     config_get timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
-    is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
+    val_is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
     config_get lazy "$section" health_check_lazy 0
     "$callback" "$name" "$subscription" "$routing_mark" "$ip_version" "$interval" "$size_limit" "$filter" "$exclude_filter" "$exclude_type" "$proxy" "$dialer" "$interface_name" "$auth" "$hwid" "$hwid_custom" "$user_agent" "$private_key" "$public_key" "$health_check" "$expected_status" "$check_url" "$check_interval" "$timeout" "$lazy"
 }
@@ -945,7 +943,7 @@ core_generate_yaml() {
         config_validate_absolute_path "$api_tls_cert" "proxy.api_tls_cert" || validation_failed=1
         config_validate_absolute_path "$api_tls_key" "proxy.api_tls_key" || validation_failed=1
     fi
-    if [ -n "$interface_name" ] && ! is_ifname "$interface_name"; then
+    if [ -n "$interface_name" ] && ! val_is_ifname "$interface_name"; then
         config_validation_error "proxy.interface_name contains an invalid interface name"
         validation_failed=1
     fi
@@ -973,7 +971,7 @@ core_generate_yaml() {
     global_ua=$(resolve_user_agent "$global_ua")
 
     if [ -n "$controller_bind_interface" ]; then
-        if ! is_ifname "$controller_bind_interface"; then
+        if ! val_is_ifname "$controller_bind_interface"; then
             router_selected_ipaddr="0.0.0.0"
             log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will listen on all interfaces."
         elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
@@ -984,23 +982,23 @@ core_generate_yaml() {
         router_selected_ipaddr="0.0.0.0"
     fi
 
-    [ -n "$effective_interface_name" ] && effective_interface_name=$(trim "$effective_interface_name")
-    if [ -n "$effective_interface_name" ] && ! is_ifname "$effective_interface_name"; then
+    [ -n "$effective_interface_name" ] && effective_interface_name=$(str_trim "$effective_interface_name")
+    if [ -n "$effective_interface_name" ] && ! val_is_ifname "$effective_interface_name"; then
         log warn "Global interface_name '$effective_interface_name' is invalid and will be ignored."
         effective_interface_name=""
     fi
 
-    default_nameserver=$(format_values_as_json_array "$default_nameserver" "" "    ")
-    direct_nameserver=$(format_values_as_json_array "$direct_nameserver" "" "    ")
-    proxy_server_nameserver=$(format_values_as_json_array "$proxy_server_nameserver" "" "    ")
-    nameserver=$(format_values_as_json_array "$nameserver" "" "    ")
-    hosts_content=$(build_slash_map_from_values "$hosts")
-    nameserver_policy_custom=$(build_slash_map_from_values "$nameserver_policy")
-    sniffer_force_domain=$(format_values_as_json_array "$sniffer_force_domain" "" "    ")
-    sniffer_exclude_domain=$(format_values_as_json_array "$sniffer_exclude_domain" "" "    ")
-    sniffer_skip_src_address=$(format_values_as_json_array "$sniffer_skip_src_address" "" "    ")
-    sniffer_skip_dst_address=$(format_values_as_json_array "$sniffer_skip_dst_address" "" "    ")
-    proxy_authentication=$(format_values_as_json_array "$proxy_authentication" "" "    ")
+    default_nameserver=$(fmt_values_as_json_array "$default_nameserver" "" "    ")
+    direct_nameserver=$(fmt_values_as_json_array "$direct_nameserver" "" "    ")
+    proxy_server_nameserver=$(fmt_values_as_json_array "$proxy_server_nameserver" "" "    ")
+    nameserver=$(fmt_values_as_json_array "$nameserver" "" "    ")
+    hosts_content=$(str_build_slash_map_from_values "$hosts")
+    nameserver_policy_custom=$(str_build_slash_map_from_values "$nameserver_policy")
+    sniffer_force_domain=$(fmt_values_as_json_array "$sniffer_force_domain" "" "    ")
+    sniffer_exclude_domain=$(fmt_values_as_json_array "$sniffer_exclude_domain" "" "    ")
+    sniffer_skip_src_address=$(fmt_values_as_json_array "$sniffer_skip_src_address" "" "    ")
+    sniffer_skip_dst_address=$(fmt_values_as_json_array "$sniffer_skip_dst_address" "" "    ")
+    proxy_authentication=$(fmt_values_as_json_array "$proxy_authentication" "" "    ")
 
     # MIXED PORT RULES section
     handle_mixed_port_rules_section "$mixed_exit_rule"
@@ -1042,9 +1040,7 @@ core_generate_yaml() {
     # (e.g. matching "youtube" inside "youtube_ads").
     # shellcheck disable=SC2034
     GLOBAL_FAKE_IP_EXCLUDE_RULES=" $fake_ip_exclude_rulesets "
-    # shellcheck disable=SC2034
     GLOBAL_FAKE_IP_EXCLUDE_GEOSITES=" $fake_ip_exclude_geosites "
-    # shellcheck disable=SC2034
     GLOBAL_FAKE_IP_EXCLUDE_DOMAINS=" $fake_ip_exclude_domains "
 
     # BLOCK section
@@ -1381,7 +1377,7 @@ core_update() {
     config_get repository settings mihomo_github_repo "$DEFAULT_MIHOMO_GITHUB_REPO"
 
     # Validate before applying any changes.
-    if ! is_choice "$source_type" github custom; then
+    if ! val_is_choice "$source_type" github custom; then
         config_validation_error "settings.mihomo_core_source_type must be 'github' or 'custom'"
         validation_failed=1
     fi
@@ -1431,7 +1427,7 @@ core_update() {
         return 1
     }
 
-    current_version=$(info_mihomo "$CORE_PATH" "$NO_DATA_STRING")
+    current_version=$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")
     core_update_apply \
         "$current_version" "$latest_version" "$version_url" \
         "$NO_DATA_STRING" "$CORE_WORKDIR_PATH" "$CORE_PATH"
@@ -1567,7 +1563,7 @@ run_diag_proxy_resolver() {
     config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
 
     # Validate before applying any changes.
-    if ! is_port "$dns_listen_port"; then
+    if ! val_is_port "$dns_listen_port"; then
         config_validation_error "proxy.dns_listen_port must be an integer from 1 to 65535"
         validation_failed=1
     fi
@@ -1585,8 +1581,8 @@ diag_report() {
     service "$PROGNAME" running && running_status="active" || running_status="inactive"
     service "$PROGNAME" enabled && autoload_status="enabled" || autoload_status="disabled"
 
-    os_ver=$(get_os_version)
-    hw_model=$(get_hw_model)
+    os_ver=$(sysinfo_get_os_version)
+    hw_model=$(sysinfo_get_hw_model)
 
     print_dpi_status() {
         local name="$1"
@@ -1605,8 +1601,8 @@ diag_report() {
     printf "  %-15s :: %s\n" "Device" "${hw_model:-$NO_DATA_STRING}"
     printf "  %-15s :: %s\n" "OpenWrt" "${os_ver:-$NO_DATA_STRING}"
     printf "  %-15s :: %s\n" "Service Ver" "$JUSTCLASH_VERSION"
-    printf "  %-15s :: %s\n" "Mihomo Ver" "$(info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
-    printf "  %-15s :: %s\n" "HWID" "$(hwid_generate)"
+    printf "  %-15s :: %s\n" "Mihomo Ver" "$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
+    printf "  %-15s :: %s\n" "HWID" "$(sysinfo_hwid_generate)"
     echo ""
     echo "  [ Service Status ]"
     printf "  %-15s :: %s\n" "Active" "$running_status"
@@ -1685,7 +1681,7 @@ diag_report_redacted() {
     echo ""
     echo "  [ Versions ]"
     printf "  %-24s :: %s\n" "Service" "$JUSTCLASH_VERSION"
-    printf "  %-24s :: %s\n" "Mihomo" "$(info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
+    printf "  %-24s :: %s\n" "Mihomo" "$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
     echo ""
     echo "  [ Service Status ]"
     printf "  %-24s :: %s\n" "Active" "$running_status"
@@ -1806,9 +1802,9 @@ logs | systemlogs | log | l)
         ;;
     esac
     ;;
-info_core | info_mihomo | version_core | vc | --vc)
+info_core | core_info_mihomo | version_core | vc | --vc)
     import /usr/lib/justclash/runtime/core.sh
-    info_mihomo "$CORE_PATH" "$NO_DATA_STRING"
+    core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING"
     ;;
 info_package | version | v | -v | --version)
     echo "$JUSTCLASH_VERSION"
@@ -1893,7 +1889,7 @@ config_reset | cfr | diag_service_config_reset | dscr)
     ;;
 show_hwid | hwid)
     import /usr/lib/justclash/helpers.sh
-    hwid_generate
+    sysinfo_hwid_generate
     echo ""
     ;;
 help | '?' | command | h | -h | --help)
@@ -1902,7 +1898,7 @@ help | '?' | command | h | -h | --help)
     ;;
 _luci_call)
     import /usr/lib/justclash/runtime/core.sh
-    echo "$JUSTCLASH_VERSION,$(info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
+    echo "$JUSTCLASH_VERSION,$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
     ;;
 *)
     import /usr/lib/justclash/logging.sh

@@ -13,7 +13,7 @@ parse_vless_url() {
     local hostport="${raw#*@}"
     local host="${hostport%%\?*}"
     local server
-    server="$(url_decode "${host%%:*}")"
+    server="$(str_url_decode "${host%%:*}")"
     local port="${host##*:}"
     [ "$server" = "$port" ] && port=$DEFAULT_TLS_PORT
     port="${port//[!0-9]/}"
@@ -55,50 +55,50 @@ parse_vless_url() {
             ;;
         security) sec="$v" ;;
         encryption) enc="$v" ;;
-        sni) sni="$(url_decode "$v")" ;;
+        sni) sni="$(str_url_decode "$v")" ;;
         host)
-            transport_host="$(url_decode "$v")"
+            transport_host="$(str_url_decode "$v")"
             ;;
         fp | client-fingerprint) fp="$v" ;;
-        alpn) alpn="$(url_decode "$v")" ;;
+        alpn) alpn="$(str_url_decode "$v")" ;;
         flow) flow="$v" ;;
-        tfo) is_truthy "$v" && tfo_value=1 ;;
-        insecure | allowInsecure | skip-cert-verify | skipCertVerify) is_truthy "$v" && insecure=1 ;;
+        tfo) uri_is_truthy "$v" && tfo_value=1 ;;
+        insecure | allowInsecure | skip-cert-verify | skipCertVerify) uri_is_truthy "$v" && insecure=1 ;;
         pbk | public-key) pbk="$v" ;;
-        pinSHA256 | fingerprint) pin_sha256="$(url_decode "$v")" ;;
-        name-cert-verify | nameCertVerify | peer) name_cert_verify="$(url_decode "$v")" ;;
-        certificate) certificate="$(url_decode "$v")" ;;
-        privateKey | private-key) private_key="$(url_decode "$v")" ;;
-        shadow-tls-password | shadowTlsPassword) shadow_tls_password="$(url_decode "$v")" ;;
+        pinSHA256 | fingerprint) pin_sha256="$(str_url_decode "$v")" ;;
+        name-cert-verify | nameCertVerify | peer) name_cert_verify="$(str_url_decode "$v")" ;;
+        certificate) certificate="$(str_url_decode "$v")" ;;
+        privateKey | private-key) private_key="$(str_url_decode "$v")" ;;
+        shadow-tls-password | shadowTlsPassword) shadow_tls_password="$(str_url_decode "$v")" ;;
         shadow-tls-version | shadowTlsVersion) shadow_tls_version="$v" ;;
-        restls-password | restlsPassword) restls_password="$(url_decode "$v")" ;;
+        restls-password | restlsPassword) restls_password="$(str_url_decode "$v")" ;;
         restls-version-hint | restlsVersionHint | restlsVersion) restls_version_hint="$v" ;;
-        restls-script | restlsScript) restls_script="$(url_decode "$v")" ;;
-        jls-username | jlsUsername | jlsUser) jls_username="$(url_decode "$v")" ;;
-        jls-password | jlsPassword) jls_password="$(url_decode "$v")" ;;
-        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) is_truthy "$v" && support_x25519mlkem768=1 ;;
+        restls-script | restlsScript) restls_script="$(str_url_decode "$v")" ;;
+        jls-username | jlsUsername | jlsUser) jls_username="$(str_url_decode "$v")" ;;
+        jls-password | jlsPassword) jls_password="$(str_url_decode "$v")" ;;
+        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) uri_is_truthy "$v" && support_x25519mlkem768=1 ;;
         sid | short-id) sid="$v" ;;
         spx)
             if [ -n "$v" ]; then
-                spx="$(url_decode "$v")"
+                spx="$(str_url_decode "$v")"
             else
                 spx="/"
             fi
             ;;
         path)
             if [ -n "$v" ]; then
-                path="$(url_decode "$v")"
+                path="$(str_url_decode "$v")"
             else
                 path="/"
             fi
             ;;
-        serviceName | service-name) sn="$(url_decode "$v")" ;;
-        grpc-user-agent | grpcUserAgent) grpc_ua="$(url_decode "$v")" ;;
+        serviceName | service-name) sn="$(str_url_decode "$v")" ;;
+        grpc-user-agent | grpcUserAgent) grpc_ua="$(str_url_decode "$v")" ;;
         ping-interval | pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
         packetEncoding | packet-encoding) penc="$v" ;;
-        ech) ech="$(url_decode "$v")" ;;
-        mode) xhttp_mode="$(url_decode "$v")" ;;
-        extra) xhttp_extra="$(url_decode "$v")" ;;
+        ech) ech="$(str_url_decode "$v")" ;;
+        mode) xhttp_mode="$(str_url_decode "$v")" ;;
+        extra) xhttp_extra="$(str_url_decode "$v")" ;;
         esac
     done
 
@@ -118,7 +118,7 @@ parse_vless_url() {
         sn="/"
     fi
 
-    alpn_json=$(json_array_from_csv "$alpn") || return 1
+    alpn_json=$(uri_json_array_from_csv "$alpn") || return 1
     if [ -n "$xhttp_extra" ] && [ "$xhttp_extra" != "null" ]; then
         xhttp_extra_json="$(printf '%s' "$xhttp_extra" | jq -c 'if type == "object" then . else {} end' 2>/dev/null)"
         [ -n "$xhttp_extra_json" ] || xhttp_extra_json='{}'

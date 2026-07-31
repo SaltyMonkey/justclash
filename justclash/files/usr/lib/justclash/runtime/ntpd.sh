@@ -4,7 +4,7 @@
 NTPD_PATH="/usr/sbin/ntpd"
 
 # Returns 0 when disabled or synchronized, 3 without servers, 6 when ntpd fails.
-ntp_force_sync() {
+ntpd_force_sync() {
     local enabled="$1"
     local servers="$2"
 

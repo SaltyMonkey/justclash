@@ -7,10 +7,10 @@
 
 build_hwid_header_fragment() {
     local hwid device_os version_os device_model
-    hwid=$(hwid_generate)
-    device_os=$(get_os_name)
-    version_os=$(get_os_version)
-    device_model=$(get_hw_model)
+    hwid=$(sysinfo_hwid_generate)
+    device_os=$(sysinfo_get_os_name)
+    version_os=$(sysinfo_get_os_version)
+    device_model=$(sysinfo_get_hw_model)
     template_hwid_header "$hwid" "$device_os" "$version_os" "$device_model"
 }
 
@@ -21,15 +21,15 @@ template_proxy_provider() {
     local age_priv="${19}"
     local out override_json hc_json
 
-    out="\"type\":\"http\",\"url\":\"$(json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
-    [ -n "$filter" ] && out="$out,\"filter\":\"$(json_escape "$filter")\""
-    [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
-    [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+    out="\"type\":\"http\",\"url\":\"$(str_json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
+    [ -n "$filter" ] && out="$out,\"filter\":\"$(str_json_escape "$filter")\""
+    [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(str_json_escape "$exclude_filter")\""
+    [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(str_json_escape "$exclude_type")\""
 
     # Override object
     override_json="\"udp\":true"
-    [ -n "$override_dialer" ] && override_json="$override_json,\"dialer-proxy\":\"$(json_escape "$override_dialer")\""
-    [ -n "$override_ifname" ] && override_json="$override_json,\"interface-name\":\"$(json_escape "$override_ifname")\""
+    [ -n "$override_dialer" ] && override_json="$override_json,\"dialer-proxy\":\"$(str_json_escape "$override_dialer")\""
+    [ -n "$override_ifname" ] && override_json="$override_json,\"interface-name\":\"$(str_json_escape "$override_ifname")\""
     [ -n "$override_ip_version" ] && override_json="$override_json,\"ip-version\":\"$override_ip_version\""
     [ -n "$override_fwmark" ] && override_json="$override_json,\"routing-mark\":$override_fwmark"
     out="$out,\"override\":{$override_json}"
@@ -39,12 +39,12 @@ template_proxy_provider() {
 
     # Health check object
     if [ "$hc_enabled" -eq 1 ]; then
-        hc_json="\"enable\":true,\"lazy\":$hc_lazy,\"url\":\"$(json_escape "$hc_url")\",\"expected-status\":$hc_status,\"interval\":$hc_interval,\"timeout\":$hc_timeout"
+        hc_json="\"enable\":true,\"lazy\":$hc_lazy,\"url\":\"$(str_json_escape "$hc_url")\",\"expected-status\":$hc_status,\"interval\":$hc_interval,\"timeout\":$hc_timeout"
         out="$out,\"health-check\":{$hc_json}"
     fi
 
     # Optional AGE keys
-    [ -n "$age_priv" ] && out="$out,\"age-private-key\":\"$(json_escape "$age_priv")\""
+    [ -n "$age_priv" ] && out="$out,\"age-private-key\":\"$(str_json_escape "$age_priv")\""
 
     OUT_TEMPLATE="{$out}"
 }
@@ -52,13 +52,13 @@ template_proxy_provider() {
 resolve_user_agent() {
     local ua="$1"
     if [ "$ua" = "__random__" ]; then
-        rand_user_agent
+        user_agent_rand
     elif [ "$ua" = "__justclash__" ]; then
         local service_ver="${JUSTCLASH_VERSION:-unknown}"
         printf '%s\n' "JustClash/${service_ver}"
     elif [ "$ua" = "__mihomo__" ]; then
         local core_ver
-        core_ver=$(info_mihomo "$CORE_PATH" "$NO_DATA_STRING")
+        core_ver=$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")
         printf '%s\n' "Mihomo/${core_ver}"
     else
         printf '%s\n' "$ua"
@@ -77,23 +77,23 @@ template_headers() {
     if [ "$hwid_enabled" = "1" ] || [ "$hwid_enabled" = "real" ] || [ "$hwid_enabled" = "spoofed" ]; then
         local hwid device_os version_os device_model
 
-        [ "$hwid_enabled" = "spoofed" ] && [ -n "$hwid_custom" ] && hwid="$hwid_custom" || hwid=$(hwid_generate)
+        [ "$hwid_enabled" = "spoofed" ] && [ -n "$hwid_custom" ] && hwid="$hwid_custom" || hwid=$(sysinfo_hwid_generate)
 
-        device_os=$(get_os_name)
-        version_os=$(get_os_version)
-        device_model=$(get_hw_model)
+        device_os=$(sysinfo_get_os_name)
+        version_os=$(sysinfo_get_os_version)
+        device_model=$(sysinfo_get_hw_model)
 
         headers_fragment=$(printf '"x-hwid":["%s"],"x-os":["%s"],"x-os-version":["%s"],"x-device-model":["%s"]' \
-            "$(json_escape "$hwid")" \
-            "$(json_escape "$device_os")" \
-            "$(json_escape "$version_os")" \
-            "$(json_escape "$device_model")")
+            "$(str_json_escape "$hwid")" \
+            "$(str_json_escape "$device_os")" \
+            "$(str_json_escape "$version_os")" \
+            "$(str_json_escape "$device_model")")
     fi
 
     # 2. Build Authorization header as array if auth token is set
     if [ -n "$auth_token" ]; then
         local auth_entry
-        auth_entry=$(printf '"Authorization":["%s"]' "$(json_escape "$auth_token")")
+        auth_entry=$(printf '"Authorization":["%s"]' "$(str_json_escape "$auth_token")")
 
         headers_fragment="${headers_fragment:+$headers_fragment,}$auth_entry"
     fi
@@ -101,7 +101,7 @@ template_headers() {
     # 3. Build User-Agent header as array if user_agent is set
     if [ -n "$user_agent" ]; then
         local ua_entry
-        ua_entry=$(printf '"User-Agent":["%s"]' "$(json_escape "$user_agent")")
+        ua_entry=$(printf '"User-Agent":["%s"]' "$(str_json_escape "$user_agent")")
 
         headers_fragment="${headers_fragment:+$headers_fragment,}$ua_entry"
     fi
@@ -109,7 +109,7 @@ template_headers() {
     # 4. Build AGE public key header if set
     if [ -n "$age_pub_key" ]; then
         local age_pub_entry
-        age_pub_entry=$(printf '"X-Age-Public-Key":["%s"]' "$(json_escape "$age_pub_key")")
+        age_pub_entry=$(printf '"X-Age-Public-Key":["%s"]' "$(str_json_escape "$age_pub_key")")
 
         headers_fragment="${headers_fragment:+$headers_fragment,}$age_pub_entry"
     fi
@@ -132,7 +132,7 @@ yaml_proxy_provider_append() {
     header_user_agent=$(resolve_user_agent "$header_user_agent")
     template_headers "$header_hwid" "$header_authorization" "$header_user_agent" "$header_age_public_key" "$header_hwid_custom"
     headers="$OUT_TEMPLATE"
-    hc_lazy=$(format_uci_bool_as_yaml "$hc_lazy")
+    hc_lazy=$(fmt_uci_bool_as_yaml "$hc_lazy")
 
     template_proxy_provider \
         "$url" "$interval" "$size_limit" "$proxy" "$filter" "$exclude_filter" "$exclude_type" \
@@ -141,5 +141,5 @@ yaml_proxy_provider_append() {
         "$age_private_key"
     provider_json="$OUT_TEMPLATE"
 
-    OUT_PROXY_PROVIDERS="$OUT_PROXY_PROVIDERS\"$(json_escape "$name")\":$provider_json,"
+    OUT_PROXY_PROVIDERS="$OUT_PROXY_PROVIDERS\"$(str_json_escape "$name")\":$provider_json,"
 }

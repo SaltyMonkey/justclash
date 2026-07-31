@@ -3,7 +3,7 @@
 
 # Focused helper module loaded into the main ash process.
 
-format_uci_bool_as_yaml() {
+fmt_uci_bool_as_yaml() {
     case "$1" in
     1 | yes | on | true) echo "true" ;;
     *) echo "false" ;;
@@ -12,7 +12,7 @@ format_uci_bool_as_yaml() {
 
 # NL is provided by helpers/strings.sh through helpers.sh.
 # shellcheck disable=SC2154
-format_values_as_json_array() {
+fmt_values_as_json_array() {
     local values="$1"
     local add_custom="$2"
     local indent="${3:-}"
@@ -23,7 +23,7 @@ format_values_as_json_array() {
     IFS="$NL"
     for val in $values; do
         [ -n "$val" ] || continue
-        val=$(json_escape "$val")
+        val=$(str_json_escape "$val")
         [ -n "$add_custom" ] && val="${val}${add_custom}"
         if [ -n "$result" ]; then
             result="${result},\n${indent}\"$val\""
@@ -35,7 +35,7 @@ format_values_as_json_array() {
 
     [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
 }
-format_uci_list_as_json_array() {
+fmt_uci_list_as_json_array() {
     local section_name="$1"
     local list_name="$2"
     local add_custom="$3"
@@ -63,7 +63,7 @@ format_uci_list_as_json_array() {
     [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
 }
 
-list_to_json_array() {
+fmt_list_to_json_array() {
     local input_list
     read -r input_list
 

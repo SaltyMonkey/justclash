@@ -37,11 +37,11 @@ parse_ssh_url() {
     userinfo="${userinfo%%;*}"
     case "$userinfo" in
     *:*)
-        username="$(url_decode "${userinfo%%:*}")"
-        password="$(url_decode "${userinfo#*:}")"
+        username="$(str_url_decode "${userinfo%%:*}")"
+        password="$(str_url_decode "${userinfo#*:}")"
         ;;
     *)
-        username="$(url_decode "$userinfo")"
+        username="$(str_url_decode "$userinfo")"
         ;;
     esac
 
@@ -62,7 +62,7 @@ parse_ssh_url() {
         server="$hostport"
         ;;
     esac
-    server="$(url_decode "$server")"
+    server="$(str_url_decode "$server")"
 
     while [ -n "$query_part" ]; do
         local param="${query_part%%&*}"
@@ -74,21 +74,21 @@ parse_ssh_url() {
         [ -n "$key" ] || continue
 
         case "$key" in
-        username | user) username="$(url_decode "$value")" ;;
-        password | pass) password="$(url_decode "$value")" ;;
-        port) port="$(url_decode "$value")" ;;
+        username | user) username="$(str_url_decode "$value")" ;;
+        password | pass) password="$(str_url_decode "$value")" ;;
+        port) port="$(str_url_decode "$value")" ;;
         private-key | private_key | privateKey)
-            private_key="$(url_decode "$value")"
+            private_key="$(str_url_decode "$value")"
             ;;
         private-key-passphrase | private_key_passphrase | privateKeyPassphrase)
-            private_key_passphrase="$(url_decode "$value")"
+            private_key_passphrase="$(str_url_decode "$value")"
             ;;
         host-key | host_key | hostKey)
-            decoded_value="$(url_decode "$value")"
+            decoded_value="$(str_url_decode "$value")"
             host_key="${host_key:+$host_key,}$decoded_value"
             ;;
         host-key-algorithms | host_key_algorithms | hostKeyAlgorithms)
-            decoded_value="$(url_decode "$value")"
+            decoded_value="$(str_url_decode "$value")"
             host_key_algorithms="${host_key_algorithms:+$host_key_algorithms,}$decoded_value"
             ;;
         esac
@@ -98,8 +98,8 @@ parse_ssh_url() {
     [ -n "$port" ] || port="$default_port"
     [ -n "$server" ] && [ -n "$username" ] || return 1
 
-    host_key_json=$(json_array_from_csv "$host_key") || return 1
-    host_key_algorithms_json=$(json_array_from_csv "$host_key_algorithms") || return 1
+    host_key_json=$(uri_json_array_from_csv "$host_key") || return 1
+    host_key_algorithms_json=$(uri_json_array_from_csv "$host_key_algorithms") || return 1
 
     proxy_obj=$(
         jq -nc \

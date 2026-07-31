@@ -18,17 +18,17 @@ parse_simple_proxy_url() {
         hostport="${raw#*@}"
 
         if printf '%s\n' "$userinfo" | grep -q ':'; then
-            username="$(url_decode "${userinfo%%:*}")"
-            password="$(url_decode "${userinfo#*:}")"
+            username="$(str_url_decode "${userinfo%%:*}")"
+            password="$(str_url_decode "${userinfo#*:}")"
         else
-            username="$(url_decode "$userinfo")"
+            username="$(str_url_decode "$userinfo")"
         fi
     else
         hostport="$raw"
     fi
 
     # host:port
-    server="$(url_decode "${hostport%%:*}")"
+    server="$(str_url_decode "${hostport%%:*}")"
 
     port="${hostport##*:}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"

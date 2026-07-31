@@ -4,7 +4,7 @@
 DNSMASQ_UCI_SECTION="dhcp.@dnsmasq[0]"
 DNSMASQ_UCI_PACKAGE="dhcp"
 DNSMASQ_INITD_PATH="/etc/init.d/dnsmasq"
-save_dnsmasq_config() {
+_dnsmasq_save_config() {
     local key="$1"
     local backup_key="$2"
     local value
@@ -42,10 +42,10 @@ dnsmasq_update() {
         [ -n "$server" ] && uci add_list "${DNSMASQ_UCI_SECTION}.${backup_prefix}_server=${server}"
     done
 
-    save_dnsmasq_config \
+    _dnsmasq_save_config \
         "${DNSMASQ_UCI_SECTION}.noresolv" \
         "${DNSMASQ_UCI_SECTION}.${backup_prefix}_noresolv"
-    save_dnsmasq_config \
+    _dnsmasq_save_config \
         "${DNSMASQ_UCI_SECTION}.cachesize" \
         "${DNSMASQ_UCI_SECTION}.${backup_prefix}_cachesize"
 

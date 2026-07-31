@@ -20,28 +20,29 @@ if [ -f /etc/os-release ]; then
     JUSTCLASH_CACHE_OS_VERSION="${PRETTY_NAME:-$OPENWRT_RELEASE}"
     JUSTCLASH_CACHE_OS_VERSION_FULL="$OPENWRT_RELEASE"
 fi
-get_hw_model() {
+
+sysinfo_get_hw_model() {
     [ -n "$JUSTCLASH_CACHE_HW_MODEL" ] || JUSTCLASH_CACHE_HW_MODEL=$(cat /tmp/sysinfo/model 2>/dev/null)
     printf '%s' "$JUSTCLASH_CACHE_HW_MODEL"
 }
 
-get_os_arch() {
+sysinfo_get_os_arch() {
     printf '%s' "$JUSTCLASH_CACHE_OS_ARCH"
 }
 
-get_os_name() {
+sysinfo_get_os_name() {
     printf '%s' "$JUSTCLASH_CACHE_OS_NAME"
 }
 
-get_os_version_full() {
+sysinfo_get_os_version_full() {
     printf '%s' "$JUSTCLASH_CACHE_OS_VERSION_FULL"
 }
 
-get_os_version() {
+sysinfo_get_os_version() {
     printf '%s' "$JUSTCLASH_CACHE_OS_VERSION"
 }
 
-hwid_generate() {
+sysinfo_hwid_generate() {
     local interface mac_addr board_data arch_data hwid_str
     local no_mac_string="__COMPILED_DEFAULT_MAC_VARIABLE__"
     local interface_dump device_status
@@ -71,7 +72,7 @@ hwid_generate() {
     { [ -z "$mac_addr" ] || [ "$mac_addr" = "null" ]; } && mac_addr="$no_mac_string"
 
     board_data=$(ubus call system board | jq -r '.board_name')
-    arch_data=$(get_os_arch)
+    arch_data=$(sysinfo_get_os_arch)
 
     hwid_str=$(printf "hwid_%s%s%s" "$mac_addr" "$board_data" "$arch_data" | md5sum | cut -c1-14)
 

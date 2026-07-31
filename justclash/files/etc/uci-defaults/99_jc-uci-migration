@@ -4,6 +4,13 @@
 # shellcheck shell=dash
 [ -f /etc/config/justclash ] || exit 0
 
+# shellcheck disable=SC1091
+if ! . /usr/lib/justclash/config/reset.sh ||
+    ! config_api_password_ensure_file /etc/config/justclash; then
+    logger -p user.err -t justclash "Failed to initialize the API password."
+    exit 1
+fi
+
 add_missing_option() {
     local path="$1"
     local default_value="$2"
@@ -23,7 +30,10 @@ clean_fake_ip_list() {
 
     for item in $list_val; do
         case "$item" in
-            +.*) need_clean=1; break ;;
+        +.*)
+            need_clean=1
+            break
+            ;;
         esac
     done
 

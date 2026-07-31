@@ -27,7 +27,7 @@ return view.extend({
             apiToken = uci.get(common.binName, "proxy", "api_password") || "";
             logLevel = uci.get(common.binName, "proxy", "log_level") || DEFAULT_LOG_LEVEL;
             mihomoApi.setTls(uci.get(common.binName, "proxy", "api_tls") === "1");
-        } catch (e) {}
+        } catch { /* ignore */ }
 
         if (!LOG_LEVEL_OPTIONS.includes(logLevel))
             logLevel = DEFAULT_LOG_LEVEL;

@@ -24,7 +24,7 @@ parse_hysteria2_url() {
     if printf '%s\n' "$raw" | grep -q '@'; then
         userinfo="${raw%@*}"
         hostport="${raw#*@}"
-        password="$(url_decode "$userinfo")"
+        password="$(str_url_decode "$userinfo")"
     else
         hostport="$raw"
         password=""
@@ -59,29 +59,29 @@ parse_hysteria2_url() {
         [ -z "$k" ] && continue
 
         case "$k" in
-        sni) sni="$(url_decode "$v")" ;;
-        insecure | allowInsecure | skip-cert-verify | skipCertVerify) is_truthy "$v" && insecure=1 ;;
-        obfs) obfs="$(url_decode "$v")" ;;
-        obfs-password | obfsPassword) obfs_password="$(url_decode "$v")" ;;
+        sni) sni="$(str_url_decode "$v")" ;;
+        insecure | allowInsecure | skip-cert-verify | skipCertVerify) uri_is_truthy "$v" && insecure=1 ;;
+        obfs) obfs="$(str_url_decode "$v")" ;;
+        obfs-password | obfsPassword) obfs_password="$(str_url_decode "$v")" ;;
         obfs-min-packet-size | obfs-min | obfsMinPacketSize | obfsMin) obfs_min="$v" ;;
         obfs-max-packet-size | obfs-max | obfsMaxPacketSize | obfsMax) obfs_max="$v" ;;
-        bbr-profile | bbrProfile | bbr) bbr_profile="$(url_decode "$v")" ;;
-        up | upmbps) up="$(url_decode "$v")" ;;
-        down | downmbps) down="$(url_decode "$v")" ;;
-        ports) ports="$(url_decode "$v")" ;;
-        hop-interval | hop_interval | hopInterval) hop_interval="$(url_decode "$v")" ;;
+        bbr-profile | bbrProfile | bbr) bbr_profile="$(str_url_decode "$v")" ;;
+        up | upmbps) up="$(str_url_decode "$v")" ;;
+        down | downmbps) down="$(str_url_decode "$v")" ;;
+        ports) ports="$(str_url_decode "$v")" ;;
+        hop-interval | hop_interval | hopInterval) hop_interval="$(str_url_decode "$v")" ;;
         handshake-timeout | handshakeTimeout) handshake_timeout="$v" ;;
-        alpn) alpn="$(url_decode "$v")" ;;
+        alpn) alpn="$(str_url_decode "$v")" ;;
         pinSHA256 | fingerprint | fp | client-fingerprint | clientFingerprint) pin_sha256="$v" ;;
-        ech) ech="$(url_decode "$v")" ;;
-        name-cert-verify | nameCertVerify | peer) name_cert_verify="$(url_decode "$v")" ;;
+        ech) ech="$(str_url_decode "$v")" ;;
+        name-cert-verify | nameCertVerify | peer) name_cert_verify="$(str_url_decode "$v")" ;;
         esac
     done
 
     [ -n "$obfs_min" ] && obfs_min_value="${obfs_min//[!0-9]/}"
     [ -n "$obfs_max" ] && obfs_max_value="${obfs_max//[!0-9]/}"
     [ -n "$handshake_timeout" ] && handshake_timeout_value="${handshake_timeout//[!0-9]/}"
-    alpn_json=$(json_array_from_csv "$alpn") || return 1
+    alpn_json=$(uri_json_array_from_csv "$alpn") || return 1
 
     proxy_obj=$(
         jq -nc \

@@ -25,7 +25,7 @@ core_validate_yaml() {
     return 0
 }
 
-info_mihomo() {
+core_info_mihomo() {
     local core_path="$1"
     local no_data_string="$2"
     local out
@@ -39,7 +39,7 @@ info_mihomo() {
     fi
 }
 
-detect_arch() {
+core_detect_arch() {
     local arch_raw="$1"
 
     case "$arch_raw" in

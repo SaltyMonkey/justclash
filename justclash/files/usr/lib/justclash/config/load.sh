@@ -12,7 +12,7 @@ config_hash_filtered() {
     local package="$1"
     local exclude_pattern="$2"
 
-    uci show "$package" | grep -vE "$exclude_pattern" | md5_str
+    uci show "$package" | grep -vE "$exclude_pattern" | str_md5
 }
 
 _config_emit_routing_mark() {
@@ -22,7 +22,7 @@ _config_emit_routing_mark() {
     local routing_mark
 
     config_get routing_mark "$section" "$option_name"
-    routing_mark=$(parse_routing_mark "$routing_mark" "$reserved_marks")
+    routing_mark=$(val_parse_routing_mark "$routing_mark" "$reserved_marks")
     [ -n "$routing_mark" ] || return 0
 
     printf '%s ' "$routing_mark"

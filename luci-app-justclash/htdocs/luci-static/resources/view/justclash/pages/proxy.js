@@ -32,7 +32,7 @@ return view.extend({
                     if (geositeBlocklist) (Array.isArray(geositeBlocklist) ? geositeBlocklist : [geositeBlocklist]).forEach(i => i && activeGeosites.add(i));
                 }
             }
-        } catch (e) {}
+        } catch { /* ignore */ }
 
         return {
             rulesetsItems: Array.from(activeRulesets).map(name => ({ rawName: name, readableName: `(Set) ${name}` })),

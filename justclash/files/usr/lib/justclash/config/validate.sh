@@ -31,7 +31,7 @@ config_validate_enabled_cron() {
         return 1
     fi
 
-    if ! validate_cron_expr "$schedule"; then
+    if ! val_cron_expr "$schedule"; then
         config_validation_error "settings.$option must be a five-field cron expression"
         return 1
     fi
@@ -43,7 +43,7 @@ config_validate_uint() {
     local value="$1"
     local option="$2"
 
-    if ! is_uint "$value"; then
+    if ! val_is_uint "$value"; then
         config_validation_error "$option must be an unsigned integer"
         return 1
     fi
@@ -55,7 +55,7 @@ config_validate_port() {
     local value="$1"
     local option="$2"
 
-    if ! is_port "$value"; then
+    if ! val_is_port "$value"; then
         config_validation_error "$option must be an integer from 1 to 65535"
         return 1
     fi
@@ -82,7 +82,7 @@ config_validate_port_list() {
     local value
 
     for value in $values; do
-        if ! is_port "$value"; then
+        if ! val_is_port "$value"; then
             config_validation_error "$option must contain only ports from 1 to 65535"
             return 1
         fi
@@ -102,7 +102,7 @@ config_validate_interface_list() {
     fi
 
     for value in $values; do
-        if ! is_ifname "$value"; then
+        if ! val_is_ifname "$value"; then
             config_validation_error "$option contains an invalid interface name"
             return 1
         fi
@@ -115,7 +115,7 @@ config_validate_nft_mode() {
     local value="$1"
     local option="$2"
 
-    if ! is_choice "$value" "BY RULES" DROP REJECT; then
+    if ! val_is_choice "$value" "BY RULES" DROP REJECT; then
         config_validation_error "$option must be 'BY RULES', 'DROP', or 'REJECT'"
         return 1
     fi
@@ -127,7 +127,7 @@ config_validate_nft_ntp_mode() {
     local value="$1"
     local option="$2"
 
-    if ! is_choice "$value" "BY RULES" DROP DIRECT; then
+    if ! val_is_choice "$value" "BY RULES" DROP DIRECT; then
         config_validation_error "$option must be 'BY RULES', 'DROP', or 'DIRECT'"
         return 1
     fi

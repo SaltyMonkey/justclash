@@ -8,9 +8,9 @@ template_proxy_group() {
     local tolerance="$9" strategy="${10}" proxies="${11}" providers="${12}" filter="${13}" exclude_filter="${14}" exclude_type="${15}" default_selected="${16}"
     local out
 
-    out="\"name\":\"$(json_escape "$name")\""
-    out="$out,\"type\":\"$(json_escape "$type")\""
-    out="$out,\"url\":\"$(json_escape "$url")\""
+    out="\"name\":\"$(str_json_escape "$name")\""
+    out="$out,\"type\":\"$(str_json_escape "$type")\""
+    out="$out,\"url\":\"$(str_json_escape "$url")\""
     out="$out,\"expected-status\":$status"
     out="$out,\"interval\":$interval"
     out="$out,\"timeout\":$timeout"
@@ -18,18 +18,18 @@ template_proxy_group() {
     out="$out,\"lazy\":$lazy"
 
     if [ "$type" = "url-test" ] && [ -n "$tolerance" ]; then
-        out="$out,\"tolerance\":\"$(json_escape "$tolerance")\""
+        out="$out,\"tolerance\":\"$(str_json_escape "$tolerance")\""
     elif [ "$type" = "load-balance" ] && [ -n "$strategy" ]; then
-        out="$out,\"strategy\":\"$(json_escape "$strategy")\""
+        out="$out,\"strategy\":\"$(str_json_escape "$strategy")\""
     elif [ "$type" = "select" ] && [ -n "$default_selected" ]; then
-        out="$out,\"default-selected\":\"$(json_escape "$default_selected")\""
+        out="$out,\"default-selected\":\"$(str_json_escape "$default_selected")\""
     fi
 
     [ -n "$proxies" ] && out="$out,\"proxies\":[$proxies]"
     [ -n "$providers" ] && out="$out,\"use\":[$providers]"
-    [ -n "$filter" ] && out="$out,\"filter\":\"$(json_escape "$filter")\""
-    [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(json_escape "$exclude_filter")\""
-    [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(json_escape "$exclude_type")\""
+    [ -n "$filter" ] && out="$out,\"filter\":\"$(str_json_escape "$filter")\""
+    [ -n "$exclude_filter" ] && out="$out,\"exclude-filter\":\"$(str_json_escape "$exclude_filter")\""
+    [ -n "$exclude_type" ] && out="$out,\"exclude-type\":\"$(str_json_escape "$exclude_type")\""
 
     OUT_TEMPLATE="{$out}"
 }
@@ -45,11 +45,11 @@ yaml_proxy_group_append() {
     local route_entries route_entry rules_fragment escaped_proxies escaped_providers group_json
     local download_proxy generated_rule
 
-    [ -n "$proxies_list" ] && escaped_proxies=$(trim "$proxies_list" | list_to_json_array)
-    [ -n "$providers_list" ] && escaped_providers=$(trim "$providers_list" | list_to_json_array)
+    [ -n "$proxies_list" ] && escaped_proxies=$(str_trim "$proxies_list" | fmt_list_to_json_array)
+    [ -n "$providers_list" ] && escaped_providers=$(str_trim "$providers_list" | fmt_list_to_json_array)
 
     template_proxy_group \
-        "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$(format_uci_bool_as_yaml "$lazy")" \
+        "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$(fmt_uci_bool_as_yaml "$lazy")" \
         "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type" "$default_selected"
     group_json="$OUT_TEMPLATE"
 

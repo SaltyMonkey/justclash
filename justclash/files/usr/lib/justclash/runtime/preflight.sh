@@ -4,7 +4,8 @@
 # Generic startup checks. Configuration loading and orchestration belong to the caller.
 
 # Returns 0 when ports are unique, 4 when configured ports conflict.
-check_port_collisions() {
+# Returns 0 when ports are unique, 4 when configured ports conflict.
+preflight_check_port_collisions() {
     local dns_port="$1"
     local tproxy_port="$2"
     local mixed_port="$3"
@@ -25,7 +26,7 @@ check_port_collisions() {
 }
 
 # Returns 0 when ports become available, 4 when another service keeps a port busy.
-check_ports_occupancy() {
+preflight_check_ports_occupancy() {
     local dns_port="$1"
     local tproxy_port="$2"
     local mixed_port="$3"
@@ -62,7 +63,7 @@ check_ports_occupancy() {
     return 0
 }
 # Predicate: returns 0 when either the script or core is already running, 1 otherwise.
-check_is_already_running() {
+preflight_check_is_already_running() {
     local script_pattern="$1"
     local program_name="$2"
     local core_path="$3"
@@ -85,7 +86,7 @@ check_is_already_running() {
 }
 
 # Returns 0 when requirements are available, 3 when a required component is missing.
-check_requirement() {
+preflight_check_requirement() {
     local core_path="$1"
     local core_name="$2"
     local required_tools="$3"
@@ -106,7 +107,7 @@ check_requirement() {
     return "$ret"
 }
 
-check_for_conflicts_warn() {
+preflight_check_conflicts_warn() {
     local dhcp_config_path="$1"
     local warn_patterns="$2"
     local resolvconf_path="$3"
@@ -120,7 +121,7 @@ check_for_conflicts_warn() {
 
     # Check for DHCP config leftovers
     # shellcheck disable=SC2086
-    found_patterns=$(is_pattern_in_file "$dhcp_config_path" $warn_patterns)
+    found_patterns=$(file_is_pattern_in_file "$dhcp_config_path" $warn_patterns)
     if [ -n "$found_patterns" ]; then
         formatted_patterns=$(echo "$found_patterns" | sed 's/ /, /g')
         log warn "DHCP configuration contains leftover patterns: $formatted_patterns"
