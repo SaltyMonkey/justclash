@@ -1,7 +1,7 @@
 ## [0.90.13_rc2] - 31072026
 
 ### Features & Enhancements
-- **CI/CD:** Pinned all GitHub Actions to full 40-character commit SHAs in `release.yml` for supply chain security.
+- **CI/CD:** Pinned all GitHub Actions to full 40-character commit SHAs in `release.yml` for supply chain security (Second try).
 - **CI/CD:** Added automated `SHA256SUMS` checksum generation for published `.ipk` and `.apk` release assets.
 - **Mihomo:** Enhanced `lib/nodes.js` proxy normalization to merge provider nodes following upstream Mihomo `/proxies` API changes.
 - **LuCI:** Restored the dedicated **System logs** (`logread`) view in `pages/system_logs.js` and reinstated its LuCI navigation menu item.
