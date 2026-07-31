@@ -1,3 +1,25 @@
+## [0.90.13_rc2] - 31072026
+
+### Features & Enhancements
+- **CI/CD:** Pinned all GitHub Actions to full 40-character commit SHAs in `release.yml` for supply chain security.
+- **CI/CD:** Added automated `SHA256SUMS` checksum generation for published `.ipk` and `.apk` release assets.
+- **Mihomo:** Enhanced `lib/nodes.js` proxy normalization to merge provider nodes following upstream Mihomo `/proxies` API changes.
+- **LuCI:** Restored the dedicated **System logs** (`logread`) view in `pages/system_logs.js` and reinstated its LuCI navigation menu item.
+- **RPC:** Migrated system log retrieval to a native `ubus` RPC endpoint (`justclash.systemlogs`) with explicit `rpcd` exec plugin and ACL declarations.
+- **Config:** Updated REST API password placeholder generation logic to ensure strong, unique credentials.
+
+### Bug Fixes
+- **LuCI:** Fixed `ReferenceError` during connection list export in `pages/connections.js` by invoking `connectionsModel.matchesFilters`.
+- **LuCI:** Fixed filtered rows copying and resolved ACL permissions for `ubus`/`rpcd` calls.
+- **LuCI:** Fixed "Unknown nodes" info rendering following Mihomo core v1.19.28 API updates.
+- **Service:** Refactored `config_reset` routine to guarantee proper configuration resets and clean fallback defaults.
+- **Docs:** Updated OpenWrt version compatibility statements in `README.md` to explicitly declare support for both OpenWrt 25.x (APK) and OpenWrt 24.x (IPK).
+
+### Refactoring & Code Quality
+- **Architecture:** Standardized domain function prefixing across all shell modules (`str_*`, `sysinfo_*`, `val_*`, `file_*`, `fmt_*`, `preflight_*`, `core_*`, `_dnsmasq_*`, `nft_*`, `uri_*`, `user_agent_*`, `ntpd_*`) to eliminate global function namespace pollution in BusyBox `ash`.
+- **Linting:** Consolidated repetitive `# shellcheck disable=` directives across `justclash.sh`, `helpers.sh`, `config.sh`, and `strings.sh`.
+- **Translations:** Synchronized translation catalogs (`ru`, `zh_Hans`) for System logs, RPC, and UI updates.
+
 ## [0.90.13_rc1] - 29072026
 
 ### Features & Enhancements
