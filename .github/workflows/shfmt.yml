@@ -1,0 +1,58 @@
+name: shfmt
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    name: Format shell scripts
+    if: github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.26.1'
+          cache: false
+
+      - name: Install shfmt
+        env:
+          GOBIN: ${{ runner.temp }}/shfmt-bin
+        run: go install mvdan.cc/sh/v3/cmd/shfmt@v3.13.1
+
+      - name: Format and commit changes
+        shell: bash
+        env:
+          SHFMT: ${{ runner.temp }}/shfmt-bin/shfmt
+        run: |
+          set -euo pipefail
+
+          mapfile -d '' shell_files < <(
+            find justclash/files -type f \
+              \( -name '*.sh' -o -path '*/etc/init.d/justclash' \) -print0
+          )
+          shell_files+=(
+            service.sh
+            luci-app-justclash/root/usr/libexec/rpcd/justclash
+            luci-app-justclash/translation-sync.sh
+          )
+
+          "$SHFMT" -w "${shell_files[@]}"
+
+          if git diff --quiet -- "${shell_files[@]}"; then
+            echo "No formatting changes were needed."
+            exit 0
+          fi
+
+          git diff --check -- "${shell_files[@]}"
+          git add -- "${shell_files[@]}"
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -m 'style: apply shfmt'
+          git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
