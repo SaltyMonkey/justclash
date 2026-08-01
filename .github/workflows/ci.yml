@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shell:
+    name: Shell checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes shellcheck
+
+      - name: Check shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -d '' shell_files < <(
+            find justclash/files -type f \
+              \( -name '*.sh' -o -path '*/etc/init.d/justclash' \) -print0
+          )
+          shell_files+=(
+            service.sh
+            luci-app-justclash/root/usr/libexec/rpcd/justclash
+            luci-app-justclash/translation-sync.sh
+          )
+
+          for file in "${shell_files[@]}"; do
+            case "$(head -n 1 "$file")" in
+              '#!/bin/bash'*) bash -n "$file" ;;
+              *) sh -n "$file" ;;
+            esac
+          done
+
+      - name: Run ShellCheck
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -d '' shell_files < <(
+            find justclash/files -type f \
+              \( -name '*.sh' -o -path '*/etc/init.d/justclash' \) -print0
+          )
+          shell_files+=(
+            service.sh
+            luci-app-justclash/root/usr/libexec/rpcd/justclash
+            luci-app-justclash/translation-sync.sh
+          )
+
+          # Cross-file globals are consumed by dynamically sourced ash modules.
+          shellcheck -e SC2034 "${shell_files[@]}"
+
+  luci-lint:
+    name: LuCI JavaScript lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: luci-app-justclash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run ESLint
+        run: npm run lint
