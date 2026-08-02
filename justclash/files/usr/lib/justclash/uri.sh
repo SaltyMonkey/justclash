@@ -13,7 +13,7 @@ _URI_LIBDIR="${JUSTCLASH_URI_LIBDIR:-/usr/lib/justclash/uri}"
 # shellcheck disable=SC1091
 . "$_URI_LIBDIR/shadowsocks.sh" || return 1
 # shellcheck disable=SC1091
-. "$_URI_LIBDIR/simple_proxy.sh" || return 1
+. "$_URI_LIBDIR/socks5.sh" || return 1
 # shellcheck disable=SC1091
 . "$_URI_LIBDIR/ssh.sh" || return 1
 # shellcheck disable=SC1091
