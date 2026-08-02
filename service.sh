@@ -687,7 +687,8 @@ justclash_release_json_get() {
 
 packages_download() {
     local install_lang="$1"
-    local file release_json release_label urls
+    local download_failed=0
+    local file package_file release_json release_label urls
     if [ -z "$JUSTCLASH_RELEASE_URL_API" ] || [ -z "$TMP_DOWNLOAD_PATH" ]; then
         print_red "Usage: packages_download requires JUSTCLASH_RELEASE_URL_API and TMP_DOWNLOAD_PATH to be set."
         return 1
@@ -713,7 +714,6 @@ packages_download() {
             print_red "No .apk files found in the selected release."
             return 1
         fi
-        echo " - Found the following .apk files: ${urls}"
     else
         echo " - Fetching .ipk links from JustClash release (release: $release_label)" "🔍"
         urls=$(printf '%s\n' "$release_json" | grep -o 'https://[^"[:space:]]*\.ipk')
@@ -721,31 +721,33 @@ packages_download() {
             print_red "No .ipk files found in the selected release."
             return 1
         fi
-        echo " - Found the following .ipk files:"
-        echo "${urls}"
     fi
 
     for file in $urls; do
-        echo " - Downloading $file"
+        package_file=$(basename "$file")
+        case "$package_file" in
+        justclash-*.apk | justclash-*.ipk) ;;
+        luci-app-justclash-*.apk | luci-app-justclash-*.ipk) ;;
+        luci-i18n-justclash-ru-*.apk | luci-i18n-justclash-ru-*.ipk)
+            [ "$install_lang" = "ru" ] || continue
+            ;;
+        luci-i18n-justclash-zh*.apk | luci-i18n-justclash-zh*.ipk)
+            [ "$install_lang" = "zh-cn" ] || continue
+            ;;
+        *)
+            continue
+            ;;
+        esac
 
-        # Skip translation files if they don't match the selected language
-        if echo "$file" | grep -q "luci-i18n-justclash-"; then
-            if [ "$install_lang" != "ru" ] && echo "$file" | grep -q "luci-i18n-justclash-ru"; then
-                echo " - Skipping $file (not selected)"
-                continue
-            fi
-            if [ "$install_lang" != "zh-cn" ] && echo "$file" | grep -q "luci-i18n-justclash-zh"; then
-                echo " - Skipping $file (not selected)"
-                continue
-            fi
-        fi
-
-        wget "$file" -qO "$TMP_DOWNLOAD_PATH/$(basename "$file")" || {
-            print_red "Failed to download $file"
+        echo " - Downloading $package_file"
+        wget "$file" -qO "$TMP_DOWNLOAD_PATH/$package_file" || {
+            print_red "Failed to download $package_file"
+            download_failed=1
             continue
         }
     done
 
+    [ "$download_failed" -eq 0 ] || return 1
     echo " - All files saved to $TMP_DOWNLOAD_PATH"
 }
 
@@ -757,11 +759,14 @@ install_translation_interactive() {
 
     while true; do
         printf "Enter your choice [1-3]: "
-        read -r choice
+        if ! read -r choice; then
+            printf "\n" >&2
+            return 1
+        fi
         case "$choice" in
-        1) return 1 ;; # en
-        2) return 2 ;; # ru
-        3) return 3 ;; # zh-cn
+        1) return 0 ;;
+        2) return 2 ;;
+        3) return 3 ;;
         *) echo "Invalid choice. Please enter 1, 2, or 3." >&2 ;;
         esac
     done
@@ -785,7 +790,7 @@ install_packages() {
 }
 
 install_service() {
-    local install_lang="en"
+    local install_lang="none"
     mkdir -p "$TMP_DOWNLOAD_PATH"
 
     diagnostic_tools
@@ -796,9 +801,7 @@ install_service() {
     diagnostic_conflicts_interactive
     core_update "stable"
 
-    if [ "$AUTOMATED" -eq 1 ]; then
-        install_lang="none"
-    else
+    if [ "$AUTOMATED" -ne 1 ]; then
         install_translation_interactive
         case "$?" in
         2) install_lang="ru" ;;
@@ -806,10 +809,8 @@ install_service() {
         esac
     fi
 
-    packages_download "$install_lang"
-    if [ $? -ne 1 ]; then
-        packages_install
-    fi
+    packages_download "$install_lang" || return 1
+    packages_install
 }
 
 uninstall_service() {

@@ -1,34 +1,31 @@
 # Guest Network Configuration
 
-A guest network needs two independent decisions:
+A guest network requires two coordinated choices:
 
-1. Should its client traffic be intercepted by JustClash?
-2. Which DNS path should guest clients use?
+1. whether guest traffic is intercepted;
+2. whether guest DNS returns Fake-IP or real addresses.
 
-Configuring only one side often produces Fake-IP answers with direct traffic, which is an efficient way to make the network look connected while nothing useful opens.
+Configuring only one side commonly leaves clients with synthetic DNS answers and a direct traffic path.
 
 ## Choose a Design
 
-| Design | Client interface intercepted | DNS behavior |
+| Design | Guest bridge intercepted | DNS result |
 | --- | --- | --- |
-| Same policy as the main LAN | Yes | Use the normal router/JustClash DNS path. |
-| Fully direct guest network | No | Give guests a resolver path that returns real addresses. |
-| Direct network with filtered DNS | No | Give guests a selected filtering resolver. |
-| Direct network with a local encrypted resolver | No | Redirect only guest DNS to a dedicated local resolver instance. |
+| Same policy as main LAN | Yes | Normal JustClash/Fake-IP path |
+| Fully direct guest | No | Real addresses |
+| Direct guest with dedicated resolver | No | Real addresses from the selected resolver |
 
-Use the OpenWrt device or bridge name in JustClash, not the firewall-zone label. They are often similar and are not interchangeable.
+Use the OpenWrt device/bridge name in JustClash, not the firewall-zone label.
 
-## Intercept the Guest Network
+## Recipe A: Intercepted Guest
 
-Use this when guest clients should follow the same proxy, block, and final rules as the main LAN.
+Use this when guests should receive the same routing and block policy as the main LAN.
 
-LuCI:
-
-1. Open **Services -> JustClash -> Service -> Traffic rules**.
-2. Add the guest bridge under **Client traffic interfaces**.
-3. Save & Apply.
-
-UCI template:
+1. Open **Services → JustClash → Setup: Service → Traffic rules**.
+2. Add the guest bridge to **Client traffic interfaces**.
+3. Keep **Change DNS settings at startup** enabled.
+4. Configure guest DHCP to advertise the router as DNS.
+5. Save & Apply.
 
 ```sh
 uci add_list justclash.settings.tproxy_input_interfaces='<GUEST_BRIDGE>'
@@ -36,20 +33,21 @@ uci commit justclash
 service justclash restart
 ```
 
-Keep guest DHCP configured to advertise the router as DNS. JustClash will pass those requests through the normal dnsmasq-to-Mihomo path.
+Verify:
 
-Verify both IPv4 and IPv6. When IPv6 is enabled in the guest network but disabled in JustClash, IPv6 traffic is intentionally bypassed.
+- guest DNS uses the router;
+- connections appear under **Connections**;
+- expected route and block rules match;
+- IPv4 and IPv6 follow the intended policy.
 
-## Keep the Guest Network Direct
+## Recipe B: Fully Direct Guest
 
-Use this when guest clients must never enter Mihomo.
+Use this when guest traffic must never enter Mihomo.
 
-1. Remove the guest bridge from `tproxy_input_interfaces`.
-2. Ensure no broader firewall rule sends the guest zone into the JustClash TProxy path.
-3. Configure guest DHCP and IPv6 router advertisements to provide resolvers that return real addresses.
-4. Renew the client lease before testing.
-
-Remove the interface with LuCI, or:
+1. Remove the guest bridge from **Client traffic interfaces**.
+2. Ensure no separate firewall rule redirects that bridge to the TProxy path.
+3. Configure guest DHCP and IPv6 advertisements to provide resolvers returning real addresses.
+4. Renew the client lease.
 
 ```sh
 uci del_list justclash.settings.tproxy_input_interfaces='<GUEST_BRIDGE>'
@@ -57,37 +55,23 @@ uci commit justclash
 service justclash restart
 ```
 
-Configure DNS in **Network -> Interfaces -> Guest -> DHCP Server**. The exact DHCP and RDNSS settings depend on whether the guest network uses IPv4, IPv6, or both.
-
 > [!WARNING]
-> A direct guest client must not receive Fake-IP answers. If it still queries the global JustClash DNS path, domain connections can fail even though raw-address connectivity works.
+> A direct guest client must not receive Fake-IP answers. Raw-address connectivity may work while every domain connection fails, which is technically connectivity but not the useful kind.
 
-## Direct Guest Network with Filtered DNS
+Do not replace the router-wide dnsmasq upstream merely to change one guest network. Configure the guest DHCP scope independently.
 
-This design is the same as the fully direct network, but guest DHCP advertises a resolver that provides the required filtering policy.
+## Recipe C: Direct Guest with Dedicated Resolver
 
-The filtering service is independent from JustClash:
-
-- JustClash does not enforce its block rules for excluded guests.
-- Availability and privacy depend on the selected resolver.
-- IPv6 clients need equivalent IPv6 resolver advertisement or a deliberate IPv6 policy.
-
-Do not globally replace the router resolver just to change guest behavior. Configure the guest DHCP scope separately.
-
-## Local Encrypted Resolver for Guests
-
-Use a dedicated local resolver instance when guests should go direct but their DNS upstream should be encrypted.
+Use this when guest traffic remains direct but DNS needs a separate filtering or encrypted upstream.
 
 Recommended design:
 
-1. Run the resolver on a dedicated local port.
-2. Disable its automatic global dnsmasq and firewall modifications.
+1. Run a dedicated local resolver instance on its own port.
+2. Disable its automatic global dnsmasq/firewall integration.
 3. Run it under a dedicated system user.
-4. Add that user to `nft_skuid_exclude_router` so its upstream traffic goes direct.
-5. Redirect DNS from the guest zone only to the dedicated listener.
-6. Keep the guest bridge out of `tproxy_input_interfaces`.
-
-Example user exclusion:
+4. Exclude that user from router interception.
+5. Redirect only guest DNS to the dedicated listener.
+6. Keep the guest bridge outside `tproxy_input_interfaces`.
 
 ```sh
 uci add_list justclash.settings.nft_skuid_exclude_router='<RESOLVER_USER>'
@@ -95,30 +79,39 @@ uci commit justclash
 service justclash restart
 ```
 
-Create the guest-only DNS redirect with standard OpenWrt firewall configuration. Use placeholders for the guest zone, listener address, and listener port; do not copy an example that assumes another router's topology.
+Create the guest-only DNS redirect with the standard OpenWrt firewall configuration for the actual guest zone and resolver listener. Do not copy interface names or addresses from another router.
 
-## Verification Checklist
+The dedicated resolver is outside JustClash policy:
+
+- JustClash block rules do not protect direct guests;
+- resolver availability and privacy depend on that service;
+- IPv6 requires an equivalent resolver advertisement and traffic decision.
+
+## Verification
 
 ### Intercepted Guest
 
-- Guest bridge is in **Client traffic interfaces**.
-- Guest DNS uses the router.
-- Connections appear in the Mihomo **Connections** view.
-- The expected proxy or block rule matches.
+- bridge is present in `tproxy_input_interfaces`;
+- DNS uses the router;
+- connections appear in Mihomo;
+- expected rules match.
 
 ### Direct Guest
 
-- Guest bridge is absent from the interception list.
-- Guest DNS returns real addresses.
-- Connections do not appear in Mihomo.
-- IPv4 and IPv6 follow the same intended policy.
-
-Useful commands:
+- bridge is absent from `tproxy_input_interfaces`;
+- DNS returns real addresses;
+- connections do not appear in Mihomo;
+- IPv4 and IPv6 are both direct.
 
 ```sh
 justclash.sh diag_nft
 justclash.sh diag_route
-justclash.sh logs 100
 ```
 
-For per-client bypass instead of a complete guest-network design, see [Traffic Exclusions](04_service_traffic_exclusion.md).
+These commands can expose local topology. Use `diag_redacted` when sharing results.
+
+For per-client bypass instead of a whole network, see [Traffic Exclusions](04_service_traffic_exclusion.md).
+
+## Rollback
+
+Return the guest bridge and DHCP resolver settings to their previous values, renew the client lease, restart JustClash, and test both address families.

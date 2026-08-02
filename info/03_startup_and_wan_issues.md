@@ -1,107 +1,130 @@
 # Startup and WAN Troubleshooting
 
-Startup problems are usually timing problems: the service starts while WAN, DNS, system time, or firewall state is still changing. Configure the smallest delay that fixes the actual condition instead of enabling every workaround at once.
+Startup failures are usually ordering problems: WAN, DNS, system time, storage, or firewall state is not ready when JustClash starts. Enable one workaround at a time and verify which condition it fixes.
 
-## Symptom Guide
+## Symptom Matrix
 
-| Symptom | First setting to try |
-| --- | --- |
-| Service works after a manual restart but not after boot | `wait_for_wan` |
-| WAN is reported up, but DNS or routes are not ready | `delayed_boot` |
-| TLS downloads fail immediately after boot | `ntpd_start` and WAN readiness |
-| Startup is slow because warnings and compatibility checks run every time | Review, then optionally enable `skip_environment_checks` |
+| Symptom | First check | Likely adjustment |
+| --- | --- | --- |
+| Works after manual restart, fails after boot | Default route availability | `wait_for_wan` |
+| WAN is up but DNS/routes are still changing | Neighboring OpenWrt services | Small `delayed_boot` |
+| TLS downloads fail immediately after boot | System clock | `ntpd_start` |
+| Startup warns about another DNS/proxy service | Conflict log | Fix the conflict before skipping checks |
+| Port validation fails | Active listeners | Change the conflicting listener |
+| Core is missing | Installed core version | Run `core_update` |
 
 ## Wait for WAN
 
-Enable **Wait for WAN** when the uplink takes time to establish, especially with PPPoE or cellular modems.
-
-LuCI: **Services -> JustClash -> Service -> Startup**.
+LuCI: **Services → JustClash → Setup: Service → Startup**.
 
 ```sh
 uci set justclash.settings.wait_for_wan='1'
-uci set justclash.settings.wait_for_wan_max='90'
+uci set justclash.settings.wait_for_wan_max='<SECONDS>'
 uci commit justclash
+service justclash restart
 ```
 
-`wait_for_wan_max` limits how long startup waits. Reaching the limit does not prove internet access is working; it only prevents startup from waiting forever.
+`wait_for_wan_max` limits the wait for an active default route. Reaching that state does not prove DNS, system time, or every upstream is ready.
+
+Use this first for PPPoE, cellular, or other uplinks that appear late during boot.
 
 ## Delayed Startup
 
-Use a fixed delay when the network interface exists but another OpenWrt service still needs time to settle.
+Use a fixed delay only when the interface and default route exist but another required service still needs time.
 
 ```sh
 uci set justclash.settings.delayed_boot='1'
-uci set justclash.settings.delayed_boot_value='15'
+uci set justclash.settings.delayed_boot_value='<SECONDS>'
 uci commit justclash
+service justclash restart
 ```
 
-Start with a short delay. A very large value hides ordering problems and makes every restart unnecessarily slow.
+Start with the smallest available value. A large delay can hide the dependency while making every real restart slower.
 
-## System Time Synchronization
+## System Time
 
-Routers without a persistent real-time clock may boot with an incorrect date. This can break TLS certificate validation, scheduled jobs, and useful timestamps.
-
-When `ntpd_start` is enabled, JustClash runs a synchronous NTP update before continuing:
+Routers without a persistent real-time clock may boot with an invalid date. This breaks certificate validation, secure downloads, cron, and useful log timestamps.
 
 ```sh
 uci set justclash.settings.ntpd_start='1'
 uci commit justclash
+service justclash restart
 ```
 
-Disable it if the router already synchronizes time reliably before JustClash starts. When disabled, an empty NTP server list is ignored as a successful no-op.
+When enabled, JustClash runs BusyBox `ntpd` once in query/synchronize mode before continuing. It does not keep a second long-running NTP daemon.
 
-Mihomo's internal NTP options are separate from system time synchronization. They affect the core configuration and do not replace correct system time for package downloads, cron, or system logs.
+Mihomo internal NTP settings are separate. They affect the generated core configuration and do not replace correct system time for package downloads or OpenWrt services.
 
 ## Environment Checks
 
-Startup checks detect common conflicts and apply compatibility fixes. They can warn about:
+The optional preflight checks warn about:
 
-- DNS settings left by another service;
-- external resolvers that bypass the intended DNS path;
-- other DPI or proxy services;
-- incompatible network sysctl state;
-- missing commands or the Mihomo binary.
+- conflicting DNS settings;
+- known proxy or DPI services;
+- compatibility state that JustClash can repair;
+- ports already used by another process.
 
-`skip_environment_checks` skips optional conflict checks and compatibility fixes. It does not skip required binary and tool checks.
+Required tool, core, path, and value validation still runs when optional checks are skipped.
 
 ```sh
 uci set justclash.settings.skip_environment_checks='1'
 uci commit justclash
+service justclash restart
 ```
 
-Enable this only after the router starts reliably and you have recorded the working network configuration. Saving a few milliseconds is less exciting when the saved time is spent diagnosing a silent conflict later.
+Enable this only after recording a stable working configuration. Hiding a warning is not the same as resolving it, although both are equally quiet.
 
-## Recommended Troubleshooting Order
+## Recommended Diagnostic Order
 
-1. Check service state and recent logs:
+1. Check procd and recent logs:
 
    ```sh
    service justclash status
    justclash.sh logs 100
    ```
 
-2. Verify the core is installed:
+2. Confirm the core exists:
 
    ```sh
    justclash.sh info_core
    ```
 
-3. Confirm WAN and system time outside JustClash.
+3. Verify WAN, DNS, and system time outside JustClash.
 4. Enable `wait_for_wan`.
-5. Add a small delayed startup only if WAN readiness is not enough.
+5. Add a short delay only if WAN readiness is insufficient.
 6. Keep environment checks enabled until startup is stable.
-7. Run the diagnostic report:
+7. Run the privacy-reduced report:
 
    ```sh
-   justclash.sh diag_report
+   justclash.sh diag_redacted
    ```
 
-## Scheduled Restarts and Work Windows
+Use `diag_report`, `diag_route`, and raw logs locally; they can reveal network details.
 
-Cron settings are stored in UCI but must be applied to the root crontab:
+## Scheduled Jobs
+
+After changing schedules through UCI, rebuild the root crontab:
 
 ```sh
 justclash.sh cron_update
 ```
 
-Run this after changing autorestart, service-data update, or scheduled start/stop settings outside LuCI. Confirm the resulting schedule before relying on it for unattended operation.
+This applies:
+
+- scheduled restarts;
+- service-data updates;
+- scheduled start/stop windows.
+
+Confirm the resulting behavior before depending on it remotely. A typo in a cron expression is wonderfully reliable at doing the wrong thing unattended.
+
+## Roll Back Startup Workarounds
+
+```sh
+uci set justclash.settings.wait_for_wan='0'
+uci set justclash.settings.delayed_boot='0'
+uci set justclash.settings.skip_environment_checks='0'
+uci commit justclash
+service justclash restart
+```
+
+Keep `ntpd_start` enabled unless another OpenWrt service reliably synchronizes time before JustClash starts.

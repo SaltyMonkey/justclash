@@ -28,6 +28,7 @@ export default defineConfig([
         Node: "readonly",
         URL: "readonly",
         AbortController: "readonly",
+        MutationObserver: "readonly",
         WebSocket: "readonly",
         // LuCI globals
         L: "readonly",

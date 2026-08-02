@@ -1,97 +1,134 @@
 # Choosing a Routing Mode
 
-JustClash can intercept all selected traffic or only traffic identified by Fake-IP and active IP-CIDR lists. This choice changes what the final rule can control, how much traffic Mihomo sees, and how much router capacity the service uses.
+JustClash supports two interception modes. The choice determines which connections reach Mihomo; rules inside Mihomo cannot affect traffic that the firewall never intercepted.
 
 ## Quick Decision
 
-Use **Partial Route** when:
+Choose **Partial Interception** when:
 
-- only selected services or destinations should use a proxy;
+- only selected domains or address lists should enter Mihomo;
 - most traffic should remain in the kernel fast path;
 - the router has limited CPU or memory;
-- direct connections to unmatched IP addresses are acceptable.
+- unmatched real-address connections may remain direct.
 
-Use **Full Route** when:
+Choose **Full Interception** when:
 
 - every selected connection must be evaluated by Mihomo;
-- the default rule must apply to all unmatched traffic;
-- raw-IP applications must follow GEOIP or IP rules;
-- complete connection visibility matters more than minimum resource use.
+- the default rule must affect all selected traffic;
+- raw-address applications must follow GEOIP or IP rules;
+- complete connection visibility is required.
+
+## Data Path
+
+```mermaid
+flowchart LR
+    Client[Selected client] --> DNS[dnsmasq and Mihomo DNS]
+    DNS --> Decision{Firewall match}
+    Decision -->|Fake-IP or active ipcidr/text set| Core[Mihomo]
+    Decision -->|No match in partial mode| Kernel[Direct kernel routing]
+    Decision -->|Full mode| Core
+    Core --> Rules[Block, group, proxy, and final rules]
+```
+
+DNS selects domain traffic for the Fake-IP path. In Partial Interception, nftables additionally selects real-address traffic from active `ipcidr/text` rulesets. Binary IP-CIDR or GeoIP databases are not converted into kernel sets.
 
 ## Behavior Comparison
 
-| Behavior | Partial Route | Full Route |
+| Behavior | Partial Interception | Full Interception |
 | --- | --- | --- |
-| Domain traffic matched through Fake-IP | Intercepted | Intercepted |
-| Active IP-CIDR RuleSets | Intercepted through nftables sets | Evaluated by Mihomo |
-| Unmatched real-IP traffic | Direct kernel routing | Evaluated by Mihomo |
-| Final `MATCH` rule | Applies only to intercepted traffic | Applies to all selected traffic |
-| Raw-IP GEOIP matching | Incomplete | Available |
-| CPU and memory use | Usually lower | Usually higher |
-| Connections visible in the dashboard | Intercepted connections only | All selected connections |
+| Fake-IP domain traffic | Intercepted | Intercepted |
+| Active `ipcidr/text` rulesets | Synchronized to nftables and intercepted | Evaluated by Mihomo |
+| Binary IP-CIDR rulesets | Do not capture otherwise-unmatched raw addresses | Evaluated by Mihomo |
+| Unmatched real-address traffic | Direct kernel routing | Evaluated by Mihomo |
+| Final `MATCH` rule | Intercepted traffic only | All selected traffic |
+| Raw-address GEOIP policy | Incomplete | Available |
+| Dashboard visibility | Intercepted connections only | All selected connections |
+| Typical resource use | Lower | Higher |
 
-## Partial Route
+## Partial Interception
 
-Partial mode builds nftables sets from enabled IP-CIDR RuleSets and intercepts traffic addressed to those sets or to the configured Fake-IP ranges. Other traffic does not enter Mihomo.
+Partial mode creates nftables sets from enabled text IP-CIDR rulesets and intercepts:
 
-This has two important consequences:
+- connections to configured Fake-IP ranges;
+- destinations contained in active IPv4 or IPv6 text sets;
+- traffic selected by explicit JustClash firewall handling.
 
-1. A proxy default rule cannot affect traffic that bypassed the firewall interception step.
-2. A domain excluded from Fake-IP may resolve to a real address and go direct unless that address is also covered by an active IP-CIDR list.
+Everything else remains outside Mihomo.
 
-The background ruleset worker updates nftables sets when Mihomo refreshes text IP-CIDR files. Domain `.mrs` files are used by Mihomo and are not converted into kernel IP sets.
+Consequences:
 
-## Full Route
+1. A proxy default rule cannot capture an unmatched real-address connection.
+2. A domain excluded from Fake-IP may go direct unless its real addresses are present in an active text IP-CIDR set.
+3. A binary `.mrs` IP-CIDR provider can classify traffic already inside Mihomo, but cannot populate the Partial Interception nftables sets.
+4. Connections that bypass Mihomo do not appear in its connection list.
 
-Full mode redirects traffic from the selected client interfaces and, when enabled, router-originated traffic to Mihomo. Routing rules are then evaluated in one place.
+The ruleset worker watches active text IP-CIDR files and updates nftables after Mihomo refreshes them. Domain and binary rulesets remain core-side data.
 
-This mode is easier to reason about when policies include:
+## Full Interception
 
-- a proxy default route;
-- GEOIP decisions for applications that connect directly to addresses;
-- complete blocking and observation of selected clients;
-- policy ordering that must be consistent for domain and address traffic.
+Full mode redirects traffic from selected client interfaces to Mihomo. Router-originated traffic is controlled separately.
 
-The cost is additional userspace processing. Use client, port, or router-process exclusions for high-volume traffic that should stay direct.
+Use it for:
+
+- proxy or block defaults that must apply to all selected connections;
+- raw-address GEOIP policy;
+- complete per-client observability;
+- policies whose ordering must be identical for domain and address traffic.
+
+The trade-off is additional userspace processing. Exclude only traffic that must stay in the native path; disabling random nftables rules merely produces a network that is broken in a more creative way.
 
 ## DNS and Fake-IP
 
-JustClash can configure dnsmasq to forward client DNS requests to Mihomo. Mihomo returns Fake-IP addresses for domains that need policy handling. The subsequent connection to the Fake-IP range is intercepted and mapped back to the original domain.
+When DNS management is enabled, dnsmasq forwards the relevant requests to Mihomo. Mihomo can return a Fake-IP address, and the following client connection is mapped back to the original domain.
 
-Do not give Fake-IP answers to a client whose traffic bypasses interception. Either intercept that client or provide it with a resolver path that returns real addresses. See [Traffic Exclusions](04_service_traffic_exclusion.md).
+The DNS path and traffic path must agree:
 
-## TProxy and TUN
+| Client design | DNS result | Traffic path |
+| --- | --- | --- |
+| Intercepted client | Fake-IP allowed | Must enter JustClash |
+| Fully bypassed client | Real addresses | Must remain outside JustClash |
+| Partially bypassed domain | Real address | Needs an active text IP-CIDR set if it must still be proxied |
 
-JustClash uses nftables and TProxy instead of creating a virtual TUN interface. TProxy preserves the original destination and works directly with OpenWrt policy routing. The service therefore manages three connected parts:
+See [Traffic Exclusions](04_service_traffic_exclusion.md) and [Guest Network Configuration](08_use_guest_network.md).
 
-1. nftables interception rules;
-2. policy-routing rules and tables;
-3. Mihomo listeners and routing policy.
+## TProxy, Not TUN
 
-Disabling only one part manually usually produces an impressively confusing half-working network. Change the corresponding JustClash setting instead.
+JustClash uses fw4/nftables, policy routing, and TProxy. It does not create a virtual TUN interface.
 
-## Router Traffic
+The managed components are:
 
-Router-originated traffic is controlled separately from forwarded client traffic:
+1. nftables interception and exclusion rules;
+2. IPv4 and optional IPv6 policy-routing tables;
+3. Mihomo listeners, DNS, and routing rules.
 
-- **Set traffic rules at startup** controls client interception.
-- **Set router traffic rules at startup** controls local router traffic.
-- socket-owner, port, and routing-mark exclusions prevent loops or bypass selected services.
+Stop or reload the service through procd so all three components are updated together.
 
-Mihomo outbound traffic carries a dedicated mark so it is not intercepted again.
+## Client and Router Traffic
+
+| Traffic source | Main control |
+| --- | --- |
+| Forwarded clients | **Set traffic rules at startup** and **Client traffic interfaces** |
+| Router processes | **Set router traffic rules at startup** |
+| Selected bypasses | Client address, MAC, port, socket owner, or routing mark |
+
+Mihomo outbound sockets use a dedicated mark to prevent interception loops.
 
 ## IPv6
 
-When IPv6 support is enabled, JustClash creates the corresponding IPv6 interception and policy-routing rules. Partial mode also maintains IPv6 sets for active text IP-CIDR sources.
+When IPv6 support is enabled and the router has a usable IPv6 WAN:
 
-When IPv6 support is disabled, IPv6 traffic is bypassed rather than partially intercepted. Verify the behavior on dual-stack clients after changing this setting; an IPv4-only test does not prove the IPv6 policy works.
+- JustClash creates IPv6 interception and policy-routing rules;
+- Partial Interception maintains IPv6 sets for supported text IP-CIDR sources;
+- IPv6 Fake-IP can be enabled in the generated DNS configuration.
 
-## Switching Modes Safely
+When IPv6 support is disabled or unavailable, IPv6 traffic is not governed by the IPv4 rules. Test IPv4 and IPv6 separately.
+
+## Change Modes Safely
 
 1. Stop high-volume transfers.
-2. Change **Routing mode** in **Service -> Traffic rules**.
-3. Review the default rule and Fake-IP exclusions.
-4. Confirm the selected client interfaces.
+2. Open **Services → JustClash → Setup: Service → Traffic rules**.
+3. Change **Routing mode**.
+4. Review the default rule, Fake-IP exclusions, and selected client interfaces.
 5. Save & Apply.
 6. Check **Connections**, **Rules**, and **System logs**.
 7. Run:
@@ -101,4 +138,6 @@ justclash.sh diag_nft
 justclash.sh diag_route
 ```
 
-If full mode overloads the router, return to partial mode or add narrow traffic exclusions instead of disabling random nftables chains by hand.
+These diagnostics may include local network data. Use `justclash.sh diag_redacted` when the result will be shared.
+
+If Full Interception overloads the router, return to Partial Interception or add a narrow exclusion. A random chain deletion is not a rollback strategy.

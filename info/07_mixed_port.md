@@ -1,98 +1,129 @@
 # Mixed Port
 
-The mixed port is an explicit HTTP and SOCKS proxy listener provided by Mihomo. It is separate from transparent interception: a browser, application, or device must be configured to connect to the router and this port directly.
+The Mihomo mixed port is an explicit HTTP and SOCKS5 listener. It is independent from transparent TProxy interception: each client application must be configured to use the router and listener directly.
 
-## When to Use It
+Enabling it also enables LAN access in the generated Mihomo configuration. Treat `proxy_authentication` and an OpenWrt firewall restriction as required parts of the listener, not optional finishing touches.
 
-Use the mixed port for:
+## Use It For
 
-- applications that support an explicit proxy;
-- testing a routing policy without changing firewall interception;
-- devices outside the intercepted interface list;
-- a dedicated inbound that should use a fixed outbound.
+- applications with explicit proxy support;
+- testing routing without changing interception rules;
+- devices outside selected client interfaces;
+- an inbound that must use a fixed outbound.
 
-Do not expose it to untrusted networks. Authentication helps, but firewall restrictions and a strong password are still required.
+Do not expose the listener to WAN or untrusted zones.
 
 ## Enable the Listener
 
-LuCI: **Services -> JustClash -> Proxy**.
+LuCI: **Services → JustClash → Setup: Proxy → Basic settings**.
 
-1. Enable **Use mixed port**.
-2. Choose an unused port.
-3. Add authentication entries when clients other than the router will connect.
+1. Enable **Mihomo mixed port**.
+2. Select an unused port.
+3. Add at least one **Mixed port authentication** entry.
 4. Save & Apply.
-
-UCI template:
 
 ```sh
 uci set justclash.proxy.use_mixed_port='1'
 uci set justclash.proxy.mixed_port='<PORT>'
-uci add_list justclash.proxy.proxy_authentication='<USERNAME>:<STRONG_PASSWORD>'
+uci add_list justclash.proxy.proxy_authentication='<USERNAME>:<PASSWORD>'
 uci commit justclash
 service justclash restart
 ```
 
-The credential is stored in UCI and appears in unsafe diagnostics. Treat it as a secret.
+Credentials are stored in UCI and appear in unsafe diagnostics. Avoid shell history when entering real values.
 
-## Configure a Client
+> [!CAUTION]
+> Do not enable Mixed Port for LAN access with an empty `proxy_authentication` list. Without an entry, every client that can reach the port through the firewall can use the proxy without credentials. Router-local loopback traffic is exempt from authentication by design.
 
-Use the router address reachable from the client and the configured port.
+## Authentication Format
 
-```sh
-export http_proxy='http://<USERNAME>:<PASSWORD>@<ROUTER_ADDRESS>:<PORT>'
-export https_proxy="$http_proxy"
+Each `proxy_authentication` list entry represents one credential:
+
+```text
+<USERNAME>:<PASSWORD>
 ```
 
-For SOCKS-capable applications, select SOCKS5 and use the same listener address and credentials.
+Rules enforced by LuCI:
 
-Do not put real credentials in shell history on shared systems. Prefer a protected environment file or the application's credential store.
+- both parts are required;
+- exactly one colon is allowed;
+- whitespace and control characters are rejected;
+- multiple entries may be added, one per client or trust group.
 
-## Choose Mixed-Port Routing Behavior
+Use a password manager or another cryptographically secure generator. Do not reuse the JustClash API password, the LuCI login password, or a provider credential. Separate entries make it possible to revoke one client without changing every other client.
 
-The `mixed_port_rules.exit_rule` setting controls the first routing decision for this inbound.
+`proxy_authentication` is unrelated to `api_password`: the former protects the HTTP/SOCKS listener, while the latter protects the Mihomo controller and dashboards.
+
+Authentication does not encrypt the Mixed Port connection. Keep it on a trusted LAN or behind a separately secured tunnel, even when credentials are enabled.
+
+## Client Configuration
+
+Configure:
+
+- the router address reachable from the client;
+- the configured mixed port;
+- HTTP or SOCKS5 mode;
+- the matching credential.
+
+Do not assume that successful transparent interception proves the mixed listener is reachable. They use different ports and firewall paths.
+
+## Routing Policy
+
+`mixed_port_rules.exit_rule` creates the first rule for explicit mixed-port traffic.
 
 | Value | Behavior |
 | --- | --- |
-| `BY RULES` | Evaluate the normal routing rule chain. |
-| `DIRECT` | Send all mixed-port traffic directly before later rules are evaluated. |
-| Proxy or group name | Send all mixed-port traffic to that outbound before later rules are evaluated. |
-
-Default policy:
-
-```ini
-config mixed_port_rules 'mixed_port_rules'
-    option exit_rule 'BY RULES'
-```
-
-Force a specific outbound:
+| `BY RULES` | Continue through block, group, proxy, and final rules |
+| `DIRECT` | Send mixed-port traffic directly |
+| Proxy/group name | Send mixed-port traffic to that outbound |
 
 ```sh
-uci set justclash.mixed_port_rules.exit_rule='<OUTBOUND_NAME>'
+uci set justclash.mixed_port_rules.exit_rule='BY RULES'
 uci commit justclash
 service justclash restart
 ```
 
-A fixed outbound override is intentionally high priority. It bypasses later domain, RuleSet, Geodata, block, and final rules for this inbound. Use `BY RULES` when mixed-port clients should receive the same policy as transparently intercepted clients.
+A fixed outbound is intentionally evaluated before normal routing and block rules. Use `BY RULES` when explicit clients should receive the same policy as transparently intercepted clients.
 
 ## Security Checklist
 
-- Set a non-default port only for organization, not as the primary security control.
-- Configure authentication.
-- Restrict access with the OpenWrt firewall to trusted source zones or addresses.
-- Do not forward the mixed port from WAN.
-- Rotate credentials after exposing them in a command, screenshot, or unsafe diagnostic.
-- Test HTTP and SOCKS separately if both client modes are used.
+- Keep at least one `proxy_authentication` entry whenever non-loopback clients can reach the listener.
+- Use separate credentials for clients that need independent revocation.
+- Restrict the OpenWrt firewall input rule to trusted source zones or addresses.
+- Do not forward the listener from WAN.
+- Do not treat a non-default port as access control.
+- Rotate credentials after accidental disclosure.
+- Test HTTP and SOCKS5 separately.
+
+## Verification
+
+1. Confirm the service is running.
+2. Confirm the port is not used by another process.
+3. Test with one trusted client.
+4. Check the expected rule and outbound under **Connections**.
+5. Confirm an unauthenticated request is rejected.
+
+```sh
+service justclash status
+justclash.sh logs 100
+```
+
+Logs can expose client or destination details. Use `diag_redacted` for shared support data.
 
 ## Troubleshooting
 
 | Symptom | Check |
 | --- | --- |
-| Connection refused | `use_mixed_port`, port collision checks, service logs, and firewall input rules. |
-| Authentication fails | Exact `username:password` value and client proxy type. |
-| Traffic ignores normal rules | `mixed_port_rules.exit_rule` may be a fixed outbound instead of `BY RULES`. |
-| Transparent clients work but explicit clients do not | The mixed listener and transparent TProxy listener are different ports and paths. |
+| Connection refused | Listener enabled, port collision, service state, firewall input |
+| Authentication fails | Exact credential format and client proxy type |
+| Normal rules are ignored | `mixed_port_rules.exit_rule` is fixed instead of `BY RULES` |
+| HTTP works but SOCKS does not | Client mode and SOCKS5 support |
+| LAN works, guest does not | Firewall zone policy and listener reachability |
+
+## Disable
 
 ```sh
-justclash.sh logs 100
-service justclash status
+uci set justclash.proxy.use_mixed_port='0'
+uci commit justclash
+service justclash restart
 ```

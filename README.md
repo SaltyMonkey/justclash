@@ -1,273 +1,140 @@
-# JustClash
+<h1 align="center">JustClash</h1>
 
 <p align="center">
   <a href="https://opensource.org/licenses/GPL-2.0"><img src="https://img.shields.io/badge/License-GPL--2.0-blue.svg" alt="License: GPL-2.0"/></a>
   <a href="https://openwrt.org"><img src="https://img.shields.io/badge/OpenWrt-24.x%20%7C%2025.x-emerald" alt="OpenWrt Compatibility"/></a>
   <br/>
-  <br/>
-  <img src=".github/assets/logo.webp" alt="JustClash Logo" width="350"/>
+  <a href="https://github.com/saltymonkey/justclash/releases/latest"><img src="https://img.shields.io/github/v/release/saltymonkey/justclash?filter=%21%2A_rc%2A&amp;sort=date&amp;display_name=tag&amp;label=JustClash%20release" alt="Latest JustClash release"/></a>
+  <a href="https://github.com/saltymonkey/justclash/releases"><img src="https://img.shields.io/github/v/release/saltymonkey/justclash?include_prereleases&amp;filter=%2A_rc%2A&amp;sort=date&amp;display_name=tag&amp;label=JustClash%20RC&amp;color=orange" alt="Latest JustClash RC release"/></a>
+  <a href="https://github.com/MetaCubeX/mihomo/releases/latest"><img src="https://img.shields.io/github/v/release/MetaCubeX/mihomo?sort=date&amp;display_name=tag&amp;label=Mihomo%20latest&amp;color=blueviolet" alt="Latest Mihomo release"/></a>
 </p>
 
+<p align="center">
+  <img src=".github/assets/logo.webp" alt="JustClash logo" width="260"/>
+</p>
+
+<p align="center">
+  Native OpenWrt traffic orchestration service and LuCI interface for managing Mihomo routing, outbounds, and lifecycle—without requiring a third-party dashboard.
+</p>
+
+<p align="center">
+  <a href="info/00_quick_start.md">Quick start</a> ·
+  <a href="info/00_routing_architecture_and_design.md">Routing architecture</a> ·
+  <a href="info/10_security_concerns.md">Security concerns</a> ·
+  <a href="info/12_update_backup_remove.md">Update / backup / remove</a> ·
+  <a href="info/01_uci-structure.md">UCI reference</a> ·
+  <a href="DISCLAIMER.md">Disclaimer</a>
+</p>
+
+> [!IMPORTANT]
+> JustClash manages local routing and runtime configuration. It does not provide remote servers, subscriptions, access credentials, or preconfigured external routing destinations.
+
 > [!CAUTION]
-> **DISCLAIMER / ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ**
+> **Disclaimer / Отказ от ответственности**
 >
-> ### English Version
->
-> **1. Educational & Scientific Purpose:**
-> This project is a non-commercial educational demonstration created for scientific and technical research in embedded systems, Linux network stack configurations (`nftables`/`tproxy`), and OpenWrt UCI/LuCI integration. It is provided "AS IS" without any warranties of any kind.
->
-> **2. Compliance with Local Laws:**
-> *   **No Censorship Circumvention:** This software does not contain, distribute, host, or pre-configure any tools, keys, servers, subscription links, or methods intended to bypass state-mandated internet filters, government registry blocks, or Internet Service Provider (ISP) restrictions.
-> *   **Nature of Included Rulesets:** The included default rulesets are public domain/IP classification databases provided solely as metadata definitions for traffic categorization.
->     *   These lists **do not** contain any circumvention tools, access keys, or communication channels.
->     *   By default, without user-provided external routing destination configurations, all traffic matching these lists routes through the default WAN gateway directly and remains subject to all local ISP blocks.
-> *   **No Access to Circumvention Tools Provided:** The repository does **not** provide any commercial or free access to circumvention tools or external routing servers. It is up to the user to configure the routing targets.
-> *   **Compliance with Encryption Laws:** The software is a general-purpose network package manager and does not implement custom encryption standards. The user is solely responsible for ensuring that their network setups comply with local import, export, and cryptography regulations.
->
-> **3. Limitation of Liability:**
-> The authors accept no responsibility or liability for any consequences, legal claims, network downtime, data loss, or hardware damage arising from the use or misuse of this software.
->
-> **4. Trademark and Commercial Use:**
-> The JustClash name and logo cannot be used to sell hardware, paid access to external networks, or commercial configurations. We are not affiliated with any commercial network providers or sellers. See our [Trademark Policy](TRADEMARK.md) for details.
->
-> ---
->
-> ### Русская версия
->
-> **1. Исключительно образовательные и научные цели:**
-> Данный проект является некоммерческой демонстрацией и предназначен исключительно для технического изучения сетевого стека Linux (`nftables`, `tproxy`), автоматизации системных служб и интеграции интерфейсов управления в среде OpenWrt. Код предоставляется по принципу «как есть» (AS IS).
->
-> **2. Соответствие местному законодательству:**
-> *   **Отсутствие средств обхода блокировок:** Данное программное обеспечение **не содержит, не распространяет и не настраивает по умолчанию** какие-либо средства обхода ограничений доступа, ключи, подписки или методы, предназначенные для получения доступа к заблокированным информационным ресурсам.
-> *   **Статус встроенных списков (Rulesets):** Встроенные по умолчанию списки правил маршрутизации представляют собой исключительно публичные классификаторы доменных имён и IP-диапазонов (метаданные), служащие для демонстрации работы с бинарным форматом MRS.
->     *   Данные списки **не являются средствами обхода ограничений доступа** и не содержат серверов, ключей доступа или туннелей.
->     *   По умолчанию (без добавления пользователем собственных внешних серверов маршрутизации) весь трафик к этим ресурсам направляется напрямую через сеть провайдера и подвергается стандартной фильтрации со стороны оператора связи.
-> *   **Инструмент маршрутизации, а не сервис:** Утилита является исключительно локальным инструментом для управления маршрутизацией трафика и не предоставляет никаких услуг по предоставлению средств обхода ограничений доступа, сторонних серверов или каналов связи. Все конфигурации заполняются конечным пользователем самостоятельно.
-> *   **Соблюдение правил использования шифрования:** Проект не содержит специализированных средств шифрования, кроме встроенных в используемые сторонние бинарные файлы. Пользователь самостоятельно несет ответственность за соблюдение местного законодательства в области использования шифровальных (криптографических) средств и защиты информации.
->
-> **3. Ограничение ответственности:**
-> Разработчики проекта не несут ответственности за любые прямые или косвенные последствия использования данного ПО, включая сбои в работе сети провайдера связи, порчу оборудования (роутера), а также за возможные нарушения пользователем законодательства своей страны при настройке маршрутизации.
->
-> **4. Товарный знак и коммерческое использование:**
-> Имя и логотип JustClash запрещено использовать для продажи роутеров, платного доступа к внешним узлам маршрутизации или коммерческих настроек. Мы не имеем отношения ни к каким коммерческим сетям или продавцам оборудования. Подробнее читайте в [Политике товарного знака](TRADEMARK_RU.md).
+> This non-commercial educational and technical research project is provided “AS IS”. Read the full bilingual [Disclaimer / Отказ от ответственности](DISCLAIMER.md), including compliance, liability, and trademark terms, before use.
 
----
+## About
 
-## Overview
+JustClash connects OpenWrt's native UCI configuration system with the Mihomo runtime. It compiles router settings into a working core configuration, manages the service lifecycle, and installs the required firewall and DNS hooks.
 
-**JustClash** is an orchestration package and Web UI designed for OpenWrt routers. It acts as a configuration and lifecycle management control layer for the **mihomo** core.
+The LuCI application provides service controls, node selection, active connections, rules, traffic statistics, and realtime logs. The service can also be managed entirely through UCI, init scripts, and the command line.
 
-Instead of requiring users to manually write complex JSON or YAML files, JustClash bridges OpenWrt's native configuration system with Mihomo's runtime environment—handling service supervision, config compilation, and firewall hookups automatically.
+## Highlights
 
-### Design Philosophy: A Complete External Dashboard & Native Runtime
-Most OpenWrt routing clients act as simple launchers, forcing users to rely on external, third-party dashboards hosted on separate ports (like YACD or Metacubexd) for basic interactions, and using resource-heavy shell scripts or external `curl` calls to parse and download configuration files.
+| Capability | Description |
+| --- | --- |
+| Native OpenWrt integration | UCI configuration, procd supervision, fw4/nftables hooks, and LuCI CSR views |
+| Full and partial routing | Choose complete traffic interception or selective lower-overhead routing |
+| Runtime control | Switch nodes, inspect rules and connections, terminate sockets, and view live logs |
+| Mihomo-native providers | Proxy providers and rule providers are downloaded and updated by the core |
+| APK and IPK packages | OpenWrt 25.x is the primary APK target; OpenWrt 24.x remains supported through IPK |
+| Headless management | LuCI is optional for users who prefer UCI and CLI administration |
 
-JustClash is designed to **eliminate both external panels and unnecessary script helpers** by implementing a feature-complete dashboard and utilizing Mihomo's native capabilities directly:
+## Getting Started
 
-*   **Native UI Control**: Switch active nodes, monitor active connections, terminate sockets in real time, and stream live logs directly within the native OpenWrt administration interface.
-*   **Offloaded Runtime Engine**: Instead of using fragile shell scripts or external `curl` commands to fetch, parse, and process subscriptions, rules, and rule-sets, JustClash offloads these operations directly to the Mihomo core. Mihomo handles downloading, parsing, and updating proxy providers and rule-providers natively and efficiently, keeping the router's resource footprint minimal.
+1. Follow the [Quick Start](info/00_quick_start.md) to install the packages and create the first outbound.
+2. Read [Choosing a Routing Mode](info/00_routing_architecture_and_design.md) before selecting full or partial routing.
+3. Use the [UCI structure reference](info/01_uci-structure.md) for manual configuration.
 
-*Note: For users who still prefer dedicated dashboards, JustClash retains a background downloader to fetch, host, and serve external panels locally from the router.*
+The online installer detects the router package manager automatically. Interactive installation asks only which translation package should be installed; automated installation uses the English LuCI package without an additional translation.
 
----
+## Documentation
 
-## Management Interfaces
+### Core Reference
 
-JustClash is fully integrated with OpenWrt's native Unified Configuration Interface (UCI) system, allowing management through two primary interfaces:
+| Guide | Covers |
+| --- | --- |
+| [Quick Start](info/00_quick_start.md) | Installation, routing mode, outbounds, groups, and first launch |
+| [Routing Architecture](info/00_routing_architecture_and_design.md) | Full and partial routing, DNS, Fake-IP, TProxy, TUN, IPv6, and mode changes |
+| [Security Concerns](info/10_security_concerns.md) | Generated API passwords, download User-Agents, controller exposure, TLS, dashboards, and CORS |
+| [Update, Backup, and Removal](info/12_update_backup_remove.md) | Package and core updates, SHA256 verification, backup, restore, rollback, and removal |
+| [UCI Configuration](info/01_uci-structure.md) | Complete configuration structure and section reference |
 
-### 1. UCI & System Daemon (Headless Mode)
-JustClash functions as a robust headless system service. The underlying shell engine `/usr/bin/justclash.sh` provides automated core management, cron schedulers, and system diagnostics. Advanced users can configure all settings via standard `uci` commands and manage the service lifecycle using native system scripts via SSH.
+### Routing and Rules
 
-### 2. LuCI Web Interface (Web UI Mode)
-For interactive administration, JustClash exposes a feature-complete, responsive dashboard and settings suite directly inside the native OpenWrt LuCI panel (accessible via **Services → JustClash**). The interface is organized across 10 dedicated sections:
+| Guide | Covers |
+| --- | --- |
+| [Traffic Exclusions](info/04_service_traffic_exclusion.md) | Router and LAN bypass rules by mark, owner, address, port, or client |
+| [User-Defined RuleSets](info/05_user_defined_rulesets.md) | Custom sources, activation, caching, and partial-routing requirements |
+| [Block Rules](info/06_block_rules.md) | Domain and address blocking, limitations, and verification |
+| [Geodata, Geosite, and GeoIP](info/11_geodata_and_geoip.md) | Policy types, update sources, Fake-IP filters, and verification |
 
-### Diagnostics & Status Views
+### Network Scenarios
 
-*   **Status (Dashboard & Service Control):** A comprehensive diagnostics and control panel showing real-time service metrics, package metadata, and maintenance options:
-    *   *Service Status Grid:* Monitor service daemon state (Running/Stopped), Boot Autostart status, Router Model, OpenWrt OS Version, LuCI UI version, Package version, and current Mihomo Core version.
-    *   *Real-time Telemetry & Traffic:* View live WebSocket-streamed network throughput (upload/download speeds), cumulative traffic volume trackers (Up/Down totals), and memory utilization (RAM) of the active Mihomo process.
-    *   *Service Actions:* Start, stop, or restart the proxy service daemon, and toggle boot autostart directly with single-click actions.
-    *   *Maintenance Tools:* Run detailed system diagnostic reports, perform core binary updates, update all active rule-sets (rule providers), and refresh local service database files.
-    *   *Configuration Inspector:* View compiled runtime Mihomo YAML, inspect the local JustClash UCI configuration, or perform a complete configuration reset to default values.
-*   **Nodes (Proxy Group & Latency Manager):** A real-time controller to manage outbound paths and subscriptions:
-    *   *Routing Mode Selector:* Toggle the global routing mode (Rule-based, Global proxy, or Direct routing) instantly.
-    *   *Active Group Cards:* Displays all proxy groups (e.g. `GLOBAL`, `Proxy`, etc.) showing their type, current selected node, and available fallbacks.
-    *   *Instant Switcher:* Click any proxy option card in the list to switch active outbound routes immediately.
-    *   *Latency (Delay) Testing:* Run parallel HTTP latency delay tests (concurrency controlled to avoid network congestion) and display real-time response times (ms) or timeouts on color-coded metadata labels.
-    *   *Proxy Providers Tracker:* View dynamic proxy subscription details, updated timestamps, manual pull updates, and provider-specific delay tests.
-*   **Rules (Active Rules Inspector):** A live, interactive inspector showing active routing rules directly from the running core:
-    *   *Real-time Filtering:* Instantly filter rules on the fly by type, payload, or target proxy/group name.
-    *   *Visual Classification:* Color-coded badges distinguish rule types (e.g., Blue for domains/keywords, Green for IP/CIDR ranges, Orange for Classical rules).
-    *   *Dynamic Runtime Toggles:* Temporarily enable or disable individual rules dynamically in runtime (resets upon service restart).
-    *   *Predictability:* Rules are evaluated top-to-bottom. To bypass a domain/IP, route it through the `DIRECT` outbound in the Routing setup panel. To block it, add it to Block Rules. Everything is unified.
-*   **Connections (Active Connections Manager):** A WebSocket-backed connection tracker allowing real-time monitoring and control of active network sockets:
-    *   *Traffic Metadata Visualizer:* Displays protocol, connection endpoints, target domain name/sniffed SNI, routing chains (groups traversed), and matched rules.
-    *   *Interactive Modal Inspector:* Click any connection row to inspect its raw JSON metadata structure and copy it to the clipboard.
-    *   *Socket Control:* Instantly close/terminate individual connections or perform a global teardown of all active connections with a single click.
-    *   *Advanced Filtering & Refresh Control:* Filter active connections by Host/Sniff, Source/Endpoint IP, Chains, or Rules, and customize the WebSocket refresh interval (from 250ms up to 5s).
-*   **System logs:** Retrieves and parses OpenWrt system logs to debug service startup, firewall injection issues, and conflict warnings.
-*   **Realtime logs:** Streams live, color-coded logging outputs (Debug, Info, Warning, Error) directly from the running Mihomo core using WebSocket connections to the API controller port.
+| Guide | Covers |
+| --- | --- |
+| [Mixed Port](info/07_mixed_port.md) | HTTP/SOCKS listener setup, client configuration, and security |
+| [Guest Network](info/08_use_guest_network.md) | Intercepted or direct guest networks and filtered DNS |
+| [Multi-WAN and Failover](info/09_multiwan_balancing_failover.md) | Interface binding, failover, latency selection, and balancing |
 
-### Setup Configurations
+### Operations and Security
 
-*   **Setup: Rulesets (Custom Rulesets Management):** Allows defining custom domain or IP-CIDR list sources:
-    *   *Source Toggles:* Includes interactive checkboxes to hide/show built-in lists or make URL strings clickable links for checking lists in the browser.
-    *   *Character Validation:* Real-time checking restricts names to valid alphanumeric characters, hyphens, and underscores.
-    *   *Duplicate and Reserved Checks:* Automatically blocks inputting duplicate keys or using reserved built-in identifiers.
-    *   *Mihomo-native Download & Cache:* The compiler maps configuration endpoints directly to Mihomo ruleset objects, enabling Mihomo to download, validate, and cache remote rulesets natively (using configurable intervals and size limits).
-    *   *Custom Authorization Headers:* Supports defining custom HTTP `Authorization` headers for authenticating private/restricted remote ruleset downloads.
-    *   *Local Rulesets Translation:* Translates local filesystem paths into native file-based rulesets for offline or local configurations.
-*   **Setup: Routing (Outbound-Centric Rules & Groups):** Instead of global rules arrays, routing rules are declared directly **inside each node's setup panel**:
-    *   *Predefined Lists Association:* Select which ruleset lists should be routed specifically through a particular outbound node.
-    *   *Subnet & Suffix Rules:* Map target domain suffixes, target subnets, and local source subnets directly within the node parameters.
-    *   *Outbound Providers:* Load dynamic external subscriptions with custom health checks, node filtering, and overrides (force specific routing chains or physical interface bindings for fetched nodes).
-*   **Setup: Service (System-level Orchestration):**
-    *   *Startup & Initialization:* Configure WAN connectivity checks (timeouts), delayed startup to prevent CPU bottlenecks, time synchronization (ntpd) prior to launching Mihomo, and options to skip startup checks.
-    *   *Storage & Memory Optimization:* Flash wear protection options to store external rulesets and core metadata cache databases in temporary RAM storage (`/tmp`) or in persistent flash memory (`/etc/justclash/`).
-    *   *Traffic Rules & Packet Filtering (nftables):* Define traffic interception rules, bind rules to client interfaces (e.g., `br-lan`), set policy routing priority (PBR), specify router traffic redirection, exclude specific ports (source/destination) or router socket owners (UIDs), and configure redirection/blocking actions for client QUIC, DoT, DoH, DoQ, and NTP traffic.
-    *   *Scheduled Tasks (Cron Automation):* Register and manage cron entries on the host system to automatically restart Mihomo on a schedule.
-    *   *External Resources:* Configure download sources for the core (GitHub or Custom URL with version.txt validation) and custom zip mirrors for Zashboard, Metacubexd, and YACD-meta dashboards.
-*   **Setup: Proxy (Mihomo Core Runtime Settings):**
-    *   *Basic Settings:* Configure core logging severity, bind outbound connections to a specific interface, set the TPROXY listen port, enable/configure mixed ports (HTTP/SOCKS5) with access authentication, set TCP concurrent connection options, adjust Keep-Alive parameters, and enable profile/fake-IP persistence.
-    *   *GeoData Settings:* Toggle using Geodata mode (`geoip` and `geosite` rules), enable automatic downloads/updates of geodata files (`geoip.dat`, `geosite.dat`, `geoip.metadb`), and configure update intervals.
-    *   *Controller/API Settings:* Choose the API controller bind interface, toggle dashboard hosting, select default web dashboards, and set API passwords/tokens.
-    *   *DNS Settings:* Set the DNS listen port, define nameserver policies (domain-specific DNS), list default nameservers, configure proxy-server nameservers (for resolving proxy hosts), and map rulesets to fake-IP or real-IP resolution lists.
-    *   *Hosts Settings:* Configure custom static domain-to-IP mappings (hosts) for local DNS resolution overrides.
-    *   *Sniffer Settings:* Enable traffic sniffing, parse pure IP connections, specify domain lists to exclude/force-sniff, and define CIDR-based source or destination address bypass rules.
-    *   *NTP Settings:* Enable the core's built-in NTP client, specify upstream NTP servers/ports, define check intervals, and toggle writing time corrections to the system clock.
+| Guide | Covers |
+| --- | --- |
+| [Startup and WAN Troubleshooting](info/03_startup_and_wan_issues.md) | WAN readiness, delayed startup, time synchronization, and recovery order |
 
-## How It Works (Architecture)
+## Architecture
 
-All operations are automated and managed via an OpenWrt system service (`/etc/init.d/justclash`). The lifecycle is fully handled automatically during system boot, shutdowns, or when changes are applied in the LuCI interface:
-
-1.  **Configuration:** Settings are managed interactively through the LuCI Web UI or directly edited in the UCI config file (`/etc/config/justclash`).
-2.  **Compilation & Translation:** The `/etc/init.d/justclash` service script invokes the backend manager engine (`/usr/bin/justclash.sh`). This script reads the UCI settings, parses and decodes proxy subscription URIs, and compiles them into a single, unified YAML configuration file optimized for the Mihomo core.
-3.  **Firewall & DNS Redirection:** 
-    * The service configures the Linux firewall (`nftables`) to intercept client/router traffic, block unwanted protocols (like QUIC, DoT/DoH), and redirects DNS queries from the local system DNS resolver (`dnsmasq`) to the core's DNS resolver.
-    * **Event-Driven Firewall Sync (Partial Interception only):** Starts a background worker using `inotifywait` to watch the ruleset cache folder. When Mihomo downloads or updates an `ipcidr` ruleset file, the worker immediately catches the update event and streams the new subnet/IP entries directly into active `nftables` sets in under 1ms, bypassing resource-heavy polling cron loops.
-4.  **Execution & Supervision:** The service starts and monitors the `mihomo` daemon process.
-5.  **Teardown & Cleanup:** On service stops or restarts, the `init.d` script automatically tears down all injected `nftables` tables, reverts DNS configurations, terminates the core process, and cleans up all background ruleset monitoring workers and subshells cleanly.
-
-### Memory and Lifecycle Optimization
-*   **Symlink Resolution:** When `mihomo_persistent_ext_rules` is enabled, the ruleset storage is symlinked to `/etc/justclash/rules/`. The ruleset synchronizer dynamically resolves the symlink to its physical destination target to ensure the Linux kernel `inotify` subsystem catches the file updates correctly.
-*   **Script-Level Singleton Lock:** The control script uses process table checks for `justclash.sh start` to enforce a strict singleton runtime, preventing race conditions and resource leaks when commands are invoked in rapid succession.
-
----
-
-## Traffic Interception Modes
-
-JustClash supports two distinct traffic routing architectures, configurable in the **Service** settings tab depending on your performance and routing requirements:
-
-### 1. Full Interception Mode (Full Route)
-*   **How it works:** All TCP and UDP traffic from the selected network interfaces is unconditionally intercepted via firewall TProxy rules and redirected to the Mihomo core.
-*   **Pros:** Complete network observability in the dashboard; unified routing logic for domains and raw IPs in one place; absolute predictability of rules (such as `GEOIP` and default `final_rule` match).
-*   **Cons:** Higher CPU/RAM usage as all packets must traverse userspace.
-
-### 2. Partial Interception Mode (Partial Route)
-*   **How it works:** Only traffic destined for Fake-IP domain ranges or explicit IP subnets declared in active `ipcidr` rulesets is intercepted by the firewall. Unmatched traffic bypasses the Mihomo core entirely and is routed natively by the Linux kernel at hardware speed.
-*   **Pros:** Ultra-low resource consumption; maximum performance for local/domestic traffic.
-*   **Cons:** Direct connections to raw IP addresses (bypassing DNS) that are not pre-declared in active IP rulesets, and domains listed in `fake-ip-filter`, bypass Mihomo completely. Consequently, global rules like `GEOIP` and the fallback `final_rule` (MATCH) will not apply to bypassed traffic.
-
----
-
-## Requirements
-
-### Dependencies
-*   **Core packages:** `nftables`, `jq-full`, `curl`, `coreutils-base64`, `ca-bundle`, `zoneinfo-all`
-*   **File monitoring packages:** `inotifywait`, `libinotifytools`
-*   **Kernel modules:** `kmod-nft-tproxy`, `kmod-nf-tproxy`
-*   **Web UI:** `luci-base`
-
-### System
-*   **OpenWrt:** OpenWrt 25.x (APK) and OpenWrt 24.x (OPKG/IPK).
-    > [!IMPORTANT]
-    > OpenWrt 25.x (APK) is the primary release target. OpenWrt 24.x is supported via IPK packages for OPKG-based systems.
-*   **Hardware Compatibility:** Works on a wide variety of architectures supported by both OpenWrt and Mihomo:
-    *   **x86_64 / 386:** The setup defaults to the standard **`amd64`** (v1) Mihomo build. This ensures out-of-the-box compatibility and avoids `Illegal instruction` crashes caused by `amd64-v3` builds on hypervisors (Proxmox, VMware, Hyper-V, KVM, etc. with default CPU emulation) or older CPUs without AVX2/FMA3 support. On modern systems (e.g., modern bare-metal x86_64 routers, or virtual machines where the CPU type is configured as `host`), it is still recommended to manually download and replace the core binary with the **`amd64-v3`** (or **`amd64-v4`** if the CPU supports AVX-512) build to benefit from instruction set optimizations.
-    *   **ARM:** Support for `arm64` (aarch64), `armv7` (neon-vfp), `armv6` (neon/vfp), and `armv5`.
-    *   **MIPS:** Support for both big-endian and little-endian configurations, including hardfloat/softfloat variants (`mips-hardfloat`, `mips-softfloat`, `mipsle-hardfloat`, `mipsle-softfloat`, `mips64`, `mips64le`).
-    *   **RISC-V:** Support for `riscv64` platforms.
-    *   **LoongArch:** Support for `loong64-abi2` platforms.
-
----
-
-## Installation
-
-### Option 1: Quick Online Installer (Recommended)
-Run the following script to automatically download dependencies and install the latest version:
-```bash
-sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh)
+```mermaid
+flowchart LR
+    Settings[UCI and LuCI settings] --> Compiler[JustClash compiler]
+    Compiler --> Runtime[Mihomo configuration]
+    Compiler --> Network[nftables and DNS hooks]
+    Runtime --> Core[Mihomo core]
+    Core --> Control[LuCI and CLI control]
+    Core --> Providers[Proxy and rule providers]
 ```
 
-The setup script supports additional flags for custom or automated deployment:
-*   `--automated`, `--auto`, `-y`: Non-interactive automated mode. Automatically removes conflicting packages, skips translation downloads (installs only the base English package), and exits upon completion without opening the menu.
-*   `--silent`, `-s`: Suppresses all regular standard output (`stdout`). Error messages and system validation warnings will still be printed to `stderr`.
-*   `--update-core`, `-u`: Core-only update mode. Runs basic system diagnostics and updates only the Mihomo core binary, bypassing packages download and installation.
-*   `--skip-space-check`: Bypasses the minimum free storage space check.
+The service owns the complete lifecycle: validation, configuration compilation, firewall setup, core supervision, and cleanup. More detail is available in [Routing Architecture](info/00_routing_architecture_and_design.md).
 
-Example of silent non-interactive installation:
-```bash
-sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh) --automated --silent
-```
+## Screenshots
 
-Example of automated core-only update:
-```bash
-sh <(wget -O - https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh) --update-core
-```
+<p align="center">
+  <img src="imgs/status.png" alt="JustClash status dashboard" width="900"/>
+</p>
 
-### Option 2: Prebuilt Packages
-1. Download `justclash`, `luci-app-justclash`, and optionally translations from the Releases page.
-2. Copy files to your router via SCP.
-3. Install:
-   * **APK-based systems (OpenWrt 25):**
-     ```bash
-     apk add --allow-untrusted justclash-*.apk luci-app-justclash-*.apk
-     ```
-   * **OPKG-based systems (OpenWrt 24):**
-     ```bash
-     opkg install justclash-*.ipk luci-app-justclash-*.ipk
-     ```
+<details>
+<summary>Interface gallery</summary>
 
-### Option 3: Compile from Source
-Build native packages using Docker SDK containers:
-* **For IPK (OpenWrt 24):**
-  ```bash
-  docker compose -f Docker-compose.yml up --build ipk-builder
-  ```
-* **For APK (OpenWrt 25):**
-  ```bash
-  docker compose -f Docker-compose.yml up --build apk-builder
-  ```
-The output files will be copied to `./output/ipk/` or `./output/apk/`.
+| Nodes | Routing |
+| --- | --- |
+| ![Node selection](imgs/nodes.png) | ![Routing configuration](imgs/routing.png) |
 
----
+| Connections | Rulesets |
+| --- | --- |
+| ![Active connections](imgs/connections.png) | ![Ruleset configuration](imgs/rulesets.png) |
 
-### Installing a specific release
+| System logs | Realtime logs |
+| --- | --- |
+| ![System logs](imgs/system_logs.png) | ![Realtime logs](imgs/realtime_logs.png) |
 
-By default, the installer downloads the latest stable release. To install an exact stable or release candidate version, pass its package version through `--custom_version`:
+</details>
 
-```sh
-sh service.sh --custom_version 0.90.13_rc1
-```
+## Compatibility
 
-The optional leading `v` is accepted. The requested version must match an existing release tag exactly.
-
-## Usage
-
-*   **Access Web Interface:** Navigate to **Services → JustClash** in your OpenWrt admin panel.
-*   **Service Control:**
-    ```bash
-    /etc/init.d/justclash start   # Start service
-    /etc/init.d/justclash stop    # Stop service
-    /etc/init.d/justclash restart # Apply new config changes
-    ```
-*   **CLI Helpers & Diagnostics:**
-    ```bash
-    justclash.sh help
-    ```
-
----
+Supports OpenWrt 24.x (OPKG/IPK) and 25.x (APK). See the [Quick Start](info/00_quick_start.md) for installation instructions.
 
 ## License
 
-Licensed under the **GPL-2.0 License**. See [LICENSE](LICENSE) for details.
+Licensed under the [GPL-2.0 License](LICENSE).

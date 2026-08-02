@@ -1,49 +1,52 @@
 # Command-Line Reference
 
-Use OpenWrt service commands for normal lifecycle management. Use `justclash.sh` for updates, diagnostics, and maintenance tasks.
+Use OpenWrt service commands for normal lifecycle management. Use `justclash.sh` for updates, diagnostics, and maintenance.
 
 ## Service Management
 
 | Command | Purpose |
 | --- | --- |
-| `service justclash start` | Start the managed service. |
-| `service justclash stop` | Stop Mihomo and remove JustClash routing state. |
-| `service justclash restart` | Stop and start the service. |
-| `service justclash reload` | Reload the service configuration. |
-| `service justclash enable` | Enable startup at boot. |
-| `service justclash disable` | Disable startup at boot. |
-| `service justclash status` | Show the procd service status. |
+| `service justclash start` | Start the procd-managed service |
+| `service justclash stop` | Stop Mihomo and remove managed routing state |
+| `service justclash restart` | Perform a complete stop and start |
+| `service justclash reload` | Reload the UCI configuration |
+| `service justclash enable` | Enable startup at boot |
+| `service justclash disable` | Disable startup at boot |
+| `service justclash status` | Show procd state |
 
 The equivalent init script is `/etc/init.d/justclash`.
 
-## JustClash Commands
-
-Run commands as:
+## Syntax
 
 ```sh
 justclash.sh <command> [arguments]
 ```
 
-### Lifecycle and Versions
+## Lifecycle and Version Commands
 
 | Command | Aliases | Purpose |
 | --- | --- | --- |
-| `start` | `run`, `up`, `u` | Run startup orchestration manually. Prefer `service justclash start` for normal use. |
-| `stop` | `down`, `d` | Stop the service and clean up routing state. |
-| `info_core` | `info_mihomo`, `version_core`, `vc`, `--vc` | Print the installed Mihomo version. |
-| `info_package` | `version`, `v`, `-v`, `--version` | Print the JustClash package version. |
+| `start` | `run`, `up`, `u` | Run startup orchestration manually; prefer the procd service command |
+| `stop` | `down`, `d` | Stop and clean managed routing state |
+| `info_core` | `core_info_mihomo`, `version_core`, `vc`, `--vc` | Print the installed Mihomo version |
+| `info_package` | `version`, `v`, `-v`, `--version` | Print the JustClash package version |
 
-### Updates and Maintenance
+## Updates and Scheduling
 
 | Command | Alias | Purpose |
 | --- | --- | --- |
-| `core_update` | `cu` | Resolve the configured update source and install a newer Mihomo core. |
-| `core_remove` | `cr` | Remove the installed Mihomo binary. |
-| `service_data_update` | `sdu` | Update the service ruleset catalogs. |
-| `cron_update` | `cru` | Rebuild scheduled jobs from UCI settings. |
-| `add_proxy <name> <uri>` | `ap` | Add a proxy URI from the command line. Treat the URI as a credential. |
+| `core_update` | `cu` | Resolve the configured source and install a newer compatible Mihomo core |
+| `core_remove` | `cr` | Remove the installed Mihomo binary |
+| `service_data_update` | `sdu` | Refresh service ruleset catalogs |
+| `cron_update` | `cru` | Rebuild scheduled jobs from UCI |
 
-### Logs
+After changing cron fields directly through UCI, run:
+
+```sh
+justclash.sh cron_update
+```
+
+## Logs
 
 ```sh
 justclash.sh logs [line_count]
@@ -51,25 +54,61 @@ justclash.sh logs [line_count]
 
 Aliases: `systemlogs`, `log`, `l`. The default is 40 lines.
 
-### Diagnostics
+System logs can contain addresses, domains, interface names, or endpoints. Inspect them before sharing.
+
+## Diagnostics
+
+### Safe Summary for Sharing
+
+```sh
+justclash.sh diag_redacted
+```
+
+Alias: `dgr`.
+
+This command reduces diagnostic results to statuses and redacts values that commonly identify network topology or credentials. It is the preferred command for support requests.
+
+### Local Diagnostics
 
 | Command | Alias | Arguments | Purpose |
 | --- | --- | --- | --- |
-| `diag_report` | `diag`, `dg` | none | Print the combined diagnostic report. |
-| `diag_nft` | `dn` | none | Check the JustClash nftables table. |
-| `diag_route` | `dr` | none | Check policy-routing rules and tables. |
-| `diag_icmp` | `di` | `<target> [count]` | Test ICMP connectivity. |
-| `diag_proxy_resolver` | `dpr` | `<domain>` | Test Mihomo DNS resolution. |
-| `diag_external_resolver` | `der` | `<domain> <resolver>` | Test an explicitly selected resolver. |
-| `show_hwid` | `hwid` | none | Print the generated hardware identifier. |
-| `diag_mihomo_config` | `dmc` | none | Print the generated Mihomo configuration with sensitive fields redacted. |
-| `diag_service_config` | `dsc` | none | Print the UCI service configuration with sensitive fields redacted. |
-| `diag_service_config_reset` | `dscr` | none | Back up the current configuration and restore package defaults. |
+| `diag_report` | `diag`, `dg` | None | Full local diagnostic report |
+| `diag_nft` | `dn` | None | Inspect the JustClash nftables state |
+| `diag_route` | `dr` | None | Inspect policy-routing rules and tables |
+| `diag_icmp` | `di` | `<TARGET> [COUNT]` | Test ICMP connectivity |
+| `diag_proxy_resolver` | `dpr` | `<DOMAIN>` | Test Mihomo DNS resolution |
+| `diag_external_resolver` | `der` | `<DOMAIN> <RESOLVER>` | Test an explicitly selected resolver |
+| `show_hwid` | `hwid` | None | Print the generated hardware identifier |
 
-> [!WARNING]
-> `diag_mihomo_config_unsafe` (`dmcu`) and `diag_service_config_unsafe` (`dscu`) print raw credentials, endpoints, and authorization data. Do not paste their output into tickets, chats, or public logs.
+These commands may print local addresses, routes, domains, resolver information, or hardware identifiers. Do not paste their raw output into public issues.
 
-## Help and Exit Status
+### Configuration Diagnostics
+
+| Command | Alias | Purpose |
+| --- | --- | --- |
+| `diag_mihomo_config` | `dmc` | Show generated Mihomo configuration with credential fields redacted |
+| `diag_service_config` | `dsc` | Show UCI configuration with credential fields redacted |
+| `diag_mihomo_config_unsafe` | `dmcu` | Show raw generated Mihomo configuration |
+| `diag_service_config_unsafe` | `dscu` | Show raw UCI configuration |
+
+> [!CAUTION]
+> “Redacted” configuration commands hide known credential fields but can still reveal domains, endpoints, addresses, routing policy, and local topology. The unsafe commands additionally expose credentials and authorization data.
+
+## Reset Configuration
+
+| Command | Aliases | Purpose |
+| --- | --- | --- |
+| `config_reset` | `cfr`, `diag_service_config_reset`, `dscr` | Back up the active config and restore package defaults |
+
+```sh
+service justclash stop
+justclash.sh config_reset
+service justclash start
+```
+
+The backup can contain secrets. Keep it local and remove it only after the restored configuration has been verified.
+
+## Help
 
 ```sh
 justclash.sh help
@@ -77,13 +116,20 @@ justclash.sh help
 
 Aliases: `?`, `command`, `h`, `-h`, `--help`.
 
-A zero exit status means the requested operation completed or was an intentional no-op. A nonzero status means validation, prerequisites, an external command, or application of a change failed. Read the system log for the specific cause:
+## Exit Status
+
+| Status | Meaning |
+| --- | --- |
+| `0` | Command completed or intentionally performed no work |
+| Nonzero | Validation, prerequisites, an external tool, or application of a change failed |
+
+Read local logs for the detailed cause:
 
 ```sh
 justclash.sh logs 100
 ```
 
-## Useful Recovery Sequence
+## Recovery Sequence
 
 ```sh
 service justclash stop
@@ -93,4 +139,4 @@ service justclash start
 justclash.sh logs 100
 ```
 
-Use the unsafe configuration commands only when you are working locally and understand that their output contains secrets.
+If the output must leave the router, collect `diag_redacted` separately instead of sharing the full recovery transcript.
