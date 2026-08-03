@@ -726,10 +726,10 @@ config_proxy_provider_read() {
     local health_check expected_status check_url check_interval timeout lazy
     config_get name "$section" name
     config_get subscription "$section" subscription
-    [ -n "$name" ] && [ -n "$subscription" ] || {
+    if [ -z "$name" ] || [ -z "$subscription" ]; then
         log warn "Skip proxy provider without a name or subscription"
         return
-    }
+    fi
     config_get_bool enabled "$section" enabled 1
     [ "$enabled" -eq 1 ] || {
         log warn "Skip disabled proxy provider: $section"

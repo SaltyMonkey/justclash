@@ -42,7 +42,8 @@ fmt_uci_list_as_json_array() {
     local indent="${4:-}"
     local result=""
 
-    # shellcheck disable=SC2329
+    # Invoked indirectly by config_list_foreach.
+    # shellcheck disable=SC2317,SC2329
     __append_json_array_element() {
         local val="$1"
         [ -n "$val" ] || return 0
