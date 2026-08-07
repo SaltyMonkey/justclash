@@ -19,7 +19,9 @@ const buttonsIDs = {
     DIAGNOSTIC: "button-diagnostic",
     UPDATE: "button-core-update",
     UPDATE_RULESETS: "button-rulesets-update",
-    SERVICE_DATA_UPDATE: "button-service-data"
+    SERVICE_DATA_UPDATE: "button-service-data",
+    MIHOMO_CONFIG: "button-mihomo-config",
+    SERVICE_CONFIG: "button-service-config"
 };
 
 const buttons = {
@@ -346,6 +348,19 @@ return view.extend({
             maintenanceActionContainer
         ]);
 
+        const configActionContainer = E("div", { class: "jc-actions-wrap" }, [
+            E("div", { class: "cbi-section-actions jc-primary-actions" }, [
+                createActionButton(buttonsIDs.MIHOMO_CONFIG, buttons.ACTION, _("Show Mihomo config"), actions.showConfigRpc(_("Mihomo config"), () => ubusApi.getMihomoConfig(), () => ubusApi.getMihomoConfigUnsafe())),
+                createActionButton(buttonsIDs.SERVICE_CONFIG, buttons.ACTION, _("Show service config"), actions.showConfigRpc(_("Service config"), () => ubusApi.getServiceConfig(), () => ubusApi.getServiceConfigUnsafe()))
+            ])
+        ]);
+
+        const configActionSection = E("div", { class: "cbi-section fade-in" }, [
+            E("h3", { class: "cbi-section-title" }, _("Configuration")),
+            E("div", { class: "cbi-section-descr" }, _("Inspect the generated Mihomo configuration or the JustClash service configuration.")),
+            configActionContainer
+        ]);
+
 
         const style = E("style", {}, `
             .jc-status-text { font-weight:700; }
@@ -428,6 +443,7 @@ return view.extend({
                 statusContainer,
                 serviceActionSection,
                 maintenanceActionSection,
+                configActionSection
             ])
         ]);
     }

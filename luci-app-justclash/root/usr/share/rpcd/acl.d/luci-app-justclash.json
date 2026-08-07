@@ -26,6 +26,8 @@
                 "justclash": [
                     "status",
                     "diag_redacted",
+                    "diag_mihomo_config",
+                    "diag_service_config",
                     "systemlogs"
                 ]
             }
@@ -47,6 +49,8 @@
                     "start",
                     "stop",
                     "restart",
+                    "diag_mihomo_config_unsafe",
+                    "diag_service_config_unsafe",
                     "update_core",
                     "update_rulesets"
                 ]

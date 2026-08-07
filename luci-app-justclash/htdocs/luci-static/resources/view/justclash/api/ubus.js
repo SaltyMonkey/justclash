@@ -33,6 +33,10 @@ const callStart = declareAction("start");
 const callStop = declareAction("stop");
 const callRestart = declareAction("restart");
 const callDiagRedacted = declareAction("diag_redacted");
+const callDiagMihomoConfig = declareAction("diag_mihomo_config");
+const callDiagMihomoConfigUnsafe = declareAction("diag_mihomo_config_unsafe");
+const callDiagServiceConfig = declareAction("diag_service_config");
+const callDiagServiceConfigUnsafe = declareAction("diag_service_config_unsafe");
 const callSystemLogs = declareAction("systemlogs");
 const callUpdateCore = declareAction("update_core");
 const callUpdateRulesets = declareAction("update_rulesets");
@@ -63,6 +67,22 @@ return baseclass.extend({
 
     async diagRedacted() {
         return assertSuccess(await callDiagRedacted());
+    },
+
+    async getMihomoConfig() {
+        return assertSuccess(await callDiagMihomoConfig());
+    },
+
+    async getMihomoConfigUnsafe() {
+        return assertSuccess(await callDiagMihomoConfigUnsafe());
+    },
+
+    async getServiceConfig() {
+        return assertSuccess(await callDiagServiceConfig());
+    },
+
+    async getServiceConfigUnsafe() {
+        return assertSuccess(await callDiagServiceConfigUnsafe());
     },
 
     async getSystemLogs() {

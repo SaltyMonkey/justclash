@@ -58,6 +58,20 @@ run_redacted_diagnostics() {
     fi
 }
 
+run_config_dump() {
+    jc_config_command="$1"
+    jc_config_failure_message="$2"
+
+    jc_config_output=$(/usr/bin/justclash.sh "$jc_config_command" 2>/dev/null)
+    jc_config_code=$?
+
+    if [ "$jc_config_code" -eq 0 ]; then
+        emit_result 0 "$jc_config_output"
+    else
+        emit_result "$jc_config_code" "$jc_config_failure_message"
+    fi
+}
+
 run_systemlogs() {
     jc_logs_output=$(/usr/bin/justclash.sh systemlogs 2>/dev/null)
     jc_logs_code=$?
@@ -77,6 +91,10 @@ list)
         "stop": {},
         "restart": {},
         "diag_redacted": {},
+        "diag_mihomo_config": {},
+        "diag_mihomo_config_unsafe": {},
+        "diag_service_config": {},
+        "diag_service_config_unsafe": {},
         "systemlogs": {},
         "update_core": {},
         "update_rulesets": {}
@@ -101,6 +119,18 @@ call)
         ;;
     diag_redacted)
         run_redacted_diagnostics
+        ;;
+    diag_mihomo_config)
+        run_config_dump diag_mihomo_config "Failed to fetch the redacted Mihomo config."
+        ;;
+    diag_mihomo_config_unsafe)
+        run_config_dump diag_mihomo_config_unsafe "Failed to fetch the unredacted Mihomo config."
+        ;;
+    diag_service_config)
+        run_config_dump diag_service_config "Failed to fetch the redacted service config."
+        ;;
+    diag_service_config_unsafe)
+        run_config_dump diag_service_config_unsafe "Failed to fetch the unredacted service config."
         ;;
     systemlogs)
         run_systemlogs

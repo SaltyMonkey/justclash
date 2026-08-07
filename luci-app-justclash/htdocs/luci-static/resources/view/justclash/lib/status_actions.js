@@ -88,6 +88,55 @@ const showConfirmRpc = (notificationTimeout, title, warning, task, afterRpc) => 
     ]);
 };
 
+const showConfigRpc = (notificationTimeout, title, safeTask, unsafeTask) => async () => {
+    const copy = async (output) => {
+        try {
+            await clipboard.copy(output || "");
+            ui.hideModal();
+        } catch (error) {
+            ui.addTimeLimitedNotification(_("Error"), E("p", `${error.message || error}`), notificationTimeout, "danger");
+            console.error("Failed to copy config output to clipboard", error);
+        }
+    };
+
+    ui.showModal(title, [E("p", _("Please wait..."))]);
+
+    try {
+        const response = await safeTask();
+        const safeOutput = response.stdout || "";
+
+        ui.showModal(title, [
+            E("pre", { class: "jc-modal-pre" }, safeOutput || _("No response")),
+            E("div", { class: "jc-modal-actions" }, [
+                E("button", {
+                    class: "cbi-button cbi-button-action",
+                    click: () => copy(safeOutput)
+                }, [_("Copy JSON")]),
+                E("button", {
+                    class: "cbi-button cbi-button-negative",
+                    style: "margin-left: 0.3125rem;",
+                    click: async () => {
+                        ui.showModal(title, [E("p", _("Please wait..."))]);
+                        try {
+                            const unsafeResponse = await unsafeTask();
+                            await copy(unsafeResponse.stdout || "");
+                        } catch (error) {
+                            showError(error.message || String(error));
+                        }
+                    }
+                }, [_("Copy JSON unsafe")]),
+                E("button", {
+                    class: "cbi-button",
+                    style: "margin-left: 0.3125rem;",
+                    click: () => ui.hideModal()
+                }, [_("Dismiss")])
+            ])
+        ]);
+    } catch (error) {
+        showError(error.message || String(error));
+    }
+};
+
 const normalizeRuleProviders = (payload) => {
     const providers = payload && typeof payload === "object" && payload.providers && typeof payload.providers === "object"
         ? payload.providers
@@ -136,6 +185,7 @@ const showUpdateRulesets = (notificationTimeout, token) =>
 const create = ({ notificationTimeout = 3000 } = {}) => ({
     showRpc: (...args) => showRpc(notificationTimeout, ...args),
     showConfirmRpc: (...args) => showConfirmRpc(notificationTimeout, ...args),
+    showConfigRpc: (...args) => showConfigRpc(notificationTimeout, ...args),
     showUpdateRulesets: (...args) => showUpdateRulesets(notificationTimeout, ...args)
 });
 
