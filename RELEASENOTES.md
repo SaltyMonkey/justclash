@@ -1,3 +1,24 @@
+## [0.90.13_rc3] - 07082026
+
+### Features & Enhancements
+- **LuCI / Configuration:** Restored **Show Mihomo config** and **Show service config** actions on the Status page.
+- **LuCI / Configuration:** Added redacted configuration previews with **Copy JSON**, plus an explicit **Copy JSON unsafe** action that fetches the unredacted configuration only when requested and copies it without rendering it in the dialog.
+- **RPC / ACL:** Added dedicated safe and unsafe configuration-dump RPC methods; redacted methods are available through the read ACL, while unredacted methods require the JustClash write ACL.
+- **Installer:** Restricted release downloads to the expected JustClash service, LuCI, and selected translation packages instead of treating every release asset as installable.
+
+### Bug Fixes
+- **LuCI / Proxy providers:** Fixed the provider delay-test button by using Mihomo's provider-specific per-proxy health-check endpoint and filtering out proxy types that cannot be tested.
+- **Installer:** Fixed English/no-translation selection, propagated package download failures, and avoided continuing into installation after an incomplete download.
+- **Service:** Replaced ambiguous proxy-provider name/subscription validation with an explicit condition and documented callback-only helper functions for ShellCheck.
+
+### Refactoring & Maintenance
+- **URI:** Renamed the generic `simple_proxy` parser module to `socks5` while preserving SOCKS/SOCKS5 URI behavior.
+- **Translations:** Synchronized Russian, Simplified Chinese, and template catalogs for the restored configuration actions and unsafe-copy label.
+
+### Security & Upgrade Notes
+- **Unsafe config copy:** The unredacted JSON may contain credentials and other secrets. It is restricted to the write ACL and is retrieved only after the explicit **Copy JSON unsafe** action.
+- **Upgrade:** No UCI migration or configuration reset is required for these changes. A browser hard refresh is recommended after upgrading LuCI assets.
+
 ## [0.90.13_rc2] - 31072026
 
 ### Features & Enhancements
