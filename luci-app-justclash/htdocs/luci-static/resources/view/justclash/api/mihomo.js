@@ -23,6 +23,8 @@ return baseclass.extend({
         proxyDelay: (name) => `/proxies/${encodeURIComponent(name)}/delay`,
         proxyProviders: "/providers/proxies",
         proxyProvider: (name) => `/providers/proxies/${encodeURIComponent(name)}`,
+        proxyProviderProxyHealthcheck: (providerName, proxyName) =>
+            `/providers/proxies/${encodeURIComponent(providerName)}/${encodeURIComponent(proxyName)}/healthcheck`,
         connections: "/connections",
         connection: (id) => `/connections/${encodeURIComponent(id)}`,
         ruleProviders: "/providers/rules",
@@ -176,6 +178,14 @@ return baseclass.extend({
     },
     fetchProxyDelay(proxyName, token, timeout = this.fetchTimeout, searchParams = null) {
         return this.fetchJson(this.paths.proxyDelay(proxyName), token, timeout, searchParams);
+    },
+    fetchProxyProviderProxyDelay(providerName, proxyName, token, timeout = this.fetchTimeout, searchParams = null) {
+        return this.fetchJson(
+            this.paths.proxyProviderProxyHealthcheck(providerName, proxyName),
+            token,
+            timeout,
+            searchParams
+        );
     },
     async patchConfigs(payload, token, timeout = this.fetchTimeout) {
         const res = await this.fetch(this.paths.configs, token, {

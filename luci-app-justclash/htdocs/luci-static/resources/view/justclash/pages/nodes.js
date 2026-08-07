@@ -133,7 +133,11 @@ return view.extend({
             return card;
         };
 
-        const runProxyDelayTests = async (candidates, delayMap) => {
+        const runProxyDelayTests = async (candidates, delayMap, fetchDelay = (proxyName) =>
+            mihomoApi.fetchProxyDelay(proxyName, state.token, mihomoApi.fetchTimeout, {
+                url: common.defaultHealthCheckUrls[0],
+                timeout: String(mihomoApi.fetchTimeout)
+            })) => {
             let nextIndex = 0;
 
             const runWorker = async () => {
@@ -141,10 +145,7 @@ return view.extend({
                     const optionName = candidates[nextIndex++];
 
                     try {
-                        const result = await mihomoApi.fetchProxyDelay(optionName, state.token, mihomoApi.fetchTimeout, {
-                            url: common.defaultHealthCheckUrls[0],
-                            timeout: String(mihomoApi.fetchTimeout)
-                        });
+                        const result = await fetchDelay(optionName);
 
                         if (typeof result?.delay === "number" && Number.isFinite(result.delay) && result.delay >= 0)
                             delayMap[optionName] = result.delay;
@@ -190,10 +191,23 @@ return view.extend({
 
             try {
                 const candidates = (provider.proxies || [])
-                    .map((proxy) => proxy?.name)
-                    .filter(canTestProxyDelay);
+                    .filter((proxy) => proxy?.name && nodesModel.canTestProxy(proxy))
+                    .map((proxy) => proxy.name);
 
-                await runProxyDelayTests(candidates, state.providerDelays[provider.name]);
+                await runProxyDelayTests(
+                    candidates,
+                    state.providerDelays[provider.name],
+                    (proxyName) => mihomoApi.fetchProxyProviderProxyDelay(
+                        provider.name,
+                        proxyName,
+                        state.token,
+                        mihomoApi.fetchTimeout,
+                        {
+                            url: common.defaultHealthCheckUrls[0],
+                            timeout: String(mihomoApi.fetchTimeout)
+                        }
+                    )
+                );
             } finally {
                 state.delayLoadingProvider = "";
                 syncModeSelect();
