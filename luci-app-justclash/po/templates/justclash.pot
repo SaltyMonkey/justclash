@@ -2443,8 +2443,8 @@ msgstr ""
 msgid "Service actions"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:318
-msgid "Control the Mihomo daemon. You can start, stop, or restart the service."
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:337
+msgid "Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:324
@@ -2521,4 +2521,12 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:119
 msgid "View system logs related to the JustClash service and its startup scripts."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:124
+msgid "Disable on boot"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:124 htdocs/luci-static/resources/view/justclash/pages/status.js:285
+msgid "Enable on boot"
 msgstr ""

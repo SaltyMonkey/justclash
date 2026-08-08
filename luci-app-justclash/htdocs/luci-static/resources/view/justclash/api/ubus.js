@@ -32,6 +32,8 @@ const declareAction = (method) => rpc.declare({
 const callStart = declareAction("start");
 const callStop = declareAction("stop");
 const callRestart = declareAction("restart");
+const callEnable = declareAction("enable");
+const callDisable = declareAction("disable");
 const callDiagRedacted = declareAction("diag_redacted");
 const callDiagMihomoConfig = declareAction("diag_mihomo_config");
 const callDiagMihomoConfigUnsafe = declareAction("diag_mihomo_config_unsafe");
@@ -63,6 +65,14 @@ return baseclass.extend({
 
     async restart() {
         return assertSuccess(await callRestart());
+    },
+
+    async enable() {
+        return assertSuccess(await callEnable());
+    },
+
+    async disable() {
+        return assertSuccess(await callDisable());
     },
 
     async diagRedacted() {

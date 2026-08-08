@@ -49,6 +49,8 @@
                     "start",
                     "stop",
                     "restart",
+                    "enable",
+                    "disable",
                     "diag_mihomo_config_unsafe",
                     "diag_service_config_unsafe",
                     "update_core",

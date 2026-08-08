@@ -16,6 +16,7 @@ const actions = statusActions.create({
 const buttonsIDs = {
     START: "button-start",
     RESTART: "button-restart",
+    ENABLE: "button-enable",
     DIAGNOSTIC: "button-diagnostic",
     UPDATE: "button-core-update",
     UPDATE_RULESETS: "button-rulesets-update",
@@ -117,6 +118,15 @@ const updateStatusUI = (elements, isAutostarting, isRunning, currentMode) => {
     if (autostartChanged && elements.autoBadge) {
         elements.autoBadge.textContent = boolToWordAutostart(isAutostarting);
         elements.autoBadge.className = `jc-status-text ${isAutostarting ? "jc-status-text-active" : "jc-status-text-inactive"}`;
+    }
+
+    if (autostartChanged && elements.btnAutoToggle) {
+        const label = isAutostarting ? _("Disable on boot") : _("Enable on boot");
+        const text = elements.btnAutoToggle.querySelector(".jc-button-label");
+        if (text) text.textContent = label;
+        elements.btnAutoToggle.className = `cbi-button ${isAutostarting ? buttons.NEGATIVE : buttons.POSITIVE}`;
+        elements.btnAutoToggle.title = label;
+        elements.btnAutoToggle.setAttribute("aria-label", label);
     }
 
     if (runningChanged && elements.btnToggle) {
@@ -264,8 +274,15 @@ return view.extend({
             return actionHandler(task, running ? 0 : ACTION_DELAY_TIMEOUT)();
         };
 
+        const autoToggleHandler = async () => {
+            const enabled = !!dynamicElements.currentAutostarting;
+            const task = enabled ? () => ubusApi.disable() : () => ubusApi.enable();
+            return actionHandler(task)();
+        };
+
         const btnToggle = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), toggleHandler);
         const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler(() => ubusApi.restart(), ACTION_DELAY_TIMEOUT));
+        const btnAutoToggle = createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable on boot"), autoToggleHandler);
         Object.assign(dynamicElements, {
             serviceBadge,
             autoBadge,
@@ -278,14 +295,16 @@ return view.extend({
             ramValue,
             connValue,
             modeValue,
-            btnToggle
+            btnToggle,
+            btnAutoToggle
         });
 
         const statusGrid = createStatusGrid(results, dynamicElements);
         const serviceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 btnToggle,
-                btnRestart
+                btnRestart,
+                btnAutoToggle
             ])
         ]);
 
@@ -315,7 +334,7 @@ return view.extend({
 
         const serviceActionSection = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Service actions")),
-            E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service.")),
+            E("div", { class: "cbi-section-descr" }, _("Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot.")),
             serviceActionContainer
         ]);
 

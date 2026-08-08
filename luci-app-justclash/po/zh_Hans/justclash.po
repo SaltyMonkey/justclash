@@ -2463,9 +2463,8 @@ msgstr ""
 msgid "Service actions"
 msgstr "服务操作"
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:318
-#, fuzzy
-msgid "Control the Mihomo daemon. You can start, stop, or restart the service."
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:337
+msgid "Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot."
 msgstr "控制 Mihomo 守护进程。您可以启动、停止或重启服务，以及启用或禁用开机自启。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:324
@@ -2546,3 +2545,11 @@ msgstr "系统日志"
 #: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:119
 msgid "View system logs related to the JustClash service and its startup scripts."
 msgstr "查看与 JustClash 服务及其启动脚本相关的系统日志。"
+
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:124
+msgid "Disable on boot"
+msgstr "禁用开机自启"
+
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:124 htdocs/luci-static/resources/view/justclash/pages/status.js:285
+msgid "Enable on boot"
+msgstr "启用开机自启"

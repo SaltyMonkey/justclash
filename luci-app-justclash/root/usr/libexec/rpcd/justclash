@@ -90,6 +90,8 @@ list)
         "start": {},
         "stop": {},
         "restart": {},
+        "enable": {},
+        "disable": {},
         "diag_redacted": {},
         "diag_mihomo_config": {},
         "diag_mihomo_config_unsafe": {},
@@ -116,6 +118,14 @@ call)
     restart)
         run_quiet "Service restarted." "Failed to restart the service." \
             /etc/init.d/justclash restart
+        ;;
+    enable)
+        run_quiet "Service enabled on boot." "Failed to enable the service on boot." \
+            /etc/init.d/justclash enable
+        ;;
+    disable)
+        run_quiet "Service disabled on boot." "Failed to disable the service on boot." \
+            /etc/init.d/justclash disable
         ;;
     diag_redacted)
         run_redacted_diagnostics
