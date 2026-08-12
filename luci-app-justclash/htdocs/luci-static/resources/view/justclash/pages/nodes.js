@@ -521,10 +521,10 @@ return view.extend({
         };
 
         const handleModeChange = async () => {
-            const nextMode = modeDropdown.getValue();
-            const previousMode = state.mode;
+            const nextMode = nodesModel.lower(modeDropdown.getValue());
+            const previousMode = nodesModel.lower(state.mode);
 
-            if (!nextMode || nextMode === previousMode)
+            if (state.modeLoading || !nextMode || nextMode === previousMode)
                 return;
 
             state.modeLoading = true;
@@ -533,6 +533,14 @@ return view.extend({
             try {
                 await mihomoApi.patchConfigs({ mode: nextMode }, state.token);
                 state.mode = nextMode;
+
+                try {
+                    await mihomoApi.closeAllConnections(state.token);
+                } catch (e) {
+                    ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
+                    console.error("Failed to close all connections after switching Mihomo mode", e);
+                }
+
                 await fetchNodesState();
             } catch (e) {
                 state.mode = previousMode;

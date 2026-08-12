@@ -103,7 +103,11 @@ return view.extend({
         levelDropdownNode.classList.add("jc-level-select");
 
         levelDropdownNode.addEventListener("cbi-dropdown-change", () => {
-            const nextLevel = levelDropdown.getValue();
+            const nextLevel = String(levelDropdown.getValue() || "");
+
+            if (!nextLevel || nextLevel === requestedLevel)
+                return;
+
             if (!document.hidden)
                 connectLogsStream(nextLevel);
             else
