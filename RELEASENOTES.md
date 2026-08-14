@@ -1,3 +1,22 @@
+## [0.90.13_rc4] - 14082026
+
+### Features & Enhancements
+- **Partial routing:** Added source-address interception for manual per-proxy and proxy-group source CIDR rules, with dedicated IPv4 and IPv6 nftables sets populated from a generated source-IP cache.
+- **LuCI / Routing:** Extended manual source and destination CIDR fields to accept both IPv4 and IPv6 networks and updated their labels, descriptions, and validation accordingly.
+- **LuCI / Service:** Restored the **Enable on boot** / **Disable on boot** action on the Status page through dedicated RPC methods protected by the JustClash write ACL.
+
+### Bug Fixes
+- **LuCI / Nodes:** Applied Mihomo mode changes consistently by normalizing mode values, suppressing duplicate change requests, closing existing connections after a successful switch, and refreshing node state.
+- **LuCI / Realtime logs:** Prevented redundant log-stream reconnections and resets when the selected log level is empty or unchanged.
+
+### Refactoring & Maintenance
+- **Runtime:** Added an atomically promoted, sorted, and deduplicated source-IP sidecar cache and included it in generated-workdir cache validation and nftables cold-start population.
+- **Translations:** Synchronized Russian, Simplified Chinese, and template catalogs for the new routing and service controls.
+
+### Upgrade Notes
+- **Configuration:** No UCI migration or configuration reset is required. The new source-IP runtime cache is generated automatically when the service configuration is rebuilt.
+- **LuCI:** A browser hard refresh is recommended after upgrading to load the updated interface assets.
+
 ## [0.90.13_rc3] - 07082026
 
 ### Features & Enhancements
