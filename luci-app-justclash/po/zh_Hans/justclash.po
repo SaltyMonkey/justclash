@@ -1391,12 +1391,12 @@ msgid "Traffic to this IPv4 address or subnet will go through this proxy (exampl
 msgstr "发往此 IPv4 地址或子网的流量将通过此代理（例如：1.1.1.1/32）。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:240 htdocs/luci-static/resources/view/justclash/pages/routing.js:812
-msgid "Source IPv4 CIDR:"
-msgstr "源 IPv4 CIDR:"
+msgid "Source IP CIDR:"
+msgstr "源 IP CIDR:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:241
-msgid "Traffic from this local IPv4 address or subnet will go through this proxy (example: 192.168.31.212/32)."
-msgstr "来自此本地 IPv4 地址或子网的流量将通过此代理（例如：192.168.31.212/32）。"
+msgid "Traffic from this local IP address or subnet will go through this proxy."
+msgstr "来自此本地 IP 地址或子网的流量将通过此代理。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:248
 msgid "Proxy provider:"
@@ -1713,8 +1713,8 @@ msgid "Traffic to this IPv4 address or subnet will go through the selected proxy
 msgstr "发往此 IPv4 地址或子网的流量将通过选定的代理组（例如：1.1.1.1/32）。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:813
-msgid "Traffic from this local IPv4 address or subnet will go through the selected proxy group (example: 192.168.31.212/32)."
-msgstr "来自此本地 IPv4 地址或子网的流量将通过选定的代理组（例如：192.168.31.212/32）。"
+msgid "Traffic from this local IP address or subnet will go through the selected proxy group."
+msgstr "来自此本地 IP 地址或子网的流量将通过选定的代理组。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:820
 msgid "Block rules:"

@@ -1388,12 +1388,12 @@ msgid "Traffic to this IPv4 address or subnet will go through this proxy (exampl
 msgstr "Трафик к этому IPv4-адресу или подсети будет направляться через этот прокси (пример: 1.1.1.1/32)."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:240 htdocs/luci-static/resources/view/justclash/pages/routing.js:812
-msgid "Source IPv4 CIDR:"
-msgstr "Исходный IPv4 CIDR:"
+msgid "Source IP CIDR:"
+msgstr "CIDR источника:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:241
-msgid "Traffic from this local IPv4 address or subnet will go through this proxy (example: 192.168.31.212/32)."
-msgstr "Трафик с этого локального IPv4-адреса или подсети будет направляться через этот прокси (пример: 192.168.31.212/32)."
+msgid "Traffic from this local IP address or subnet will go through this proxy."
+msgstr "Трафик с этого локального IP-адреса или подсети будет направляться через этот прокси."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:248
 msgid "Proxy provider:"
@@ -1710,8 +1710,8 @@ msgid "Traffic to this IPv4 address or subnet will go through the selected proxy
 msgstr "Трафик к этому IPv4-адресу или подсети будет направляться через выбранную группу прокси (пример: 1.1.1.1/32)."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:813
-msgid "Traffic from this local IPv4 address or subnet will go through the selected proxy group (example: 192.168.31.212/32)."
-msgstr "Трафик с этого локального IPv4-адреса или подсети будет направляться через выбранную группу прокси (пример: 192.168.31.212/32)."
+msgid "Traffic from this local IP address or subnet will go through the selected proxy group."
+msgstr "Трафик с этого локального IP-адреса или подсети будет направляться через выбранную группу прокси."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:820
 msgid "Block rules:"
