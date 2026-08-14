@@ -355,7 +355,8 @@ nft_table_partial_apply() {
     local ipv6_enabled="${20}"
     local active_ipcidr_path="${21}"
     local active_static_ips_path="${22}"
-    local workdir_rules_path="${23}"
+    local active_static_source_ips_path="${23}"
+    local workdir_rules_path="${24}"
     local iface skuid_list skuid_resolved
 
     if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
@@ -397,8 +398,10 @@ nft_table_partial_apply() {
             echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
         done
         echo "add set inet $NF_TABLE_NAME ruleset_static_ips { type ipv4_addr; flags interval; }"
+        echo "add set inet $NF_TABLE_NAME ruleset_source_ips { type ipv4_addr; flags interval; }"
         if [ "$ipv6_enabled" -eq 1 ]; then
             echo "add set inet $NF_TABLE_NAME ruleset6_static_ips { type ipv6_addr; flags interval; }"
+            echo "add set inet $NF_TABLE_NAME ruleset6_source_ips { type ipv6_addr; flags interval; }"
         fi
         # Create ipcidr sets (populated after the main transaction via nft_ruleset_file_populate)
         for safe_rname in $ipcidr_safe_names; do
@@ -487,6 +490,10 @@ nft_table_partial_apply() {
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport { $DEFAULT_NTP_PORT } return comment \"Bypass NTP traffic\""
             fi
 
+            echo "add rule inet $NF_TABLE_NAME prerouting ip saddr @ruleset_source_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept configured source IPs to TProxy\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip6 saddr @ruleset6_source_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept configured source IPv6s to TProxy\""
+            fi
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @fake_ips meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Intercept Fake-IP to TProxy\""
             if [ "$ipv6_enabled" -eq 1 ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @fake_ip6s meta l4proto { tcp, udp } meta mark set $NF_TABLE_FWMARK_FINAL tproxy ip6 to [::1]:$tproxy_port accept comment \"Intercept Fake-IP6 to TProxy\""
@@ -561,6 +568,7 @@ nft_table_partial_apply() {
     # Populate sets from cached files (cold start).
     # Sets were just created above; nft_ruleset_file_populate uses flush+add so it's safe to call now.
     [ -s "$active_static_ips_path" ] && nft_ruleset_file_populate "static_ips" "$active_static_ips_path" "static_ips" "$ipv6_enabled"
+    [ -s "$active_static_source_ips_path" ] && nft_ruleset_file_populate "source_ips" "$active_static_source_ips_path" "source_ips" "$ipv6_enabled"
 
     if [ -n "$ipcidr_cold_start_list" ]; then
         local item cs_name cs_file cs_safe

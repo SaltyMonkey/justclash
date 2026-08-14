@@ -34,13 +34,15 @@ workdir_cache_check() {
     local output_config_path="$3"
     local active_ipcidr_path="$4"
     local active_static_ips_path="$5"
+    local active_static_source_ips_path="$6"
     local saved_hash
 
     saved_hash=$(cat "$hash_path" 2>/dev/null)
 
     if [ ! -f "$output_config_path" ] ||
         [ ! -f "$active_ipcidr_path" ] ||
-        [ ! -f "$active_static_ips_path" ]; then
+        [ ! -f "$active_static_ips_path" ] ||
+        [ ! -f "$active_static_source_ips_path" ]; then
         return 1
     fi
 

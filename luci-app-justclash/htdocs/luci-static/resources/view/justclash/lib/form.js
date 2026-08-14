@@ -10,6 +10,7 @@ return baseclass.extend({
         PORT: "port",
         UINTEGER: "uinteger",
         IPADDR: "ipaddr",
+        CIDR: "or(cidr4,cidr6)",
         CIDR4: "cidr4",
         MACADDR: "macaddr",
         IP4ADDR: "ip4addr"

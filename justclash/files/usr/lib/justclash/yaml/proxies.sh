@@ -9,7 +9,7 @@ yaml_proxy_append() {
     local use_proxy_for_list_update="${10}" ip_version="${11}"
     local additional_srcip_route="${12}" enabled_list="${13}" additional_domain_route="${14}"
     local enabled_geosite_list="${15}" additional_destip_route="${16}" enabled_geoip_list="${17}"
-    local route_entries route_entry rules_fragment proxy_obj=""
+    local route_entries route_entry ip_cidr rules_fragment proxy_obj=""
     local download_proxy generated_rule
 
     if [ "$mode" = "object" ]; then
@@ -64,6 +64,9 @@ yaml_proxy_append() {
     [ "$use_proxy_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
 
     route_entries="$additional_srcip_route"
+    for ip_cidr in $route_entries; do
+        [ -n "$ip_cidr" ] && _STATIC_SOURCE_IPS_BUFFER="${_STATIC_SOURCE_IPS_BUFFER:+$_STATIC_SOURCE_IPS_BUFFER$NL}$ip_cidr"
+    done
     rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
     [ -n "$rules_fragment" ] && OUT_RULES="${OUT_RULES:+$OUT_RULES,}$rules_fragment"
 

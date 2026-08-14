@@ -42,7 +42,7 @@ yaml_proxy_group_append() {
     local list_update_interval="${18}" size_limit="${19}" use_proxy_group_for_list_update="${20}"
     local additional_srcip_route="${21}" additional_domain_route="${22}"
     local enabled_geosite_list="${23}" additional_destip_route="${24}" enabled_geoip_list="${25}"
-    local route_entries route_entry rules_fragment escaped_proxies escaped_providers group_json
+    local route_entries route_entry ip_cidr rules_fragment escaped_proxies escaped_providers group_json
     local download_proxy generated_rule
 
     [ -n "$proxies_list" ] && escaped_proxies=$(str_trim "$proxies_list" | fmt_list_to_json_array)
@@ -57,6 +57,9 @@ yaml_proxy_group_append() {
     [ "$use_proxy_group_for_list_update" -eq 1 ] && download_proxy="$name" || download_proxy=$DEFAULT_PROXY
 
     route_entries="$additional_srcip_route"
+    for ip_cidr in $route_entries; do
+        [ -n "$ip_cidr" ] && _STATIC_SOURCE_IPS_BUFFER="${_STATIC_SOURCE_IPS_BUFFER:+$_STATIC_SOURCE_IPS_BUFFER$NL}$ip_cidr"
+    done
     rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
     [ -n "$rules_fragment" ] && OUT_RULES="${OUT_RULES:+$OUT_RULES,}$rules_fragment"
 

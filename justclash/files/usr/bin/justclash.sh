@@ -509,6 +509,7 @@ run_nftables_apply() {
             "$ipv6_enabled" \
             "$ACTIVE_IPCIDR_RULESETS_PATH" \
             "$ACTIVE_STATIC_IPS_PATH" \
+            "$ACTIVE_STATIC_SOURCE_IPS_PATH" \
             "$CORE_WORKDIR_RULES_PATH"
         nft_res=$?
     else
@@ -781,7 +782,7 @@ core_generate_yaml() {
     local OUT_PROXY_GROUPS="[]" OUT_PROXIES="[]" OUT_PROXY_PROVIDERS=""
     local OUT_NAMES_RULESETS="" OUT_NAMES_SUFFIXES="" OUT_NAMES_GEOSITE=""
     local OUT_MIXED_RULES="" OUT_FINAL_RULES=""
-    local _IPCIDR_RULESETS_BUFFER="" _STATIC_IPS_BUFFER=""
+    local _IPCIDR_RULESETS_BUFFER="" _STATIC_IPS_BUFFER="" _STATIC_SOURCE_IPS_BUFFER=""
     local _RULESETS_CONTENT="" _BLOCK_RULESETS_CONTENT=""
     local JC_CONFIG_LIST_VALUE=""
     # These values are consumed only by nested YAML builders.
@@ -809,7 +810,7 @@ core_generate_yaml() {
     local block_geosite_list block_domain_routes block_destip_routes block_geoip_list
     local mixed_exit_rule final_exit_rule
     local effective_interface_name router_selected_ipaddr
-    local output_yaml_tmp_path active_static_ips_tmp_path active_ipcidr_rulesets_tmp_path
+    local output_yaml_tmp_path active_static_ips_tmp_path active_source_ips_tmp_path active_ipcidr_rulesets_tmp_path
     local render_status
 
     local fake_ip_filter_data
@@ -1151,14 +1152,19 @@ core_generate_yaml() {
         rm -f "$output_yaml_tmp_path"
         return 1
     }
-    active_ipcidr_rulesets_tmp_path=$(mktemp "${ACTIVE_IPCIDR_RULESETS_PATH}.XXXXXX") || {
-        log error "Failed to create a temporary IPCIDR ruleset cache."
+    active_source_ips_tmp_path=$(mktemp "${ACTIVE_STATIC_SOURCE_IPS_PATH}.XXXXXX") || {
+        log error "Failed to create a temporary source IP cache."
         rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path"
         return 1
     }
-    chmod 600 "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path" || {
+    active_ipcidr_rulesets_tmp_path=$(mktemp "${ACTIVE_IPCIDR_RULESETS_PATH}.XXXXXX") || {
+        log error "Failed to create a temporary IPCIDR ruleset cache."
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path"
+        return 1
+    }
+    chmod 600 "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path" || {
         log error "Failed to secure temporary configuration artifacts."
-        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
         return 1
     }
 
@@ -1241,40 +1247,53 @@ core_generate_yaml() {
     render_status=$?
     if [ "$render_status" -ne 0 ]; then
         log error "Failed to render the temporary YAML configuration."
-        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
         return 1
     fi
 
     if ! printf '%s' "${_STATIC_IPS_BUFFER:+$_STATIC_IPS_BUFFER$NL}" >"$active_static_ips_tmp_path" ||
+        ! printf '%s' "${_STATIC_SOURCE_IPS_BUFFER:+$_STATIC_SOURCE_IPS_BUFFER$NL}" >"$active_source_ips_tmp_path" ||
         ! printf '%s' "${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}" >"$active_ipcidr_rulesets_tmp_path"; then
         log error "Failed to render temporary YAML sidecar caches."
-        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
         return 1
     fi
 
     if [ -s "$active_ipcidr_rulesets_tmp_path" ] &&
         ! sort -u -o "$active_ipcidr_rulesets_tmp_path" "$active_ipcidr_rulesets_tmp_path"; then
         log error "Failed to sort the temporary IPCIDR ruleset cache."
-        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
         return 1
     fi
 
     if [ -s "$active_static_ips_tmp_path" ] &&
         ! sort -u -o "$active_static_ips_tmp_path" "$active_static_ips_tmp_path"; then
         log error "Failed to sort the temporary static IP cache."
-        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        return 1
+    fi
+
+    if [ -s "$active_source_ips_tmp_path" ] &&
+        ! sort -u -o "$active_source_ips_tmp_path" "$active_source_ips_tmp_path"; then
+        log error "Failed to sort the temporary source IP cache."
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
         return 1
     fi
 
     log info "Validating generated YAML configuration..."
     if ! core_validate_yaml "$CORE_PATH" "$CORE_WORKDIR_PATH" "$output_yaml_tmp_path"; then
-        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
         return 1
     fi
 
     if ! mv -f "$active_static_ips_tmp_path" "$ACTIVE_STATIC_IPS_PATH"; then
         log error "Failed to promote the static IP cache."
-        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        rm -f "$output_yaml_tmp_path" "$active_static_ips_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
+        return 1
+    fi
+    if ! mv -f "$active_source_ips_tmp_path" "$ACTIVE_STATIC_SOURCE_IPS_PATH"; then
+        log error "Failed to promote the source IP cache."
+        rm -f "$output_yaml_tmp_path" "$active_source_ips_tmp_path" "$active_ipcidr_rulesets_tmp_path"
         return 1
     fi
     if ! mv -f "$active_ipcidr_rulesets_tmp_path" "$ACTIVE_IPCIDR_RULESETS_PATH"; then
@@ -1339,7 +1358,8 @@ core_prepare_workdir() {
             "$CORE_WORKDIR_UCI_HASH_PATH" \
             "$OUTPUT_YAML_CONFIG_PATH" \
             "$ACTIVE_IPCIDR_RULESETS_PATH" \
-            "$ACTIVE_STATIC_IPS_PATH"
+            "$ACTIVE_STATIC_IPS_PATH" \
+            "$ACTIVE_STATIC_SOURCE_IPS_PATH"
         res=$?
     fi
 

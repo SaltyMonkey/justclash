@@ -230,19 +230,19 @@ return view.extend({
         };
         o.modalonly = true;
 
-        o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
-        o.description = _("Traffic to this IPv4 address or subnet will go through this proxy (example: 1.1.1.1/32).");
-        o.placeholder = "8.8.8.8/32";
+        o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
+        o.description = _("Traffic to this destination IP address or subnet will go through this proxy.");
+        o.placeholder = "CIDR";
         o.optional = true;
-        o.datatype = datatypes.CIDR4;
+        o.datatype = datatypes.CIDR;
         o.modalonly = true;
 
-        o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
-        o.description = _("Traffic from this local IPv4 address or subnet will go through this proxy (example: 192.168.31.212/32).");
-        o.placeholder = "192.168.31.212/32";
+        o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IP CIDR:"));
+        o.description = _("Traffic from this local IP address or subnet will go through this proxy.");
+        o.placeholder = "CIDR";
         o.optional = true;
         o.editable = true;
-        o.datatype = datatypes.CIDR4;
+        o.datatype = datatypes.CIDR;
         o.modalonly = true;
 
         spp = m.section(form.GridSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies."));
@@ -801,20 +801,20 @@ return view.extend({
         };
         o.modalonly = true;
 
-        o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IPv4 CIDR:"));
-        o.description = _("Traffic to this IPv4 address or subnet will go through the selected proxy group (example: 1.1.1.1/32).");
-        o.placeholder = "8.8.8.8/32";
+        o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
+        o.description = _("Traffic to this destination IP address or subnet will go through the selected proxy group.");
+        o.placeholder = "CIDR";
         o.optional = true;
         o.editable = true;
-        o.datatype = datatypes.CIDR4;
+        o.datatype = datatypes.CIDR;
         o.modalonly = true;
 
-        o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IPv4 CIDR:"));
-        o.description = _("Traffic from this local IPv4 address or subnet will go through the selected proxy group (example: 192.168.31.212/32).");
-        o.placeholder = "192.168.31.212/32";
+        o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IP CIDR:"));
+        o.description = _("Traffic from this local IP address or subnet will go through the selected proxy group.");
+        o.placeholder = "CIDR";
         o.optional = true;
         o.editable = true;
-        o.datatype = datatypes.CIDR4;
+        o.datatype = datatypes.CIDR;
         o.modalonly = true;
 
         s4 = m.section(form.GridSection, "block_rules", _("Block rules:"), _("Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."));
