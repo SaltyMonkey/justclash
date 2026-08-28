@@ -594,6 +594,7 @@ return view.extend({
             return common.validateSimpleName(value);
         };
         o.modalonly = true;
+        routingOptions.makeDynamic(o, common.binName, [], ["proxies", "proxy_group"], true);
 
         o = s2.taboption(tabname, form.DynamicList, "providers", _("Providers:"));
         o.description = _("List proxy providers whose nodes should be included in this group.");
@@ -605,6 +606,7 @@ return view.extend({
             return common.validateSimpleName(value);
         };
         o.modalonly = true;
+        routingOptions.makeDynamic(o, common.binName, [], ["proxy_provider"]);
 
         tabname = "proxygrouphelthchk_tab";
         s2.tab(tabname, _("Health check"));
