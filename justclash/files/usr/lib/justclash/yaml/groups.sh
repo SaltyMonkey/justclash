@@ -60,7 +60,7 @@ yaml_proxy_group_append() {
     for ip_cidr in $route_entries; do
         [ -n "$ip_cidr" ] && _STATIC_SOURCE_IPS_BUFFER="${_STATIC_SOURCE_IPS_BUFFER:+$_STATIC_SOURCE_IPS_BUFFER$NL}$ip_cidr"
     done
-    rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name" "no-resolve")
+    rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name")
     [ -n "$rules_fragment" ] && OUT_RULES="${OUT_RULES:+$OUT_RULES,}$rules_fragment"
 
     # Compile ruleset bundle early so we have domain/IP rulesets separated
