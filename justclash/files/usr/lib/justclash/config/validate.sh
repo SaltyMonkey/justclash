@@ -123,6 +123,18 @@ config_validate_nft_mode() {
     return 0
 }
 
+config_validate_nft_dns_udp_mode() {
+    local value="$1"
+    local option="$2"
+
+    if ! val_is_choice "$value" "BY RULES" DROP HIJACK; then
+        config_validation_error "$option must be 'BY RULES', 'DROP', or 'HIJACK'"
+        return 1
+    fi
+
+    return 0
+}
+
 config_validate_nft_ntp_mode() {
     local value="$1"
     local option="$2"
