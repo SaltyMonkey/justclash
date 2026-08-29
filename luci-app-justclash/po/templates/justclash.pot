@@ -177,6 +177,10 @@ msgstr ""
 msgid "Reject"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/common.js:134
+msgid "Hijack"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/common.js:133 htdocs/luci-static/resources/view/justclash/common.js:173 htdocs/luci-static/resources/view/justclash/pages/nodes.js:506
 msgid "Direct"
 msgstr ""
@@ -500,7 +504,7 @@ msgid "Authorization cannot contain pipe (|) or newlines."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/lib/status_actions.js:9 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:39 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:97 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:168 htdocs/luci-static/resources/view/justclash/pages/connections.js:53 htdocs/luci-static/resources/view/justclash/pages/connections.js:97 htdocs/luci-static/resources/view/justclash/pages/connections.js:188 htdocs/luci-static/resources/view/justclash/pages/connections.js:215 htdocs/luci-static/resources/view/justclash/pages/connections.js:290 htdocs/luci-static/resources/view/justclash/pages/nodes.js:46 htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:123 htdocs/luci-static/resources/view/justclash/pages/rules.js:38 htdocs/luci-static/resources/view/justclash/pages/rules.js:92
-#: htdocs/luci-static/resources/view/justclash/pages/rules.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:157 htdocs/luci-static/resources/view/justclash/pages/status.js:158 htdocs/luci-static/resources/view/justclash/pages/status.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:164 htdocs/luci-static/resources/view/justclash/pages/status.js:165 htdocs/luci-static/resources/view/justclash/pages/status.js:253 htdocs/luci-static/resources/view/justclash/pages/status.js:335 htdocs/luci-static/resources/view/justclash/pages/status.js:338 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:46 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:68
+#: htdocs/luci-static/resources/view/justclash/pages/rules.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:157 htdocs/luci-static/resources/view/justclash/pages/status.js:158 htdocs/luci-static/resources/view/justclash/pages/status.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:164 htdocs/luci-static/resources/view/justclash/pages/status.js:165 htdocs/luci-static/resources/view/justclash/pages/status.js:253 htdocs/luci-static/resources/view/justclash/pages/status.js:335 htdocs/luci-static/resources/view/justclash/pages/status.js:338 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:46 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:68
 msgid "Error"
 msgstr ""
 
@@ -1205,7 +1209,7 @@ msgstr ""
 msgid "Allow Mihomo to write corrected time to the system clock."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:146 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:74
+#: htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:146 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:74
 msgid "Newest first"
 msgstr ""
 
@@ -1769,11 +1773,11 @@ msgstr ""
 msgid "Search rules by type, payload or proxy..."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/rules.js:77 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:31 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:43
+#: htdocs/luci-static/resources/view/justclash/pages/rules.js:77 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:31 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:43
 msgid "Last updated: "
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/rules.js:97 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:57
+#: htdocs/luci-static/resources/view/justclash/pages/rules.js:97 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:57
 msgid "Refresh"
 msgstr ""
 
@@ -1971,14 +1975,6 @@ msgstr ""
 msgid "Choose how many seconds to wait before the first service start after boot."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/service.js:54
-msgid "Skip startup checks:"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/justclash/pages/service.js:55
-msgid "Skip some safety checks during startup. This can speed up startup, but it may hide problems with files, permissions, or system settings."
-msgstr ""
-
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:59
 msgid "Start time sync service:"
 msgstr ""
@@ -2121,6 +2117,14 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:177
 msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:186
+msgid "Client UDP DNS traffic:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:187
+msgid "Choose how to handle external UDP DNS requests from clients. Hijack redirects them to the router DNS service; local destinations and bypassed clients remain unchanged."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:186
@@ -2511,16 +2515,16 @@ msgstr ""
 msgid "Inspect the generated Mihomo configuration or the JustClash service configuration."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:72
+#: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:72
 msgid "Copy log"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:118
-msgid "System logs"
+#: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:118
+msgid "Service logs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:119
-msgid "View system logs related to the JustClash service and its startup scripts."
+#: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:119
+msgid "View logs written by the JustClash service and Mihomo."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:124

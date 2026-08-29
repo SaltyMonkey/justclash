@@ -177,6 +177,10 @@ msgstr "丢弃 (Drop)"
 msgid "Reject"
 msgstr "拒绝 (Reject)"
 
+#: htdocs/luci-static/resources/view/justclash/common.js:134
+msgid "Hijack"
+msgstr "劫持"
+
 #: htdocs/luci-static/resources/view/justclash/common.js:133 htdocs/luci-static/resources/view/justclash/common.js:173 htdocs/luci-static/resources/view/justclash/pages/nodes.js:506
 msgid "Direct"
 msgstr "直连 (Direct)"
@@ -504,7 +508,7 @@ msgid "Authorization cannot contain pipe (|) or newlines."
 msgstr "认证字段不能包含竖线 (|) 或换行符。"
 
 #: htdocs/luci-static/resources/view/justclash/lib/status_actions.js:9 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:39 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:97 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:168 htdocs/luci-static/resources/view/justclash/pages/connections.js:53 htdocs/luci-static/resources/view/justclash/pages/connections.js:97 htdocs/luci-static/resources/view/justclash/pages/connections.js:188 htdocs/luci-static/resources/view/justclash/pages/connections.js:215 htdocs/luci-static/resources/view/justclash/pages/connections.js:290 htdocs/luci-static/resources/view/justclash/pages/nodes.js:46 htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:123 htdocs/luci-static/resources/view/justclash/pages/rules.js:38 htdocs/luci-static/resources/view/justclash/pages/rules.js:92
-#: htdocs/luci-static/resources/view/justclash/pages/rules.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:157 htdocs/luci-static/resources/view/justclash/pages/status.js:158 htdocs/luci-static/resources/view/justclash/pages/status.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:164 htdocs/luci-static/resources/view/justclash/pages/status.js:165 htdocs/luci-static/resources/view/justclash/pages/status.js:253 htdocs/luci-static/resources/view/justclash/pages/status.js:335 htdocs/luci-static/resources/view/justclash/pages/status.js:338 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:46 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:68
+#: htdocs/luci-static/resources/view/justclash/pages/rules.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:157 htdocs/luci-static/resources/view/justclash/pages/status.js:158 htdocs/luci-static/resources/view/justclash/pages/status.js:160 htdocs/luci-static/resources/view/justclash/pages/status.js:164 htdocs/luci-static/resources/view/justclash/pages/status.js:165 htdocs/luci-static/resources/view/justclash/pages/status.js:253 htdocs/luci-static/resources/view/justclash/pages/status.js:335 htdocs/luci-static/resources/view/justclash/pages/status.js:338 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:46 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:68
 msgid "Error"
 msgstr "错误"
 
@@ -1218,7 +1222,7 @@ msgstr "写入系统:"
 msgid "Allow Mihomo to write corrected time to the system clock."
 msgstr "允许 Mihomo 将更正后的时间写入系统时钟。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:146 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:74
+#: htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:146 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:74
 msgid "Newest first"
 msgstr "最新的排在前面"
 
@@ -1784,11 +1788,11 @@ msgstr "加载 Mihomo 规则失败"
 msgid "Search rules by type, payload or proxy..."
 msgstr "按类型、内容或代理搜索规则..."
 
-#: htdocs/luci-static/resources/view/justclash/pages/rules.js:77 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:31 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:43
+#: htdocs/luci-static/resources/view/justclash/pages/rules.js:77 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:31 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:43
 msgid "Last updated: "
 msgstr "最后更新: "
 
-#: htdocs/luci-static/resources/view/justclash/pages/rules.js:97 htdocs/luci-static/resources/view/justclash/pages/system_logs.js:57
+#: htdocs/luci-static/resources/view/justclash/pages/rules.js:97 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:57
 msgid "Refresh"
 msgstr "刷新"
 
@@ -1986,14 +1990,6 @@ msgstr "启动延迟:"
 msgid "Choose how many seconds to wait before the first service start after boot."
 msgstr "选择在启动后首次启动服务之前等待的秒数。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/service.js:54
-msgid "Skip startup checks:"
-msgstr "跳过启动检查:"
-
-#: htdocs/luci-static/resources/view/justclash/pages/service.js:55
-msgid "Skip some safety checks during startup. This can speed up startup, but it may hide problems with files, permissions, or system settings."
-msgstr "在启动期间跳过一些安全检查。这可以加快启动速度，但可能会隐藏文件、权限或系统设置的问题。"
-
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:59
 msgid "Start time sync service:"
 msgstr "启动时间同步服务:"
@@ -2139,6 +2135,14 @@ msgstr "客户端 QUIC 流量:"
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:177
 msgid "Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked."
 msgstr "选择如何处理来自所选客户端流量接口上设备的 QUIC 流量。所选模式决定了此流量是否被重定向或阻止。"
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:186
+msgid "Client UDP DNS traffic:"
+msgstr "客户端 UDP DNS 流量:"
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:187
+msgid "Choose how to handle external UDP DNS requests from clients. Hijack redirects them to the router DNS service; local destinations and bypassed clients remain unchanged."
+msgstr "选择如何处理客户端的外部 UDP DNS 请求。劫持会将其重定向到路由器 DNS 服务；本地目标和已绕过的客户端不受影响。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:186
 msgid "Client DoT traffic:"
@@ -2534,17 +2538,17 @@ msgstr "配置"
 msgid "Inspect the generated Mihomo configuration or the JustClash service configuration."
 msgstr "查看生成的 Mihomo 配置或 JustClash 服务配置。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:72
+#: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:72
 msgid "Copy log"
 msgstr "复制日志"
 
-#: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:118
-msgid "System logs"
-msgstr "系统日志"
+#: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:118
+msgid "Service logs"
+msgstr "服务日志"
 
-#: htdocs/luci-static/resources/view/justclash/pages/system_logs.js:119
-msgid "View system logs related to the JustClash service and its startup scripts."
-msgstr "查看与 JustClash 服务及其启动脚本相关的系统日志。"
+#: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:119
+msgid "View logs written by the JustClash service and Mihomo."
+msgstr "查看 JustClash 服务和 Mihomo 写入的日志。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:124
 msgid "Disable on boot"
