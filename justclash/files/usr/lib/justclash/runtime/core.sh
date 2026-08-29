@@ -59,7 +59,7 @@ core_detect_arch() {
     *_neon-vfp*) echo "armv7" ;;
     *_neon* | *_vfp*) echo "armv6" ;;
     arm_*) echo "armv5" ;;
-    *) echo "amd64" ;;
+    *) return 1 ;;
     esac
 }
 
