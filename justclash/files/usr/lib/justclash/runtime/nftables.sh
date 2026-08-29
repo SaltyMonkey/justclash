@@ -171,6 +171,7 @@ nft_table_full_apply() {
     local nft_mac_exclude="${18}"
     local nft_ips_exclude="${19}"
     local ipv6_enabled="${20}"
+    local nft_dns_udp_mode="${21}"
     local iface skuid_list skuid_resolved
 
     if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
@@ -189,6 +190,9 @@ nft_table_full_apply() {
             echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
             echo "add chain inet $NF_TABLE_NAME filter_input { type filter hook input priority filter; policy accept; }"
             echo "add chain inet $NF_TABLE_NAME filter_forward { type filter hook forward priority filter; policy accept; }"
+            if [ "$nft_dns_udp_mode" = "HIJACK" ]; then
+                echo "add chain inet $NF_TABLE_NAME dns_hijack { type nat hook prerouting priority -151; policy accept; }"
+            fi
 
             echo "add set inet $NF_TABLE_NAME fake_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME fake_ips { $fake_ip_range }"
@@ -200,11 +204,35 @@ nft_table_full_apply() {
             for iface in $tproxy_input_interfaces; do
                 echo "add element inet $NF_TABLE_NAME inbound_interfaces { \"$iface\" }"
             done
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
+                echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fc00::/7, fe80::/10, ff00::/8 }"
+            fi
             echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS4 }"
             if [ "$ipv6_enabled" -eq 1 ]; then
                 echo "add set inet $NF_TABLE_NAME doh_ip6s { type ipv6_addr; flags interval; }"
                 echo "add element inet $NF_TABLE_NAME doh_ip6s { $DEFAULT_DOH_IPS6 }"
+            fi
+            if [ "$nft_dns_udp_mode" = "HIJACK" ]; then
+                echo "add rule inet $NF_TABLE_NAME dns_hijack iifname != @inbound_interfaces return comment \"Bypass DNS from non-intercepted interfaces\""
+                if [ -n "$nft_mac_exclude" ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack ether saddr { $(echo "$nft_mac_exclude" | str_spaces_to_commas) } return comment \"Bypass DNS from excluded MACs\""
+                fi
+                if [ -n "$nft_ips_exclude" ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack ip saddr { $(echo "$nft_ips_exclude" | str_spaces_to_commas) } return comment \"Bypass DNS from excluded client IPs\""
+                fi
+                if [ -n "$nft_ports_exclude" ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded DNS destination ports\""
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded DNS source ports\""
+                fi
+                echo "add rule inet $NF_TABLE_NAME dns_hijack fib daddr type local return comment \"Bypass router DNS destinations\""
+                echo "add rule inet $NF_TABLE_NAME dns_hijack ip daddr @private_ips return comment \"Bypass private/LAN DNS destinations\""
+                echo "add rule inet $NF_TABLE_NAME dns_hijack meta nfproto ipv4 meta l4proto udp udp dport $DEFAULT_DNS_PORT redirect to :$DEFAULT_DNS_PORT comment \"Hijack external UDP DNS to router\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 DNS destinations\""
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack meta nfproto ipv6 meta l4proto udp udp dport $DEFAULT_DNS_PORT redirect to :$DEFAULT_DNS_PORT comment \"Hijack external UDP DNS IPv6 to router\""
+                fi
             fi
             if [ "$ipv6_enabled" -eq 0 ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
@@ -215,7 +243,11 @@ nft_table_full_apply() {
             fi
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting fib daddr type local return comment \"Bypass router-local traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
+            fi
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
@@ -229,6 +261,10 @@ nft_table_full_apply() {
             if [ -n "$nft_ports_exclude" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded destination ports\""
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded source ports\""
+            fi
+
+            if [ "$nft_dns_udp_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport $DEFAULT_DNS_PORT drop comment \"Drop external UDP DNS traffic\""
             fi
 
             if [ "$nft_quic_mode" = "DROP" ]; then
@@ -357,6 +393,7 @@ nft_table_partial_apply() {
     local active_static_ips_path="${22}"
     local active_static_source_ips_path="${23}"
     local workdir_rules_path="${24}"
+    local nft_dns_udp_mode="${25}"
     local iface skuid_list skuid_resolved
 
     if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
@@ -415,6 +452,9 @@ nft_table_partial_apply() {
             echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
             echo "add chain inet $NF_TABLE_NAME filter_input { type filter hook input priority filter; policy accept; }"
             echo "add chain inet $NF_TABLE_NAME filter_forward { type filter hook forward priority filter; policy accept; }"
+            if [ "$nft_dns_udp_mode" = "HIJACK" ]; then
+                echo "add chain inet $NF_TABLE_NAME dns_hijack { type nat hook prerouting priority -151; policy accept; }"
+            fi
 
             echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS4 }"
@@ -422,7 +462,27 @@ nft_table_partial_apply() {
                 echo "add set inet $NF_TABLE_NAME doh_ip6s { type ipv6_addr; flags interval; }"
                 echo "add element inet $NF_TABLE_NAME doh_ip6s { $DEFAULT_DOH_IPS6 }"
                 echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
-                echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fe80::/10, fc00::/7, ff00::/8 }"
+                echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fc00::/7, fe80::/10, ff00::/8 }"
+            fi
+            if [ "$nft_dns_udp_mode" = "HIJACK" ]; then
+                echo "add rule inet $NF_TABLE_NAME dns_hijack iifname != @inbound_interfaces return comment \"Bypass DNS from non-intercepted interfaces\""
+                if [ -n "$nft_mac_exclude" ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack ether saddr { $(echo "$nft_mac_exclude" | str_spaces_to_commas) } return comment \"Bypass DNS from excluded MACs\""
+                fi
+                if [ -n "$nft_ips_exclude" ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack ip saddr { $(echo "$nft_ips_exclude" | str_spaces_to_commas) } return comment \"Bypass DNS from excluded client IPs\""
+                fi
+                if [ -n "$nft_ports_exclude" ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded DNS destination ports\""
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded DNS source ports\""
+                fi
+                echo "add rule inet $NF_TABLE_NAME dns_hijack fib daddr type local return comment \"Bypass router DNS destinations\""
+                echo "add rule inet $NF_TABLE_NAME dns_hijack ip daddr @private_ips return comment \"Bypass private/LAN DNS destinations\""
+                echo "add rule inet $NF_TABLE_NAME dns_hijack meta nfproto ipv4 meta l4proto udp udp dport $DEFAULT_DNS_PORT redirect to :$DEFAULT_DNS_PORT comment \"Hijack external UDP DNS to router\""
+                if [ "$ipv6_enabled" -eq 1 ]; then
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 DNS destinations\""
+                    echo "add rule inet $NF_TABLE_NAME dns_hijack meta nfproto ipv6 meta l4proto udp udp dport $DEFAULT_DNS_PORT redirect to :$DEFAULT_DNS_PORT comment \"Hijack external UDP DNS IPv6 to router\""
+                fi
             fi
             if [ "$ipv6_enabled" -eq 0 ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
@@ -433,7 +493,11 @@ nft_table_partial_apply() {
             fi
             echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
             echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting fib daddr type local return comment \"Bypass router-local traffic\""
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
+            if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @private_ip6s return comment \"Bypass private/LAN IPv6 ranges\""
+            fi
             echo "add rule inet $NF_TABLE_NAME prerouting udp sport { 546, 547 } udp dport { 546, 547 } return comment \"Bypass DHCPv6 traffic\""
 
             if [ -n "$nft_mac_exclude" ]; then
@@ -447,6 +511,10 @@ nft_table_partial_apply() {
             if [ -n "$nft_ports_exclude" ]; then
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th dport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded destination ports\""
                 echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto { tcp, udp } th sport { $(echo "$nft_ports_exclude" | str_spaces_to_commas) } return comment \"Bypass excluded source ports\""
+            fi
+
+            if [ "$nft_dns_udp_mode" = "DROP" ]; then
+                echo "add rule inet $NF_TABLE_NAME prerouting meta l4proto udp udp dport $DEFAULT_DNS_PORT drop comment \"Drop external UDP DNS traffic\""
             fi
 
             if [ "$nft_quic_mode" = "DROP" ]; then
