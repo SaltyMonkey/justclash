@@ -34,29 +34,6 @@ str_yaml_quote() {
     printf '"%s"' "$val"
 }
 
-str_build_slash_map_from_values() {
-    local values="$1"
-    local delim="${2:-,}"
-    local result=""
-    local entry key val item old_ifs
-
-    old_ifs="$IFS"
-    IFS="$NL"
-    for entry in $values; do
-        key="${entry%%/*}"
-        val="${entry#*/}"
-        [ "$key" = "$entry" ] || [ -z "$key" ] || [ -z "$val" ] && continue
-        item="$(
-            str_yaml_quote "$key"
-            printf ': '
-            str_yaml_quote "$val"
-        )"
-        [ -z "$result" ] && result="$item" || result="$result$delim$item"
-    done
-    IFS="$old_ifs"
-
-    printf '%s' "$result"
-}
 str_build_custom_slash_map() {
     local section_name="$1"
     local list_name="$2"
