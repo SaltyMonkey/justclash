@@ -328,7 +328,7 @@ start_core() {
                     # shellcheck disable=SC2030
                     export GOMEMLIMIT="${mihomo_mem_limit}MiB"
                 fi
-                if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "$DEFAULT_MIHOMO_GOGC" ]; then
+                if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "0" ]; then
                     # shellcheck disable=SC2030
                     export GOGC="$mihomo_gogc"
                 fi
@@ -361,7 +361,7 @@ start_core() {
             if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
                 export GOMEMLIMIT="${mihomo_mem_limit}MiB"
             fi
-            if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "$DEFAULT_MIHOMO_GOGC" ]; then
+            if [ -n "$mihomo_gogc" ] && [ "$mihomo_gogc" != "0" ]; then
                 export GOGC="$mihomo_gogc"
             fi
             if [ -n "$mihomo_gomaxprocs" ] && [ "$mihomo_gomaxprocs" != "$DEFAULT_MIHOMO_GOMAXPROCS" ]; then

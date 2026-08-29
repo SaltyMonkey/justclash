@@ -408,7 +408,7 @@ return view.extend({
         o.datatype = datatypes.UINTEGER;
         o.placeholder = "100";
         o.rmempty = false;
-        o.default = common.defaultGoGCValues[0].value;
+        o.default = "50";
 
         o = s.taboption(tabname, form.Value, "mihomo_gomaxprocs", _("GOMAXPROCS (CPU Threads):"));
         common.defaultGoMaxProcsValues.forEach(item => {
