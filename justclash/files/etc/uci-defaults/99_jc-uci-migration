@@ -86,6 +86,7 @@ fi
 uci -q delete justclash.settings.mihomo_autoupdate
 uci -q delete justclash.settings.mihomo_autoupdate_channel
 uci -q delete justclash.settings.mihomo_cron_update_string
+uci -q delete justclash.settings.skip_environment_checks
 
 if [ "$(uci -q get justclash.proxy.fake_ip_ttl)" = "1" ]; then
     uci set justclash.proxy.fake_ip_ttl="60"
