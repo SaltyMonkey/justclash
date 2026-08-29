@@ -70,7 +70,8 @@ start() {
     local current_config_hash workdir_status
     local api_tls api_tls_cert api_tls_key dns_listen_port ipv6_enabled mihomo_gogc mihomo_gomaxprocs
     local mihomo_mem_limit mihomo_persistent_cache mihomo_persistent_ext_rules mixed_port nft_apply_changes
-    local nft_apply_changes_router ntpd_start routing_mode skip_environment_checks tproxy_port
+    local nft_apply_changes_router ntpd_start routing_mode tproxy_port
+    local controller_bind_interface router_selected_ipaddr
     local core_exit_code preflight_tproxy_port
 
     if preflight_check_is_already_running "$PROGNAME start" "JustClash" "$CORE_PATH" "$$"; then
@@ -93,10 +94,10 @@ start() {
     config_get mihomo_mem_limit settings mihomo_mem_limit "$DEFAULT_MIHOMO_MEM_LIMIT"
     config_get mihomo_gogc settings mihomo_gogc "$DEFAULT_MIHOMO_GOGC"
     config_get mihomo_gomaxprocs settings mihomo_gomaxprocs "$DEFAULT_MIHOMO_GOMAXPROCS"
-    config_get skip_environment_checks settings skip_environment_checks "$DEFAULT_SKIP_ENVIRONMENT_CHECKS"
     config_get routing_mode settings routing_mode "$DEFAULT_ROUTING_MODE"
     config_get nft_apply_changes_router settings nft_apply_changes_router "$DEFAULT_NFT_APPLY_CHANGES_ROUTER"
     config_get ipv6_enabled settings ipv6_enabled "$DEFAULT_IPV6_ENABLED"
+    config_get controller_bind_interface proxy controller_bind_interface
 
     # Validate before applying any changes.
     config_validate_bool "$ntpd_start" "settings.ntpd_start" || validation_failed=1
@@ -104,7 +105,6 @@ start() {
     config_validate_bool "$api_tls" "proxy.api_tls" || validation_failed=1
     config_validate_bool "$mihomo_persistent_ext_rules" "settings.mihomo_persistent_ext_rules" || validation_failed=1
     config_validate_bool "$mihomo_persistent_cache" "settings.mihomo_persistent_cache" || validation_failed=1
-    config_validate_bool "$skip_environment_checks" "settings.skip_environment_checks" || validation_failed=1
     config_validate_bool "$nft_apply_changes_router" "settings.nft_apply_changes_router" || validation_failed=1
     config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
 
@@ -118,6 +118,11 @@ start() {
 
     if ! val_is_choice "$routing_mode" full partial; then
         config_validation_error "settings.routing_mode must be 'full' or 'partial'"
+        validation_failed=1
+    fi
+
+    if ! val_is_ifname "$controller_bind_interface"; then
+        config_validation_error "proxy.controller_bind_interface must name a logical network"
         validation_failed=1
     fi
 
@@ -155,6 +160,13 @@ start() {
         sleep "$ENV_JUSTCLASH_BOOT_DELAY"
     fi
 
+    network_flush_cache
+    if ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" ||
+        [ -z "$router_selected_ipaddr" ]; then
+        log error "Controller bind network has no IPv4 address. Aborting startup."
+        return 1
+    fi
+
     preflight_check_requirement "$CORE_PATH" "$CORE_BIN_NAME" "$REQUIRED_TOOLS" || {
         log error "System requirement checks failed. Aborting startup."
         return 1
@@ -180,21 +192,18 @@ start() {
         return 1
     }
 
-    if [ "$skip_environment_checks" -eq 0 ]; then
+    log info "Checking for non-critical conflicts"
+    preflight_check_conflicts_warn \
+        "$DHCP_CONFIG_FILEPATH" \
+        "$WARN_PATTERNS_DHCP_CONFIG" \
+        "$RESOLVCONF_FILEPATH" \
+        "$ZAPRETINITD_FILEPATH" \
+        "$BYEDPI_FILEPATH" \
+        "$YOUTUBEUNBLOCK_FILEPATH" \
+        "$B4_FILEPATH"
 
-        log info "Checking for non-critical conflicts"
-        preflight_check_conflicts_warn \
-            "$DHCP_CONFIG_FILEPATH" \
-            "$WARN_PATTERNS_DHCP_CONFIG" \
-            "$RESOLVCONF_FILEPATH" \
-            "$ZAPRETINITD_FILEPATH" \
-            "$BYEDPI_FILEPATH" \
-            "$YOUTUBEUNBLOCK_FILEPATH" \
-            "$B4_FILEPATH"
-
-        log info "Fixing known compatibility problems"
-        compat_fixes
-    fi
+    log info "Fixing known compatibility problems"
+    compat_fixes
 
     log info "Synchronizing system time"
     ntpd_force_sync \
@@ -208,8 +217,12 @@ start() {
         "$api_tls_key" \
         "$mihomo_persistent_ext_rules"
 
-    current_config_hash=$(config_hash_filtered "$PROGNAME" "^${PROGNAME}\.settings\.(wait_for_wan|delayed_boot|skip_environment_checks|ntpd_start|mihomo_autorestart|mihomo_cron_|mihomo_service_data_|mihomo_core_|mihomo_github_|mihomo_custom_core_url|mihomo_dashboard_|mihomo_rulesets_files_download_url)") || {
+    current_config_hash=$(config_hash_filtered "$PROGNAME" "^${PROGNAME}\.settings\.(wait_for_wan|delayed_boot|ntpd_start|mihomo_autorestart|mihomo_cron_|mihomo_service_data_|mihomo_core_|mihomo_github_|mihomo_custom_core_url|mihomo_dashboard_|mihomo_rulesets_files_download_url)") || {
         log error "Failed to calculate the current configuration hash."
+        return 1
+    }
+    current_config_hash=$(printf '%s\n%s\n' "$current_config_hash" "$router_selected_ipaddr" | str_md5) || {
+        log error "Failed to include the controller bind address in the configuration hash."
         return 1
     }
 
@@ -233,7 +246,7 @@ start() {
         ;;
     1)
         log info "Generating YAML configuration..."
-        core_generate_yaml || {
+        core_generate_yaml "$router_selected_ipaddr" || {
             log error "YAML configuration generation failed. Aborting startup."
             return 1
         }
@@ -385,7 +398,7 @@ stop_core() {
 # Reads and validates nftables settings, then applies the selected routing mode.
 run_nftables_apply() {
     local validation_failed=0
-    local fake_ip_range fake_ip_range6 ipv6_enabled nft_apply_changes nft_apply_changes_router nft_doh_mode
+    local fake_ip_range fake_ip_range6 ipv6_enabled nft_apply_changes nft_apply_changes_router nft_doh_mode nft_dns_udp_mode
     local nft_dot_mode nft_dot_quic_mode nft_ips_exclude nft_mac_exclude nft_ntp_mode nft_ntp_mode_router
     local nft_ports_exclude nft_ports_exclude_router nft_quic_mode nft_skuid_exclude_router pbr_priority
     local provider_routing_marks proxy_routing_marks routing_mode tproxy_input_interfaces tproxy_port
@@ -401,6 +414,7 @@ run_nftables_apply() {
     config_get fake_ip_range6 proxy fake_ip_range6
     config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
     config_get nft_quic_mode settings nft_quic_mode
+    config_get nft_dns_udp_mode settings nft_dns_udp_mode
     config_get nft_dot_mode settings nft_dot_mode
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_doh_mode settings nft_doh_mode
@@ -463,6 +477,7 @@ run_nftables_apply() {
             config_validate_interface_list "$tproxy_input_interfaces" "settings.tproxy_input_interfaces" || validation_failed=1
             config_validate_port_list "$nft_ports_exclude" "settings.nft_ports_exclude" || validation_failed=1
             config_validate_nft_mode "$nft_quic_mode" "settings.nft_quic_mode" || validation_failed=1
+            config_validate_nft_dns_udp_mode "$nft_dns_udp_mode" "settings.nft_dns_udp_mode" || validation_failed=1
             config_validate_nft_mode "$nft_dot_mode" "settings.nft_dot_mode" || validation_failed=1
             config_validate_nft_mode "$nft_dot_quic_mode" "settings.nft_dot_quic_mode" || validation_failed=1
             config_validate_nft_mode "$nft_doh_mode" "settings.nft_doh_mode" || validation_failed=1
@@ -510,7 +525,8 @@ run_nftables_apply() {
             "$ACTIVE_IPCIDR_RULESETS_PATH" \
             "$ACTIVE_STATIC_IPS_PATH" \
             "$ACTIVE_STATIC_SOURCE_IPS_PATH" \
-            "$CORE_WORKDIR_RULES_PATH"
+            "$CORE_WORKDIR_RULES_PATH" \
+            "$nft_dns_udp_mode"
         nft_res=$?
     else
         nft_table_full_apply \
@@ -533,7 +549,8 @@ run_nftables_apply() {
             "$nft_ports_exclude_router" \
             "$nft_mac_exclude" \
             "$nft_ips_exclude" \
-            "$ipv6_enabled"
+            "$ipv6_enabled" \
+            "$nft_dns_udp_mode"
         nft_res=$?
     fi
 
@@ -774,6 +791,7 @@ config_proxy_provider_read() {
 
 # Reads and validates YAML settings, then atomically promotes the generated document.
 core_generate_yaml() {
+    local router_selected_ipaddr="$1"
     local validation_failed=0
 
     # ash locals are dynamically scoped. Synchronous YAML callbacks update this
@@ -791,7 +809,7 @@ core_generate_yaml() {
         OUT_BUNDLE_NAMES="" OUT_BUNDLE_FAKEIPRULES="" \
         GLOBAL_FAKE_IP_EXCLUDE_RULES="" GLOBAL_FAKE_IP_EXCLUDE_GEOSITES="" \
         GLOBAL_FAKE_IP_EXCLUDE_DOMAINS=""
-    local ipv6_enabled controller_bind_interface
+    local ipv6_enabled
     local use_dashboard dashboard_repo dashboard_url
     local api_password log_level api_tls api_tls_cert api_tls_key interface_name
     local tproxy_port use_mixed_port mixed_port unified_delay tcp_concurrent
@@ -809,7 +827,7 @@ core_generate_yaml() {
     local block_enabled block_enabled_list block_proxy block_update_interval block_size_limit
     local block_geosite_list block_domain_routes block_destip_routes block_geoip_list
     local mixed_exit_rule final_exit_rule
-    local effective_interface_name router_selected_ipaddr
+    local effective_interface_name
     local output_yaml_tmp_path active_static_ips_tmp_path active_source_ips_tmp_path active_ipcidr_rulesets_tmp_path
     local render_status
 
@@ -827,7 +845,6 @@ core_generate_yaml() {
 
     # Read settings used by this scenario.
     config_get ipv6_enabled settings ipv6_enabled 0
-    config_get controller_bind_interface proxy controller_bind_interface
     config_get use_dashboard proxy use_dashboard 0
     config_get dashboard_repo proxy dashboard_repo "$DEFAULT_EXTERNAL_PANEL"
     case "$dashboard_repo" in
@@ -971,18 +988,6 @@ core_generate_yaml() {
 
     global_ua=$(resolve_user_agent "$global_ua")
 
-    if [ -n "$controller_bind_interface" ]; then
-        if ! val_is_ifname "$controller_bind_interface"; then
-            router_selected_ipaddr="0.0.0.0"
-            log warn "Controller bind interface '$controller_bind_interface' is invalid; API controller will listen on all interfaces."
-        elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" || [ -z "$router_selected_ipaddr" ]; then
-            router_selected_ipaddr="0.0.0.0"
-            log warn "Controller bind network '$controller_bind_interface' has no IPv4 address; API controller will listen on all interfaces."
-        fi
-    else
-        router_selected_ipaddr="0.0.0.0"
-    fi
-
     [ -n "$effective_interface_name" ] && effective_interface_name=$(str_trim "$effective_interface_name")
     if [ -n "$effective_interface_name" ] && ! val_is_ifname "$effective_interface_name"; then
         log warn "Global interface_name '$effective_interface_name' is invalid and will be ignored."
@@ -993,8 +998,8 @@ core_generate_yaml() {
     direct_nameserver=$(fmt_values_as_json_array "$direct_nameserver" "" "    ")
     proxy_server_nameserver=$(fmt_values_as_json_array "$proxy_server_nameserver" "" "    ")
     nameserver=$(fmt_values_as_json_array "$nameserver" "" "    ")
-    hosts_content=$(str_build_slash_map_from_values "$hosts")
-    nameserver_policy_custom=$(str_build_slash_map_from_values "$nameserver_policy")
+    hosts_content=$(yaml_slash_multimap_build "$hosts") || return 1
+    nameserver_policy_custom=$(yaml_slash_multimap_build "$nameserver_policy") || return 1
     sniffer_force_domain=$(fmt_values_as_json_array "$sniffer_force_domain" "" "    ")
     sniffer_exclude_domain=$(fmt_values_as_json_array "$sniffer_exclude_domain" "" "    ")
     sniffer_skip_src_address=$(fmt_values_as_json_array "$sniffer_skip_src_address" "" "    ")
@@ -1104,7 +1109,7 @@ core_generate_yaml() {
     fake_ip_rules_proxies="$OUT_FAKE_IP_RULES"
 
     nameserver_policy=$(yaml_nameserver_policy_build \
-        "{$nameserver_policy_custom}" \
+        "$nameserver_policy_custom" \
         "$names_rulesets_block_policy" \
         "$names_suffixes_block_policy" \
         "$names_geosite_block_policy") || return 1
@@ -1811,7 +1816,18 @@ service_data_update | sdu)
     config_init "$PROGNAME"
     service_data_update
     ;;
-logs | systemlogs | log | l)
+logs | log | l)
+    import /usr/lib/justclash/logging.sh
+    case "$2" in
+    *[!0-9]* | '')
+        logs "$PROGNAME"
+        ;;
+    *)
+        logs "$PROGNAME" "$2"
+        ;;
+    esac
+    ;;
+systemlogs)
     import /usr/lib/justclash/logging.sh
     case "$2" in
     *[!0-9]* | '')

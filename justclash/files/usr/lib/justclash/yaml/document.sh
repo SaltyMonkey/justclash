@@ -132,7 +132,7 @@ yaml_document_write_services() {
     local core_ntp_interval="$6"
     local rule_providers="$7"
 
-    echo "hosts: {$hosts_content}"
+    printf '%s\n' "hosts: $hosts_content"
     echo ""
     echo "ntp:"
     echo "  enable: $(fmt_uci_bool_as_yaml "$core_ntp_enabled")"
