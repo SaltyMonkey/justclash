@@ -5,6 +5,26 @@ yaml_json_format() {
     jq --indent "${1:-2}" .
 }
 
+yaml_slash_multimap_build() {
+    printf '%s\n' "$1" |
+        jq --indent 4 -Rn '
+            reduce inputs as $entry ({};
+                ($entry | index("/")) as $separator |
+                if $separator == null or $separator == 0 or $separator == ($entry | length) - 1 then
+                    .
+                else
+                    ($entry[0:$separator]) as $matcher |
+                    ($entry[$separator + 1:]) as $nameserver |
+                    if ((.[$matcher] // []) | index($nameserver)) == null then
+                        .[$matcher] = ((.[$matcher] // []) + [$nameserver])
+                    else
+                        .
+                    end
+                end
+            )
+        '
+}
+
 yaml_nameserver_policy_build() {
     jq --indent 4 -n \
         --argjson custom_entries "$1" \
