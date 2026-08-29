@@ -126,6 +126,12 @@ return baseclass.extend({
         { value: "DROP", text: _("Drop") },
         { value: "REJECT", text: _("Reject") }
     ],
+    // OpenWrt NFTables plain UDP DNS interception mode (JustClash UI specific)
+    defaultNftDnsUdpOptions: [
+        { value: "BY RULES", text: _("By rules") },
+        { value: "DROP", text: _("Drop") },
+        { value: "HIJACK", text: _("Hijack") }
+    ],
     // OpenWrt NFTables NTP interception mode (JustClash UI specific)
     defaultNftNtpOptions: [
         { value: "BY RULES", text: _("By rules") },

@@ -51,11 +51,6 @@ return view.extend({
         o.rmempty = false;
         o.description = _("Choose how many seconds to wait before the first service start after boot.");
 
-        o = s.taboption(tabname, form.Flag, "skip_environment_checks", _("Skip startup checks:"));
-        o.description = _("Skip some safety checks during startup. This can speed up startup, but it may hide problems with files, permissions, or system settings.");
-        o.rmempty = false;
-        o.default = primitives.FALSE;
-
         o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start time sync service:"));
         o.description = _("Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
         o.rmempty = false;
@@ -180,6 +175,16 @@ return view.extend({
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
+            o.value(item.value, `${item.text}`);
+        });
+
+        o = s.taboption(tabname, form.ListValue, "nft_dns_udp_mode", _("Client UDP DNS traffic:"));
+        o.description = _("Choose how to handle external UDP DNS requests from clients. Hijack redirects them to the router DNS service; local destinations and bypassed clients remain unchanged.");
+        o.depends("nft_apply_changes", primitives.TRUE);
+        o.retain = true;
+        o.rmempty = false;
+        o.default = common.defaultNftDnsUdpOptions[0].value;
+        common.defaultNftDnsUdpOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
 
