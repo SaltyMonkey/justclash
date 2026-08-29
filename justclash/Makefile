@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=$(PKG_NAME)
-	DEPENDS:=+nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
+	DEPENDS:=+nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +kmod-nft-nat +kmod-nft-fib +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
 	CONFLICTS:=banip mihomo forkop luci-app-forkop podkop sing-box sing-box-tiny luci-app-passwall luci-app-passwall2 dns-failsafe-proxy netshift luci-app-netshift nikki luci-app-nikki luci-app-ssclash
 	PKGARCH:=all
 endef
@@ -103,20 +103,6 @@ define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	# randomize api password only when package default is still in use
-	DEFAULT_API_PASSWORD='abcdefghijklmnopqrstuvwxyz1234567890'
-	CURRENT_API_PASSWORD="$$(uci -q get justclash.proxy.api_password)"
-
-	if [ "$${CURRENT_API_PASSWORD}" = "$${DEFAULT_API_PASSWORD}" ]; then
-		RANDOM_API_PASSWORD="$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-')"
-		if [ -z "$${RANDOM_API_PASSWORD}" ]; then
-			RANDOM_API_PASSWORD="$$(head -c 32 /dev/urandom 2>/dev/null | base64 2>/dev/null | tr -d '+/=\r\n' | cut -c1-32)"
-		fi
-		if [ -n "$${RANDOM_API_PASSWORD}" ]; then
-			uci set justclash.proxy.api_password="$${RANDOM_API_PASSWORD}"
-			uci commit justclash
-		fi
-	fi
 	if ! . /usr/lib/justclash/config/reset.sh; then
 		echo "Failed to load the JustClash config reset module." >&2
 		exit 1
