@@ -63,12 +63,12 @@
             }
         }
     },
-    "admin/services/justclash/system_logs": {
-        "title": "System logs",
+    "admin/services/justclash/service_logs": {
+        "title": "Service logs",
         "order": 30,
         "action": {
             "type": "view",
-            "path": "justclash/pages/system_logs"
+            "path": "justclash/pages/service_logs"
         },
         "depends": {
             "acl": [
@@ -165,6 +165,22 @@
         "action": {
             "type": "view",
             "path": "justclash/pages/proxy"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
+    "admin/services/justclash/dns": {
+        "title": "Setup: DNS",
+        "order": 75,
+        "action": {
+            "type": "view",
+            "path": "justclash/pages/dns"
         },
         "depends": {
             "acl": [
