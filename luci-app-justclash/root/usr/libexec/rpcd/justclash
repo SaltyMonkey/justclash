@@ -73,13 +73,13 @@ run_config_dump() {
 }
 
 run_systemlogs() {
-    jc_logs_output=$(/usr/bin/justclash.sh systemlogs 2>/dev/null)
+    jc_logs_output=$(/usr/bin/justclash.sh logs 2>/dev/null)
     jc_logs_code=$?
 
     if [ "$jc_logs_code" -eq 0 ]; then
         emit_result 0 "$jc_logs_output"
     else
-        emit_result "$jc_logs_code" "Failed to fetch system logs."
+        emit_result "$jc_logs_code" "Failed to fetch service logs."
     fi
 }
 
