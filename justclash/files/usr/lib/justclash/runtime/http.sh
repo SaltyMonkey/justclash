@@ -5,13 +5,15 @@ HTTP_CONNECT_TIMEOUT=15
 HTTP_MIN_SPEED_LIMIT_BYTES=5000
 HTTP_MIN_SPEED_TIMEOUT=15
 
-http_get() {
-    local url="$1"
-
+_http_curl() {
     curl --connect-timeout "$HTTP_CONNECT_TIMEOUT" \
         --speed-limit "$HTTP_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$HTTP_MIN_SPEED_TIMEOUT" \
-        -sL "$url"
+        -L "$@"
+}
+
+http_get() {
+    _http_curl -s -- "$1"
 }
 
 http_download() {
@@ -20,14 +22,14 @@ http_download() {
     local fail_on_http_error="${3:-0}"
 
     if [ "$fail_on_http_error" = "1" ]; then
-        curl --connect-timeout "$HTTP_CONNECT_TIMEOUT" \
-            --speed-limit "$HTTP_MIN_SPEED_LIMIT_BYTES" \
-            --speed-time "$HTTP_MIN_SPEED_TIMEOUT" \
-            --progress-bar -L -f -o "$destination" "$url"
+        set -- -f
     else
-        curl --connect-timeout "$HTTP_CONNECT_TIMEOUT" \
-            --speed-limit "$HTTP_MIN_SPEED_LIMIT_BYTES" \
-            --speed-time "$HTTP_MIN_SPEED_TIMEOUT" \
-            --progress-bar -L -o "$destination" "$url"
+        set --
     fi
+
+    _http_curl \
+        "$@" \
+        --progress-bar \
+        -o "$destination" \
+        -- "$url"
 }
