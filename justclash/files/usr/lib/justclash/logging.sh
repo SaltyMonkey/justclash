@@ -8,10 +8,42 @@
 # External justclash logging part
 # --------------------------------------------
 
-: "${JUSTCLASH_CONSTANTS_LOADED:?constants.sh must be loaded before logging.sh}"
-
 IS_TTY=false
 [ -t 1 ] && IS_TTY=true
+_LOG_FILE_READY=false
+
+_log_file_init() {
+    local owner current_uid
+
+    [ -L "$CORE_WORKDIR_PATH" ] && return 1
+
+    if [ ! -d "$CORE_WORKDIR_PATH" ]; then
+        # shellcheck disable=SC2174
+        mkdir -m 700 -p "$CORE_WORKDIR_PATH" 2>/dev/null || return 1
+    fi
+
+    # Do not feed potentially sensitive logs into a directory prepared by another user.
+    # shellcheck disable=SC2012
+    owner=$(ls -ldn "$CORE_WORKDIR_PATH" 2>/dev/null | awk '{print $3}')
+    current_uid=$(id -u)
+    [ -n "$owner" ] && [ "$owner" != "$current_uid" ] && return 1
+    [ -L "$CORE_LOG_FILE_PATH" ] && return 1
+
+    chmod 700 "$CORE_WORKDIR_PATH" 2>/dev/null || return 1
+    (umask 077 && : >>"$CORE_LOG_FILE_PATH") 2>/dev/null || return 1
+    chmod 600 "$CORE_LOG_FILE_PATH" 2>/dev/null || return 1
+    _LOG_FILE_READY=true
+}
+
+_log_file_write() {
+    local level="$1"
+    local message="$2"
+    local ts
+
+    $_LOG_FILE_READY || _log_file_init || return 0
+    ts=$(date '+%Y-%m-%d %H:%M:%S')
+    (umask 077 && printf '%s %s: %s\n' "$ts" "$level" "$message" >>"$CORE_LOG_FILE_PATH") 2>/dev/null || true
+}
 
 clog() {
     local level="$1"
@@ -51,32 +83,33 @@ log() {
     local level="$1"
     local message="$2"
 
-    local facility lvl_num
+    local facility level_label
     case "$level" in
     0 | err | error)
-        lvl_num="0"
+        level_label="error"
         facility="user.err"
         ;;
     2 | info)
-        lvl_num="2"
+        level_label="info"
         facility="user.info"
         ;;
     3 | debug)
-        lvl_num="3"
+        level_label="debug"
         facility="user.debug"
         ;;
     *)
-        lvl_num="1"
+        level_label="warning"
         facility="user.warning"
         ;;
     esac
 
     logger -p "$facility" -t "$PROGNAME" "$message"
-    clog "$lvl_num" "$message"
+    _log_file_write "$level_label" "$message"
+    clog "$level_label" "$message"
 }
 
 log_piped() {
-    local line level message lvl_num facility
+    local line level message level_label facility
     local color_start="" color_end="" ts_start="" ts_end=""
 
     while IFS= read -r line || [ -n "$line" ]; do
@@ -109,7 +142,7 @@ log_piped() {
 
         case "$level" in
         INFO | info)
-            lvl_num="info"
+            level_label="info"
             facility="user.info"
             $IS_TTY && {
                 color_start="\033[1;32m"
@@ -117,7 +150,7 @@ log_piped() {
             }
             ;;
         WARN | warning | warn)
-            lvl_num="warn"
+            level_label="warning"
             facility="user.warning"
             $IS_TTY && {
                 color_start="\033[1;33m"
@@ -125,7 +158,7 @@ log_piped() {
             }
             ;;
         ERRO | error | erro)
-            lvl_num="error"
+            level_label="error"
             facility="user.err"
             $IS_TTY && {
                 color_start="\033[1;31m"
@@ -133,7 +166,7 @@ log_piped() {
             }
             ;;
         DEBG | debug | debg)
-            lvl_num="debug"
+            level_label="debug"
             facility="user.debug"
             $IS_TTY && {
                 color_start="\033[1;36m"
@@ -141,7 +174,7 @@ log_piped() {
             }
             ;;
         *)
-            lvl_num="info"
+            level_label="info"
             facility="user.info"
             $IS_TTY && {
                 color_start="\033[1;32m"
@@ -150,15 +183,23 @@ log_piped() {
             ;;
         esac
 
+        logger -p "$facility" -t "$PROGNAME" "$message"
+        _log_file_write "$level_label" "$message"
+
         if $IS_TTY; then
             local ts
             ts=$(date '+%Y-%m-%d %H:%M:%S')
             ts_start="\033[90m" ts_end="\033[0m"
-            printf '%b%s%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$lvl_num" "$color_end" "$message"
-        else
-            logger -p "$facility" -t "$PROGNAME" "$message"
+            printf '%b%s%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$level_label" "$color_end" "$message"
         fi
     done
+}
+
+logs() {
+    local lines="${2:-40}"
+
+    [ -f "$CORE_LOG_FILE_PATH" ] || return 0
+    tail -n "$lines" "$CORE_LOG_FILE_PATH"
 }
 
 systemlogs() {
