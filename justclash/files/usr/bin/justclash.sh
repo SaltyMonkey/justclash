@@ -1133,7 +1133,7 @@ core_generate_yaml() {
 
     proxy_groups=$(
         printf '%s\n' "$proxy_groups" |
-            yaml_json_format 4
+            yaml_json_format 2
     ) || return 1
 
     rule_providers=$(yaml_rule_providers_merge \
