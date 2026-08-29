@@ -68,11 +68,10 @@ core_archive_apply() {
 # and 7 when the downloaded archive cannot be applied.
 core_download() {
     local version_url="$1" version="$2"
-    local core_workdir="$3" core_path="$4"
+    local core_workdir="$3" core_path="$4" arch="$5"
 
-    local arch filename base_url download_url archive_path
+    local filename base_url download_url archive_path
 
-    arch=$(core_detect_arch "$(sysinfo_get_os_arch)")
     mkdir -p "$core_workdir" || return 5
     archive_path=$(mktemp "${core_workdir}/mihomo.XXXXXX") || return 5
     filename="mihomo-linux-${arch}-${version}.gz"
@@ -98,44 +97,46 @@ core_download() {
     return 0
 }
 
-# Propagates core_download() and core_binary_remove() operation statuses.
+# Propagates core_download() and core_binary_remove() operation statuses,
+# and returns 8 for an unsupported OpenWrt architecture.
 core_update_apply() {
     local current_version="$1" latest_version="$2" version_url="$3"
     local no_data_string="$4" core_workdir="$5" core_path="$6"
-    local rc
+    local arch install_required=0 os_arch rc
 
     if [ "$current_version" = "$no_data_string" ] || [ -z "$current_version" ]; then
         log warn "Mihomo is not installed. Installing version $latest_version."
-        core_download \
-            "$version_url" "$latest_version" \
-            "$core_workdir" "$core_path"
+        install_required=1
+    else
+        log info "Current Mihomo version: $current_version"
+        log info "Latest Mihomo version: $latest_version"
+        if [ "$current_version" = "$latest_version" ]; then
+            log info "Mihomo is already up-to-date."
+            return 0
+        fi
+    fi
+
+    os_arch=$(sysinfo_get_os_arch)
+    arch=$(core_detect_arch "$os_arch") || {
+        log error "Unsupported OpenWrt architecture: ${os_arch:-unknown}"
+        return 8
+    }
+
+    if [ "$install_required" -eq 0 ]; then
+        log info "Removing current mihomo binary..."
+        core_binary_remove "$core_path"
         rc=$?
         if [ "$rc" -ne 0 ]; then
             log error "Core update failed."
             return "$rc"
         fi
-        return 0
+
+        log info "Updating Mihomo to version $latest_version"
     fi
 
-    log info "Current Mihomo version: $current_version"
-    log info "Latest Mihomo version: $latest_version"
-    if [ "$current_version" = "$latest_version" ]; then
-        log info "Mihomo is already up-to-date."
-        return 0
-    fi
-
-    log info "Removing current mihomo binary..."
-    core_binary_remove "$core_path"
-    rc=$?
-    if [ "$rc" -ne 0 ]; then
-        log error "Core update failed."
-        return "$rc"
-    fi
-
-    log info "Updating Mihomo to version $latest_version"
     core_download \
         "$version_url" "$latest_version" \
-        "$core_workdir" "$core_path"
+        "$core_workdir" "$core_path" "$arch"
     rc=$?
     if [ "$rc" -ne 0 ]; then
         log error "Core update failed."
