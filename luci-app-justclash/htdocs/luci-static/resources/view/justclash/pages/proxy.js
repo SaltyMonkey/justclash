@@ -1,46 +1,12 @@
 "use strict";
-"require uci";
 "require form";
 "require view";
 "require view.justclash.common as common";
 "require view.justclash.lib.form as formConstants";
-"require view.justclash.api.fs as fsApi";
 "require tools.widgets as widgets";
 
 return view.extend({
-    async load() {
-        let activeRulesets = new Set();
-        let activeGeosites = new Set();
-
-        try {
-            await uci.load("justclash");
-
-            const sections = uci.sections("justclash");
-            for (const sec of sections) {
-                if (["proxies", "proxy_group"].includes(sec[".type"]) && uci.get("justclash", sec[".name"], "enabled") !== "0") {
-                    const list = uci.get("justclash", sec[".name"], "enabled_list");
-                    if (list) (Array.isArray(list) ? list : [list]).forEach(i => i && activeRulesets.add(i));
-
-                    const geositeList = uci.get("justclash", sec[".name"], "enabled_geosite_list");
-                    if (geositeList) (Array.isArray(geositeList) ? geositeList : [geositeList]).forEach(i => i && activeGeosites.add(i));
-                }
-                if (sec[".type"] === "block_rules" && uci.get("justclash", sec[".name"], "enabled") !== "0") {
-                    const blocklist = uci.get("justclash", sec[".name"], "enabled_blocklist");
-                    if (blocklist) (Array.isArray(blocklist) ? blocklist : [blocklist]).forEach(i => i && activeRulesets.add(i));
-
-                    const geositeBlocklist = uci.get("justclash", sec[".name"], "enabled_geosite_blocklist");
-                    if (geositeBlocklist) (Array.isArray(geositeBlocklist) ? geositeBlocklist : [geositeBlocklist]).forEach(i => i && activeGeosites.add(i));
-                }
-            }
-        } catch { /* ignore */ }
-
-        return {
-            rulesetsItems: Array.from(activeRulesets).map(name => ({ rawName: name, readableName: `(Set) ${name}` })),
-            geositeItems: Array.from(activeGeosites).map(name => ({ rawName: name, readableName: `(Geo) ${name}` }))
-        };
-    },
-
-    render: function (result) {
+    render: function () {
         let m, s, o, tabname;
 
         const primitives = formConstants.boolean;
@@ -234,155 +200,19 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "api_tls_cert", _("API TLS certificate path"));
         o.description = _("Path to the PEM-encoded SSL/TLS certificate file.");
-        o.placeholder = "/etc/uhttpd.crt";
-        o.default = "/etc/uhttpd.crt";
+        o.placeholder = "/etc/justclash/api-cert.pem";
+        o.default = "/etc/justclash/api-cert.pem";
         o.rmempty = false;
         o.retain = true;
         o.depends("api_tls", primitives.TRUE);
 
         o = s.taboption(tabname, form.Value, "api_tls_key", _("API TLS key path"));
         o.description = _("Path to the PEM-encoded SSL/TLS private key file.");
-        o.placeholder = "/etc/uhttpd.key";
-        o.default = "/etc/uhttpd.key";
+        o.placeholder = "/etc/justclash/api-key.pem";
+        o.default = "/etc/justclash/api-key.pem";
         o.rmempty = false;
         o.retain = true;
         o.depends("api_tls", primitives.TRUE);
-
-        tabname = "dnssettings_tab";
-        s.tab(tabname, _("DNS settings"));
-
-        o = s.taboption(tabname, form.Value, "dns_listen_port", _("DNS listen port:"));
-        o.description = _("Port where Mihomo built-in DNS server listens.");
-        o.datatype = datatypes.PORT;
-        o.placeholder = "7894";
-        o.default = "7894";
-        o.rmempty = false;
-
-        o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
-        o.description = _("Maximum number of DNS cache entries kept by Mihomo.");
-        o.default = common.defaultIPDnsCache[0].value;
-        common.defaultIPDnsCache.forEach(item => {
-            o.value(item.value, item.text);
-        });
-        o.rmempty = false;
-        o.datatype = "integer";
-        o.validate = function (section_id, value) {
-            return common.validateIntegerRange(value, 1, 1048576);
-        };
-
-        o = s.taboption(tabname, form.Value, "fake_ip_range", _("Fake IP range:"));
-        o.description = _("IPv4 CIDR range used for fake-IP responses.");
-        o.default = "198.18.0.1/22";
-        o.rmempty = false;
-        o.readonly = true;
-        o.datatype = "cidr4";
-
-        o = s.taboption(tabname, form.Value, "fake_ip_range6", _("Fake IP range (IPv6):"));
-        o.description = _("IPv6 CIDR range used for fake-IP responses.");
-        o.default = "2001:2::1/48";
-        o.rmempty = false;
-        o.readonly = true;
-        o.datatype = "cidr6";
-
-        o = s.taboption(tabname, form.Value, "fake_ip_ttl", _("Fake IP TTL:"));
-        o.description = _("TTL for fake-IP DNS responses (in seconds).");
-        o.datatype = datatypes.UINTEGER;
-        o.rmempty = false;
-        common.defaultFakeIPTtlValues.forEach(item => {
-            o.value(item.value, item.text);
-        });
-        o.default = common.defaultFakeIPTtlValues[0].value;
-        o.validate = function (section_id, value) {
-            return common.validateIntegerRange(value, 1, 86400);
-        };
-
-        o = s.taboption(tabname, form.DynamicList, "nameserver_policy", _("Nameserver policy:"));
-        o.description = _("Domain-specific DNS policy in the format domain/nameserver (example: +.arpa/10.0.0.1).");
-        o.rmempty = false;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            return common.validateNameserverPolicy(value);
-        };
-
-        o = s.taboption(tabname, form.DynamicList, "default_nameserver", _("Default nameservers:"));
-        o.description = _("Default nameservers used at startup. Recommended to use UDP ones.");
-        o.rmempty = false;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDnsServer(value);
-        };
-        o = s.taboption(tabname, form.DynamicList, "proxy_server_nameserver", _("Proxy nameservers:"));
-        o.description = _("Nameservers used to resolve proxy server hostnames.");
-        o.rmempty = false;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDnsServer(value);
-        };
-        o = s.taboption(tabname, form.DynamicList, "direct_nameserver", _("Direct nameservers:"));
-        o.description = _("Direct nameservers used for DIRECT rules.");
-        o.rmempty = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDnsServer(value);
-        };
-        o = s.taboption(tabname, form.DynamicList, "nameserver", _("Nameservers:"));
-        o.description = _("Main nameservers used for regular DNS queries.");
-        o.rmempty = false;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            if (!value || value.trim() === "") return true;
-            return common.validateDnsServer(value);
-        };
-
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_rulesets", _("Force real IP rulesets:"));
-        result.rulesetsItems.forEach(item => {
-            o.value(item.rawName, item.readableName);
-        });
-        o.description = _("Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied.");
-        o.rmempty = true;
-        o.retain = true;
-        o.editable = true;
-        o.optional = true;
-
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_geosites", _("Force real IP geosites:"));
-        result.geositeItems.forEach(item => {
-            o.value(item.rawName, item.readableName);
-        });
-        o.description = _("Select active GEOSITEs that should resolve through real IP before fake-IP matches are applied.");
-        o.rmempty = true;
-        o.retain = true;
-        o.editable = true;
-        o.optional = true;
-
-
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Force real IP rules:"));
-        o.description = _("Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com.");
-        o.rmempty = true;
-        o.retain = true;
-        o.editable = true;
-        o.optional = true;
-        o.validate = function (section_id, value) {
-            return common.isValidDomainSuffix(value);
-        };
-
-        tabname = "hostssettings_tab";
-        s.tab(tabname, _("Hosts settings"));
-
-        o = s.taboption(tabname, form.Flag, "use_system_hosts", _("Use system hosts:"));
-        o.description = _("Load DNS entries from the system hosts file when possible.");
-        o.rmempty = false;
-        o.default = primitives.TRUE;
-
-        o = s.taboption(tabname, form.DynamicList, "hosts", _("Hosts mapping:"));
-        o.description = _("Domain-specific IP mapping in the format domain/ip (example: cloudflare-dns.com/1.1.1.1).");
-        o.rmempty = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            return common.validateHostsEntry(value);
-        };
 
         tabname = "sniffersettings_tab";
         s.tab(tabname, _("Sniffer settings"));
@@ -480,7 +310,6 @@ return view.extend({
             .cbi-value[data-name="mixed_port"] .cbi-value-title,
             .cbi-value[data-name="controller_bind_interface"] .cbi-value-title,
             .cbi-value[data-name="api_password"] .cbi-value-title,
-            .cbi-value[data-name="dns_listen_port"] .cbi-value-title,
             .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
             .cbi-value[data-name="core_ntp_enabled"] .cbi-value-title,
             .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
