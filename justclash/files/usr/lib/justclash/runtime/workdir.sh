@@ -1,6 +1,30 @@
 #!/bin/ash
 # shellcheck shell=dash
 
+workdir_cache_fingerprint() {
+    local uci_hash="$1"
+    local controller_bind_address="$2"
+    local file_path file_hash
+    local fingerprint
+    shift 2
+
+    fingerprint=$(printf 'generator=%s|uci=%s|controller=%s' \
+        "$JUSTCLASH_VERSION" \
+        "$uci_hash" \
+        "$controller_bind_address") || return 1
+
+    for file_path in "$@"; do
+        if [ -f "$file_path" ]; then
+            file_hash=$(str_md5 <"$file_path") || return 1
+            fingerprint="${fingerprint}|file-present=${file_path}:${file_hash}"
+        else
+            fingerprint="${fingerprint}|file-missing=${file_path}"
+        fi
+    done
+
+    printf '%s\n' "$fingerprint" | str_md5
+}
+
 # Returns 0 when ready, 5 when the workdir cannot be recreated.
 workdir_ensure() {
     local workdir_path="$1"

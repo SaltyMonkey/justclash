@@ -222,12 +222,18 @@ start() {
         "$api_tls_key" \
         "$mihomo_persistent_ext_rules"
 
-    current_config_hash=$(config_hash_filtered "$PROGNAME" "^${PROGNAME}\.settings\.(wait_for_wan|delayed_boot|ntpd_start|mihomo_autorestart|mihomo_cron_|mihomo_service_data_|mihomo_core_|mihomo_github_|mihomo_custom_core_url|mihomo_dashboard_|mihomo_rulesets_files_download_url)") || {
+    current_config_hash=$(config_hash_filtered "$PROGNAME" "^${PROGNAME}\.settings\.(wait_for_wan|delayed_boot|ntpd_start|mihomo_autorestart|mihomo_cron_|mihomo_service_data_|mihomo_core_|mihomo_github_|mihomo_custom_core_url|mihomo_rulesets_files_download_url)") || {
         log error "Failed to calculate the current configuration hash."
         return 1
     }
-    current_config_hash=$(printf '%s\n%s\n' "$current_config_hash" "$router_selected_ipaddr" | str_md5) || {
-        log error "Failed to include the controller bind address in the configuration hash."
+    current_config_hash=$(workdir_cache_fingerprint \
+        "$current_config_hash" \
+        "$router_selected_ipaddr" \
+        "$RULESETS_FILE" \
+        "$RULESETS_BLOCKS_FILE" \
+        "$USER_RULESETS_FILE" \
+        "$USER_RULESETS_BLOCKS_FILE") || {
+        log error "Failed to calculate the YAML input fingerprint."
         return 1
     }
 
@@ -852,11 +858,14 @@ core_generate_yaml() {
     config_get ipv6_enabled settings ipv6_enabled 0
     config_get use_dashboard proxy use_dashboard 0
     config_get dashboard_repo proxy dashboard_repo "$DEFAULT_EXTERNAL_PANEL"
-    case "$dashboard_repo" in
-    yacd-meta) config_get dashboard_url settings mihomo_dashboard_yacd_meta_url "$DEFAULT_DASHBOARD_YACD_META_URL" ;;
-    zashboard) config_get dashboard_url settings mihomo_dashboard_zashboard_url "$DEFAULT_DASHBOARD_ZASHBOARD_URL" ;;
-    *) config_get dashboard_url settings mihomo_dashboard_metacubexd_url "$DEFAULT_DASHBOARD_METACUBEXD_URL" ;;
-    esac
+    dashboard_url=""
+    if [ "$use_dashboard" = "1" ]; then
+        dashboard_url=$(config_dashboard_url_read \
+            "$dashboard_repo" \
+            "$DEFAULT_DASHBOARD_METACUBEXD_URL" \
+            "$DEFAULT_DASHBOARD_YACD_META_URL" \
+            "$DEFAULT_DASHBOARD_ZASHBOARD_URL") || return 1
+    fi
     config_get api_password proxy api_password
     config_get log_level proxy log_level
     config_get api_tls proxy api_tls 0

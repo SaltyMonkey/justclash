@@ -64,7 +64,7 @@ str_build_custom_slash_map() {
 
 str_md5() {
     local res
-    res=$(md5sum)
+    res=$(md5sum) || return 1
     printf '%s' "${res%% *}"
 }
 
