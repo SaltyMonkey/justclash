@@ -63,7 +63,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
         o.description = _("Maximum number of DNS cache entries kept by Mihomo.");
-        o.default = common.defaultIPDnsCache[0].value;
+        o.default = common.defaultIPDnsCache[2].value;
         common.defaultIPDnsCache.forEach(item => {
             o.value(item.value, item.text);
         });

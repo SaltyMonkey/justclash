@@ -1,5 +1,6 @@
 "use strict";
 "require form";
+"require uci";
 "require view";
 "require view.justclash.common as common";
 "require view.justclash.lib.form as formConstants";
@@ -21,10 +22,10 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "log_level", _("Logging level:"));
         common.defaultLoggingLevels.forEach(item => {
-            o.value(item, _(`${item}`));
+            o.value(item.value, item.text);
         });
         o.description = _("Choose how much information Mihomo writes to the log. Higher levels help with debugging, but create more log entries.");
-        o.default = common.defaultLoggingLevels[0];
+        o.default = common.defaultLoggingLevels[0].value;
         o.rmempty = false;
 
         o = s.taboption(tabname, widgets.DeviceSelect, "interface_name", _("Bind all outbound connections to interface:"));
@@ -98,8 +99,8 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "keep_alive_idle", _("Idle time before connection check:"));
-        o.placeholder = "600";
-        o.description = _("How long to wait with no activity before checking whether the connection is still alive. Shorter values detect dead connections sooner.");
+        o.placeholder = "15";
+        o.description = _("How long to wait with no activity before checking whether the connection is still alive, in seconds. Presets show the equivalent duration in parentheses. Shorter values detect dead connections sooner.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         common.defaultKeepAliveSec.forEach(item => {
@@ -112,7 +113,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Connection check interval:"));
         o.placeholder = "15";
-        o.description = _("How often to repeat that check after the connection becomes idle.");
+        o.description = _("How often to repeat that check after the connection becomes idle, in seconds. Presets show the equivalent duration in parentheses.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
         common.defaultKeepAliveSec.forEach(item => {
@@ -142,7 +143,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Flag, "geodata_autoupdate", _("Enable autoupdate:"));
-        o.description = _("Enable geodata features in rules.");
+        o.description = _("Automatically update geosite and GeoIP databases at the configured interval while geodata mode is enabled.");
         o.rmempty = false;
         o.retain = true;
         o.default = primitives.FALSE;
@@ -151,7 +152,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "geodata_autoupdate_interval", _("Update interval:"));
         o.description = _("Geodata update interval in hours.");
         o.rmempty = false;
-        o.default = common.defaultGeoDataIntervalH[0].value;
+        o.default = common.defaultGeoDataIntervalH[1].value;
         common.defaultGeoDataIntervalH.forEach(item => {
             o.value(item.value, item.text);
         });
@@ -163,12 +164,19 @@ return view.extend({
         s.tab(tabname, _("Controller/API settings"));
 
         // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select which network will allow access to the API controller and dashboard."));
+        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select which network will allow access to the API controller and dashboard. Choose unspecified to listen on every IPv4 interface."));
         o.default = "lan";
         o.optional = false;
+        o.rmempty = true;
         o.nocreate = true;
         o.multiple = false;
-        o.description = _("Select which network will allow access to the API controller and dashboard.");
+        o.cfgvalue = function (section_id) {
+            const value = uci.get(common.binName, section_id, this.option);
+            return value === "-" ? "" : value;
+        };
+        o.remove = function (section_id) {
+            return uci.set(common.binName, section_id, this.option, "-");
+        };
 
         o = s.taboption(tabname, form.Value, "api_password", _("API password:"));
         o.password = true;
@@ -185,9 +193,9 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "dashboard_repo", _("Web dashboard:"));
         o.description = _("Choose which web dashboard Mihomo should download and serve.");
-        o.value("zashboard", _("zashboard"));
-        o.value("metacubexd", _("metacubexd"));
-        o.value("yacd-meta", _("Yacd-meta"));
+        o.value("zashboard", _("Zashboard"));
+        o.value("metacubexd", _("MetaCubeXD"));
+        o.value("yacd-meta", _("YACD-meta"));
         o.default = "metacubexd";
         o.rmempty = false;
         o.retain = true;
@@ -312,7 +320,6 @@ return view.extend({
             .cbi-value[data-name="api_password"] .cbi-value-title,
             .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
             .cbi-value[data-name="core_ntp_enabled"] .cbi-value-title,
-            .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
             .cbi-value[data-name="core_ntp_write_system"] .cbi-value-title {
                 color: var(--error-color-medium, #f44336) !important;
             }

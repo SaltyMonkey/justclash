@@ -14,10 +14,31 @@ return baseclass.extend({
     },
 
     async saveFileSafe(routingContent, blockingContent) {
-        return Promise.all([
-            fs.write(common.userRulesetsFilePath, routingContent ?? ""),
-            fs.write(common.userBlockRulesetsFilePath, blockingContent ?? "")
-        ]);
+        const routingBackup = await fs.read(common.userRulesetsFilePath) ?? "";
+        const blockingBackup = await fs.read(common.userBlockRulesetsFilePath) ?? "";
+
+        try {
+            await fs.write(common.userRulesetsFilePath, routingContent ?? "");
+            await fs.write(common.userBlockRulesetsFilePath, blockingContent ?? "");
+        } catch {
+            let rollbackFailed = false;
+
+            try {
+                await fs.write(common.userRulesetsFilePath, routingBackup);
+            } catch {
+                rollbackFailed = true;
+            }
+
+            try {
+                await fs.write(common.userBlockRulesetsFilePath, blockingBackup);
+            } catch {
+                rollbackFailed = true;
+            }
+
+            throw new Error(rollbackFailed
+                ? _("Failed to save rulesets and rollback was incomplete.")
+                : _("Failed to save rulesets; previous content was restored."));
+        }
     },
 
     parseNameYamlEntries(content) {

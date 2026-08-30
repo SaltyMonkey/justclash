@@ -58,7 +58,7 @@ boot() {
     fi
 
     config_get_bool delayed_boot settings delayed_boot 0
-    config_get delayed_boot_value settings delayed_boot_value 8
+    config_get delayed_boot_value settings delayed_boot_value 10
 
     if [ "$delayed_boot" -eq 1 ]; then
         ENV_JUSTCLASH_BOOT_DELAY="$delayed_boot_value"

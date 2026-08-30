@@ -165,7 +165,7 @@ return view.extend({
         o.placeholder = "192.168.1.100";
         o.rmempty = true;
         o.retain = true;
-        o.datatype = datatypes.IP4ADDR;
+        o.datatype = datatypes.IP4ADDR_OR_CIDR4;
         o.depends("nft_apply_changes", primitives.TRUE);
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
@@ -252,7 +252,7 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("mihomo_autorestart", primitives.TRUE);
-        o.description = _("Use cron format to choose when Mihomo should restart automatically.");
+        o.description = _("Use a simple five-field cron schedule to choose when Mihomo should restart automatically. Each field accepts only * or one numeric value; lists, ranges, and steps are not supported.");
         o.validate = function (section_id, value) {
             return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
         };
@@ -268,7 +268,7 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("mihomo_service_data_autoupdate", primitives.TRUE);
-        o.description = _("Use cron format to choose when rules and databases should update automatically.");
+        o.description = _("Use a simple five-field cron schedule to choose when rules and databases should update automatically. Each field accepts only * or one numeric value; lists, ranges, and steps are not supported.");
         o.validate = function (section_id, value) {
             return (common.isValidCronString(value)) ? true : _("Invalid schedule format. Use: 'minute hour day month weekday' (for example, '0 3 * * 0')");
         };
@@ -284,7 +284,7 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("mihomo_scheduled_work", primitives.TRUE);
-        o.description = _("Use cron format to choose when the core should start.");
+        o.description = _("Use a simple five-field cron schedule to choose when the core should start. Each field accepts only * or one numeric value; lists, ranges, and steps are not supported.");
         o.validate = function (section_id, value) {
             return (common.isValidCronString(value)) ? true : _("Invalid schedule format.");
         };
@@ -295,7 +295,7 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("mihomo_scheduled_work", primitives.TRUE);
-        o.description = _("Use cron format to choose when the core should stop.");
+        o.description = _("Use a simple five-field cron schedule to choose when the core should stop. Each field accepts only * or one numeric value; lists, ranges, and steps are not supported.");
         o.validate = function (section_id, value) {
             return (common.isValidCronString(value)) ? true : _("Invalid schedule format.");
         };
@@ -304,9 +304,9 @@ return view.extend({
         s.tab(tabname, _("External resources"));
 
         o = s.taboption(tabname, form.ListValue, "mihomo_core_source_type", _("Core update source:"));
-        o.value("github", _("Github"));
+        o.value("github", _("GitHub"));
         o.value("custom", _("Custom URL"));
-        o.description = _("Choose where Mihomo core should be downloaded from. 'Github' will automatically fetch the latest release, 'Custom URL' allows downloading directly from your specified link.");
+        o.description = _("Choose where Mihomo core should be downloaded from. 'GitHub' will automatically fetch the latest release, while 'Custom URL' allows downloading directly from your specified link.");
         o.rmempty = false;
         o.retain = true;
         o.default = "github";
@@ -341,7 +341,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_rulesets_files_download_url", _("Rulesets download URL:"));
-        o.description = _("URL to download inbuild rulesets from. Leave empty to use the default.");
+        o.description = _("URL to download built-in rulesets from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
@@ -372,8 +372,8 @@ return view.extend({
             return common.validateHttpZipUrl(value);
         };
 
-        o = s.taboption(tabname, form.Value, "mihomo_dashboard_metacubexd_url", _("Metacubexd download URL:"));
-        o.description = _("URL to download Metacubexd dashboard from. Leave empty to use the default.");
+        o = s.taboption(tabname, form.Value, "mihomo_dashboard_metacubexd_url", _("MetaCubeXD download URL:"));
+        o.description = _("URL to download the MetaCubeXD dashboard from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {

@@ -270,8 +270,12 @@ return view.extend({
             }.bind(this), "blur", "keyup");
 
             ui.addValidator(urlInput, "string", false, function(value) {
-                return rulesetsCodec.validateLocation(value);
+                return rulesetsCodec.validateRulesetLocation(value, typeSelect.value);
             }, "blur", "keyup");
+
+            typeSelect.addEventListener("change", function() {
+                urlInput.dispatchEvent(new window.Event("blur"));
+            });
 
             ui.addValidator(authInput, "string", true, function(value) {
                 return rulesetsCodec.validateAuth(value);
@@ -286,6 +290,11 @@ return view.extend({
         const errors = [];
 
         rows.forEach((row, index) => {
+            row.nameInput.value = row.nameInput.value.trim();
+            row.idInput.value = row.idInput.value.trim();
+            row.urlInput.value = row.urlInput.value.trim();
+            row.authInput.value = row.authInput.value.trim();
+
             const inputs = [row.nameInput, row.idInput, row.urlInput, row.authInput];
             inputs.forEach(input => input.dispatchEvent(new window.Event("blur")));
 

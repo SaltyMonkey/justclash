@@ -17,9 +17,9 @@ return view.extend({
         let geoDataMode = false;
 
         try {
-            const inbuildRules = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
+            const builtInRules = await fsApi.readNameYamlEntries(common.rulesetsFilePath);
             const userRules = await fsApi.readNameYamlEntries(common.userRulesetsFilePath);
-            const combinedRules = [...inbuildRules, ...userRules];
+            const combinedRules = [...builtInRules, ...userRules];
             const seenRules = new Set();
             rulesetsItems = combinedRules.filter(item => {
                 if (seenRules.has(item.yamlName)) return false;
@@ -27,9 +27,9 @@ return view.extend({
                 return true;
             });
 
-            const inbuildBlockRules = await fsApi.readNameYamlEntries(common.blockRulesetsFilePath);
+            const builtInBlockRules = await fsApi.readNameYamlEntries(common.blockRulesetsFilePath);
             const userBlockRules = await fsApi.readNameYamlEntries(common.userBlockRulesetsFilePath);
-            const combinedBlockRules = [...inbuildBlockRules, ...userBlockRules];
+            const combinedBlockRules = [...builtInBlockRules, ...userBlockRules];
             const seenBlock = new Set();
             blockRulesetsItems = combinedBlockRules.filter(item => {
                 if (seenBlock.has(item.yamlName)) return false;
@@ -178,12 +178,12 @@ return view.extend({
         o.modalonly = true;
 
         o = s.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.description = _("How often remote lists should be checked for updates, in seconds.");
+        o.description = _("How often remote lists should be checked for updates, in seconds. Presets show the equivalent duration in parentheses.");
         o.datatype = datatypes.UINTEGER;
         common.defaultRuleSetUpdateIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
+        o.default = common.defaultRuleSetUpdateIntervalSec[2].value;
         o.optional = true;
         o.validate = function (section_id, value) {
             return common.validateListUpdateInterval(value);
@@ -191,7 +191,7 @@ return view.extend({
         o.modalonly = true;
 
         o = s.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
-        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.description = _("Maximum download size in bytes. Presets show the equivalent size in MiB in parentheses. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
         common.defaultDownloadSizeLimits.forEach(item => {
             o.value(item.value, item.text);
@@ -206,13 +206,13 @@ return view.extend({
             s.tab(tabname, _("Geodata rules"));
 
             o = s.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.description = _("Select geosite lists whose matching domains should be routed through this proxy. Leave this empty when those lists are handled by proxy groups.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
 
             o = s.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.description = _("Select GeoIP lists whose matching networks should be routed through this proxy. Leave this empty when those lists are handled by proxy groups.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
@@ -337,11 +337,11 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultProxyProviderUpdateIntervalSec[1].value;
-        o.description = _("Time interval for subscription update check in seconds.");
+        o.description = _("Time interval for subscription update checks in seconds. Presets show the equivalent duration in parentheses.");
         o.modalonly = true;
 
         o = spp.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
-        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.description = _("Maximum download size in bytes. Presets show the equivalent size in MiB in parentheses. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
         common.defaultDownloadSizeLimits.forEach(item => {
             o.value(item.value, item.text);
@@ -476,7 +476,7 @@ return view.extend({
         o.default = common.defaultProxyProviderHealthCheckSec[3].value;
         o.retain = true;
         o.depends("health_check", primitives.TRUE);
-        o.description = _("Time interval between health checks in seconds.");
+        o.description = _("Time interval between health checks in seconds. Presets show the equivalent duration in parentheses.");
         o.validate = function (section_id, value) {
             return common.validateSecondsInterval(value);
         };
@@ -490,7 +490,7 @@ return view.extend({
         o.default = common.defaultHealthCheckTimeoutMs[3].value;
         o.retain = true;
         o.depends("health_check", primitives.TRUE);
-        o.description = _("Timeout for each individual health check in milliseconds.");
+        o.description = _("Timeout for each individual health check in milliseconds. Presets show the equivalent duration in seconds in parentheses.");
         o.validate = function (section_id, value) {
             return common.validateMillisecondsTimeout(value);
         };
@@ -511,7 +511,7 @@ return view.extend({
         o.rmempty = true;
         o.placeholder = "HK|US|(?i)Netflix";
         o.validate = function (section_id, value) {
-            return common.isValidKeywordOrRegexList(value, "filter");
+            return common.isValidKeywordOrRegexList(value);
         };
         o.modalonly = true;
 
@@ -521,7 +521,7 @@ return view.extend({
         o.rmempty = true;
         o.placeholder = "CN|(?i)douyin";
         o.validate = function (section_id, value) {
-            return common.isValidKeywordOrRegexList(value, "exclude_filter");
+            return common.isValidKeywordOrRegexList(value);
         };
         o.modalonly = true;
 
@@ -643,7 +643,7 @@ return view.extend({
         });
         o.default = common.defaultProxyGroupIntervalSec[2].value;
         o.rmempty = false;
-        o.description = _("Time interval between health checks in seconds.");
+        o.description = _("Time interval between health checks in seconds. Presets show the equivalent duration in parentheses.");
         o.validate = function (section_id, value) {
             return common.validateSecondsInterval(value);
         };
@@ -675,7 +675,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultHealthCheckTimeoutMs[3].value;
-        o.description = _("Timeout for each individual health check in milliseconds.");
+        o.description = _("Timeout for each individual health check in milliseconds. Presets show the equivalent duration in seconds in parentheses.");
         o.validate = function (section_id, value) {
             return common.validateMillisecondsTimeout(value);
         };
@@ -709,7 +709,7 @@ return view.extend({
         o.rmempty = true;
         o.placeholder = "HK|US|(?i)Netflix";
         o.validate = function (section_id, value) {
-            return common.isValidKeywordOrRegexList(value, "filter");
+            return common.isValidKeywordOrRegexList(value);
         };
         o.modalonly = true;
 
@@ -719,7 +719,7 @@ return view.extend({
         o.rmempty = true;
         o.placeholder = "CN|(?i)douyin";
         o.validate = function (section_id, value) {
-            return common.isValidKeywordOrRegexList(value, "exclude_filter");
+            return common.isValidKeywordOrRegexList(value);
         };
         o.modalonly = true;
 
@@ -750,12 +750,12 @@ return view.extend({
         o.modalonly = true;
 
         o = s2.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.description = _("How often remote lists should be checked for updates, in seconds.");
+        o.description = _("How often remote lists should be checked for updates, in seconds. Presets show the equivalent duration in parentheses.");
         o.datatype = datatypes.UINTEGER;
         common.defaultRuleSetUpdateIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
+        o.default = common.defaultRuleSetUpdateIntervalSec[2].value;
         o.optional = true;
         o.validate = function (section_id, value) {
             return common.validateListUpdateInterval(value);
@@ -763,7 +763,7 @@ return view.extend({
         o.modalonly = true;
 
         o = s2.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
-        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.description = _("Maximum download size in bytes. Presets show the equivalent size in MiB in parentheses. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
         common.defaultDownloadSizeLimits.forEach(item => {
             o.value(item.value, item.text);
@@ -778,13 +778,13 @@ return view.extend({
             s2.tab(tabname, _("Geodata rules"));
 
             o = s2.taboption(tabname, form.DynamicList, "enabled_geosite_list", _("Use with geosite:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.description = _("Select geosite lists whose matching domains should be routed through this proxy group.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
 
             o = s2.taboption(tabname, form.DynamicList, "enabled_geoip_list", _("Use with geoip:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.description = _("Select GeoIP lists whose matching networks should be routed through this proxy group.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
@@ -856,20 +856,20 @@ return view.extend({
         o.modalonly = true;
 
         o = s4.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
-        o.description = _("How often remote lists should be checked for updates, in seconds.");
+        o.description = _("How often remote lists should be checked for updates, in seconds. Presets show the equivalent duration in parentheses.");
         o.datatype = datatypes.UINTEGER;
         o.optional = true;
         common.defaultRuleSetUpdateIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultRuleSetUpdateIntervalSec[1].value;
+        o.default = common.defaultRuleSetUpdateIntervalSec[2].value;
         o.validate = function (section_id, value) {
             return common.validateListUpdateInterval(value);
         };
         o.modalonly = true;
 
         o = s4.taboption(tabname, form.Value, "size_limit", _("Size limit:"));
-        o.description = _("Maximum download size in bytes. Use 0 to disable the limit.");
+        o.description = _("Maximum download size in bytes. Presets show the equivalent size in MiB in parentheses. Use 0 to disable the limit.");
         o.datatype = datatypes.UINTEGER;
         common.defaultDownloadSizeLimits.forEach(item => {
             o.value(item.value, item.text);
@@ -884,13 +884,13 @@ return view.extend({
             s4.tab(tabname, _("Geodata rules"));
 
             o = s4.taboption(tabname, form.DynamicList, "enabled_geosite_blocklist", _("Use with geosite:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.description = _("Select geosite lists whose matching domains should be blocked.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;
 
             o = s4.taboption(tabname, form.DynamicList, "enabled_geoip_blocklist", _("Use with geoip:"));
-            o.description = _("Selected geosite lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
+            o.description = _("Select GeoIP lists whose matching networks should be blocked.");
             o.modalonly = true;
             o.optional = true;
             o.editable = true;

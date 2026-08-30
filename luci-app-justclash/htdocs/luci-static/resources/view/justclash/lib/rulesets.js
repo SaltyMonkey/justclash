@@ -1,6 +1,14 @@
 "use strict";
 "require baseclass";
 
+const MAX_LOCATION_LENGTH = 4096;
+const MAX_AUTH_LENGTH = 4096;
+const CONTROL_CHARACTERS = /[\x00-\x1F\x7F]/;
+const LOCAL_EXTENSIONS = {
+    domain: [".mrs"],
+    ipcidr: [".txt", ".list"]
+};
+
 const createEmptyRule = () => ({
     name: "",
     id: "",
@@ -63,20 +71,70 @@ const validateReadableName = (value) => {
     return true;
 };
 
-const validateLocation = (value) => {
-    if (!value || value.trim() === "")
+const validateRulesetLocation = (value, type) => {
+    const val = value ? value.trim() : "";
+
+    if (!val)
         return _("URL / Local Path is required.");
-    if (value.includes("|") || value.includes("\n"))
-        return _("URL / Local Path cannot contain pipe (|) or newlines.");
-    if (!/^(https?:\/\/|\/)/.test(value))
-        return _("URL / Local Path must start with http://, https://, or /");
+
+    if (!Object.prototype.hasOwnProperty.call(LOCAL_EXTENSIONS, type))
+        return _("Unsupported ruleset type.");
+
+    if (val.length > MAX_LOCATION_LENGTH)
+        return _("URL / Local Path must not exceed %d characters.").format(MAX_LOCATION_LENGTH);
+
+    if (val.includes("|") || CONTROL_CHARACTERS.test(val))
+        return _("URL / Local Path cannot contain pipe (|) or control characters.");
+
+    if (/^https?:\/\//i.test(val)) {
+        try {
+            const url = new URL(val);
+
+            if (!["http:", "https:"].includes(url.protocol)
+                || !url.hostname
+                || url.username
+                || url.password)
+                return _("Use an HTTP(S) URL without embedded credentials.");
+
+            return true;
+        } catch {
+            return _("Invalid HTTP(S) URL.");
+        }
+    }
+
+    if (!val.startsWith("/"))
+        return _("URL / Local Path must be an HTTP(S) URL or an absolute path.");
+
+    if (val.includes("//")
+        || /(^|\/)\.{1,2}(\/|$)/.test(val)
+        || /[\s"'`$;&|<>\\]/.test(val))
+        return _("Local path contains unsafe characters or path segments.");
+
+    const lowerPath = val.toLowerCase();
+    const allowedExtensions = LOCAL_EXTENSIONS[type];
+
+    if (!allowedExtensions.some(extension => lowerPath.endsWith(extension)))
+        return type === "domain"
+            ? _("Domain ruleset local path must end with .mrs.")
+            : _("IP CIDR ruleset local path must end with .txt or .list.");
 
     return true;
 };
 
-const validateAuth = (value) => value && (value.includes("|") || value.includes("\n"))
-    ? _("Authorization cannot contain pipe (|) or newlines.")
-    : true;
+const validateAuth = (value) => {
+    const val = value ? value.trim() : "";
+
+    if (!val)
+        return true;
+
+    if (val.length > MAX_AUTH_LENGTH)
+        return _("Authorization must not exceed %d characters.").format(MAX_AUTH_LENGTH);
+
+    if (val.includes("|") || CONTROL_CHARACTERS.test(val))
+        return _("Authorization cannot contain pipe (|) or control characters.");
+
+    return true;
+};
 
 return baseclass.extend({
     createEmptyRule,
@@ -84,6 +142,6 @@ return baseclass.extend({
     serialize,
     serializeList,
     validateReadableName,
-    validateLocation,
+    validateRulesetLocation,
     validateAuth
 });

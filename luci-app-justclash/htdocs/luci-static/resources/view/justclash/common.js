@@ -1,6 +1,11 @@
 "use strict";
 "require baseclass";
 
+const makePresetValue = (value, readable) => ({
+    value: String(value),
+    text: String(value) + " (" + readable + ")",
+});
+
 return baseclass.extend({
     // Project constants
     justclashLuciVersion: "__COMPILED_VERSION_VARIABLE__",
@@ -18,9 +23,9 @@ return baseclass.extend({
         { value: "89.109.251.23", text: "ntp3.vniiftri.ru" },
         { value: "216.239.35.4", text: "time2.google.com" },
         { value: "216.239.35.8", text: "time3.google.com" },
-    ],
+    ].map(item => makePresetValue(item.value, item.text)),
     // keep-alive-interval (Seconds)
-    defaultKeepAliveSec: [15, 25, 35, 45, 60].map(v => ({ value: String(v), text: v === 60 ? _("Every 1 minute") : _("Every %d seconds").format(v) })),
+    defaultKeepAliveSec: [15, 25, 35, 45, 60].map(v => makePresetValue(v, v === 60 ? _("1 minute") : _("%d seconds").format(v))),
     // OpenWrt NTP cron job interval (Minutes)
     defaultNtpIntervalValuesMin: [30, 60, 120, 180].map(v => ({ value: String(v), text: _("Every %d minutes").format(v) })),
     // OpenWrt init.d boot delay (Seconds)
@@ -28,13 +33,13 @@ return baseclass.extend({
     // OpenWrt init.d wait for WAN (Seconds)
     defaultWaitForWanMaxValues: [10, 20, 30, 60, 90, 120, 180].map(v => ({ value: String(v), text: _("%d seconds").format(v) })),
     // dns.fake-ip-ttl (Seconds)
-    defaultFakeIPTtlValues: [60, 120, 180].map(v => ({ value: String(v), text: _("%d seconds").format(v) })),
+    defaultFakeIPTtlValues: [10, 60, 120, 180].map(v => ({ value: String(v), text: _("%d seconds").format(v) })),
     // geo-update-interval (Hours)
     defaultGeoDataIntervalH: [12, 24, 48, 96, 168].map(v => ({ value: String(v), text: _("%d hours").format(v) })),
     // JustClash/Mihomo DNS cache limit
     defaultIPDnsCache: [1024, 2048, 4096, 8192, 16384].map(v => ({ value: String(v), text: _("%d entries").format(v) })),
     // rule-providers.[*].interval (Seconds)
-    defaultRuleSetUpdateIntervalSec: [12, 24, 48, 72].map(v => ({ value: String(v * 3600), text: _("Every %d hours").format(v) })),
+    defaultRuleSetUpdateIntervalSec: [12, 24, 48, 72].map(v => makePresetValue(v * 3600, _("%d hours").format(v))),
     // OpenWrt init.d Go runtime GOMEMLIMIT (Bytes/MiB string passed to env)
     defaultGoMemLimitValues: [
         { value: "0", text: _("Disabled") },
@@ -60,7 +65,7 @@ return baseclass.extend({
         { value: "4", text: _("4 Threads") },
     ],
     // proxy-groups.[*].interval (Seconds)
-    defaultProxyGroupIntervalSec: [60, 120, 180, 360].map(v => ({ value: String(v), text: v === 60 ? _("Every 1 minute") : _("Every %d minutes").format(v / 60) })),
+    defaultProxyGroupIntervalSec: [60, 120, 180, 360].map(v => makePresetValue(v, v === 60 ? _("1 minute") : _("%d minutes").format(v / 60))),
     // proxy-groups.[*].tolerance (Milliseconds)
     defaultUrlTestToleranceMs: [10, 20, 30, 40, 50, 100].map(v => ({ value: String(v), text: _("%d milliseconds").format(v) })),
     // proxy-groups.[*].expected-status & proxy-providers.[*].health-check.expected-status
@@ -69,27 +74,34 @@ return baseclass.extend({
         { value: "204", text: _("Response code 204") },
     ],
     // proxy-groups.[*].timeout & proxy-providers.[*].health-check.timeout (Milliseconds)
-    defaultHealthCheckTimeoutMs: [1000, 2000, 3000, 5000, 10000].map(v => ({ value: String(v), text: v === 1000 ? _("1 second") : _("%d seconds").format(v / 1000) })),
+    defaultHealthCheckTimeoutMs: [1000, 2000, 3000, 5000, 10000].map(v => makePresetValue(v, v === 1000 ? _("1 second") : _("%d seconds").format(v / 1000))),
     // Proxy groups max failed times before marking as unhealthy
     defaultMaxFailedTimes: [1, 2, 3, 4, 5, 10].map(v => ({ value: String(v), text: String(v) })),
     // proxy-providers.[*].health-check.interval (Seconds)
-    defaultProxyProviderHealthCheckSec: [60, 120, 180, 360, 720].map(v => ({ value: String(v), text: v === 60 ? _("Every 1 minute") : _("Every %d minutes").format(v / 60) })),
+    defaultProxyProviderHealthCheckSec: [60, 120, 180, 360, 720].map(v => makePresetValue(v, v === 60 ? _("1 minute") : _("%d minutes").format(v / 60))),
     // proxy-providers.[*].interval (Seconds)
-    defaultProxyProviderUpdateIntervalSec: [0.5, 1, 3].map(v => ({ value: String(v * 3600), text: v === 0.5 ? _("Every 30 minutes") : v === 1 ? _("Every hour") : _("Every %d hours").format(v) })),
+    defaultProxyProviderUpdateIntervalSec: [0.5, 1, 3].map(v => {
+        const seconds = v * 3600;
+        const readable = v < 1 ? _("%d minutes").format(v * 60) : v === 1 ? _("1 hour") : _("%d hours").format(v);
+        return makePresetValue(seconds, readable);
+    }),
     // rule-providers.[*].size-limit & proxy-providers.[*].size-limit (Bytes)
-    defaultDownloadSizeLimits: [0, 1, 2, 3, 5, 10, 25].map(v => ({ value: String(v === 0 ? 0 : v * 1048576), text: v + " MiB" })),
+    defaultDownloadSizeLimits: [0, 1, 2, 3, 5, 10, 25].map(v => {
+        const bytes = v === 0 ? 0 : v * 1048576;
+        return makePresetValue(bytes, v === 0 ? _("Disabled") : _("%d MiB").format(v));
+    }),
     // proxy-groups.[*].type (List of modes)
     defaultProxiesModes: [
         { value: "object", text: _("Object") },
-        { value: "uri", text: _("URL") }
+        { value: "uri", text: _("URI") }
     ],
     // log-level
     defaultLoggingLevels: [
-        "info",
-        "warning",
-        "error",
-        "debug",
-        "silent"
+        { value: "info", text: _("Info") },
+        { value: "warning", text: _("Warning") },
+        { value: "error", text: _("Error") },
+        { value: "debug", text: _("Debug") },
+        { value: "silent", text: _("Silent") }
     ],
     // proxy-groups.[*].url & proxy-providers.[*].health-check.url
     defaultHealthCheckUrls: [
@@ -669,20 +681,14 @@ return baseclass.extend({
         }
         return true;
     },
-    isValidKeywordOrRegexList: function (value, ctxLabel) {
-        if (!value || value.trim() === "") return true;
+    isValidKeywordOrRegexList: function (value) {
+        const val = value ? value.trim() : "";
 
-        const parts = value.split("|");
-        for (let i = 0; i < parts.length; i++) {
-            const part = parts[i].trim();
-            if (!part) continue;
-
-            try {
-                new RegExp(part);
-            } catch {
-                return _("Invalid expression in ") + ctxLabel + ": " + part;
-            }
-        }
+        if (!val) return true;
+        if (val.length > 1024)
+            return _("Filter expression must not exceed 1024 characters");
+        if (this.hasControlChars(val))
+            return _("Filter expression must not contain control characters");
 
         return true;
     },
@@ -706,7 +712,8 @@ return baseclass.extend({
     },
     formatBytes: function (b) {
         if (!b) return "0 B";
-        const units = ["B", "KB", "MB", "GB", "TB"];
+        // Binary units: the formatter divides by 1024, so IEC labels are required.
+        const units = ["B", "KiB", "MiB", "GiB", "TiB"];
         const k = 1024;
         const i = Math.floor(Math.log(b) / Math.log(k));
         return parseFloat((b / Math.pow(k, i)).toFixed(2)) + " " + units[i];
@@ -715,33 +722,33 @@ return baseclass.extend({
         const metadata = conn.metadata || {};
         const lines = [];
 
-        lines.push(`Connection ID: ${conn.id}`);
-        lines.push(`Protocol: ${String(metadata.network || "").toUpperCase()} (${metadata.type || "N/A"})`);
+        lines.push(_("Connection ID: %s").format(conn.id));
+        lines.push(_("Protocol: %s (%s)").format(String(metadata.network || "").toUpperCase(), metadata.type || _("N/A")));
 
         const src = metadata.sourceIP + ":" + metadata.sourcePort;
-        lines.push(`Source: ${src}`);
+        lines.push(_("Source: %s").format(src));
 
         const dest = metadata.destinationIP
             ? `${metadata.host || ""}` + (metadata.host ? ` (${metadata.destinationIP}:${metadata.destinationPort})` : `${metadata.destinationIP}:${metadata.destinationPort}`)
-            : (metadata.remoteDestination || "N/A");
-        lines.push(`Destination: ${dest}`);
+            : (metadata.remoteDestination || _("N/A"));
+        lines.push(_("Destination: %s").format(dest));
 
         if (metadata.sniffHost) {
-            lines.push(`Sniffed Host: ${metadata.sniffHost}`);
+            lines.push(_("Sniffed Host: %s").format(metadata.sniffHost));
         }
 
-        lines.push(`Rule: ${conn.rulePayload || conn.rule || "N/A"}`);
-        lines.push(`Proxy Chain: ${(conn.chains || []).join(" → ") || "DIRECT"}`);
+        lines.push(_("Rule: %s").format(conn.rulePayload || conn.rule || _("N/A")));
+        lines.push(_("Proxy Chain: %s").format((conn.chains || []).join(" → ") || "DIRECT"));
 
-        lines.push(`Upload: ${this.formatBytes(conn.upload)}`);
-        lines.push(`Download: ${this.formatBytes(conn.download)}`);
+        lines.push(_("Upload: %s").format(this.formatBytes(conn.upload)));
+        lines.push(_("Download: %s").format(this.formatBytes(conn.download)));
 
         if (conn.start) {
             try {
                 const date = new Date(conn.start);
-                lines.push(`Start Time: ${date.toLocaleString()}`);
+                lines.push(_("Start Time: %s").format(date.toLocaleString()));
             } catch {
-                lines.push(`Start Time: ${conn.start}`);
+                lines.push(_("Start Time: %s").format(conn.start));
             }
         }
 

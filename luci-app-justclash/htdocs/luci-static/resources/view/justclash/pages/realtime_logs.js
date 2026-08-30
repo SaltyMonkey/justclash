@@ -29,7 +29,7 @@ return view.extend({
             mihomoApi.setTls(uci.get(common.binName, "proxy", "api_tls") === "1");
         } catch { /* ignore */ }
 
-        if (!LOG_LEVEL_OPTIONS.includes(logLevel))
+        if (!LOG_LEVEL_OPTIONS.some(item => item.value === logLevel))
             logLevel = DEFAULT_LOG_LEVEL;
 
         return { apiToken, logLevel };
@@ -90,8 +90,8 @@ return view.extend({
             })
         });
         const levelChoices = {};
-        LOG_LEVEL_OPTIONS.forEach((level) => {
-            levelChoices[level] = level;
+        LOG_LEVEL_OPTIONS.forEach((item) => {
+            levelChoices[item.value] = item.text;
         });
 
         const levelDropdown = new ui.Dropdown(results.logLevel || DEFAULT_LOG_LEVEL, levelChoices, {
