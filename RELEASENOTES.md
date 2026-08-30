@@ -1,3 +1,64 @@
+## [0.92.0] - 30082026
+
+### Features & Enhancements
+- **DNS enforcement:** Added configurable handling for external client UDP DNS traffic with **By rules**, **Drop**, and **Hijack** modes. Hijack redirects requests to the router DNS service for both IPv4 and IPv6 while preserving router-local, private-network, excluded-interface, excluded-client, and excluded-port traffic.
+- **LuCI / DNS:** Moved Mihomo DNS configuration out of the Proxy page into a dedicated top-level **DNS** page and navigation entry, keeping DNS settings easier to find and maintain.
+- **LuCI / Controller:** Added an explicit unspecified controller-bind state for listening on all IPv4 interfaces while retaining logical-network selection for restricted access.
+- **Logging:** Added a private runtime log at `/tmp/justclash/justclash.log` with directory ownership, symlink, and permission checks while continuing to mirror messages to OpenWrt syslog. The separate file preserves JustClash and Mihomo history during long uptimes within the current boot when OpenWrt `logd` evicts older entries from its bounded ring buffer.
+- **LuCI / Logs:** Renamed **System logs** to **Service logs**, switched the page to the dedicated JustClash/Mihomo runtime log, and increased page retrieval from the CLI default of 40 to the most recent 400 lines.
+- **CLI / Logs:** Split `logs` (`log`, `l`) for the dedicated runtime file from `systemlogs` for filtered OpenWrt syslog output, with an optional line-count argument for both commands.
+- **Routing UX:** Added dynamic proxy, proxy-group, and provider choices to proxy-group editors and excluded the group currently being edited to prevent accidental self-references.
+- **YAML generation:** Added multi-value support for repeated `hosts` and `nameserver-policy` matchers, deduplicating values and emitting valid arrays instead of overwriting earlier entries.
+- **YAML cache:** Expanded regeneration tracking to include the generator revision, resolved controller address, dashboard URL settings, and built-in and user ruleset file contents, preventing stale YAML reuse after package or ruleset updates.
+
+### Security & Reliability
+- **Controller exposure:** Invalid controller networks and selected networks without an IPv4 address now abort startup instead of silently exposing the API controller on every interface. Listening on all interfaces requires the explicit unspecified value.
+- **Controller regeneration:** Refreshed network state before resolving the controller bind address and included that address in the runtime configuration hash, so the next service start or reload regenerates YAML after an address change instead of reusing a stale bind address.
+- **Custom rulesets:** Strengthened location validation with length limits, control-character rejection, credential-free HTTP(S) URLs, safe absolute local paths, and file extensions appropriate for domain or IP-CIDR rulesets.
+- **Custom rulesets:** Added length and control-character validation for Authorization values and normalized editable fields before validating and saving them.
+- **Custom rulesets:** Replaced parallel two-file writes with sequential writes backed by both original files; a failed save now restores previous content and reports an incomplete rollback separately.
+- **Startup checks:** Removed the option to skip environment checks so compatibility fixes and non-critical conflict detection always run before service startup.
+- **Core updates:** Unsupported OpenWrt architectures now fail explicitly instead of falling back to an AMD64 download, and architecture validation happens before an existing Mihomo binary is removed.
+- **Installer:** Applied the same strict architecture detection to the maintenance installer and update workflow.
+- **Downloads:** Consolidated curl invocation and added an explicit option terminator so download URLs cannot be interpreted as command-line options.
+- **API TLS:** Moved default controller certificate and key locations into the package-owned configuration directory and updated migration defaults accordingly.
+
+### Bug Fixes
+- **Routing:** Removed the invalid `no-resolve` suffix from generated `SRC-IP-CIDR` rules so source-address routing is emitted in Mihomo-compatible form.
+- **Controller bind:** Corrected the unspecified-network sentinel so it intentionally generates an all-IPv4 bind address instead of failing interface lookup.
+- **Firewall bypasses:** Extended both full and partial interception paths with explicit bypasses for router-local destinations and private IPv6 ranges so this traffic does not fall through to TProxy processing. Private IPv4 ranges were already bypassed.
+- **YAML formatting:** Fixed proxy-group indentation to match the surrounding generated document.
+- **LuCI / CIDR:** Aligned the client bypass validator with its description by accepting either an IPv4 address or an IPv4 CIDR subnet.
+- **LuCI / Filters:** Stopped splitting and compiling filter expressions on `|`, which is a valid regular-expression operator; validation now enforces only a length limit and rejects control characters.
+- **LuCI / Cron:** Clarified that scheduled tasks accept a simple five-field cron form with only `*` or one numeric value per field, matching the implemented validator.
+- **LuCI / Geodata:** Replaced copied descriptions with separate proxy, proxy-group, and block explanations and corrected the geodata auto-update description.
+- **LuCI / Clipboard:** Localized connection summaries and switched byte formatting to IEC units that match the formatter's base-1024 calculations.
+- **LuCI / Text:** Corrected built-in, GitHub, and dashboard naming; removed a duplicate sniffer CSS selector; and replaced a dynamically constructed gettext key with extractable preset labels.
+- **LuCI / Presets:** Made numeric preset values visible alongside readable units and localized log-level choices without changing the stored values.
+- **Logging:** Updated realtime-log level handling for localized option objects and kept file and syslog severity labels consistent.
+
+### Defaults & Configuration
+- **DNS defaults:** Expanded bootstrap host records to retain multiple resolver addresses for one matcher and aligned DNS cache and Fake-IP defaults between UCI, runtime fallbacks, and LuCI.
+- **DNS policy:** Expanded and reorganized resolver policies for Russian public, government, regulated, payment, fiscal, POS, and media services without exposing individual entries in release notes.
+- **Compatibility lists:** Expanded and sorted Fake-IP and sniffer compatibility exclusions, mirrored applicable resolver-policy services into sniffer exclusions, and removed NTP/time entries from sniffer where protocol sniffing cannot use them.
+- **Runtime defaults:** Changed the new-install defaults to a DNS cache size of 4096 entries, Fake-IP TTL of 10 seconds, `GOGC=50`, 15-second keep-alive idle time, and a 60-minute core NTP interval.
+- **Update defaults:** Changed the default built-in ruleset refresh interval to 48 hours, geodata refresh interval to 24 hours, and delayed-start preset to 10 seconds.
+- **User-Agent:** Refreshed the bundled desktop browser User-Agent snapshot and changed array construction so the random selector cannot target uninitialized entries.
+- **Translations:** Rebuilt and cleaned the Russian, Simplified Chinese, and gettext template catalogs, including previously fuzzy or untranslated UI strings.
+
+### Packaging, Migration & Documentation
+- **Dependencies:** Added the nftables NAT and FIB kernel modules required by DNS hijacking and local-destination checks to package and container-build dependencies.
+- **Conflicts:** Declared Forkop service and LuCI packages as conflicts with JustClash transparent routing.
+- **Post-install:** Removed duplicate legacy API-password randomization while preserving placeholder-based password generation through the shared configuration reset module for installation and migration.
+- **Migration:** Added the UDP DNS mode with a safe **By rules** default, removed the deprecated environment-check bypass, and supplied package-owned TLS paths when those options are missing.
+- **Documentation:** Updated routing, ruleset, UCI, CLI, security, log-page, installation, and upgrade documentation for the new DNS, controller, logging, and generated-YAML cache behavior.
+
+### Upgrade Notes
+- **Configuration:** No UCI reset is required. Migration adds missing options and removes only the deprecated environment-check bypass; existing user-selected runtime values remain unchanged.
+- **Controller:** Verify the selected controller network before upgrading. A missing or address-less selected network now blocks startup rather than broadening API exposure; choose the unspecified option only when listening on every IPv4 interface is intentional.
+- **Firewall:** DNS hijack requires the newly declared nftables NAT and FIB dependencies. Package managers should install them automatically with the service package.
+- **LuCI:** A browser hard refresh is recommended after upgrading because DNS navigation, translated labels, and the logs page changed.
+
 ## [0.90.13_rc4] - 14082026
 
 ### Features & Enhancements

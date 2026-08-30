@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.90.13_rc4
+PKG_VERSION:=0.92.0
 
 PKG_RELEASE:=1
 
