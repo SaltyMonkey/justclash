@@ -103,6 +103,22 @@ The managed components are:
 
 Stop or reload the service through procd so all three components are updated together.
 
+## Generated YAML Cache
+
+JustClash stores the generated Mihomo YAML and its routing sidecar files under the RAM-backed runtime directory. On each service start or reload, the existing files are reused only when every required artifact exists, the YAML still passes Mihomo validation, and the saved input fingerprint matches the current inputs.
+
+The fingerprint covers:
+
+- the UCI configuration after excluding lifecycle, scheduler, and updater-only settings;
+- the JustClash package version used by the YAML generator;
+- the currently resolved controller bind address;
+- dashboard URL settings;
+- the contents and presence of both built-in ruleset catalogs and both user ruleset catalogs.
+
+This means a package upgrade, controller address change, dashboard URL edit, or ruleset catalog edit invalidates the cached YAML without requiring an unrelated UCI change. The comparison happens on the next service start or reload; editing a catalog or running `service_data_update` does not modify the configuration of an already running Mihomo process by itself.
+
+The runtime directory is recreated after a router reboot, so the YAML and sidecar files are generated again even when the persistent configuration has not changed.
+
 ## Client and Router Traffic
 
 | Traffic source | Main control |

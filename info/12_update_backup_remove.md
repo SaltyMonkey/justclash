@@ -8,10 +8,16 @@ JustClash packages, the Mihomo core, and downloaded service data have separate l
 | --- | --- | --- |
 | `justclash` and LuCI packages | Online installer or local APK/IPK files | Package migrations may update the UCI schema |
 | Mihomo core | Installer `--update-core` or `justclash.sh core_update` | Replaces the CPU-specific runtime binary |
-| Rulesets and service data | LuCI actions, schedules, or `service_data_update` | Refreshes downloaded catalogs and generated data |
+| Rulesets and service data | LuCI actions, schedules, or `service_data_update` | Refreshes downloaded catalogs; generated YAML is rebuilt on the next start or reload |
 | User configuration | LuCI or UCI | Stored under `/etc/config/justclash` and selected files under `/etc/justclash/` |
 
 The package version and Mihomo version are intentionally independent. A package update can preserve the current core, while the online automated installation updates the core to the current stable build before installing the selected JustClash release.
+
+## Generated Configuration After Updates
+
+The generated Mihomo YAML is cached in the RAM-backed runtime directory. Its fingerprint includes the JustClash package version, relevant UCI settings, the resolved controller address, and the built-in and user ruleset catalog files. A changed package version or catalog therefore invalidates the old YAML on the next service start or reload instead of reusing output produced from older generator inputs.
+
+Updating the Mihomo core alone does not change this fingerprint. Cached YAML is still validated by the installed core before reuse; a validation failure aborts startup rather than silently running an incompatible configuration.
 
 ## Before an Update
 

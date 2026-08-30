@@ -58,6 +58,8 @@ justclash.sh logs [line_count]
 
 Aliases: `log`, `l`. The default is 40 lines. The file is stored at `/tmp/justclash/justclash.log` with mode `0600` and is cleared when `/tmp` is recreated during a router reboot.
 
+The LuCI **Service logs** page requests 400 recent lines through RPC. This does not change the CLI default.
+
 To read JustClash entries still present in the OpenWrt system log:
 
 ```sh
