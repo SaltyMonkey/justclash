@@ -361,8 +361,7 @@ diagnostic_conflicts_interactive() {
 }
 
 detect_arch() {
-    local arch_raw
-    arch_raw=$(get_os_arch)
+    local arch_raw="$1"
 
     case "$arch_raw" in
     aarch64_*) echo "arm64" ;;
@@ -389,7 +388,7 @@ detect_arch() {
     *_neon-vfp*) echo "armv7" ;;
     *_neon* | *_vfp*) echo "armv6" ;;
     arm_*) echo "armv5" ;;
-    *) echo "amd64" ;;
+    *) return 1 ;;
     esac
 }
 
@@ -434,13 +433,12 @@ get_release_asset_digest() {
 
 core_update() {
     local cur_ver latest_ver version_txt_url
-    local check_url channel arch
+    local check_url channel arch os_arch
     local asset_name digest expected_sha256
     channel=${1}
     check_url="https://api.github.com/repos/${MIHOMO_GITHUB_REPO}/releases/latest"
 
     cur_ver=$(info_mihomo)
-    arch=$(detect_arch)
 
     echo " - Checking for Mihomo updates (channel: $channel)..."
 
@@ -469,6 +467,22 @@ core_update() {
         return 1
     fi
 
+    if [ "$cur_ver" != "$NO_DATA_STRING" ] && [ -n "$cur_ver" ]; then
+        echo " - Current Mihomo version: $cur_ver"
+        echo " - Latest Mihomo version ($channel): $latest_ver"
+
+        if [ "$cur_ver" = "$latest_ver" ]; then
+            echo " - Mihomo is already up-to-date."
+            return 0
+        fi
+    fi
+
+    os_arch=$(get_os_arch)
+    arch=$(detect_arch "$os_arch") || {
+        print_red "Unsupported OpenWrt architecture: ${os_arch:-unknown}"
+        return 1
+    }
+
     asset_name="mihomo-linux-${arch}-${latest_ver}.gz"
     digest=$(get_release_asset_digest "$check_url" "$channel" "$asset_name")
 
@@ -489,7 +503,7 @@ core_update() {
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         echo " - Mihomo is not installed. Installing version $latest_ver ($channel)."
-        core_download "$version_txt_url" "$latest_ver" "$expected_sha256"
+        core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"
         if [ $? -eq 1 ]; then
             print_red "Core update failed."
             return 1
@@ -497,38 +511,31 @@ core_update() {
         return 0
     fi
 
-    echo " - Current Mihomo version: $cur_ver"
-    echo " - Latest Mihomo version ($channel): $latest_ver"
+    echo " - Removing current mihomo binary..."
+    core_remove
+    if [ $? -eq 1 ]; then
+        print_red "Core update failed."
+        return 1
+    fi
 
-    if [ "$cur_ver" != "$latest_ver" ]; then
-        echo " - Removing current mihomo binary..."
-        core_remove
-        if [ $? -eq 1 ]; then
-            print_red "Core update failed."
-            return 1
-        fi
-
-        echo " - Updating Mihomo to version $latest_ver ($channel)"
-        core_download "$version_txt_url" "$latest_ver" "$expected_sha256"
-        if [ $? -eq 1 ]; then
-            print_red "Core update failed."
-            return 1
-        fi
-    else
-        echo " - Mihomo is already up-to-date."
+    echo " - Updating Mihomo to version $latest_ver ($channel)"
+    core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"
+    if [ $? -eq 1 ]; then
+        print_red "Core update failed."
+        return 1
     fi
 
     return 0
 }
 
 core_download() {
-    local arch file_name base_url param_version version_txt_url download_url
+    local file_name base_url param_version version_txt_url download_url arch
+    local expected_sha256 actual_sha256 tmp_archive_path
     version_txt_url="$1"
-    local param_version="$2"
-    local expected_sha256="$3"
-    local actual_sha256 tmp_archive_path
+    param_version="$2"
+    expected_sha256="$3"
+    arch="$4"
 
-    arch=$(detect_arch)
     mkdir -p "$TMP_DOWNLOAD_PATH"
     tmp_archive_path=$(mktemp "${TMP_DOWNLOAD_PATH}/mihomo.XXXXXX")
 
