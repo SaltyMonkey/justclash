@@ -68,6 +68,7 @@ LuCI creates dynamic sections with generated UCI IDs. Rules refer to the user-vi
 | `nft_ips_exclude` | List of IPv4 addresses/CIDRs | Bypass matching IPv4 clients |
 | `pbr_priority` | Unsigned integer | Priority used by JustClash policy-routing rules |
 | `nft_quic_mode` | Choice | QUIC handling policy |
+| `nft_dns_udp_mode` | Choice | Plain client UDP DNS policy (`BY RULES`, `DROP`, or `HIJACK` to the router DNS service) |
 | `nft_dot_mode` | Choice | DNS-over-TLS handling policy |
 | `nft_doh_mode` | Choice | DNS-over-HTTPS handling policy |
 | `nft_dot_quic_mode` | Choice | DNS-over-QUIC handling policy |
@@ -113,7 +114,7 @@ URL fields may contain private sources. Do not include their values in bug repor
 | `use_mixed_port` | Boolean | Enable explicit HTTP/SOCKS listener |
 | `mixed_port` | Port | Explicit mixed listener |
 | `proxy_authentication` | List of `user:pass` credentials | Required access control for non-loopback Mixed Port clients |
-| `controller_bind_interface` | OpenWrt network name | Network whose address is used for API binding |
+| `controller_bind_interface` | OpenWrt network name or `-` | Network whose address is used for API binding; `-` listens on all IPv4 interfaces |
 | `use_dashboard` | Boolean | Enable local dashboard hosting |
 | `dashboard_repo` | Choice | Selected dashboard |
 | `api_password` | Secret | Mihomo API credential, generated during package installation |

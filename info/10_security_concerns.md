@@ -101,7 +101,7 @@ An HTTPS LuCI page cannot open insecure HTTP or WebSocket controller connections
 
 ## Controller Binding
 
-`controller_bind_interface` is an OpenWrt network name, not a device name. JustClash resolves its current address and uses it for the controller listener.
+`controller_bind_interface` is an OpenWrt network name, not a device name. JustClash resolves its current address and uses it for the controller listener. The special value `-` intentionally listens on all IPv4 interfaces.
 
 ```sh
 uci set justclash.proxy.controller_bind_interface='<TRUSTED_NETWORK>'
@@ -111,7 +111,7 @@ service justclash restart
 ```
 
 > [!WARNING]
-> An invalid network name or a network without a usable address can cause an all-interface controller binding. Treat firewall restrictions as mandatory.
+> The special value `-` exposes the controller listener on all IPv4 interfaces. Invalid network names and networks without a usable address abort startup. Treat firewall restrictions as mandatory when using `-`.
 
 Never expose the controller directly to WAN.
 

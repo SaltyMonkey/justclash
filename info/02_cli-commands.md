@@ -48,13 +48,23 @@ justclash.sh cron_update
 
 ## Logs
 
+JustClash writes each service and Mihomo message to both its private runtime log and the OpenWrt system log.
+
+To read the private log:
+
 ```sh
 justclash.sh logs [line_count]
 ```
 
-Aliases: `systemlogs`, `log`, `l`. The default is 40 lines.
+Aliases: `log`, `l`. The default is 40 lines. The file is stored at `/tmp/justclash/justclash.log` with mode `0600` and is cleared when `/tmp` is recreated during a router reboot.
 
-System logs can contain addresses, domains, interface names, or endpoints. Inspect them before sharing.
+To read JustClash entries still present in the OpenWrt system log:
+
+```sh
+justclash.sh systemlogs [line_count]
+```
+
+The default is 40 lines. Both logs can contain addresses, domains, interface names, or endpoints. Inspect them before sharing.
 
 ## Diagnostics
 

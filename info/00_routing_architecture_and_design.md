@@ -130,7 +130,7 @@ When IPv6 support is disabled or unavailable, IPv6 traffic is not governed by th
 3. Change **Routing mode**.
 4. Review the default rule, Fake-IP exclusions, and selected client interfaces.
 5. Save & Apply.
-6. Check **Connections**, **Rules**, and **System logs**.
+6. Check **Connections**, **Rules**, and **Service logs**.
 7. Run:
 
 ```sh

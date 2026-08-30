@@ -125,9 +125,9 @@ The service owns the complete lifecycle: validation, configuration compilation, 
 | --- | --- |
 | ![Active connections](imgs/connections.png) | ![Ruleset configuration](imgs/rulesets.png) |
 
-| System logs | Realtime logs |
+| Service logs | Realtime logs |
 | --- | --- |
-| ![System logs](imgs/system_logs.png) | ![Realtime logs](imgs/realtime_logs.png) |
+| ![Service logs](imgs/service_logs.png) | ![Realtime logs](imgs/realtime_logs.png) |
 
 </details>
 
