@@ -22,10 +22,10 @@ const callStatus = rpc.declare({
     params: []
 });
 
-const declareAction = (method) => rpc.declare({
+const declareAction = (method, params = []) => rpc.declare({
     object: "justclash",
     method,
-    params: [],
+    params,
     timeout: 300000
 });
 
@@ -39,7 +39,7 @@ const callDiagMihomoConfig = declareAction("diag_mihomo_config");
 const callDiagMihomoConfigUnsafe = declareAction("diag_mihomo_config_unsafe");
 const callDiagServiceConfig = declareAction("diag_service_config");
 const callDiagServiceConfigUnsafe = declareAction("diag_service_config_unsafe");
-const callSystemLogs = declareAction("systemlogs");
+const callServiceLogs = declareAction("logs", ["lines"]);
 const callUpdateCore = declareAction("update_core");
 const callUpdateRulesets = declareAction("update_rulesets");
 
@@ -95,8 +95,8 @@ return baseclass.extend({
         return assertSuccess(await callDiagServiceConfigUnsafe());
     },
 
-    async getSystemLogs() {
-        return assertSuccess(await callSystemLogs());
+    async getServiceLogs(lines) {
+        return assertSuccess(await callServiceLogs(lines));
     },
 
     async updateCore() {

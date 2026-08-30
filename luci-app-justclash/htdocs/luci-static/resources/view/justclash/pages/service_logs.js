@@ -38,7 +38,7 @@ return view.extend({
             refreshBtn.disabled = true;
 
             try {
-                const res = await ubusApi.getSystemLogs();
+                const res = await ubusApi.getServiceLogs(common.serviceLogsMaxLines);
                 rawLogs = (res.stdout || "").replace(/\r?\n$/, "");
                 lastFetchLabel.textContent = _("Last updated: ") + new Date().toLocaleString();
                 renderLogs(reverseCheckbox.checked);

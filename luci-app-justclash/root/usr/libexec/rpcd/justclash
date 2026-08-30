@@ -72,8 +72,10 @@ run_config_dump() {
     fi
 }
 
-run_systemlogs() {
-    jc_logs_output=$(/usr/bin/justclash.sh logs 2>/dev/null)
+run_logs() {
+    jc_logs_lines="$1"
+
+    jc_logs_output=$(/usr/bin/justclash.sh logs "$jc_logs_lines" 2>/dev/null)
     jc_logs_code=$?
 
     if [ "$jc_logs_code" -eq 0 ]; then
@@ -97,7 +99,7 @@ list)
         "diag_mihomo_config_unsafe": {},
         "diag_service_config": {},
         "diag_service_config_unsafe": {},
-        "systemlogs": {},
+        "logs": { "lines": 32 },
         "update_core": {},
         "update_rulesets": {}
     }'
@@ -142,8 +144,14 @@ call)
     diag_service_config_unsafe)
         run_config_dump diag_service_config_unsafe "Failed to fetch the unredacted service config."
         ;;
-    systemlogs)
-        run_systemlogs
+    logs)
+        read -r jc_request
+        if json_load "$jc_request"; then
+            json_get_var jc_logs_lines lines
+            run_logs "$jc_logs_lines"
+        else
+            emit_result 2 "Invalid service log request."
+        fi
         ;;
     update_core)
         run_quiet "Core update completed." "Core update failed." \
