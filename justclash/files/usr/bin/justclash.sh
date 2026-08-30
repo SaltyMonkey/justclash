@@ -121,8 +121,9 @@ start() {
         validation_failed=1
     fi
 
-    if ! val_is_ifname "$controller_bind_interface"; then
-        config_validation_error "proxy.controller_bind_interface must name a logical network"
+    if [ "$controller_bind_interface" != "$CONTROLLER_BIND_UNSPECIFIED" ] &&
+        ! val_is_ifname "$controller_bind_interface"; then
+        config_validation_error "proxy.controller_bind_interface must name a logical network or be '-'"
         validation_failed=1
     fi
 
@@ -161,10 +162,14 @@ start() {
     fi
 
     network_flush_cache
-    if ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" ||
-        [ -z "$router_selected_ipaddr" ]; then
-        log error "Controller bind network has no IPv4 address. Aborting startup."
-        return 1
+    if [ "$controller_bind_interface" = "$CONTROLLER_BIND_UNSPECIFIED" ]; then
+        router_selected_ipaddr="$CONTROLLER_BIND_ALL_IPV4"
+    else
+        if ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" ||
+            [ -z "$router_selected_ipaddr" ]; then
+            log error "Controller bind network has no IPv4 address. Aborting startup."
+            return 1
+        fi
     fi
 
     preflight_check_requirement "$CORE_PATH" "$CORE_BIN_NAME" "$REQUIRED_TOOLS" || {
