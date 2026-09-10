@@ -536,8 +536,8 @@ core_download() {
     expected_sha256="$3"
     arch="$4"
 
-    mkdir -p "$TMP_DOWNLOAD_PATH"
-    tmp_archive_path=$(mktemp "${TMP_DOWNLOAD_PATH}/mihomo.XXXXXX")
+    mkdir -p "$TMP_DOWNLOAD_PATH" || return 1
+    tmp_archive_path=$(mktemp "${TMP_DOWNLOAD_PATH}/mihomo.XXXXXX") || return 1
 
     file_name="mihomo-linux-${arch}-${param_version}.gz"
     base_url="${version_txt_url%/*}"
@@ -547,7 +547,7 @@ core_download() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        --progress-bar -L -o "$tmp_archive_path" "$download_url" || {
+        --progress-bar -f -L -o "$tmp_archive_path" -- "$download_url" || {
         print_red "Failed to download the Mihomo archive."
         rm -f "$tmp_archive_path"
         return 1
@@ -563,25 +563,23 @@ core_download() {
     echo " - SHA256 verification passed for Mihomo archive version $param_version"
 
     echo " - Extracting to $CORE_PATH" "⬇️"
-    if gzip -t "$tmp_archive_path" 2>/dev/null; then
-        gunzip -c "$tmp_archive_path" >"$CORE_PATH" || {
-            rm -f "$tmp_archive_path"
-            print_red "Failed to extract the Mihomo archive."
-            return 1
-        }
-    else
-        cp "$tmp_archive_path" "$CORE_PATH" || {
-            rm -f "$tmp_archive_path"
-            print_red "Failed to copy the Mihomo binary."
-            return 1
-        }
+    if ! gzip -t "$tmp_archive_path" 2>/dev/null; then
+        rm -f "$tmp_archive_path"
+        print_red "Invalid Mihomo gzip archive."
+        return 1
+    fi
+    if ! gunzip -c "$tmp_archive_path" >"$CORE_PATH"; then
+        rm -f "$tmp_archive_path"
+        print_red "Failed to extract the Mihomo archive."
+        return 1
+    fi
+    if ! chmod 755 "$CORE_PATH"; then
+        rm -f "$tmp_archive_path"
+        print_red "Failed to install the Mihomo binary."
+        return 1
     fi
 
     echo " - Mihomo installed at $CORE_PATH"
-
-    if ! chmod +x "$CORE_PATH"; then
-        print_red "Failed to set executable permissions: $CORE_PATH"
-    fi
 
     echo " - Cleaning up temporary files"
     if ! rm -f "$tmp_archive_path"; then
