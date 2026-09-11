@@ -2,12 +2,14 @@
 # Ash is checked as dash because ShellCheck still treats BusyBox as folklore.
 # shellcheck shell=dash
 
-_COMPAT_LIBDIR="${JUSTCLASH_COMPAT_LIBDIR:-/usr/lib/justclash/compat}"
+# Disable bridge netfilter hooks that would otherwise process bridged traffic twice.
 
-# shellcheck disable=SC1091
-. "$_COMPAT_LIBDIR/iptables.sh" || return 1
+iptables_fix() {
+    command -v sysctl >/dev/null 2>&1 || return 0
 
-unset _COMPAT_LIBDIR
+    [ "$(sysctl -n net.bridge.bridge-nf-call-iptables 2>/dev/null)" = "1" ] && sysctl -w net.bridge.bridge-nf-call-iptables=0
+    [ "$(sysctl -n net.bridge.bridge-nf-call-ip6tables 2>/dev/null)" = "1" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=0
+}
 
 compat_fixes() {
     iptables_fix
