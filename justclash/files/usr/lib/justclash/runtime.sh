@@ -14,32 +14,26 @@
 # Predicates keep the usual 0/1 contract. Each operation documents the subset
 # it returns; apparently even integers need an API contract once shell grows up.
 
-_RUNTIME_LIBDIR="${JUSTCLASH_RUNTIME_LIBDIR:-/usr/lib/justclash/runtime}"
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/preflight.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/downloads.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/core.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/core_update.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/ntpd.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/dnsmasq.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/workdir.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/nftables.sh" || return 1
+# shellcheck disable=SC1091
+. "/usr/lib/justclash/runtime/policy_routing.sh" || return 1
 
 # shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/preflight.sh" || return 1
+. "/usr/lib/justclash/runtime/scheduler.sh" || return 1
 # shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/http.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/core.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/core_update.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/service_data.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/ntpd.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/dnsmasq.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/workdir.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/nftables.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/policy_routing.sh" || return 1
-
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/scheduler.sh" || return 1
-# shellcheck disable=SC1091
-. "$_RUNTIME_LIBDIR/diagnostics.sh" || return 1
-
-unset _RUNTIME_LIBDIR
+. "/usr/lib/justclash/runtime/diagnostics.sh" || return 1
