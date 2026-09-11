@@ -1,0 +1,224 @@
+#!/bin/sh
+# JSON strings go through jq arguments, never through shell interpolation.
+
+emit_result() {
+    result_code="$1"
+    result_message="$2"
+
+    jq -cn --argjson code "$result_code" --arg stdout "$result_message" \
+        '{code: $code, stdout: $stdout}'
+}
+
+emit_status() {
+    status_running=0
+    status_enabled=0
+
+    status_package_version=$(/usr/bin/justclash.sh version package 2>/dev/null)
+    status_core_version=$(/usr/bin/justclash.sh version core 2>/dev/null)
+
+    /etc/init.d/justclash running >/dev/null 2>&1 && status_running=1
+    /etc/init.d/justclash enabled >/dev/null 2>&1 && status_enabled=1
+
+    jq -cn --arg package_version "$status_package_version" \
+        --arg core_version "$status_core_version" \
+        --argjson running "$status_running" --argjson enabled "$status_enabled" \
+        '{code: 0, package_version: $package_version, core_version: $core_version,
+          running: ($running == 1), enabled: ($enabled == 1)}'
+}
+
+# Require one JSON object; missing/null fields stay empty, not the string "null".
+request_field() {
+    printf '%s' "$request" | jq -rs --arg field "$1" '
+        if length == 1 and (.[0] | type) == "object" then
+            .[0][$field] | if . == null then ""
+            elif type == "string" or type == "number" then tostring
+            else error("Invalid field type") end
+        else error("Invalid request") end
+    ' 2>/dev/null
+}
+
+run_quiet() {
+    run_success_message="$1"
+    run_failure_message="$2"
+
+    shift 2
+    "$@" >/dev/null 2>&1
+    run_code=$?
+
+    if [ "$run_code" -eq 0 ]; then
+        emit_result 0 "$run_success_message"
+    else
+        emit_result "$run_code" "$run_failure_message"
+    fi
+}
+
+run_safe_check() {
+    check_output=$(/usr/bin/justclash.sh check 2>/dev/null)
+    check_code=$?
+
+    if [ "$check_code" -eq 0 ]; then
+        emit_result 0 "$check_output"
+    else
+        emit_result "$check_code" "Redacted check failed."
+    fi
+}
+
+run_output() {
+    output_failure_message="$1"
+    shift
+
+    output=$(/usr/bin/justclash.sh "$@" 2>/dev/null)
+    output_code=$?
+
+    if [ "$output_code" -eq 0 ]; then
+        emit_result 0 "$output"
+    else
+        emit_result "$output_code" "$output_failure_message"
+    fi
+}
+
+run_config_request() {
+    config_unsafe="$1"
+    config_target=""
+
+    read -r request
+    if ! config_target=$(request_field target); then
+        emit_result 2 "Invalid configuration request."
+        return
+    fi
+
+    case "${config_target}:${config_unsafe}" in
+    mihomo:0)
+        run_output "Failed to fetch the redacted Mihomo config." \
+            config show mihomo
+        ;;
+    mihomo:1)
+        run_output "Failed to fetch the unredacted Mihomo config." \
+            config show mihomo --unsafe
+        ;;
+    service:0)
+        run_output "Failed to fetch the redacted service config." \
+            config show service
+        ;;
+    service:1)
+        run_output "Failed to fetch the unredacted service config." \
+            config show service --unsafe
+        ;;
+    *)
+        emit_result 2 "Invalid configuration target."
+        ;;
+    esac
+}
+
+run_logs() {
+    logs_lines="$1"
+
+    logs_output=$(/usr/bin/justclash.sh logs service "$logs_lines" 2>/dev/null)
+    logs_code=$?
+
+    if [ "$logs_code" -eq 0 ]; then
+        emit_result 0 "$logs_output"
+    else
+        emit_result "$logs_code" "Failed to fetch service logs."
+    fi
+}
+
+run_resources_update() {
+    resource_target=""
+
+    read -r request
+    if ! resource_target=$(request_field target); then
+        emit_result 2 "Invalid resource update request."
+        return
+    fi
+
+    case "$resource_target" in
+    core)
+        run_quiet "Core update completed." "Core update failed." \
+            /usr/bin/justclash.sh resources core update
+        ;;
+    data)
+        run_quiet "Service data update completed." "Service data update failed." \
+            /usr/bin/justclash.sh resources data update
+        ;;
+    *)
+        emit_result 2 "Invalid resource target."
+        ;;
+    esac
+}
+
+case "$1" in
+list)
+    printf '%s\n' '{
+        "status": {},
+        "start": {},
+        "stop": {},
+        "restart": {},
+        "enable": {},
+        "disable": {},
+        "check": {},
+        "hardware_id": {},
+        "config_show": { "target": "" },
+        "config_show_unsafe": { "target": "" },
+        "logs": { "lines": 32 },
+        "resources_update": { "target": "" }
+    }'
+    ;;
+call)
+    case "$2" in
+    status)
+        emit_status
+        ;;
+    start)
+        run_quiet "Service started." "Failed to start the service." \
+            /etc/init.d/justclash start
+        ;;
+    stop)
+        run_quiet "Service stopped." "Failed to stop the service." \
+            /etc/init.d/justclash stop
+        ;;
+    restart)
+        run_quiet "Service restarted." "Failed to restart the service." \
+            /etc/init.d/justclash restart
+        ;;
+    enable)
+        run_quiet "Service enabled on boot." "Failed to enable the service on boot." \
+            /etc/init.d/justclash enable
+        ;;
+    disable)
+        run_quiet "Service disabled on boot." "Failed to disable the service on boot." \
+            /etc/init.d/justclash disable
+        ;;
+    check)
+        run_safe_check
+        ;;
+    hardware_id)
+        run_output "Failed to generate the hardware identifier." \
+            check hwid
+        ;;
+    config_show)
+        run_config_request 0
+        ;;
+    config_show_unsafe)
+        run_config_request 1
+        ;;
+    logs)
+        read -r request
+        if logs_lines=$(request_field lines); then
+            run_logs "$logs_lines"
+        else
+            emit_result 2 "Invalid service log request."
+        fi
+        ;;
+    resources_update)
+        run_resources_update
+        ;;
+    *)
+        exit 1
+        ;;
+    esac
+    ;;
+*)
+    exit 1
+    ;;
+esac
