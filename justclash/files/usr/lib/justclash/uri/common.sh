@@ -16,6 +16,45 @@ uri_is_truthy() {
     esac
 }
 
+# Return host and raw port in URI_HOST/URI_PORT; protocols normalize ports themselves.
+uri_parse_hostport() {
+    local authority="$1" default_port="$2" host suffix port=""
+    URI_HOST=""
+    URI_PORT=""
+    authority="${authority%%\?*}"
+    authority="${authority%%#*}"
+    authority="${authority%%/*}"
+
+    case "$authority" in
+    \[*\]*)
+        host="${authority#\[}"
+        host="${host%%\]*}"
+        suffix="${authority#*\]}"
+        case "$suffix" in
+        '') ;;
+        :*) port="${suffix#:}" ;;
+        *) return 1 ;;
+        esac
+        ;;
+    *\[* | *\]*) return 1 ;;
+    *:*:*)
+        # Guessing where an unbracketed IPv6 address ends is not parsing.
+        return 1
+        ;;
+    *:*)
+        host="${authority%:*}"
+        port="${authority##*:}"
+        ;;
+    *) host="$authority" ;;
+    esac
+
+    [ -n "$host" ] || return 1
+    URI_HOST=$(str_url_decode "$host") || return 1
+    [ -n "$URI_HOST" ] || return 1
+    URI_PORT="${port:-$default_port}"
+    return 0
+}
+
 uri_json_array_from_csv() {
     local value="$1"
 

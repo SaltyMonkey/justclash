@@ -27,11 +27,10 @@ parse_simple_proxy_url() {
         hostport="$raw"
     fi
 
-    # host:port
-    server="$(str_url_decode "${hostport%%:*}")"
-
-    port="${hostport##*:}"
-    [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
+    local URI_HOST="" URI_PORT=""
+    uri_parse_hostport "$hostport" "$DEFAULT_SOCKS_PORT" || return 1
+    server="$URI_HOST"
+    port="$URI_PORT"
     port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 

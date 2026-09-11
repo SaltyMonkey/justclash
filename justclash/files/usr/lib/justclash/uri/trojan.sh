@@ -17,10 +17,11 @@ parse_trojan_url() {
     password="$(printf '%b' "$(printf '%s' "$userinfo" | sed 's/%\(..\)/\\x\1/g')")"
 
     local host="${hostport%%\?*}"
-    local server
-    server="$(str_url_decode "${host%%:*}")"
-    local port="${host##*:}"
-    [ "$server" = "$port" ] && port="$DEFAULT_TLS_PORT"
+    local server port
+    local URI_HOST="" URI_PORT=""
+    uri_parse_hostport "$host" "$DEFAULT_TLS_PORT" || return 1
+    server="$URI_HOST"
+    port="$URI_PORT"
     port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
 

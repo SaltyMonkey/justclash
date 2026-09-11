@@ -15,8 +15,7 @@ parse_direct_url() {
         {
             name: $name,
             type: "direct",
-            udp: true,
-            tfo: true
+            udp: true
         }
         + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
         + (if $interface_name != "" then {"interface-name": $interface_name} else {} end)

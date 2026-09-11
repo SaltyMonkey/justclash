@@ -30,9 +30,10 @@ parse_hysteria2_url() {
         password=""
     fi
 
-    server="${hostport%%:*}"
-    port="${hostport##*:}"
-    [ "$server" = "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
+    local URI_HOST="" URI_PORT=""
+    uri_parse_hostport "$hostport" "${DEFAULT_HY2_PORT:-443}" || return 1
+    server="$URI_HOST"
+    port="$URI_PORT"
 
     case "$port" in
     *[,-]*)

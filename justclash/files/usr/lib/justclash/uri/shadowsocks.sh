@@ -6,6 +6,7 @@
 
 parse_ss_url() {
     local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
+    local random_ua="${8:-}"
     local userinfo hostport method password server port decoded query_part proxy_obj
     query_part=""
 
@@ -86,9 +87,10 @@ parse_ss_url() {
         password="$(str_url_decode "${userinfo#*:}")"
     fi
 
-    server="$(str_url_decode "${hostport%%:*}")"
-    port="${hostport##*:}"
-    [ "$server" = "$port" ] && port=$DEFAULT_SOCKS_PORT
+    local URI_HOST="" URI_PORT=""
+    uri_parse_hostport "$hostport" "$DEFAULT_SOCKS_PORT" || return 1
+    server="$URI_HOST"
+    port="$URI_PORT"
     port="${port//[!0-9]/}"
     [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
 
@@ -204,6 +206,7 @@ parse_ss_url() {
             --arg plugin_key "$plugin_key" \
             --argjson plugin_alpn "$alpn_json" \
             --arg client_fingerprint "$client_fingerprint" \
+            --arg ws_user_agent "$random_ua" \
             --argjson port "$port" '
             {
                 name: $name,

@@ -7,6 +7,7 @@
 parse_sudoku_url() {
     local link="$1" dialer_proxy="$2" name="$3" interface_name="$4" routing_mark="$5" ip_version="$6"
     local padding_min="${7:-5}" padding_max="${8:-15}"
+    local raw payload
     raw="$link"
     raw="${raw#sudoku://}"
 
