@@ -2,11 +2,22 @@
 # shellcheck shell=dash
 # shellcheck disable=SC2034
 
-# Process-wide immutable application contract shared by the CLI and sourced modules.
+# Shared application constants and fallback values; load before other modules.
+# The readonly block protects service constants only. DEFAULT_* values below it
+# remain ordinary shell variables and do not replace actual UCI settings.
 
 PROGNAME="justclash"
 JUSTCLASH_VERSION="__COMPILED_VERSION_VARIABLE__"
 NO_DATA_STRING="N/A"
+
+# Shared character constants: NL separates UCI lists and YAML/nft sidecar records;
+# CR and TAB are used with NL by helpers/strings.sh for escaping and stripping.
+# Readonly in this shell; sourced modules use them without export.
+# Command substitution strips trailing newlines; keep the sentinel until after it.
+NL="$(printf '\n.')"
+NL="${NL%.}"
+CR="$(printf '\r')"
+TAB="$(printf '\t')"
 
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
@@ -51,7 +62,7 @@ ZAPRETINITD_FILEPATH="/etc/init.d/zapret"
 BYEDPI_FILEPATH="/etc/init.d/byedpi"
 YOUTUBEUNBLOCK_FILEPATH="/etc/init.d/youtubeUnblock"
 B4_FILEPATH="/etc/init.d/b4"
-REQUIRED_TOOLS="jq nft curl md5sum ntpd base64 inotifywait"
+REQUIRED_TOOLS="jq nft curl md5sum ntpd base64 inotifywait ip netstat pgrep gunzip"
 
 CONTROLLER_BIND_UNSPECIFIED="-"
 CONTROLLER_BIND_ALL_IPV4="0.0.0.0"
@@ -61,12 +72,13 @@ NF_TABLE_FWMARK_FINAL=3
 NF_TABLE_FWMARK_PROXY=255
 NF_ROUTE_TABLE=100
 
-JUSTCLASH_CONSTANTS_LOADED=1
-
 readonly \
     PROGNAME \
     JUSTCLASH_VERSION \
     NO_DATA_STRING \
+    NL \
+    CR \
+    TAB \
     CORE_BIN_NAME \
     CORE_PATH \
     CORE_WORKDIR_PATH \
@@ -111,5 +123,76 @@ readonly \
     NF_TABLE_NAME \
     NF_TABLE_FWMARK_FINAL \
     NF_TABLE_FWMARK_PROXY \
-    NF_ROUTE_TABLE \
-    JUSTCLASH_CONSTANTS_LOADED
+    NF_ROUTE_TABLE
+
+
+# List of NTP server IP addresses:
+DEFAULT_NTP_IPS="194.190.168.1 89.109.251.22 89.109.251.23 216.239.35.4 216.239.35.8"
+DEFAULT_DOH_IPS4="223.5.5.5, 223.6.6.6, 8.8.8.8, 8.8.4.4, 1.1.1.1, 1.0.0.1, 9.9.9.9, 149.112.112.112, 94.140.14.14, 94.140.15.15, 208.67.222.222, 208.67.220.220, 76.76.2.0/24, 76.76.10.0/24, 77.88.8.8, 77.88.8.1"
+DEFAULT_DOH_IPS6="2400:3200::1, 2400:3200:baba::1, 2001:4860:4860::8888, 2001:4860:4860::8844, 2606:4700:4700::1111, 2606:4700:4700::1001, 2620:fe::fe, 2620:fe::9, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff, 2620:0:ccc::2, 2620:0:ccd::2, 2606:1a40::/48, 2606:1a40:1::/48, 2a02:6b8::feed:0ff, 2a02:6b8::feed:a11"
+DEFAULT_DASHBOARD_ZASHBOARD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+DEFAULT_DASHBOARD_METACUBEXD_URL="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
+DEFAULT_DASHBOARD_YACD_META_URL="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
+DEFAULT_GEOSITE_URL="https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+DEFAULT_GEOIP_URL="https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+DEFAULT_GEODATA_UPDATE_INTERVAL=24
+DEFAULT_MIHOMO_SOURCE_CORE="github"
+DEFAULT_MIHOMO_UPDATE_CHANNEL="stable"
+DEFAULT_MIHOMO_GITHUB_REPO="MetaCubeX/mihomo"
+DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL="https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
+DEFAULT_EXTERNAL_PANEL="metacubexd"
+DEFAULT_PROXY="DIRECT"
+DEFAULT_HEALTHCHECK_INTERVAL=360
+DEFAULT_GROUP_HEALTHCHECK_INTERVAL=180
+DEFAULT_PROVIDERUPDATE_INTERVAL=7200
+DEFAULT_HEALTHCHECK_TIMEOUT=5000
+DEFAULT_RULESET_INTERVAL="172800"
+DEFAULT_HEALTHCHECK_URL="https://www.gstatic.com/generate_204"
+DEFAULT_HEALTHCHECK_RESULT=204
+DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES=5
+DEFAULT_EXTERNAL_CONTROLLER_PORT=9090
+DEFAULT_INPUT_INTERFACE="br-lan"
+DEFAULT_DNS_LISTEN_PORT=1053
+DEFAULT_DNS_PORT=53
+DEFAULT_MIXED_PORT=7890
+DEFAULT_KEEP_ALIVE_IDLE=15
+DEFAULT_KEEP_ALIVE_INTERVAL=15
+DEFAULT_CORE_NTP_INTERVAL=60
+DEFAULT_DNS_CACHE_MAX_SIZE=4096
+DEFAULT_FAKE_IP_TTL=10
+DEFAULT_MIHOMO_MEM_LIMIT=0
+DEFAULT_MIHOMO_GOGC=50
+DEFAULT_MIHOMO_GOMAXPROCS=0
+
+DEFAULT_TLS_PORT=443
+DEFAULT_SECONDARY_TLS_PORT=8443
+DEFAULT_HTTP_PORT=80
+DEFAULT_SECONDARY_HTTP_PORT_RANGE=8080
+DEFAULT_SECONDARY_HTTP_PORT_RANGE_END=8880
+DEFAULT_SOCKS_PORT=1080
+DEFAULT_SSH_PORT=22
+DEFAULT_DOT_PORT=853
+DEFAULT_SECONDARY_DOQ_PORT_SECOND=784
+DEFAULT_SECONDARY_DOQ_PORT_THIRD=8853
+DEFAULT_NTP_PORT=123
+
+DEFAULT_CORE_RESTART_RETRIES=3
+DEFAULT_PBR_PRIORITY=169
+
+DEFAULT_CHECK_RESOLVE_URL_YANDEX="ya.ru"
+DEFAULT_CHECK_IP_PING_YANDEX="77.88.8.8"
+DEFAULT_CHECK_IP_PING_GOOGLE="8.8.8.8"
+DEFAULT_CHECK_DOMAIN_PING_GITHUB="github.com"
+DEFAULT_SCHEDULED_WORK_START_CRON="0 5 * * *"
+DEFAULT_SCHEDULED_WORK_STOP_CRON="0 23 * * *"
+# Startup profile fallbacks preserve the previous shell behavior.
+DEFAULT_NTPD_START=0
+DEFAULT_NFT_APPLY_CHANGES=0
+DEFAULT_API_TLS=0
+DEFAULT_API_TLS_CERT_PATH="/etc/justclash/api-cert.pem"
+DEFAULT_API_TLS_KEY_PATH="/etc/justclash/api-key.pem"
+DEFAULT_MIHOMO_PERSISTENT_EXT_RULES=0
+DEFAULT_MIHOMO_PERSISTENT_CACHE=0
+DEFAULT_ROUTING_MODE="partial"
+DEFAULT_IPV6_ENABLED=0
+DEFAULT_DNSMASQ_APPLY_CHANGES=0
