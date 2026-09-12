@@ -23,12 +23,11 @@
                 "system": [
                     "board"
                 ],
-                "justclash": [
+                "justclash-core": [
                     "status",
-                    "diag_redacted",
-                    "diag_mihomo_config",
-                    "diag_service_config",
-                    "systemlogs"
+                    "check",
+                    "config_show",
+                    "logs"
                 ]
             }
         },
@@ -45,16 +44,15 @@
                 "justclash"
             ],
             "ubus": {
-                "justclash": [
+                "justclash-core": [
                     "start",
                     "stop",
                     "restart",
                     "enable",
                     "disable",
-                    "diag_mihomo_config_unsafe",
-                    "diag_service_config_unsafe",
-                    "update_core",
-                    "update_rulesets"
+                    "hardware_id",
+                    "config_show_unsafe",
+                    "resources_update"
                 ]
             }
         }
