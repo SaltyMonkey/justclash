@@ -70,6 +70,8 @@ The online installer detects the router package manager automatically. Interacti
 | [Security Concerns](info/10_security_concerns.md) | Generated API passwords, download User-Agents, controller exposure, TLS, dashboards, and CORS |
 | [Update, Backup, and Removal](info/12_update_backup_remove.md) | Package and core updates, SHA256 verification, backup, restore, rollback, and removal |
 | [UCI Configuration](info/01_uci-structure.md) | Complete configuration structure and section reference |
+| [Command-Line Reference](info/02_cli-commands.md) | Service maintenance, diagnostics, configuration display, and updates from the shell |
+| [ubus API](info/13_ubus-api.md) | rpcd methods, request parameters, responses, ACL classes, and LuCI integration |
 
 ### Routing and Rules
 
