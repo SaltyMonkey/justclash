@@ -27,7 +27,7 @@ Exclusions matter most in Full Interception. In Partial Interception, unmatched 
 
 ## Router-Originated Traffic
 
-Router traffic is enabled separately through **Set router traffic rules at startup**.
+Router traffic and client traffic are enabled together through **Create nftables**. Router-specific exclusions below remain independent of client exclusions.
 
 ### Socket Owner
 
@@ -118,8 +118,8 @@ For a complete bypassed network, see [Guest Network Configuration](08_use_guest_
 ## Verification
 
 ```sh
-justclash.sh diag_nft
-justclash.sh diag_route
+justclash.sh check nft
+justclash.sh check routes
 ```
 
 Then verify:
@@ -129,7 +129,7 @@ Then verify:
 - domain and raw-address behavior both match the design;
 - IPv4 and IPv6 are tested separately.
 
-The diagnostic commands can expose local addresses and routes. Use `diag_redacted` when sharing results.
+The diagnostic commands can expose local addresses and routes. Use `check` when sharing results.
 
 ## Remove an Exclusion
 

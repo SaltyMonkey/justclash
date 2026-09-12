@@ -7,8 +7,8 @@ JustClash packages, the Mihomo core, and downloaded service data have separate l
 | Component | Typical update path | Persistent state affected |
 | --- | --- | --- |
 | `justclash` and LuCI packages | Online installer or local APK/IPK files | Package migrations may update the UCI schema |
-| Mihomo core | Installer `--update-core` or `justclash.sh core_update` | Replaces the CPU-specific runtime binary |
-| Rulesets and service data | LuCI actions, schedules, or `service_data_update` | Refreshes downloaded catalogs; generated YAML is rebuilt on the next start or reload |
+| Mihomo core | Installer `--update-core` or `justclash.sh resources core update` | Replaces the CPU-specific runtime binary |
+| Rulesets and service data | LuCI actions, schedules, or `resources data update` | Refreshes downloaded catalogs; generated YAML is rebuilt on the next start or reload |
 | User configuration | LuCI or UCI | Stored under `/etc/config/justclash` and selected files under `/etc/justclash/` |
 
 The package version and Mihomo version are intentionally independent. A package update can preserve the current core, while the online automated installation updates the core to the current stable build before installing the selected JustClash release.
@@ -28,8 +28,8 @@ Updating the Mihomo core alone does not change this fingerprint. Cached YAML is 
 5. Keep enough free space for both the downloaded assets and temporary extraction.
 
 ```sh
-justclash.sh version
-justclash.sh core_info_mihomo
+justclash.sh version package
+justclash.sh version core
 ```
 
 Do not publish this output together with configuration or diagnostics. Version output is harmless by itself, but nearby shell history and copied terminal output may not be.
@@ -130,9 +130,9 @@ Run only the APK or OPKG command used by that router. Do not mix formats. Instal
 ## Verify an Update
 
 ```sh
-justclash.sh version
-justclash.sh core_info_mihomo
-justclash.sh diag_redacted
+justclash.sh version package
+justclash.sh version core
+justclash.sh check
 ```
 
 Then verify in LuCI:
@@ -173,14 +173,14 @@ tar -C / -xzf '/tmp/<BACKUP_FILE>.tar.gz'
 chmod 600 /etc/config/justclash
 uci -q show justclash >/dev/null
 service justclash start
-justclash.sh diag_redacted
+justclash.sh check
 ```
 
 Restoring a backup also restores its credentials. Rotate the API password and any provider credentials when the archive may have been copied, exposed, or stored without encryption.
 
 ## Reset Is Not Restore
 
-`config_reset` backs up the active UCI configuration and replaces it with package defaults. It also generates a new API password.
+`config reset` backs up the active UCI configuration and replaces it with package defaults. It also generates new API and Mixed Port passwords.
 
 Use reset to recover from a broken configuration, not as an update or downgrade procedure. Follow the canonical command sequence in [Command-Line Reference → Reset Configuration](02_cli-commands.md#reset-configuration). The generated backup can contain secrets and should remain local.
 

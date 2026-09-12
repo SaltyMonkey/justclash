@@ -11,7 +11,7 @@ Startup failures are usually ordering problems: WAN, DNS, system time, storage, 
 | TLS downloads fail immediately after boot | System clock | `ntpd_start` |
 | Startup warns about another DNS/proxy service | Conflict log | Fix the conflict before skipping checks |
 | Port validation fails | Active listeners | Change the conflicting listener |
-| Core is missing | Installed core version | Run `core_update` |
+| Core is missing | Installed core version | Run `resources core update` |
 
 ## Wait for WAN
 
@@ -80,13 +80,13 @@ Enable this only after recording a stable working configuration. Hiding a warnin
 
    ```sh
    service justclash status
-   justclash.sh logs 100
+   justclash.sh logs service 100
    ```
 
 2. Confirm the core exists:
 
    ```sh
-   justclash.sh info_core
+   justclash.sh version core
    ```
 
 3. Verify WAN, DNS, and system time outside JustClash.
@@ -96,17 +96,17 @@ Enable this only after recording a stable working configuration. Hiding a warnin
 7. Run the privacy-reduced report:
 
    ```sh
-   justclash.sh diag_redacted
+   justclash.sh check
    ```
 
-Use `diag_report`, `diag_route`, and raw logs locally; they can reveal network details.
+Use `check full --unsafe`, `check routes`, and raw logs locally; they can reveal network details.
 
 ## Scheduled Jobs
 
 After changing schedules through UCI, rebuild the root crontab:
 
 ```sh
-justclash.sh cron_update
+justclash.sh schedule sync
 ```
 
 This applies:

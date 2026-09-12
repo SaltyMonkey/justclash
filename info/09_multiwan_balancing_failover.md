@@ -137,8 +137,8 @@ A final proxy group cannot capture unmatched raw-address traffic in Partial Inte
 Use **Nodes** to observe health state and **Connections** to verify the selected chain.
 
 ```sh
-justclash.sh diag_route
-justclash.sh logs 100
+justclash.sh check routes
+justclash.sh logs service 100
 ```
 
 | Symptom | Check |
@@ -150,7 +150,7 @@ justclash.sh logs 100
 | Connections loop/disappear | Conflicting marks or external PBR |
 | One address family fails | `ip_version`, provider override, and WAN capability |
 
-Diagnostics can reveal routes and interfaces. Use `diag_redacted` for shared output.
+Diagnostics can reveal routes and interfaces. Use `check` for shared output.
 
 ## Rollback
 

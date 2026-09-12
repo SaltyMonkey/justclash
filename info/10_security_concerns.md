@@ -24,7 +24,7 @@ A fresh package installation does not intentionally keep the packaged placeholde
 2. if that source is unavailable, it falls back to bytes from `/dev/urandom`;
 3. it stores the result in `justclash.proxy.api_password` and commits the UCI configuration.
 
-The generated value is at least 32 characters. An existing non-default password is preserved during a normal package upgrade. Running `config_reset` creates a new API password together with the restored default configuration.
+The generated value is at least 32 characters. An existing non-default password is preserved during a normal package upgrade. Running `config reset` creates new API and Mixed Port passwords together with the restored default configuration.
 
 This matters because the controller credential protects API actions such as inspecting connections, changing the selected node, closing connections, and modifying runtime state. A shared package default would make every installation predictable, which is very convenient for everyone except the router owner.
 
@@ -57,7 +57,7 @@ Rotate the password after suspected disclosure, before exposing the controller t
 
 The Mihomo Mixed Port is a separate HTTP/SOCKS5 listener for explicitly configured clients. It does not use `api_password`; access is controlled by `proxy_authentication`.
 
-When JustClash enables Mixed Port, the generated Mihomo configuration also enables LAN access. If the authentication list is empty, any client that can reach the listener through the OpenWrt firewall can use it without credentials. Loopback traffic is intentionally exempt from authentication so router-local clients can connect.
+When JustClash enables Mixed Port, the generated Mihomo configuration also enables LAN access. Fresh installations and `config reset` create a `user:` credential with a random 64-character password. Package upgrades preserve existing configuration and do not add or replace Mixed Port credentials. If the list is empty, any client that can reach the listener through the OpenWrt firewall can use the proxy without credentials. Loopback traffic is intentionally exempt from authentication so router-local clients can connect.
 
 For every non-loopback use, require credentials, restrict firewall input to trusted clients, and never forward the listener from WAN. This authentication is access control, not transport encryption, so the listener still belongs only on a trusted LAN or behind a separately secured tunnel.
 
@@ -290,8 +290,8 @@ Do not enter the API password into an untrusted hosted dashboard. Keep firewall 
 
 ```sh
 service justclash status
-justclash.sh logs 100
-justclash.sh diag_mihomo_config
+justclash.sh logs service 100
+justclash.sh config show mihomo
 ```
 
 Check:
@@ -302,7 +302,7 @@ Check:
 - WebSocket forwarding succeeds;
 - WAN and guest zones cannot reach the controller.
 
-The configuration diagnostic can still reveal endpoints and topology. Use `diag_redacted` for shared output.
+The configuration diagnostic can still reveal endpoints and topology. Use `check` for shared output.
 
 ## Rollback
 

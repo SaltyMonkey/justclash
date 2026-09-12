@@ -19,7 +19,7 @@ uci commit justclash
 service justclash reload
 ```
 
-`uci show` can expose endpoints, credentials, domains, client addresses, and routing policy. Use `justclash.sh diag_redacted` when sharing diagnostics.
+`uci show` can expose endpoints, credentials, domains, client addresses, and routing policy. Use `justclash.sh check` when sharing diagnostics.
 
 ## Section Model
 
@@ -53,13 +53,23 @@ LuCI creates dynamic sections with generated UCI IDs. Rules refer to the user-vi
 
 ### Traffic Interception
 
+`nft_apply_changes` is the single **Create nftables** switch: `1` creates client
+and router interception rules together with policy routing; `0` skips both.
+The `full` / `partial` mode and the separate client/router exclusions still apply.
+DNS forwarding remains controlled independently by `dnsmasq_apply_changes`.
+
+On upgrade, the former client and router flags are combined with logical OR and
+`nft_apply_changes_router` is removed. A previously client-only or router-only
+configuration therefore becomes combined interception. When restoring an older
+backup after package migration, convert these flags the same way; the removed
+router flag is no longer read at runtime.
+
 | Field | Type | Purpose |
 | --- | --- | --- |
 | `routing_mode` | Choice: `partial`, `full` | Select interception architecture |
 | `ipv6_enabled` | Boolean | Enable IPv6 interception and Fake-IP support when WAN IPv6 is usable |
 | `dnsmasq_apply_changes` | Boolean | Manage dnsmasq forwarding for Mihomo DNS |
-| `nft_apply_changes` | Boolean | Install client traffic rules |
-| `nft_apply_changes_router` | Boolean | Install router-originated traffic rules |
+| `nft_apply_changes` | Boolean | Create nftables rules and policy routing for both client and router traffic |
 | `tproxy_input_interfaces` | List of device names | Client interfaces subject to interception |
 | `nft_skuid_exclude_router` | List of users or UIDs | Bypass router sockets owned by selected users |
 | `nft_ports_exclude_router` | List of ports/ranges | Bypass router TCP/UDP source or destination ports |
@@ -67,13 +77,15 @@ LuCI creates dynamic sections with generated UCI IDs. Rules refer to the user-vi
 | `nft_mac_exclude` | List of MAC addresses | Bypass matching local clients |
 | `nft_ips_exclude` | List of IPv4 addresses/CIDRs | Bypass matching IPv4 clients |
 | `pbr_priority` | Unsigned integer | Priority used by JustClash policy-routing rules |
-| `nft_quic_mode` | Choice | QUIC handling policy |
+| `nft_quic_mode` | `BY RULES` / `DROP` | QUIC handling policy |
 | `nft_dns_udp_mode` | Choice | Plain client UDP DNS policy (`BY RULES`, `DROP`, or `HIJACK` to the router DNS service) |
-| `nft_dot_mode` | Choice | DNS-over-TLS handling policy |
-| `nft_doh_mode` | Choice | DNS-over-HTTPS handling policy |
-| `nft_dot_quic_mode` | Choice | DNS-over-QUIC handling policy |
+| `nft_dot_mode` | `BY RULES` / `DROP` | DNS-over-TLS handling policy |
+| `nft_doh_mode` | `BY RULES` / `DROP` | DNS-over-HTTPS handling policy |
+| `nft_dot_quic_mode` | `BY RULES` / `DROP` | DNS-over-QUIC handling policy |
 | `nft_ntp_mode` | Choice | Client NTP handling policy |
 | `nft_ntp_mode_router` | Choice | Router NTP handling policy |
+
+The `REJECT` choice has been removed only from the four `nft_*_mode` settings above. Package migration converts existing QUIC/DoT/DoH/DoQ `REJECT` settings to `DROP`, preserving blocking without sending a rejection response. The default QUIC policy is now `DROP`. This does not disable blocklists: their blocking rules run inside Mihomo, separately from these OpenWrt firewall settings. When restoring an older configuration after migration, replace these four firewall settings with `DROP` before starting the service.
 
 ### Scheduling, Core, and Downloads
 
@@ -113,8 +125,8 @@ URL fields may contain private sources. Do not include their values in bug repor
 | `tproxy_port` | Port | Transparent TProxy listener |
 | `use_mixed_port` | Boolean | Enable explicit HTTP/SOCKS listener |
 | `mixed_port` | Port | Explicit mixed listener |
-| `proxy_authentication` | List of `user:pass` credentials | Required access control for non-loopback Mixed Port clients |
-| `controller_bind_interface` | OpenWrt network name or `-` | Network whose address is used for API binding; `-` listens on all IPv4 interfaces |
+| `proxy_authentication` | List of `user:pass` credentials | Access control for non-loopback Mixed Port clients; installation and reset generate a `user:` credential with a random 64-character password |
+| `controller_bind_interface` | OpenWrt network name or `-` | Network whose IPv4 address is used for API binding; `-` listens on all IPv4 interfaces |
 | `use_dashboard` | Boolean | Enable local dashboard hosting |
 | `dashboard_repo` | Choice | Selected dashboard |
 | `api_password` | Secret | Mihomo API credential, generated during package installation |
@@ -134,6 +146,34 @@ URL fields may contain private sources. Do not include their values in bug repor
 | `keep_alive_interval` | Unsigned integer | TCP keep-alive probe interval |
 | `profile_store_selected` | Boolean | Persist selected group state |
 | `profile_store_fake_ip` | Boolean | Persist Fake-IP mappings |
+
+### DNS recovery state
+
+JustClash keeps its DNS backup in the affected `dnsmasq` section of the `dhcp`
+UCI package, separately from the current JustClash settings. Existing
+`justclash_server`, `justclash_noresolv`, and `justclash_cachesize` backup fields
+are accompanied by `justclash_<option>_present` flags, `justclash_applied_server`,
+and `justclash_applied`. The last flag is set before modifying DNS, so a failed
+apply can also be cleaned up. These are internal recovery fields, not settings
+to edit in LuCI.
+
+Cleanup uses this saved state even after DNS management is disabled or the
+listener port is changed. It restores an old configuration before applying a
+new one. After a successful commit and dnsmasq restart, it sets
+`justclash_applied=0`. The inactive snapshot remains until the next apply
+overwrites it. For `server`, cleanup removes the saved JustClash upstream,
+restores the original servers, and keeps manually added servers without
+duplicates. Original servers come first, followed by additional current entries.
+Conflicting manual edits to `noresolv` or `cachesize`, incomplete backups, and older
+backup formats stop automatic recovery without deleting the saved data; no automatic
+legacy conversion is attempted. A failed recovery also prevents a new DNS
+configuration from being applied. Quoted server lists (including UCI-quoted
+entries containing whitespace) are rejected rather than parsed as shell expressions.
+
+The backup is persistent because the DNS changes themselves are committed to
+UCI. Do not delete recovery fields to silence an error: doing so loses the
+information needed to restore the original settings. They can contain private
+DNS configuration; redact their values before sharing diagnostics.
 
 ### DNS
 
@@ -199,11 +239,16 @@ Mihomo internal NTP is separate from `settings.ntpd_start`.
 | Identity/source | `enabled`, `name`, `subscription`, `update_interval`, `size_limit` |
 | Download path | `proxy` |
 | Overrides | `override_dialer_proxy`, `override_interface_name`, `override_routing_mark`, `override_ip_version` |
-| Headers and encryption | `header_hwid`, `header_hwid_custom`, `header_authorization`, `header_user_agent`, `age_private_key`, `header_age_public_key` |
+| Headers and encryption | `header_hwid`, `header_hwid_custom`, `header_os_custom`, `header_os_version_custom`, `header_device_model_custom`, `header_authorization`, `header_user_agent`, `age_private_key`, `header_age_public_key` |
 | Health check | `health_check`, `health_check_url`, `health_check_expected_status`, `health_check_interval`, `health_check_timeout`, `health_check_lazy` |
 | Filtering | `filter`, `exclude_filter`, `exclude_type` |
 
-The subscription, authorization header, hardware identifier, and private key are sensitive.
+With `header_hwid=real`, all four identity headers are read from the router. With
+`header_hwid=spoofed`, `x-hwid`, `x-os`, `x-os-version`, and `x-device-model`
+come only from their corresponding `header_*_custom` fields. Empty custom values
+remain empty; they never fall back to the router identity.
+
+The subscription, authorization header, identity fields, and private key are sensitive.
 
 ## `proxy_group`
 
@@ -262,7 +307,7 @@ Treat these as sensitive:
 Use the redacted diagnostic:
 
 ```sh
-justclash.sh diag_redacted
+justclash.sh check
 ```
 
 Use raw UCI or unsafe diagnostic output only locally.
@@ -271,9 +316,9 @@ Use raw UCI or unsafe diagnostic output only locally.
 
 ```sh
 service justclash stop
-justclash.sh diag_service_config
-justclash.sh config_reset
+justclash.sh config show service
+justclash.sh config reset
 service justclash start
 ```
 
-`config_reset` backs up the active configuration before restoring package defaults. Review the generated backup locally because it can contain secrets.
+`config reset` backs up the active configuration before restoring package defaults. Review the generated backup locally because it can contain secrets.

@@ -101,8 +101,8 @@ Mixed-port fixed-outbound handling is also high priority. Use `BY RULES` when ex
 ## Verification
 
 ```sh
-justclash.sh logs 100
-justclash.sh diag_nft
+justclash.sh logs service 100
+justclash.sh check nft
 ```
 
 Verify:
@@ -113,7 +113,7 @@ Verify:
 4. the test client uses the managed DNS path;
 5. IPv4 and IPv6 behavior are checked separately.
 
-Do not publish the tested domain, client address, or raw diagnostic output. Use `diag_redacted` for support.
+Do not publish the tested domain, client address, or raw diagnostic output. Use `check` for support.
 
 ## Disable or Remove
 

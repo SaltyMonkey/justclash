@@ -2,7 +2,7 @@
 
 The Mihomo mixed port is an explicit HTTP and SOCKS5 listener. It is independent from transparent TProxy interception: each client application must be configured to use the router and listener directly.
 
-Enabling it also enables LAN access in the generated Mihomo configuration. Treat `proxy_authentication` and an OpenWrt firewall restriction as required parts of the listener, not optional finishing touches.
+Enabling it also enables LAN access in the generated Mihomo configuration. Installation and `config reset` create a `user:` credential with a random 64-character password. Keep authentication enabled for every non-loopback use.
 
 ## Use It For
 
@@ -19,7 +19,7 @@ LuCI: **Services → JustClash → Setup: Proxy → Basic settings**.
 
 1. Enable **Mihomo mixed port**.
 2. Select an unused port.
-3. Add at least one **Mixed port authentication** entry.
+3. Use the generated **Mixed port authentication** entry or replace it with your own credentials.
 4. Save & Apply.
 
 ```sh
@@ -33,7 +33,7 @@ service justclash restart
 Credentials are stored in UCI and appear in unsafe diagnostics. Avoid shell history when entering real values.
 
 > [!CAUTION]
-> Do not enable Mixed Port for LAN access with an empty `proxy_authentication` list. Without an entry, every client that can reach the port through the firewall can use the proxy without credentials. Router-local loopback traffic is exempt from authentication by design.
+> Do not remove every `proxy_authentication` entry while Mixed Port is enabled. Without an entry, every client that can reach the port through the firewall can use the proxy without credentials. Router-local loopback traffic is exempt from authentication by design.
 
 ## Authentication Format
 
@@ -105,10 +105,10 @@ A fixed outbound is intentionally evaluated before normal routing and block rule
 
 ```sh
 service justclash status
-justclash.sh logs 100
+justclash.sh logs service 100
 ```
 
-Logs can expose client or destination details. Use `diag_redacted` for shared support data.
+Logs can expose client or destination details. Use `check` for shared support data.
 
 ## Troubleshooting
 

@@ -107,11 +107,11 @@ In Partial Interception, those real addresses can bypass Mihomo. Use this only f
 6. Compare memory usage with the baseline.
 
 ```sh
-justclash.sh logs 100
-justclash.sh diag_mihomo_config
+justclash.sh logs service 100
+justclash.sh config show mihomo
 ```
 
-These outputs can include private sources, categories, domains, or topology. Use `diag_redacted` when sharing results.
+These outputs can include private sources, categories, domains, or topology. Use `check` when sharing results.
 
 ## Troubleshooting
 

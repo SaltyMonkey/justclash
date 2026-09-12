@@ -130,7 +130,7 @@ Otherwise the rules are downloaded again after reboot.
 
 Saving a user catalog or refreshing the built-in catalogs does not reload the running service. On the next start or reload, JustClash fingerprints all four catalog files and regenerates the Mihomo YAML and routing sidecars when their contents or presence changed. No unrelated UCI edit is required to invalidate the cache.
 
-After a manual catalog edit or `service_data_update`, apply the change with:
+After a manual catalog edit or `resources data update`, apply the change with:
 
 ```sh
 service justclash reload
@@ -140,8 +140,8 @@ service justclash reload
 
 ```sh
 service justclash restart
-justclash.sh logs 100
-justclash.sh diag_nft
+justclash.sh logs service 100
+justclash.sh check nft
 ```
 
 | Symptom | Check |
@@ -152,7 +152,7 @@ justclash.sh diag_nft
 | Partial mode ignores raw addresses | Source must be active `ipcidr/text` |
 | Update is not visible | Reload after editing or refreshing a catalog; the new file fingerprint is checked during startup |
 
-Use `diag_redacted` for shared diagnostics. Catalog URLs and authorization fields may be sensitive.
+Use `check` for shared diagnostics. Catalog URLs and authorization fields may be sensitive.
 
 ## Remove an Entry
 

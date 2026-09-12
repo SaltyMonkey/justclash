@@ -104,11 +104,11 @@ The dedicated resolver is outside JustClash policy:
 - IPv4 and IPv6 are both direct.
 
 ```sh
-justclash.sh diag_nft
-justclash.sh diag_route
+justclash.sh check nft
+justclash.sh check routes
 ```
 
-These commands can expose local topology. Use `diag_redacted` when sharing results.
+These commands can expose local topology. Use `check` when sharing results.
 
 For per-client bypass instead of a whole network, see [Traffic Exclusions](04_service_traffic_exclusion.md).
 

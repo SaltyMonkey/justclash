@@ -75,7 +75,7 @@ opkg install /tmp/justclash-*.ipk /tmp/luci-app-justclash-*.ipk
 Install the core from **Services → JustClash → Status → Update Core**, or run:
 
 ```sh
-justclash.sh core_update
+justclash.sh resources core update
 ```
 
 ## 2. Choose the Routing Mode
@@ -89,7 +89,7 @@ Open **Services → JustClash → Setup: Service → Traffic rules**.
 
 Start with `partial` for a narrow policy. Use `full` when the default rule must apply to every selected connection. See [Choosing a Routing Mode](00_routing_architecture_and_design.md).
 
-Keep **Set traffic rules at startup** enabled and select the client bridge under **Client traffic interfaces**.
+Keep **Create nftables** enabled and select the client bridge under **Client traffic interfaces**. This switch enables interception for both clients and the router itself.
 
 ## 3. Configure DNS
 
@@ -152,9 +152,9 @@ After applying, open **Status** and confirm that both the service and Mihomo are
 
 ```sh
 service justclash status
-justclash.sh info_core
-justclash.sh diag_redacted
-justclash.sh logs 100
+justclash.sh version core
+justclash.sh check
+justclash.sh logs service 100
 ```
 
 Then verify:
@@ -165,7 +165,7 @@ Then verify:
 - unrelated traffic remains direct in Partial Interception;
 - DNS works after renewing the client lease or clearing its cache.
 
-Use `diag_redacted` when sharing a diagnostic result. Other diagnostics can contain local addresses, domains, routes, or hardware identifiers.
+Use `check` when sharing a diagnostic result. Other checks can contain local addresses, domains, routes, or hardware identifiers.
 
 ## Next Steps
 

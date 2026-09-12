@@ -66,7 +66,7 @@ The ruleset worker watches active text IP-CIDR files and updates nftables after 
 
 ## Full Interception
 
-Full mode redirects traffic from selected client interfaces to Mihomo. Router-originated traffic is controlled separately.
+Full mode redirects traffic from selected client interfaces and the router itself to Mihomo. Both use the common **Create nftables** switch; their exclusions remain separate.
 
 Use it for:
 
@@ -115,7 +115,7 @@ The fingerprint covers:
 - dashboard URL settings;
 - the contents and presence of both built-in ruleset catalogs and both user ruleset catalogs.
 
-This means a package upgrade, controller address change, dashboard URL edit, or ruleset catalog edit invalidates the cached YAML without requiring an unrelated UCI change. The comparison happens on the next service start or reload; editing a catalog or running `service_data_update` does not modify the configuration of an already running Mihomo process by itself.
+This means a package upgrade, controller address change, dashboard URL edit, or ruleset catalog edit invalidates the cached YAML without requiring an unrelated UCI change. The comparison happens on the next service start or reload; editing a catalog or running `resources data update` does not modify the configuration of an already running Mihomo process by itself.
 
 The runtime directory is recreated after a router reboot, so the YAML and sidecar files are generated again even when the persistent configuration has not changed.
 
@@ -123,8 +123,8 @@ The runtime directory is recreated after a router reboot, so the YAML and sideca
 
 | Traffic source | Main control |
 | --- | --- |
-| Forwarded clients | **Set traffic rules at startup** and **Client traffic interfaces** |
-| Router processes | **Set router traffic rules at startup** |
+| Forwarded clients | **Create nftables** and **Client traffic interfaces** |
+| Router processes | The same **Create nftables** switch |
 | Selected bypasses | Client address, MAC, port, socket owner, or routing mark |
 
 Mihomo outbound sockets use a dedicated mark to prevent interception loops.
@@ -150,10 +150,10 @@ When IPv6 support is disabled or unavailable, IPv6 traffic is not governed by th
 7. Run:
 
 ```sh
-justclash.sh diag_nft
-justclash.sh diag_route
+justclash.sh check nft
+justclash.sh check routes
 ```
 
-These diagnostics may include local network data. Use `justclash.sh diag_redacted` when the result will be shared.
+These checks may include local network data. Use `justclash.sh check` when the result will be shared.
 
 If Full Interception overloads the router, return to Partial Interception or add a narrow exclusion. A random chain deletion is not a rollback strategy.
