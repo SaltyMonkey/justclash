@@ -1,9 +1,15 @@
 #!/bin/ash
 # shellcheck shell=dash
 # Dynamically scoped YAML build state is provided by core_generate_yaml().
+# Reads _RULESETS_CONTENT (the caller swaps in _BLOCK_RULESETS_CONTENT for block)
+# and GLOBAL_FAKE_IP_EXCLUDE_RULES. NL comes from constants.sh.
+# Appends name|source lines to _IPCIDR_RULESETS_BUFFER and destination CIDR lines
+# to _STATIC_IPS_BUFFER; the caller writes these to ACTIVE_* sidecar files for
+# runtime/nftables.sh. These are per-build locals, not exported shell globals.
+# OUT_TEMPLATE and OUT_BUNDLE_* are overwritten per helper call; section builders
+# return OUT_RULES, OUT_RULESETS and OUT_NAMES_* to core_generate_yaml().
+# Call mutating builders directly: command substitution loses buffer updates.
 # shellcheck disable=SC2034,SC2154
-
-: "${JUSTCLASH_CONSTANTS_LOADED:?constants.sh must be loaded before yaml/rules.sh}"
 
 build_fake_ip_rule_array() {
     local entries="$1"
@@ -145,7 +151,11 @@ build_builtin_rules_bundle() {
                 rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
             fi
             ;;
-        non-domain-only)
+        block)
+            # Domains are blocked through DNS; IP lists also need partial interception.
+            if [ "$ruleset_behavior" = "ipcidr" ]; then
+                _IPCIDR_RULESETS_BUFFER="${_IPCIDR_RULESETS_BUFFER:+$_IPCIDR_RULESETS_BUFFER$NL}$ruleset_name|$ruleset_url"
+            fi
             if [ "$ruleset_behavior" != "domain" ]; then
                 rules_fragment="${rules_fragment:+$rules_fragment,}\"$generated_rule\""
             fi
@@ -221,7 +231,7 @@ handle_block_rule_section() {
     fi
 
     if [ -n "$enabled_blocklist" ]; then
-        build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "non-domain-only"
+        build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "block"
         [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
         [ -n "$OUT_BUNDLE_NAMES" ] && list_rulesets_names=$(printf '%s' "$OUT_BUNDLE_NAMES" | sed 's/"//g; s/,rule-set:/,/g')
     fi
