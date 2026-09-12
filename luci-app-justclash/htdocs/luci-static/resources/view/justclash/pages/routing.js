@@ -380,6 +380,27 @@ return view.extend({
         o.rmempty = true;
         o.modalonly = true;
 
+        o = spp.taboption(tabname, form.Value, "header_os_custom", _("Spoofed OS:"));
+        o.depends("header_hwid", "spoofed");
+        o.description = _("Enter the OS name sent with the spoofed HWID.");
+        o.editable = true;
+        o.rmempty = true;
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.Value, "header_os_version_custom", _("Spoofed OS version:"));
+        o.depends("header_hwid", "spoofed");
+        o.description = _("Enter the OS version sent with the spoofed HWID.");
+        o.editable = true;
+        o.rmempty = true;
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.Value, "header_device_model_custom", _("Spoofed device model:"));
+        o.depends("header_hwid", "spoofed");
+        o.description = _("Enter the device model sent with the spoofed HWID.");
+        o.editable = true;
+        o.rmempty = true;
+        o.modalonly = true;
+
         o = spp.taboption(tabname, form.Value, "header_authorization", _("Authorization header:"));
         o.description = _("Send custom Authorization header to server with proxy provider request. Leave it empty if you don't need it.");
         o.editable = true;
