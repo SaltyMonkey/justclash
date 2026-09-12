@@ -2,6 +2,7 @@
 # shellcheck shell=dash
 
 _CONFIG_API_PASSWORD_PLACEHOLDER="__JUSTCLASH_GENERATE_API_PASSWORD__"
+_CONFIG_MIXED_PASSWORD_PLACEHOLDER="__JUSTCLASH_GENERATE_MIXED_PASSWORD__"
 
 _config_generate_api_password() {
     local password=""
@@ -23,10 +24,25 @@ _config_generate_api_password() {
     printf '%s\n' "$password"
 }
 
-_config_write_api_password() {
+_config_generate_mixed_password() {
+    local password=""
+
+    [ -r /dev/urandom ] || return 1
+    password="$(
+        head -c 48 /dev/urandom 2>/dev/null |
+            base64 2>/dev/null |
+            tr -d '\r\n'
+    )" || password=""
+
+    [ "${#password}" -eq 64 ] || return 1
+    printf '%s\n' "$password"
+}
+
+_config_write_credentials() {
     local source_path="$1"
     local output_path="$2"
     local api_password="$3"
+    local mixed_password="$4"
     local option_count
 
     option_count="$(
@@ -38,26 +54,28 @@ _config_write_api_password() {
     [ "$option_count" -eq 1 ] || return 1
 
     sed -E \
-        "s|^([[:space:]]*option[[:space:]]+api_password[[:space:]]+).*|\1'${api_password}'|" \
-        "$source_path" >"$output_path"
+        -e "s|^([[:space:]]*option[[:space:]]+api_password[[:space:]]+)'${_CONFIG_API_PASSWORD_PLACEHOLDER}'[[:space:]]*$|\1'${api_password}'|" \
+        -e "s|^([[:space:]]*list[[:space:]]+proxy_authentication[[:space:]]+)'user:${_CONFIG_MIXED_PASSWORD_PLACEHOLDER}'[[:space:]]*$|\1'user:${mixed_password}'|" \
+        "$source_path" >"$output_path" || return 1
+
+    ! grep -Eq "${_CONFIG_API_PASSWORD_PLACEHOLDER}|${_CONFIG_MIXED_PASSWORD_PLACEHOLDER}" "$output_path"
 }
 
-config_api_password_ensure_file() {
+config_credentials_ensure_file() {
     local config_path="$1"
-    local api_password tmp_config
+    local api_password mixed_password tmp_config
 
     [ -f "$config_path" ] || return 1
 
-    if ! grep -Eq \
-        "^[[:space:]]*option[[:space:]]+api_password[[:space:]]+'${_CONFIG_API_PASSWORD_PLACEHOLDER}'[[:space:]]*$" \
-        "$config_path"; then
+    if ! grep -Eq "${_CONFIG_API_PASSWORD_PLACEHOLDER}|${_CONFIG_MIXED_PASSWORD_PLACEHOLDER}" "$config_path"; then
         return 0
     fi
 
     api_password="$(_config_generate_api_password)" || return 1
+    mixed_password="$(_config_generate_mixed_password)" || return 1
     tmp_config="$(mktemp "${config_path}.password.XXXXXX")" || return 1
 
-    if ! _config_write_api_password "$config_path" "$tmp_config" "$api_password" ||
+    if ! _config_write_credentials "$config_path" "$tmp_config" "$api_password" "$mixed_password" ||
         ! chmod 600 "$tmp_config" ||
         ! mv -f "$tmp_config" "$config_path"; then
         rm -f "$tmp_config"
@@ -69,7 +87,7 @@ config_reset() {
     local default_config_path="$1"
     local config_path="$2"
     local backup_config_path="$3"
-    local api_password tmp_config backup_tmp=""
+    local api_password mixed_password tmp_config backup_tmp=""
 
     if [ ! -f "$default_config_path" ]; then
         clog error "Default configuration file is missing. Reset is unavailable."
@@ -80,13 +98,17 @@ config_reset() {
         clog error "Failed to generate a new API password."
         return 1
     }
+    mixed_password="$(_config_generate_mixed_password)" || {
+        clog error "Failed to generate a new Mixed Port password."
+        return 1
+    }
 
     tmp_config="$(mktemp "${config_path}.reset.XXXXXX")" || {
         clog error "Failed to create a temporary configuration file."
         return 1
     }
 
-    if ! _config_write_api_password "$default_config_path" "$tmp_config" "$api_password" ||
+    if ! _config_write_credentials "$default_config_path" "$tmp_config" "$api_password" "$mixed_password" ||
         ! chmod 600 "$tmp_config"; then
         rm -f "$tmp_config"
         clog error "Failed to prepare the default configuration."
@@ -121,6 +143,6 @@ config_reset() {
         return 1
     fi
 
-    clog info "Default settings with a new API password will be applied on the next service restart."
+    clog info "Default settings with new API and Mixed Port passwords will be applied on the next service restart."
     return 0
 }
