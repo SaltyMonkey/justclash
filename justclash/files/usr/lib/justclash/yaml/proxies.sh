@@ -1,6 +1,12 @@
 #!/bin/ash
 # shellcheck shell=dash
 # Per-section renderers append to dynamically scoped build state owned by core_generate_yaml().
+# Reads GLOBAL_FAKE_IP_EXCLUDE_DOMAINS/GEOSITES and OUT_BUNDLE_* from rules.sh.
+# Appends source/destination CIDR lines to _STATIC_SOURCE_IPS_BUFFER/_STATIC_IPS_BUFFER;
+# build_builtin_rules_bundle() also appends to _IPCIDR_RULESETS_BUFFER.
+# The caller persists these buffers as ACTIVE_* sidecar files for nftables.
+# OUT_PROXIES, OUT_RULES, OUT_RULESETS and OUT_FAKE_IP_RULES accumulate JSON
+# fragments. NL is from constants.sh; mutating renderers must run in the caller shell.
 # shellcheck disable=SC2034,SC2154,SC2329
 
 yaml_proxy_append() {
@@ -36,7 +42,7 @@ yaml_proxy_append() {
 
         case "$proxy_link_uri" in
         direct://*) proxy_obj=$(parse_direct_url "$name" "$dialer_proxy" "$interface_name" "$routing_mark" "$ip_version") ;;
-        ss://*) proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+        ss://*) proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(user_agent_rand)") ;;
         socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         socks://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         ssh://*) proxy_obj=$(parse_ssh_url "$proxy_link_uri" "$DEFAULT_SSH_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
@@ -49,13 +55,13 @@ yaml_proxy_append() {
         mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         sudoku://*) proxy_obj=$(parse_sudoku_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         *)
-            log warn "Unknown proxy link type: $proxy_link_uri"
+            log warn "Unknown proxy link type for '$name'"
             return
             ;;
         esac
 
         [ -z "$proxy_obj" ] && {
-            log warn "Failed to parse proxy link: $proxy_link_uri"
+            log warn "Failed to parse proxy '$name'"
             return
         }
     fi
