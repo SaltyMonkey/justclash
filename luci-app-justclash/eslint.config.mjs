@@ -59,6 +59,7 @@ export default defineConfig([
         rulesModel: "readonly",
         formConstants: "readonly",
         routingOptions: "readonly",
+        proxyBulkImport: "readonly",
         logs: "readonly",
         ubusApi: "readonly",
         fsApi: "readonly",
