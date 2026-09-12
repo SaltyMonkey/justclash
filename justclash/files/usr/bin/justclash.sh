@@ -8,6 +8,9 @@ set -f # Disable path expansion (globbing) globally to safely iterate over user-
 # --------------------------------------------
 # Main application orchestration
 # Simple UCI reads and validation stay with their owning scenarios.
+# constants.sh supplies service constants, DEFAULT_* fallbacks and readonly
+# NL (newline), CR and TAB before helpers and configuration modules load.
+# NL separates collected UCI list values and the per-build nftables sidecar records.
 # --------------------------------------------
 
 # Simple self contained function for file import
@@ -27,13 +30,44 @@ import() {
 
 import /usr/lib/justclash/constants.sh
 
+cli_confirm_destructive() {
+    local prompt="$1"
+    local assume_yes="$2"
+    local answer
+
+    case "$assume_yes" in
+    -y | -Y | --yes) return 0 ;;
+    '') ;;
+    *)
+        printf 'error: Expected -y, -Y, or --yes\n' >&2
+        return 2
+        ;;
+    esac
+
+    [ -t 0 ] || {
+        printf 'error: This command requires -y, -Y, or --yes in non-interactive mode\n' >&2
+        return 2
+    }
+
+    printf '%s [y/N] ' "$prompt" >&2
+    read -r answer || return 2
+
+    case "$answer" in
+    y | Y | yes | YES) return 0 ;;
+    *)
+        printf 'Cancelled.\n' >&2
+        return 2
+        ;;
+    esac
+}
+
 core_prepare_safe_paths() {
     local api_tls="$1"
     local api_tls_cert="$2"
     local api_tls_key="$3"
     local mihomo_persistent_ext_rules="$4"
     local cert_dir key_dir
-    local ruleset_url safe_path rulesets_files=""
+    local ruleset_file ruleset_label ruleset_id ruleset_behavior ruleset_format ruleset_url ruleset_auth safe_path
 
     safe_paths_clear
     safe_paths_add "$DASHBOARD_PATH"
@@ -52,17 +86,18 @@ core_prepare_safe_paths() {
     fi
 
     # 3. Custom local ruleset paths from user ruleset text files
-    [ -f "$USER_RULESETS_FILE" ] && rulesets_files="$rulesets_files $USER_RULESETS_FILE"
-    [ -f "$USER_RULESETS_BLOCKS_FILE" ] && rulesets_files="$rulesets_files $USER_RULESETS_BLOCKS_FILE"
-
-    if [ -n "$rulesets_files" ]; then
-        # shellcheck disable=SC2086
-        awk -F'|' '$2 ~ /^\// { print $2 }' $rulesets_files 2>/dev/null | while read -r ruleset_url; do
-            [ -n "$ruleset_url" ] || continue
+    for ruleset_file in "$USER_RULESETS_FILE" "$USER_RULESETS_BLOCKS_FILE"; do
+        [ -f "$ruleset_file" ] && [ -r "$ruleset_file" ] || continue
+        # Keep the loop in this shell; exporting from a subshell is not a return channel.
+        while IFS='|' read -r ruleset_label ruleset_id ruleset_behavior ruleset_format ruleset_url ruleset_auth || [ -n "$ruleset_url" ]; do
+            case "$ruleset_label" in \#*) continue ;; esac
+            ruleset_url=$(str_trim "$ruleset_url")
+            case "$ruleset_url" in /*) ;; *) continue ;; esac
             safe_path=$(readlink -f "$(dirname "$ruleset_url")" 2>/dev/null || realpath "$(dirname "$ruleset_url")" 2>/dev/null)
             [ -n "$safe_path" ] && safe_paths_add "$safe_path"
-        done
-    fi
+        done <"$ruleset_file"
+    done
+    return 0
 }
 
 start() {
@@ -70,9 +105,9 @@ start() {
     local current_config_hash workdir_status
     local api_tls api_tls_cert api_tls_key dns_listen_port ipv6_enabled mihomo_gogc mihomo_gomaxprocs
     local mihomo_mem_limit mihomo_persistent_cache mihomo_persistent_ext_rules mixed_port nft_apply_changes
-    local nft_apply_changes_router ntpd_start routing_mode tproxy_port
+    local ntpd_start routing_mode tproxy_port use_mixed_port
     local controller_bind_interface router_selected_ipaddr
-    local core_exit_code preflight_tproxy_port
+    local core_exit_code preflight_tproxy_port preflight_mixed_port
 
     if preflight_check_is_already_running "$PROGNAME start" "JustClash" "$CORE_PATH" "$$"; then
         return 0
@@ -86,6 +121,7 @@ start() {
     config_get tproxy_port proxy tproxy_port
     config_get nft_apply_changes settings nft_apply_changes "$DEFAULT_NFT_APPLY_CHANGES"
     config_get mixed_port proxy mixed_port "$DEFAULT_MIXED_PORT"
+    config_get use_mixed_port proxy use_mixed_port 0
     config_get api_tls proxy api_tls "$DEFAULT_API_TLS"
     config_get api_tls_cert proxy api_tls_cert "$DEFAULT_API_TLS_CERT_PATH"
     config_get api_tls_key proxy api_tls_key "$DEFAULT_API_TLS_KEY_PATH"
@@ -95,7 +131,6 @@ start() {
     config_get mihomo_gogc settings mihomo_gogc "$DEFAULT_MIHOMO_GOGC"
     config_get mihomo_gomaxprocs settings mihomo_gomaxprocs "$DEFAULT_MIHOMO_GOMAXPROCS"
     config_get routing_mode settings routing_mode "$DEFAULT_ROUTING_MODE"
-    config_get nft_apply_changes_router settings nft_apply_changes_router "$DEFAULT_NFT_APPLY_CHANGES_ROUTER"
     config_get ipv6_enabled settings ipv6_enabled "$DEFAULT_IPV6_ENABLED"
     config_get controller_bind_interface proxy controller_bind_interface
 
@@ -105,12 +140,12 @@ start() {
     config_validate_bool "$api_tls" "proxy.api_tls" || validation_failed=1
     config_validate_bool "$mihomo_persistent_ext_rules" "settings.mihomo_persistent_ext_rules" || validation_failed=1
     config_validate_bool "$mihomo_persistent_cache" "settings.mihomo_persistent_cache" || validation_failed=1
-    config_validate_bool "$nft_apply_changes_router" "settings.nft_apply_changes_router" || validation_failed=1
     config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
+    config_validate_bool "$use_mixed_port" "proxy.use_mixed_port" || validation_failed=1
 
     config_validate_port "$dns_listen_port" "proxy.dns_listen_port" || validation_failed=1
     config_validate_port "$tproxy_port" "proxy.tproxy_port" || validation_failed=1
-    config_validate_port "$mixed_port" "proxy.mixed_port" || validation_failed=1
+    [ "$use_mixed_port" != 1 ] || config_validate_port "$mixed_port" "proxy.mixed_port" || validation_failed=1
 
     config_validate_uint "$mihomo_mem_limit" "settings.mihomo_mem_limit" || validation_failed=1
     config_validate_uint "$mihomo_gogc" "settings.mihomo_gogc" || validation_failed=1
@@ -142,6 +177,9 @@ start() {
     else
         preflight_tproxy_port=""
     fi
+
+    preflight_mixed_port=""
+    [ "$use_mixed_port" = "1" ] && preflight_mixed_port="$mixed_port"
 
     if [ -n "$ENV_JUSTCLASH_WAIT_WAN_MAX" ] && [ "$ENV_JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
         log info "Waiting for WAN (max ${ENV_JUSTCLASH_WAIT_WAN_MAX}s)..."
@@ -181,7 +219,7 @@ start() {
     preflight_check_port_collisions \
         "$dns_listen_port" \
         "$preflight_tproxy_port" \
-        "$mixed_port" \
+        "$preflight_mixed_port" \
         "$DEFAULT_EXTERNAL_CONTROLLER_PORT" || {
         log error "Port configuration validation failed. Aborting startup."
         return 1
@@ -191,7 +229,7 @@ start() {
     preflight_check_ports_occupancy \
         "$dns_listen_port" \
         "$preflight_tproxy_port" \
-        "$mixed_port" \
+        "$preflight_mixed_port" \
         "$DEFAULT_EXTERNAL_CONTROLLER_PORT" || {
         log error "Active ports check failed. Aborting startup."
         return 1
@@ -279,7 +317,12 @@ start() {
     }
 
     log info "Modifying dnsmasq configuration"
-    run_dnsmasq_update
+    run_dnsmasq_update || {
+        log error "Dnsmasq configuration failed. Aborting startup."
+        run_dnsmasq_restore || log error "Dnsmasq rollback failed; backup retained."
+        nf_table_remove
+        return 1
+    }
 
     log info "Updating scheduled tasks"
     cron_update
@@ -287,7 +330,6 @@ start() {
     nft_sets_watch_start \
         "$routing_mode" \
         "$nft_apply_changes" \
-        "$nft_apply_changes_router" \
         "$ipv6_enabled" \
         "$ACTIVE_IPCIDR_RULESETS_PATH" \
         "$CORE_WORKDIR_RULES_PATH" \
@@ -300,13 +342,14 @@ start() {
     nft_async_worker_stop "$ASYNC_WORKER_PID_PATH"
 
     log warn "Mihomo core exited; restoring networking changes."
-    run_dnsmasq_restore
+    run_dnsmasq_restore || core_exit_code=1
     nf_table_remove
 
     return "$core_exit_code"
 }
 
 stop() {
+    local stop_status=0
     log info "Stopping JustClash service..."
 
     nft_async_worker_stop "$ASYNC_WORKER_PID_PATH"
@@ -315,10 +358,11 @@ stop() {
     nf_table_remove
 
     log info "Restoring default dnsmasq configuration"
-    run_dnsmasq_restore
+    run_dnsmasq_restore || stop_status=1
 
     log info "Stopping core process"
-    stop_core
+    stop_core || stop_status=1
+    return "$stop_status"
 }
 
 # WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
@@ -409,7 +453,7 @@ stop_core() {
 # Reads and validates nftables settings, then applies the selected routing mode.
 run_nftables_apply() {
     local validation_failed=0
-    local fake_ip_range fake_ip_range6 ipv6_enabled nft_apply_changes nft_apply_changes_router nft_doh_mode nft_dns_udp_mode
+    local fake_ip_range fake_ip_range6 ipv6_enabled nft_apply_changes nft_doh_mode nft_dns_udp_mode
     local nft_dot_mode nft_dot_quic_mode nft_ips_exclude nft_mac_exclude nft_ntp_mode nft_ntp_mode_router
     local nft_ports_exclude nft_ports_exclude_router nft_quic_mode nft_skuid_exclude_router pbr_priority
     local provider_routing_marks proxy_routing_marks routing_mode tproxy_input_interfaces tproxy_port
@@ -418,7 +462,6 @@ run_nftables_apply() {
     # Read settings used by this scenario.
     config_get routing_mode settings routing_mode "$DEFAULT_ROUTING_MODE"
     config_get nft_apply_changes settings nft_apply_changes "$DEFAULT_NFT_APPLY_CHANGES"
-    config_get nft_apply_changes_router settings nft_apply_changes_router "$DEFAULT_NFT_APPLY_CHANGES_ROUTER"
     config_get tproxy_port proxy tproxy_port
     config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
     config_get fake_ip_range proxy fake_ip_range
@@ -445,7 +488,6 @@ run_nftables_apply() {
 
     # Validate before applying any changes.
     config_validate_bool "$nft_apply_changes" "settings.nft_apply_changes" || validation_failed=1
-    config_validate_bool "$nft_apply_changes_router" "settings.nft_apply_changes_router" || validation_failed=1
     config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
 
     if ! val_is_choice "$routing_mode" full partial; then
@@ -453,7 +495,7 @@ run_nftables_apply() {
         validation_failed=1
     fi
 
-    if [ "$nft_apply_changes" = "1" ] || [ "$nft_apply_changes_router" = "1" ]; then
+    if [ "$nft_apply_changes" = "1" ]; then
         config_validate_port "$tproxy_port" "proxy.tproxy_port" || validation_failed=1
         if ! val_is_uint "$pbr_priority" ||
             [ "$pbr_priority" -lt 1 ] 2>/dev/null ||
@@ -475,30 +517,26 @@ run_nftables_apply() {
             ;;
         esac
 
-        if [ "$nft_apply_changes" = "1" ]; then
-            [ -n "$fake_ip_range" ] || {
-                config_validation_error "proxy.fake_ip_range is required"
-                validation_failed=1
-            }
-            if [ "$ipv6_enabled" = "1" ] && [ -z "$fake_ip_range6" ]; then
-                config_validation_error "proxy.fake_ip_range6 is required when IPv6 is enabled"
-                validation_failed=1
-            fi
-
-            config_validate_interface_list "$tproxy_input_interfaces" "settings.tproxy_input_interfaces" || validation_failed=1
-            config_validate_port_list "$nft_ports_exclude" "settings.nft_ports_exclude" || validation_failed=1
-            config_validate_nft_mode "$nft_quic_mode" "settings.nft_quic_mode" || validation_failed=1
-            config_validate_nft_dns_udp_mode "$nft_dns_udp_mode" "settings.nft_dns_udp_mode" || validation_failed=1
-            config_validate_nft_mode "$nft_dot_mode" "settings.nft_dot_mode" || validation_failed=1
-            config_validate_nft_mode "$nft_dot_quic_mode" "settings.nft_dot_quic_mode" || validation_failed=1
-            config_validate_nft_mode "$nft_doh_mode" "settings.nft_doh_mode" || validation_failed=1
-            config_validate_nft_ntp_mode "$nft_ntp_mode" "settings.nft_ntp_mode" || validation_failed=1
+        [ -n "$fake_ip_range" ] || {
+            config_validation_error "proxy.fake_ip_range is required"
+            validation_failed=1
+        }
+        if [ "$ipv6_enabled" = "1" ] && [ -z "$fake_ip_range6" ]; then
+            config_validation_error "proxy.fake_ip_range6 is required when IPv6 is enabled"
+            validation_failed=1
         fi
 
-        if [ "$nft_apply_changes_router" = "1" ]; then
-            config_validate_port_list "$nft_ports_exclude_router" "settings.nft_ports_exclude_router" || validation_failed=1
-            config_validate_nft_ntp_mode "$nft_ntp_mode_router" "settings.nft_ntp_mode_router" || validation_failed=1
-        fi
+        config_validate_interface_list "$tproxy_input_interfaces" "settings.tproxy_input_interfaces" || validation_failed=1
+        config_validate_port_list "$nft_ports_exclude" "settings.nft_ports_exclude" || validation_failed=1
+        config_validate_nft_mode "$nft_quic_mode" "settings.nft_quic_mode" || validation_failed=1
+        config_validate_nft_dns_udp_mode "$nft_dns_udp_mode" "settings.nft_dns_udp_mode" || validation_failed=1
+        config_validate_nft_mode "$nft_dot_mode" "settings.nft_dot_mode" || validation_failed=1
+        config_validate_nft_mode "$nft_dot_quic_mode" "settings.nft_dot_quic_mode" || validation_failed=1
+        config_validate_nft_mode "$nft_doh_mode" "settings.nft_doh_mode" || validation_failed=1
+        config_validate_nft_ntp_mode "$nft_ntp_mode" "settings.nft_ntp_mode" || validation_failed=1
+
+        config_validate_port_list "$nft_ports_exclude_router" "settings.nft_ports_exclude_router" || validation_failed=1
+        config_validate_nft_ntp_mode "$nft_ntp_mode_router" "settings.nft_ntp_mode_router" || validation_failed=1
     fi
 
     if [ "$validation_failed" -ne 0 ]; then
@@ -506,7 +544,7 @@ run_nftables_apply() {
         return 1
     fi
 
-    if [ "$nft_apply_changes" = "0" ] && [ "$nft_apply_changes_router" = "0" ]; then
+    if [ "$nft_apply_changes" = "0" ]; then
         log info "Skipping nftables and PBR setup (disabled in configuration)"
         return 0
     fi
@@ -514,7 +552,6 @@ run_nftables_apply() {
     if [ "$routing_mode" = "partial" ]; then
         nft_table_partial_apply \
             "$nft_apply_changes" \
-            "$nft_apply_changes_router" \
             "$tproxy_port" \
             "$fake_ip_range" \
             "$fake_ip_range6" \
@@ -542,7 +579,6 @@ run_nftables_apply() {
     else
         nft_table_full_apply \
             "$nft_apply_changes" \
-            "$nft_apply_changes_router" \
             "$tproxy_port" \
             "$fake_ip_range" \
             "$fake_ip_range6" \
@@ -611,28 +647,7 @@ run_dnsmasq_update() {
 }
 
 run_dnsmasq_restore() {
-    local validation_failed=0
-    local dns_listen_port dnsmasq_apply_changes
-    # Read settings used by this scenario.
-    config_get dnsmasq_apply_changes settings dnsmasq_apply_changes "$DEFAULT_DNSMASQ_APPLY_CHANGES"
-    config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
-
-    # Validate before applying any changes.
-    config_validate_bool "$dnsmasq_apply_changes" "settings.dnsmasq_apply_changes" || validation_failed=1
-
-    if [ "$dnsmasq_apply_changes" = "1" ]; then
-        config_validate_port "$dns_listen_port" "proxy.dns_listen_port" || validation_failed=1
-    fi
-
-    if [ "$validation_failed" -ne 0 ]; then
-        log error "Dnsmasq configuration validation failed."
-        return 1
-    fi
-
-    dnsmasq_restore \
-        "$dnsmasq_apply_changes" \
-        "$dns_listen_port" \
-        "$PROGNAME"
+    dnsmasq_restore "$PROGNAME"
 }
 
 # Complex YAML section readers live with the scenario that owns their validation.
@@ -722,7 +737,7 @@ config_proxy_group_read() {
     config_get check_url "$section" check_url "$DEFAULT_HEALTHCHECK_URL"
     config_get expected_status "$section" expected_status "$DEFAULT_HEALTHCHECK_RESULT"
     val_is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
-    config_get interval "$section" interval "$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
+    config_get interval "$section" check_interval "$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
     val_is_uint "$interval" || interval="$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
     config_get timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
     val_is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
@@ -751,7 +766,8 @@ config_proxy_group_read() {
 config_proxy_provider_read() {
     local section="$1" callback="$2" reserved_marks="$3"
     local name enabled subscription routing_mark ip_version interval size_limit
-    local filter exclude_filter exclude_type proxy dialer interface_name auth hwid hwid_custom user_agent private_key public_key
+    local filter exclude_filter exclude_type proxy dialer interface_name auth hwid hwid_custom os_custom os_version_custom device_model_custom
+    local user_agent private_key public_key
     local health_check expected_status check_url check_interval timeout lazy
     config_get name "$section" name
     config_get subscription "$section" subscription
@@ -785,6 +801,9 @@ config_proxy_provider_read() {
     config_get auth "$section" header_authorization
     config_get hwid "$section" header_hwid
     config_get hwid_custom "$section" header_hwid_custom
+    config_get os_custom "$section" header_os_custom
+    config_get os_version_custom "$section" header_os_version_custom
+    config_get device_model_custom "$section" header_device_model_custom
     config_get user_agent "$section" header_user_agent
     config_get private_key "$section" age_private_key
     config_get public_key "$section" header_age_public_key
@@ -797,7 +816,7 @@ config_proxy_provider_read() {
     config_get timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
     val_is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
     config_get lazy "$section" health_check_lazy 0
-    "$callback" "$name" "$subscription" "$routing_mark" "$ip_version" "$interval" "$size_limit" "$filter" "$exclude_filter" "$exclude_type" "$proxy" "$dialer" "$interface_name" "$auth" "$hwid" "$hwid_custom" "$user_agent" "$private_key" "$public_key" "$health_check" "$expected_status" "$check_url" "$check_interval" "$timeout" "$lazy"
+    "$callback" "$name" "$subscription" "$routing_mark" "$ip_version" "$interval" "$size_limit" "$filter" "$exclude_filter" "$exclude_type" "$proxy" "$dialer" "$interface_name" "$auth" "$hwid" "$hwid_custom" "$os_custom" "$os_version_custom" "$device_model_custom" "$user_agent" "$private_key" "$public_key" "$health_check" "$expected_status" "$check_url" "$check_interval" "$timeout" "$lazy"
 }
 
 # Reads and validates YAML settings, then atomically promotes the generated document.
@@ -807,14 +826,35 @@ core_generate_yaml() {
 
     # ash locals are dynamically scoped. Synchronous YAML callbacks update this
     # build state without leaking it into the process-wide environment.
+    # OUT_RULES / OUT_RULESETS / OUT_FAKE_IP_RULES: JSON fragments accumulated by
+    # rules.sh, groups.sh and proxies.sh, then wrapped and merged below.
+    # OUT_PROXY_GROUPS / OUT_PROXIES / OUT_PROXY_PROVIDERS: rendered entities from
+    # groups.sh / proxies.sh / providers.sh, copied into the final document here.
+    # OUT_NAMES_RULESETS / OUT_NAMES_SUFFIXES / OUT_NAMES_GEOSITE: block DNS selectors
+    # returned by rules.sh. OUT_MIXED_RULES / OUT_FINAL_RULES: its final rule arrays.
     local OUT_RULES="[]" OUT_RULESETS="{}" OUT_FAKE_IP_RULES="[]"
     local OUT_PROXY_GROUPS="[]" OUT_PROXIES="[]" OUT_PROXY_PROVIDERS=""
     local OUT_NAMES_RULESETS="" OUT_NAMES_SUFFIXES="" OUT_NAMES_GEOSITE=""
     local OUT_MIXED_RULES="" OUT_FINAL_RULES=""
+    # Per-build newline-delimited sidecars, not process-global configuration:
+    # NL is the readonly newline from constants.sh, not a literal backslash-n.
+    # rules.sh writes name|source to _IPCIDR_RULESETS_BUFFER (all and block modes);
+    # rules.sh/groups.sh/proxies.sh append destination CIDRs to _STATIC_IPS_BUFFER;
+    # groups.sh/proxies.sh append source CIDRs to _STATIC_SOURCE_IPS_BUFFER.
+    # This function writes them to ACTIVE_IPCIDR_RULESETS_PATH,
+    # ACTIVE_STATIC_IPS_PATH and ACTIVE_STATIC_SOURCE_IPS_PATH. nftables reads
+    # those files, never these locals. Keep writer callbacks in this shell.
     local _IPCIDR_RULESETS_BUFFER="" _STATIC_IPS_BUFFER="" _STATIC_SOURCE_IPS_BUFFER=""
+    # Catalog text consumed by rules.sh; _RULESETS_CONTENT is temporarily replaced
+    # by _BLOCK_RULESETS_CONTENT while handle_block_rule_section() runs.
     local _RULESETS_CONTENT="" _BLOCK_RULESETS_CONTENT=""
     local JC_CONFIG_LIST_VALUE=""
-    # These values are consumed only by nested YAML builders.
+    # OUT_TEMPLATE is overwritten by each template helper; callers consume it immediately.
+    # OUT_BUNDLE_* is overwritten by build_builtin_rules_bundle() in rules.sh:
+    # IP_RULES / RULES split IP and other rules; RULESETS holds provider entries;
+    # NAMES holds domain selectors; FAKEIPRULES holds Fake-IP selection rules.
+    # Section callbacks consume these results before the next bundle is built.
+    # GLOBAL_FAKE_IP_EXCLUDE_* are input filters shared with those callbacks.
     # shellcheck disable=SC2034
     local OUT_TEMPLATE="" OUT_BUNDLE_IP_RULES="" OUT_BUNDLE_RULES="" OUT_BUNDLE_RULESETS="" \
         OUT_BUNDLE_NAMES="" OUT_BUNDLE_FAKEIPRULES="" \
@@ -1491,17 +1531,17 @@ core_autorestart_cron_remove() {
 }
 
 service_data_cron_check() {
-    cron_job_check "${PROG_PATH} service_data_update"
+    cron_job_check "# Service Data Update"
 }
 
 service_data_cron_add() {
     local schedule="$1"
 
-    cron_job_add "$schedule" "${PROG_PATH} service_data_update" "$PROG_PATH service_data_update # Service Data Update" "Service data update"
+    cron_job_add "$schedule" "# Service Data Update" "$PROG_PATH resources data update # Service Data Update" "Service data update"
 }
 
 service_data_cron_remove() {
-    cron_job_remove "${PROG_PATH} service_data_update" "Service data update"
+    cron_job_remove "# Service Data Update" "Service data update"
 }
 
 scheduled_work_cron_add() {
@@ -1577,7 +1617,7 @@ cron_update() {
     fi
 }
 
-run_diag_route() {
+run_check_routes() {
     local validation_failed=0
     local ipv6_enabled
     # Read settings used by this scenario.
@@ -1590,10 +1630,10 @@ run_diag_route() {
         return 1
     fi
 
-    diag_route "$NF_TABLE_FWMARK_FINAL" "$NF_ROUTE_TABLE" "$ipv6_enabled"
+    check_routes "$NF_TABLE_FWMARK_FINAL" "$NF_ROUTE_TABLE" "$ipv6_enabled"
 }
 
-run_diag_proxy_resolver() {
+run_check_dns_proxy() {
     local validation_failed=0
     local dns_listen_port
     local target="$1"
@@ -1611,10 +1651,10 @@ run_diag_proxy_resolver() {
         return 1
     fi
 
-    diag_proxy_resolver "$target" "$dns_listen_port" "$NSLOOKUP_TIMEOUT"
+    check_dns_proxy "$target" "$dns_listen_port" "$NSLOOKUP_TIMEOUT"
 }
 
-diag_report() {
+check_report_full() {
     local running_status autoload_status hw_model os_ver
 
     service "$PROGNAME" running && running_status="active" || running_status="inactive"
@@ -1648,24 +1688,24 @@ diag_report() {
     printf "  %-15s :: %s\n" "Autoload" "$autoload_status"
     echo ""
     echo "  [ ICMP Pings ]"
-    echo "  Yandex ($DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
-    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2 2 | sed 's/^/    /'
+    echo "  Yandex ($DEFAULT_CHECK_IP_PING_YANDEX):"
+    check_ping "$DEFAULT_CHECK_IP_PING_YANDEX" 2 2 | sed 's/^/    /'
     echo ""
-    echo "  Google ($DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
-    diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2 2 | sed 's/^/    /'
+    echo "  Google ($DEFAULT_CHECK_IP_PING_GOOGLE):"
+    check_ping "$DEFAULT_CHECK_IP_PING_GOOGLE" 2 2 | sed 's/^/    /'
     echo ""
-    echo "  GitHub ($DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB):"
-    diag_icmp "$DEFAULT_DIAG_DOMAIN_CHECK_PING_GITHUB" 2 2 | sed 's/^/    /'
+    echo "  GitHub ($DEFAULT_CHECK_DOMAIN_PING_GITHUB):"
+    check_ping "$DEFAULT_CHECK_DOMAIN_PING_GITHUB" 2 2 | sed 's/^/    /'
     echo ""
     echo "  [ DNS Resolves ]"
-    echo "  Proxy ($DEFAULT_DIAG_RESOLVE_URL_YANDEX):"
-    run_diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" | sed 's/^/    /'
+    echo "  Proxy ($DEFAULT_CHECK_RESOLVE_URL_YANDEX):"
+    run_check_dns_proxy "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" | sed 's/^/    /'
     echo ""
-    echo "  External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_YANDEX):"
-    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" "$NSLOOKUP_TIMEOUT" | sed 's/^/    /'
+    echo "  External ($DEFAULT_CHECK_RESOLVE_URL_YANDEX via $DEFAULT_CHECK_IP_PING_YANDEX):"
+    check_dns_external "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" "$DEFAULT_CHECK_IP_PING_YANDEX" "$NSLOOKUP_TIMEOUT" | sed 's/^/    /'
     echo ""
-    echo "  External ($DEFAULT_DIAG_RESOLVE_URL_YANDEX via $DEFAULT_DIAG_IP_CHECK_PING_GOOGLE):"
-    diag_external_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" "$NSLOOKUP_TIMEOUT" | sed 's/^/    /'
+    echo "  External ($DEFAULT_CHECK_RESOLVE_URL_YANDEX via $DEFAULT_CHECK_IP_PING_GOOGLE):"
+    check_dns_external "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" "$DEFAULT_CHECK_IP_PING_GOOGLE" "$NSLOOKUP_TIMEOUT" | sed 's/^/    /'
     echo ""
     echo "  [ DPI Applications ]"
     print_dpi_status "Zapret" "$ZAPRETINITD_FILEPATH"
@@ -1674,10 +1714,10 @@ diag_report() {
     print_dpi_status "B4" "$B4_FILEPATH"
     echo ""
     echo "  [ NFT Tables ]"
-    diag_nft "$NF_TABLE_NAME" | sed 's/^/    /'
+    check_nft "$NF_TABLE_NAME" | sed 's/^/    /'
     echo ""
     echo "  [ Routes ]"
-    run_diag_route | sed 's/^/    /'
+    run_check_routes | sed 's/^/    /'
     echo ""
     echo "  [ /etc/resolv.conf ]"
     sed 's/^/    /' /etc/resolv.conf
@@ -1689,22 +1729,22 @@ diag_report() {
     uci show dhcp | sed 's/^/    /'
     echo ""
     echo "  [ Service Config ]"
-    diag_service_config "$CONFIG_PATH" | sed 's/^/    /'
+    config_show_service "$CONFIG_PATH" | sed 's/^/    /'
     echo ""
     echo "  [ Mihomo Config ]"
-    diag_mihomo_config "$OUTPUT_YAML_CONFIG_PATH" | sed 's/^/    /'
+    config_show_mihomo "$OUTPUT_YAML_CONFIG_PATH" | sed 's/^/    /'
     echo ""
     echo "----------------------------------------------------------------"
     echo ""
 }
 
-diag_report_redacted() {
+check_report_safe() {
     local running_status autoload_status
 
     service "$PROGNAME" running && running_status="active" || running_status="inactive"
     service "$PROGNAME" enabled && autoload_status="enabled" || autoload_status="disabled"
 
-    diag_redacted_check() {
+    check_safe_item() {
         local label="$1"
 
         shift
@@ -1727,21 +1767,21 @@ diag_report_redacted() {
     printf "  %-24s :: %s\n" "Autoload" "$autoload_status"
     echo ""
     echo "  [ Connectivity ]"
-    diag_redacted_check "ICMP check 1" \
-        diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_YANDEX" 2 2
-    diag_redacted_check "ICMP check 2" \
-        diag_icmp "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" 2 2
-    diag_redacted_check "Proxy DNS resolve" \
-        run_diag_proxy_resolver "$DEFAULT_DIAG_RESOLVE_URL_YANDEX"
-    diag_redacted_check "External DNS resolve" \
-        diag_external_resolver \
-        "$DEFAULT_DIAG_RESOLVE_URL_YANDEX" \
-        "$DEFAULT_DIAG_IP_CHECK_PING_GOOGLE" \
+    check_safe_item "ICMP check 1" \
+        check_ping "$DEFAULT_CHECK_IP_PING_YANDEX" 2 2
+    check_safe_item "ICMP check 2" \
+        check_ping "$DEFAULT_CHECK_IP_PING_GOOGLE" 2 2
+    check_safe_item "Proxy DNS resolve" \
+        run_check_dns_proxy "$DEFAULT_CHECK_RESOLVE_URL_YANDEX"
+    check_safe_item "External DNS resolve" \
+        check_dns_external \
+        "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" \
+        "$DEFAULT_CHECK_IP_PING_GOOGLE" \
         "$NSLOOKUP_TIMEOUT"
     echo ""
     echo "  [ Runtime ]"
-    diag_redacted_check "NFT state" diag_nft "$NF_TABLE_NAME"
-    diag_redacted_check "Policy routes" run_diag_route
+    check_safe_item "NFT state" check_nft "$NF_TABLE_NAME"
+    check_safe_item "Policy routes" run_check_routes
     echo ""
     echo "  Configuration, addresses, domains, identifiers and raw network"
     echo "  state are intentionally omitted from this report."
@@ -1751,7 +1791,7 @@ diag_report_redacted() {
 }
 
 case "$1" in
-start | run | up | u)
+start | run | up)
     import \
         /lib/functions/network.sh \
         /lib/functions.sh \
@@ -1788,25 +1828,59 @@ stop | down | d)
     config_init "$PROGNAME"
     stop
     ;;
-core_update | cu)
-    import \
-        /lib/functions.sh \
-        /lib/config/uci.sh \
-        /usr/lib/justclash/logging.sh \
-        /usr/lib/justclash/helpers.sh \
-        /usr/lib/justclash/config.sh \
-        /usr/lib/justclash/runtime/http.sh \
-        /usr/lib/justclash/runtime/core.sh \
-        /usr/lib/justclash/runtime/core_update.sh
-    config_init "$PROGNAME"
-    core_update
+resources)
+    case "$2:$3" in
+    core:update)
+        [ "$#" -eq 3 ] || {
+            printf 'Usage: justclash.sh resources core update\n' >&2
+            exit 2
+        }
+        import \
+            /lib/functions.sh \
+            /lib/config/uci.sh \
+            /usr/lib/justclash/logging.sh \
+            /usr/lib/justclash/helpers.sh \
+            /usr/lib/justclash/config.sh \
+            /usr/lib/justclash/runtime/downloads.sh \
+            /usr/lib/justclash/runtime/core.sh \
+            /usr/lib/justclash/runtime/core_update.sh
+        config_init "$PROGNAME"
+        core_update
+        ;;
+    core:remove)
+        [ "$#" -le 4 ] || {
+            printf 'Usage: justclash.sh resources core remove [-y|-Y|--yes]\n' >&2
+            exit 2
+        }
+        import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/core.sh
+        cli_confirm_destructive "Remove the Mihomo core?" "$4" && core_remove
+        ;;
+    data:update)
+        [ "$#" -eq 3 ] || {
+            printf 'Usage: justclash.sh resources data update\n' >&2
+            exit 2
+        }
+        import \
+            /lib/functions.sh \
+            /lib/config/uci.sh \
+            /usr/lib/justclash/logging.sh \
+            /usr/lib/justclash/helpers.sh \
+            /usr/lib/justclash/config.sh \
+            /usr/lib/justclash/runtime/downloads.sh
+        config_init "$PROGNAME"
+        service_data_update
+        ;;
+    *)
+        printf 'Usage: justclash.sh resources {core update|core remove [-y|-Y|--yes]|data update}\n' >&2
+        exit 2
+        ;;
+    esac
     ;;
-core_remove | cr)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/core.sh
-    core_remove
-    ;;
-
-cron_update | cru)
+schedule)
+    [ "$#" -eq 2 ] && [ "$2" = "sync" ] || {
+        printf 'Usage: justclash.sh schedule sync\n' >&2
+        exit 2
+    }
     import \
         /lib/functions.sh \
         /lib/config/uci.sh \
@@ -1817,143 +1891,227 @@ cron_update | cru)
     config_init "$PROGNAME"
     cron_update
     ;;
+logs)
+    [ "$#" -ge 2 ] && [ "$#" -le 3 ] || {
+        printf 'Usage: justclash.sh logs {service|system} [N]\n' >&2
+        exit 2
+    }
 
-service_data_update | sdu)
-    import \
-        /lib/functions.sh \
-        /lib/config/uci.sh \
-        /usr/lib/justclash/logging.sh \
-        /usr/lib/justclash/helpers.sh \
-        /usr/lib/justclash/config.sh \
-        /usr/lib/justclash/runtime/http.sh \
-        /usr/lib/justclash/runtime/service_data.sh
-    config_init "$PROGNAME"
-    service_data_update
-    ;;
-logs | log | l)
+    case "$3" in
+    '') ;;
+    *[!0-9]*)
+        printf 'Usage: justclash.sh logs {service|system} [N]\n' >&2
+        exit 2
+        ;;
+    esac
+
     import /usr/lib/justclash/logging.sh
     case "$2" in
-    *[!0-9]* | '')
-        logs "$PROGNAME"
+    service)
+        if [ -n "$3" ]; then
+            logs "$PROGNAME" "$3"
+        else
+            logs "$PROGNAME"
+        fi
+        ;;
+    system)
+        if [ -n "$3" ]; then
+            systemlogs "$PROGNAME" "$3"
+        else
+            systemlogs "$PROGNAME"
+        fi
         ;;
     *)
-        logs "$PROGNAME" "$2"
+        printf 'Usage: justclash.sh logs {service|system} [N]\n' >&2
+        exit 2
         ;;
     esac
     ;;
-systemlogs)
-    import /usr/lib/justclash/logging.sh
+version)
+    [ "$#" -eq 2 ] || {
+        printf 'Usage: justclash.sh version {package|core}\n' >&2
+        exit 2
+    }
+
     case "$2" in
-    *[!0-9]* | '')
-        systemlogs "$PROGNAME"
+    package)
+        echo "$JUSTCLASH_VERSION"
+        ;;
+    core)
+        import /usr/lib/justclash/runtime/core.sh
+        core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING"
         ;;
     *)
-        systemlogs "$PROGNAME" "$2"
+        printf 'Usage: justclash.sh version {package|core}\n' >&2
+        exit 2
         ;;
     esac
     ;;
-info_core | core_info_mihomo | version_core | vc | --vc)
-    import /usr/lib/justclash/runtime/core.sh
-    core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING"
+check)
+    case "$2" in
+    '')
+        [ "$#" -eq 1 ] || {
+            printf 'Usage: justclash.sh check\n' >&2
+            exit 2
+        }
+        import \
+            /lib/functions.sh \
+            /lib/config/uci.sh \
+            /usr/lib/justclash/logging.sh \
+            /usr/lib/justclash/helpers.sh \
+            /usr/lib/justclash/config.sh \
+            /usr/lib/justclash/runtime/core.sh \
+            /usr/lib/justclash/runtime/diagnostics.sh
+        config_init "$PROGNAME"
+        check_report_safe
+        ;;
+    full)
+        [ "$#" -eq 3 ] && [ "$3" = "--unsafe" ] || {
+            printf 'Usage: justclash.sh check full --unsafe\n' >&2
+            exit 2
+        }
+        import \
+            /lib/functions.sh \
+            /lib/config/uci.sh \
+            /usr/lib/justclash/logging.sh \
+            /usr/lib/justclash/helpers.sh \
+            /usr/lib/justclash/config.sh \
+            /usr/lib/justclash/runtime/core.sh \
+            /usr/lib/justclash/runtime/diagnostics.sh
+        config_init "$PROGNAME"
+        check_report_full
+        ;;
+    nft)
+        [ "$#" -eq 2 ] || {
+            printf 'Usage: justclash.sh check nft\n' >&2
+            exit 2
+        }
+        import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
+        check_nft "$NF_TABLE_NAME"
+        ;;
+    routes)
+        [ "$#" -eq 2 ] || {
+            printf 'Usage: justclash.sh check routes\n' >&2
+            exit 2
+        }
+        import \
+            /lib/functions.sh \
+            /lib/config/uci.sh \
+            /usr/lib/justclash/logging.sh \
+            /usr/lib/justclash/helpers.sh \
+            /usr/lib/justclash/config.sh \
+            /usr/lib/justclash/runtime/diagnostics.sh
+        config_init "$PROGNAME"
+        run_check_routes
+        ;;
+    ping)
+        [ "$#" -ge 3 ] && [ "$#" -le 4 ] || {
+            printf 'Usage: justclash.sh check ping TARGET [COUNT]\n' >&2
+            exit 2
+        }
+        import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
+        check_ping "$3" "${4:-3}" 2
+        ;;
+    dns-proxy)
+        [ "$#" -eq 3 ] || {
+            printf 'Usage: justclash.sh check dns-proxy DOMAIN\n' >&2
+            exit 2
+        }
+        import \
+            /lib/functions.sh \
+            /lib/config/uci.sh \
+            /usr/lib/justclash/logging.sh \
+            /usr/lib/justclash/helpers.sh \
+            /usr/lib/justclash/config.sh \
+            /usr/lib/justclash/runtime/diagnostics.sh
+        config_init "$PROGNAME"
+        run_check_dns_proxy "$3"
+        ;;
+    dns-external)
+        [ "$#" -eq 4 ] || {
+            printf 'Usage: justclash.sh check dns-external DOMAIN RESOLVER\n' >&2
+            exit 2
+        }
+        import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
+        check_dns_external "$3" "$4" "$NSLOOKUP_TIMEOUT"
+        ;;
+    hwid)
+        [ "$#" -eq 2 ] || {
+            printf 'Usage: justclash.sh check hwid\n' >&2
+            exit 2
+        }
+        import /usr/lib/justclash/helpers.sh
+        sysinfo_hwid_generate
+        echo ""
+        ;;
+    *)
+        printf 'Usage: justclash.sh check [full --unsafe|nft|routes|ping TARGET [COUNT]|dns-proxy DOMAIN|dns-external DOMAIN RESOLVER|hwid]\n' >&2
+        exit 2
+        ;;
+    esac
     ;;
-info_package | version | v | -v | --version)
-    echo "$JUSTCLASH_VERSION"
-    ;;
-diag_nft | dn)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_nft "$NF_TABLE_NAME"
-    ;;
-diag_route | dr)
-    import \
-        /lib/functions.sh \
-        /lib/config/uci.sh \
-        /usr/lib/justclash/logging.sh \
-        /usr/lib/justclash/helpers.sh \
-        /usr/lib/justclash/config.sh \
-        /usr/lib/justclash/runtime/diagnostics.sh
-    config_init "$PROGNAME"
-    run_diag_route
-    ;;
-diag_report | diag | dg)
-    import \
-        /lib/functions.sh \
-        /lib/config/uci.sh \
-        /usr/lib/justclash/logging.sh \
-        /usr/lib/justclash/helpers.sh \
-        /usr/lib/justclash/config.sh \
-        /usr/lib/justclash/runtime/core.sh \
-        /usr/lib/justclash/runtime/diagnostics.sh
-    config_init "$PROGNAME"
-    diag_report
-    ;;
-diag_redacted | dgr)
-    import \
-        /lib/functions.sh \
-        /lib/config/uci.sh \
-        /usr/lib/justclash/logging.sh \
-        /usr/lib/justclash/helpers.sh \
-        /usr/lib/justclash/config.sh \
-        /usr/lib/justclash/runtime/core.sh \
-        /usr/lib/justclash/runtime/diagnostics.sh
-    config_init "$PROGNAME"
-    diag_report_redacted
-    ;;
-diag_proxy_resolver | dpr)
-    import \
-        /lib/functions.sh \
-        /lib/config/uci.sh \
-        /usr/lib/justclash/logging.sh \
-        /usr/lib/justclash/helpers.sh \
-        /usr/lib/justclash/config.sh \
-        /usr/lib/justclash/runtime/diagnostics.sh
-    config_init "$PROGNAME"
-    run_diag_proxy_resolver "$2"
-    ;;
-diag_external_resolver | der)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_external_resolver "$2" "$3" "$NSLOOKUP_TIMEOUT"
-    ;;
-diag_icmp | di)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_icmp "$2" "${3:-3}" 2
-    ;;
-diag_mihomo_config | dmc)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_mihomo_config "$OUTPUT_YAML_CONFIG_PATH"
-    ;;
-diag_mihomo_config_unsafe | dmcu)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_mihomo_config_unsafe "$OUTPUT_YAML_CONFIG_PATH"
-    ;;
-diag_service_config | dsc)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_service_config "$CONFIG_PATH"
-    ;;
-diag_service_config_unsafe | dscu)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-    diag_service_config_unsafe "$CONFIG_PATH"
-    ;;
-config_reset | cfr | diag_service_config_reset | dscr)
-    import /usr/lib/justclash/logging.sh /usr/lib/justclash/config.sh
-    config_reset "$DEFAULT_CONFIG_PATH" "$CONFIG_PATH" "$CONFIG_BAK_PATH"
-    ;;
-show_hwid | hwid)
-    import /usr/lib/justclash/helpers.sh
-    sysinfo_hwid_generate
-    echo ""
+config)
+    case "$2" in
+    show)
+        case "$3" in
+        mihomo)
+            [ "$#" -le 4 ] || {
+                printf 'Usage: justclash.sh config show mihomo [--unsafe]\n' >&2
+                exit 2
+            }
+            import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
+            case "$4" in
+            '') config_show_mihomo "$OUTPUT_YAML_CONFIG_PATH" ;;
+            --unsafe) config_show_mihomo_unsafe "$OUTPUT_YAML_CONFIG_PATH" ;;
+            *)
+                printf 'Usage: justclash.sh config show mihomo [--unsafe]\n' >&2
+                exit 2
+                ;;
+            esac
+            ;;
+        service)
+            [ "$#" -le 4 ] || {
+                printf 'Usage: justclash.sh config show service [--unsafe]\n' >&2
+                exit 2
+            }
+            import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
+            case "$4" in
+            '') config_show_service "$CONFIG_PATH" ;;
+            --unsafe) config_show_service_unsafe "$CONFIG_PATH" ;;
+            *)
+                printf 'Usage: justclash.sh config show service [--unsafe]\n' >&2
+                exit 2
+                ;;
+            esac
+            ;;
+        *)
+            printf 'Usage: justclash.sh config show {mihomo|service} [--unsafe]\n' >&2
+            exit 2
+            ;;
+        esac
+        ;;
+    reset)
+        [ "$#" -le 3 ] || {
+            printf 'Usage: justclash.sh config reset [-y|-Y|--yes]\n' >&2
+            exit 2
+        }
+        import /usr/lib/justclash/logging.sh /usr/lib/justclash/config.sh
+        cli_confirm_destructive "Reset the JustClash configuration?" "$3" &&
+            config_reset "$DEFAULT_CONFIG_PATH" "$CONFIG_PATH" "$CONFIG_BAK_PATH"
+        ;;
+    *)
+        printf 'Usage: justclash.sh config {show|reset}\n' >&2
+        exit 2
+        ;;
+    esac
     ;;
 help | '?' | command | h | -h | --help)
     import /usr/lib/justclash/help.sh
     help
     ;;
-_luci_call)
-    import /usr/lib/justclash/runtime/core.sh
-    echo "$JUSTCLASH_VERSION,$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
-    ;;
 *)
-    import /usr/lib/justclash/logging.sh
-    clog info "Unknown command: $1"
-    clog info "Type 'justclash.sh help' for a list of available commands."
+    printf 'error: Unknown command\n' >&2
+    printf "Type 'justclash.sh help' for a list of available commands.\n" >&2
     exit 1
     ;;
 esac
