@@ -44,23 +44,14 @@ core_update_latest_version_get() {
     )
 }
 
-core_archive_download() {
-    local download_url="$1" archive_path="$2"
-
-    http_download "$download_url" "$archive_path" 0
-}
-
-# Returns 0 when installed, 5 when the destination cannot be written.
+# Returns 0 when installed, 5 for an invalid archive or an I/O failure.
 core_archive_apply() {
     local archive_path="$1" destination="$2"
 
-    if gzip -t "$archive_path" 2>/dev/null; then
-        gunzip -c "$archive_path" >"$destination" || return 5
-    else
-        cp "$archive_path" "$destination" || return 5
-    fi
-
-    chmod +x "$destination" || return 5
+    # Downloads are .gz archives. An error page is not an alternative format.
+    gzip -t "$archive_path" 2>/dev/null || return 5
+    gunzip -c "$archive_path" >"$destination" || return 5
+    chmod 755 "$destination" || return 5
     return 0
 }
 
@@ -79,7 +70,7 @@ core_download() {
     download_url="${base_url}/${filename}"
 
     log info "Downloading Mihomo binary"
-    core_archive_download "$download_url" "$archive_path" || {
+    http_download "$download_url" "$archive_path" 1 || {
         rm -f "$archive_path"
         log error "Failed to download the Mihomo archive."
         return 6
