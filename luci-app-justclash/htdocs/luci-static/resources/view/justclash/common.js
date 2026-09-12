@@ -136,8 +136,7 @@ return baseclass.extend({
     // OpenWrt NFTables QUIC and Encrypted DNS (DoT/DoH/DoQ) handling (JustClash UI specific)
     defaultNftOptions: [
         { value: "BY RULES", text: _("By rules") },
-        { value: "DROP", text: _("Drop") },
-        { value: "REJECT", text: _("Reject") }
+        { value: "DROP", text: _("Drop") }
     ],
     // OpenWrt NFTables plain UDP DNS interception mode (JustClash UI specific)
     defaultNftDnsUdpOptions: [
@@ -155,14 +154,7 @@ return baseclass.extend({
     defaultUaPresets: [
         { value: "__random__",   label: _("Random popular") },
         { value: "__justclash__", label: _("JustClash") },
-        { value: "__mihomo__",    label: _("Mihomo") },
-        { value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36", label: _("Chrome (Windows)") },
-        { value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36", label: _("Chrome (macOS)") },
-        { value: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36", label: _("Chrome (Linux)") },
-        { value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0", label: _("Firefox (Windows)") },
-        { value: "Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0", label: _("Firefox (Linux)") },
-        { value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Safari/605.1.15", label: _("Safari (macOS)") },
-        { value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0", label: _("Edge (Windows)") }
+        { value: "__mihomo__",    label: _("Mihomo") }
     ],
     // global-client-fingerprint & proxies.[*].client-fingerprint
     defaultFingerprints: [
@@ -464,6 +456,7 @@ return baseclass.extend({
         const allowedPrefixes = [
             "direct://",
             "vless://",
+            "vmess://",
             "trojan://",
             "trojan-go://",
             "hy2://",
