@@ -1,14 +1,14 @@
 # ubus API Reference
 
-The `justclash` package registers the `justclash` ubus object through an rpcd executable plugin. LuCI uses this API for service control, status, diagnostics, configuration display, logs, and updates, but the API is also available without `luci-app-justclash` installed.
+The `justclash` package registers the `justclash-core` ubus object through an rpcd executable plugin. LuCI uses this API for service control, status, diagnostics, configuration display, logs, and updates, but the API is also available without `luci-app-justclash` installed.
 
 Use the [Command-Line Reference](02_cli-commands.md) for interactive shell administration. The ubus API is intended for LuCI and other local RPC clients.
 
 ## Discover the API
 
 ```sh
-ubus list justclash
-ubus -v list justclash
+ubus list justclash-core
+ubus -v list justclash-core
 ```
 
 The verbose form shows the accepted request fields and their types.
@@ -37,50 +37,50 @@ The unsafe configuration method is intentionally separate from `config_show`. rp
 Read service status:
 
 ```sh
-ubus call justclash status
+ubus call justclash-core status
 ```
 
 Generate the safe diagnostic summary:
 
 ```sh
-ubus call justclash check
+ubus call justclash-core check
 ```
 
 Display a redacted configuration:
 
 ```sh
-ubus call justclash config_show '{ "target": "mihomo" }'
-ubus call justclash config_show '{ "target": "service" }'
+ubus call justclash-core config_show '{ "target": "mihomo" }'
+ubus call justclash-core config_show '{ "target": "service" }'
 ```
 
 Display an unredacted configuration only in a trusted local session:
 
 ```sh
-ubus call justclash config_show_unsafe '{ "target": "mihomo" }'
+ubus call justclash-core config_show_unsafe '{ "target": "mihomo" }'
 ```
 
 Read recent service logs:
 
 ```sh
-ubus call justclash logs '{ "lines": 40 }'
+ubus call justclash-core logs '{ "lines": 40 }'
 ```
 
 Run a service action:
 
 ```sh
-ubus call justclash restart
+ubus call justclash-core restart
 ```
 
 Update built-in service data:
 
 ```sh
-ubus call justclash resources_update '{ "target": "data" }'
+ubus call justclash-core resources_update '{ "target": "data" }'
 ```
 
 Read the hardware identifier in a trusted local session:
 
 ```sh
-ubus call justclash hardware_id
+ubus call justclash-core hardware_id
 ```
 
 ## Response Format
@@ -117,7 +117,7 @@ LuCI access is defined in `/usr/share/rpcd/acl.d/luci-app-justclash.json`:
 
 `hardware_id` does not modify the system, but it is deliberately placed in the write ACL class because it exposes a stable device identifier.
 
-The `justclash` package installs the rpcd implementation as `/usr/libexec/rpcd/justclash`. The `luci-app-justclash` package supplies the LuCI session ACL and calls the API through the shared JavaScript wrapper in `api/ubus.js`; views should not declare duplicate RPC methods directly.
+The `justclash` package installs the rpcd implementation as `/usr/libexec/rpcd/justclash-core`. The separate name avoids a file-ownership collision with RPC helpers shipped by older `luci-app-justclash` packages. The current LuCI package supplies the session ACL and calls the API through the shared JavaScript wrapper in `api/ubus.js`; views should not declare duplicate RPC methods directly.
 
 ## Sensitive Output
 

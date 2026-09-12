@@ -58,11 +58,11 @@ and router interception rules together with policy routing; `0` skips both.
 The `full` / `partial` mode and the separate client/router exclusions still apply.
 DNS forwarding remains controlled independently by `dnsmasq_apply_changes`.
 
-On upgrade, the former client and router flags are combined with logical OR and
-`nft_apply_changes_router` is removed. A previously client-only or router-only
-configuration therefore becomes combined interception. When restoring an older
-backup after package migration, convert these flags the same way; the removed
-router flag is no longer read at runtime.
+On upgrade, `nft_apply_changes_router` is removed and the existing
+`nft_apply_changes` value is preserved. Since that remaining switch now controls
+both paths, a previously enabled client path becomes combined interception. A
+router-only legacy setting is not carried forward. When restoring an older backup,
+remove the retired router flag; it is no longer read at runtime.
 
 | Field | Type | Purpose |
 | --- | --- | --- |
@@ -164,11 +164,14 @@ new one. After a successful commit and dnsmasq restart, it sets
 overwrites it. For `server`, cleanup removes the saved JustClash upstream,
 restores the original servers, and keeps manually added servers without
 duplicates. Original servers come first, followed by additional current entries.
-Conflicting manual edits to `noresolv` or `cachesize`, incomplete backups, and older
-backup formats stop automatic recovery without deleting the saved data; no automatic
-legacy conversion is attempted. A failed recovery also prevents a new DNS
-configuration from being applied. Quoted server lists (including UCI-quoted
-entries containing whitespace) are rejected rather than parsed as shell expressions.
+The package's one-time UCI migration restores complete backups from the previous
+format directly and then removes their legacy fields. It also removes stale legacy
+snapshots left after a clean stop. The next DNS apply creates a snapshot in the
+current format. Conflicting manual edits, incomplete backups, and unrecognized older
+formats remain untouched. Runtime recovery still rejects those ambiguous states and
+prevents a new DNS configuration from being applied. Quoted server lists (including
+UCI-quoted entries containing whitespace) are rejected rather than parsed as shell
+expressions.
 
 The backup is persistent because the DNS changes themselves are committed to
 UCI. Do not delete recovery fields to silence an error: doing so loses the
