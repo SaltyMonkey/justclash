@@ -1,9 +1,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.92.0
+PKG_VERSION:=0.95.0_rc1
 
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=$(PKG_NAME)
-	DEPENDS:=+nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +kmod-nft-nat +kmod-nft-fib +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
+	DEPENDS:=+rpcd +nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +kmod-nft-nat +kmod-nft-fib +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
 	CONFLICTS:=banip mihomo forkop luci-app-forkop podkop sing-box sing-box-tiny luci-app-passwall luci-app-passwall2 dns-failsafe-proxy netshift luci-app-netshift nikki luci-app-nikki luci-app-ssclash
 	PKGARCH:=all
 endef
@@ -51,8 +51,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/justclash/yaml
 	$(INSTALL_DATA) ./files/usr/lib/justclash/yaml/*.sh $(1)/usr/lib/justclash/yaml/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/compat.sh $(1)/usr/lib/justclash/
-	$(INSTALL_DIR) $(1)/usr/lib/justclash/compat
-	$(INSTALL_DATA) ./files/usr/lib/justclash/compat/*.sh $(1)/usr/lib/justclash/compat/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/logging.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/user_agents.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/help.sh $(1)/usr/lib/justclash/
@@ -62,6 +60,9 @@ define Package/$(PKG_NAME)/install
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/justclash.sh $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/usr/libexec/rpcd/justclash-core $(1)/usr/libexec/rpcd/justclash-core
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/justclash $(1)/etc/config/
@@ -95,6 +96,7 @@ define Package/$(PKG_NAME)/postrm
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	#[ -f "/usr/bin/mihomo" ] && rm -rf "/usr/bin/mihomo"
 	[ -d "/tmp/justclash" ] && rm -rf "/tmp/justclash"
+	[ -x "/etc/init.d/rpcd" ] && /etc/init.d/rpcd reload
 fi
 exit 0
 endef
@@ -107,8 +109,8 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		echo "Failed to load the JustClash config reset module." >&2
 		exit 1
 	fi
-	if ! config_api_password_ensure_file /etc/config/justclash; then
-		echo "Failed to initialize the active JustClash API password." >&2
+	if ! config_credentials_ensure_file /etc/config/justclash; then
+		echo "Failed to initialize the active JustClash credentials." >&2
 		exit 1
 	fi
 	# randomize failover mac string if placeholder value detected
@@ -117,6 +119,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		RANDOM_MAC_REPLACEMENT="$$(head -c 30 /dev/urandom 2>/dev/null | base64 2>/dev/null | tr -d '+/=\r\n' | cut -c1-30)"
 	fi
 	[ -n "$${RANDOM_MAC_REPLACEMENT}" ] && sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|$${RANDOM_MAC_REPLACEMENT}|g" /usr/lib/justclash/helpers.sh || true
+	[ -x "/etc/init.d/rpcd" ] && /etc/init.d/rpcd reload
 fi
 exit 0
 endef

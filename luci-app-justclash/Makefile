@@ -1,9 +1,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-justclash
-PKG_VERSION:=0.92.0
+PKG_VERSION:=0.95.0_rc1
 
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 LUCI_TITLE:=LuCI justclash app
 LUCI_DEPENDS:=+luci-base +justclash
@@ -40,8 +40,6 @@ define Package/$(PKG_NAME)/install
 	$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)$(HTDOCS)/
 	$(INSTALL_DIR) $(1)/
 	$(CP) $(PKG_BUILD_DIR)/root/* $(1)/
-	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/root/usr/libexec/rpcd/justclash $(1)/usr/libexec/rpcd/justclash
 
 	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)$(HTDOCS)/luci-static/resources/view/justclash/common.js || true
 endef
