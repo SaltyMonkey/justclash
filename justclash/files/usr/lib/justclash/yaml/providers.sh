@@ -1,9 +1,10 @@
 #!/bin/ash
 # shellcheck shell=dash
 # Per-section renderers append to dynamically scoped build state owned by core_generate_yaml().
+# OUT_TEMPLATE is a scratch result overwritten by template helpers and consumed
+# immediately by their callers (including rules.sh). OUT_PROXY_PROVIDERS accumulates
+# provider JSON fragments for core_generate_yaml(); neither variable is exported.
 # shellcheck disable=SC2034,SC2154
-
-: "${JUSTCLASH_CONSTANTS_LOADED:?constants.sh must be loaded before yaml/providers.sh}"
 
 build_hwid_header_fragment() {
     local hwid device_os version_os device_model
@@ -71,18 +72,33 @@ template_headers() {
     local user_agent="$3"
     local age_pub_key="$4"
     local hwid_custom="$5"
+    local device_os_custom="$6"
+    local version_os_custom="$7"
+    local device_model_custom="$8"
     local headers_fragment=""
+    local hwid device_os version_os device_model
+    local hwid_headers_enabled=0
 
     # 1. Build HWID headers as arrays if enabled
-    if [ "$hwid_enabled" = "1" ] || [ "$hwid_enabled" = "real" ] || [ "$hwid_enabled" = "spoofed" ]; then
-        local hwid device_os version_os device_model
-
-        [ "$hwid_enabled" = "spoofed" ] && [ -n "$hwid_custom" ] && hwid="$hwid_custom" || hwid=$(sysinfo_hwid_generate)
-
+    case "$hwid_enabled" in
+    1 | real)
+        hwid=$(sysinfo_hwid_generate)
         device_os=$(sysinfo_get_os_name)
         version_os=$(sysinfo_get_os_version)
         device_model=$(sysinfo_get_hw_model)
+        hwid_headers_enabled=1
+        ;;
+    spoofed)
+        hwid="$hwid_custom"
+        device_os="$device_os_custom"
+        version_os="$version_os_custom"
+        device_model="$device_model_custom"
+        hwid_headers_enabled=1
+        ;;
+    *) ;;
+    esac
 
+    if [ "$hwid_headers_enabled" -eq 1 ]; then
         headers_fragment=$(printf '"x-hwid":["%s"],"x-os":["%s"],"x-os-version":["%s"],"x-device-model":["%s"]' \
             "$(str_json_escape "$hwid")" \
             "$(str_json_escape "$device_os")" \
@@ -115,7 +131,11 @@ template_headers() {
     fi
 
     # Final output generation
-    [ -n "$headers_fragment" ] && OUT_TEMPLATE=$(printf '"header":{%s}' "$headers_fragment") || OUT_TEMPLATE=""
+    if [ -n "$headers_fragment" ]; then
+        OUT_TEMPLATE=$(printf '"header":{%s}' "$headers_fragment")
+    else
+        OUT_TEMPLATE=""
+    fi
 }
 
 yaml_proxy_provider_append() {
@@ -123,14 +143,17 @@ yaml_proxy_provider_append() {
     local interval="$5" size_limit="$6" filter="$7" exclude_filter="$8" exclude_type="$9"
     local proxy="${10}" override_dialer_proxy="${11}" override_interface_name="${12}"
     local header_authorization="${13}" header_hwid="${14}" header_hwid_custom="${15}"
-    local header_user_agent="${16}" age_private_key="${17}" header_age_public_key="${18}"
-    local health_check="${19}" hc_expected_status="${20}" hc_url="${21}"
-    local hc_interval="${22}" hc_timeout="${23}" hc_lazy="${24}"
+    local header_os_custom="${16}" header_os_version_custom="${17}" header_device_model_custom="${18}"
+    local header_user_agent="${19}" age_private_key="${20}" header_age_public_key="${21}"
+    local health_check="${22}" hc_expected_status="${23}" hc_url="${24}"
+    local hc_interval="${25}" hc_timeout="${26}" hc_lazy="${27}"
     local provider_json headers
 
     headers=""
     header_user_agent=$(resolve_user_agent "$header_user_agent")
-    template_headers "$header_hwid" "$header_authorization" "$header_user_agent" "$header_age_public_key" "$header_hwid_custom"
+    template_headers \
+        "$header_hwid" "$header_authorization" "$header_user_agent" "$header_age_public_key" \
+        "$header_hwid_custom" "$header_os_custom" "$header_os_version_custom" "$header_device_model_custom"
     headers="$OUT_TEMPLATE"
     hc_lazy=$(fmt_uci_bool_as_yaml "$hc_lazy")
 
