@@ -1,14 +1,11 @@
 #!/bin/ash
 # shellcheck shell=dash
 # shellcheck disable=SC3060
+# NL, CR and TAB are supplied by constants.sh before helpers are loaded.
+# shellcheck disable=SC2154
 
 # Focused helper module loaded into the main ash process.
 
-# Global constants for ash-native string operations
-NL="$(printf '\n.')"
-NL="${NL%.}"
-CR="$(printf '\r')"
-TAB="$(printf '\t')"
 str_url_decode() {
     local data="${1//+/ }"
     echo -n "$data" | sed 's/\\/\\\\/g; s/%/\\x/g' | xargs -0 printf '%b'

@@ -1,6 +1,13 @@
 #!/bin/ash
 # shellcheck shell=dash
 # Per-section renderers append to dynamically scoped build state owned by core_generate_yaml().
+# Reads GLOBAL_FAKE_IP_EXCLUDE_DOMAINS/GEOSITES and OUT_BUNDLE_* from rules.sh.
+# Appends source/destination CIDR lines to _STATIC_SOURCE_IPS_BUFFER/_STATIC_IPS_BUFFER;
+# build_builtin_rules_bundle() also appends to _IPCIDR_RULESETS_BUFFER.
+# The caller persists these buffers as ACTIVE_* sidecar files for nftables.
+# OUT_PROXY_GROUPS, OUT_RULES, OUT_RULESETS and OUT_FAKE_IP_RULES accumulate JSON
+# fragments; OUT_TEMPLATE is overwritten by each template call. NL is from constants.sh.
+# Do not call these mutating renderers in subshells: their output is caller state.
 # shellcheck disable=SC2034,SC2154,SC2329
 
 template_proxy_group() {

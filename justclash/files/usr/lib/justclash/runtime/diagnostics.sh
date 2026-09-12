@@ -3,7 +3,7 @@
 
 # Runtime functions extracted from the main service CLI.
 
-diag_nft() {
+check_nft() {
     local table_name="$1"
 
     clog info "Verifying existence of NFTables table '$table_name'..."
@@ -20,7 +20,7 @@ diag_nft() {
     return 0
 }
 
-diag_route() {
+check_routes() {
     local routing_mark="$1"
     local route_table="$2"
     local ipv6_enabled="$3"
@@ -62,14 +62,14 @@ diag_route() {
     return 0
 }
 
-diag_proxy_resolver() {
+check_dns_proxy() {
     local target="$1"
     local dns_listen_port="$2"
     local timeout="$3"
     local ip_output exit_code ips
 
     if [ -z "$target" ] || [ -z "$dns_listen_port" ] || [ -z "$timeout" ]; then
-        log warn "Usage: diag_proxy_resolver <domain> <port> <timeout>"
+        log warn "Usage: check_dns_proxy <domain> <port> <timeout>"
         return 1
     fi
 
@@ -90,9 +90,9 @@ diag_proxy_resolver() {
     fi
 }
 
-diag_external_resolver() {
+check_dns_external() {
     if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
-        log warn "Usage: diag_external_resolver <domain> <dns resolver>"
+        log warn "Usage: check_dns_external <domain> <dns resolver>"
         return 1
     fi
     local target="$1"
@@ -116,14 +116,14 @@ diag_external_resolver() {
     fi
 }
 
-diag_icmp() {
+check_ping() {
     local target="${1}"
     local count="${2}"
     local timeout="${3}"
     local ping_output exit_code
 
     if [ -z "$target" ] || [ -z "$count" ] || [ -z "$timeout" ]; then
-        clog warn "Usage: diag_icmp <target> <count>"
+        clog warn "Usage: check_ping <target> <count>"
         return 1
     fi
 
@@ -137,9 +137,10 @@ diag_icmp() {
         clog error "Ping to ${target} failed"
         clog error "$ping_output"
     fi
+    return "$exit_code"
 }
 
-diag_mihomo_config() {
+config_show_mihomo() {
     local config_path="$1"
 
     if [ -f "$config_path" ]; then
@@ -149,7 +150,7 @@ diag_mihomo_config() {
     fi
 }
 
-diag_mihomo_config_unsafe() {
+config_show_mihomo_unsafe() {
     local config_path="$1"
 
     if [ -f "$config_path" ]; then
@@ -159,7 +160,7 @@ diag_mihomo_config_unsafe() {
     fi
 }
 
-diag_service_config() {
+config_show_service() {
     local config_path="$1"
 
     if [ -f "$config_path" ]; then
@@ -169,7 +170,7 @@ diag_service_config() {
     fi
 }
 
-diag_service_config_unsafe() {
+config_show_service_unsafe() {
     local config_path="$1"
 
     if [ -f "$config_path" ]; then

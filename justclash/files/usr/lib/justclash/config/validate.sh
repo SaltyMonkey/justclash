@@ -115,8 +115,8 @@ config_validate_nft_mode() {
     local value="$1"
     local option="$2"
 
-    if ! val_is_choice "$value" "BY RULES" DROP REJECT; then
-        config_validation_error "$option must be 'BY RULES', 'DROP', or 'REJECT'"
+    if ! val_is_choice "$value" "BY RULES" DROP; then
+        config_validation_error "$option must be 'BY RULES' or 'DROP'"
         return 1
     fi
 

@@ -1,6 +1,8 @@
 #!/bin/ash
 # shellcheck shell=dash
 
+# JUSTCLASH_VERSION is supplied by constants.sh before this module is loaded.
+# shellcheck disable=SC2154
 workdir_cache_fingerprint() {
     local uci_hash="$1"
     local controller_bind_address="$2"
