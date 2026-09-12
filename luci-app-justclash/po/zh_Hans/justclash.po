@@ -382,7 +382,11 @@ msgstr "JSON 对象不能为空"
 msgid "Invalid JSON format"
 msgstr "无效的 JSON 格式"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:596
+#: htdocs/luci-static/resources/view/justclash/common.js:597
+msgid "JSON array must contain exactly one proxy object."
+msgstr "JSON 数组必须只包含一个代理对象。"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:603
 msgid "JSON must be an object"
 msgstr "JSON 必须是一个对象"
 
@@ -395,8 +399,8 @@ msgid "DIRECT proxy type must be defined without server or port fields."
 msgstr "DIRECT 代理类型必须在没有服务器或端口字段的情况下定义。"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:614
-msgid "JSON must contain at least type, server and port fields."
-msgstr "JSON 必须至少包含 type、server 和 port 字段。"
+msgid "JSON must contain a type field."
+msgstr "JSON 必须包含 type 字段。"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:617
 msgid "Proxy type contains unsupported characters"
@@ -405,6 +409,30 @@ msgstr "代理类型包含不受支持的字符"
 #: htdocs/luci-static/resources/view/justclash/common.js:620
 msgid "Server must be a non-empty host without whitespace"
 msgstr "Server 必须是没有空格的非空主机"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Server and port fields are required for this proxy type."
+msgstr "此代理类型必须包含 server 和 port 字段。"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peers must be a non-empty array."
+msgstr "WireGuard 的 peers 字段必须是非空数组。"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peer %d must be a JSON object."
+msgstr "WireGuard 对等节点 %d 必须是 JSON 对象。"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peer %d: %s"
+msgstr "WireGuard 对等节点 %d：%s"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Mieru port and port-range fields cannot be used together."
+msgstr "Mieru 的 port 和 port-range 字段不能同时使用。"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Port range must use START-END with ports from 1 to 65535."
+msgstr "端口范围必须使用 START-END 格式，端口取值为 1 到 65535。"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:630
 msgid "Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols."
@@ -1364,8 +1392,10 @@ msgid "JSON object:"
 msgstr "JSON 对象:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:99
-msgid "JSON object with connection parameters."
-msgstr "包含连接参数的 JSON 对象。"
+msgid ""
+"JSON object with connection parameters. A single object wrapped in an array "
+"is also accepted; the array wrapper is removed when saved."
+msgstr "包含连接参数的 JSON 对象。也可以使用仅包含一个对象的数组；保存时将移除数组外层。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:108
 msgid "Link:"
@@ -2672,3 +2702,54 @@ msgstr "配置"
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:379
 msgid "Inspect the generated Mihomo configuration or the JustClash service configuration."
 msgstr "查看生成的 Mihomo 配置或 JustClash 服务配置。"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:22
+msgid "JSON must be an array"
+msgstr "JSON 必须是数组"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:25
+msgid "JSON array cannot be empty"
+msgstr "JSON 数组不能为空"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:28
+msgid "JSON array must contain no more than %d proxy objects."
+msgstr "JSON 数组包含的代理对象不得超过 %d 个。"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:34
+msgid "Entry %d must be a JSON object."
+msgstr "第 %d 项必须是 JSON 对象。"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:40
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:54
+msgid "Entry %d: %s"
+msgstr "第 %d 项：%s"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:43
+msgid "Proxy name in entry %d is duplicated."
+msgstr "第 %d 项中的代理名称重复。"
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:49
+msgid "Fix existing form validation errors before importing."
+msgstr "导入前请修复当前表单中的验证错误。"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:112
+msgid "Proxy name in entry %d already exists."
+msgstr "第 %d 项中的代理名称已存在。"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:127
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:76
+msgid "Unable to add proxy entry."
+msgstr "无法添加代理条目。"
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:70
+msgid "Added %d proxy entries. Review and save the configuration to keep them."
+msgstr "已添加 %d 个代理条目。请检查并保存配置以保留它们。"
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:82
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:110
+msgid "Add in bulk"
+msgstr "批量添加"
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:83
+msgid "Paste a JSON array of proxy objects. Each object must contain a unique name. Imported entries are added to the form and remain unsaved until you save or apply the configuration."
+msgstr "粘贴代理对象的 JSON 数组。每个对象必须包含唯一名称。导入的条目将添加到表单中，在保存或应用配置前不会保存。"

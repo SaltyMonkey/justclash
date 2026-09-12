@@ -382,7 +382,11 @@ msgstr "Объект JSON не может быть пустым"
 msgid "Invalid JSON format"
 msgstr "Неверный формат JSON"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:596
+#: htdocs/luci-static/resources/view/justclash/common.js:597
+msgid "JSON array must contain exactly one proxy object."
+msgstr "Массив JSON должен содержать ровно один объект прокси."
+
+#: htdocs/luci-static/resources/view/justclash/common.js:603
 msgid "JSON must be an object"
 msgstr "JSON должен быть объектом"
 
@@ -395,8 +399,8 @@ msgid "DIRECT proxy type must be defined without server or port fields."
 msgstr "Тип прокси DIRECT должен быть определен без полей server или port."
 
 #: htdocs/luci-static/resources/view/justclash/common.js:614
-msgid "JSON must contain at least type, server and port fields."
-msgstr "JSON должен содержать как минимум поля type, server и port."
+msgid "JSON must contain a type field."
+msgstr "JSON должен содержать поле type."
 
 #: htdocs/luci-static/resources/view/justclash/common.js:617
 msgid "Proxy type contains unsupported characters"
@@ -405,6 +409,30 @@ msgstr "Тип прокси содержит неподдерживаемые с
 #: htdocs/luci-static/resources/view/justclash/common.js:620
 msgid "Server must be a non-empty host without whitespace"
 msgstr "Server должен быть непустым хостом без пробелов"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Server and port fields are required for this proxy type."
+msgstr "Для этого типа прокси обязательны поля server и port."
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peers must be a non-empty array."
+msgstr "Поле peers для WireGuard должно быть непустым массивом."
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peer %d must be a JSON object."
+msgstr "Узел WireGuard %d должен быть объектом JSON."
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peer %d: %s"
+msgstr "Узел WireGuard %d: %s"
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Mieru port and port-range fields cannot be used together."
+msgstr "Поля port и port-range для Mieru нельзя использовать одновременно."
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Port range must use START-END with ports from 1 to 65535."
+msgstr "Диапазон портов должен иметь формат START-END и содержать порты от 1 до 65535."
 
 #: htdocs/luci-static/resources/view/justclash/common.js:630
 msgid "Only lowercase letters, digits, and the '|' separator are allowed. No spaces or special symbols."
@@ -1364,8 +1392,12 @@ msgid "JSON object:"
 msgstr "JSON объект:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:99
-msgid "JSON object with connection parameters."
-msgstr "JSON-объект с параметрами подключения."
+msgid ""
+"JSON object with connection parameters. A single object wrapped in an array "
+"is also accepted; the array wrapper is removed when saved."
+msgstr ""
+"JSON-объект с параметрами подключения. Также допускается массив с "
+"единственным объектом; при сохранении внешняя оболочка массива удаляется."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:108
 msgid "Link:"
@@ -2672,3 +2704,54 @@ msgstr "Конфигурация"
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:379
 msgid "Inspect the generated Mihomo configuration or the JustClash service configuration."
 msgstr "Просмотр сгенерированной конфигурации Mihomo или конфигурации сервиса JustClash."
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:22
+msgid "JSON must be an array"
+msgstr "JSON должен быть массивом"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:25
+msgid "JSON array cannot be empty"
+msgstr "Массив JSON не может быть пустым"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:28
+msgid "JSON array must contain no more than %d proxy objects."
+msgstr "Массив JSON должен содержать не более %d объектов прокси."
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:34
+msgid "Entry %d must be a JSON object."
+msgstr "Элемент %d должен быть объектом JSON."
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:40
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:54
+msgid "Entry %d: %s"
+msgstr "Элемент %d: %s"
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:43
+msgid "Proxy name in entry %d is duplicated."
+msgstr "Имя прокси в элементе %d повторяется."
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:49
+msgid "Fix existing form validation errors before importing."
+msgstr "Исправьте существующие ошибки проверки формы перед импортом."
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:112
+msgid "Proxy name in entry %d already exists."
+msgstr "Имя прокси в элементе %d уже существует."
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:127
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:76
+msgid "Unable to add proxy entry."
+msgstr "Не удалось добавить запись прокси."
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:70
+msgid "Added %d proxy entries. Review and save the configuration to keep them."
+msgstr "Добавлено записей прокси: %d. Проверьте их и сохраните конфигурацию, чтобы оставить изменения."
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:82
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:110
+msgid "Add in bulk"
+msgstr "Массовое добавление"
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:83
+msgid "Paste a JSON array of proxy objects. Each object must contain a unique name. Imported entries are added to the form and remain unsaved until you save or apply the configuration."
+msgstr "Вставьте массив JSON с объектами прокси. Каждый объект должен содержать уникальное имя. Импортированные записи добавляются в форму и остаются несохранёнными, пока вы не сохраните или не примените конфигурацию."

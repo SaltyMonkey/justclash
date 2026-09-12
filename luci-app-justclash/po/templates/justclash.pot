@@ -383,7 +383,11 @@ msgstr ""
 msgid "Invalid JSON format"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:596
+#: htdocs/luci-static/resources/view/justclash/common.js:597
+msgid "JSON array must contain exactly one proxy object."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:603
 msgid "JSON must be an object"
 msgstr ""
 
@@ -396,7 +400,7 @@ msgid "DIRECT proxy type must be defined without server or port fields."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:614
-msgid "JSON must contain at least type, server and port fields."
+msgid "JSON must contain a type field."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:617
@@ -405,6 +409,30 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:620
 msgid "Server must be a non-empty host without whitespace"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Server and port fields are required for this proxy type."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peers must be a non-empty array."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peer %d must be a JSON object."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "WireGuard peer %d: %s"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Mieru port and port-range fields cannot be used together."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Port range must use START-END with ports from 1 to 65535."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/common.js:630
@@ -1365,7 +1393,9 @@ msgid "JSON object:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:99
-msgid "JSON object with connection parameters."
+msgid ""
+"JSON object with connection parameters. A single object wrapped in an array "
+"is also accepted; the array wrapper is removed when saved."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:108
@@ -2672,4 +2702,55 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:379
 msgid "Inspect the generated Mihomo configuration or the JustClash service configuration."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:22
+msgid "JSON must be an array"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:25
+msgid "JSON array cannot be empty"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:28
+msgid "JSON array must contain no more than %d proxy objects."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:34
+msgid "Entry %d must be a JSON object."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:40
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:54
+msgid "Entry %d: %s"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:43
+msgid "Proxy name in entry %d is duplicated."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:49
+msgid "Fix existing form validation errors before importing."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:112
+msgid "Proxy name in entry %d already exists."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/lib/routing.js:127
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:76
+msgid "Unable to add proxy entry."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:70
+msgid "Added %d proxy entries. Review and save the configuration to keep them."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:82
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:110
+msgid "Add in bulk"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:83
+msgid "Paste a JSON array of proxy objects. Each object must contain a unique name. Imported entries are added to the form and remain unsaved until you save or apply the configuration."
 msgstr ""
