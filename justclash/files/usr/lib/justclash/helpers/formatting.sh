@@ -10,7 +10,7 @@ fmt_uci_bool_as_yaml() {
     esac
 }
 
-# NL is provided by helpers/strings.sh through helpers.sh.
+# NL is provided by constants.sh before helpers.sh is loaded.
 # shellcheck disable=SC2154
 fmt_values_as_json_array() {
     local values="$1"
@@ -26,15 +26,18 @@ fmt_values_as_json_array() {
         val=$(str_json_escape "$val")
         [ -n "$add_custom" ] && val="${val}${add_custom}"
         if [ -n "$result" ]; then
-            result="${result},\n${indent}\"$val\""
+            result="${result},${NL}${indent}\"$val\""
         else
             result="${indent}\"$val\""
         fi
     done
     IFS="$old_ifs"
 
-    [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
+    [ -z "$result" ] && echo "[]" || printf '[\n%s\n]' "$result"
 }
+
+# NL is provided by constants.sh before helpers.sh is loaded.
+# shellcheck disable=SC2154
 fmt_uci_list_as_json_array() {
     local section_name="$1"
     local list_name="$2"
@@ -53,7 +56,7 @@ fmt_uci_list_as_json_array() {
         [ -n "$add_custom" ] && val="${val}${add_custom}"
 
         if [ -n "$result" ]; then
-            result="${result},\n${indent}\"$val\""
+            result="${result},${NL}${indent}\"$val\""
         else
             result="${indent}\"$val\""
         fi
@@ -61,7 +64,7 @@ fmt_uci_list_as_json_array() {
 
     config_list_foreach "$section_name" "$list_name" __append_json_array_element
 
-    [ -z "$result" ] && echo "[]" || printf '[\n%b\n]' "$result"
+    [ -z "$result" ] && echo "[]" || printf '[\n%s\n]' "$result"
 }
 
 fmt_list_to_json_array() {
