@@ -39,7 +39,7 @@ jobs:
           )
           shell_files+=(
             service.sh
-            justclash/files/usr/libexec/rpcd/justclash
+            justclash/files/usr/libexec/rpcd/justclash-core
             justclash/files/etc/uci-defaults/99_jc-uci-migration
             luci-app-justclash/translation-sync.sh
           )
