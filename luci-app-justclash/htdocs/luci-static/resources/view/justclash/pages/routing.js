@@ -3,6 +3,7 @@
 "require uci";
 "require view.justclash.common as common";
 "require view.justclash.api.fs as fsApi";
+"require view.justclash.components.proxy_bulk_import as proxyBulkImport";
 "require view.justclash.lib.form as formConstants";
 "require view.justclash.lib.routing as routingOptions";
 "require form";
@@ -96,13 +97,16 @@ return view.extend({
         o.modalonly = true;
 
         o = s.taboption(tabname, form.TextValue, "proxy_link_object", _("JSON object:"));
-        o.description = _("JSON object with connection parameters.");
+        o.description = _("JSON object with connection parameters. A single object wrapped in an array is also accepted; the array wrapper is removed when saved.");
         o.rows = JSON_OBJECT_ROWS;
         o.optional = true;
         o.modalonly = true;
         o.depends("mode", "object");
         o.validate = function (section_id, value) {
             return common.validateProxyJsonObject(value);
+        };
+        o.write = function (section_id, value) {
+            return uci.set(common.binName, section_id, "proxy_link_object", common.normalizeProxyJsonObject(value));
         };
 
         o = s.taboption(tabname, form.Value, "proxy_link_uri", _("Link:"));
@@ -981,6 +985,15 @@ return view.extend({
         //}
         //.cbi-section-create { width:100% !important; padding:10px 0 !important; }
         //.cbi-section { border:0 !important; border-bottom:1px solid #595959 !important; }
+        let formContainer;
+
+        const toolbar = proxyBulkImport.create({
+            map: m,
+            configName: common.binName,
+            notificationTimeout: common.notificationTimeout,
+            replaceForm: (nextForm) => formContainer.replaceChildren(nextForm)
+        });
+
         const style = E("style", {}, `
             ul.dropdown { max-height:320px !important; }
             .cbi-value[data-name="enabled"] .cbi-value-title,
@@ -997,6 +1010,9 @@ return view.extend({
                 color: var(--error-color-medium, #f44336) !important;
             }
         `);
-        return m.render().then(formEl => E("div", {}, [style, formEl]));
+        return m.render().then((formEl) => {
+            formContainer = E("div", { class: "jc-routing-form" }, [formEl]);
+            return E("div", {}, [style, toolbar, formContainer]);
+        });
     }
 });
