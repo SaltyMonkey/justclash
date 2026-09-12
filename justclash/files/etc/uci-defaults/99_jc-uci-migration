@@ -6,8 +6,8 @@
 
 # shellcheck disable=SC1091
 if ! . /usr/lib/justclash/config/reset.sh ||
-    ! config_api_password_ensure_file /etc/config/justclash; then
-    logger -p user.err -t justclash "Failed to initialize the API password."
+    ! config_credentials_ensure_file /etc/config/justclash; then
+    logger -p user.err -t justclash "Failed to initialize service credentials."
     exit 1
 fi
 
@@ -45,6 +45,157 @@ clean_fake_ip_list() {
         uci add_list "justclash.proxy.$option=$new_val"
     done
 }
+
+dnsmasq_option_matches_legacy_backup() {
+    local section="$1" prefix="$2" option="$3"
+    local saved current
+
+    saved=$(uci -q get "${section}.${prefix}_${option}") || return 1
+    [ -n "$saved" ] || return 1
+    if [ "$saved" = "unset" ]; then
+        ! uci -q get "${section}.${option}" >/dev/null 2>&1
+        return "$?"
+    fi
+    current=$(uci -q get "${section}.${option}") || return 1
+    [ "$current" = "$saved" ]
+}
+
+dnsmasq_restart_if_running() {
+    pidof dnsmasq >/dev/null 2>&1 || return 0
+    if [ ! -x /etc/init.d/dnsmasq ] ||
+        ! /etc/init.d/dnsmasq restart >/dev/null 2>&1; then
+        logger -p user.err -t justclash "Failed to restart Dnsmasq after legacy backup recovery."
+        return 1
+    fi
+}
+
+delete_legacy_dnsmasq_backup() {
+    local section="$1" prefix="$2" field
+
+    for field in server noresolv cachesize; do
+        if uci -q get "${section}.${prefix}_${field}" >/dev/null 2>&1; then
+            uci -q delete "${section}.${prefix}_${field}" || return 1
+        fi
+    done
+}
+
+restore_legacy_dnsmasq_backup() {
+    local section='dhcp.@dnsmasq[0]' prefix='justclash'
+    local field option saved server current_server saved_server listen_port upstream
+    local legacy_backup=0
+
+    # A current-format snapshot, active or inactive, needs no archaeology.
+    if uci -q get "${section}.${prefix}_applied" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    for field in server noresolv cachesize; do
+        if uci -q get "${section}.${prefix}_${field}" >/dev/null 2>&1; then
+            legacy_backup=1
+        fi
+    done
+    [ "$legacy_backup" = "1" ] || return 0
+
+    # Mixed old/new metadata is not a format; it is evidence of an interrupted
+    # write. Leave it alone so runtime recovery can fail safely and loudly.
+    for field in state applied_server server_present noresolv_present cachesize_present; do
+        if uci -q get "${section}.${prefix}_${field}" >/dev/null 2>&1; then
+            logger -p user.err -t justclash "Incomplete Dnsmasq recovery metadata preserved."
+            return 0
+        fi
+    done
+
+    # Legacy versions always saved both scalar options, using "unset" when the
+    # original option did not exist.
+    for option in noresolv cachesize; do
+        saved=$(uci -q get "${section}.${prefix}_${option}") || {
+            logger -p user.err -t justclash "Incomplete legacy Dnsmasq backup preserved."
+            return 0
+        }
+        [ -n "$saved" ] || {
+            logger -p user.err -t justclash "Incomplete legacy Dnsmasq backup preserved."
+            return 0
+        }
+    done
+
+    listen_port=$(uci -q get justclash.proxy.dns_listen_port) || {
+        logger -p user.err -t justclash "Cannot identify the legacy Dnsmasq upstream; backup preserved."
+        return 0
+    }
+    upstream="127.0.0.1#${listen_port}"
+    current_server=$(uci -q get "${section}.server") || current_server=""
+
+    if [ "$current_server" = "$upstream" ] &&
+        [ "$(uci -q get "${section}.noresolv")" = "1" ] &&
+        [ "$(uci -q get "${section}.cachesize")" = "0" ]; then
+        saved_server=$(uci -q get "${section}.${prefix}_server") || saved_server=""
+        case "$saved_server" in
+        *\'*)
+            logger -p user.err -t justclash "Unsupported legacy Dnsmasq server list; backup preserved."
+            return 0
+            ;;
+        esac
+
+        uci -q delete "${section}.server" || return 1
+        if [ -n "$saved_server" ]; then
+            set -f
+            for server in $saved_server; do
+                uci add_list "${section}.server=${server}" || return 1
+            done
+            set +f
+        fi
+
+        for option in noresolv cachesize; do
+            saved=$(uci -q get "${section}.${prefix}_${option}") || return 1
+            if [ "$saved" = "unset" ]; then
+                uci -q delete "${section}.${option}" || return 1
+            else
+                uci set "${section}.${option}=${saved}" || return 1
+            fi
+        done
+
+        uci commit dhcp || return 1
+        dnsmasq_restart_if_running || return 1
+        delete_legacy_dnsmasq_backup "$section" "$prefix" || return 1
+        uci commit dhcp || return 1
+        logger -p user.notice -t justclash "Restored and removed the active legacy Dnsmasq backup."
+        return 0
+    fi
+
+    # A clean legacy stop restored both scalar values and consumed its server
+    # snapshot. Recognize that stale state too, so an already stopped service
+    # does not demand a ceremonial manual cleanup after upgrade.
+    if dnsmasq_option_matches_legacy_backup "$section" "$prefix" noresolv &&
+        dnsmasq_option_matches_legacy_backup "$section" "$prefix" cachesize; then
+        if saved_server=$(uci -q get "${section}.${prefix}_server"); then
+            [ "$current_server" = "$saved_server" ] || {
+                logger -p user.err -t justclash "Ambiguous legacy Dnsmasq backup preserved."
+                return 0
+            }
+        fi
+        dnsmasq_restart_if_running || return 1
+        delete_legacy_dnsmasq_backup "$section" "$prefix" || return 1
+        uci commit dhcp || return 1
+        logger -p user.notice -t justclash "Removed an inactive legacy Dnsmasq backup."
+        return 0
+    fi
+
+    logger -p user.err -t justclash "Ambiguous legacy Dnsmasq backup preserved."
+    return 0
+}
+
+restore_legacy_dnsmasq_backup || exit 1
+
+# Keep blocking enabled when retiring the firewall REJECT mode.
+for option in nft_quic_mode nft_dot_mode nft_doh_mode nft_dot_quic_mode; do
+    if [ "$(uci -q get "justclash.settings.$option")" = "REJECT" ]; then
+        uci set "justclash.settings.$option=DROP" || exit 1
+    fi
+done
+
+if uci -q get justclash.settings.nft_apply_changes_router >/dev/null 2>&1; then
+    uci -q delete justclash.settings.nft_apply_changes_router || exit 1
+fi
 
 add_missing_option "justclash.settings.routing_mode" "partial"
 add_missing_option "justclash.settings.mihomo_core_source_type" "github"
@@ -121,6 +272,6 @@ for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_prov
     fi
 done
 
-uci commit justclash
+uci commit justclash || exit 1
 
 exit 0
