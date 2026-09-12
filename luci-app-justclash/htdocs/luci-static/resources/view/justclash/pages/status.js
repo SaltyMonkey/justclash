@@ -177,19 +177,20 @@ return view.extend({
                 enabled: false
             }));
 
-        const mihomoVersionPromise = mihomoApi.fetchVersion(apiToken)
-            .catch(() => null);
+        const serviceStatus = await statusPromise;
+        let infoMihomoVersion = null;
+        let infoMode = "";
 
-        const mihomoModePromise = mihomoApi.fetchConfigs(apiToken)
-            .then(configs => configs.mode || "")
-            .catch(() => "");
+        if (serviceStatus.running) {
+            [infoMihomoVersion, infoMode] = await Promise.all([
+                mihomoApi.fetchVersion(apiToken).catch(() => null),
+                mihomoApi.fetchConfigs(apiToken)
+                    .then(configs => configs.mode || "")
+                    .catch(() => "")
+            ]);
+        }
 
-        const [
-            [infoDevice, infoOpenWrt],
-            serviceStatus,
-            infoMihomoVersion,
-            infoMode
-        ] = await Promise.all([boardPromise, statusPromise, mihomoVersionPromise, mihomoModePromise]);
+        const [infoDevice, infoOpenWrt] = await boardPromise;
 
         return {
             infoDevice,
@@ -235,7 +236,13 @@ return view.extend({
             token: results.apiToken,
             isMounted: () => document.body.contains(dynamicElements.serviceBadge),
             onUpdate: ({ isRunning, isAutostarting, currentMode }) => {
+                const wasRunning = !!dynamicElements.currentRunning;
                 updateStatusUI(dynamicElements, isAutostarting, isRunning, currentMode);
+
+                if (isRunning && !wasRunning)
+                    sockets?.connect();
+                else if (!isRunning && wasRunning)
+                    sockets?.stop();
             },
             onInactive: cleanup
         });
@@ -453,7 +460,8 @@ return view.extend({
 
         requestAnimationFrame(() => {
             updateStatusUI(dynamicElements, results.infoIsAutostarting, !!results.infoIsRunning, results.infoMode);
-            sockets.connect();
+            if (results.infoIsRunning)
+                sockets.connect();
         });
 
         return E("div", { class: "cbi-map" }, [
