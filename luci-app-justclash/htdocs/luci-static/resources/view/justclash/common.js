@@ -582,6 +582,28 @@ return baseclass.extend({
 
     validateProxyJsonObject: function (value) {
         let parsed;
+        const hasOwn = (object, property) => Object.prototype.hasOwnProperty.call(object, property);
+        const validateServer = (endpoint) => {
+            if (!hasOwn(endpoint, "server") ||
+                typeof endpoint.server !== "string" ||
+                !endpoint.server.trim() ||
+                /\s/.test(endpoint.server) ||
+                this.hasControlChars(endpoint.server))
+                return _("Server must be a non-empty host without whitespace");
+
+            return true;
+        };
+        const validateEndpoint = (endpoint) => {
+            if (!hasOwn(endpoint, "server") || !hasOwn(endpoint, "port") ||
+                endpoint.port === null || endpoint.port === "")
+                return _("Server and port fields are required for this proxy type.");
+
+            const serverValidation = validateServer(endpoint);
+            if (serverValidation !== true)
+                return serverValidation;
+
+            return this.validateIntegerRange(String(endpoint.port), 1, 65535);
+        };
 
         if (!value || String(value).trim() === "")
             return _("JSON object cannot be empty");
@@ -592,14 +614,18 @@ return baseclass.extend({
             return _("Invalid JSON format");
         }
 
+        if (Array.isArray(parsed)) {
+            if (parsed.length !== 1)
+                return _("JSON array must contain exactly one proxy object.");
+
+            parsed = parsed[0];
+        }
+
         if (Object.prototype.toString.call(parsed) !== "[object Object]" || Array.isArray(parsed))
             return _("JSON must be an object");
 
         if (parsed.name)
             return _("Name field must not be defined in object.");
-
-        if (parsed.type === "direct" && (parsed.server || parsed.port))
-            return _("DIRECT proxy type must be defined without server or port fields.");
 
         if (parsed["routing-mark"] !== undefined) {
             const markValidation = this.validateRoutingMark(parsed["routing-mark"]);
@@ -607,19 +633,70 @@ return baseclass.extend({
                 return markValidation;
         }
 
-        if (parsed.type === "direct")
-            return true;
-
-        if (!parsed.type || !parsed.server || parsed.port === undefined || parsed.port === null)
-            return _("JSON must contain at least type, server and port fields.");
+        if (parsed.type === undefined || parsed.type === null || parsed.type === "")
+            return _("JSON must contain a type field.");
 
         if (typeof parsed.type !== "string" || !/^[a-z0-9-]+$/.test(parsed.type))
             return _("Proxy type contains unsupported characters");
 
-        if (typeof parsed.server !== "string" || !parsed.server.trim() || /\s/.test(parsed.server) || this.hasControlChars(parsed.server))
-            return _("Server must be a non-empty host without whitespace");
+        if (parsed.type === "direct") {
+            if (hasOwn(parsed, "server") || hasOwn(parsed, "port"))
+                return _("DIRECT proxy type must be defined without server or port fields.");
 
-        return this.validateIntegerRange(String(parsed.port), 1, 65535);
+            return true;
+        }
+
+        if (["dns", "rematch", "tailscale", "zerotier"].includes(parsed.type))
+            return false;
+
+        if (parsed.type === "wireguard") {
+            if (!hasOwn(parsed, "peers"))
+                return validateEndpoint(parsed);
+
+            if (!Array.isArray(parsed.peers) || parsed.peers.length === 0)
+                return _("WireGuard peers must be a non-empty array.");
+
+            for (let index = 0; index < parsed.peers.length; index++) {
+                const peer = parsed.peers[index];
+
+                if (Object.prototype.toString.call(peer) !== "[object Object]" || Array.isArray(peer))
+                    return _("WireGuard peer %d must be a JSON object.").format(index + 1);
+
+                const endpointValidation = validateEndpoint(peer);
+                if (endpointValidation !== true)
+                    return _("WireGuard peer %d: %s").format(index + 1, endpointValidation);
+            }
+
+            return true;
+        }
+
+        if (parsed.type === "mieru" && hasOwn(parsed, "port-range")) {
+            if (hasOwn(parsed, "port"))
+                return _("Mieru port and port-range fields cannot be used together.");
+
+            const serverValidation = validateServer(parsed);
+            if (serverValidation !== true)
+                return serverValidation;
+
+            const rangeMatch = String(parsed["port-range"]).match(/^(\d+)-(\d+)$/);
+            if (!rangeMatch)
+                return _("Port range must use START-END with ports from 1 to 65535.");
+
+            const startPort = Number(rangeMatch[1]);
+            const endPort = Number(rangeMatch[2]);
+            if (startPort < 1 || endPort > 65535 || startPort > endPort)
+                return _("Port range must use START-END with ports from 1 to 65535.");
+
+            return true;
+        }
+
+        return validateEndpoint(parsed);
+    },
+    normalizeProxyJsonObject: function (value) {
+        const parsed = JSON.parse(value);
+        const proxy = Array.isArray(parsed) ? parsed[0] : parsed;
+
+        return JSON.stringify(proxy);
     },
     validateProxyTypeFilter: function (value) {
         const val = String(value || "").trim();
