@@ -17,13 +17,13 @@ const callSessionAccess = rpc.declare({
 });
 
 const callStatus = rpc.declare({
-    object: "justclash",
+    object: "justclash-core",
     method: "status",
     params: []
 });
 
 const declareAction = (method, params = []) => rpc.declare({
-    object: "justclash",
+    object: "justclash-core",
     method,
     params,
     timeout: 300000
