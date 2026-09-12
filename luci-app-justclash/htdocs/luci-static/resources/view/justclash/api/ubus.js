@@ -34,14 +34,12 @@ const callStop = declareAction("stop");
 const callRestart = declareAction("restart");
 const callEnable = declareAction("enable");
 const callDisable = declareAction("disable");
-const callDiagRedacted = declareAction("diag_redacted");
-const callDiagMihomoConfig = declareAction("diag_mihomo_config");
-const callDiagMihomoConfigUnsafe = declareAction("diag_mihomo_config_unsafe");
-const callDiagServiceConfig = declareAction("diag_service_config");
-const callDiagServiceConfigUnsafe = declareAction("diag_service_config_unsafe");
+const callCheck = declareAction("check");
+const callHardwareId = declareAction("hardware_id");
+const callConfigShow = declareAction("config_show", ["target"]);
+const callConfigShowUnsafe = declareAction("config_show_unsafe", ["target"]);
 const callServiceLogs = declareAction("logs", ["lines"]);
-const callUpdateCore = declareAction("update_core");
-const callUpdateRulesets = declareAction("update_rulesets");
+const callResourcesUpdate = declareAction("resources_update", ["target"]);
 
 const assertSuccess = (result) => {
     if (!result || result.code !== 0)
@@ -75,24 +73,28 @@ return baseclass.extend({
         return assertSuccess(await callDisable());
     },
 
-    async diagRedacted() {
-        return assertSuccess(await callDiagRedacted());
+    async check() {
+        return assertSuccess(await callCheck());
+    },
+
+    async getHardwareId() {
+        return assertSuccess(await callHardwareId());
     },
 
     async getMihomoConfig() {
-        return assertSuccess(await callDiagMihomoConfig());
+        return assertSuccess(await callConfigShow("mihomo"));
     },
 
     async getMihomoConfigUnsafe() {
-        return assertSuccess(await callDiagMihomoConfigUnsafe());
+        return assertSuccess(await callConfigShowUnsafe("mihomo"));
     },
 
     async getServiceConfig() {
-        return assertSuccess(await callDiagServiceConfig());
+        return assertSuccess(await callConfigShow("service"));
     },
 
     async getServiceConfigUnsafe() {
-        return assertSuccess(await callDiagServiceConfigUnsafe());
+        return assertSuccess(await callConfigShowUnsafe("service"));
     },
 
     async getServiceLogs(lines) {
@@ -100,11 +102,11 @@ return baseclass.extend({
     },
 
     async updateCore() {
-        return assertSuccess(await callUpdateCore());
+        return assertSuccess(await callResourcesUpdate("core"));
     },
 
-    async updateRulesets() {
-        return assertSuccess(await callUpdateRulesets());
+    async updateData() {
+        return assertSuccess(await callResourcesUpdate("data"));
     },
 
     async getSystemBoard() {

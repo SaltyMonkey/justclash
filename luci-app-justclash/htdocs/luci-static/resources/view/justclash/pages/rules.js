@@ -213,13 +213,13 @@ return view.extend({
         `);
 
         const container = E("div", { class: "cbi-section fade-in" }, [
-            style,
             E("h3", { class: "cbi-section-title" }, _("Rules")),
             E("div", { class: "cbi-section-descr" }, _("Mihomo rules list and routing information. Rules can be temporarily disabled (resets on service restart).")),
             actionWrap,
             E("div", { class: "cbi-section-node" }, [
                 grid
-            ])
+            ]),
+            style
         ]);
 
         return container;

@@ -6,7 +6,7 @@ const INTERVAL_OPTIONS = [250, 500, 1000, 2000, 5000];
 
 const normalizeFilterValue = (value) => String(value || "").trim().toLowerCase();
 
-const joinEndpoint = (address, port) => {
+const formatEndpoint = (address, port) => {
     if (!address)
         return "";
 
@@ -19,9 +19,11 @@ const formatEndpoints = (conn) => {
     const metadata = conn?.metadata || {};
 
     return {
-        src: joinEndpoint(metadata.sourceIP, metadata.sourcePort),
+        src: metadata.type === "Inner"
+            ? metadata.type
+            : formatEndpoint(metadata.sourceIP, metadata.sourcePort),
         dest: metadata.destinationIP
-            ? joinEndpoint(metadata.destinationIP, metadata.destinationPort)
+            ? formatEndpoint(metadata.destinationIP, metadata.destinationPort)
             : String(metadata.remoteDestination || "")
     };
 };

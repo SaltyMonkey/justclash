@@ -218,12 +218,12 @@ return view.extend({
         `);
 
         return E("div", { class: "cbi-section fade-in" }, [
-            style,
             E("h3", { class: "cbi-section-title" }, _("Realtime logs")),
             E("div", { class: "cbi-section-descr" }, _("View realtime traffic logs and debug information from the Mihomo core.")),
             buttonBar,
             settingsBar,
-            logContainer
+            logContainer,
+            style
         ]);
     }
 });

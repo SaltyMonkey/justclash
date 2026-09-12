@@ -54,7 +54,7 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "ntpd_start", _("Start time sync service:"));
         o.description = _("Start the built-in ntpd daemon so the system clock stays correct for secure connections. Without correct time, secure downloads and API connections may fail.");
         o.rmempty = false;
-        o.default = primitives.TRUE;
+        o.default = primitives.FALSE;
 
         tabname = "servicestorage_tab";
         s.tab(tabname, _("Storage"));
@@ -93,15 +93,10 @@ return view.extend({
         o.default = primitives.FALSE;
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Set traffic rules at startup:"));
-        o.description = _("Create traffic rules so client devices use the proxy. Disable this only if you already manage traffic redirection rules outside JustClash.");
+        o = s.taboption(tabname, form.Flag, "nft_apply_changes", _("Create nftables:"));
+        o.description = _("Create nftables rules and policy routing for both client and router traffic. Disable this only if you manage traffic redirection outside JustClash.");
         o.rmempty = false;
         o.default = primitives.TRUE;
-
-        o = s.taboption(tabname, form.Flag, "nft_apply_changes_router", _("Set router traffic rules at startup:"));
-        o.description = _("Create traffic rules so the router's own traffic also uses the proxy. Enable this only if you want updates, package installs, and other router traffic to go through the proxy too.");
-        o.rmempty = false;
-        o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "pbr_priority", _("PBR priority:"));
         o.description = _("Priority for the policy routing rule that sends marked traffic to the local TPROXY table. Lower numbers run earlier.");
@@ -110,7 +105,6 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("nft_apply_changes", primitives.TRUE);
-        o.depends("nft_apply_changes_router", primitives.TRUE);
         o.validate = function (section_id, value) {
             return common.validateIntegerRange(value, 1, 32766);
         };
@@ -120,7 +114,7 @@ return view.extend({
         o.placeholder = "byedpi";
         o.rmempty = true;
         o.retain = true;
-        o.depends("nft_apply_changes_router", primitives.TRUE);
+        o.depends("nft_apply_changes", primitives.TRUE);
         o.validate = function (section_id, value) {
             return common.validateUsernameOrUid(value);
         };
@@ -131,7 +125,7 @@ return view.extend({
         o.rmempty = true;
         o.retain = true;
         o.datatype = datatypes.PORT;
-        o.depends("nft_apply_changes_router", primitives.TRUE);
+        o.depends("nft_apply_changes", primitives.TRUE);
 
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interfaces:"));
         o.default = "br-lan";
@@ -230,7 +224,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.ListValue, "nft_ntp_mode_router", _("Router NTP traffic:"));
         o.description = _("Choose how to handle time sync requests from the router itself. The selected mode decides whether these requests are redirected, bypassed, or blocked.");
-        o.depends("nft_apply_changes_router", primitives.TRUE);
+        o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftNtpOptions[0].value;
@@ -421,7 +415,6 @@ return view.extend({
 
         const style = E("style", {}, `
             .cbi-value[data-name="routing_mode"] .cbi-value-title,
-            .cbi-value[data-name="nft_apply_changes_router"] .cbi-value-title,
             .cbi-value[data-name="dnsmasq_apply_changes"] .cbi-value-title,
             .cbi-value[data-name="nft_apply_changes"] .cbi-value-title,
             .cbi-value[data-name="tproxy_input_interfaces"] .cbi-value-title,
