@@ -1,4 +1,5 @@
 #!/bin/sh
+# rpcd exposes this executable as the "justclash-core" ubus object.
 # JSON strings go through jq arguments, never through shell interpolation.
 
 emit_result() {
