@@ -1,3 +1,20 @@
+## [0.95.0_rc2] - Unreleased
+
+### Proxy URI Parsing
+
+- **VLESS and VMess HTTP transports:** `type=tcp&headerType=http` now produces Mihomo HTTP transport with `http-opts`; `type=http` produces H2 transport with `h2-opts`. Link `path` and `host` are passed to the matching transport options, and `method` is passed to `http-opts` when present.
+- **Certificate pinning:** VLESS, VMess, and Trojan links now accept `pcs` as an alias for `pinSHA256` and `fingerprint`.
+- **Reality ML-KEM:** VLESS and VMess links emit `support-x25519mlkem768` only when a Reality public key is present. Trojan links no longer emit this option.
+- **Parser state:** Shared host-and-port parsing now returns its result to each protocol parser instead of writing global variables, including for bracketed IPv6 hosts.
+
+### Defaults & Configuration
+
+- **Mihomo core source:** Fresh installations, configuration resets, and the standalone installer now use the slim kernel version by default. LuCI also offers the upstream repository as a preset and accepts custom `username/repo` entries. Existing repository selections remain unchanged on upgrade.
+
+### Logging
+
+- **Service logs:** JustClash and piped Mihomo messages now use the OpenWrt system log only. The separate runtime log file is no longer written; the CLI and RPC log commands read system-log entries.
+
 ## [0.95.0_rc1] - 10092026
 
 ### Features & Enhancements

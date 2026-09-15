@@ -59,6 +59,8 @@ The LuCI application provides service controls, node selection, active connectio
 
 The online installer detects the router package manager automatically. Interactive installation asks only which translation package should be installed; automated installation uses the English LuCI package without an additional translation.
 
+New installations use the slim kernel version of Mihomo by default. The core repository remains editable in LuCI.
+
 ## Documentation
 
 ### Core Reference
