@@ -10,40 +10,6 @@
 
 IS_TTY=false
 [ -t 1 ] && IS_TTY=true
-_LOG_FILE_READY=false
-
-_log_file_init() {
-    local owner current_uid
-
-    [ -L "$CORE_WORKDIR_PATH" ] && return 1
-
-    if [ ! -d "$CORE_WORKDIR_PATH" ]; then
-        # shellcheck disable=SC2174
-        mkdir -m 700 -p "$CORE_WORKDIR_PATH" 2>/dev/null || return 1
-    fi
-
-    # Do not feed potentially sensitive logs into a directory prepared by another user.
-    # shellcheck disable=SC2012
-    owner=$(ls -ldn "$CORE_WORKDIR_PATH" 2>/dev/null | awk '{print $3}')
-    current_uid=$(id -u)
-    [ -n "$owner" ] && [ "$owner" != "$current_uid" ] && return 1
-    [ -L "$CORE_LOG_FILE_PATH" ] && return 1
-
-    chmod 700 "$CORE_WORKDIR_PATH" 2>/dev/null || return 1
-    (umask 077 && : >>"$CORE_LOG_FILE_PATH") 2>/dev/null || return 1
-    chmod 600 "$CORE_LOG_FILE_PATH" 2>/dev/null || return 1
-    _LOG_FILE_READY=true
-}
-
-_log_file_write() {
-    local level="$1"
-    local message="$2"
-    local ts
-
-    $_LOG_FILE_READY || _log_file_init || return 0
-    ts=$(date '+%Y-%m-%d %H:%M:%S')
-    (umask 077 && printf '%s %s: %s\n' "$ts" "$level" "$message" >>"$CORE_LOG_FILE_PATH") 2>/dev/null || true
-}
 
 clog() {
     local level="$1"
@@ -104,7 +70,6 @@ log() {
     esac
 
     logger -p "$facility" -t "$PROGNAME" "$message"
-    _log_file_write "$level_label" "$message"
     clog "$level_label" "$message"
 }
 
@@ -184,7 +149,6 @@ log_piped() {
         esac
 
         logger -p "$facility" -t "$PROGNAME" "$message"
-        _log_file_write "$level_label" "$message"
 
         if $IS_TTY; then
             local ts
@@ -193,13 +157,6 @@ log_piped() {
             printf '%b%s%b %b%s:%b %s\n' "$ts_start" "$ts" "$ts_end" "$color_start" "$level_label" "$color_end" "$message"
         fi
     done
-}
-
-logs() {
-    local lines="${2:-40}"
-
-    [ -f "$CORE_LOG_FILE_PATH" ] || return 0
-    tail -n "$lines" "$CORE_LOG_FILE_PATH"
 }
 
 systemlogs() {

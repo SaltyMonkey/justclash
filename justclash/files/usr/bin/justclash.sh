@@ -1907,14 +1907,7 @@ logs)
 
     import /usr/lib/justclash/logging.sh
     case "$2" in
-    service)
-        if [ -n "$3" ]; then
-            logs "$PROGNAME" "$3"
-        else
-            logs "$PROGNAME"
-        fi
-        ;;
-    system)
+    service | system)
         if [ -n "$3" ]; then
             systemlogs "$PROGNAME" "$3"
         else

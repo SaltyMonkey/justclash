@@ -115,7 +115,7 @@ return view.extend({
 
         return E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Service logs")),
-            E("div", { class: "cbi-section-descr" }, _("View logs written by the JustClash service and Mihomo.")),
+            E("div", { class: "cbi-section-descr" }, _("View JustClash service and Mihomo entries from the system log.")),
             buttonBar,
             settingsBar,
             logContainer,

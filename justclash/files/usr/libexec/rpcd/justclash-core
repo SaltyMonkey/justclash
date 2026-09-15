@@ -114,7 +114,7 @@ run_config_request() {
 run_logs() {
     logs_lines="$1"
 
-    logs_output=$(/usr/bin/justclash.sh logs service "$logs_lines" 2>/dev/null)
+    logs_output=$(/usr/bin/justclash.sh logs system "$logs_lines" 2>/dev/null)
     logs_code=$?
 
     if [ "$logs_code" -eq 0 ]; then
