@@ -306,9 +306,11 @@ return view.extend({
         o.default = "github";
 
         o = s.taboption(tabname, form.Value, "mihomo_github_repo", _("GitHub repository:"));
+        o.value("SaltyMonkey/justclash-core-slim", _("SaltyMonkey / JustClash Core Slim"));
+        o.value("MetaCubeX/mihomo", _("MetaCubeX / Mihomo"));
         o.description = _("GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'.");
         o.placeholder = "MetaCubeX/mihomo";
-        o.default = "MetaCubeX/mihomo";
+        o.default = "SaltyMonkey/justclash-core-slim";
         o.depends("mihomo_core_source_type", "github");
         o.rmempty = false;
         o.retain = true;
