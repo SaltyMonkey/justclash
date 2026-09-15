@@ -5,7 +5,7 @@
 # requires scrolling through the collected history of every other protocol.
 
 parse_hysteria2_url() {
-    local url="$1" DEFAULT_HY2_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
+    local url="$1" default_hy2_port="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
 
     local raw="${url#hysteria2://}"
     raw="${raw#hy2://}"
@@ -30,10 +30,10 @@ parse_hysteria2_url() {
         password=""
     fi
 
-    local URI_HOST="" URI_PORT=""
-    uri_parse_hostport "$hostport" "${DEFAULT_HY2_PORT:-443}" || return 1
-    server="$URI_HOST"
-    port="$URI_PORT"
+    local parsed_hostport
+    parsed_hostport=$(uri_parse_hostport "$hostport" "${default_hy2_port:-443}") || return 1
+    server="${parsed_hostport%:*}"
+    port="${parsed_hostport##*:}"
 
     case "$port" in
     *[,-]*)
@@ -42,7 +42,7 @@ parse_hysteria2_url() {
         ;;
     esac
     port="${port//[!0-9]/}"
-    [ -z "$port" ] && port="${DEFAULT_HY2_PORT:-443}"
+    [ -z "$port" ] && port="${default_hy2_port:-443}"
 
     local sni="" insecure=0 obfs="" obfs_password="" obfs_min="" obfs_max="" bbr_profile=""
     local up="" down="" alpn="" pin_sha256="" ech="" handshake_timeout="" hop_interval="" name_cert_verify=""

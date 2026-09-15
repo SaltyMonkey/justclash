@@ -5,7 +5,7 @@
 # requires scrolling through the collected history of every other protocol.
 
 parse_vless_url() {
-    local link="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
+    local link="$1" default_tls_port="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
     local raw="${link#vless://}"
     raw="${raw%%#*}"
 
@@ -13,12 +13,12 @@ parse_vless_url() {
     local hostport="${raw#*@}"
     local host="${hostport%%\?*}"
     local server port
-    local URI_HOST="" URI_PORT=""
-    uri_parse_hostport "$host" "$DEFAULT_TLS_PORT" || return 1
-    server="$URI_HOST"
-    port="$URI_PORT"
+    local parsed_hostport
+    parsed_hostport=$(uri_parse_hostport "$host" "$default_tls_port") || return 1
+    server="${parsed_hostport%:*}"
+    port="${parsed_hostport##*:}"
     port="${port//[!0-9]/}"
-    [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
+    [ -z "$port" ] && port="$default_tls_port"
 
     local query_part=""
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
@@ -26,7 +26,7 @@ parse_vless_url() {
     local net="tcp" httpupgrade=0 sec="" sni="" fp="" alpn="" flow="" penc="" insecure=0
     local pbk="" sid="" spx="" sn="" grpc_ua="" enc="" ech="" path=""
     local grpc_ping_interval=""
-    local transport_host="" xhttp_mode="" xhttp_extra=""
+    local transport_host="" header_type="" http_method="" xhttp_mode="" xhttp_extra=""
     local tfo_value=0 alpn_json proxy_obj xhttp_extra_json='{}'
     local tls_servername=""
     local pin_sha256="" name_cert_verify="" certificate="" private_key=""
@@ -54,6 +54,8 @@ parse_vless_url() {
                 net="$v"
             fi
             ;;
+        headerType) header_type="$v" ;;
+        method) http_method="$(str_url_decode "$v")" ;;
         security) sec="$v" ;;
         encryption) enc="$v" ;;
         sni) sni="$(str_url_decode "$v")" ;;
@@ -66,7 +68,7 @@ parse_vless_url() {
         tfo) uri_is_truthy "$v" && tfo_value=1 ;;
         insecure | allowInsecure | skip-cert-verify | skipCertVerify) uri_is_truthy "$v" && insecure=1 ;;
         pbk | public-key) pbk="$v" ;;
-        pinSHA256 | fingerprint) pin_sha256="$(str_url_decode "$v")" ;;
+        pinSHA256 | fingerprint | pcs) pin_sha256="$(str_url_decode "$v")" ;;
         name-cert-verify | nameCertVerify | peer) name_cert_verify="$(str_url_decode "$v")" ;;
         certificate) certificate="$(str_url_decode "$v")" ;;
         privateKey | private-key) private_key="$(str_url_decode "$v")" ;;
@@ -79,20 +81,8 @@ parse_vless_url() {
         jls-password | jlsPassword) jls_password="$(str_url_decode "$v")" ;;
         support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) uri_is_truthy "$v" && support_x25519mlkem768=1 ;;
         sid | short-id) sid="$v" ;;
-        spx)
-            if [ -n "$v" ]; then
-                spx="$(str_url_decode "$v")"
-            else
-                spx="/"
-            fi
-            ;;
-        path)
-            if [ -n "$v" ]; then
-                path="$(str_url_decode "$v")"
-            else
-                path="/"
-            fi
-            ;;
+        spx) spx="$(str_url_decode "${v:-/}")" ;;
+        path) path="$(str_url_decode "${v:-/}")" ;;
         serviceName | service-name) sn="$(str_url_decode "$v")" ;;
         grpc-user-agent | grpcUserAgent) grpc_ua="$(str_url_decode "$v")" ;;
         ping-interval | pingInterval) grpc_ping_interval="${v//[!0-9]/}" ;;
@@ -102,6 +92,12 @@ parse_vless_url() {
         extra) xhttp_extra="$(str_url_decode "$v")" ;;
         esac
     done
+
+    if [ "$net" = "tcp" ] && [ "$header_type" = "http" ]; then
+        net="http"
+    elif [ "$net" = "http" ]; then
+        net="h2"
+    fi
 
     if [ -n "$path" ]; then
         case "$path" in
@@ -162,6 +158,7 @@ parse_vless_url() {
             --arg grpc_ua "$grpc_ua" \
             --arg grpc_ping_interval "$grpc_ping_interval" \
             --arg transport_host "$transport_host" \
+            --arg http_method "$http_method" \
             --arg xhttp_mode "$xhttp_mode" \
             --argjson port "$port" \
             --argjson tfo "$tfo_value" \
@@ -222,7 +219,7 @@ parse_vless_url() {
                         (if $pbk != "" then {"public-key": $pbk} else {} end)
                         + (if $sid != "" then {"short-id": $sid} else {} end)
                         + (if $spx != "" then {"spider-x": $spx} else {} end)
-                        + (if $support_x25519mlkem768 == "1" then {"support-x25519mlkem768": true} else {} end)
+                        + (if $pbk != "" and $support_x25519mlkem768 == "1" then {"support-x25519mlkem768": true} else {} end)
                     )}
                 else {} end)
             + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
@@ -245,6 +242,19 @@ parse_vless_url() {
                         {"grpc-service-name": $sn}
                         + (if $grpc_ua != "" then {"grpc-user-agent": $grpc_ua} else {} end)
                         + (if $grpc_ping_interval != "" then {"ping-interval": ($grpc_ping_interval | tonumber)} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "h2" then
+                    {"h2-opts": (
+                        {path: $path}
+                        + (if $transport_host != "" then {host: [$transport_host]} else {} end)
+                    )}
+                else {} end)
+            + (if $net == "http" then
+                    {"http-opts": (
+                        {path: [$path]}
+                        + (if $transport_host != "" then {headers: {Host: [$transport_host]}} else {} end)
+                        + (if $http_method != "" then {method: $http_method} else {} end)
                     )}
                 else {} end)
             + (if $net == "xhttp" then

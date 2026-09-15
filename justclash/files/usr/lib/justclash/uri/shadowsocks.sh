@@ -5,7 +5,7 @@
 # requires scrolling through the collected history of every other protocol.
 
 parse_ss_url() {
-    local link="${1#ss://}" DEFAULT_SOCKS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
+    local link="${1#ss://}" default_socks_port="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
     local random_ua="${8:-}"
     local userinfo hostport method password server port decoded query_part proxy_obj
     query_part=""
@@ -87,12 +87,12 @@ parse_ss_url() {
         password="$(str_url_decode "${userinfo#*:}")"
     fi
 
-    local URI_HOST="" URI_PORT=""
-    uri_parse_hostport "$hostport" "$DEFAULT_SOCKS_PORT" || return 1
-    server="$URI_HOST"
-    port="$URI_PORT"
+    local parsed_hostport
+    parsed_hostport=$(uri_parse_hostport "$hostport" "$default_socks_port") || return 1
+    server="${parsed_hostport%:*}"
+    port="${parsed_hostport##*:}"
     port="${port//[!0-9]/}"
-    [ -z "$port" ] && port="$DEFAULT_SOCKS_PORT"
+    [ -z "$port" ] && port="$default_socks_port"
 
     # Parse query parameters for plugins
     local plugin_param=""

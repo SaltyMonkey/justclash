@@ -5,7 +5,7 @@
 # requires scrolling through the collected history of every other protocol.
 
 parse_trojan_url() {
-    local url="$1" DEFAULT_TLS_PORT="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7" random_ua="$8"
+    local url="$1" default_tls_port="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7" random_ua="$8"
 
     local raw="${url#trojan://}"
     raw="${raw#trojan-go://}"
@@ -18,12 +18,12 @@ parse_trojan_url() {
 
     local host="${hostport%%\?*}"
     local server port
-    local URI_HOST="" URI_PORT=""
-    uri_parse_hostport "$host" "$DEFAULT_TLS_PORT" || return 1
-    server="$URI_HOST"
-    port="$URI_PORT"
+    local parsed_hostport
+    parsed_hostport=$(uri_parse_hostport "$host" "$default_tls_port") || return 1
+    server="${parsed_hostport%:*}"
+    port="${parsed_hostport##*:}"
     port="${port//[!0-9]/}"
-    [ -z "$port" ] && port="$DEFAULT_TLS_PORT"
+    [ -z "$port" ] && port="$default_tls_port"
 
     local query_part=""
     case "$hostport" in *\?*) query_part="${hostport#*\?}" ;; esac
@@ -34,7 +34,6 @@ parse_trojan_url() {
     local shadow_tls_password="" shadow_tls_version=""
     local restls_password="" restls_version_hint="" restls_script=""
     local jls_username="" jls_password=""
-    local support_x25519mlkem768=""
     local alpn_json proxy_obj
 
     local temp_query="$query_part"
@@ -63,7 +62,7 @@ parse_trojan_url() {
         sid | short-id) sid="$v" ;;
         spx) spx="$(str_url_decode "$v")" ;;
         flow) flow="$v" ;;
-        pinSHA256 | fingerprint) pin_sha256="$(str_url_decode "$v")" ;;
+        pinSHA256 | fingerprint | pcs) pin_sha256="$(str_url_decode "$v")" ;;
         name-cert-verify | nameCertVerify | peer) name_cert_verify="$(str_url_decode "$v")" ;;
         shadow-tls-password | shadowTlsPassword) shadow_tls_password="$(str_url_decode "$v")" ;;
         shadow-tls-version | shadowTlsVersion) shadow_tls_version="$v" ;;
@@ -72,17 +71,10 @@ parse_trojan_url() {
         restls-script | restlsScript) restls_script="$(str_url_decode "$v")" ;;
         jls-username | jlsUsername | jlsUser) jls_username="$(str_url_decode "$v")" ;;
         jls-password | jlsPassword) jls_password="$(str_url_decode "$v")" ;;
-        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) uri_is_truthy "$v" && support_x25519mlkem768=1 ;;
         ech) ech="$(str_url_decode "$v")" ;;
         fp | client-fingerprint | clientFingerprint) fp="$v" ;;
         alpn) alpn="$(str_url_decode "$v")" ;;
-        path)
-            if [ -n "$v" ]; then
-                ws_path="$(str_url_decode "$v")"
-            else
-                ws_path="/"
-            fi
-            ;;
+        path) ws_path="$(str_url_decode "${v:-/}")" ;;
         host) ws_host="$(str_url_decode "$v")" ;;
         serviceName | service-name) grpc_service="$(str_url_decode "$v")" ;;
         grpc-user-agent | grpcUserAgent) grpc_ua="$(str_url_decode "$v")" ;;
@@ -131,7 +123,6 @@ parse_trojan_url() {
             --arg restls_script "$restls_script" \
             --arg jls_username "$jls_username" \
             --arg jls_password "$jls_password" \
-            --arg support_x25519mlkem768 "$support_x25519mlkem768" \
             --arg ss_method "$ss_method" \
             --arg ss_password "$ss_password" \
             --arg ss_enabled "$ss_enabled" \
@@ -210,7 +201,6 @@ parse_trojan_url() {
                         (if $pbk != "" then {"public-key": $pbk} else {} end)
                         + (if $sid != "" then {"short-id": $sid} else {} end)
                         + (if $spx != "" then {"spider-x": $spx} else {} end)
-                        + (if $support_x25519mlkem768 == "1" then {"support-x25519mlkem768": true} else {} end)
                     )}
                 else {} end)
             + (if $ss_enabled != "" and $ss_method != "" and $ss_password != "" then
