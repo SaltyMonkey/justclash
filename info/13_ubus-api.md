@@ -20,7 +20,7 @@ The verbose form shows the accepted request fields and their types.
 | `status` | `{}` | Read | Return package and core versions plus service state |
 | `check` | `{}` | Read | Generate the safe, redacted diagnostic summary |
 | `config_show` | `{ "target": "mihomo" }` or `{ "target": "service" }` | Read | Return a configuration with credential fields redacted |
-| `logs` | `{ "lines": 40 }` | Read | Return recent JustClash service log lines |
+| `logs` | `{ "lines": 40 }` | Read | Return recent JustClash entries from the OpenWrt system log |
 | `start` | `{}` | Write | Start the service |
 | `stop` | `{}` | Write | Stop the service |
 | `restart` | `{}` | Write | Restart the service |

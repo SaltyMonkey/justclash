@@ -13,6 +13,10 @@ JustClash packages, the Mihomo core, and downloaded service data have separate l
 
 The package version and Mihomo version are intentionally independent. A package update can preserve the current core, while the online automated installation updates the core to the current stable build before installing the selected JustClash release.
 
+The standalone installer and fresh package configurations use the slim kernel version by default. Existing UCI repository choices survive package upgrades. In LuCI, **Service → External resources** offers slim and upstream Mihomo repository presets and still accepts any `username/repo` value.
+
+The package core updater compares version strings. Changing repositories alone does not reinstall a core when the selected release reports the same version as the installed binary.
+
 ## Generated Configuration After Updates
 
 The generated Mihomo YAML is cached in the RAM-backed runtime directory. Its fingerprint includes the JustClash package version, relevant UCI settings, the resolved controller address, and the built-in and user ruleset catalog files. A changed package version or catalog therefore invalidates the old YAML on the next service start or reload instead of reusing output produced from older generator inputs.

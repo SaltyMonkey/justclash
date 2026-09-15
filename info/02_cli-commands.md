@@ -52,25 +52,25 @@ justclash.sh schedule sync
 
 ## Logs
 
-JustClash writes each service and Mihomo message to both its private runtime log and the OpenWrt system log.
+JustClash sends service and Mihomo messages to the OpenWrt system log. It no longer writes a separate runtime log file.
 
-To read the private log:
+To read recent JustClash entries:
 
 ```sh
 justclash.sh logs service [line_count]
 ```
 
-The default is 40 lines. The file is stored at `/tmp/justclash/justclash.log` with mode `0600` and is cleared when `/tmp` is recreated during a router reboot.
+The default is 40 lines. `logs service` and `logs system` read the same system-log entries; `logs service` remains available for existing scripts.
 
 The LuCI **Service logs** page requests 400 recent lines through RPC. This does not change the CLI default.
 
-To read JustClash entries still present in the OpenWrt system log:
+The equivalent command is:
 
 ```sh
 justclash.sh logs system [line_count]
 ```
 
-The default is 40 lines. Both logs can contain addresses, domains, interface names, or endpoints. Inspect them before sharing.
+System-log entries can contain addresses, domains, interface names, or endpoints. Inspect them before sharing.
 
 ## Diagnostics
 

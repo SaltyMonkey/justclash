@@ -58,6 +58,8 @@ wget -qO /tmp/justclash-install.sh 'https://raw.githubusercontent.com/saltymonke
 
 `--custom_version` pins the `justclash` and LuCI packages only. The installer still selects the current stable Mihomo core for the detected CPU architecture. It detects APK or OPKG automatically; interactive installation also asks which LuCI translation to install.
 
+The standalone installer downloads the stable slim kernel version by default.
+
 ### Manual Installation from a Release
 
 The `justclash` and `luci-app-justclash` packages have architecture `all`. Select `.apk` or `.ipk` for the router's OpenWrt package manager. Only the separately downloaded Mihomo core is CPU-specific.
@@ -71,6 +73,8 @@ apk add --allow-untrusted /tmp/justclash-*.apk /tmp/luci-app-justclash-*.apk
 # OPKG-based OpenWrt
 opkg install /tmp/justclash-*.ipk /tmp/luci-app-justclash-*.ipk
 ```
+
+Fresh package installations also use the slim kernel version for this update. To choose another repository, use **Services → JustClash → Service → External resources → GitHub repository** before updating the core.
 
 Install the core from **Services → JustClash → Status → Update Core**, or run:
 

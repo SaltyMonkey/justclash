@@ -99,7 +99,7 @@ The `REJECT` choice has been removed only from the four `nft_*_mode` settings ab
 | `mihomo_cron_scheduled_work_start_string` | Cron expression | Scheduled start |
 | `mihomo_cron_scheduled_work_stop_string` | Cron expression | Scheduled stop |
 | `mihomo_core_source_type` | Choice | Core update source type |
-| `mihomo_github_repo` | String | Repository identifier used by the configured updater |
+| `mihomo_github_repo` | `username/repo` | Repository used for GitHub core updates; new-install default provides the slim kernel version |
 | `mihomo_github_channel` | Choice | Stable or configured prerelease channel |
 | `mihomo_custom_core_url` | URL | Custom core archive source |
 | `mihomo_rulesets_files_download_url` | URL | Service ruleset catalog source |
@@ -113,6 +113,8 @@ The `REJECT` choice has been removed only from the four `nft_*_mode` settings ab
 | `mihomo_gomaxprocs` | Unsigned integer | Optional Go CPU-thread limit |
 
 URL fields may contain private sources. Do not include their values in bug reports.
+
+LuCI offers repositories for the slim kernel version and upstream Mihomo as editable presets. Configuration resets use the slim kernel version default; package upgrades keep an existing `mihomo_github_repo` value.
 
 ## `proxy proxy`
 
