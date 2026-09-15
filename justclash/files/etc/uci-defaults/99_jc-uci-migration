@@ -199,7 +199,7 @@ fi
 
 add_missing_option "justclash.settings.routing_mode" "partial"
 add_missing_option "justclash.settings.mihomo_core_source_type" "github"
-add_missing_option "justclash.settings.mihomo_github_repo" "MetaCubeX/mihomo"
+add_missing_option "justclash.settings.mihomo_github_repo" "SaltyMonkey/justclash-core-slim"
 add_missing_option "justclash.settings.mihomo_github_channel" "alpha"
 add_missing_option "justclash.settings.mihomo_custom_core_url" ""
 add_missing_option "justclash.settings.mihomo_rulesets_files_download_url" "https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"

@@ -2,7 +2,7 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version signature (kind of similar)
 # shellcheck shell=dash
-MIHOMO_GITHUB_REPO="MetaCubeX/mihomo"
+MIHOMO_GITHUB_REPO="SaltyMonkey/justclash-core-slim"
 JUSTCLASH_RELEASE_URL_API="https://api.github.com/repos/SaltyMonkey/justclash/releases/latest"
 JUSTCLASH_CUSTOM_VERSION=""
 
