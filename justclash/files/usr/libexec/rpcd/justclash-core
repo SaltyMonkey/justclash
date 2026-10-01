@@ -49,7 +49,7 @@ run_quiet() {
     if [ "$run_code" -eq 0 ]; then
         emit_result 0 "$run_success_message"
     else
-        emit_result "$run_code" "$run_failure_message"
+        emit_result "$run_code" "$run_failure_message Exit code: $run_code."
     fi
 }
 

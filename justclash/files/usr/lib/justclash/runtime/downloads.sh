@@ -39,7 +39,7 @@ http_download() {
 service_data_file_update() {
     local base_url="$1" filename="$2" destination="$3" workdir="$4"
     local label="$5"
-    local download_url tmp_path
+    local download_url tmp_path curl_code
 
     download_url="${base_url%/}/${filename}"
     tmp_path=$(mktemp "${workdir}/${filename}.XXXXXX") || return 5
@@ -49,7 +49,8 @@ service_data_file_update() {
         "$download_url" \
         "$tmp_path" \
         1 || {
-        log error "Failed to download $label."
+        curl_code=$?
+        log error "Failed to download $label (curl exit code: $curl_code)."
         rm -f "$tmp_path"
         return 6
     }
