@@ -1569,6 +1569,14 @@ msgstr "IP 版本覆盖："
 msgid "Override ip-version for all proxy nodes loaded from this provider."
 msgstr "覆盖从此提供商加载的所有代理节点的 ip-version。"
 
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:337
+msgid "Enable X25519-MLKEM768 for Reality:"
+msgstr "为 Reality 启用 X25519-MLKEM768："
+
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:338
+msgid "Enable X25519-MLKEM768 on provider nodes that already have Reality options."
+msgstr "仅对已配置 Reality 的提供商节点启用 X25519-MLKEM768。"
+
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:340
 msgid "Time interval for subscription update checks in seconds. Presets show the equivalent duration in parentheses."
 msgstr "订阅更新检查间隔以秒为单位。预设值会在括号中显示对应的易读时长。"

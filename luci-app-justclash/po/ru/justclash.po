@@ -1571,6 +1571,14 @@ msgstr "Переопределение версии IP:"
 msgid "Override ip-version for all proxy nodes loaded from this provider."
 msgstr "Переопределить ip-version для всех прокси-узлов, загруженных от этого провайдера."
 
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:337
+msgid "Enable X25519-MLKEM768 for Reality:"
+msgstr "Включить X25519-MLKEM768 для Reality:"
+
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:338
+msgid "Enable X25519-MLKEM768 on provider nodes that already have Reality options."
+msgstr "Включать X25519-MLKEM768 только для узлов провайдера с настройками Reality."
+
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:340
 msgid "Time interval for subscription update checks in seconds. Presets show the equivalent duration in parentheses."
 msgstr "Интервал проверки обновлений подписки задаётся в секундах. Для готовых значений эквивалентная длительность указана в скобках."

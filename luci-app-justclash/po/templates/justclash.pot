@@ -1570,6 +1570,14 @@ msgstr ""
 msgid "Override ip-version for all proxy nodes loaded from this provider."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:337
+msgid "Enable X25519-MLKEM768 for Reality:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:338
+msgid "Enable X25519-MLKEM768 on provider nodes that already have Reality options."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:340
 msgid "Time interval for subscription update checks in seconds. Presets show the equivalent duration in parentheses."
 msgstr ""
