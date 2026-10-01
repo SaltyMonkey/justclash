@@ -769,6 +769,7 @@ config_proxy_provider_read() {
     local filter exclude_filter exclude_type proxy dialer interface_name auth hwid hwid_custom os_custom os_version_custom device_model_custom
     local user_agent private_key public_key
     local health_check expected_status check_url check_interval timeout lazy
+    local reality_mlkem768
     config_get name "$section" name
     config_get subscription "$section" subscription
     if [ -z "$name" ] || [ -z "$subscription" ]; then
@@ -816,7 +817,8 @@ config_proxy_provider_read() {
     config_get timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
     val_is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
     config_get lazy "$section" health_check_lazy 0
-    "$callback" "$name" "$subscription" "$routing_mark" "$ip_version" "$interval" "$size_limit" "$filter" "$exclude_filter" "$exclude_type" "$proxy" "$dialer" "$interface_name" "$auth" "$hwid" "$hwid_custom" "$os_custom" "$os_version_custom" "$device_model_custom" "$user_agent" "$private_key" "$public_key" "$health_check" "$expected_status" "$check_url" "$check_interval" "$timeout" "$lazy"
+    config_get_bool reality_mlkem768 "$section" override_reality_mlkem768 0
+    "$callback" "$name" "$subscription" "$routing_mark" "$ip_version" "$interval" "$size_limit" "$filter" "$exclude_filter" "$exclude_type" "$proxy" "$dialer" "$interface_name" "$auth" "$hwid" "$hwid_custom" "$os_custom" "$os_version_custom" "$device_model_custom" "$user_agent" "$private_key" "$public_key" "$health_check" "$expected_status" "$check_url" "$check_interval" "$timeout" "$lazy" "$reality_mlkem768"
 }
 
 # Reads and validates YAML settings, then atomically promotes the generated document.
