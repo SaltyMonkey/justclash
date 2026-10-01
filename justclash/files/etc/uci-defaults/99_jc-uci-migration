@@ -1,6 +1,4 @@
 #!/bin/sh
-# Ash isn't supported properly in spellcheck static analyzer
-# Using debian based version (kind of similar)
 # shellcheck shell=dash
 [ -f /etc/config/justclash ] || exit 0
 
@@ -11,39 +9,16 @@ if ! . /usr/lib/justclash/config/reset.sh ||
     exit 1
 fi
 
+# Upgrade compatibility starts at v0.90.13_rc4.
+migration_changed=0
+
 add_missing_option() {
-    local path="$1"
-    local default_value="$2"
+    local path="$1" default_value="$2"
 
     if ! uci -q get "$path" >/dev/null; then
-        uci set "$path"="$default_value"
+        uci set "$path"="$default_value" || return 1
+        migration_changed=1
     fi
-}
-
-clean_fake_ip_list() {
-    local option="$1"
-    local list_val item new_val
-    local need_clean=0
-
-    list_val=$(uci -q get "justclash.proxy.$option")
-    [ -n "$list_val" ] || return 0
-
-    for item in $list_val; do
-        case "$item" in
-        +.*)
-            need_clean=1
-            break
-            ;;
-        esac
-    done
-
-    [ "$need_clean" = "1" ] || return 0
-
-    uci -q delete "justclash.proxy.$option"
-    for item in $list_val; do
-        new_val="${item#+.}"
-        uci add_list "justclash.proxy.$option=$new_val"
-    done
 }
 
 dnsmasq_option_matches_legacy_backup() {
@@ -190,88 +165,34 @@ restore_legacy_dnsmasq_backup || exit 1
 for option in nft_quic_mode nft_dot_mode nft_doh_mode nft_dot_quic_mode; do
     if [ "$(uci -q get "justclash.settings.$option")" = "REJECT" ]; then
         uci set "justclash.settings.$option=DROP" || exit 1
+        migration_changed=1
     fi
 done
 
 if uci -q get justclash.settings.nft_apply_changes_router >/dev/null 2>&1; then
     uci -q delete justclash.settings.nft_apply_changes_router || exit 1
+    migration_changed=1
 fi
 
-add_missing_option "justclash.settings.routing_mode" "partial"
-add_missing_option "justclash.settings.mihomo_core_source_type" "github"
-add_missing_option "justclash.settings.mihomo_github_repo" "SaltyMonkey/justclash-core-slim"
-add_missing_option "justclash.settings.mihomo_github_channel" "alpha"
-add_missing_option "justclash.settings.mihomo_custom_core_url" ""
-add_missing_option "justclash.settings.mihomo_rulesets_files_download_url" "https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
-add_missing_option "justclash.settings.mihomo_dashboard_zashboard_url" "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
-add_missing_option "justclash.settings.mihomo_dashboard_metacubexd_url" "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
-add_missing_option "justclash.settings.mihomo_dashboard_yacd_meta_url" "https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip"
-add_missing_option "justclash.settings.wait_for_wan" "0"
-add_missing_option "justclash.settings.wait_for_wan_max" "90"
-add_missing_option "justclash.settings.mihomo_mem_limit" "0"
-add_missing_option "justclash.settings.mihomo_gogc" "0"
-add_missing_option "justclash.settings.mihomo_gomaxprocs" "0"
-add_missing_option "justclash.settings.nft_doh_mode" "BY RULES"
-add_missing_option "justclash.settings.nft_dns_udp_mode" "BY RULES"
-add_missing_option "justclash.settings.mihomo_service_data_autoupdate" "0"
-add_missing_option "justclash.settings.mihomo_cron_service_data_update_string" "0 4 * * 0"
-add_missing_option "justclash.settings.mihomo_scheduled_work" "0"
-add_missing_option "justclash.settings.mihomo_cron_scheduled_work_start_string" "0 5 * * *"
-add_missing_option "justclash.settings.mihomo_cron_scheduled_work_stop_string" "0 23 * * *"
-add_missing_option "justclash.proxy.sniffer_override_destination" "0"
-add_missing_option "justclash.proxy.api_tls" "0"
-add_missing_option "justclash.proxy.api_tls_cert" "/etc/justclash/api-cert.pem"
-add_missing_option "justclash.proxy.api_tls_key" "/etc/justclash/api-key.pem"
-add_missing_option "justclash.settings.mihomo_geosite_url" "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
-add_missing_option "justclash.settings.mihomo_geoip_url" "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
-add_missing_option "justclash.settings.ipv6_enabled" "0"
-add_missing_option "justclash.proxy.fake_ip_range6" "2001:2::1/48"
-add_missing_option "justclash.proxy.geodata_mode" "0"
-add_missing_option "justclash.proxy.geodata_autoupdate" "0"
-add_missing_option "justclash.proxy.geodata_autoupdate_interval" "24"
+add_missing_option "justclash.settings.nft_dns_udp_mode" "BY RULES" || exit 1
 
-if ! uci -q get justclash.settings.nft_ports_exclude >/dev/null; then
-    uci add_list justclash.settings.nft_ports_exclude='6881'
+if uci -q get justclash.settings.skip_environment_checks >/dev/null 2>&1; then
+    uci -q delete justclash.settings.skip_environment_checks || exit 1
+    migration_changed=1
 fi
 
-uci -q delete justclash.settings.mihomo_autoupdate
-uci -q delete justclash.settings.mihomo_autoupdate_channel
-uci -q delete justclash.settings.mihomo_cron_update_string
-uci -q delete justclash.settings.skip_environment_checks
+# Replace only the obsolete packaged default; user-supplied sources stay put.
+legacy_rulesets_url="https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
+current_rulesets_url=$(uci -q get justclash.settings.mihomo_rulesets_files_download_url)
+case "$current_rulesets_url" in
+"$legacy_rulesets_url" | "$legacy_rulesets_url/")
+    uci set "justclash.settings.mihomo_rulesets_files_download_url=https://cdn.jsdelivr.net/gh/SaltyMonkey/mrs-parsed-data@main/justclash" || exit 1
+    migration_changed=1
+    ;;
+esac
 
-if [ "$(uci -q get justclash.proxy.fake_ip_ttl)" = "1" ]; then
-    uci set justclash.proxy.fake_ip_ttl="60"
+if [ "$migration_changed" -eq 1 ]; then
+    uci commit justclash || exit 1
 fi
-
-if ! uci -q get justclash.proxy.sniffer_exclude_domain | grep -qF "*"; then
-    uci add_list justclash.proxy.sniffer_exclude_domain='*'
-fi
-
-clean_fake_ip_list "fake_ip_exclude_domains"
-
-# Remove deprecated fake_ip options from routing sections
-for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxies$/\1/p'); do
-    uci -q delete "justclash.$section.fake_ip"
-done
-for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_group$/\1/p'); do
-    uci -q delete "justclash.$section.fake_ip"
-done
-uci -q delete justclash.direct_rules
-
-for section in $(uci -q show justclash | sed -n 's/^justclash\.\(.*\)=proxy_provider$/\1/p'); do
-    uci -q rename "justclash.$section.subscription_useragent_support=header_user_agent"
-    uci -q rename "justclash.$section.subscription_authorization_support=header_authorization"
-    uci -q rename "justclash.$section.subscription_hwid_support=header_hwid"
-    uci -q rename "justclash.$section.age_public_key=header_age_public_key"
-
-    hwid_val=$(uci -q get "justclash.$section.header_hwid")
-    if [ "$hwid_val" = "1" ]; then
-        uci set "justclash.$section.header_hwid=real"
-    elif [ "$hwid_val" = "0" ]; then
-        uci set "justclash.$section.header_hwid="
-    fi
-done
-
-uci commit justclash || exit 1
 
 exit 0
