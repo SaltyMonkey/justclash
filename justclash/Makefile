@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.95.0_rc2
+PKG_VERSION:=0.96.0
 
 PKG_RELEASE:=2
 
@@ -44,7 +44,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/usr/lib/justclash/config/*.sh $(1)/usr/lib/justclash/config/
 	$(INSTALL_DIR) $(1)/usr/lib/justclash/helpers
 	$(INSTALL_DATA) ./files/usr/lib/justclash/helpers/*.sh $(1)/usr/lib/justclash/helpers/
-	$(INSTALL_BIN) ./files/usr/lib/justclash/runtime.sh $(1)/usr/lib/justclash/
 	$(INSTALL_DIR) $(1)/usr/lib/justclash/runtime
 	$(INSTALL_DATA) ./files/usr/lib/justclash/runtime/*.sh $(1)/usr/lib/justclash/runtime/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/yaml.sh $(1)/usr/lib/justclash/

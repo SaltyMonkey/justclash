@@ -1,4 +1,45 @@
-## [0.95.0_rc2] - Unreleased
+## [0.96.0] - 01102026
+
+### Features & Enhancements
+
+- **Reality ML-KEM override:** Routing → Proxy providers → Override now has an
+  X25519-MLKEM768 switch for each provider. The switch is off by default. When
+  enabled, JustClash emits a single `override-expr` entry in a JSON array. The
+  expression sets `support-x25519mlkem768` only on imported nodes that already
+  contain `reality-opts`; it does not create Reality settings on other nodes.
+
+  For manually defined proxies under Routing → Proxies:
+
+  - **URI mode:** A VLESS or VMess URI with a Reality public key gets the option
+    when its query contains `support-x25519mlkem768=1`. The aliases
+    `x25519mlkem768=1` and `support-x25519-mlkem768=1` also work.
+  - **JSON object mode:** Add `"support-x25519mlkem768": true` inside the
+    existing `"reality-opts"` object while keeping the other Reality fields.
+
+- **Built-in lists:** Refreshed the shipped ruleset and blocklist catalogs used
+  for built-in service data.
+- **Desktop User-Agents:** Updated the generated desktop User-Agent snapshot
+  used by the built-in presets.
+
+### Security & Reliability
+
+- **Service data source:** The packaged download location now points to the
+  current ruleset and blocklist catalogs. An existing UCI setting is updated
+  only when it exactly matches the previous packaged default, with or without
+  a trailing slash. Custom sources remain unchanged.
+- **Update errors:** RPC messages now include the failing command's numeric
+  exit code, so LuCI no longer shows only a generic service-data failure. The
+  standalone `resources data update` command logs the underlying curl exit
+  code when a catalog download fails, without echoing the download URL in that
+  message.
+- **Upgrade migration:** Cleaned up legacy migrations and kept support for
+  upgrades from the last four tags (`v0.90.13_rc4` through `v0.95.0_rc2`).
+- **Package cleanup:** Removed the unused runtime loader; commands import their
+  required runtime modules directly. Removed the invalid CI workflow.
+- **Proxy provider User-Agent internals:** Refactored the existing preset
+  resolution in the provider config generator without changing its behavior.
+
+## [0.95.0_rc2] - 15092026
 
 ### Proxy URI Parsing
 
