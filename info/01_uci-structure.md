@@ -243,10 +243,15 @@ Mihomo internal NTP is separate from `settings.ntpd_start`.
 | --- | --- |
 | Identity/source | `enabled`, `name`, `subscription`, `update_interval`, `size_limit` |
 | Download path | `proxy` |
-| Overrides | `override_dialer_proxy`, `override_interface_name`, `override_routing_mark`, `override_ip_version` |
+| Overrides | `override_dialer_proxy`, `override_interface_name`, `override_routing_mark`, `override_ip_version`, `override_reality_mlkem768` |
 | Headers and encryption | `header_hwid`, `header_hwid_custom`, `header_os_custom`, `header_os_version_custom`, `header_device_model_custom`, `header_authorization`, `header_user_agent`, `age_private_key`, `header_age_public_key` |
 | Health check | `health_check`, `health_check_url`, `health_check_expected_status`, `health_check_interval`, `health_check_timeout`, `health_check_lazy` |
 | Filtering | `filter`, `exclude_filter`, `exclude_type` |
+
+`override_reality_mlkem768` is a LuCI toggle under Routing → Proxy providers → Override.
+It defaults to `0`. When enabled, the generated provider `override` contains an
+`override-expr` JSON array that sets `reality-opts.support-x25519mlkem768` to
+`true` only on nodes that already have `reality-opts`. Other nodes are unchanged.
 
 With `header_hwid=real`, all four identity headers are read from the router. With
 `header_hwid=spoofed`, `x-hwid`, `x-os`, `x-os-version`, and `x-device-model`

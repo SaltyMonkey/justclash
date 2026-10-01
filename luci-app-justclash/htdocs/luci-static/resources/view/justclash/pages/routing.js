@@ -334,6 +334,12 @@ return view.extend({
         o.rmempty = false;
         o.modalonly = true;
 
+        o = spp.taboption(proxyProviderOverrideTab, form.Flag, "override_reality_mlkem768", _("Enable X25519-MLKEM768 for Reality:"));
+        o.description = _("Enable X25519-MLKEM768 on provider nodes that already have Reality options.");
+        o.default = primitives.FALSE;
+        o.rmempty = false;
+        o.modalonly = true;
+
         o = spp.taboption(tabname, form.Value, "update_interval", _("Update interval:"));
         o.rmempty = false;
         o.datatype = datatypes.UINTEGER;
