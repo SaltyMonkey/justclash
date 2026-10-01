@@ -5,7 +5,7 @@
 # active_static_ips_path / active_static_source_ips_path contain destination/source
 # CIDRs from _STATIC_IPS_BUFFER / _STATIC_SOURCE_IPS_BUFFER. core_generate_yaml()
 # owns and writes these snapshots; the watcher refreshes IP-ruleset nft sets.
-# Application constants and shared helpers are provided by runtime.sh caller.
+# Application constants and shared helpers are loaded by the CLI before this file.
 # shellcheck disable=SC2154
 
 nft_build_skuid_exclusions() {
