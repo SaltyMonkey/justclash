@@ -19,7 +19,7 @@ template_proxy_provider() {
     local url="$1" interval="$2" size_limit="$3" proxy="$4" filter="$5" exclude_filter="$6" exclude_type="$7"
     local override_dialer="$8" override_ifname="$9" override_fwmark="${10}" override_ip_version="${11}" hwid_header="${12}"
     local hc_enabled="${13}" hc_url="${14}" hc_status="${15}" hc_interval="${16}" hc_timeout="${17}" hc_lazy="${18}"
-    local age_priv="${19}"
+    local age_priv="${19}" reality_mlkem768="${20}"
     local out override_json hc_json
 
     out="\"type\":\"http\",\"url\":\"$(str_json_escape "$url")\",\"interval\":$interval,\"size-limit\":$size_limit,\"proxy\":\"$proxy\""
@@ -33,6 +33,7 @@ template_proxy_provider() {
     [ -n "$override_ifname" ] && override_json="$override_json,\"interface-name\":\"$(str_json_escape "$override_ifname")\""
     [ -n "$override_ip_version" ] && override_json="$override_json,\"ip-version\":\"$override_ip_version\""
     [ -n "$override_fwmark" ] && override_json="$override_json,\"routing-mark\":$override_fwmark"
+    [ "$reality_mlkem768" = "1" ] && override_json="$override_json,\"override-expr\":[\"$(str_json_escape '.["reality-opts"] |= (select(. != null) | .["support-x25519mlkem768"] = true)')\"]"
     out="$out,\"override\":{$override_json}"
 
     # Optional HWID headers
@@ -52,18 +53,24 @@ template_proxy_provider() {
 
 resolve_user_agent() {
     local ua="$1"
-    if [ "$ua" = "__random__" ]; then
+
+    case "$ua" in
+    __random__)
         user_agent_rand
-    elif [ "$ua" = "__justclash__" ]; then
+        ;;
+    __justclash__)
         local service_ver="${JUSTCLASH_VERSION:-unknown}"
         printf '%s\n' "JustClash/${service_ver}"
-    elif [ "$ua" = "__mihomo__" ]; then
+        ;;
+    __mihomo__)
         local core_ver
         core_ver=$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")
         printf '%s\n' "Mihomo/${core_ver}"
-    else
+        ;;
+    *)
         printf '%s\n' "$ua"
-    fi
+        ;;
+    esac
 }
 
 template_headers() {
@@ -146,7 +153,7 @@ yaml_proxy_provider_append() {
     local header_os_custom="${16}" header_os_version_custom="${17}" header_device_model_custom="${18}"
     local header_user_agent="${19}" age_private_key="${20}" header_age_public_key="${21}"
     local health_check="${22}" hc_expected_status="${23}" hc_url="${24}"
-    local hc_interval="${25}" hc_timeout="${26}" hc_lazy="${27}"
+    local hc_interval="${25}" hc_timeout="${26}" hc_lazy="${27}" reality_mlkem768="${28}"
     local provider_json headers
 
     headers=""
@@ -161,7 +168,7 @@ yaml_proxy_provider_append() {
         "$url" "$interval" "$size_limit" "$proxy" "$filter" "$exclude_filter" "$exclude_type" \
         "$override_dialer_proxy" "$override_interface_name" "$override_routing_mark" "$override_ip_version" "$headers" \
         "$health_check" "$hc_url" "$hc_expected_status" "$hc_interval" "$hc_timeout" "$hc_lazy" \
-        "$age_private_key"
+        "$age_private_key" "$reality_mlkem768"
     provider_json="$OUT_TEMPLATE"
 
     OUT_PROXY_PROVIDERS="$OUT_PROXY_PROVIDERS\"$(str_json_escape "$name")\":$provider_json,"
