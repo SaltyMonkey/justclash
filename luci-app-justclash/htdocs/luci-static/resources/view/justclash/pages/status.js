@@ -165,7 +165,7 @@ return view.extend({
         const boardPromise = ubusApi.getSystemBoard()
             .then(data => [
                 data.model ? data.model.replace(/\s*\(.*\)\s*$/, "") : _("Error"),
-                data.release && data.release.description ? data.release.description.replace(/ r\d+-[a-f0-9]+.*$/, "") : _("Error")
+                data.release && data.release.version ? data.release.version : _("Error")
             ])
             .catch(() => [_("Error"), _("Error")]);
 
