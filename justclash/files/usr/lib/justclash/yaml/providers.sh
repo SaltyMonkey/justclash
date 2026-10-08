@@ -89,11 +89,13 @@ template_headers() {
     # 1. Build HWID headers as arrays if enabled
     case "$hwid_enabled" in
     1 | real)
-        hwid=$(sysinfo_hwid_generate)
-        device_os=$(sysinfo_get_os_name)
-        version_os=$(sysinfo_get_os_version)
-        device_model=$(sysinfo_get_hw_model)
-        hwid_headers_enabled=1
+        hwid=$(sysinfo_hwid_generate) || hwid=""
+        if [ -n "$hwid" ]; then
+            device_os=$(sysinfo_get_os_name)
+            version_os=$(sysinfo_get_os_version)
+            device_model=$(sysinfo_get_hw_model)
+            hwid_headers_enabled=1
+        fi
         ;;
     spoofed)
         hwid="$hwid_custom"
