@@ -316,8 +316,6 @@ return view.extend({
         ]);
 
         const statusContainer = E("div", { class: "cbi-section fade-in" }, [
-            E("h3", { class: "cbi-section-title" }, _("Current status")),
-            E("div", { class: "cbi-section-descr" }, _("Overview of the running Mihomo service status, core version, and active traffic usage.")),
             statusGrid
         ]);
 
