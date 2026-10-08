@@ -78,7 +78,7 @@ remove the retired router flag; it is no longer read at runtime.
 | `nft_ips_exclude` | List of IPv4 addresses/CIDRs | Bypass matching IPv4 clients |
 | `pbr_priority` | Unsigned integer | Priority used by JustClash policy-routing rules |
 | `nft_quic_mode` | `BY RULES` / `DROP` | QUIC handling policy |
-| `nft_dns_udp_mode` | Choice | Plain client UDP DNS policy (`BY RULES`, `DROP`, or `HIJACK` to the router DNS service) |
+| `nft_dns_mode` | Choice | Plain client TCP/UDP port 53 DNS policy (`BY RULES`, `DROP`, or `HIJACK` to the router DNS service) |
 | `nft_dot_mode` | `BY RULES` / `DROP` | DNS-over-TLS handling policy |
 | `nft_doh_mode` | `BY RULES` / `DROP` | DNS-over-HTTPS handling policy |
 | `nft_dot_quic_mode` | `BY RULES` / `DROP` | DNS-over-QUIC handling policy |
@@ -108,9 +108,9 @@ The `REJECT` choice has been removed only from the four `nft_*_mode` settings ab
 | `mihomo_dashboard_yacd_meta_url` | URL | Dashboard archive source |
 | `mihomo_geosite_url` | URL | Geosite database source |
 | `mihomo_geoip_url` | URL | GeoIP database source |
-| `mihomo_mem_limit` | Unsigned integer | Optional Mihomo memory limit |
-| `mihomo_gogc` | Unsigned integer | Optional Go GC target |
-| `mihomo_gomaxprocs` | Unsigned integer | Optional Go CPU-thread limit |
+| `mihomo_mem_limit` | Unsigned integer | Required Mihomo memory limit |
+| `mihomo_gogc` | Unsigned integer | Required Go GC target |
+| `mihomo_gomaxprocs` | Unsigned integer | Required Go CPU-thread limit |
 
 URL fields may contain private sources. Do not include their values in bug reports.
 

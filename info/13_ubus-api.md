@@ -4,6 +4,8 @@ The `justclash` package registers the `justclash-core` ubus object through an rp
 
 Use the [Command-Line Reference](02_cli-commands.md) for interactive shell administration. The ubus API is intended for LuCI and other local RPC clients.
 
+This rpcd API is available while Mihomo is stopped, including service status, startup controls, and Service logs. Live LuCI pages such as Nodes, Rules, Connections, and Realtime logs use the separate Mihomo HTTP/WebSocket controller API and require a running core. See [LuCI Pages and Core Availability](14_luci_pages.md).
+
 ## Discover the API
 
 ```sh

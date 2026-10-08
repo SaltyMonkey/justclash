@@ -152,6 +152,10 @@ LuCI has three separate stages:
 
 After applying, open **Status** and confirm that both the service and Mihomo are running.
 
+If the service is stopped, start it from **Status** before opening **Nodes**, **Rules**, **Connections**, or **Realtime logs**. Those pages show live core data and require its controller API. Saved **Setup** pages and **Service logs** work without a running core. See [LuCI Pages and Core Availability](14_luci_pages.md) for the page matrix and API troubleshooting.
+
+The current UI may open a live page with an error, an empty list, or unchanged metrics when Mihomo is unavailable. Check **Status** and **Service logs** instead of assuming that an empty page means there is no data. After starting the service, reload **Nodes** and **Rules**. **Connections** and **Realtime logs** normally reconnect automatically; reload them if the browser blocked the API connection or API settings were changed.
+
 ## 8. Verify
 
 ```sh

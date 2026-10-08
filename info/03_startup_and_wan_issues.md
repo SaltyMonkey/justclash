@@ -13,6 +13,16 @@ Startup failures are usually ordering problems: WAN, DNS, system time, storage, 
 | Port validation fails | Active listeners | Change the conflicting listener |
 | Core is missing | Installed core version | Run `resources core update` |
 
+## LuCI Live Pages Are Unavailable
+
+**Nodes**, **Rules**, **Connections**, and **Realtime logs** use the running Mihomo controller. Start JustClash from **Status**, then reload Nodes or Rules; Connections and Realtime logs reconnect automatically. **Service logs** remains available for startup failures; realtime core logs do not.
+
+The pages themselves may open while the core is stopped. Nodes and Rules can show a load error and an empty list; Connections and Realtime logs can remain empty or retain the last received data. Status metrics may stay at their initial values. Check the service state on **Status** before treating any of these as current core data. If the browser blocks controller access, correct API/TLS settings and reload the affected page.
+
+If the service is already running, distinguish API authorization failures from connection failures. Check the API password and TLS settings under **Setup: Proxy**, controller access from the browser, and certificate trust. HTTPS LuCI requires HTTPS/WSS for the controller connection. A failed live request alone is not evidence that the core has stopped.
+
+See [LuCI Pages and Core Availability](14_luci_pages.md) for the complete page matrix and stream reconnection behavior.
+
 ## Wait for WAN
 
 LuCI: **Services → JustClash → Setup: Service → Startup**.
