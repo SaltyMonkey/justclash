@@ -46,7 +46,6 @@ cron_entry_apply() {
     fi
 }
 
-# Returns 0 when applied, 2 when the schedule is empty or invalid.
 cron_job_add() {
     local schedule="$1"
     local pattern="$2"
@@ -54,17 +53,12 @@ cron_job_add() {
     local name="$4"
     local expected_entry
 
+    [ -n "$schedule" ] || {
+        log error "$name cron schedule is empty."
+        return 1
+    }
+
     cron_make_if_missing
-
-    if [ -z "$schedule" ]; then
-        log error "$name cron schedule string is empty. Cron job was not added."
-        return 2
-    fi
-
-    if ! val_cron_expr "$schedule"; then
-        log error "$name cron schedule string is invalid: $schedule. Cron job was not added."
-        return 2
-    fi
 
     expected_entry=$(cron_entry_build "$schedule" "$command")
     cron_entry_apply "$pattern" "$expected_entry" "$name"

@@ -7,7 +7,7 @@ set -f # Disable path expansion (globbing) globally to safely iterate over user-
 
 # --------------------------------------------
 # Main application orchestration
-# Simple UCI reads and validation stay with their owning scenarios.
+# UCI option types and defaults are applied once when the configuration loads.
 # constants.sh supplies service constants, DEFAULT_* fallbacks and readonly
 # NL (newline), CR and TAB before helpers and configuration modules load.
 # NL separates collected UCI list values and the per-build nftables sidecar records.
@@ -72,7 +72,7 @@ core_prepare_safe_paths() {
     safe_paths_clear
     safe_paths_add "$DASHBOARD_PATH"
 
-    # 1. API TLS Cert/Key Paths from validated startup config
+    # 1. API TLS Cert/Key Paths
     if [ "$api_tls" -eq 1 ]; then
         cert_dir=$(readlink -f "$(dirname "$api_tls_cert")" 2>/dev/null || realpath "$(dirname "$api_tls_cert")" 2>/dev/null)
         key_dir=$(readlink -f "$(dirname "$api_tls_key")" 2>/dev/null || realpath "$(dirname "$api_tls_key")" 2>/dev/null)
@@ -80,7 +80,7 @@ core_prepare_safe_paths() {
         [ -n "$key_dir" ] && safe_paths_add "$key_dir"
     fi
 
-    # 2. Persistent rulesets path from validated startup config
+    # 2. Persistent rulesets path
     if [ "$mihomo_persistent_ext_rules" -eq 1 ]; then
         safe_paths_add "$SYMLINKDIR_RULESETS"
     fi
@@ -100,13 +100,28 @@ core_prepare_safe_paths() {
     return 0
 }
 
+core_controller_address_read() {
+    local controller_bind_interface router_selected_ipaddr
+
+    config_get controller_bind_interface proxy controller_bind_interface
+    network_flush_cache
+    if [ "$controller_bind_interface" = "$CONTROLLER_BIND_UNSPECIFIED" ]; then
+        router_selected_ipaddr="$CONTROLLER_BIND_ALL_IPV4"
+    elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" ||
+        [ -z "$router_selected_ipaddr" ]; then
+        log error "Controller bind network has no IPv4 address. Aborting startup." >&2
+        return 1
+    fi
+
+    printf '%s' "$router_selected_ipaddr"
+}
+
 start() {
-    local validation_failed=0
     local current_config_hash workdir_status
     local api_tls api_tls_cert api_tls_key dns_listen_port ipv6_enabled mihomo_gogc mihomo_gomaxprocs
     local mihomo_mem_limit mihomo_persistent_cache mihomo_persistent_ext_rules mixed_port nft_apply_changes
     local ntpd_start routing_mode tproxy_port use_mixed_port
-    local controller_bind_interface router_selected_ipaddr
+    local router_selected_ipaddr
     local core_exit_code preflight_tproxy_port preflight_mixed_port
 
     if preflight_check_is_already_running "$PROGNAME start" "JustClash" "$CORE_PATH" "$$"; then
@@ -116,61 +131,22 @@ start() {
     log info "Initializing JustClash service..."
 
     # Read settings used by this scenario.
-    config_get ntpd_start settings ntpd_start "$DEFAULT_NTPD_START"
-    config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
+    config_get ntpd_start settings ntpd_start
+    config_get dns_listen_port proxy dns_listen_port
     config_get tproxy_port proxy tproxy_port
-    config_get nft_apply_changes settings nft_apply_changes "$DEFAULT_NFT_APPLY_CHANGES"
-    config_get mixed_port proxy mixed_port "$DEFAULT_MIXED_PORT"
-    config_get use_mixed_port proxy use_mixed_port 0
-    config_get api_tls proxy api_tls "$DEFAULT_API_TLS"
-    config_get api_tls_cert proxy api_tls_cert "$DEFAULT_API_TLS_CERT_PATH"
-    config_get api_tls_key proxy api_tls_key "$DEFAULT_API_TLS_KEY_PATH"
-    config_get mihomo_persistent_ext_rules settings mihomo_persistent_ext_rules "$DEFAULT_MIHOMO_PERSISTENT_EXT_RULES"
-    config_get mihomo_persistent_cache settings mihomo_persistent_cache "$DEFAULT_MIHOMO_PERSISTENT_CACHE"
-    config_get mihomo_mem_limit settings mihomo_mem_limit "$DEFAULT_MIHOMO_MEM_LIMIT"
-    config_get mihomo_gogc settings mihomo_gogc "$DEFAULT_MIHOMO_GOGC"
-    config_get mihomo_gomaxprocs settings mihomo_gomaxprocs "$DEFAULT_MIHOMO_GOMAXPROCS"
-    config_get routing_mode settings routing_mode "$DEFAULT_ROUTING_MODE"
-    config_get ipv6_enabled settings ipv6_enabled "$DEFAULT_IPV6_ENABLED"
-    config_get controller_bind_interface proxy controller_bind_interface
-
-    # Validate before applying any changes.
-    config_validate_bool "$ntpd_start" "settings.ntpd_start" || validation_failed=1
-    config_validate_bool "$nft_apply_changes" "settings.nft_apply_changes" || validation_failed=1
-    config_validate_bool "$api_tls" "proxy.api_tls" || validation_failed=1
-    config_validate_bool "$mihomo_persistent_ext_rules" "settings.mihomo_persistent_ext_rules" || validation_failed=1
-    config_validate_bool "$mihomo_persistent_cache" "settings.mihomo_persistent_cache" || validation_failed=1
-    config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
-    config_validate_bool "$use_mixed_port" "proxy.use_mixed_port" || validation_failed=1
-
-    config_validate_port "$dns_listen_port" "proxy.dns_listen_port" || validation_failed=1
-    config_validate_port "$tproxy_port" "proxy.tproxy_port" || validation_failed=1
-    [ "$use_mixed_port" != 1 ] || config_validate_port "$mixed_port" "proxy.mixed_port" || validation_failed=1
-
-    config_validate_uint "$mihomo_mem_limit" "settings.mihomo_mem_limit" || validation_failed=1
-    config_validate_uint "$mihomo_gogc" "settings.mihomo_gogc" || validation_failed=1
-    config_validate_uint "$mihomo_gomaxprocs" "settings.mihomo_gomaxprocs" || validation_failed=1
-
-    if ! val_is_choice "$routing_mode" full partial; then
-        config_validation_error "settings.routing_mode must be 'full' or 'partial'"
-        validation_failed=1
-    fi
-
-    if [ "$controller_bind_interface" != "$CONTROLLER_BIND_UNSPECIFIED" ] &&
-        ! val_is_ifname "$controller_bind_interface"; then
-        config_validation_error "proxy.controller_bind_interface must name a logical network or be '-'"
-        validation_failed=1
-    fi
-
-    if [ "$api_tls" = "1" ]; then
-        config_validate_absolute_path "$api_tls_cert" "proxy.api_tls_cert" || validation_failed=1
-        config_validate_absolute_path "$api_tls_key" "proxy.api_tls_key" || validation_failed=1
-    fi
-
-    if [ "$validation_failed" -ne 0 ]; then
-        log error "Startup configuration validation failed. Aborting startup."
-        return 1
-    fi
+    config_get nft_apply_changes settings nft_apply_changes
+    config_get mixed_port proxy mixed_port
+    config_get use_mixed_port proxy use_mixed_port
+    config_get api_tls proxy api_tls
+    config_get api_tls_cert proxy api_tls_cert
+    config_get api_tls_key proxy api_tls_key
+    config_get mihomo_persistent_ext_rules settings mihomo_persistent_ext_rules
+    config_get mihomo_persistent_cache settings mihomo_persistent_cache
+    config_get mihomo_mem_limit settings mihomo_mem_limit
+    config_get mihomo_gogc settings mihomo_gogc
+    config_get mihomo_gomaxprocs settings mihomo_gomaxprocs
+    config_get routing_mode settings routing_mode
+    config_get ipv6_enabled settings ipv6_enabled
 
     if [ "$nft_apply_changes" = "1" ]; then
         preflight_tproxy_port="$tproxy_port"
@@ -199,16 +175,10 @@ start() {
         sleep "$ENV_JUSTCLASH_BOOT_DELAY"
     fi
 
-    network_flush_cache
-    if [ "$controller_bind_interface" = "$CONTROLLER_BIND_UNSPECIFIED" ]; then
-        router_selected_ipaddr="$CONTROLLER_BIND_ALL_IPV4"
-    else
-        if ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" ||
-            [ -z "$router_selected_ipaddr" ]; then
-            log error "Controller bind network has no IPv4 address. Aborting startup."
-            return 1
-        fi
-    fi
+    router_selected_ipaddr=$(core_controller_address_read) || {
+        log error "Controller address resolution failed. Aborting startup."
+        return 1
+    }
 
     preflight_check_requirement "$CORE_PATH" "$CORE_BIN_NAME" "$REQUIRED_TOOLS" || {
         log error "System requirement checks failed. Aborting startup."
@@ -237,8 +207,6 @@ start() {
 
     log info "Checking for non-critical conflicts"
     preflight_check_conflicts_warn \
-        "$DHCP_CONFIG_FILEPATH" \
-        "$WARN_PATTERNS_DHCP_CONFIG" \
         "$RESOLVCONF_FILEPATH" \
         "$ZAPRETINITD_FILEPATH" \
         "$BYEDPI_FILEPATH" \
@@ -249,16 +217,18 @@ start() {
     compat_fixes
 
     log info "Synchronizing system time"
-    ntpd_force_sync \
-        "$ntpd_start" \
-        "$DEFAULT_NTP_IPS"
+    # Time synchronization is best effort; configuration was checked above.
+    ntpd_force_sync "$ntpd_start" "$DEFAULT_NTP_IPS"
 
     log info "Updating SAFE_PATHS environment variable"
     core_prepare_safe_paths \
         "$api_tls" \
         "$api_tls_cert" \
         "$api_tls_key" \
-        "$mihomo_persistent_ext_rules"
+        "$mihomo_persistent_ext_rules" || {
+        log error "Safe paths preparation failed. Aborting startup."
+        return 1
+    }
 
     current_config_hash=$(config_hash_filtered "$PROGNAME" "^${PROGNAME}\.settings\.(wait_for_wan|delayed_boot|ntpd_start|mihomo_autorestart|mihomo_cron_|mihomo_service_data_|mihomo_core_|mihomo_github_|mihomo_custom_core_url|mihomo_rulesets_files_download_url)") || {
         log error "Failed to calculate the current configuration hash."
@@ -325,7 +295,10 @@ start() {
     }
 
     log info "Updating scheduled tasks"
-    cron_update
+    cron_update || {
+        log error "Scheduled tasks update failed. Aborting startup."
+        return 1
+    }
 
     nft_sets_watch_start \
         "$routing_mode" \
@@ -372,6 +345,7 @@ start_core() {
     local mihomo_gomaxprocs="$3"
     local attempt=0
     local exit_code=0
+
     log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries"
 
     # shellcheck disable=SC2154
@@ -450,25 +424,24 @@ stop_core() {
     fi
 }
 
-# Reads and validates nftables settings, then applies the selected routing mode.
+# Reads nftables settings, then applies the selected routing mode.
 run_nftables_apply() {
-    local validation_failed=0
-    local fake_ip_range fake_ip_range6 ipv6_enabled nft_apply_changes nft_doh_mode nft_dns_udp_mode
+    local fake_ip_range fake_ip_range6 ipv6_enabled nft_apply_changes nft_doh_mode nft_dns_mode
     local nft_dot_mode nft_dot_quic_mode nft_ips_exclude nft_mac_exclude nft_ntp_mode nft_ntp_mode_router
     local nft_ports_exclude nft_ports_exclude_router nft_quic_mode nft_skuid_exclude_router pbr_priority
     local provider_routing_marks proxy_routing_marks routing_mode tproxy_input_interfaces tproxy_port
     local nft_res=0
 
     # Read settings used by this scenario.
-    config_get routing_mode settings routing_mode "$DEFAULT_ROUTING_MODE"
-    config_get nft_apply_changes settings nft_apply_changes "$DEFAULT_NFT_APPLY_CHANGES"
+    config_get routing_mode settings routing_mode
+    config_get nft_apply_changes settings nft_apply_changes
     config_get tproxy_port proxy tproxy_port
-    config_get pbr_priority settings pbr_priority "$DEFAULT_PBR_PRIORITY"
+    config_get pbr_priority settings pbr_priority
     config_get fake_ip_range proxy fake_ip_range
     config_get fake_ip_range6 proxy fake_ip_range6
-    config_get tproxy_input_interfaces settings tproxy_input_interfaces "$DEFAULT_INPUT_INTERFACE"
+    config_get tproxy_input_interfaces settings tproxy_input_interfaces
     config_get nft_quic_mode settings nft_quic_mode
-    config_get nft_dns_udp_mode settings nft_dns_udp_mode
+    config_get nft_dns_mode settings nft_dns_mode
     config_get nft_dot_mode settings nft_dot_mode
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_doh_mode settings nft_doh_mode
@@ -479,74 +452,22 @@ run_nftables_apply() {
     config_get nft_mac_exclude settings nft_mac_exclude
     config_get nft_ips_exclude settings nft_ips_exclude
     config_get nft_skuid_exclude_router settings nft_skuid_exclude_router
-    config_get ipv6_enabled settings ipv6_enabled "$DEFAULT_IPV6_ENABLED"
+    config_get ipv6_enabled settings ipv6_enabled
 
     proxy_routing_marks=$(str_trim "$(config_routing_marks_read \
-        "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY" proxies routing_mark)")
+        proxies routing_mark)")
     provider_routing_marks=$(str_trim "$(config_routing_marks_read \
-        "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY" proxy_provider override_routing_mark)")
-
-    # Validate before applying any changes.
-    config_validate_bool "$nft_apply_changes" "settings.nft_apply_changes" || validation_failed=1
-    config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
-
-    if ! val_is_choice "$routing_mode" full partial; then
-        config_validation_error "settings.routing_mode must be 'full' or 'partial'"
-        validation_failed=1
-    fi
-
-    if [ "$nft_apply_changes" = "1" ]; then
-        config_validate_port "$tproxy_port" "proxy.tproxy_port" || validation_failed=1
-        if ! val_is_uint "$pbr_priority" ||
-            [ "$pbr_priority" -lt 1 ] 2>/dev/null ||
-            [ "$pbr_priority" -gt 32766 ] 2>/dev/null; then
-            config_validation_error "settings.pbr_priority must be an integer from 1 to 32766"
-            validation_failed=1
-        fi
-
-        case "$proxy_routing_marks" in
-        *-1*)
-            config_validation_error "proxies.routing_mark contains an invalid or reserved mark"
-            validation_failed=1
-            ;;
-        esac
-        case "$provider_routing_marks" in
-        *-1*)
-            config_validation_error "proxy_provider.override_routing_mark contains an invalid or reserved mark"
-            validation_failed=1
-            ;;
-        esac
-
-        [ -n "$fake_ip_range" ] || {
-            config_validation_error "proxy.fake_ip_range is required"
-            validation_failed=1
-        }
-        if [ "$ipv6_enabled" = "1" ] && [ -z "$fake_ip_range6" ]; then
-            config_validation_error "proxy.fake_ip_range6 is required when IPv6 is enabled"
-            validation_failed=1
-        fi
-
-        config_validate_interface_list "$tproxy_input_interfaces" "settings.tproxy_input_interfaces" || validation_failed=1
-        config_validate_port_list "$nft_ports_exclude" "settings.nft_ports_exclude" || validation_failed=1
-        config_validate_nft_mode "$nft_quic_mode" "settings.nft_quic_mode" || validation_failed=1
-        config_validate_nft_dns_udp_mode "$nft_dns_udp_mode" "settings.nft_dns_udp_mode" || validation_failed=1
-        config_validate_nft_mode "$nft_dot_mode" "settings.nft_dot_mode" || validation_failed=1
-        config_validate_nft_mode "$nft_dot_quic_mode" "settings.nft_dot_quic_mode" || validation_failed=1
-        config_validate_nft_mode "$nft_doh_mode" "settings.nft_doh_mode" || validation_failed=1
-        config_validate_nft_ntp_mode "$nft_ntp_mode" "settings.nft_ntp_mode" || validation_failed=1
-
-        config_validate_port_list "$nft_ports_exclude_router" "settings.nft_ports_exclude_router" || validation_failed=1
-        config_validate_nft_ntp_mode "$nft_ntp_mode_router" "settings.nft_ntp_mode_router" || validation_failed=1
-    fi
-
-    if [ "$validation_failed" -ne 0 ]; then
-        log error "Nftables configuration validation failed."
-        return 1
-    fi
+        proxy_provider override_routing_mark)")
 
     if [ "$nft_apply_changes" = "0" ]; then
         log info "Skipping nftables and PBR setup (disabled in configuration)"
         return 0
+    fi
+
+    if [ -z "$fake_ip_range" ] || [ -z "$tproxy_input_interfaces" ] ||
+        { [ "$ipv6_enabled" = 1 ] && [ -z "$fake_ip_range6" ]; }; then
+        log error "Nftables configuration is missing required options."
+        return 1
     fi
 
     if [ "$routing_mode" = "partial" ]; then
@@ -574,7 +495,7 @@ run_nftables_apply() {
             "$ACTIVE_STATIC_IPS_PATH" \
             "$ACTIVE_STATIC_SOURCE_IPS_PATH" \
             "$CORE_WORKDIR_RULES_PATH" \
-            "$nft_dns_udp_mode"
+            "$nft_dns_mode"
         nft_res=$?
     else
         nft_table_full_apply \
@@ -597,7 +518,7 @@ run_nftables_apply() {
             "$nft_mac_exclude" \
             "$nft_ips_exclude" \
             "$ipv6_enabled" \
-            "$nft_dns_udp_mode"
+            "$nft_dns_mode"
         nft_res=$?
     fi
 
@@ -622,23 +543,10 @@ nf_table_remove() {
 }
 
 run_dnsmasq_update() {
-    local validation_failed=0
     local dns_listen_port dnsmasq_apply_changes
     # Read settings used by this scenario.
-    config_get dnsmasq_apply_changes settings dnsmasq_apply_changes "$DEFAULT_DNSMASQ_APPLY_CHANGES"
-    config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
-
-    # Validate before applying any changes.
-    config_validate_bool "$dnsmasq_apply_changes" "settings.dnsmasq_apply_changes" || validation_failed=1
-
-    if [ "$dnsmasq_apply_changes" = "1" ]; then
-        config_validate_port "$dns_listen_port" "proxy.dns_listen_port" || validation_failed=1
-    fi
-
-    if [ "$validation_failed" -ne 0 ]; then
-        log error "Dnsmasq configuration validation failed."
-        return 1
-    fi
+    config_get dnsmasq_apply_changes settings dnsmasq_apply_changes
+    config_get dns_listen_port proxy dns_listen_port
 
     dnsmasq_update \
         "$dnsmasq_apply_changes" \
@@ -650,7 +558,7 @@ run_dnsmasq_restore() {
     dnsmasq_restore "$PROGNAME"
 }
 
-# Complex YAML section readers live with the scenario that owns their validation.
+# Complex YAML section readers live with the scenario that consumes their values.
 # Renderers receive normalized values once; ash already makes this interface
 # verbose enough without adding a second configuration pass.
 config_list_append() {
@@ -664,7 +572,7 @@ config_load_list() {
 }
 
 config_proxy_read() {
-    local section="$1" callback="$2" reserved_marks="$3"
+    local section="$1" callback="$2"
     local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
     local list_update_interval size_limit mode proxy_link_object use_for_update ip_version
     local src_routes enabled_list domain_routes geosite_list destip_routes geoip_list
@@ -673,35 +581,22 @@ config_proxy_read() {
         log warn "Skip proxy without name: $section"
         return
     }
-    config_get_bool enabled "$section" enabled 1
+    config_get_bool enabled "$section" enabled
     [ "$enabled" -eq 1 ] || {
         log warn "Skip disabled proxy: $section"
         return
     }
     config_get routing_mark "$section" routing_mark
-    routing_mark=$(val_parse_routing_mark "$routing_mark" "$reserved_marks")
-    [ "$routing_mark" != -1 ] || {
-        log warn "Skip proxy '$section' due to invalid routing mark"
-        return
-    }
+    [ -z "$routing_mark" ] || routing_mark=$(printf '%d' "$routing_mark")
     config_get proxy_link_uri "$section" proxy_link_uri
     config_get dialer_proxy "$section" dialer_proxy
     config_get interface_name "$section" interface_name
-    config_get list_update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
-    val_is_uint "$list_update_interval" || {
-        log warn "Invalid list update interval for proxy '$name'; using default"
-        list_update_interval="$DEFAULT_RULESET_INTERVAL"
-    }
-    config_get size_limit "$section" size_limit 0
-    val_is_uint "$size_limit" || {
-        log warn "Invalid size limit for proxy '$name'; using zero"
-        size_limit=0
-    }
-    config_get mode "$section" mode uri
+    config_get list_update_interval "$section" list_update_interval
+    config_get size_limit "$section" size_limit
+    config_get mode "$section" mode
     config_get proxy_link_object "$section" proxy_link_object
-    config_get_bool use_for_update "$section" use_proxy_for_list_update 0
-    config_get ip_version "$section" ip_version dual
-    ip_version=$(val_parse_ip_version "$ip_version")
+    config_get_bool use_for_update "$section" use_proxy_for_list_update
+    config_get ip_version "$section" ip_version
     config_get src_routes "$section" additional_srcip_route
     config_get enabled_list "$section" enabled_list
     config_get domain_routes "$section" additional_domain_route
@@ -721,7 +616,7 @@ config_proxy_group_read() {
         log warn "Skip proxy group without a name: $section"
         return
     }
-    config_get_bool enabled "$section" enabled 1
+    config_get_bool enabled "$section" enabled
     [ "$enabled" -eq 1 ] || {
         log warn "Skip disabled proxy group: $section"
         return
@@ -734,27 +629,21 @@ config_proxy_group_read() {
     }
     config_get group_type "$section" group_type
     config_get strategy "$section" strategy
-    config_get check_url "$section" check_url "$DEFAULT_HEALTHCHECK_URL"
-    config_get expected_status "$section" expected_status "$DEFAULT_HEALTHCHECK_RESULT"
-    val_is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
-    config_get interval "$section" check_interval "$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
-    val_is_uint "$interval" || interval="$DEFAULT_GROUP_HEALTHCHECK_INTERVAL"
-    config_get timeout "$section" check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
-    val_is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
-    config_get max_failed "$section" max_failed_times "$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
-    val_is_uint "$max_failed" || max_failed="$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES"
-    config_get lazy "$section" lazy 0
+    config_get check_url "$section" check_url
+    config_get expected_status "$section" expected_status
+    config_get interval "$section" check_interval
+    config_get timeout "$section" check_timeout
+    config_get max_failed "$section" max_failed_times
+    config_get lazy "$section" lazy
     config_get tolerance "$section" tolerance
     config_get selected "$section" default_selected
     config_get filter "$section" filter
     config_get exclude_filter "$section" exclude_filter
     config_get exclude_type "$section" exclude_type
     config_get enabled_list "$section" enabled_list
-    config_get update_interval "$section" list_update_interval "$DEFAULT_RULESET_INTERVAL"
-    val_is_uint "$update_interval" || update_interval="$DEFAULT_RULESET_INTERVAL"
-    config_get size_limit "$section" size_limit 0
-    val_is_uint "$size_limit" || size_limit=0
-    config_get_bool use_for_update "$section" use_proxy_group_for_list_update 0
+    config_get update_interval "$section" list_update_interval
+    config_get size_limit "$section" size_limit
+    config_get_bool use_for_update "$section" use_proxy_group_for_list_update
     config_get src_routes "$section" additional_srcip_route
     config_get domain_routes "$section" additional_domain_route
     config_get geosite_list "$section" enabled_geosite_list
@@ -764,7 +653,7 @@ config_proxy_group_read() {
 }
 
 config_proxy_provider_read() {
-    local section="$1" callback="$2" reserved_marks="$3"
+    local section="$1" callback="$2"
     local name enabled subscription routing_mark ip_version interval size_limit
     local filter exclude_filter exclude_type proxy dialer interface_name auth hwid hwid_custom os_custom os_version_custom device_model_custom
     local user_agent private_key public_key
@@ -776,27 +665,20 @@ config_proxy_provider_read() {
         log warn "Skip proxy provider without a name or subscription"
         return
     fi
-    config_get_bool enabled "$section" enabled 1
+    config_get_bool enabled "$section" enabled
     [ "$enabled" -eq 1 ] || {
         log warn "Skip disabled proxy provider: $section"
         return
     }
     config_get routing_mark "$section" override_routing_mark
-    routing_mark=$(val_parse_routing_mark "$routing_mark" "$reserved_marks")
-    [ "$routing_mark" != -1 ] || {
-        log warn "Skip proxy provider '$section' due to invalid routing mark"
-        return
-    }
-    config_get ip_version "$section" override_ip_version dual
-    ip_version=$(val_parse_ip_version "$ip_version")
-    config_get interval "$section" update_interval "$DEFAULT_PROVIDERUPDATE_INTERVAL"
-    val_is_uint "$interval" || interval="$DEFAULT_PROVIDERUPDATE_INTERVAL"
-    config_get size_limit "$section" size_limit 0
-    val_is_uint "$size_limit" || size_limit=0
+    [ -z "$routing_mark" ] || routing_mark=$(printf '%d' "$routing_mark")
+    config_get ip_version "$section" override_ip_version
+    config_get interval "$section" update_interval
+    config_get size_limit "$section" size_limit
     config_get filter "$section" filter
     config_get exclude_filter "$section" exclude_filter
     config_get exclude_type "$section" exclude_type
-    config_get proxy "$section" proxy "$DEFAULT_PROXY"
+    config_get proxy "$section" proxy
     config_get dialer "$section" override_dialer_proxy
     config_get interface_name "$section" override_interface_name
     config_get auth "$section" header_authorization
@@ -808,23 +690,19 @@ config_proxy_provider_read() {
     config_get user_agent "$section" header_user_agent
     config_get private_key "$section" age_private_key
     config_get public_key "$section" header_age_public_key
-    config_get_bool health_check "$section" health_check 0
-    config_get expected_status "$section" health_check_expected_status "$DEFAULT_HEALTHCHECK_RESULT"
-    val_is_uint "$expected_status" || expected_status="$DEFAULT_HEALTHCHECK_RESULT"
-    config_get check_url "$section" health_check_url "$DEFAULT_HEALTHCHECK_URL"
-    config_get check_interval "$section" health_check_interval "$DEFAULT_HEALTHCHECK_INTERVAL"
-    val_is_uint "$check_interval" || check_interval="$DEFAULT_HEALTHCHECK_INTERVAL"
-    config_get timeout "$section" health_check_timeout "$DEFAULT_HEALTHCHECK_TIMEOUT"
-    val_is_uint "$timeout" || timeout="$DEFAULT_HEALTHCHECK_TIMEOUT"
-    config_get lazy "$section" health_check_lazy 0
-    config_get_bool reality_mlkem768 "$section" override_reality_mlkem768 0
+    config_get_bool health_check "$section" health_check
+    config_get expected_status "$section" health_check_expected_status
+    config_get check_url "$section" health_check_url
+    config_get check_interval "$section" health_check_interval
+    config_get timeout "$section" health_check_timeout
+    config_get_bool lazy "$section" health_check_lazy
+    config_get_bool reality_mlkem768 "$section" override_reality_mlkem768
     "$callback" "$name" "$subscription" "$routing_mark" "$ip_version" "$interval" "$size_limit" "$filter" "$exclude_filter" "$exclude_type" "$proxy" "$dialer" "$interface_name" "$auth" "$hwid" "$hwid_custom" "$os_custom" "$os_version_custom" "$device_model_custom" "$user_agent" "$private_key" "$public_key" "$health_check" "$expected_status" "$check_url" "$check_interval" "$timeout" "$lazy" "$reality_mlkem768"
 }
 
 # Reads and validates YAML settings, then atomically promotes the generated document.
 core_generate_yaml() {
     local router_selected_ipaddr="$1"
-    local validation_failed=0
 
     # ash locals are dynamically scoped. Synchronous YAML callbacks update this
     # build state without leaking it into the process-wide environment.
@@ -897,56 +775,56 @@ core_generate_yaml() {
     mkdir -p "$CORE_WORKDIR_PATH"
 
     # Read settings used by this scenario.
-    config_get ipv6_enabled settings ipv6_enabled 0
-    config_get use_dashboard proxy use_dashboard 0
-    config_get dashboard_repo proxy dashboard_repo "$DEFAULT_EXTERNAL_PANEL"
+    config_get ipv6_enabled settings ipv6_enabled
+    config_get use_dashboard proxy use_dashboard
+    config_get dashboard_repo proxy dashboard_repo
     dashboard_url=""
     if [ "$use_dashboard" = "1" ]; then
-        dashboard_url=$(config_dashboard_url_read \
-            "$dashboard_repo" \
-            "$DEFAULT_DASHBOARD_METACUBEXD_URL" \
-            "$DEFAULT_DASHBOARD_YACD_META_URL" \
-            "$DEFAULT_DASHBOARD_ZASHBOARD_URL") || return 1
+        case "$dashboard_repo" in
+        yacd-meta) config_get dashboard_url settings mihomo_dashboard_yacd_meta_url ;;
+        zashboard) config_get dashboard_url settings mihomo_dashboard_zashboard_url ;;
+        *) config_get dashboard_url settings mihomo_dashboard_metacubexd_url ;;
+        esac
     fi
     config_get api_password proxy api_password
     config_get log_level proxy log_level
-    config_get api_tls proxy api_tls 0
-    config_get api_tls_cert proxy api_tls_cert "$DEFAULT_API_TLS_CERT_PATH"
-    config_get api_tls_key proxy api_tls_key "$DEFAULT_API_TLS_KEY_PATH"
+    config_get api_tls proxy api_tls
+    config_get api_tls_cert proxy api_tls_cert
+    config_get api_tls_key proxy api_tls_key
     config_get interface_name proxy interface_name
     config_get tproxy_port proxy tproxy_port
-    config_get use_mixed_port proxy use_mixed_port 0
-    config_get mixed_port proxy mixed_port "$DEFAULT_MIXED_PORT"
-    config_get unified_delay proxy unified_delay 0
-    config_get tcp_concurrent proxy tcp_concurrent 0
-    config_get keep_alive_idle proxy keep_alive_idle "$DEFAULT_KEEP_ALIVE_IDLE"
-    config_get keep_alive_interval proxy keep_alive_interval "$DEFAULT_KEEP_ALIVE_INTERVAL"
+    config_get use_mixed_port proxy use_mixed_port
+    config_get mixed_port proxy mixed_port
+    config_get unified_delay proxy unified_delay
+    config_get tcp_concurrent proxy tcp_concurrent
+    config_get keep_alive_idle proxy keep_alive_idle
+    config_get keep_alive_interval proxy keep_alive_interval
     config_get global_ua proxy global_ua
-    config_get etag_support proxy etag_support 0
-    config_get profile_store_selected proxy profile_store_selected 0
-    config_get profile_store_fake_ip proxy profile_store_fake_ip 0
-    config_get core_ntp_enabled proxy core_ntp_enabled 0
+    config_get etag_support proxy etag_support
+    config_get profile_store_selected proxy profile_store_selected
+    config_get profile_store_fake_ip proxy profile_store_fake_ip
+    config_get core_ntp_enabled proxy core_ntp_enabled
     config_get core_ntp_server proxy core_ntp_server
-    config_get core_ntp_port proxy core_ntp_port "$DEFAULT_NTP_PORT"
-    config_get core_ntp_interval proxy core_ntp_interval "$DEFAULT_CORE_NTP_INTERVAL"
-    config_get core_ntp_write_system proxy core_ntp_write_system 0
-    config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
-    config_get dns_cache_max_size proxy dns_cache_max_size "$DEFAULT_DNS_CACHE_MAX_SIZE"
-    config_get use_system_hosts proxy use_system_hosts 0
+    config_get core_ntp_port proxy core_ntp_port
+    config_get core_ntp_interval proxy core_ntp_interval
+    config_get core_ntp_write_system proxy core_ntp_write_system
+    config_get dns_listen_port proxy dns_listen_port
+    config_get dns_cache_max_size proxy dns_cache_max_size
+    config_get use_system_hosts proxy use_system_hosts
     config_get fake_ip_range proxy fake_ip_range
     config_get fake_ip_range6 proxy fake_ip_range6
-    config_get fake_ip_ttl proxy fake_ip_ttl "$DEFAULT_FAKE_IP_TTL"
-    config_get sniffer_enable proxy sniffer_enable 0
-    config_get sniffer_parse_pure_ip proxy sniffer_parse_pure_ip 0
-    config_get sniffer_override_destination proxy sniffer_override_destination 0
+    config_get fake_ip_ttl proxy fake_ip_ttl
+    config_get sniffer_enable proxy sniffer_enable
+    config_get sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
+    config_get sniffer_override_destination proxy sniffer_override_destination
     config_get fake_ip_exclude_domains proxy fake_ip_exclude_domains
     config_get fake_ip_exclude_rulesets proxy fake_ip_exclude_rulesets
     config_get fake_ip_exclude_geosites proxy fake_ip_exclude_geosites
-    config_get geodata_mode proxy geodata_mode 0
-    config_get geodata_autoupdate proxy geodata_autoupdate 0
-    config_get geodata_autoupdate_interval proxy geodata_autoupdate_interval "$DEFAULT_GEODATA_UPDATE_INTERVAL"
-    config_get geosite_url settings mihomo_geosite_url "$DEFAULT_GEOSITE_URL"
-    config_get geoip_url settings mihomo_geoip_url "$DEFAULT_GEOIP_URL"
+    config_get geodata_mode proxy geodata_mode
+    config_get geodata_autoupdate proxy geodata_autoupdate
+    config_get geodata_autoupdate_interval proxy geodata_autoupdate_interval
+    config_get geosite_url settings mihomo_geosite_url
+    config_get geoip_url settings mihomo_geoip_url
 
     config_load_list proxy default_nameserver
     default_nameserver="$JC_CONFIG_LIST_VALUE"
@@ -971,84 +849,22 @@ core_generate_yaml() {
     config_load_list proxy proxy_authentication
     proxy_authentication="$JC_CONFIG_LIST_VALUE"
 
-    config_get block_enabled block_rules enabled 1
+    config_get block_enabled block_rules enabled
     config_get block_enabled_list block_rules enabled_blocklist
-    config_get block_proxy block_rules proxy "$DEFAULT_PROXY"
-    config_get block_update_interval block_rules list_update_interval "$DEFAULT_RULESET_INTERVAL"
-    config_get block_size_limit block_rules size_limit 0
+    config_get block_proxy block_rules proxy
+    config_get block_update_interval block_rules list_update_interval
+    config_get block_size_limit block_rules size_limit
     config_get block_geosite_list block_rules enabled_geosite_blocklist
     config_get block_domain_routes block_rules additional_domain_blockroute
     config_get block_destip_routes block_rules additional_destip_blockroute
     config_get block_geoip_list block_rules enabled_geoip_blocklist
     config_get mixed_exit_rule mixed_port_rules exit_rule
     config_get final_exit_rule final_rules exit_rule
-    # Validate before applying any changes.
-    config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
-    config_validate_bool "$use_dashboard" "proxy.use_dashboard" || validation_failed=1
-    config_validate_bool "$api_tls" "proxy.api_tls" || validation_failed=1
-    config_validate_bool "$use_mixed_port" "proxy.use_mixed_port" || validation_failed=1
-    config_validate_bool "$unified_delay" "proxy.unified_delay" || validation_failed=1
-    config_validate_bool "$tcp_concurrent" "proxy.tcp_concurrent" || validation_failed=1
-    config_validate_bool "$etag_support" "proxy.etag_support" || validation_failed=1
-    config_validate_bool "$profile_store_selected" "proxy.profile_store_selected" || validation_failed=1
-    config_validate_bool "$profile_store_fake_ip" "proxy.profile_store_fake_ip" || validation_failed=1
-    config_validate_bool "$core_ntp_enabled" "proxy.core_ntp_enabled" || validation_failed=1
-    config_validate_bool "$core_ntp_write_system" "proxy.core_ntp_write_system" || validation_failed=1
-    config_validate_bool "$use_system_hosts" "proxy.use_system_hosts" || validation_failed=1
-    config_validate_bool "$sniffer_enable" "proxy.sniffer_enable" || validation_failed=1
-    config_validate_bool "$sniffer_parse_pure_ip" "proxy.sniffer_parse_pure_ip" || validation_failed=1
-    config_validate_bool "$sniffer_override_destination" "proxy.sniffer_override_destination" || validation_failed=1
-    config_validate_bool "$geodata_mode" "proxy.geodata_mode" || validation_failed=1
-    config_validate_bool "$geodata_autoupdate" "proxy.geodata_autoupdate" || validation_failed=1
-    config_validate_bool "$block_enabled" "block_rules.enabled" || validation_failed=1
-    config_validate_port "$tproxy_port" "proxy.tproxy_port" || validation_failed=1
-    config_validate_port "$dns_listen_port" "proxy.dns_listen_port" || validation_failed=1
-    [ "$use_mixed_port" != 1 ] || config_validate_port "$mixed_port" "proxy.mixed_port" || validation_failed=1
-    [ "$core_ntp_enabled" != 1 ] || config_validate_port "$core_ntp_port" "proxy.core_ntp_port" || validation_failed=1
-    config_validate_uint "$keep_alive_idle" "proxy.keep_alive_idle" || validation_failed=1
-    config_validate_uint "$keep_alive_interval" "proxy.keep_alive_interval" || validation_failed=1
-    config_validate_uint "$core_ntp_interval" "proxy.core_ntp_interval" || validation_failed=1
-    config_validate_uint "$dns_cache_max_size" "proxy.dns_cache_max_size" || validation_failed=1
-    config_validate_uint "$fake_ip_ttl" "proxy.fake_ip_ttl" || validation_failed=1
-    config_validate_uint "$geodata_autoupdate_interval" "proxy.geodata_autoupdate_interval" || validation_failed=1
-    config_validate_uint "$block_update_interval" "block_rules.list_update_interval" || validation_failed=1
-    config_validate_uint "$block_size_limit" "block_rules.size_limit" || validation_failed=1
-    if [ "$api_tls" = 1 ]; then
-        config_validate_absolute_path "$api_tls_cert" "proxy.api_tls_cert" || validation_failed=1
-        config_validate_absolute_path "$api_tls_key" "proxy.api_tls_key" || validation_failed=1
-    fi
-    if [ -n "$interface_name" ] && ! val_is_ifname "$interface_name"; then
-        config_validation_error "proxy.interface_name contains an invalid interface name"
-        validation_failed=1
-    fi
-    if [ "$use_dashboard" = 1 ] && [ -z "$dashboard_url" ]; then
-        config_validation_error "the selected dashboard URL is required when dashboard is enabled"
-        validation_failed=1
-    fi
-    if [ "$geodata_autoupdate" = 1 ]; then
-        [ -n "$geosite_url" ] || {
-            config_validation_error "settings.mihomo_geosite_url is required when geodata autoupdate is enabled"
-            validation_failed=1
-        }
-        [ -n "$geoip_url" ] || {
-            config_validation_error "settings.mihomo_geoip_url is required when geodata autoupdate is enabled"
-            validation_failed=1
-        }
-    fi
-
-    if [ "$validation_failed" -ne 0 ]; then
-        return 1
-    fi
-
     effective_interface_name="$interface_name"
 
     global_ua=$(resolve_user_agent "$global_ua")
 
     [ -n "$effective_interface_name" ] && effective_interface_name=$(str_trim "$effective_interface_name")
-    if [ -n "$effective_interface_name" ] && ! val_is_ifname "$effective_interface_name"; then
-        log warn "Global interface_name '$effective_interface_name' is invalid and will be ignored."
-        effective_interface_name=""
-    fi
 
     default_nameserver=$(fmt_values_as_json_array "$default_nameserver" "" "    ")
     direct_nameserver=$(fmt_values_as_json_array "$direct_nameserver" "" "    ")
@@ -1075,8 +891,7 @@ core_generate_yaml() {
     config_foreach \
         config_proxy_provider_read \
         proxy_provider \
-        yaml_proxy_provider_append \
-        "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY"
+        yaml_proxy_provider_append
     OUT_PROXY_PROVIDERS="{${OUT_PROXY_PROVIDERS%,}}"
     proxy_providers=$(
         printf '%s\n' "$OUT_PROXY_PROVIDERS" |
@@ -1153,8 +968,7 @@ core_generate_yaml() {
     config_foreach \
         config_proxy_read \
         proxies \
-        yaml_proxy_append \
-        "$NF_TABLE_FWMARK_FINAL $NF_TABLE_FWMARK_PROXY"
+        yaml_proxy_append
     OUT_RULES="[${OUT_RULES:-}]"
     OUT_RULESETS="{${OUT_RULESETS:-}}"
     OUT_PROXIES="[${OUT_PROXIES:-}]"
@@ -1372,21 +1186,10 @@ core_generate_yaml() {
 }
 
 service_data_update() {
-    local validation_failed=0
     local base_url
 
     # Read settings used by this scenario.
-    config_get base_url settings mihomo_rulesets_files_download_url "$DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL"
-
-    # Validate before applying any changes.
-    [ -n "$base_url" ] || {
-        config_validation_error "settings.mihomo_rulesets_files_download_url is required"
-        validation_failed=1
-    }
-
-    if [ "$validation_failed" -ne 0 ]; then
-        return 1
-    fi
+    config_get base_url settings mihomo_rulesets_files_download_url
 
     mkdir -p "$CORE_WORKDIR_PATH" "$PROG_ETC_DIR"
 
@@ -1399,6 +1202,7 @@ service_data_update() {
         "block ruleset list" || return "$?"
 }
 
+# Returns 0 for a reusable cache, 1 for regeneration; other codes indicate workdir errors.
 core_prepare_workdir() {
     local mihomo_persistent_ext_rules="$1"
     local mihomo_persistent_cache="$2"
@@ -1446,42 +1250,15 @@ core_prepare_workdir() {
 }
 
 core_update() {
-    local validation_failed=0
     local channel custom_url repository source_type
 
     local current_version latest_version version_url
 
     # Read settings used by this scenario.
-    config_get source_type settings mihomo_core_source_type "$DEFAULT_MIHOMO_SOURCE_CORE"
+    config_get source_type settings mihomo_core_source_type
     config_get custom_url settings mihomo_custom_core_url
-    config_get channel settings mihomo_github_channel "$DEFAULT_MIHOMO_UPDATE_CHANNEL"
-    config_get repository settings mihomo_github_repo "$DEFAULT_MIHOMO_GITHUB_REPO"
-
-    # Validate before applying any changes.
-    if ! val_is_choice "$source_type" github custom; then
-        config_validation_error "settings.mihomo_core_source_type must be 'github' or 'custom'"
-        validation_failed=1
-    fi
-
-    if [ "$source_type" = custom ]; then
-        [ -n "$custom_url" ] || {
-            config_validation_error "settings.mihomo_custom_core_url is required for custom core source"
-            validation_failed=1
-        }
-    else
-        [ -n "$channel" ] || {
-            config_validation_error "settings.mihomo_github_channel is required for GitHub core source"
-            validation_failed=1
-        }
-        [ -n "$repository" ] || {
-            config_validation_error "settings.mihomo_github_repo is required for GitHub core source"
-            validation_failed=1
-        }
-    fi
-
-    if [ "$validation_failed" -ne 0 ]; then
-        return 1
-    fi
+    config_get channel settings mihomo_github_channel
+    config_get repository settings mihomo_github_repo
 
     if [ "$source_type" = custom ]; then
         log info "Checking for Mihomo updates from custom source..."
@@ -1550,7 +1327,7 @@ scheduled_work_cron_add() {
     local start_schedule="$1"
     local stop_schedule="$2"
 
-    cron_job_add "$start_schedule" "${INITD_PATH} start # Scheduled Work" "pgrep -f ${CORE_PATH} >/dev/null || ${INITD_PATH} start # Scheduled Work" "Scheduled work start"
+    cron_job_add "$start_schedule" "${INITD_PATH} start # Scheduled Work" "pgrep -f ${CORE_PATH} >/dev/null || ${INITD_PATH} start # Scheduled Work" "Scheduled work start" || return 1
     cron_job_add "$stop_schedule" "${INITD_PATH} stop # Scheduled Work" "pgrep -f ${CORE_PATH} >/dev/null && ${INITD_PATH} stop # Scheduled Work" "Scheduled work stop"
 }
 
@@ -1560,52 +1337,25 @@ scheduled_work_cron_remove() {
 }
 
 cron_update() {
-    local validation_failed=0
     local autorestart_enabled autorestart_schedule scheduled_work_enabled scheduled_work_start_schedule
     local scheduled_work_stop_schedule service_data_autoupdate_enabled service_data_update_schedule
     # Read settings used by this scenario.
-    config_get autorestart_enabled settings mihomo_autorestart 0
+    config_get autorestart_enabled settings mihomo_autorestart
     config_get autorestart_schedule settings mihomo_cron_autorestart_string
-    config_get service_data_autoupdate_enabled settings mihomo_service_data_autoupdate 0
+    config_get service_data_autoupdate_enabled settings mihomo_service_data_autoupdate
     config_get service_data_update_schedule settings mihomo_cron_service_data_update_string
-    config_get scheduled_work_enabled settings mihomo_scheduled_work 0
-    config_get scheduled_work_start_schedule settings mihomo_cron_scheduled_work_start_string "$DEFAULT_SCHEDULED_WORK_START_CRON"
-    config_get scheduled_work_stop_schedule settings mihomo_cron_scheduled_work_stop_string "$DEFAULT_SCHEDULED_WORK_STOP_CRON"
-
-    # Validate before applying any changes.
-    config_validate_bool "$autorestart_enabled" "settings.mihomo_autorestart" || validation_failed=1
-    config_validate_bool "$service_data_autoupdate_enabled" "settings.mihomo_service_data_autoupdate" || validation_failed=1
-    config_validate_bool "$scheduled_work_enabled" "settings.mihomo_scheduled_work" || validation_failed=1
-
-    config_validate_enabled_cron \
-        "$autorestart_enabled" \
-        "$autorestart_schedule" \
-        "mihomo_cron_autorestart_string" || validation_failed=1
-    config_validate_enabled_cron \
-        "$service_data_autoupdate_enabled" \
-        "$service_data_update_schedule" \
-        "mihomo_cron_service_data_update_string" || validation_failed=1
-    config_validate_enabled_cron \
-        "$scheduled_work_enabled" \
-        "$scheduled_work_start_schedule" \
-        "mihomo_cron_scheduled_work_start_string" || validation_failed=1
-    config_validate_enabled_cron \
-        "$scheduled_work_enabled" \
-        "$scheduled_work_stop_schedule" \
-        "mihomo_cron_scheduled_work_stop_string" || validation_failed=1
-
-    if [ "$validation_failed" -ne 0 ]; then
-        return 1
-    fi
+    config_get scheduled_work_enabled settings mihomo_scheduled_work
+    config_get scheduled_work_start_schedule settings mihomo_cron_scheduled_work_start_string
+    config_get scheduled_work_stop_schedule settings mihomo_cron_scheduled_work_stop_string
 
     if [ "$autorestart_enabled" -eq 1 ]; then
-        core_autorestart_cron_add "$autorestart_schedule"
+        core_autorestart_cron_add "$autorestart_schedule" || return 1
     else
         core_autorestart_cron_remove
     fi
 
     if [ "$service_data_autoupdate_enabled" -eq 1 ]; then
-        service_data_cron_add "$service_data_update_schedule"
+        service_data_cron_add "$service_data_update_schedule" || return 1
     else
         service_data_cron_remove
     fi
@@ -1613,45 +1363,27 @@ cron_update() {
     if [ "$scheduled_work_enabled" -eq 1 ]; then
         scheduled_work_cron_add \
             "$scheduled_work_start_schedule" \
-            "$scheduled_work_stop_schedule"
+            "$scheduled_work_stop_schedule" || return 1
     else
         scheduled_work_cron_remove
     fi
 }
 
 run_check_routes() {
-    local validation_failed=0
     local ipv6_enabled
+
     # Read settings used by this scenario.
-    config_get ipv6_enabled settings ipv6_enabled 0
-
-    # Validate before applying any changes.
-    config_validate_bool "$ipv6_enabled" "settings.ipv6_enabled" || validation_failed=1
-
-    if [ "$validation_failed" -ne 0 ]; then
-        return 1
-    fi
+    config_get ipv6_enabled settings ipv6_enabled
 
     check_routes "$NF_TABLE_FWMARK_FINAL" "$NF_ROUTE_TABLE" "$ipv6_enabled"
 }
 
 run_check_dns_proxy() {
-    local validation_failed=0
     local dns_listen_port
     local target="$1"
 
     # Read settings used by this scenario.
-    config_get dns_listen_port proxy dns_listen_port "$DEFAULT_DNS_LISTEN_PORT"
-
-    # Validate before applying any changes.
-    if ! val_is_port "$dns_listen_port"; then
-        config_validation_error "proxy.dns_listen_port must be an integer from 1 to 65535"
-        validation_failed=1
-    fi
-
-    if [ "$validation_failed" -ne 0 ]; then
-        return 1
-    fi
+    config_get dns_listen_port proxy dns_listen_port
 
     check_dns_proxy "$target" "$dns_listen_port" "$NSLOOKUP_TIMEOUT"
 }
@@ -1813,7 +1545,7 @@ start | run | up)
         /usr/lib/justclash/runtime/nftables.sh \
         /usr/lib/justclash/runtime/policy_routing.sh \
         /usr/lib/justclash/runtime/scheduler.sh
-    config_init "$PROGNAME"
+    config_init "$PROGNAME" || exit 1
     [ "$ENV_JUSTCLASH_RUN_CONTEXT" != "procd" ] && trap 'stop; exit 0' INT TERM HUP
     start
     ;;

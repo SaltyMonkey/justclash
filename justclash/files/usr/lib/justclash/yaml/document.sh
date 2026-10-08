@@ -49,7 +49,6 @@ yaml_document_write_access() {
     fi
 
     echo "mode: rule"
-    echo ""
     printf 'ipv6: %s\n' "$(fmt_uci_bool_as_yaml "$ipv6_enabled")"
 
     if [ "$api_tls" -eq 1 ]; then

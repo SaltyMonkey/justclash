@@ -270,7 +270,7 @@ handle_mixed_port_rules_section() {
     if [ "$exit_rule" = "BY RULES" ]; then
         rules="[]"
     else
-        rule_str=$(printf 'IN-TYPE,SOCKS/HTTP,%s' "${exit_rule:-$DEFAULT_PROXY}")
+        rule_str=$(printf 'IN-TYPE,SOCKS/HTTP,%s' "$exit_rule")
         rules="[\"${rule_str:-}\"]"
     fi
 
@@ -280,7 +280,7 @@ handle_mixed_port_rules_section() {
 handle_final_rule_section() {
     local exit_rule="$1"
     local rule_str rules
-    rule_str=$(printf 'MATCH,%s' "${exit_rule:-$DEFAULT_PROXY}")
+    rule_str=$(printf 'MATCH,%s' "$exit_rule")
 
     rules="[\"${rule_str:-}\"]"
 
