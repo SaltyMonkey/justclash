@@ -55,6 +55,16 @@ return view.extend({
 
         const primitives = formConstants.boolean;
         const datatypes = formConstants.datatypes;
+        const handleRoutingRemove = function (sectionId) {
+            const configName = this.map.config;
+            const name = uci.get(configName, sectionId, "name");
+
+            // Don't let an unsaved exit-rule field resurrect the deleted name.
+            return this.map.save(() => {
+                routingOptions.removeRoutingReferences(configName, this.sectiontype, name);
+                this.map.data.remove(configName, sectionId);
+            }, true);
+        };
 
         m = new form.Map(common.binName);
         s = m.section(form.GridSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
@@ -63,6 +73,8 @@ return view.extend({
         s.nodescriptions = true;
         s.cloneable = true;
         s.sortable = true;
+
+        s.handleRemove = handleRoutingRemove;
 
         tabname = "proxiesbasic_tab";
         s.tab(tabname, _("Basic"));
@@ -254,6 +266,7 @@ return view.extend({
         spp.nodescriptions = true;
         spp.cloneable = true;
         spp.sortable = true;
+        spp.handleRemove = handleRoutingRemove;
 
         tabname = "proxyprovidersbasic_tab";
         spp.tab(tabname, _("Basic"));
@@ -573,6 +586,7 @@ return view.extend({
         s2.nodescriptions = true;
         s2.cloneable = true;
         s2.sortable = true;
+        s2.handleRemove = handleRoutingRemove;
 
         tabname = "proxygroupsbasic_tab";
         s2.tab(tabname, _("Basic"));
