@@ -40,6 +40,8 @@ JustClash connects OpenWrt's native UCI configuration system with the Mihomo run
 
 The LuCI application provides service controls, node selection, active connections, rules, traffic statistics, and realtime logs. The service can also be managed entirely through UCI, init scripts, and the command line.
 
+Saved configuration pages, service controls, and Service logs remain available while Mihomo is stopped. Live data on Nodes, Rules, Connections, and Realtime logs requires a running core and a reachable controller API. These pages may still open with errors or empty lists while the core is stopped; check **Status** before using them. See [LuCI Pages and Core Availability](info/14_luci_pages.md).
+
 ## Highlights
 
 | Capability | Description |
@@ -74,6 +76,7 @@ New installations use the slim kernel version of Mihomo by default. The core rep
 | [UCI Configuration](info/01_uci-structure.md) | Complete configuration structure and section reference |
 | [Command-Line Reference](info/02_cli-commands.md) | Service maintenance, diagnostics, configuration display, and updates from the shell |
 | [ubus API](info/13_ubus-api.md) | rpcd methods, request parameters, responses, ACL classes, and LuCI integration |
+| [LuCI Page Availability](info/14_luci_pages.md) | Pages available with the core stopped, live API dependencies, and connection errors |
 
 ### Routing and Rules
 
