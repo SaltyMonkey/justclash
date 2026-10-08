@@ -129,6 +129,7 @@ return view.extend({
 
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interfaces:"));
         o.default = "br-lan";
+        o.rmempty = false;
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.noaliases = true;
@@ -172,13 +173,13 @@ return view.extend({
             o.value(item.value, `${item.text}`);
         });
 
-        o = s.taboption(tabname, form.ListValue, "nft_dns_udp_mode", _("Client UDP DNS traffic:"));
-        o.description = _("Choose how to handle external UDP DNS requests from clients. Hijack redirects them to the router DNS service; local destinations and bypassed clients remain unchanged.");
+        o = s.taboption(tabname, form.ListValue, "nft_dns_mode", _("Client DNS traffic:"));
+        o.description = _("Choose how to handle external DNS requests from clients. Hijack redirects TCP and UDP port 53 to the router DNS service. Drop blocks these requests; local destinations and bypassed clients remain unchanged.");
         o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.rmempty = false;
-        o.default = common.defaultNftDnsUdpOptions[0].value;
-        common.defaultNftDnsUdpOptions.forEach(item => {
+        o.default = common.defaultNftDnsOptions[0].value;
+        common.defaultNftDnsOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
 

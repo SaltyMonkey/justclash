@@ -138,8 +138,8 @@ return baseclass.extend({
         { value: "BY RULES", text: _("By rules") },
         { value: "DROP", text: _("Drop") }
     ],
-    // OpenWrt NFTables plain UDP DNS interception mode (JustClash UI specific)
-    defaultNftDnsUdpOptions: [
+    // Plain DNS handling: TCP and UDP now get the same treatment.
+    defaultNftDnsOptions: [
         { value: "BY RULES", text: _("By rules") },
         { value: "DROP", text: _("Drop") },
         { value: "HIJACK", text: _("Hijack") }

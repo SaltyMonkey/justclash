@@ -59,7 +59,7 @@ return view.extend({
         o.datatype = datatypes.PORT;
         o.placeholder = "7894";
         o.default = "7894";
-        o.rmempty = true;
+        o.rmempty = false;
 
         o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
         o.description = _("Maximum number of DNS cache entries kept by Mihomo.");
@@ -112,17 +112,6 @@ return view.extend({
             return common.validateDnsServer(value);
         };
 
-        tabname = "dnspolicies_tab";
-        s.tab(tabname, _("Policies"));
-
-        o = s.taboption(tabname, form.DynamicList, "nameserver_policy", _("Nameserver policy:"));
-        o.description = _("Domain-specific DNS policy in the format domain/nameserver. Domain matchers may include +., *. or *.");
-        o.rmempty = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            return common.validateNameserverPolicy(value);
-        };
-
         tabname = "dnsfakeip_tab";
         s.tab(tabname, _("Fake IP"));
 
@@ -156,7 +145,7 @@ return view.extend({
         result.rulesetsItems.forEach(item => {
             o.value(item.rawName, item.readableName);
         });
-        o.description = _("Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied.");
+        o.description = _("Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo.");
         o.rmempty = true;
         o.retain = true;
         o.editable = true;
@@ -166,20 +155,31 @@ return view.extend({
         result.geositeItems.forEach(item => {
             o.value(item.rawName, item.readableName);
         });
-        o.description = _("Select active GEOSITEs that should resolve through real IP before fake-IP matches are applied.");
+        o.description = _("Select active GEOSITEs that should resolve through real IP before fake-IP matches are applied. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo.");
         o.rmempty = true;
         o.retain = true;
         o.editable = true;
         o.optional = true;
 
         o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Force real IP rules:"));
-        o.description = _("Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com.");
+        o.description = _("Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo.");
         o.rmempty = true;
         o.retain = true;
         o.editable = true;
         o.optional = true;
         o.validate = function (section_id, value) {
             return common.isValidDomainSuffix(value);
+        };
+
+        tabname = "dnspolicies_tab";
+        s.tab(tabname, _("Policies"));
+
+        o = s.taboption(tabname, form.DynamicList, "nameserver_policy", _("Nameserver policy:"));
+        o.description = _("Domain-specific DNS policy in the format domain/nameserver. Domain matchers may include +., *. or *.");
+        o.rmempty = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateNameserverPolicy(value);
         };
 
         tabname = "dnshosts_tab";

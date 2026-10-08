@@ -177,7 +177,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Flag, "use_proxy_for_list_update", _("Get lists through proxy:"));
         o.description = _("If selected, rule set lists will be updated through the proxy.");
-        o.optional = true;
+        o.rmempty = false;
         o.default = primitives.FALSE;
         o.modalonly = true;
 
@@ -188,7 +188,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultRuleSetUpdateIntervalSec[2].value;
-        o.optional = true;
+        o.rmempty = false;
         o.validate = function (section_id, value) {
             return common.validateListUpdateInterval(value);
         };
@@ -202,7 +202,6 @@ return view.extend({
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
         o.rmempty = false;
-        o.optional = true;
         o.modalonly = true;
 
         if (result.geoDataMode) {
@@ -358,7 +357,6 @@ return view.extend({
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
         o.rmempty = false;
-        o.optional = true;
         o.modalonly = true;
 
         o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
@@ -367,9 +365,12 @@ return view.extend({
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         o.validate = function (section_id, value) {
-            return common.validateExitRule(value);
+            return common.validateSimpleName(value);
         };
-        routingOptions.makeDynamic(o, common.binName, common.endRuleOptions);
+        routingOptions.makeDynamic(o, common.binName, [
+            common.endRuleOptions[0],
+            common.endRuleOptions[2]
+        ]);
         o.modalonly = true;
 
         tabname = "proxyproviderheaders_tab";
@@ -702,6 +703,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Value, "check_timeout", _("Check timeout:"));
         o.datatype = datatypes.UINTEGER;
+        o.rmempty = false;
         common.defaultHealthCheckTimeoutMs.forEach(item => {
             o.value(item.value, item.text);
         });
@@ -714,6 +716,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Value, "max_failed_times", _("Max failed times:"));
         o.datatype = datatypes.UINTEGER;
+        o.rmempty = false;
         common.defaultMaxFailedTimes.forEach(item => {
             o.value(item.value, item.text);
         });
@@ -776,7 +779,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Flag, "use_proxy_group_for_list_update", _("Get lists through proxy group:"));
         o.description = _("If selected, rule set lists will be updated through the proxy group.");
-        o.optional = true;
+        o.rmempty = false;
         o.default = primitives.FALSE;
         o.modalonly = true;
 
@@ -787,7 +790,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultRuleSetUpdateIntervalSec[2].value;
-        o.optional = true;
+        o.rmempty = false;
         o.validate = function (section_id, value) {
             return common.validateListUpdateInterval(value);
         };
@@ -801,7 +804,6 @@ return view.extend({
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
         o.rmempty = false;
-        o.optional = true;
         o.modalonly = true;
 
         if (result.geoDataMode) {
@@ -875,21 +877,18 @@ return view.extend({
         o.description = _("Ready-made blocklists for ads and harmful sites. Matching traffic will be blocked. Choose the ones you want to use, or leave this empty.");
         o.modalonly = true;
 
-        o = s4.taboption(tabname, form.Value, "proxy", _("Download lists through:"));
+        o = s4.taboption(tabname, form.ListValue, "proxy", _("Download lists through:"));
         o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");
         o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
-        o.validate = function (section_id, value) {
-            return common.validateExitRule(value);
-        };
-        routingOptions.makeDynamic(o, common.binName, common.endRuleOptions);
+        routingOptions.makeDynamic(o, common.binName, [common.endRuleOptions[0]]);
         o.modalonly = true;
 
         o = s4.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds. Presets show the equivalent duration in parentheses.");
         o.datatype = datatypes.UINTEGER;
-        o.optional = true;
+        o.rmempty = false;
         common.defaultRuleSetUpdateIntervalSec.forEach(item => {
             o.value(item.value, item.text);
         });
@@ -907,7 +906,6 @@ return view.extend({
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
         o.rmempty = false;
-        o.optional = true;
         o.modalonly = true;
 
         if (result.geoDataMode) {
