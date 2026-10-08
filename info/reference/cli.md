@@ -1,8 +1,10 @@
 # Command-Line Reference
 
+[Documentation](../README.md)
+
 Use OpenWrt service commands for normal lifecycle management. Use `justclash.sh` for updates, diagnostics, and maintenance.
 
-For programmatic calls from LuCI or another local RPC client, see the [ubus API Reference](13_ubus-api.md).
+For programmatic calls from LuCI or another local RPC client, see the [ubus API Reference](ubus.md).
 
 ## Service Management
 
@@ -137,11 +139,7 @@ Aliases: `?`, `command`, `h`, `-h`, `--help`.
 | `0` | Command completed or intentionally performed no work |
 | Nonzero | Validation, prerequisites, an external tool, or application of a change failed |
 
-Read local logs for the detailed cause:
-
-```sh
-justclash.sh logs service 100
-```
+Read [local logs](#logs) for the detailed cause.
 
 ## Recovery Sequence
 

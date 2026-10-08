@@ -1,9 +1,13 @@
 # UCI Configuration Reference
 
+[Documentation](../README.md)
+
 JustClash stores its configuration in `/etc/config/justclash`. LuCI edits the same UCI package; direct UCI commands are intended for automation, recovery, and advanced setups.
 
 > [!IMPORTANT]
-> This document describes the current schema, not a replacement default configuration. Package upgrades may add defaults or migrate fields. Keep the installed package config as the source of truth.
+> This reference is not a replacement default configuration. Package upgrades may add defaults or migrate fields. The installed configuration records your saved choices; schema fallbacks and
+> LuCI presets may differ. This reference describes behavior rather than providing
+> a complete replacement config.
 
 ## Safe Workflow
 
@@ -21,20 +25,38 @@ service justclash reload
 
 `uci show` can expose endpoints, credentials, domains, client addresses, and routing policy. Use `justclash.sh check` when sharing diagnostics.
 
+### Validation and Missing Values
+
+JustClash validates the loaded UCI configuration during initialization, before
+startup applies changes. For options with schema defaults, missing or empty
+values are filled in the process's in-memory configuration. This does not
+rewrite `/etc/config/justclash`; optional fields without defaults remain unset.
+
+For fields covered by the schema, an invalid nonempty value is reported and
+initialization fails. It is not silently replaced by a default. Existing disabled sections are validated too,
+so correct or remove an invalid section rather than only disabling it.
+
 ## Section Model
 
 | Section type | Cardinality | Purpose |
 | --- | --- | --- |
 | `main settings` | One named section | Service startup, traffic interception, scheduling, storage, and downloads |
 | `proxy proxy` | One named section | Mihomo runtime, controller, DNS, sniffer, mixed port, and Geodata |
-| `proxies` | Zero or more anonymous sections | Individual outbound definitions |
-| `proxy_provider` | Zero or more anonymous sections | Remote provider definitions |
-| `proxy_group` | Zero or more anonymous sections | Selection, failover, latency, and balancing groups |
+| `proxies` | Zero or more named or anonymous sections | Individual outbound definitions |
+| `proxy_provider` | Zero or more named or anonymous sections | Remote provider definitions |
+| `proxy_group` | Zero or more named or anonymous sections | Selection, failover, latency, and balancing groups |
 | `block_rules block_rules` | One named section | Domain/address blocking and blocklist providers |
 | `mixed_port_rules mixed_port_rules` | One named section | First rule for explicit mixed-port traffic |
 | `final_rules final_rules` | One named section | Final action after all other rules |
 
 LuCI creates dynamic sections with generated UCI IDs. Rules refer to the user-visible `name`, not necessarily to the UCI section ID.
+
+For the relationship and setup sequence, see
+[Outbounds, providers, and groups](../guides/routing.md).
+
+The singleton `proxy proxy` section configures the Mihomo runtime. Individual
+connections belong in `proxies` or come from `proxy_provider`; they are not
+additional singleton `proxy` sections.
 
 ## `main settings`
 
@@ -46,7 +68,6 @@ LuCI creates dynamic sections with generated UCI IDs. Rules refer to the user-vi
 | `wait_for_wan_max` | Unsigned integer | Maximum WAN wait in seconds |
 | `delayed_boot` | Boolean | Add a fixed startup delay |
 | `delayed_boot_value` | Unsigned integer | Delay in seconds |
-| `skip_environment_checks` | Boolean | Skip non-critical conflict checks and compatibility fixes |
 | `ntpd_start` | Boolean | Run one-shot system-time synchronization before startup |
 | `mihomo_persistent_ext_rules` | Boolean | Store downloaded external rules on persistent storage |
 | `mihomo_persistent_cache` | Boolean | Store Mihomo profile/cache data persistently |
@@ -127,7 +148,7 @@ LuCI offers repositories for the slim kernel version and upstream Mihomo as edit
 | `tproxy_port` | Port | Transparent TProxy listener |
 | `use_mixed_port` | Boolean | Enable explicit HTTP/SOCKS listener |
 | `mixed_port` | Port | Explicit mixed listener |
-| `proxy_authentication` | List of `user:pass` credentials | Access control for non-loopback Mixed Port clients; installation and reset generate a `user:` credential with a random 64-character password |
+| `proxy_authentication` | List of `user:pass` credentials | Access control for non-loopback Mixed Port clients; installation and reset generate a `user:` credential with a random 32-character password |
 | `controller_bind_interface` | OpenWrt network name or `-` | Network whose IPv4 address is used for API binding; `-` listens on all IPv4 interfaces |
 | `use_dashboard` | Boolean | Enable local dashboard hosting |
 | `dashboard_repo` | Choice | Selected dashboard |
@@ -149,42 +170,15 @@ LuCI offers repositories for the slim kernel version and upstream Mihomo as edit
 | `profile_store_selected` | Boolean | Persist selected group state |
 | `profile_store_fake_ip` | Boolean | Persist Fake-IP mappings |
 
-### DNS recovery state
-
-JustClash keeps its DNS backup in the affected `dnsmasq` section of the `dhcp`
-UCI package, separately from the current JustClash settings. Existing
-`justclash_server`, `justclash_noresolv`, and `justclash_cachesize` backup fields
-are accompanied by `justclash_<option>_present` flags, `justclash_applied_server`,
-and `justclash_applied`. The last flag is set before modifying DNS, so a failed
-apply can also be cleaned up. These are internal recovery fields, not settings
-to edit in LuCI.
-
-Cleanup uses this saved state even after DNS management is disabled or the
-listener port is changed. It restores an old configuration before applying a
-new one. After a successful commit and dnsmasq restart, it sets
-`justclash_applied=0`. The inactive snapshot remains until the next apply
-overwrites it. For `server`, cleanup removes the saved JustClash upstream,
-restores the original servers, and keeps manually added servers without
-duplicates. Original servers come first, followed by additional current entries.
-The package's one-time UCI migration restores complete backups from the previous
-format directly and then removes their legacy fields. It also removes stale legacy
-snapshots left after a clean stop. The next DNS apply creates a snapshot in the
-current format. Conflicting manual edits, incomplete backups, and unrecognized older
-formats remain untouched. Runtime recovery still rejects those ambiguous states and
-prevents a new DNS configuration from being applied. Quoted server lists (including
-UCI-quoted entries containing whitespace) are rejected rather than parsed as shell
-expressions.
-
-The backup is persistent because the DNS changes themselves are committed to
-UCI. Do not delete recovery fields to silence an error: doing so loses the
-information needed to restore the original settings. They can contain private
-DNS configuration; redact their values before sharing diagnostics.
-
 ### DNS
+
+See [DNS and Fake-IP](../guides/dns.md) for resolver roles, policy syntax, and
+real-IP exceptions. [DNS recovery](../concepts/configuration-lifecycle.md#dns-recovery)
+describes restoration of the managed dnsmasq configuration.
 
 | Field | Type | Purpose |
 | --- | --- | --- |
-| `dns_listen_port` | Port | Mihomo DNS listener |
+| `dns_listen_port` | Port | Mihomo DNS listener; schema fallback is 1053, while the shipped configuration and current LuCI preset use 7894 |
 | `dns_cache_max_size` | Unsigned integer | DNS cache entry limit |
 | `use_system_hosts` | Boolean | Import system hosts |
 | `hosts` | List | Static host mappings |
@@ -224,20 +218,84 @@ Mihomo internal NTP is separate from `settings.ntpd_start`.
 
 ## `proxies`
 
-| Field group | Fields |
-| --- | --- |
-| Identity | `enabled`, `name`, `mode` |
-| Definition | `proxy_link_uri`, `proxy_link_object` |
-| Outbound chaining | `dialer_proxy` |
-| Network binding | `interface_name`, `routing_mark`, `ip_version` |
-| Rulesets | `enabled_list`, `use_proxy_for_list_update`, `list_update_interval`, `size_limit` |
-| Domain policy | `additional_domain_route`, `enabled_geosite_list` |
-| Destination policy | `additional_destip_route`, `enabled_geoip_list` |
-| Source policy | `additional_srcip_route` |
+A `proxies` section defines one named outbound.
 
-`proxy_link_uri` and `proxy_link_object` can contain credentials.
+Deleting an outbound in LuCI removes its name from every group's `proxies` list
+and clears any matching `default_selected`. The same cleanup applies when a group
+is deleted. References in the default rule reset to `DIRECT`; Mixed Port resets
+to `BY RULES`, and subscription/blocklist download paths reset to `DIRECT`.
+Matching connection-chaining fields are cleared, including `dialer-proxy` in
+JSON outbounds. Empty groups are retained. Apply the pending changes with
+Save & Apply.
+
+Choose `mode='uri'` to use a link in `proxy_link_uri`, or `mode='object'` to
+provide a Mihomo outbound object in `proxy_link_object`.
+
+| Field | What it controls |
+| --- | --- |
+| `enabled` | Whether this outbound is generated |
+| `name` | The name used when selecting this outbound in rules and groups |
+| `mode` | `uri` for a link, or `object` for a Mihomo JSON object |
+| `proxy_link_uri` | The connection link used in URI mode |
+| `proxy_link_object` | The outbound definition used in object mode |
+| `interface_name` | The outgoing network device for a URI-defined outbound; an empty value leaves it to the core's normal interface selection |
+| `routing_mark` | Optional socket mark, decimal or hexadecimal, from `1` to `2147483647` except reserved `3` and `255`; see [fwmark handoff](../guides/fwmark-handoff.md) for bypass behavior and receiver requirements |
+| `ip_version` | Name-resolution strategy: `dual`, `ipv4`, `ipv6`, `ipv4-prefer`, or `ipv6-prefer` |
+| `dialer_proxy` | Another outbound or group through which the URI-defined outbound establishes its connection |
+| `enabled_list` | Built-in rulesets whose traffic should use this outbound |
+| `use_proxy_for_list_update` | Whether to download those rulesets through this outbound |
+| `list_update_interval`, `size_limit` | Ruleset update interval and download size limit |
+| `additional_domain_route`, `enabled_geosite_list` | Additional domain and Geosite matches |
+| `additional_destip_route`, `enabled_geoip_list` | Destination-address and GeoIP matches |
+| `additional_srcip_route` | Source-address matches |
+
+The separate interface, mark, address-family, and chaining controls are read
+by the URI parsers. In object mode, put the corresponding Mihomo fields in the
+JSON object itself.
+
+**Bind to interface** selects the outgoing device, while **Connect through**
+selects another outbound or group as the connection's dialer. A group chooses
+a member; `dialer_proxy` adds a connection through another outbound. Avoid
+references that lead back to the same outbound. See the
+[two-outbound example](../guides/routing.md#chain-two-outbounds-with-connect-through)
+for the connection order and LuCI setup.
+
+### A Direct Outbound with `direct://`
+
+Set `mode='uri'` and `proxy_link_uri='direct://'` to generate a named outbound
+with `type: direct`. Configure its interface, mark, and address-family settings
+using the fields above. [Quick Start](../getting-started.md#3-add-an-outbound) shows
+the LuCI fields for one path; [Multi-WAN](../guides/multiwan.md#direct-wan-outbounds)
+adds multiple paths and switching between them.
+
+Connection links and JSON objects can contain credentials; keep their values
+out of shared configuration dumps.
 
 ## `proxy_provider`
+
+A provider downloads and refreshes nodes from a subscription. Select
+its `name` in a group's `providers` list to make those nodes available to that
+group. Imported nodes do not need separate `proxies` sections in UCI.
+
+Deleting a provider in LuCI removes it from every group's `providers` list.
+If a group has no remaining members or providers, its `default_selected` is
+cleared too. A provider name is separate from outbound names, so deleting a
+provider does not reset routes through an outbound with the same name.
+
+For the LuCI setup sequence, see
+[Use a Subscription Instead](../getting-started.md#use-a-subscription-instead).
+
+The provider's `proxy` option chooses how to download the subscription. It
+does not decide which websites use the downloaded nodes; that is the job of
+the group's routing assignments.
+
+If the source cannot be reached directly, **Get subscription with** must use an
+already working outbound or group. A group that relies on this same subscription
+cannot provide the initial download path.
+
+The **Override** tab applies connection settings to imported nodes. For example,
+`override_interface_name` binds their outgoing connections to a device; it does
+not select the path used to fetch the subscription itself.
 
 | Field group | Fields |
 | --- | --- |
@@ -262,6 +320,10 @@ The subscription, authorization header, identity fields, and private key are sen
 
 ## `proxy_group`
 
+A group's `proxies` list names manually configured outbounds or other groups; its
+`providers` list names subscriptions whose nodes it can use. A group can use
+both lists together.
+
 | Field group | Fields |
 | --- | --- |
 | Identity | `enabled`, `name`, `group_type` |
@@ -275,7 +337,17 @@ The subscription, authorization header, identity fields, and private key are sen
 | Destination policy | `additional_destip_route`, `enabled_geoip_list` |
 | Source policy | `additional_srcip_route` |
 
-Allowed `group_type` values are `select`, `fallback`, `load-balance`, and `url-test`.
+### Group Types
+
+| `group_type` | Behavior |
+| --- | --- |
+| `select` | You choose a member under Nodes |
+| `fallback` | Uses the first healthy member; later members are backups |
+| `url-test` | Chooses using measured delay, with the configured tolerance |
+| `load-balance` | Distributes connections across members |
+
+For working failover and balancing examples, see
+[Multi-WAN and Failover](../guides/multiwan.md#build-a-group).
 
 ## Singleton Rule Sections
 
@@ -324,11 +396,8 @@ Use raw UCI or unsafe diagnostic output only locally.
 
 ## Recovery
 
-```sh
-service justclash stop
-justclash.sh config show service
-justclash.sh config reset
-service justclash start
-```
-
-`config reset` backs up the active configuration before restoring package defaults. Review the generated backup locally because it can contain secrets.
+Use [startup troubleshooting](../troubleshooting/startup.md) to identify a failed
+setting first. To restore a known configuration, follow
+[Maintenance](../guides/maintenance.md#restore-a-backup). Resetting replaces saved
+settings with package defaults and generates new credentials; the command is
+documented under [Reset configuration](cli.md#reset-configuration).

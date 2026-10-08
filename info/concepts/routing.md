@@ -1,6 +1,11 @@
 # Choosing a Routing Mode
 
+[Documentation](../README.md)
+
 JustClash supports two interception modes. The choice determines which connections reach Mihomo; rules inside Mihomo cannot affect traffic that the firewall never intercepted.
+
+For the meaning of outbounds, providers, and groups, see
+[Configure routing](../guides/routing.md#how-the-components-fit-together).
 
 ## Quick Decision
 
@@ -13,10 +18,10 @@ Choose **Partial Interception** when:
 
 Choose **Full Interception** when:
 
-- every selected connection must be evaluated by Mihomo;
-- the default rule must affect all selected traffic;
+- every eligible TCP/UDP connection must be evaluated by Mihomo;
+- the default rule must affect all eligible traffic;
 - raw-address applications must follow GEOIP or IP rules;
-- complete connection visibility is required.
+- dashboard visibility is needed for all eligible connections.
 
 ## Data Path
 
@@ -27,10 +32,13 @@ flowchart LR
     Decision -->|Fake-IP or active ipcidr/text set| Core[Mihomo]
     Decision -->|No match in partial mode| Kernel[Direct kernel routing]
     Decision -->|Full mode| Core
-    Core --> Rules[Block, group, proxy, and final rules]
+    Core --> Rules[Block, group, outbound, and final rules]
 ```
 
-DNS selects domain traffic for the Fake-IP path. In Partial Interception, nftables additionally selects real-address traffic from active `ipcidr/text` rulesets. Binary IP-CIDR or GeoIP databases are not converted into kernel sets.
+DNS selects configured domain traffic for the Fake-IP path. In Partial
+Interception, nftables also selects manual destination/source address rules and
+active `ipcidr/text` rulesets. Binary IP-CIDR or GeoIP databases are not converted
+into kernel sets.
 
 ## Behavior Comparison
 
@@ -39,11 +47,16 @@ DNS selects domain traffic for the Fake-IP path. In Partial Interception, nftabl
 | Fake-IP domain traffic | Intercepted | Intercepted |
 | Active `ipcidr/text` rulesets | Synchronized to nftables and intercepted | Evaluated by Mihomo |
 | Binary IP-CIDR rulesets | Do not capture otherwise-unmatched raw addresses | Evaluated by Mihomo |
+| Manual source/destination address rules | Included in interception sets | Evaluated by Mihomo |
 | Unmatched real-address traffic | Direct kernel routing | Evaluated by Mihomo |
-| Final `MATCH` rule | Intercepted traffic only | All selected traffic |
+| Final `MATCH` rule | Intercepted traffic only | All eligible TCP/UDP traffic |
 | Raw-address GEOIP policy | Incomplete | Available |
-| Dashboard visibility | Intercepted connections only | All selected connections |
+| Dashboard visibility | Intercepted connections only | All eligible TCP/UDP connections |
 | Typical resource use | Lower | Higher |
+
+Eligibility depends on the intercepted interfaces, exclusions, address family,
+and private/local destination bypasses. Full Interception does not capture every
+packet on the router.
 
 ## Partial Interception
 
@@ -51,31 +64,53 @@ Partial mode creates nftables sets from enabled text IP-CIDR rulesets and interc
 
 - connections to configured Fake-IP ranges;
 - destinations contained in active IPv4 or IPv6 text sets;
-- traffic selected by explicit JustClash firewall handling.
+- manually configured destination addresses;
+- selected clients matching manual source-address rules.
+
+Earlier firewall bypasses and protocol policies still apply. Interception handles
+eligible TCP/UDP connections, not every protocol or local/private destination.
 
 Everything else remains outside Mihomo.
 
-Consequences:
-
-1. A proxy default rule cannot capture an unmatched real-address connection.
-2. A domain excluded from Fake-IP may go direct unless its real addresses are present in an active text IP-CIDR set.
-3. A binary `.mrs` IP-CIDR provider can classify traffic already inside Mihomo, but cannot populate the Partial Interception nftables sets.
-4. Connections that bypass Mihomo do not appear in its connection list.
+A final outbound rule cannot capture an unmatched real-address connection.
+The same applies to a domain excluded from Fake-IP unless a manual address/source
+rule or an active text IP-CIDR set also captures its connection.
 
 The ruleset worker watches active text IP-CIDR files and updates nftables after Mihomo refreshes them. Domain and binary rulesets remain core-side data.
 
 ## Full Interception
 
-Full mode redirects traffic from selected client interfaces and the router itself to Mihomo. Both use the common **Create nftables** switch; their exclusions remain separate.
+Full mode redirects eligible TCP/UDP traffic from selected client interfaces and
+the router itself to Mihomo. Local/private destinations and firewall exclusions
+still bypass interception. Both client and router paths use the common **Create
+nftables** switch; their exclusions remain separate.
 
-Use it for:
+To use one outbound or group for traffic without a more specific rule:
 
-- proxy or block defaults that must apply to all selected connections;
-- raw-address GEOIP policy;
-- complete per-client observability;
-- policies whose ordering must be identical for domain and address traffic.
+1. Under **Setup: Service → Traffic rules**, select Full Interception, enable
+   **Create nftables**, and select the intended **Client traffic interfaces**.
+2. Under **Setup: Routing → Default rule → Send traffic to**, choose that
+   outbound or group.
+3. Save & Apply, then verify the selected path under **Connections**.
 
-The trade-off is additional userspace processing. Exclude only traffic that must stay in the native path; disabling random nftables rules merely produces a network that is broken in a more creative way.
+Earlier routing rules and firewall exclusions still take precedence. Explicit
+Mixed Port clients have their own [routing policy](../guides/mixed-port.md#routing-policy).
+
+The trade-off is additional userspace processing. Use the supported exclusion
+settings for traffic that must stay in the native path.
+
+## What "Direct" Means
+
+There are three paths that can look like "direct internet access":
+
+| Path | Who handles the connection? | How is the outgoing path chosen? |
+| --- | --- | --- |
+| Traffic outside Mihomo | OpenWrt's normal network stack | System routes and any external policy routing |
+| Mihomo's built-in `DIRECT` action | Mihomo | The core's normal direct settings and system routing |
+| A named `direct://` outbound | Mihomo | The outbound's own interface, address-family, and optional mark settings |
+
+See [Multi-WAN and Failover](../guides/multiwan.md) to configure
+named direct paths and choose between them.
 
 ## DNS and Fake-IP
 
@@ -87,9 +122,9 @@ The DNS path and traffic path must agree:
 | --- | --- | --- |
 | Intercepted client | Fake-IP allowed | Must enter JustClash |
 | Fully bypassed client | Real addresses | Must remain outside JustClash |
-| Partially bypassed domain | Real address | Needs an active text IP-CIDR set if it must still be proxied |
+| Partially bypassed domain | Real address | Needs another address/source interception match in partial mode |
 
-See [Traffic Exclusions](04_service_traffic_exclusion.md) and [Guest Network Configuration](08_use_guest_network.md).
+See [Traffic Exclusions](../guides/traffic-exclusions.md) and [Guest Network Configuration](../guides/guest-network.md).
 
 ## TProxy, Not TUN
 
@@ -103,21 +138,11 @@ The managed components are:
 
 Stop or reload the service through procd so all three components are updated together.
 
-## Generated YAML Cache
+## Configuration Changes
 
-JustClash stores the generated Mihomo YAML and its routing sidecar files under the RAM-backed runtime directory. On each service start or reload, the existing files are reused only when every required artifact exists, the YAML still passes Mihomo validation, and the saved input fingerprint matches the current inputs.
-
-The fingerprint covers:
-
-- the UCI configuration after excluding lifecycle, scheduler, and updater-only settings;
-- the JustClash package version used by the YAML generator;
-- the currently resolved controller bind address;
-- dashboard URL settings;
-- the contents and presence of both built-in ruleset catalogs and both user ruleset catalogs.
-
-This means a package upgrade, controller address change, dashboard URL edit, or ruleset catalog edit invalidates the cached YAML without requiring an unrelated UCI change. The comparison happens on the next service start or reload; editing a catalog or running `resources data update` does not modify the configuration of an already running Mihomo process by itself.
-
-The runtime directory is recreated after a router reboot, so the YAML and sidecar files are generated again even when the persistent configuration has not changed.
+Saved settings and runtime state are separate. See
+[Configuration lifecycle](configuration-lifecycle.md) for Save & Apply, validation,
+generated YAML caching, and persistent data.
 
 ## Client and Router Traffic
 
@@ -156,4 +181,4 @@ justclash.sh check routes
 
 These checks may include local network data. Use `justclash.sh check` when the result will be shared.
 
-If Full Interception overloads the router, return to Partial Interception or add a narrow exclusion. A random chain deletion is not a rollback strategy.
+If Full Interception overloads the router, return to Partial Interception or add a narrow exclusion. Use Save & Apply to restore the previous configuration.

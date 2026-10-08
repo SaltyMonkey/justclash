@@ -1,6 +1,11 @@
 # Startup and WAN Troubleshooting
 
-Startup failures are usually ordering problems: WAN, DNS, system time, storage, or firewall state is not ready when JustClash starts. Enable one workaround at a time and verify which condition it fixes.
+[Documentation](../README.md)
+
+Start with the first error in Service logs. Failures can come from configuration,
+a missing core, occupied ports, WAN readiness, DNS, time, or storage. Boot-only
+failures often require a startup-order adjustment; enable one adjustment at a
+time and verify what it fixes.
 
 ## Symptom Matrix
 
@@ -15,13 +20,22 @@ Startup failures are usually ordering problems: WAN, DNS, system time, storage, 
 
 ## LuCI Live Pages Are Unavailable
 
-**Nodes**, **Rules**, **Connections**, and **Realtime logs** use the running Mihomo controller. Start JustClash from **Status**, then reload Nodes or Rules; Connections and Realtime logs reconnect automatically. **Service logs** remains available for startup failures; realtime core logs do not.
+Check the service state on **Status** and startup failures in **Service logs**.
+If the service is running but live data is unavailable, follow
+[LuCI Pages and Core Availability](luci.md#when-a-live-page-is-unavailable)
+to distinguish API credentials, TLS, and connection problems.
 
-The pages themselves may open while the core is stopped. Nodes and Rules can show a load error and an empty list; Connections and Realtime logs can remain empty or retain the last received data. Status metrics may stay at their initial values. Check the service state on **Status** before treating any of these as current core data. If the browser blocks controller access, correct API/TLS settings and reload the affected page.
+## Configuration Validation Fails
 
-If the service is already running, distinguish API authorization failures from connection failures. Check the API password and TLS settings under **Setup: Proxy**, controller access from the browser, and certificate trust. HTTPS LuCI requires HTTPS/WSS for the controller connection. A failed live request alone is not evidence that the core has stopped.
+A schema failure identifies the section type and option in Service logs. Check
+that value in [UCI reference](../reference/uci.md), including disabled sections.
+Missing values with declared defaults are filled in memory; invalid supplied
+values are not replaced. Later Mihomo validation can also reject unresolved
+outbound references or an incompatible generated setting.
 
-See [LuCI Pages and Core Availability](14_luci_pages.md) for the complete page matrix and stream reconnection behavior.
+Review the first specific error before the generic failure message. Do not reset
+the entire configuration merely because startup stopped; first correct the
+reported field or restore a known backup.
 
 ## Wait for WAN
 
@@ -49,7 +63,10 @@ uci commit justclash
 service justclash restart
 ```
 
-Start with the smallest available value. A large delay can hide the dependency while making every real restart slower.
+Start with the smallest useful value. WAN waiting and delayed startup are read
+by the init script's boot path; normal manual restarts do not replay these boot
+delays. Saving the setting and restarting now verifies ordinary startup, but its
+boot-specific effect must be checked at the next planned reboot.
 
 ## System Time
 
@@ -67,22 +84,14 @@ Mihomo internal NTP settings are separate. They affect the generated core config
 
 ## Environment Checks
 
-The optional preflight checks warn about:
+Startup checks required tools and the core, configured port collisions, and
+occupied listeners. It also warns about known service/DNS conflicts and runs
+compatibility adjustments. A warning does not necessarily abort startup; a
+failed required check does.
 
-- conflicting DNS settings;
-- known proxy or DPI services;
-- compatibility state that JustClash can repair;
-- ports already used by another process.
-
-Required tool, core, path, and value validation still runs when optional checks are skipped.
-
-```sh
-uci set justclash.settings.skip_environment_checks='1'
-uci commit justclash
-service justclash restart
-```
-
-Enable this only after recording a stable working configuration. Hiding a warning is not the same as resolving it, although both are equally quiet.
+The current implementation does not read a `skip_environment_checks` setting.
+Do not add it to bypass a port or configuration error. Resolve the reported
+condition instead.
 
 ## Recommended Diagnostic Order
 
@@ -100,9 +109,9 @@ Enable this only after recording a stable working configuration. Hiding a warnin
    ```
 
 3. Verify WAN, DNS, and system time outside JustClash.
-4. Enable `wait_for_wan`.
-5. Add a short delay only if WAN readiness is insufficient.
-6. Keep environment checks enabled until startup is stable.
+4. For boot-only failures, enable `wait_for_wan`.
+5. For remaining boot-order problems, add a short delay only if WAN readiness is insufficient.
+6. Resolve reported conflicts and retest normal startup.
 7. Run the privacy-reduced report:
 
    ```sh
@@ -113,26 +122,17 @@ Use `check full --unsafe`, `check routes`, and raw logs locally; they can reveal
 
 ## Scheduled Jobs
 
-After changing schedules through UCI, rebuild the root crontab:
+After changing restart, data-update, or start/stop schedules through UCI, run
+[`schedule sync`](../reference/cli.md#resources-and-scheduling) to rebuild the
+root crontab.
 
-```sh
-justclash.sh schedule sync
-```
-
-This applies:
-
-- scheduled restarts;
-- service-data updates;
-- scheduled start/stop windows.
-
-Confirm the resulting behavior before depending on it remotely. A typo in a cron expression is wonderfully reliable at doing the wrong thing unattended.
+Confirm the resulting behavior before depending on it remotely. Check the accepted expression format in LuCI before relying on a schedule.
 
 ## Roll Back Startup Workarounds
 
 ```sh
 uci set justclash.settings.wait_for_wan='0'
 uci set justclash.settings.delayed_boot='0'
-uci set justclash.settings.skip_environment_checks='0'
 uci commit justclash
 service justclash restart
 ```

@@ -1,5 +1,7 @@
 # Block Rules
 
+[Documentation](../README.md)
+
 JustClash blocks domains through Mihomo DNS policy and blocks addresses through high-priority routing rules. The generated action is `REJECT`.
 
 > [!IMPORTANT]
@@ -16,7 +18,7 @@ Open **Services → JustClash → Setup: Routing → Block rules**.
 5. Add manual domain or IPv4 CIDR entries when needed.
 6. Save & Apply.
 
-Catalog entries are managed under **Setup: Rulesets**. See [User-Defined Rulesets](05_user_defined_rulesets.md).
+Catalog entries are managed under **Setup: Rulesets**. See [User-Defined Rulesets](rulesets.md).
 
 ## Minimal UCI Configuration
 
@@ -34,7 +36,7 @@ To select a download path explicitly:
 uci set justclash.block_rules.proxy='<DOWNLOAD_OUTBOUND>'
 ```
 
-Use `DIRECT` or an existing proxy/group name. This affects provider downloads only.
+Use `DIRECT` or an existing outbound/group name.
 
 ## Manual Entries
 
@@ -77,14 +79,18 @@ This requires the client to use the JustClash-managed DNS path. Applications usi
 
 Address blocklists, GeoIP block categories, and manual IPv4 entries produce high-priority `REJECT` rules.
 
-In Partial Interception, an active `ipcidr/text` blocklist can also populate nftables sets so raw-address traffic reaches Mihomo. Binary address providers cannot capture otherwise-unmatched raw connections.
+In Partial Interception, manual blocked destination addresses are also added
+to interception sets. For an address blocklist provider, use an active
+`ipcidr/text` source when its raw-address traffic must be captured; binary
+GeoIP/MRS data does not create kernel interception sets. See
+[ruleset synchronization](rulesets.md#partial-interception).
 
 ## Rule Order
 
 Block rules are emitted before:
 
-- proxy-group routing rules;
-- individual proxy rules;
+- outbound-group routing rules;
+- individual outbound rules;
 - the final rule.
 
 Mixed-port fixed-outbound handling is also high priority. Use `BY RULES` when explicit proxy clients must receive normal block policy.
@@ -92,8 +98,6 @@ Mixed-port fixed-outbound handling is also high priority. Use `BY RULES` when ex
 ## Limitations
 
 - Firewall-excluded clients never reach Mihomo block rules.
-- Domain blocking does not control applications bypassing the managed DNS path.
-- Partial Interception needs an active text address list to capture raw-address traffic.
 - Manual address blocking is IPv4-only in the current UCI field.
 - Large overlapping lists increase memory use and refresh work.
 - Fake-IP exclusions and nameserver policy can change which DNS rule sees a domain.

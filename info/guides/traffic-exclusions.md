@@ -1,5 +1,7 @@
 # Traffic Exclusions
 
+[Documentation](../README.md)
+
 A firewall exclusion keeps traffic outside Mihomo. Excluded connections do not appear in the dashboard and cannot be changed by later Mihomo rules. Use a `DIRECT` routing rule instead when traffic should remain visible to the core.
 
 ## Scope Matrix
@@ -92,17 +94,9 @@ service justclash restart
 
 A bypassed client can still query the router. If Mihomo returns a Fake-IP result, the client attempts to reach that synthetic address directly and the connection fails.
 
-Choose one design:
-
-1. **Intercept the client:** use the normal JustClash DNS and traffic path.
-2. **Bypass it completely:** provide a DNS path that returns real addresses.
-3. **Exclude selected domains from Fake-IP:** use only for direct domains or domains still covered by an active text IP-CIDR set.
-
-Real-address filters:
-
-- `fake_ip_exclude_domains`;
-- `fake_ip_exclude_rulesets`;
-- `fake_ip_exclude_geosites`.
+For a complete client bypass, provide DNS that returns real addresses. For a
+domain-only exception, use `fake_ip_exclude_domains`, `fake_ip_exclude_rulesets`,
+or `fake_ip_exclude_geosites`.
 
 ```sh
 uci add_list justclash.proxy.fake_ip_exclude_domains='<DOMAIN_SUFFIX>'
@@ -110,10 +104,11 @@ uci commit justclash
 service justclash restart
 ```
 
-> [!WARNING]
-> In Partial Interception, a real address can bypass Mihomo. Do not add a proxied domain to a Fake-IP exclusion unless another supported interception rule captures it.
+In Partial Interception, a Fake-IP exception can also bypass routing policy.
+Check the [DNS and traffic path requirements](../concepts/routing.md#dns-and-fake-ip)
+before adding an exception for a domain that should use an outbound.
 
-For a complete bypassed network, see [Guest Network Configuration](08_use_guest_network.md).
+For a complete bypassed network, see [Guest Network Configuration](guest-network.md).
 
 ## Verification
 

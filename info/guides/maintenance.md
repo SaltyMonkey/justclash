@@ -1,5 +1,7 @@
 # Update, Backup, Restore, and Removal
 
+[Documentation](../README.md)
+
 JustClash packages, the Mihomo core, and downloaded service data have separate lifecycles. Updating one does not necessarily update the others.
 
 ## What Is Being Updated
@@ -19,9 +21,10 @@ The package core updater compares version strings. Changing repositories alone d
 
 ## Generated Configuration After Updates
 
-The generated Mihomo YAML is cached in the RAM-backed runtime directory. Its fingerprint includes the JustClash package version, relevant UCI settings, the resolved controller address, and the built-in and user ruleset catalog files. A changed package version or catalog therefore invalidates the old YAML on the next service start or reload instead of reusing output produced from older generator inputs.
-
-Updating the Mihomo core alone does not change this fingerprint. Cached YAML is still validated by the installed core before reuse; a validation failure aborts startup rather than silently running an incompatible configuration.
+Package and catalog updates invalidate the generated configuration on the next
+service start or reload. After a core-only update, startup still validates the
+cached YAML with the new core before reuse. See [Generated YAML Cache](../concepts/configuration-lifecycle.md#generated-yaml-cache)
+for the complete reuse conditions.
 
 ## Before an Update
 
@@ -35,8 +38,6 @@ Updating the Mihomo core alone does not change this fingerprint. Cached YAML is 
 justclash.sh version package
 justclash.sh version core
 ```
-
-Do not publish this output together with configuration or diagnostics. Version output is harmless by itself, but nearby shell history and copied terminal output may not be.
 
 ## Create a Backup
 
@@ -75,7 +76,7 @@ service justclash stop
 
 A clean stop removes the JustClash nftables state, restores the saved dnsmasq configuration, and restarts dnsmasq. Wait for that command to finish and confirm ordinary DNS resolution works before starting the firmware upgrade.
 
-If the firmware upgrade begins while JustClash is still active, the preserved DHCP/dnsmasq configuration can continue pointing DNS at a local Mihomo listener that is no longer running during the transition or after the first boot. The result is a router that appears online while name resolution has quietly left the building.
+If the firmware upgrade begins while JustClash is still active, the preserved DHCP/dnsmasq configuration can continue pointing DNS at a local Mihomo listener that is no longer running during the transition or after the first boot. The router can retain network connectivity while name resolution fails.
 
 After the new firmware boots, verify that the matching JustClash packages and Mihomo core are present and that native DNS works. Only then start JustClash again:
 
@@ -105,13 +106,38 @@ Repeat the check for the base package, LuCI application, and optional translatio
 
 ## Update with the Online Installer
 
-Use the canonical one-liners and parameter table in [Quick Start → Online Installer](00_quick_start.md#online-installer):
+Download the installer once, then run it with the options for the required task:
 
-- automatic mode installs the latest JustClash release and stable Mihomo core;
-- `--custom_version` selects an exact stable or `X.Y.Z_rcN` JustClash release but does not pin Mihomo;
-- `--update-core` updates only the stable Mihomo core after preparing installer dependencies.
+```sh
+wget -qO /tmp/justclash-install.sh 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh'
+```
 
-Keeping the executable examples in Quick Start prevents the installer invocation from drifting between two documents.
+```sh
+# Install or update to the latest release without prompts
+sh /tmp/justclash-install.sh --automated
+
+# Install a specific package release
+sh /tmp/justclash-install.sh --automated --custom_version 0.98.0_rc1
+
+# Download or update only the Mihomo core
+sh /tmp/justclash-install.sh --update-core
+```
+
+For interactive use, run without arguments as shown in
+[Quick Start](../getting-started.md#online-installer). Replace `0.98.0_rc1` with the
+required version: `X.Y.Z` or `X.Y.Z_rcN`, optionally with a leading `v`.
+Combine the options below as needed.
+
+| Parameter | Short form | Effect |
+| --- | --- | --- |
+| `--automated` | `--auto`, `-y` | Installs without the translation prompt |
+| `--silent` | `-s` | Hides normal stdout; errors remain visible |
+| `--custom_version VERSION` | — | Selects a specific JustClash package release |
+| `--update-core` | `-u` | Downloads or updates the stable Mihomo core without installing JustClash release packages |
+| `--skip-space-check` | — | Skips the installer free-space check |
+
+`--custom_version` pins the `justclash` and LuCI packages only. The installer still selects the current stable Mihomo core for the detected CPU architecture. It detects APK or OPKG automatically; interactive installation also asks which LuCI translation to install.
+
 
 ## Update from Local Packages
 
@@ -186,13 +212,13 @@ Restoring a backup also restores its credentials. Rotate the API password and an
 
 `config reset` backs up the active UCI configuration and replaces it with package defaults. It also generates new API and Mixed Port passwords.
 
-Use reset to recover from a broken configuration, not as an update or downgrade procedure. Follow the canonical command sequence in [Command-Line Reference → Reset Configuration](02_cli-commands.md#reset-configuration). The generated backup can contain secrets and should remain local.
+Use reset to recover from a broken configuration, not as an update or downgrade procedure. Follow the canonical command sequence in [Command-Line Reference → Reset Configuration](../reference/cli.md#reset-configuration). The generated backup can contain secrets and should remain local.
 
 ## Remove JustClash
 
 ### Online Installer Menu
 
-Run the interactive command from [Quick Start → Online Installer](00_quick_start.md#online-installer), then choose **Uninstall JustClash package**.
+Run the interactive command from [Quick Start → Online Installer](../getting-started.md#online-installer), then choose **Uninstall JustClash package**.
 
 The installer removes the JustClash packages and the Mihomo core. Create a backup first; do not rely on package-manager conffile retention as the only copy.
 

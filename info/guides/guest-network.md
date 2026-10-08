@@ -1,5 +1,7 @@
 # Guest Network Configuration
 
+[Documentation](../README.md)
+
 A guest network requires two coordinated choices:
 
 1. whether guest traffic is intercepted;
@@ -33,13 +35,6 @@ uci commit justclash
 service justclash restart
 ```
 
-Verify:
-
-- guest DNS uses the router;
-- connections appear under **Connections**;
-- expected route and block rules match;
-- IPv4 and IPv6 follow the intended policy.
-
 ## Recipe B: Fully Direct Guest
 
 Use this when guest traffic must never enter Mihomo.
@@ -56,7 +51,7 @@ service justclash restart
 ```
 
 > [!WARNING]
-> A direct guest client must not receive Fake-IP answers. Raw-address connectivity may work while every domain connection fails, which is technically connectivity but not the useful kind.
+> A direct guest client must not receive Fake-IP answers. Raw-address connectivity can work while domain connections fail.
 
 Do not replace the router-wide dnsmasq upstream merely to change one guest network. Configure the guest DHCP scope independently.
 
@@ -110,7 +105,7 @@ justclash.sh check routes
 
 These commands can expose local topology. Use `check` when sharing results.
 
-For per-client bypass instead of a whole network, see [Traffic Exclusions](04_service_traffic_exclusion.md).
+For per-client bypass instead of a whole network, see [Traffic Exclusions](traffic-exclusions.md).
 
 ## Rollback
 

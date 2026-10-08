@@ -1,6 +1,8 @@
 # User-Defined Rulesets
 
-A ruleset catalog entry defines a source. It becomes active only when an enabled proxy, group, block section, or Fake-IP filter references its ID.
+[Documentation](../README.md)
+
+A ruleset catalog entry defines a source. It becomes active only when an enabled outbound, group, block section, or Fake-IP filter references its ID.
 
 ## Lifecycle
 
@@ -75,8 +77,8 @@ The fields cannot contain a pipe or newline. Authorization data is a credential;
 
 | Policy | UCI reference |
 | --- | --- |
-| Route through an individual proxy | `proxies.enabled_list` |
-| Route through a proxy group | `proxy_group.enabled_list` |
+| Route through an individual outbound | `proxies.enabled_list` |
+| Route through an outbound group | `proxy_group.enabled_list` |
 | Block | `block_rules.enabled_blocklist` |
 | Return real addresses for matching domains | `proxy.fake_ip_exclude_rulesets` |
 
@@ -84,7 +86,7 @@ The reference uses the catalog ID, not its display name.
 
 ## Download Path
 
-Active remote rulesets are downloaded by Mihomo. The target proxy/group section controls:
+Active remote rulesets are downloaded by Mihomo. The target outbound/group section controls:
 
 - the outbound used for downloads;
 - update interval;
@@ -128,7 +130,9 @@ Otherwise the rules are downloaded again after reboot.
 
 ## Applying Catalog Changes
 
-Saving a user catalog or refreshing the built-in catalogs does not reload the running service. On the next start or reload, JustClash fingerprints all four catalog files and regenerates the Mihomo YAML and routing sidecars when their contents or presence changed. No unrelated UCI edit is required to invalidate the cache.
+Catalog edits take effect on the next service start or reload. Changes invalidate
+the [generated YAML cache](../concepts/configuration-lifecycle.md#generated-yaml-cache)
+automatically; no unrelated UCI edit is needed.
 
 After a manual catalog edit or `resources data update`, apply the change with:
 
@@ -161,4 +165,5 @@ Use `check` for shared diagnostics. Catalog URLs and authorization fields may be
 3. Remove the catalog row.
 4. Apply again and verify that the provider disappeared.
 
-Removing the catalog first leaves stale references that UCI will preserve with admirable indifference.
+Removing the catalog first leaves stale UCI references and can prevent the
+intended rules from being generated.

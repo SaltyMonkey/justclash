@@ -1,10 +1,13 @@
 # ubus API Reference
 
+[Documentation](../README.md)
+
 The `justclash` package registers the `justclash-core` ubus object through an rpcd executable plugin. LuCI uses this API for service control, status, diagnostics, configuration display, logs, and updates, but the API is also available without `luci-app-justclash` installed.
 
-Use the [Command-Line Reference](02_cli-commands.md) for interactive shell administration. The ubus API is intended for LuCI and other local RPC clients.
+Use the [Command-Line Reference](cli.md) for interactive shell administration. The ubus API is intended for LuCI and other local RPC clients.
 
-This rpcd API is available while Mihomo is stopped, including service status, startup controls, and Service logs. Live LuCI pages such as Nodes, Rules, Connections, and Realtime logs use the separate Mihomo HTTP/WebSocket controller API and require a running core. See [LuCI Pages and Core Availability](14_luci_pages.md).
+This rpcd API works while Mihomo is stopped. Live LuCI data uses the separate
+Mihomo controller API; see [LuCI Page Availability](../troubleshooting/luci.md).
 
 ## Discover the API
 
@@ -112,10 +115,8 @@ Clients must check the application-level `code` field. A successful ubus transpo
 
 ## Access Control
 
-LuCI access is defined in `/usr/share/rpcd/acl.d/luci-app-justclash.json`:
-
-- read access covers `status`, `check`, `config_show`, and `logs`;
-- write access covers lifecycle actions, `hardware_id`, `config_show_unsafe`, and `resources_update`.
+LuCI access is defined in `/usr/share/rpcd/acl.d/luci-app-justclash.json`.
+The [method table](#methods) lists each method's ACL class.
 
 `hardware_id` does not modify the system, but it is deliberately placed in the write ACL class because it exposes a stable device identifier.
 

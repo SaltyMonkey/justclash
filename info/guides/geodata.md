@@ -1,5 +1,7 @@
 # Geodata, Geosite, and GeoIP
 
+[Documentation](../README.md)
+
 JustClash supports two classification models:
 
 - **Ruleset mode:** selected rule providers, usually `.mrs` or text IP-CIDR files;
@@ -59,7 +61,7 @@ When Geodata mode is enabled, routing sections expose:
 - `enabled_geoip_list` for destination-address categories;
 - corresponding blocklist fields in `block_rules`.
 
-Categories can target individual proxies, groups, or block rules.
+Categories can target individual outbounds, groups, or block rules.
 
 Conceptually generated rules are:
 
@@ -73,21 +75,18 @@ Use exact category identifiers from the selected database source.
 
 ## Partial Interception Limitation
 
-Geosite policy works with the Fake-IP DNS path because the domain connection is intercepted before rule evaluation.
-
-GeoIP cannot classify every raw-address connection in Partial Interception. If the address is absent from an active nftables set, the connection bypasses Mihomo before the GeoIP rule is evaluated.
-
-Choose one:
-
-- use Full Interception when GEOIP must apply to all selected traffic;
-- use a supported `ipcidr/text` ruleset for address ranges that Partial Interception must capture;
-- accept direct bypass for unmatched raw-address traffic.
+Geosite can classify intercepted Fake-IP domain traffic. GeoIP cannot capture
+a raw-address connection that never enters Mihomo. Use Full Interception when
+GeoIP must apply to all selected traffic, or an active `ipcidr/text` ruleset to
+capture specific ranges in Partial Interception. See
+[routing-mode behavior](../concepts/routing.md#behavior-comparison).
 
 ## Fake-IP Filters
 
 `fake_ip_exclude_geosites` returns real addresses for selected Geosite categories.
 
-In Partial Interception, those real addresses can bypass Mihomo. Use this only for direct categories or categories also covered by an active text IP-CIDR set.
+Check the [DNS and traffic path requirements](../concepts/routing.md#dns-and-fake-ip)
+before excluding a category that should still follow outbound rules.
 
 ## Resource and Storage Checklist
 
@@ -130,4 +129,4 @@ These outputs can include private sources, categories, domains, or topology. Use
 3. Save & Apply.
 4. Verify the equivalent ruleset policy before removing database files.
 
-See [Choosing a Routing Mode](00_routing_architecture_and_design.md) and [User-Defined Rulesets](05_user_defined_rulesets.md).
+See [Choosing a Routing Mode](../concepts/routing.md) and [User-Defined Rulesets](rulesets.md).

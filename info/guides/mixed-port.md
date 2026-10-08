@@ -1,8 +1,10 @@
 # Mixed Port
 
+[Documentation](../README.md)
+
 The Mihomo mixed port is an explicit HTTP and SOCKS5 listener. It is independent from transparent TProxy interception: each client application must be configured to use the router and listener directly.
 
-Enabling it also enables LAN access in the generated Mihomo configuration. Installation and `config reset` create a `user:` credential with a random 64-character password. Keep authentication enabled for every non-loopback use.
+Enabling it also enables LAN access in the generated Mihomo configuration.
 
 ## Use It For
 
@@ -50,7 +52,10 @@ Rules enforced by LuCI:
 - whitespace and control characters are rejected;
 - multiple entries may be added, one per client or trust group.
 
-Use a password manager or another cryptographically secure generator. Do not reuse the JustClash API password, the LuCI login password, or a provider credential. Separate entries make it possible to revoke one client without changing every other client.
+Installation and `config reset` create a `user:` credential with a random
+32-character password. Normal package upgrades preserve existing credentials.
+For custom credentials, use a password manager or another cryptographically
+secure generator. Separate entries let you revoke one client independently.
 
 `proxy_authentication` is unrelated to `api_password`: the former protects the HTTP/SOCKS listener, while the latter protects the Mihomo controller and dashboards.
 
@@ -73,9 +78,9 @@ Do not assume that successful transparent interception proves the mixed listener
 
 | Value | Behavior |
 | --- | --- |
-| `BY RULES` | Continue through block, group, proxy, and final rules |
+| `BY RULES` | Continue through block, group, outbound, and final rules |
 | `DIRECT` | Send mixed-port traffic directly |
-| Proxy/group name | Send mixed-port traffic to that outbound |
+| Outbound/group name | Send mixed-port traffic to that outbound |
 
 ```sh
 uci set justclash.mixed_port_rules.exit_rule='BY RULES'
@@ -87,19 +92,16 @@ A fixed outbound is intentionally evaluated before normal routing and block rule
 
 ## Security Checklist
 
-- Keep at least one `proxy_authentication` entry whenever non-loopback clients can reach the listener.
-- Use separate credentials for clients that need independent revocation.
 - Restrict the OpenWrt firewall input rule to trusted source zones or addresses.
 - Do not forward the listener from WAN.
 - Do not treat a non-default port as access control.
 - Rotate credentials after accidental disclosure.
-- Test HTTP and SOCKS5 separately.
 
 ## Verification
 
 1. Confirm the service is running.
 2. Confirm the port is not used by another process.
-3. Test with one trusted client.
+3. Test HTTP and SOCKS5 separately with one trusted client.
 4. Check the expected rule and outbound under **Connections**.
 5. Confirm an unauthenticated request is rejected.
 
