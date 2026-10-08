@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.96.0
+PKG_VERSION:=0.98.0_rc1
 
 PKG_RELEASE:=2
 
@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=$(PKG_NAME)
-	DEPENDS:=+rpcd +nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +kmod-nft-nat +kmod-nft-fib +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
+	DEPENDS:=+ubox +rpcd +nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +kmod-nft-nat +kmod-nft-fib +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
 	CONFLICTS:=banip mihomo forkop luci-app-forkop podkop sing-box sing-box-tiny luci-app-passwall luci-app-passwall2 dns-failsafe-proxy netshift luci-app-netshift nikki luci-app-nikki luci-app-ssclash
 	PKGARCH:=all
 endef
@@ -77,7 +77,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/etc/init.d/justclash $(1)/etc/init.d/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/etc/uci-defaults/99_jc-uci-migration $(1)/etc/uci-defaults/
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99-justclash-migrate-config $(1)/etc/uci-defaults/
 
 	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/lib/justclash/constants.sh
 
@@ -112,12 +112,6 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		echo "Failed to initialize the active JustClash credentials." >&2
 		exit 1
 	fi
-	# randomize failover mac string if placeholder value detected
-	RANDOM_MAC_REPLACEMENT="$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-' | cut -c1-30)"
-	if [ -z "$${RANDOM_MAC_REPLACEMENT}" ]; then
-		RANDOM_MAC_REPLACEMENT="$$(head -c 30 /dev/urandom 2>/dev/null | base64 2>/dev/null | tr -d '+/=\r\n' | cut -c1-30)"
-	fi
-	[ -n "$${RANDOM_MAC_REPLACEMENT}" ] && sed -i -e "s|__COMPILED_DEFAULT_MAC_VARIABLE__|$${RANDOM_MAC_REPLACEMENT}|g" /usr/lib/justclash/helpers.sh || true
 	[ -x "/etc/init.d/rpcd" ] && /etc/init.d/rpcd reload
 fi
 exit 0

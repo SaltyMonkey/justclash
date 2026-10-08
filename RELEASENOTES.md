@@ -1,3 +1,129 @@
+## [0.98.0_rc1] - 08102026
+
+### Configuration Validation
+
+- **Native validation:** UCI configuration is checked once during initialization
+  through OpenWrt's `/sbin/validate_data`. Schemas cover service, proxy, block,
+  Mixed Port, final-rule, and anonymous proxy/provider/group sections. Manual
+  startup and procd use the same path; failures stop initialization before
+  YAML generation or networking changes.
+- **Configuration self-recovery:** The new flow reconstructs missing or empty
+  options from schema defaults wherever possible. Recovered values are
+  available to readers and generators in memory for the current command;
+  the saved UCI file is not rewritten. Invalid non-empty values are rejected
+  rather than replaced, and optional fields without defaults remain optional.
+- **Centralized checks:** Ports, numeric settings, modes, network selectors,
+  outbound names, routing marks, and five-field cron structure are validated
+  centrally. Decimal and hex routing marks remain supported, with reserved
+  marks rejected. Subscription and health-check URLs accept HTTP and HTTPS.
+  Repeated checks and fallback logic were removed from configuration readers.
+- **Diagnostics:** Validation announces its start and reports failing section
+  types and option names without exposing values. A failing anonymous section
+  cannot be hidden by a later successful check. Runtime checks such as port
+  availability remain separate.
+
+### Firewall & DNS
+
+- **TCP and UDP DNS:** Client **Drop** and **Hijack** modes now cover both
+  transports on port 53, for IPv4 and enabled IPv6 in full and partial routing.
+  Existing local-destination, interface, client, and source-port exclusions
+  remain in place.
+- **DNS migration:** `nft_dns_udp_mode` becomes `nft_dns_mode`. Migration carries
+  forward the old selection when the new option is absent, preserves an
+  explicitly configured new selection, and removes the retired option.
+- **Reply bypass:** Both routing modes now bypass conntrack reply traffic in
+  prerouting and output to avoid unnecessary interception of return traffic.
+- **Bridge compatibility:** The workaround disables IPv4 and IPv6 bridge
+  iptables hooks only when `br_netfilter` is loaded and the IPv4 hook is on.
+  Changes apply to the current runtime; the module is not unloaded.
+- **Resolver defaults:** Bootstrap defaults now include Google, Cloudflare,
+  and DNS SB; main and proxy-server DoH defaults use Cloudflare and Google.
+  Host mappings were expanded and redundant DNS-policy/sniffer entries removed
+  in both templates. Embedded DoH firewall lists were also expanded.
+
+### Hardware Identity & Credentials
+
+- **HWID generation:** Real hardware identity now prefers OpenWrt's label MAC,
+  with validated active-interface MAC fallbacks. Malformed, all-zero, and
+  multicast values are rejected. HWIDs use a full 64-character SHA-256 digest
+  instead of a 14-character MD5 prefix; `sha256sum` is checked at startup.
+- **Identity failure:** If no valid real HWID can be generated, subscription
+  requests omit the real device-identity headers instead of sending an empty
+  or compiled placeholder identity.
+- **Password generation:** API and Mixed Port credentials share one generator,
+  drawing separate 24-byte random values from `/dev/urandom` and encoding each
+  as 32 Base64 characters. `pipefail` and output checks detect read or encoding
+  failures. Existing saved credentials are retained on upgrade.
+
+### LuCI & Defaults
+
+- **Routing cleanup:** Deleting an outbound, group, or provider in LuCI removes
+  its group references and affected selected defaults. Deleted outbound/group
+  targets reset final rules and download paths to `DIRECT`, and Mixed Port to
+  `BY RULES`; matching `Connect through` references are cleared, including JSON
+  `dialer-proxy` fields. Empty groups are retained for review. Changes take
+  effect after **Save & Apply**; manual UCI deletions and renames are not covered.
+- **Select groups:** The backend no longer invents missing health-check or lazy
+  settings for `select` groups. Absent values are omitted from YAML; explicitly
+  saved values remain supported. Other group types retain their defaults.
+- **Fake-IP guidance:** Real-IP exception fields warn that changes in partial
+  routing may make traffic bypass Mihomo. The Fake IP tab precedes Policies.
+- **Required fields:** List-update controls, download limits, group check
+  timeout/failure count, DNS listening port, and client interfaces now have
+  consistent non-empty LuCI settings. Download-limit schema defaults match
+  LuCI's 10 MiB preset; explicit limits remain unchanged.
+- **Download choices:** Blocklist downloads offer **DIRECT** and configured
+  proxies/groups, without **By rules** or **REJECT**. Subscription downloads
+  no longer offer **By rules**.
+- **Status page:** OpenWrt status shows the release version directly. Removed
+  the redundant **Current status** heading and introductory description.
+- **Presets:** Refreshed the embedded desktop User-Agent snapshot. Documented
+  the three Mihomo memory/GC/thread settings as required.
+
+### Packaging & Maintenance
+
+- **Build dependencies:** Package dependencies, IPK/APK container, and Compose
+  build definitions now declare `ubox` alongside `rpcd` for native validation.
+- **Service cleanup:** Removed obsolete DHCP-pattern scanning and duplicate
+  validation helpers, propagated schedule-installation failures, and clarified
+  startup errors. Renamed migration to `99-justclash-migrate-config` and cleaned
+  up generated YAML spacing.
+- **Translations and version:** Synchronized Russian and Simplified Chinese
+  translations. Both packages are version `0.98.0_rc1`.
+
+### Documentation & Branding
+
+- **Navigation:** Reorganized `info` around a single [documentation index](info/README.md),
+  with configuration guides, concepts, references, and troubleshooting. Updated
+  README links and reduced repeated explanations.
+- **Configuration guides:** Reworked the quick start and explained how outbounds,
+  providers, and groups fit together. Added DNS/Fake-IP guidance, a two-outbound
+  `Connect through` example, and `direct://` plus fwmark handoff to another local
+  service. Split controller TLS into its own guide and documented configuration
+  validation, applying changes, and generated YAML reuse.
+- **Reference and troubleshooting:** Corrected UCI descriptions against the
+  implementation and clarified boot-only WAN waits, controller availability,
+  and API/TLS failures.
+- **Logo:** Replaced the project logo with the updated electronic cat design
+  and switched the README image to PNG.
+
+### Upgrade Notes
+
+- **Review HWID-based device limits:** Real HWIDs change in source selection
+  and digest format, so subscription servers may count the router as a new
+  device. Custom spoofed HWIDs are unchanged.
+- **Review DNS expectations:** Migrated **Drop**/**Hijack** settings now cover
+  TCP as well as UDP. Update scripts and restored backups to use
+  `nft_dns_mode`. Resolver-template changes apply to fresh installations and
+  resets rather than replacing custom DNS settings.
+- **Check validation errors:** Previously tolerated invalid values can stop
+  initialization, including values in disabled anonymous sections. Defaults
+  recover missing settings in memory, but do not repair invalid saved values.
+  No reset is required for the DNS migration; back up manual configuration.
+- **Custom images and UI:** Ensure `/sbin/validate_data` is available from
+  `ubox`, and refresh LuCI after upgrading. Existing credentials remain valid;
+  the new password format applies only when credentials are generated.
+
 ## [0.96.0] - 01102026
 
 ### Features & Enhancements
