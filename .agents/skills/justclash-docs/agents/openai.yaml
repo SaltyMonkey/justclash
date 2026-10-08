@@ -1,0 +1,3 @@
+interface:
+  display_name: "JustClash Docs"
+  short_description: "Write JustClash docs verified against code and LuCI"
