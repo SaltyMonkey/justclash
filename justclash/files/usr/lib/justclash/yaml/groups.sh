@@ -17,12 +17,12 @@ template_proxy_group() {
 
     out="\"name\":\"$(str_json_escape "$name")\""
     out="$out,\"type\":\"$(str_json_escape "$type")\""
-    out="$out,\"url\":\"$(str_json_escape "$url")\""
-    out="$out,\"expected-status\":$status"
-    out="$out,\"interval\":$interval"
-    out="$out,\"timeout\":$timeout"
-    out="$out,\"max-failed-times\":$max_failed"
-    out="$out,\"lazy\":$lazy"
+    [ -n "$url" ] && out="$out,\"url\":\"$(str_json_escape "$url")\""
+    [ -n "$status" ] && out="$out,\"expected-status\":$status"
+    [ -n "$interval" ] && out="$out,\"interval\":$interval"
+    [ -n "$timeout" ] && out="$out,\"timeout\":$timeout"
+    [ -n "$max_failed" ] && out="$out,\"max-failed-times\":$max_failed"
+    [ -n "$lazy" ] && out="$out,\"lazy\":$lazy"
 
     if [ "$type" = "url-test" ] && [ -n "$tolerance" ]; then
         out="$out,\"tolerance\":\"$(str_json_escape "$tolerance")\""
@@ -50,13 +50,14 @@ yaml_proxy_group_append() {
     local additional_srcip_route="${21}" additional_domain_route="${22}"
     local enabled_geosite_list="${23}" additional_destip_route="${24}" enabled_geoip_list="${25}"
     local route_entries route_entry ip_cidr rules_fragment escaped_proxies escaped_providers group_json
-    local download_proxy generated_rule
+    local download_proxy generated_rule lazy_value=""
 
     [ -n "$proxies_list" ] && escaped_proxies=$(str_trim "$proxies_list" | fmt_list_to_json_array)
     [ -n "$providers_list" ] && escaped_providers=$(str_trim "$providers_list" | fmt_list_to_json_array)
+    [ -z "$lazy" ] || lazy_value=$(fmt_uci_bool_as_yaml "$lazy")
 
     template_proxy_group \
-        "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$(fmt_uci_bool_as_yaml "$lazy")" \
+        "$name" "$group_type" "$check_url" "$expected_status" "$interval" "$check_timeout" "$max_failed_times" "$lazy_value" \
         "$tolerance" "$strategy" "$escaped_proxies" "$escaped_providers" "$filter" "$exclude_filter" "$exclude_type" "$default_selected"
     group_json="$OUT_TEMPLATE"
 
