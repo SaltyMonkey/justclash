@@ -108,24 +108,13 @@ preflight_check_requirement() {
 }
 
 preflight_check_conflicts_warn() {
-    local dhcp_config_path="$1"
-    local warn_patterns="$2"
-    local resolvconf_path="$3"
-    local zapret_path="$4"
-    local byedpi_path="$5"
-    local youtube_unblock_path="$6"
-    local b4_path="$7"
+    local resolvconf_path="$1"
+    local zapret_path="$2"
+    local byedpi_path="$3"
+    local youtube_unblock_path="$4"
+    local b4_path="$5"
     local resolvconf_res
-    local found_patterns formatted_patterns
     local service_path detected_services service_name
-
-    # Check for DHCP config leftovers
-    # shellcheck disable=SC2086
-    found_patterns=$(file_is_pattern_in_file "$dhcp_config_path" $warn_patterns)
-    if [ -n "$found_patterns" ]; then
-        formatted_patterns=$(echo "$found_patterns" | sed 's/ /, /g')
-        log warn "DHCP configuration contains leftover patterns: $formatted_patterns"
-    fi
 
     # Check for external DNS in resolv.conf
     awk '$1 == "nameserver" && $2 != "127.0.0.1" && $2 != "0.0.0.0" && $2 != "::1" && $2 != "::" { found=1 } END { exit !found }' "$resolvconf_path"
@@ -146,27 +135,5 @@ preflight_check_conflicts_warn() {
 
     if [ -n "$detected_services" ]; then
         log warn "Potential conflict: active DPI or proxy services detected ($detected_services)"
-    fi
-}
-
-file_is_pattern_in_file() {
-    local file="$1"
-
-    if [ ! -r "$file" ]; then
-        log warn "Failed to open file $file"
-        return 1
-    fi
-    shift
-    local found_patterns=""
-    for pattern in "$@"; do
-        if grep -qE "$pattern" "$file"; then
-            found_patterns="${found_patterns:+$found_patterns }$pattern"
-        fi
-    done
-    if [ -n "$found_patterns" ]; then
-        echo "$found_patterns"
-        return 0
-    else
-        return 1
     fi
 }
