@@ -174,7 +174,13 @@ if uci -q get justclash.settings.nft_apply_changes_router >/dev/null 2>&1; then
     migration_changed=1
 fi
 
-add_missing_option "justclash.settings.nft_dns_udp_mode" "BY RULES" || exit 1
+# Keep an explicit new setting; upgrade should not win an argument with the user.
+if legacy_dns_mode=$(uci -q get justclash.settings.nft_dns_udp_mode); then
+    add_missing_option "justclash.settings.nft_dns_mode" "$legacy_dns_mode" || exit 1
+    uci -q delete justclash.settings.nft_dns_udp_mode || exit 1
+    migration_changed=1
+fi
+add_missing_option "justclash.settings.nft_dns_mode" "BY RULES" || exit 1
 
 if uci -q get justclash.settings.skip_environment_checks >/dev/null 2>&1; then
     uci -q delete justclash.settings.skip_environment_checks || exit 1
