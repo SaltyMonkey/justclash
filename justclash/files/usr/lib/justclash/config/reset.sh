@@ -4,38 +4,22 @@
 _CONFIG_API_PASSWORD_PLACEHOLDER="__JUSTCLASH_GENERATE_API_PASSWORD__"
 _CONFIG_MIXED_PASSWORD_PLACEHOLDER="__JUSTCLASH_GENERATE_MIXED_PASSWORD__"
 
-_config_generate_api_password() {
-    local password=""
-
-    if [ -r /proc/sys/kernel/random/uuid ]; then
-        password="$(tr -d '-' </proc/sys/kernel/random/uuid 2>/dev/null)" || password=""
-    fi
-
-    if [ "${#password}" -lt 32 ] && [ -r /dev/urandom ]; then
-        password="$(
-            head -c 24 /dev/urandom 2>/dev/null |
-                base64 2>/dev/null |
-                tr -d '\r\n'
-        )" || password=""
-    fi
-
-    [ "${#password}" -ge 32 ] || return 1
-
-    printf '%s\n' "$password"
-}
-
-_config_generate_mixed_password() {
+_config_generate_password() {
     local password=""
 
     [ -r /dev/urandom ] || return 1
     password="$(
-        head -c 48 /dev/urandom 2>/dev/null |
+        set -o pipefail || exit 1
+        head -c 24 /dev/urandom 2>/dev/null |
             base64 2>/dev/null |
             tr -d '\r\n'
-    )" || password=""
+    )" || return 1
 
-    [ "${#password}" -eq 64 ] || return 1
-    printf '%s\n' "$password"
+    [ "${#password}" -eq 32 ] || return 1
+    case "$password" in
+        *[!A-Za-z0-9+/]*) return 1 ;;
+    esac
+    printf '%s' "$password"
 }
 
 _config_write_credentials() {
@@ -71,8 +55,8 @@ config_credentials_ensure_file() {
         return 0
     fi
 
-    api_password="$(_config_generate_api_password)" || return 1
-    mixed_password="$(_config_generate_mixed_password)" || return 1
+    api_password="$(_config_generate_password)" || return 1
+    mixed_password="$(_config_generate_password)" || return 1
     tmp_config="$(mktemp "${config_path}.password.XXXXXX")" || return 1
 
     if ! _config_write_credentials "$config_path" "$tmp_config" "$api_password" "$mixed_password" ||
@@ -94,11 +78,11 @@ config_reset() {
         return 1
     fi
 
-    api_password="$(_config_generate_api_password)" || {
+    api_password="$(_config_generate_password)" || {
         clog error "Failed to generate a new API password."
         return 1
     }
-    mixed_password="$(_config_generate_mixed_password)" || {
+    mixed_password="$(_config_generate_password)" || {
         clog error "Failed to generate a new Mixed Port password."
         return 1
     }
