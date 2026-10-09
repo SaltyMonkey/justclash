@@ -1,3 +1,95 @@
+## [0.100.0] - 09102026
+
+Stable release following **0.96.0**, consolidating the **0.98.0_rc1** and
+**0.98.0_rc2** changes and the final IP-CIDR and Nodes fixes.
+
+### Configuration Validation
+
+- Configuration is validated once during initialization with OpenWrt's
+  `/sbin/validate_data`, for both manual commands and procd. Schemas cover service,
+  proxy, blocking, Mixed Port, final rules, and anonymous outbound/provider/group
+  sections. Failures stop initialization before YAML or networking changes.
+- Missing or empty options recover schema defaults in memory where available;
+  saved UCI files are not rewritten. Invalid non-empty values are rejected,
+  and optional fields without defaults remain optional.
+- Centralized checks cover ports, numeric settings, modes, selectors, outbound
+  names, routing marks, and five-field cron structure. Decimal and hexadecimal
+  marks are accepted, reserved marks are rejected, and subscription/health-check
+  URLs accept HTTP and HTTPS. Errors identify section types and option names
+  without exposing values; runtime checks such as port availability stay separate.
+
+### Firewall, DNS & Rulesets
+
+- Client DNS **Drop** and **Hijack** now cover TCP and UDP in both routing modes,
+  including enabled IPv6. The migration renames `nft_dns_udp_mode` to
+  `nft_dns_mode`, preserving an explicitly configured new value.
+- Conntrack reply traffic bypasses interception in prerouting and output.
+  The bridge workaround disables IPv4/IPv6 bridge iptables hooks only when
+  `br_netfilter` is loaded and the IPv4 hook is enabled, without unloading it.
+- Refreshed resolver defaults and static host mappings, removed redundant
+  DNS-policy/sniffer entries, and expanded the embedded DoH firewall lists.
+- Fixed partial-routing IP-CIDR sets: 17 built-in entries, including Telegram and
+  Discord voice, now use dual-stack text `.list` sources instead of binary MRS,
+  matching the nftables loader and update watcher. IPv6 remains controlled by
+  the IPv6 setting. Removed `antifilter-community-ipcidr`, `apple-ipcidr`, and
+  `cloudfront-ipcidr` from the catalog.
+
+### Hardware Identity & Credentials
+
+- Real HWIDs prefer OpenWrt's label MAC, with validated active-interface MAC
+  fallbacks, and use a full SHA-256 digest instead of a 14-character MD5 prefix.
+  `sha256sum` is checked at startup. Failed generation omits real identity headers.
+- Subscription identity headers now use `x-device-os` and `x-ver-os` in real and
+  spoofed modes. Real OS versions and CLI status use OpenWrt's `VERSION_ID`.
+  Custom identity values are preserved.
+- API and Mixed Port passwords share a generator using separate random reads
+  from `/dev/urandom`, producing 32 Base64 characters each. Pipeline and output
+  checks detect generation failures; existing credentials remain unchanged.
+
+### LuCI
+
+- Deleting an outbound, group, or provider cleans up group membership and
+  affected selections. Deleted outbound/group targets reset final rules and
+  download paths to `DIRECT`, Mixed Port to `BY RULES`, and clear `Connect through`
+  references, including JSON `dialer-proxy`. Empty groups remain for review.
+  Cleanup uses pending LuCI changes and takes effect after **Save & Apply**.
+- Group-node delay tests use the provider-specific API for provider nodes,
+  fixing lookup failures previously displayed as timeouts. Standalone outbounds
+  retain their existing test path.
+- Select groups no longer receive invented health-check or lazy defaults;
+  explicitly saved values remain supported. List-update controls, download
+  limits, group check timeout/failure count, DNS port, and client interfaces have
+  consistent non-empty settings. Download-limit defaults match LuCI's 10 MiB preset.
+- Blocklist download choices are **DIRECT** and configured outbounds/groups;
+  subscription downloads no longer offer **By rules**. Fake-IP exceptions warn
+  about partial-routing bypass, and the Fake IP tab precedes Policies.
+- Simplified status headings and OpenWrt version display, refreshed desktop
+  User-Agent presets, and synchronized Russian and Simplified Chinese translations.
+
+### Documentation & Maintenance
+
+- Reorganized `info` around the [documentation index](info/README.md), with a
+  rewritten quick start, task guides, concepts, references, and troubleshooting.
+  Explained outbounds/providers/groups, connection chaining, `direct://` with
+  interface binding and fwmark handoff, DNS/Fake-IP, and configuration lifecycle.
+- Added `ubox` to package and container build dependencies for native validation.
+  Removed duplicate validation and obsolete scanning, improved startup errors
+  and scheduler failure handling, renamed the UCI migration, and cleaned YAML spacing.
+- Updated the electronic cat logo and switched the README image to PNG.
+
+### Upgrade Notes
+
+- Back up your configuration. Newly enforced checks may reject previously
+  tolerated invalid values, including those in disabled anonymous sections.
+  Default recovery happens in memory and does not repair invalid saved values.
+- Real HWIDs change, so subscription device limits may count the router as a new
+  device. Spoofed HWIDs and existing passwords are unchanged.
+- DNS **Drop**/**Hijack** now also affect TCP. Update scripts/backups to use
+  `nft_dns_mode`; resolver-template changes apply to fresh installations and resets.
+- Replace saved selections of the three removed IP-CIDR entries or add custom
+  text rulesets; those selections are not migrated automatically.
+- Custom images need `/sbin/validate_data` from `ubox`. Refresh LuCI after upgrading.
+
 ## [0.98.0_rc2] - 09102026
 
 ### HWID Headers
