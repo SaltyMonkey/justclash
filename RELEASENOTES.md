@@ -1,3 +1,16 @@
+## [0.98.0_rc2] - 09102026
+
+### HWID Headers
+
+- **Correct header names:** Subscription requests now send `x-device-os` and
+  `x-ver-os` instead of `x-os` and `x-os-version`, in both real and spoofed HWID
+  modes. Existing custom identity values are preserved.
+- **Version only:** Real-HWID requests use OpenWrt's `VERSION_ID` for `x-ver-os`,
+  without the OS name or build description. The CLI status report also uses
+  this version-only value.
+- **Documentation:** Updated the UCI reference with the corrected header names
+  and OS-version source.
+
 ## [0.98.0_rc1] - 08102026
 
 ### Configuration Validation
