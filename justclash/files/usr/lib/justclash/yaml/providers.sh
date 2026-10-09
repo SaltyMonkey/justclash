@@ -108,7 +108,7 @@ template_headers() {
     esac
 
     if [ "$hwid_headers_enabled" -eq 1 ]; then
-        headers_fragment=$(printf '"x-hwid":["%s"],"x-os":["%s"],"x-os-version":["%s"],"x-device-model":["%s"]' \
+        headers_fragment=$(printf '"x-hwid":["%s"],"x-device-os":["%s"],"x-ver-os":["%s"],"x-device-model":["%s"]' \
             "$(str_json_escape "$hwid")" \
             "$(str_json_escape "$device_os")" \
             "$(str_json_escape "$version_os")" \

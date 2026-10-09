@@ -17,7 +17,9 @@ if [ -f /etc/os-release ]; then
     JUSTCLASH_CACHE_OS_ARCH="$OPENWRT_ARCH"
     # shellcheck disable=SC2154
     JUSTCLASH_CACHE_OS_NAME="$NAME"
-    JUSTCLASH_CACHE_OS_VERSION="${PRETTY_NAME:-$OPENWRT_RELEASE}"
+    # shellcheck disable=SC2154
+    JUSTCLASH_CACHE_OS_VERSION="$VERSION_ID"
+    # shellcheck disable=SC2154
     JUSTCLASH_CACHE_OS_VERSION_FULL="$OPENWRT_RELEASE"
 fi
 
