@@ -22,13 +22,16 @@ const unique = (items) => {
 const normalizeNodesState = (response, rawProvidersResponse) => {
     const rawProxies = response && typeof response.proxies === "object" ? response.proxies : {};
     const proxies = Object.assign({}, rawProxies);
+    const proxyProviderMap = Object.create(null);
 
     if (rawProvidersResponse && typeof rawProvidersResponse.providers === "object") {
-        for (const provider of Object.values(rawProvidersResponse.providers)) {
+        for (const [providerName, provider] of Object.entries(rawProvidersResponse.providers)) {
             if (provider && Array.isArray(provider.proxies)) {
                 for (const proxy of provider.proxies) {
-                    if (proxy && proxy.name && !proxies[proxy.name])
+                    if (proxy && proxy.name && !proxies[proxy.name]) {
                         proxies[proxy.name] = proxy;
+                        proxyProviderMap[proxy.name] = providerName;
+                    }
                 }
             }
         }
@@ -69,7 +72,7 @@ const normalizeNodesState = (response, rawProvidersResponse) => {
         return a.name.localeCompare(b.name);
     });
 
-    return { proxyMap: proxies, groups };
+    return { proxyMap: proxies, proxyProviderMap, groups };
 };
 
 const normalizeProvidersState = (response) => {

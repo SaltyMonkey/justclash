@@ -133,11 +133,21 @@ return view.extend({
             return card;
         };
 
-        const runProxyDelayTests = async (candidates, delayMap, fetchDelay = (proxyName) =>
-            mihomoApi.fetchProxyDelay(proxyName, state.token, mihomoApi.fetchTimeout, {
+        const fetchNodeDelay = (proxyName, providerName = state.nodesState.proxyProviderMap[proxyName]) => {
+            const searchParams = {
                 url: common.defaultHealthCheckUrls[0],
                 timeout: String(mihomoApi.fetchTimeout)
-            })) => {
+            };
+
+            if (providerName)
+                return mihomoApi.fetchProxyProviderProxyDelay(
+                    providerName, proxyName, state.token, mihomoApi.fetchTimeout, searchParams
+                );
+
+            return mihomoApi.fetchProxyDelay(proxyName, state.token, mihomoApi.fetchTimeout, searchParams);
+        };
+
+        const runProxyDelayTests = async (candidates, delayMap, fetchDelay = fetchNodeDelay) => {
             let nextIndex = 0;
 
             const runWorker = async () => {
@@ -197,16 +207,7 @@ return view.extend({
                 await runProxyDelayTests(
                     candidates,
                     state.providerDelays[provider.name],
-                    (proxyName) => mihomoApi.fetchProxyProviderProxyDelay(
-                        provider.name,
-                        proxyName,
-                        state.token,
-                        mihomoApi.fetchTimeout,
-                        {
-                            url: common.defaultHealthCheckUrls[0],
-                            timeout: String(mihomoApi.fetchTimeout)
-                        }
-                    )
+                    (proxyName) => fetchNodeDelay(proxyName, provider.name)
                 );
             } finally {
                 state.delayLoadingProvider = "";
