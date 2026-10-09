@@ -311,8 +311,9 @@ It defaults to `0`. When enabled, the generated provider `override` contains an
 `override-expr` JSON array that sets `reality-opts.support-x25519mlkem768` to
 `true` only on nodes that already have `reality-opts`. Other nodes are unchanged.
 
-With `header_hwid=real`, all four identity headers are read from the router. With
-`header_hwid=spoofed`, `x-hwid`, `x-os`, `x-os-version`, and `x-device-model`
+With `header_hwid=real`, all four identity headers are read from the router.
+`x-ver-os` contains only the OpenWrt version from `VERSION_ID`, without the OS name.
+With `header_hwid=spoofed`, `x-hwid`, `x-device-os`, `x-ver-os`, and `x-device-model`
 come only from their corresponding `header_*_custom` fields. Empty custom values
 remain empty; they never fall back to the router identity.
 
