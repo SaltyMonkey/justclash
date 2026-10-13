@@ -220,6 +220,9 @@ start() {
     # Time synchronization is best effort; configuration was checked above.
     ntpd_force_sync "$ntpd_start" "$DEFAULT_NTP_IPS"
 
+    log info "Updating scheduled tasks"
+    cron_update || log warn "Scheduled tasks update failed; continuing startup without updated schedules."
+
     log info "Updating SAFE_PATHS environment variable"
     core_prepare_safe_paths \
         "$api_tls" \
@@ -291,12 +294,6 @@ start() {
         log error "Dnsmasq configuration failed. Aborting startup."
         run_dnsmasq_restore || log error "Dnsmasq rollback failed; backup retained."
         nf_table_remove
-        return 1
-    }
-
-    log info "Updating scheduled tasks"
-    cron_update || {
-        log error "Scheduled tasks update failed. Aborting startup."
         return 1
     }
 
@@ -387,6 +384,7 @@ start_core() {
     else
         # shellcheck disable=SC2030,SC2031
         (
+            set -o pipefail
             if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
                 export GOMEMLIMIT="${mihomo_mem_limit}MiB"
             fi
@@ -1250,45 +1248,18 @@ core_prepare_workdir() {
 }
 
 core_update() {
-    local channel custom_url repository source_type
-
-    local current_version latest_version version_url
+    local channel custom_url repository source_type update_mode
 
     # Read settings used by this scenario.
     config_get source_type settings mihomo_core_source_type
     config_get custom_url settings mihomo_custom_core_url
     config_get channel settings mihomo_github_channel
     config_get repository settings mihomo_github_repo
+    config_get update_mode settings mihomo_core_update_mode "$DEFAULT_MIHOMO_CORE_UPDATE_MODE"
 
-    if [ "$source_type" = custom ]; then
-        log info "Checking for Mihomo updates from custom source..."
-    else
-        log info "Checking for Mihomo updates from configured repository (channel: $channel)..."
-    fi
-
-    version_url=$(core_update_source_resolve \
-        "$source_type" "$custom_url" "$channel" "$repository") || {
-        log error "Failed to resolve the core version source."
-        return 1
-    }
-    [ -n "$version_url" ] || {
-        log error "Release version metadata was not found."
-        return 1
-    }
-
-    latest_version=$(core_update_latest_version_get "$version_url") || {
-        log error "Failed to download core version metadata."
-        return 1
-    }
-    [ -n "$latest_version" ] || {
-        log error "Failed to retrieve the latest version information."
-        return 1
-    }
-
-    current_version=$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")
-    core_update_apply \
-        "$current_version" "$latest_version" "$version_url" \
-        "$NO_DATA_STRING" "$CORE_WORKDIR_PATH" "$CORE_PATH"
+    core_update_run \
+        "$source_type" "$custom_url" "$channel" "$repository" "$update_mode" \
+        "$CORE_WORKDIR_PATH" "$CORE_PATH" "$NO_DATA_STRING"
 }
 
 core_remove() {
@@ -1578,7 +1549,7 @@ resources)
             /usr/lib/justclash/runtime/downloads.sh \
             /usr/lib/justclash/runtime/core.sh \
             /usr/lib/justclash/runtime/core_update.sh
-        config_init "$PROGNAME"
+        config_init "$PROGNAME" || exit 1
         core_update
         ;;
     core:remove)
@@ -1601,7 +1572,7 @@ resources)
             /usr/lib/justclash/helpers.sh \
             /usr/lib/justclash/config.sh \
             /usr/lib/justclash/runtime/downloads.sh
-        config_init "$PROGNAME"
+        config_init "$PROGNAME" || exit 1
         service_data_update
         ;;
     *)
