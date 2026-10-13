@@ -19,6 +19,45 @@ The standalone installer and fresh package configurations use the slim kernel ve
 
 The package core updater compares version strings. Changing repositories alone does not reinstall a core when the selected release reports the same version as the installed binary.
 
+Core updates require HTTPS for version metadata, archives, checksums, and redirects. For GitHub sources, both the standalone installer and package updater verify the archive's SHA-256 against the digest supplied by the release API. An unavailable or invalid digest prevents installation.
+
+Ruleset catalog, dashboard archive, and GeoIP/Geosite source URLs must also use HTTPS. Empty fields use the HTTPS defaults. Existing HTTP overrides must be replaced before startup or resource updates can pass configuration validation. Catalog downloads reject redirects to HTTP. Dashboard and geodata downloads are performed by Mihomo; JustClash validates their configured URLs but does not control the core's redirect handling.
+
+For a custom core source, **Service → External resources → Custom core base URL** must use HTTPS. The server must provide `version.txt`, the `mihomo-linux-arch-version.gz` archives, and a shared `checksums.txt` file in `sha256sum` format: a 64-character hexadecimal SHA-256 hash followed by the archive filename. The updater selects exactly one entry matching the archive's full filename; an optional `./` prefix and the binary-mode `*` marker are supported. Missing, duplicate, or malformed entries prevent the update. Hash mismatches are rejected before extracting the archive.
+
+### Core Update Modes
+
+Choose **Service → External resources → Core update mode** to set the package updater's replacement order. The UCI option is `justclash.settings.mihomo_core_update_mode`.
+
+Package migration adds `REMOVE AND DOWNLOAD` only when this option is missing. Existing values are preserved without conversion. The package updater stops if configuration validation fails, and its replacement routine also rejects an unknown mode before removing any binary.
+
+| Mode | Replacement order | Tradeoff |
+| --- | --- | --- |
+| `REMOVE AND DOWNLOAD` — Remove and download (default) | Obtain the expected checksum, remove the installed core, download and verify the archive, then extract it | Frees the installed binary's storage before downloading. A download or verification failure leaves no installed core. |
+| `DOWNLOAD AND REMOVE` — Download and remove | Download the archive and verify SHA-256 and gzip before removing the installed core, then extract it | Keeps the installed core on download, checksum, or gzip failure. Requires space for the installed binary and the downloaded archive at the same time. |
+
+Both modes download the compressed archive to `/tmp` and extract directly to the core path. Removing the installed binary does not reduce the space required for the compressed archive in `/tmp`. Neither mode keeps an additional uncompressed binary or provides rollback after removal: an extraction or write failure can still leave no usable core. Download-first never falls back to removing the current core when temporary space is insufficient. Fresh installations skip removal, and an already current version is left unchanged.
+
+The standalone installer always uses `REMOVE AND DOWNLOAD`, independently of the LuCI/UCI mode setting. After obtaining valid version and checksum metadata, it removes an installed core before downloading its replacement archive. A download or archive verification failure therefore leaves no installed core. There is no installer option to change this order.
+
+## Switching the Web Dashboard
+
+Open **Services → JustClash → Setup: Proxy → Controller/API settings** to select
+MetaCubeXD, Zashboard, or YACD-meta. All three use `/etc/justclash/dashboard`.
+Mihomo skips automatic dashboard downloads when that directory already contains
+files, even if the selected panel or its download URL has changed.
+
+If a panel has already been downloaded:
+
+1. Manually remove all files and subdirectories inside `/etc/justclash/dashboard`.
+2. Select the desired **Web dashboard** and use **Save & Apply**.
+3. Restart JustClash, then reopen the dashboard and confirm the selected
+   interface appears. The download requires working network access.
+
+Changing the selection regenerates YAML on the next start/reload, but does not
+replace existing dashboard files. The same manual cleanup is needed to download
+an installed panel from a changed source URL.
+
 ## Generated Configuration After Updates
 
 Package and catalog updates invalidate the generated configuration on the next

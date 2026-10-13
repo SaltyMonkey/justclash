@@ -120,15 +120,16 @@ The `REJECT` choice has been removed only from the four `nft_*_mode` settings ab
 | `mihomo_cron_scheduled_work_start_string` | Cron expression | Scheduled start |
 | `mihomo_cron_scheduled_work_stop_string` | Cron expression | Scheduled stop |
 | `mihomo_core_source_type` | Choice | Core update source type |
+| `mihomo_core_update_mode` | `REMOVE AND DOWNLOAD` / `DOWNLOAD AND REMOVE` | Core replacement order; defaults to `REMOVE AND DOWNLOAD`. Download first preserves the current core until SHA-256 and gzip checks pass. See [core update modes](../guides/maintenance.md#core-update-modes). |
 | `mihomo_github_repo` | `username/repo` | Repository used for GitHub core updates; new-install default provides the slim kernel version |
 | `mihomo_github_channel` | Choice | Stable or configured prerelease channel |
-| `mihomo_custom_core_url` | URL | Custom core archive source |
-| `mihomo_rulesets_files_download_url` | URL | Service ruleset catalog source |
-| `mihomo_dashboard_zashboard_url` | URL | Dashboard archive source |
-| `mihomo_dashboard_metacubexd_url` | URL | Dashboard archive source |
-| `mihomo_dashboard_yacd_meta_url` | URL | Dashboard archive source |
-| `mihomo_geosite_url` | URL | Geosite database source |
-| `mihomo_geoip_url` | URL | GeoIP database source |
+| `mihomo_custom_core_url` | HTTPS URL | Custom core archive source with a shared `checksums.txt` file in `sha256sum` format. See [core update requirements](../guides/maintenance.md#what-is-being-updated). |
+| `mihomo_rulesets_files_download_url` | HTTPS URL | Service ruleset catalog source |
+| `mihomo_dashboard_zashboard_url` | HTTPS URL | Dashboard archive source |
+| `mihomo_dashboard_metacubexd_url` | HTTPS URL | Dashboard archive source |
+| `mihomo_dashboard_yacd_meta_url` | HTTPS URL | Dashboard archive source |
+| `mihomo_geosite_url` | HTTPS URL | Geosite database source |
+| `mihomo_geoip_url` | HTTPS URL | GeoIP database source |
 | `mihomo_mem_limit` | Unsigned integer | Required Mihomo memory limit |
 | `mihomo_gogc` | Unsigned integer | Required Go GC target |
 | `mihomo_gomaxprocs` | Unsigned integer | Required Go CPU-thread limit |
@@ -151,7 +152,7 @@ LuCI offers repositories for the slim kernel version and upstream Mihomo as edit
 | `proxy_authentication` | List of `user:pass` credentials | Access control for non-loopback Mixed Port clients; installation and reset generate a `user:` credential with a random 32-character password |
 | `controller_bind_interface` | OpenWrt network name or `-` | Network whose IPv4 address is used for API binding; `-` listens on all IPv4 interfaces |
 | `use_dashboard` | Boolean | Enable local dashboard hosting |
-| `dashboard_repo` | Choice | Selected dashboard |
+| `dashboard_repo` | Choice | Selected dashboard; changing an already downloaded panel requires [manual cleanup](../guides/maintenance.md#switching-the-web-dashboard). |
 | `api_password` | Secret | Mihomo API credential, generated during package installation |
 | `api_tls` | Boolean | Enable direct API TLS |
 | `api_tls_cert` | Absolute path | PEM certificate path |

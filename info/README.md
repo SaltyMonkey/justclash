@@ -34,6 +34,7 @@ appear in the interface.
 | Protect controller access and handle credentials or download headers | [Security and access](guides/security.md) |
 | Connect HTTPS LuCI to the controller | [Controller TLS](guides/controller-tls.md) |
 | Update packages/core, back up, restore, or remove JustClash | [Maintenance](guides/maintenance.md) |
+| Switch an already downloaded web dashboard | [Dashboard switching](guides/maintenance.md#switching-the-web-dashboard) |
 | Understand when changes take effect and YAML is regenerated | [Configuration lifecycle](concepts/configuration-lifecycle.md) |
 
 ## Troubleshooting

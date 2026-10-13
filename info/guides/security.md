@@ -16,6 +16,16 @@ Protect the controller with:
 3. OpenWrt firewall restrictions;
 4. TLS whenever the browser reaches LuCI over HTTPS.
 
+## LuCI Access Assumption: Trusted Administrators
+
+JustClash assumes that every user granted access to the application is a trusted administrator. A separate role for viewing controller data without management privileges is not provided.
+
+The application's read ACL permits reading the entire `justclash` UCI package, including `api_password` and other sensitive settings. Live pages need that password to connect directly from the browser to the Mihomo controller. The same password also authorizes management requests, such as changing the core configuration and closing connections. LuCI's read/write ACL distinction applies to UCI and ubus operations; it does not restrict direct requests made with the controller password.
+
+Grant JustClash access only to trusted administrators. Assigning only the application's read ACL does not create a safe view-only account. This is an accepted limitation of the administrator-only access model. If view-only users are needed, the access model must first be changed to keep the controller password and other secrets on the server and authorize viewing and management separately.
+
+Revoking a LuCI session does not revoke a controller password already obtained by the user. When withdrawing an administrator's controller access, rotate the API password as well.
+
 ## API Password After Installation
 
 A fresh installation replaces the packaged placeholder or a known legacy default

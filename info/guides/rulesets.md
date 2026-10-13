@@ -24,12 +24,23 @@ Open **Services → JustClash → Setup: Rulesets**.
 2. Add a row.
 3. Set a display name and stable unique ID.
 4. Choose the content type and format.
-5. Enter a remote URL or absolute local path.
+5. Enter a remote HTTPS URL or absolute local path.
 6. Add authorization only when the source requires it.
-7. Save the row and Save & Apply.
+7. Use **Save** to write the catalog files.
 8. Open **Setup: Routing** and reference the ID.
+9. Use **Save & Apply** there to apply the routing configuration.
+
+The Rulesets page saves files without reloading the service. Empty user catalogs
+are valid: deleting the final row and saving leaves an empty file. To apply
+catalog-only changes, reload from **Status** or use `service justclash reload`.
 
 Changing an ID requires updating every reference. Renaming only the display name does not.
+
+The LuCI editor requires HTTPS for remote user-defined sources, for both routing
+and blocking rulesets. Absolute local paths remain supported. This check applies
+only in LuCI; the server-side catalog parser does not enforce HTTPS on manually
+edited files. Existing HTTP entries must be changed to HTTPS or local paths
+before the page can be saved.
 
 ## Supported Sources
 
@@ -116,6 +127,11 @@ For an `ipcidr/text` source:
 
 A binary `.mrs` address provider remains useful inside Mihomo but cannot capture a raw-address connection that never entered the core.
 
+Generated nftables identifiers preserve `_` and encode `-` as `_d_` without
+truncating the catalog ID. The encoding is not unique: `my-list` and `my_d_list`
+produce the same identifier. Choose IDs that remain distinct after this conversion,
+and avoid `static_ips` and `source_ips`, which conflict with built-in set names.
+
 ## Persistence
 
 `mihomo_persistent_ext_rules` moves downloaded rules from RAM-backed storage to persistent storage.
@@ -163,7 +179,7 @@ Use `check` for shared diagnostics. Catalog URLs and authorization fields may be
 1. Remove every UCI reference to its ID.
 2. Save & Apply.
 3. Remove the catalog row.
-4. Apply again and verify that the provider disappeared.
+4. Use **Save** on Rulesets, reload the service, and verify that the provider disappeared.
 
 Removing the catalog first leaves stale UCI references and can prevent the
 intended rules from being generated.

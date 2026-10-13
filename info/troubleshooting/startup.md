@@ -122,6 +122,10 @@ Use `check full --unsafe`, `check routes`, and raw logs locally; they can reveal
 
 ## Scheduled Jobs
 
+Startup refreshes schedules after optional time synchronization. If that refresh
+fails, JustClash logs a warning and continues starting the core. A running core
+therefore does not confirm that its scheduled jobs were updated successfully.
+
 After changing restart, data-update, or start/stop schedules through UCI, run
 [`schedule sync`](../reference/cli.md#resources-and-scheduling) to rebuild the
 root crontab.

@@ -49,7 +49,7 @@ uci commit justclash
 service justclash restart
 ```
 
-Use direct downloadable files compatible with the installed Mihomo version. A new source can use different category names or contents; review every policy after migration.
+Use HTTPS URLs for direct downloadable files compatible with the installed Mihomo version. Leave a source field empty to use its default. A new source can use different category names or contents; review every policy after migration.
 
 Private database URLs are sensitive and should not appear in diagnostics.
 
