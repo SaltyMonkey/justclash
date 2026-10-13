@@ -37,8 +37,9 @@ parse_ss_url() {
             # Try base64 on entire userinfo
             decoded="$(printf '%s' "$userinfo" | base64 -d 2>/dev/null)"
             if [ -n "$decoded" ] && printf '%s\n' "$decoded" | grep -q ':'; then
-                method="$(str_url_decode "${decoded%%:*}")"
-                password="$(str_url_decode "${decoded#*:}")"
+                # Base64 restored the credentials; decoding again would invent a new password.
+                method="${decoded%%:*}"
+                password="${decoded#*:}"
             else
                 # Check for segmented base64 (Base64(method):Base64(pass) or Base64(method):Base64(psk1):Base64(psk2))
                 local method_part="${userinfo%%:*}"
@@ -83,8 +84,8 @@ parse_ss_url() {
         decoded="$(printf '%s' "$link" | base64 -d 2>/dev/null)"
         userinfo="${decoded%@*}"
         hostport="${decoded#*@}"
-        method="$(str_url_decode "${userinfo%%:*}")"
-        password="$(str_url_decode "${userinfo#*:}")"
+        method="${userinfo%%:*}"
+        password="${userinfo#*:}"
     fi
 
     local parsed_hostport
