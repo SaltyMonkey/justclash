@@ -247,6 +247,10 @@ msgstr ""
 msgid "Invalid HTTP(S) URL"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Invalid HTTPS URL"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/common.js:273
 msgid "URL must point to a .zip file"
 msgstr ""
@@ -1257,7 +1261,7 @@ msgid "Web dashboard:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/proxy.js:195
-msgid "Choose which web dashboard Mihomo should download and serve."
+msgid "Choose which web dashboard Mihomo should download and serve. If a dashboard has already been downloaded, manually remove all contents of /etc/justclash/dashboard before switching to another dashboard, then restart JustClash to download it."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/proxy.js:196
@@ -2475,6 +2479,22 @@ msgid "External resources"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:300
+msgid "Core update mode:"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:302
+msgid "Remove and download"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:303
+msgid "Download and remove"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:304
+msgid "Remove first saves storage space but leaves no installed core if the download fails. Download first keeps the current core until the archive passes SHA-256 and gzip checks; it needs space for both."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:309
 msgid "Core update source:"
 msgstr ""
 
@@ -2519,7 +2539,7 @@ msgid "Custom core base URL:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:329
-msgid "Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'"
+msgid "Base HTTPS URL of the server hosting the core files. The server MUST contain 'version.txt', the corresponding 'mihomo-linux-arch-version.gz' archives, and 'checksums.txt' with SHA-256 hashes and archive filenames in sha256sum format."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:339
@@ -2527,7 +2547,7 @@ msgid "Rulesets download URL:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:340
-msgid "URL to download built-in rulesets from. Leave empty to use the default."
+msgid "HTTPS URL to download built-in rulesets from. Leave empty to use the default."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:347
@@ -2535,7 +2555,7 @@ msgid "Geosite download URL:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:348
-msgid "URL to download geosite.dat from. Leave empty to use the default."
+msgid "HTTPS URL to download geosite.dat from. Leave empty to use the default."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:355
@@ -2543,7 +2563,7 @@ msgid "GeoIP download URL:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:356
-msgid "URL to download geoip.dat from. Leave empty to use the default."
+msgid "HTTPS URL to download geoip.dat from. Leave empty to use the default."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:363
@@ -2551,7 +2571,7 @@ msgid "Zashboard download URL:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:364
-msgid "URL to download Zashboard dashboard from. Leave empty to use the default."
+msgid "HTTPS URL to download Zashboard dashboard from. Leave empty to use the default."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:371
@@ -2559,7 +2579,7 @@ msgid "MetaCubeXD download URL:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:372
-msgid "URL to download the MetaCubeXD dashboard from. Leave empty to use the default."
+msgid "HTTPS URL to download the MetaCubeXD dashboard from. Leave empty to use the default."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:379
@@ -2567,7 +2587,7 @@ msgid "YACD-meta download URL:"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:380
-msgid "URL to download YACD-meta dashboard from. Leave empty to use the default."
+msgid "HTTPS URL to download YACD-meta dashboard from. Leave empty to use the default."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:388
@@ -2731,7 +2751,7 @@ msgid "Update Mihomo core"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:351
-msgid "Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."
+msgid "Core updates use the mode selected in Service → External resources. 'Remove and download' deletes the current core before downloading. 'Download and remove' keeps it until SHA-256 and gzip checks pass. Neither mode provides rollback after removal."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:366

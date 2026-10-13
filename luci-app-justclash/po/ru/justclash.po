@@ -246,6 +246,10 @@ msgstr "Значение не должно превышать %s"
 msgid "Invalid HTTP(S) URL"
 msgstr "Недопустимый HTTP(S) URL"
 
+#: htdocs/luci-static/resources/view/justclash/common.js
+msgid "Invalid HTTPS URL"
+msgstr "Недопустимый HTTPS URL"
+
 #: htdocs/luci-static/resources/view/justclash/common.js:273
 msgid "URL must point to a .zip file"
 msgstr "URL должен указывать на .zip-файл"
@@ -1256,8 +1260,8 @@ msgid "Web dashboard:"
 msgstr "Дашборд:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/proxy.js:195
-msgid "Choose which web dashboard Mihomo should download and serve."
-msgstr "Выберите, какой web-дашборд Mihomo должен скачивать и отдавать."
+msgid "Choose which web dashboard Mihomo should download and serve. If a dashboard has already been downloaded, manually remove all contents of /etc/justclash/dashboard before switching to another dashboard, then restart JustClash to download it."
+msgstr "Выберите, какой web-дашборд Mihomo должен скачивать и отдавать. Если панель уже скачана, перед переключением на другую вручную удалите всё содержимое /etc/justclash/dashboard, затем перезапустите JustClash для загрузки выбранной панели."
 
 #: htdocs/luci-static/resources/view/justclash/pages/proxy.js:196
 msgid "Zashboard"
@@ -2474,6 +2478,22 @@ msgid "External resources"
 msgstr "Внешние ресурсы"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:300
+msgid "Core update mode:"
+msgstr "Режим обновления ядра:"
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:302
+msgid "Remove and download"
+msgstr "Удалить и скачать"
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:303
+msgid "Download and remove"
+msgstr "Скачать и удалить"
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:304
+msgid "Remove first saves storage space but leaves no installed core if the download fails. Download first keeps the current core until the archive passes SHA-256 and gzip checks; it needs space for both."
+msgstr "Удаление перед скачиванием экономит место, но при ошибке загрузки установленного ядра не останется. Скачивание перед удалением сохраняет текущее ядро до проверки SHA-256 и gzip архива; требуется место для обоих файлов."
+
+#: htdocs/luci-static/resources/view/justclash/pages/service.js:309
 msgid "Core update source:"
 msgstr "Источник ядра:"
 
@@ -2519,56 +2539,56 @@ msgid "Custom core base URL:"
 msgstr "Пользовательский базовый URL ядра:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:329
-msgid "Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'"
-msgstr "Базовый URL сервера с файлами ядра. На сервере ДОЛЖНЫ быть файл 'version.txt' и архивы 'mihomo-linux-arch-version.gz'. Пример: 'https://example.com/mihomo/'"
+msgid "Base HTTPS URL of the server hosting the core files. The server MUST contain 'version.txt', the corresponding 'mihomo-linux-arch-version.gz' archives, and 'checksums.txt' with SHA-256 hashes and archive filenames in sha256sum format."
+msgstr "Базовый HTTPS URL сервера с файлами ядра. На сервере ДОЛЖНЫ быть 'version.txt', архивы 'mihomo-linux-arch-version.gz' и 'checksums.txt' с хешами SHA-256 и именами архивов в формате sha256sum."
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:339
 msgid "Rulesets download URL:"
 msgstr "URL для загрузки наборов правил:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:340
-msgid "URL to download built-in rulesets from. Leave empty to use the default."
-msgstr "URL для загрузки встроенных наборов правил. Оставьте поле пустым, чтобы использовать значение по умолчанию."
+msgid "HTTPS URL to download built-in rulesets from. Leave empty to use the default."
+msgstr "HTTPS URL для загрузки встроенных наборов правил. Оставьте пустым, чтобы использовать значение по умолчанию."
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:347
 msgid "Geosite download URL:"
 msgstr "URL для загрузки Geosite:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:348
-msgid "URL to download geosite.dat from. Leave empty to use the default."
-msgstr "URL для загрузки geosite.dat. Оставьте пустым для использования значения по умолчанию."
+msgid "HTTPS URL to download geosite.dat from. Leave empty to use the default."
+msgstr "HTTPS URL для загрузки geosite.dat. Оставьте пустым, чтобы использовать значение по умолчанию."
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:355
 msgid "GeoIP download URL:"
 msgstr "URL для загрузки GeoIP:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:356
-msgid "URL to download geoip.dat from. Leave empty to use the default."
-msgstr "URL для загрузки geoip.dat. Оставьте пустым для использования значения по умолчанию."
+msgid "HTTPS URL to download geoip.dat from. Leave empty to use the default."
+msgstr "HTTPS URL для загрузки geoip.dat. Оставьте пустым, чтобы использовать значение по умолчанию."
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:363
 msgid "Zashboard download URL:"
 msgstr "URL для загрузки Zashboard:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:364
-msgid "URL to download Zashboard dashboard from. Leave empty to use the default."
-msgstr "URL для загрузки панели Zashboard. Оставьте пустым для использования по умолчанию."
+msgid "HTTPS URL to download Zashboard dashboard from. Leave empty to use the default."
+msgstr "HTTPS URL для загрузки панели Zashboard. Оставьте пустым, чтобы использовать значение по умолчанию."
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:371
 msgid "MetaCubeXD download URL:"
 msgstr "URL загрузки MetaCubeXD:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:372
-msgid "URL to download the MetaCubeXD dashboard from. Leave empty to use the default."
-msgstr "URL для загрузки панели MetaCubeXD. Оставьте поле пустым, чтобы использовать значение по умолчанию."
+msgid "HTTPS URL to download the MetaCubeXD dashboard from. Leave empty to use the default."
+msgstr "HTTPS URL для загрузки панели MetaCubeXD. Оставьте пустым, чтобы использовать значение по умолчанию."
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:379
 msgid "YACD-meta download URL:"
 msgstr "URL для загрузки YACD-meta:"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:380
-msgid "URL to download YACD-meta dashboard from. Leave empty to use the default."
-msgstr "URL для загрузки панели YACD-meta. Оставьте пустым для использования по умолчанию."
+msgid "HTTPS URL to download YACD-meta dashboard from. Leave empty to use the default."
+msgstr "HTTPS URL для загрузки панели YACD-meta. Оставьте пустым, чтобы использовать значение по умолчанию."
 
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:388
 msgid "Kernel limits"
@@ -2731,8 +2751,8 @@ msgid "Update Mihomo core"
 msgstr "Обновить ядро Mihomo"
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:351
-msgid "Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."
-msgstr "Обновление ядра Mihomo пока не является атомарным. Если на роутере слишком мало свободного места или загрузка сорвётся в процессе обновления, текущее ядро может быть удалено до полной установки нового."
+msgid "Core updates use the mode selected in Service → External resources. 'Remove and download' deletes the current core before downloading. 'Download and remove' keeps it until SHA-256 and gzip checks pass. Neither mode provides rollback after removal."
+msgstr "Обновление ядра использует режим, выбранный в «Сервис → Внешние ресурсы». «Удалить и скачать» удаляет текущее ядро перед скачиванием. «Скачать и удалить» сохраняет его до успешной проверки SHA-256 и gzip. Ни один режим не предусматривает откат после удаления."
 
 #: htdocs/luci-static/resources/view/justclash/pages/status.js:366
 msgid "Update active rulesets"
