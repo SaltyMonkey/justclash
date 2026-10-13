@@ -298,6 +298,14 @@ return view.extend({
         tabname = "external_resources_tab";
         s.tab(tabname, _("External resources"));
 
+        o = s.taboption(tabname, form.ListValue, "mihomo_core_update_mode", _("Core update mode:"));
+        o.value("REMOVE AND DOWNLOAD", _("Remove and download"));
+        o.value("DOWNLOAD AND REMOVE", _("Download and remove"));
+        o.description = _("Remove first saves storage space but leaves no installed core if the download fails. Download first keeps the current core until the archive passes SHA-256 and gzip checks; it needs space for both.");
+        o.rmempty = false;
+        o.retain = true;
+        o.default = "REMOVE AND DOWNLOAD";
+
         o = s.taboption(tabname, form.ListValue, "mihomo_core_source_type", _("Core update source:"));
         o.value("github", _("GitHub"));
         o.value("custom", _("Custom URL"));
@@ -327,62 +335,61 @@ return view.extend({
         o.default = common.defaultUpdateChannelOptions[0].value;
 
         o = s.taboption(tabname, form.Value, "mihomo_custom_core_url", _("Custom core base URL:"));
-        o.description = _("Base URL of the server hosting the core files (similar to GitHub releases). The server MUST contain a 'version.txt' file and the corresponding 'mihomo-linux-arch-version.gz' archives. Example: 'https://example.com/mihomo/'");
+        o.description = _("Base HTTPS URL of the server hosting the core files. The server MUST contain 'version.txt', the corresponding 'mihomo-linux-arch-version.gz' archives, and 'checksums.txt' with SHA-256 hashes and archive filenames in sha256sum format.");
         o.placeholder = "https://example.com/mihomo";
         o.depends("mihomo_core_source_type", "custom");
         o.rmempty = true;
         o.retain = true;
         o.validate = function (section_id, value) {
-            if (!value) return true;
-            return common.validateHttpUrl(value);
+            return common.validateHttpsUrl(value);
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_rulesets_files_download_url", _("Rulesets download URL:"));
-        o.description = _("URL to download built-in rulesets from. Leave empty to use the default.");
+        o.description = _("HTTPS URL to download built-in rulesets from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            return common.validateHttpUrl(value);
+            return common.validateHttpsUrl(value);
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_geosite_url", _("Geosite download URL:"));
-        o.description = _("URL to download geosite.dat from. Leave empty to use the default.");
+        o.description = _("HTTPS URL to download geosite.dat from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            return common.validateHttpUrl(value);
+            return common.validateHttpsUrl(value);
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_geoip_url", _("GeoIP download URL:"));
-        o.description = _("URL to download geoip.dat from. Leave empty to use the default.");
+        o.description = _("HTTPS URL to download geoip.dat from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            return common.validateHttpUrl(value);
+            return common.validateHttpsUrl(value);
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_zashboard_url", _("Zashboard download URL:"));
-        o.description = _("URL to download Zashboard dashboard from. Leave empty to use the default.");
+        o.description = _("HTTPS URL to download Zashboard dashboard from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            return common.validateHttpZipUrl(value);
+            return common.validateHttpsZipUrl(value);
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_metacubexd_url", _("MetaCubeXD download URL:"));
-        o.description = _("URL to download the MetaCubeXD dashboard from. Leave empty to use the default.");
+        o.description = _("HTTPS URL to download the MetaCubeXD dashboard from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            return common.validateHttpZipUrl(value);
+            return common.validateHttpsZipUrl(value);
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_yacd_meta_url", _("YACD-meta download URL:"));
-        o.description = _("URL to download YACD-meta dashboard from. Leave empty to use the default.");
+        o.description = _("HTTPS URL to download YACD-meta dashboard from. Leave empty to use the default.");
         o.placeholder = "https://...";
         o.rmempty = true;
         o.validate = function (section_id, value) {
-            return common.validateHttpZipUrl(value);
+            return common.validateHttpsZipUrl(value);
         };
 
         tabname = "serviceresources_tab";

@@ -264,16 +264,19 @@ return baseclass.extend({
         if (!value || value.trim() === "") return true; // Let rmempty handle required fields
         return this.isValidHttpUrl(value) ? true : _("Invalid HTTP(S) URL");
     },
-    validateHttpZipUrl: function (value) {
+    validateHttpsUrl: function (value) {
         if (!value || value.trim() === "") return true;
-        if (!this.isValidHttpUrl(value)) return _("Invalid HTTP(S) URL");
+        return this.isValidHttpUrl(value) && new URL(value).protocol === "https:"
+            ? true
+            : _("Invalid HTTPS URL");
+    },
+    validateHttpsZipUrl: function (value) {
+        if (!value || value.trim() === "") return true;
+        const result = this.validateHttpsUrl(value);
+        if (result !== true) return result;
 
-        try {
-            const url = new URL(value);
-            return url.pathname.toLowerCase().split("/").pop().includes(".zip") ? true : _("URL must point to a .zip file");
-        } catch {
-            return _("Invalid HTTP(S) URL");
-        }
+        const url = new URL(value);
+        return url.pathname.toLowerCase().split("/").pop().includes(".zip") ? true : _("URL must point to a .zip file");
     },
     isValidResourceFilePath: function (value) {
         const val = String(value || "").trim();

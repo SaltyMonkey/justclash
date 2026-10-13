@@ -192,7 +192,7 @@ return view.extend({
         o.rmempty = false;
 
         o = s.taboption(tabname, form.ListValue, "dashboard_repo", _("Web dashboard:"));
-        o.description = _("Choose which web dashboard Mihomo should download and serve.");
+        o.description = _("Choose which web dashboard Mihomo should download and serve. If a dashboard has already been downloaded, manually remove all contents of /etc/justclash/dashboard before switching to another dashboard, then restart JustClash to download it.");
         o.value("zashboard", _("Zashboard"));
         o.value("metacubexd", _("MetaCubeXD"));
         o.value("yacd-meta", _("YACD-meta"));
