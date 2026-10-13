@@ -16,6 +16,16 @@ http_get() {
     _http_curl -s -- "$1"
 }
 
+# Resource downloads do not get to downgrade TLS just because a redirect asks nicely.
+http_get_https() {
+    _http_curl --proto '=https' --proto-redir '=https' -fs -- "$1"
+}
+
+http_download_https() {
+    _http_curl --proto '=https' --proto-redir '=https' \
+        --progress-bar -f -o "$2" -- "$1"
+}
+
 http_download() {
     local url="$1"
     local destination="$2"
@@ -45,10 +55,9 @@ service_data_file_update() {
     tmp_path=$(mktemp "${workdir}/${filename}.XXXXXX") || return 5
 
     log info "Downloading $label"
-    http_download \
+    http_download_https \
         "$download_url" \
-        "$tmp_path" \
-        1 || {
+        "$tmp_path" || {
         curl_code=$?
         log error "Failed to download $label (curl exit code: $curl_code)."
         rm -f "$tmp_path"
