@@ -1,3 +1,83 @@
+## [0.100.16] - 13102026
+
+Stabilization release, focused on reliable startup, core updates,
+ruleset editing, and safer resource downloads.
+
+### Stability Fixes
+
+- A failed scheduled-task update now logs a warning and allows startup to
+  continue. Scheduling is refreshed after the optional system-time synchronization,
+  before YAML and network preparation. Failed schedules still require correction.
+- Manual core startup preserves failures from the core/logging pipeline instead
+  of reporting success when only the logger succeeds.
+- The installer stops when package-index refresh, required dependency installation,
+  or core installation fails.
+- Base64 Shadowsocks credentials are no longer URL-decoded a second time,
+  preserving literal plus signs and percent sequences in passwords.
+- Partial-routing nftables identifiers preserve underscores, encode hyphens as
+  `_d_`, and no longer truncate names to 31 characters. This reduces naming
+  collisions; custom IDs must still avoid conflicting generated names.
+
+### Security and Core Updates
+
+- Core version metadata, archives, and checksum downloads require HTTPS and
+  reject redirects to HTTP. Archives are checked with SHA-256 and validated as
+  gzip before extraction. GitHub updates use release asset digests; custom
+  sources require a shared `checksums.txt` in `sha256sum` format.
+- Ruleset catalog, dashboard, and GeoIP/Geosite source settings now require
+  HTTPS. Catalog downloads also reject HTTP redirects; dashboard and geodata
+  downloads remain handled by Mihomo.
+- The LuCI User-Defined Rulesets editor requires HTTPS for remote routing and
+  blocking sources. Absolute local paths remain supported. This additional
+  restriction is enforced only in LuCI, not in the server-side catalog parser.
+- Expanded [Security concerns](info/guides/security.md#external-resources-and-https)
+  to cover downloaded software, dashboards, subscriptions, and routing data.
+  HTTPS and core archive checks reduce transport and integrity risks; they do
+  not guarantee safe third-party content or protect against a compromised source.
+  Documented where HTTPS is enforced and where downloads use separate policies.
+- Core updates always download the archive and verify SHA-256 and gzip before
+  removing the installed core. The package updater and standalone installer use
+  this fixed order; the mode selector and UCI setting have been removed. See
+  [core update procedure](info/guides/maintenance.md#core-update-procedure).
+- Core and service-data update commands stop on invalid configuration. The
+  package core update sequence is consolidated in one runtime procedure.
+- Documented the [trusted-administrator access model](info/guides/security.md#luci-access-assumption-trusted-administrators).
+  A JustClash read ACL does not provide an isolated view-only controller role.
+
+### LuCI and Maintenance
+
+- All four ruleset files are read through CGI-IO, supporting empty and large
+  catalogs. This bypasses an rpcd `file.read` bug that returns `No data received`
+  for empty files, including when reading previous user ruleset contents for
+  rollback before saving. The [upstream fix](https://github.com/openwrt/rpcd/commit/4062f666ecd17a03a153a40e76af6904d3eb6a78)
+  was committed on September 17, 2026 and is included in
+  [current OpenWrt snapshots](https://github.com/openwrt/openwrt/blob/master/package/system/rpcd/Makefile).
+  As of October 13, 2026, the latest stable release, **OpenWrt 25.12.5**, still
+  [uses an affected rpcd revision](https://github.com/openwrt/openwrt/blob/v25.12.5/package/system/rpcd/Makefile),
+  so the CGI-IO workaround remains necessary for that release.
+- Session access checks use JustClash's own status permission instead of
+  unrelated UCI access. Removed console debug output from session checks and
+  page lifecycle handlers.
+- Added a dashboard-switching note: previously downloaded panel files must be
+  removed manually before another panel can be downloaded into the shared directory.
+- Fixed the migration filename in the shfmt workflow and updated English,
+  Russian, and Simplified Chinese interface text.
+
+### Upgrade Notes
+
+- Replace HTTP overrides for the affected resource sources with HTTPS. Custom
+  core servers must supply matching archive entries in `checksums.txt`.
+- Review default and custom external sources before updating. A valid HTTPS
+  connection and matching source-supplied checksum do not establish that the
+  downloaded resource is trustworthy.
+- The obsolete `mihomo_core_update_mode` option is ignored. Updates keep
+  the old core through download and archive-verification failures, but do not
+  provide rollback after removal or a failed extraction/write.
+- Check custom partial-routing ruleset IDs for generated-name conflicts; see
+  [Partial Interception](info/guides/rulesets.md#partial-interception).
+- Refresh LuCI after upgrading. Follow [dashboard switching](info/guides/maintenance.md#switching-the-web-dashboard)
+  when changing an already downloaded panel.
+
 ## [0.100.0] - 09102026
 
 Stable release following **0.96.0**, consolidating the **0.98.0_rc1** and
