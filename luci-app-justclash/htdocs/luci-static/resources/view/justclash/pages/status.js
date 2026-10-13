@@ -346,7 +346,7 @@ return view.extend({
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showRpc(_("Diagnostic report"), false, () => ubusApi.check())),
-                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmRpc(_("Update Mihomo core"), _("Updating the Mihomo core is not atomic yet. If the router has too little free space or the download fails mid-update, the current core may be removed before the new one is fully installed."), () => ubusApi.updateCore(), async () => {
+                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmRpc(_("Update Mihomo core"), _("Core updates use the mode selected in Service → External resources. 'Remove and download' deletes the current core before downloading. 'Download and remove' keeps it until SHA-256 and gzip checks pass. Neither mode provides rollback after removal."), () => ubusApi.updateCore(), async () => {
                     const status = await ubusApi.getStatus();
                     const infoPackage = status.package_version;
                     let infoCore = status.core_version;
@@ -434,7 +434,6 @@ return view.extend({
         poller.start();
 
         visibilityChangeHandler = () => {
-            console.debug(`[status] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
             if (document.hidden) {
                 poller.stop();
                 sockets.stop();
@@ -450,7 +449,6 @@ return view.extend({
         document.addEventListener("visibilitychange", visibilityChangeHandler);
 
         beforeUnloadHandler = () => {
-            console.debug("[status] beforeunload");
             cleanup();
         };
 

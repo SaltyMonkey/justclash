@@ -171,7 +171,6 @@ return view.extend({
         });
 
         visibilityChangeHandler = () => {
-            console.debug(`[realtime_logs] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
             if (document.hidden) {
                 stream.stop();
             } else {
@@ -182,7 +181,6 @@ return view.extend({
         document.addEventListener("visibilitychange", visibilityChangeHandler);
 
         beforeUnloadHandler = () => {
-            console.debug("[realtime_logs] beforeunload: cleanup");
             cleanup();
         };
 

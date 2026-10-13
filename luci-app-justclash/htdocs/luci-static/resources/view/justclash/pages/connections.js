@@ -494,7 +494,6 @@ return view.extend({
             }
 
             visibilityChangeHandler = () => {
-                console.debug(`[connections] visibilitychange: ${document.hidden ? "hidden" : "visible"}`);
                 if (document.hidden)
                     connectionsSocket.stop();
                 else
@@ -507,7 +506,6 @@ return view.extend({
                 window.removeEventListener("beforeunload", beforeUnloadHandler);
 
             beforeUnloadHandler = () => {
-                console.debug("[connections] beforeunload: cleanup");
                 cleanup();
             };
 
