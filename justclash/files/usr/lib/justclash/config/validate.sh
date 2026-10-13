@@ -52,6 +52,7 @@ config_section_validate() {
 
 validate_main_section() {
     local cron_type='regex("([-0-9*/]|\,)+([ 	]+([-0-9*/]|\,)+){4}")'
+    local https_url_type='regex("^https\://.+$")'
 
     config_section_validate main "${1:-}" \
         "ipv6_enabled:$CONFIG_FLAG_TYPE:$DEFAULT_IPV6_ENABLED" \
@@ -79,15 +80,19 @@ validate_main_section() {
         "nft_ntp_mode:or(\"BY RULES\",\"DROP\",\"DIRECT\"):$DEFAULT_NFT_MODE" \
         "nft_ntp_mode_router:or(\"BY RULES\",\"DROP\",\"DIRECT\"):$DEFAULT_NFT_MODE" \
         "mihomo_core_source_type:or(\"github\",\"custom\"):$DEFAULT_MIHOMO_SOURCE_CORE" \
+        "mihomo_core_update_mode:or(\"REMOVE AND DOWNLOAD\",\"DOWNLOAD AND REMOVE\"):$DEFAULT_MIHOMO_CORE_UPDATE_MODE" \
         "mihomo_cron_autorestart_string:$cron_type" \
         "mihomo_cron_service_data_update_string:$cron_type" \
         "mihomo_cron_scheduled_work_start_string:$cron_type:$DEFAULT_SCHEDULED_WORK_START_CRON" \
         "mihomo_cron_scheduled_work_stop_string:$cron_type:$DEFAULT_SCHEDULED_WORK_STOP_CRON" \
         "mihomo_github_channel:string(1):$DEFAULT_MIHOMO_UPDATE_CHANNEL" \
         "mihomo_github_repo:string(1):$DEFAULT_MIHOMO_GITHUB_REPO" \
-        "mihomo_rulesets_files_download_url:string(1):$DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL" \
-        "mihomo_geosite_url:string(1):$DEFAULT_GEOSITE_URL" \
-        "mihomo_geoip_url:string(1):$DEFAULT_GEOIP_URL"
+        "mihomo_rulesets_files_download_url:$https_url_type:$DEFAULT_MIHOMO_RULESETS_FILES_DOWNLOAD_URL" \
+        "mihomo_dashboard_zashboard_url:$https_url_type:$DEFAULT_DASHBOARD_ZASHBOARD_URL" \
+        "mihomo_dashboard_metacubexd_url:$https_url_type:$DEFAULT_DASHBOARD_METACUBEXD_URL" \
+        "mihomo_dashboard_yacd_meta_url:$https_url_type:$DEFAULT_DASHBOARD_YACD_META_URL" \
+        "mihomo_geosite_url:$https_url_type:$DEFAULT_GEOSITE_URL" \
+        "mihomo_geoip_url:$https_url_type:$DEFAULT_GEOIP_URL"
 }
 
 validate_proxy_section() {
