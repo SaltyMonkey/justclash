@@ -16,14 +16,14 @@ val_is_uint() {
 }
 
 val_sanitize_nft_name() {
-    printf '%s\n' "$1" |
+    printf '%s' "$1" |
         LC_ALL=C awk '{
-            gsub(/[-.]/, "_")
+            gsub(/-/, "_d_")
             gsub(/[^a-zA-Z0-9_]/, "")
             value = value $0
         }
         END {
-            print substr(value, 1, 31)
+            printf "%s", value
         }'
 }
 
