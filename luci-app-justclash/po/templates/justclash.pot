@@ -651,15 +651,15 @@ msgid "URL / Local Path cannot contain pipe (|) or control characters."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:97
-msgid "Use an HTTP(S) URL without embedded credentials."
+msgid "Use an HTTPS URL without embedded credentials."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:101
-msgid "Invalid HTTP(S) URL."
+msgid "Invalid HTTPS URL."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:106
-msgid "URL / Local Path must be an HTTP(S) URL or an absolute path."
+msgid "URL / Local Path must be an HTTPS URL or an absolute path."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:111

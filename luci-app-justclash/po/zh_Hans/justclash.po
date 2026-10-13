@@ -650,16 +650,16 @@ msgid "URL / Local Path cannot contain pipe (|) or control characters."
 msgstr "URL / 本地路径不得包含竖线 (|) 或控制字符。"
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:97
-msgid "Use an HTTP(S) URL without embedded credentials."
-msgstr "请使用不含嵌入式凭据的 HTTP(S) URL。"
+msgid "Use an HTTPS URL without embedded credentials."
+msgstr "请使用不含嵌入式凭据的 HTTPS URL。"
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:101
-msgid "Invalid HTTP(S) URL."
-msgstr "HTTP(S) URL 无效。"
+msgid "Invalid HTTPS URL."
+msgstr "HTTPS URL 无效。"
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:106
-msgid "URL / Local Path must be an HTTP(S) URL or an absolute path."
-msgstr "URL / 本地路径必须是 HTTP(S) URL 或绝对路径。"
+msgid "URL / Local Path must be an HTTPS URL or an absolute path."
+msgstr "URL / 本地路径必须是 HTTPS URL 或绝对路径。"
 
 #: htdocs/luci-static/resources/view/justclash/lib/rulesets.js:111
 msgid "Local path contains unsafe characters or path segments."
