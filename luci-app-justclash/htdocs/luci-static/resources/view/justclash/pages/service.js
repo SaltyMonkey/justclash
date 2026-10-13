@@ -298,14 +298,6 @@ return view.extend({
         tabname = "external_resources_tab";
         s.tab(tabname, _("External resources"));
 
-        o = s.taboption(tabname, form.ListValue, "mihomo_core_update_mode", _("Core update mode:"));
-        o.value("REMOVE AND DOWNLOAD", _("Remove and download"));
-        o.value("DOWNLOAD AND REMOVE", _("Download and remove"));
-        o.description = _("Remove first saves storage space but leaves no installed core if the download fails. Download first keeps the current core until the archive passes SHA-256 and gzip checks; it needs space for both.");
-        o.rmempty = false;
-        o.retain = true;
-        o.default = "REMOVE AND DOWNLOAD";
-
         o = s.taboption(tabname, form.ListValue, "mihomo_core_source_type", _("Core update source:"));
         o.value("github", _("GitHub"));
         o.value("custom", _("Custom URL"));

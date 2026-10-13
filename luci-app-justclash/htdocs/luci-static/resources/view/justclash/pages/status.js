@@ -346,7 +346,7 @@ return view.extend({
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showRpc(_("Diagnostic report"), false, () => ubusApi.check())),
-                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmRpc(_("Update Mihomo core"), _("Core updates use the mode selected in Service → External resources. 'Remove and download' deletes the current core before downloading. 'Download and remove' keeps it until SHA-256 and gzip checks pass. Neither mode provides rollback after removal."), () => ubusApi.updateCore(), async () => {
+                createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmRpc(_("Update Mihomo core"), _("The core archive is downloaded and checked with SHA-256 and gzip before replacing the installed core. Download or verification failures keep the current core. There is no rollback after removal."), () => ubusApi.updateCore(), async () => {
                     const status = await ubusApi.getStatus();
                     const infoPackage = status.package_version;
                     let infoCore = status.core_version;

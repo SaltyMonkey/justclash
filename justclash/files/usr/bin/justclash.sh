@@ -1248,17 +1248,16 @@ core_prepare_workdir() {
 }
 
 core_update() {
-    local channel custom_url repository source_type update_mode
+    local channel custom_url repository source_type
 
     # Read settings used by this scenario.
     config_get source_type settings mihomo_core_source_type
     config_get custom_url settings mihomo_custom_core_url
     config_get channel settings mihomo_github_channel
     config_get repository settings mihomo_github_repo
-    config_get update_mode settings mihomo_core_update_mode "$DEFAULT_MIHOMO_CORE_UPDATE_MODE"
 
     core_update_run \
-        "$source_type" "$custom_url" "$channel" "$repository" "$update_mode" \
+        "$source_type" "$custom_url" "$channel" "$repository" \
         "$CORE_WORKDIR_PATH" "$CORE_PATH" "$NO_DATA_STRING"
 }
 

@@ -80,7 +80,6 @@ validate_main_section() {
         "nft_ntp_mode:or(\"BY RULES\",\"DROP\",\"DIRECT\"):$DEFAULT_NFT_MODE" \
         "nft_ntp_mode_router:or(\"BY RULES\",\"DROP\",\"DIRECT\"):$DEFAULT_NFT_MODE" \
         "mihomo_core_source_type:or(\"github\",\"custom\"):$DEFAULT_MIHOMO_SOURCE_CORE" \
-        "mihomo_core_update_mode:or(\"REMOVE AND DOWNLOAD\",\"DOWNLOAD AND REMOVE\"):$DEFAULT_MIHOMO_CORE_UPDATE_MODE" \
         "mihomo_cron_autorestart_string:$cron_type" \
         "mihomo_cron_service_data_update_string:$cron_type" \
         "mihomo_cron_scheduled_work_start_string:$cron_type:$DEFAULT_SCHEDULED_WORK_START_CRON" \

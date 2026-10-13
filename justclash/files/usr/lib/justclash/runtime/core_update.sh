@@ -135,7 +135,6 @@ core_archive_apply() {
 core_download() {
     local version_url="$1" version="$2"
     local core_workdir="$3" core_path="$4" arch="$5" expected_sha256="$6"
-    local remove_current="${7:-0}"
 
     local filename base_url download_url archive_path actual_sha256 rc
 
@@ -176,7 +175,7 @@ core_download() {
         return 7
     fi
 
-    if [ "$remove_current" -eq 1 ]; then
+    if [ -x "$core_path" ]; then
         log info "Removing current Mihomo binary after archive verification..."
         core_binary_remove "$core_path"
         rc=$?
@@ -199,14 +198,13 @@ core_download() {
 }
 
 # Propagates core_download() and core_binary_remove() operation statuses,
-# and returns 1 for source/version metadata or mode errors,
+# and returns 1 for source/version metadata errors,
 # 7 for unavailable checksum metadata, 8 for an unsupported architecture.
 core_update_run() {
     local source_type="$1" custom_url="$2" channel="$3" repository="$4"
-    local update_mode="${5:-REMOVE AND DOWNLOAD}"
-    local core_workdir="$6" core_path="$7" no_data_string="$8"
+    local core_workdir="$5" core_path="$6" no_data_string="$7"
     local current_version latest_version version_url
-    local arch core_installed=0 remove_after_download=0 os_arch rc expected_sha256
+    local arch os_arch rc expected_sha256
 
     if [ "$source_type" = custom ]; then
         log info "Checking for Mihomo updates from custom source..."
@@ -235,18 +233,9 @@ core_update_run() {
 
     current_version=$(core_info_mihomo "$core_path" "$no_data_string")
 
-    case "$update_mode" in
-    "REMOVE AND DOWNLOAD" | "DOWNLOAD AND REMOVE") ;;
-    *)
-        log error "Invalid core update mode."
-        return 1
-        ;;
-    esac
-
     if [ "$current_version" = "$no_data_string" ] || [ -z "$current_version" ]; then
         log warn "Mihomo is not installed. Installing version $latest_version."
     else
-        core_installed=1
         log info "Current Mihomo version: $current_version"
         log info "Latest Mihomo version: $latest_version"
         if [ "$current_version" = "$latest_version" ]; then
@@ -267,25 +256,9 @@ core_update_run() {
         return 7
     }
 
-    if [ "$core_installed" -eq 1 ]; then
-        if [ "$update_mode" = "REMOVE AND DOWNLOAD" ]; then
-            log info "Removing current Mihomo binary before downloading..."
-            core_binary_remove "$core_path"
-            rc=$?
-            if [ "$rc" -ne 0 ]; then
-                log error "Core update failed."
-                return "$rc"
-            fi
-        else
-            remove_after_download=1
-        fi
-
-        log info "Updating Mihomo to version $latest_version"
-    fi
-
     core_download \
         "$version_url" "$latest_version" \
-        "$core_workdir" "$core_path" "$arch" "$expected_sha256" "$remove_after_download"
+        "$core_workdir" "$core_path" "$arch" "$expected_sha256"
     rc=$?
     if [ "$rc" -ne 0 ]; then
         log error "Core update failed."
