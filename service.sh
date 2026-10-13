@@ -504,20 +504,10 @@ core_update() {
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         echo " - Mihomo is not installed. Installing version $latest_ver ($channel)."
-        if ! core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"; then
-            print_red "Core update failed."
-            return 1
-        fi
-        return 0
+    else
+        echo " - Updating Mihomo to version $latest_ver ($channel)"
     fi
 
-    echo " - Removing current Mihomo binary before downloading..."
-    if ! core_remove; then
-        print_red "Core update failed."
-        return 1
-    fi
-
-    echo " - Updating Mihomo to version $latest_ver ($channel)"
     if ! core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"; then
         print_red "Core update failed."
         return 1
@@ -565,6 +555,13 @@ core_download() {
         rm -f "$tmp_archive_path"
         print_red "Invalid Mihomo gzip archive."
         return 1
+    fi
+    if [ -x "$CORE_PATH" ]; then
+        echo " - Removing current Mihomo binary after archive verification..."
+        if ! core_remove; then
+            rm -f "$tmp_archive_path"
+            return 1
+        fi
     fi
     echo " - Extracting to $CORE_PATH" "⬇️"
     if ! gunzip -c "$tmp_archive_path" >"$CORE_PATH"; then
