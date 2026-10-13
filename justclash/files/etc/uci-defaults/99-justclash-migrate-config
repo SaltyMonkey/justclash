@@ -187,6 +187,8 @@ if uci -q get justclash.settings.skip_environment_checks >/dev/null 2>&1; then
     migration_changed=1
 fi
 
+add_missing_option "justclash.settings.mihomo_core_update_mode" "REMOVE AND DOWNLOAD" || exit 1
+
 # Replace only the obsolete packaged default; user-supplied sources stay put.
 legacy_rulesets_url="https://cdn.jsdelivr.net/gh/saltymonkey/mrs-parsed-data"
 current_rulesets_url=$(uci -q get justclash.settings.mihomo_rulesets_files_download_url)
