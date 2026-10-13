@@ -6,7 +6,7 @@
 return baseclass.extend({
     async readFileSafe(path, fallback = "") {
         try {
-            const content = await fs.read(path);
+            const content = await fs.read_direct(path);
             return content ?? fallback;
         } catch {
             return fallback;
@@ -14,8 +14,9 @@ return baseclass.extend({
     },
 
     async saveFileSafe(routingContent, blockingContent) {
-        const routingBackup = await fs.read(common.userRulesetsFilePath) ?? "";
-        const blockingBackup = await fs.read(common.userBlockRulesetsFilePath) ?? "";
+        // Empty files are valid too, despite what older rpcd thinks.
+        const routingBackup = await fs.read_direct(common.userRulesetsFilePath) ?? "";
+        const blockingBackup = await fs.read_direct(common.userBlockRulesetsFilePath) ?? "";
 
         try {
             await fs.write(common.userRulesetsFilePath, routingContent ?? "");

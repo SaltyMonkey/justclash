@@ -2,6 +2,9 @@
     "luci-app-justclash": {
         "description": "Grant UCI and RPC access to LuCI app justclash",
         "read": {
+            "cgi-io": [
+                "download"
+            ],
             "file": {
                 "/etc/justclash/rulesets.txt": [
                     "read"
