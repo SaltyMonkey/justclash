@@ -1,5 +1,7 @@
 # JustClash Documentation
 
+Before installing or configuring JustClash, read [Security and access](guides/security.md), especially the [external resource risks and limits of HTTPS](guides/security.md#external-resources-and-https). Review controller access and the sources you trust before downloading software or routing data.
+
 Start with a working connection, then add the routing policy you need. The guides
 use **outbound** for a connection path, **provider** for a subscription source,
 and **group** for a selection of connections. LuCI field names are quoted as they
@@ -32,6 +34,7 @@ appear in the interface.
 | Task | Read |
 | --- | --- |
 | Protect controller access and handle credentials or download headers | [Security and access](guides/security.md) |
+| Understand external resource risks and the limits of HTTPS and checksum checks | [External resources and HTTPS](guides/security.md#external-resources-and-https) |
 | Connect HTTPS LuCI to the controller | [Controller TLS](guides/controller-tls.md) |
 | Update packages/core, back up, restore, or remove JustClash | [Maintenance](guides/maintenance.md) |
 | Switch an already downloaded web dashboard | [Dashboard switching](guides/maintenance.md#switching-the-web-dashboard) |

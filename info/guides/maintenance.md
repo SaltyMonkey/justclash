@@ -25,20 +25,19 @@ Ruleset catalog, dashboard archive, and GeoIP/Geosite source URLs must also use 
 
 For a custom core source, **Service → External resources → Custom core base URL** must use HTTPS. The server must provide `version.txt`, the `mihomo-linux-arch-version.gz` archives, and a shared `checksums.txt` file in `sha256sum` format: a 64-character hexadecimal SHA-256 hash followed by the archive filename. The updater selects exactly one entry matching the archive's full filename; an optional `./` prefix and the binary-mode `*` marker are supported. Missing, duplicate, or malformed entries prevent the update. Hash mismatches are rejected before extracting the archive.
 
-### Core Update Modes
+### Core Update Procedure
 
-Choose **Service → External resources → Core update mode** to set the package updater's replacement order. The UCI option is `justclash.settings.mihomo_core_update_mode`.
+The package updater and standalone installer use the same replacement order:
 
-Package migration adds `REMOVE AND DOWNLOAD` only when this option is missing. Existing values are preserved without conversion. The package updater stops if configuration validation fails, and its replacement routine also rejects an unknown mode before removing any binary.
+1. Obtain the version and expected checksum, then download the compressed archive to `/tmp`.
+2. Verify the archive's SHA-256 and gzip integrity while keeping the installed core.
+3. Remove the installed core, extract the verified archive directly to the core path, and delete the temporary archive.
 
-| Mode | Replacement order | Tradeoff |
-| --- | --- | --- |
-| `REMOVE AND DOWNLOAD` — Remove and download (default) | Obtain the expected checksum, remove the installed core, download and verify the archive, then extract it | Frees the installed binary's storage before downloading. A download or verification failure leaves no installed core. |
-| `DOWNLOAD AND REMOVE` — Download and remove | Download the archive and verify SHA-256 and gzip before removing the installed core, then extract it | Keeps the installed core on download, checksum, or gzip failure. Requires space for the installed binary and the downloaded archive at the same time. |
+A download, checksum, or gzip failure keeps the installed core. The archive requires space in `/tmp` while the installed binary still occupies its core path. With the core on flash, this means RAM for the compressed archive and flash space for one uncompressed binary; no second uncompressed binary is kept.
 
-Both modes download the compressed archive to `/tmp` and extract directly to the core path. Removing the installed binary does not reduce the space required for the compressed archive in `/tmp`. Neither mode keeps an additional uncompressed binary or provides rollback after removal: an extraction or write failure can still leave no usable core. Download-first never falls back to removing the current core when temporary space is insufficient. Fresh installations skip removal, and an already current version is left unchanged.
+There is no fallback to early removal when temporary space is insufficient. There is no rollback after removal: an extraction or write failure can still leave no usable core. Fresh installations skip removal, and an already current version is left unchanged. The package updater also stops if configuration validation fails.
 
-The standalone installer always uses `REMOVE AND DOWNLOAD`, independently of the LuCI/UCI mode setting. After obtaining valid version and checksum metadata, it removes an installed core before downloading its replacement archive. A download or archive verification failure therefore leaves no installed core. There is no installer option to change this order.
+The replacement order is fixed. The LuCI mode selector and support for the UCI option `mihomo_core_update_mode` have been removed. An existing value is ignored.
 
 ## Switching the Web Dashboard
 

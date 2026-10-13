@@ -2,10 +2,11 @@
 
 [Documentation](../README.md)
 
-JustClash crosses two separate security boundaries:
+JustClash crosses three separate security boundaries:
 
 - the local Mihomo controller accepts commands and exposes connection metadata;
-- remote providers receive download requests, headers, identifiers, and authorization data.
+- remote providers receive download requests, headers, identifiers, and authorization data;
+- downloaded software, dashboards, and routing data run on or influence the router and its administration clients.
 
 Controller passwords, TLS, firewall policy, and provider request headers solve different problems. A realistic-looking User-Agent is not authentication, TLS does not restrict who may connect, and a strong password does not make an exposed controller a good idea.
 
@@ -15,6 +16,37 @@ Protect the controller with:
 2. a strong generated API password;
 3. OpenWrt firewall restrictions;
 4. TLS whenever the browser reaches LuCI over HTTPS.
+
+## External Resources and HTTPS
+
+JustClash and Mihomo download external resources during installation and resource updates, and when configured providers refresh their data. These include installation packages, the Mihomo core, web dashboards, ruleset catalogs, routing and blocking lists, GeoIP/Geosite databases, and proxy subscriptions. Both bundled default sources and administrator-supplied sources are part of this trust boundary. Their content can change independently of a JustClash release.
+
+> [!WARNING]
+> External resources can contain malicious code, unsafe or incorrect routing data, or files that cause parsing and startup failures. Requiring HTTPS protects transport; it does not establish that the publisher or downloaded content is safe.
+
+| Resource | Security concern |
+| --- | --- |
+| Installer, packages, and Mihomo core | Executable code runs with the privileges of the installer or service; a compromised source can compromise the router. |
+| Web dashboard | Downloaded JavaScript runs in the administrator's browser and must be trusted with any controller credentials and data supplied to it. |
+| Rulesets and GeoIP/Geosite databases | Their contents affect routing and blocking decisions. Incorrect or malicious data can send traffic along unintended paths, bypass intended policy, or disrupt service. |
+| Proxy subscriptions | The provider supplies outbound destinations and receives download requests and configured headers. HTTPS does not make those destinations or the provider trustworthy. |
+
+### Where HTTPS Is Enforced
+
+- **Core updates:** the package updater and standalone installer require HTTPS for release metadata, archives, and checksums, and reject redirects to HTTP. Both verify SHA-256 and gzip before removing the installed core. See the [core update procedure](maintenance.md#core-update-procedure).
+- **Ruleset catalogs:** configured download sources require HTTPS, and the package downloader rejects redirects to HTTP.
+- **Dashboard and GeoIP/Geosite sources:** JustClash requires HTTPS in their source settings. Mihomo performs these downloads; JustClash's shell redirect restrictions do not apply to that downloader.
+- **User-defined rulesets:** the LuCI editor requires HTTPS for remote routing and blocking lists and also accepts absolute local paths. This restriction is not enforced by the server-side catalog parser.
+
+This is not a universal HTTPS requirement for every download. Proxy-provider fields still accept HTTP as well as HTTPS, and package installation has separate download and package-manager paths. Do not assume that every external resource uses the core updater's transport and verification policy.
+
+### What the Checks Do Not Guarantee
+
+HTTPS reduces the risk of interception and modification in transit when certificate verification succeeds. A compromised publisher, repository account, release process, or hosting service can still supply harmful content over a valid HTTPS connection.
+
+The core's expected SHA-256 comes from the release API or the custom source's `checksums.txt`. A matching digest confirms that the archive matches that supplied value; it is not independent proof of publisher identity or code safety if the source is compromised. The core updater does not verify an independent publisher signature. The gzip check establishes archive integrity, not whether the extracted binary is trustworthy. These checks do not extend to every downloaded dashboard, subscription, or data file.
+
+Review **Service → External resources**, provider sources, and user-defined ruleset sources before using or changing them. Use publishers you trust, including for the bundled defaults, and keep known-good copies for recovery. Local ruleset files avoid a remote fetch but still require trusted contents. Follow [Maintenance](maintenance.md) for update checks and backups; the project cannot guarantee the safety or availability of third-party resources.
 
 ## LuCI Access Assumption: Trusted Administrators
 

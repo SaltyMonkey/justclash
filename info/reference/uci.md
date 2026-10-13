@@ -119,8 +119,7 @@ The `REJECT` choice has been removed only from the four `nft_*_mode` settings ab
 | `mihomo_scheduled_work` | Boolean | Enable scheduled start/stop window |
 | `mihomo_cron_scheduled_work_start_string` | Cron expression | Scheduled start |
 | `mihomo_cron_scheduled_work_stop_string` | Cron expression | Scheduled stop |
-| `mihomo_core_source_type` | Choice | Core update source type |
-| `mihomo_core_update_mode` | `REMOVE AND DOWNLOAD` / `DOWNLOAD AND REMOVE` | Core replacement order; defaults to `REMOVE AND DOWNLOAD`. Download first preserves the current core until SHA-256 and gzip checks pass. See [core update modes](../guides/maintenance.md#core-update-modes). |
+| `mihomo_core_source_type` | Choice | Core update source type. Updates always download and verify SHA-256 and gzip before removing the installed core. See [core update procedure](../guides/maintenance.md#core-update-procedure). |
 | `mihomo_github_repo` | `username/repo` | Repository used for GitHub core updates; new-install default provides the slim kernel version |
 | `mihomo_github_channel` | Choice | Stable or configured prerelease channel |
 | `mihomo_custom_core_url` | HTTPS URL | Custom core archive source with a shared `checksums.txt` file in `sha256sum` format. See [core update requirements](../guides/maintenance.md#what-is-being-updated). |
