@@ -90,20 +90,20 @@ const validateRulesetLocation = (value, type) => {
         try {
             const url = new URL(val);
 
-            if (!["http:", "https:"].includes(url.protocol)
+            if (url.protocol !== "https:"
                 || !url.hostname
                 || url.username
                 || url.password)
-                return _("Use an HTTP(S) URL without embedded credentials.");
+                return _("Use an HTTPS URL without embedded credentials.");
 
             return true;
         } catch {
-            return _("Invalid HTTP(S) URL.");
+            return _("Invalid HTTPS URL.");
         }
     }
 
     if (!val.startsWith("/"))
-        return _("URL / Local Path must be an HTTP(S) URL or an absolute path.");
+        return _("URL / Local Path must be an HTTPS URL or an absolute path.");
 
     if (val.includes("//")
         || /(^|\/)\.{1,2}(\/|$)/.test(val)
