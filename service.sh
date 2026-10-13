@@ -408,7 +408,7 @@ get_latest_version_url() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$api_url" | jq -r "$jq_filter"
+        --proto '=https' --proto-redir '=https' -fsL "$api_url" | jq -r "$jq_filter"
 }
 
 get_release_asset_digest() {
@@ -428,7 +428,7 @@ get_release_asset_digest() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$api_url" | jq -r --arg name "$asset_name" "$jq_filter" | sed -n 1p
+        --proto '=https' --proto-redir '=https' -fsL "$api_url" | jq -r --arg name "$asset_name" "$jq_filter" | sed -n 1p
 }
 
 core_update() {
@@ -456,7 +456,7 @@ core_update() {
     latest_ver=$(curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
-        -sL "$version_txt_url" | sed -n 1p | tr -d '\r\n') || {
+        --proto '=https' --proto-redir '=https' -fsL "$version_txt_url" | sed -n 1p | tr -d '\r\n') || {
         print_red "Failed to download version.txt."
         return 1
     }
@@ -500,27 +500,25 @@ core_update() {
         print_red "Release asset sha256 digest is invalid: $asset_name"
         return 1
     fi
+    expected_sha256=$(printf '%s' "$expected_sha256" | tr 'A-F' 'a-f')
 
     if [ "$cur_ver" = "$NO_DATA_STRING" ] || [ -z "$cur_ver" ]; then
         echo " - Mihomo is not installed. Installing version $latest_ver ($channel)."
-        core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"
-        if [ $? -eq 1 ]; then
+        if ! core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"; then
             print_red "Core update failed."
             return 1
         fi
         return 0
     fi
 
-    echo " - Removing current mihomo binary..."
-    core_remove
-    if [ $? -eq 1 ]; then
+    echo " - Removing current Mihomo binary before downloading..."
+    if ! core_remove; then
         print_red "Core update failed."
         return 1
     fi
 
     echo " - Updating Mihomo to version $latest_ver ($channel)"
-    core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"
-    if [ $? -eq 1 ]; then
+    if ! core_download "$version_txt_url" "$latest_ver" "$expected_sha256" "$arch"; then
         print_red "Core update failed."
         return 1
     fi
@@ -547,6 +545,7 @@ core_download() {
     curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
         --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
         --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
+        --proto '=https' --proto-redir '=https' \
         --progress-bar -f -L -o "$tmp_archive_path" -- "$download_url" || {
         print_red "Failed to download the Mihomo archive."
         rm -f "$tmp_archive_path"
@@ -562,12 +561,12 @@ core_download() {
 
     echo " - SHA256 verification passed for Mihomo archive version $param_version"
 
-    echo " - Extracting to $CORE_PATH" "⬇️"
     if ! gzip -t "$tmp_archive_path" 2>/dev/null; then
         rm -f "$tmp_archive_path"
         print_red "Invalid Mihomo gzip archive."
         return 1
     fi
+    echo " - Extracting to $CORE_PATH" "⬇️"
     if ! gunzip -c "$tmp_archive_path" >"$CORE_PATH"; then
         rm -f "$tmp_archive_path"
         print_red "Failed to extract the Mihomo archive."
@@ -585,6 +584,7 @@ core_download() {
     if ! rm -f "$tmp_archive_path"; then
         print_red "Failed to clean up temporary file: $tmp_archive_path"
     fi
+    return 0
 }
 
 core_remove() {
@@ -779,24 +779,24 @@ install_translation_interactive() {
 
 install_packages() {
     echo "  "
-    pkg_list_update
+    pkg_list_update || return 1
 
     print_bold_green "Installing required packages..."
     echo " - Removing standard jq to prevent conflicts..."
     pkg_remove jq >/dev/null 2>&1 || true
 
     echo " - Installing jq-full"
-    pkg_install jq-full
+    pkg_install jq-full || return 1
 
     echo " - Installing curl"
-    pkg_install curl
+    pkg_install curl || return 1
 
     rm -rf "$TMP_DOWNLOAD_PATH"
 }
 
 install_service() {
     local install_lang="none"
-    mkdir -p "$TMP_DOWNLOAD_PATH"
+    mkdir -p "$TMP_DOWNLOAD_PATH" || return 1
 
     diagnostic_tools
     diagnostic_net
@@ -804,7 +804,7 @@ install_service() {
         diagnostic_mem
     fi
     diagnostic_conflicts_interactive
-    core_update "stable"
+    core_update "stable" || return 1
 
     if [ "$AUTOMATED" -ne 1 ]; then
         install_translation_interactive
@@ -927,7 +927,7 @@ if [ "$SILENT" -eq 1 ]; then
     exec >/dev/null
 fi
 
-install_packages
+install_packages || exit 1
 if [ "$UPDATE_CORE" -eq 1 ]; then
     echo "Starting Mihomo core update..."
     diagnostic_tools
