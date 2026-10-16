@@ -178,7 +178,7 @@ return view.extend({
         o.modalonly = true;
 
         tabname = "proxieslists_tab";
-        s.tab(tabname, _("Lists"));
+        s.tab(tabname, _("Rulesets"));
 
         o = s.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
@@ -782,7 +782,7 @@ return view.extend({
         o.modalonly = true;
 
         tabname = "proxiesgrouplist_tab";
-        s2.tab(tabname, _("Lists"));
+        s2.tab(tabname, _("Rulesets"));
 
         o = s2.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
         result.rulesetsItems.forEach(item => {
@@ -875,7 +875,7 @@ return view.extend({
         };
 
         tabname = "rejectrules_tab";
-        s4.tab(tabname, _("Lists"));
+        s4.tab(tabname, _("Rulesets"));
 
         o = s4.taboption(tabname, form.Flag, "enabled", _("Enabled"));
         o.width = "15%";

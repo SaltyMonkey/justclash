@@ -1500,8 +1500,8 @@ msgid "Optional Linux fwmark applied by Mihomo to outbound connections of this p
 msgstr "Mihomo 应用于此代理的出站连接的可选 Linux fwmark。留空以使用全局标记。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:181 htdocs/luci-static/resources/view/justclash/pages/routing.js:785 htdocs/luci-static/resources/view/justclash/pages/routing.js:878
-msgid "Lists"
-msgstr "列表"
+msgid "Rulesets"
+msgstr "规则集"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:183 htdocs/luci-static/resources/view/justclash/pages/routing.js:787 htdocs/luci-static/resources/view/justclash/pages/routing.js:887
 msgid "Use with rules:"

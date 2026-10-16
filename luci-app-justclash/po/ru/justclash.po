@@ -1500,8 +1500,8 @@ msgid "Optional Linux fwmark applied by Mihomo to outbound connections of this p
 msgstr "Опциональный Linux fwmark, применяемый Mihomo к исходящим соединениям этого прокси. Оставьте пустым, чтобы использовать глобальную метку."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:181 htdocs/luci-static/resources/view/justclash/pages/routing.js:785 htdocs/luci-static/resources/view/justclash/pages/routing.js:878
-msgid "Lists"
-msgstr "Списки"
+msgid "Rulesets"
+msgstr "Наборы правил"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:183 htdocs/luci-static/resources/view/justclash/pages/routing.js:787 htdocs/luci-static/resources/view/justclash/pages/routing.js:887
 msgid "Use with rules:"
