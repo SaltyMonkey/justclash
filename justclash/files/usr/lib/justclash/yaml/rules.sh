@@ -45,6 +45,7 @@ lookup_many_rulesets_full() {
         BEGIN {
             split(keys, arr, /[[:space:]]+/)
             for (i in arr) {
+                sub(/:resolve$/, "", arr[i])
                 if (arr[i] != "") {
                     need[arr[i]] = 1
                 }
@@ -123,7 +124,13 @@ build_builtin_rules_bundle() {
             ;;
         esac
 
-        [ "$ruleset_behavior" = "ipcidr" ] && generated_rule="RULE-SET,$ruleset_name,$target_name,no-resolve" || generated_rule="RULE-SET,$ruleset_name,$target_name"
+        generated_rule="RULE-SET,$ruleset_name,$target_name"
+        if [ "$ruleset_behavior" = "ipcidr" ]; then
+            case " $enabled_list " in
+            *" $ruleset_name:resolve "*) ;;
+            *) generated_rule="$generated_rule,no-resolve" ;;
+            esac
+        fi
         case "$ruleset_url" in
         http://* | https://*)
             local headers=""
