@@ -9,6 +9,10 @@ return view.extend({
     async load() {
         const activeRulesets = new Set();
         const activeGeosites = new Set();
+        const addRulesets = values => (Array.isArray(values) ? values : [values]).forEach((value) => {
+            if (value)
+                activeRulesets.add(value.replace(/:resolve$/, ""));
+        });
 
         try {
             await uci.load(common.binName);
@@ -21,7 +25,7 @@ return view.extend({
                     const rulesets = uci.get(common.binName, sectionId, "enabled_list");
                     const geosites = uci.get(common.binName, sectionId, "enabled_geosite_list");
 
-                    (Array.isArray(rulesets) ? rulesets : [rulesets]).forEach(name => name && activeRulesets.add(name));
+                    addRulesets(rulesets);
                     (Array.isArray(geosites) ? geosites : [geosites]).forEach(name => name && activeGeosites.add(name));
                 }
 
@@ -30,7 +34,7 @@ return view.extend({
                     const rulesets = uci.get(common.binName, sectionId, "enabled_blocklist");
                     const geosites = uci.get(common.binName, sectionId, "enabled_geosite_blocklist");
 
-                    (Array.isArray(rulesets) ? rulesets : [rulesets]).forEach(name => name && activeRulesets.add(name));
+                    addRulesets(rulesets);
                     (Array.isArray(geosites) ? geosites : [geosites]).forEach(name => name && activeGeosites.add(name));
                 }
             });

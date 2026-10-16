@@ -49,10 +49,11 @@ return baseclass.extend({
         return content.split("\n")
             .filter(line => line.trim() && !line.trim().startsWith("#"))
             .map(line => {
-                const [name, yamlName] = line.split("|");
+                const [name, yamlName, type] = line.split("|");
                 return {
                     name: name ? name.trim() : null,
-                    yamlName: yamlName ? yamlName.trim() : null
+                    yamlName: yamlName ? yamlName.trim() : null,
+                    type: type ? type.trim() : null
                 };
             })
             .filter(item => item.name && item.yamlName);

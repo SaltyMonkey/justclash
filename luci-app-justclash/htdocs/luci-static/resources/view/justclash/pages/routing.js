@@ -11,6 +11,14 @@
 
 const JSON_OBJECT_ROWS = 10;
 
+const configureRulesetChoices = (option, rulesets) => {
+    rulesets.forEach((item) => {
+        option.value(item.yamlName, item.type === "ipcidr" ? _("%s (no-resolve)").format(item.name) : item.name);
+        if (item.type === "ipcidr")
+            option.value(item.yamlName + ":resolve", _("%s (resolve)").format(item.name));
+    });
+};
+
 return view.extend({
     async load() {
         let rulesetsItems = [];
@@ -181,9 +189,7 @@ return view.extend({
         s.tab(tabname, _("Rulesets"));
 
         o = s.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
-        result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, item.name);
-        });
+        configureRulesetChoices(o, result.rulesetsItems);
         o.description = _("Predefined rule set lists. Select the ones you want to route through the proxy. Leave this empty if you use proxy groups.");
         o.modalonly = true;
 
@@ -785,9 +791,7 @@ return view.extend({
         s2.tab(tabname, _("Rulesets"));
 
         o = s2.taboption(tabname, form.DynamicList, "enabled_list", _("Use with rules:"));
-        result.rulesetsItems.forEach(item => {
-            o.value(item.yamlName, item.name);
-        });
+        configureRulesetChoices(o, result.rulesetsItems);
         o.description = _("Predefined rule set lists. Select the ones you want to route through the proxy group.");
         o.modalonly = true;
 
@@ -885,9 +889,7 @@ return view.extend({
         o.editable = true;
 
         o = s4.taboption(tabname, form.DynamicList, "enabled_blocklist", _("Use with rules:"));
-        result.blockRulesetsItems.forEach(item => {
-            o.value(item.yamlName, item.name);
-        });
+        configureRulesetChoices(o, result.blockRulesetsItems);
         o.description = _("Ready-made blocklists for ads and harmful sites. Matching traffic will be blocked. Choose the ones you want to use, or leave this empty.");
         o.modalonly = true;
 
@@ -1014,6 +1016,9 @@ return view.extend({
 
         const style = E("style", {}, `
             ul.dropdown { max-height:320px !important; }
+            #cbi-justclash-block_rules > .cbi-section-actions > div {
+                display: inline-flex;
+            }
             .cbi-value[data-name="enabled"] .cbi-value-title,
             .cbi-value[data-name="proxy_link_uri"] .cbi-value-title,
             .cbi-value[data-name="subscription"] .cbi-value-title,
