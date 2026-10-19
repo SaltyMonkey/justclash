@@ -11,20 +11,22 @@ emit_result() {
 }
 
 emit_status() {
-    status_running=0
-    status_enabled=0
+    status_running=false
+    status_enabled=false
 
-    status_package_version=$(/usr/bin/justclash.sh version package 2>/dev/null)
-    status_core_version=$(/usr/bin/justclash.sh version core 2>/dev/null)
+    /etc/init.d/justclash running >/dev/null 2>&1 && status_running=true
+    /etc/init.d/justclash enabled >/dev/null 2>&1 && status_enabled=true
 
-    /etc/init.d/justclash running >/dev/null 2>&1 && status_running=1
-    /etc/init.d/justclash enabled >/dev/null 2>&1 && status_enabled=1
+    printf '{"code":0,"running":%s,"enabled":%s}\n' \
+        "$status_running" "$status_enabled"
+}
 
-    jq -cn --arg package_version "$status_package_version" \
-        --arg core_version "$status_core_version" \
-        --argjson running "$status_running" --argjson enabled "$status_enabled" \
-        '{code: 0, package_version: $package_version, core_version: $core_version,
-          running: ($running == 1), enabled: ($enabled == 1)}'
+emit_versions() {
+    versions_package=$(/usr/bin/justclash.sh version package 2>/dev/null)
+    versions_core=$(/usr/bin/justclash.sh version core 2>/dev/null)
+
+    jq -cn --arg package_version "$versions_package" --arg core_version "$versions_core" \
+        '{code: 0, package_version: $package_version, core_version: $core_version}'
 }
 
 # Require one JSON object; missing/null fields stay empty, not the string "null".
@@ -152,6 +154,7 @@ case "$1" in
 list)
     printf '%s\n' '{
         "status": {},
+        "versions": {},
         "start": {},
         "stop": {},
         "restart": {},
@@ -169,6 +172,9 @@ call)
     case "$2" in
     status)
         emit_status
+        ;;
+    versions)
+        emit_versions
         ;;
     start)
         run_quiet "Service started." "Failed to start the service." \
