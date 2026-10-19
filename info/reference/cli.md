@@ -52,6 +52,17 @@ After changing cron fields directly through UCI, run:
 justclash.sh schedule sync
 ```
 
+## Controller TLS
+
+| Command | Purpose |
+| --- | --- |
+| `cert uhttpd` | Copy the uhttpd certificate and key as PEM, converting DER automatically |
+| `cert generate SAN [SAN ...]` | Generate a self-signed certificate; SAN entries use `DNS:<HOSTNAME>` or `IP:<ADDRESS>` |
+
+Both commands replace the configured `api_tls_cert` and `api_tls_key` files,
+falling back to `/etc/justclash/api-cert.pem` and `/etc/justclash/api-key.pem`.
+See [Controller TLS](../guides/controller-tls.md) for setup.
+
 ## Logs
 
 JustClash sends service and Mihomo messages to the OpenWrt system log. It no longer writes a separate runtime log file.
@@ -89,7 +100,8 @@ This command reduces diagnostic results to statuses and redacts values that comm
 | Command | Purpose |
 | --- | --- |
 | `check full --unsafe` | Print the full local diagnostic report |
-| `check nft` | Inspect the JustClash nftables state |
+| `check nft` | Check that the JustClash nftables table exists without printing its contents |
+| `check nft --unsafe` | Print the current JustClash nftables table, including rules, sets, and counters |
 | `check routes` | Inspect policy-routing rules and tables |
 | `check ping <TARGET> [COUNT]` | Test ICMP connectivity |
 | `check dns-proxy <DOMAIN>` | Test Mihomo DNS resolution |

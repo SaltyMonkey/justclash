@@ -17,16 +17,24 @@ Do not expose the listener to WAN or untrusted zones.
 
 ## Enable the Listener
 
-LuCI: **Services → JustClash → Setup: Proxy → Basic settings**.
+LuCI: **Services → JustClash → Setup: Proxy → Mixed proxy settings**.
 
 1. Enable **Mihomo mixed port**.
 2. Select an unused port.
-3. Use the generated **Mixed port authentication** entry or replace it with your own credentials.
-4. Save & Apply.
+3. Under **Mixed proxy bind**, select a network or leave it unspecified to listen on all available addresses.
+4. Use the generated **Mixed port authentication** entry or replace it with your own credentials.
+5. Save & Apply.
+
+The bind setting is independent of **Controller bind**. A selected network uses
+its first IPv4 address, falling back to IPv6. If neither is available, startup
+fails while Mixed Port is enabled. Disabled Mixed Port does not require its
+selected network to have an address. The default network is `lan`; `-` uses wildcard listening.
+Changes to the resolved address are included in the YAML cache fingerprint.
 
 ```sh
 uci set justclash.proxy.use_mixed_port='1'
 uci set justclash.proxy.mixed_port='<PORT>'
+uci set justclash.proxy.mixed_port_bind_interface='<NETWORK_OR_DASH>'
 uci add_list justclash.proxy.proxy_authentication='<USERNAME>:<PASSWORD>'
 uci commit justclash
 service justclash restart

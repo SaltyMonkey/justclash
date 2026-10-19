@@ -148,8 +148,9 @@ LuCI offers repositories for the slim kernel version and upstream Mihomo as edit
 | `tproxy_port` | Port | Transparent TProxy listener |
 | `use_mixed_port` | Boolean | Enable explicit HTTP/SOCKS listener |
 | `mixed_port` | Port | Explicit mixed listener |
+| `mixed_port_bind_interface` | OpenWrt network name or `-` | Mixed listener bind, independent of the controller; IPv4 first, then IPv6; default `lan`; `-` listens on all available addresses |
 | `proxy_authentication` | List of `user:pass` credentials | Access control for non-loopback Mixed Port clients; installation and reset generate a `user:` credential with a random 32-character password |
-| `controller_bind_interface` | OpenWrt network name or `-` | Network whose IPv4 address is used for API binding; `-` listens on all IPv4 interfaces |
+| `controller_bind_interface` | OpenWrt network name or `-` | Network address used for API binding, trying IPv4 first and then IPv6; `-` emits `:<port>` with an empty host for wildcard listening |
 | `use_dashboard` | Boolean | Enable local dashboard hosting |
 | `dashboard_repo` | Choice | Selected dashboard; changing an already downloaded panel requires [manual cleanup](../guides/maintenance.md#switching-the-web-dashboard). |
 | `api_password` | Secret | Mihomo API credential, generated during package installation |
@@ -242,10 +243,11 @@ provide a Mihomo outbound object in `proxy_link_object`.
 | `routing_mark` | Optional socket mark, decimal or hexadecimal, from `1` to `2147483647` except reserved `3` and `255`; see [fwmark handoff](../guides/fwmark-handoff.md) for bypass behavior and receiver requirements |
 | `ip_version` | Name-resolution strategy: `dual`, `ipv4`, `ipv6`, `ipv4-prefer`, or `ipv6-prefer` |
 | `dialer_proxy` | Another outbound or group through which the URI-defined outbound establishes its connection |
-| `enabled_list` | Built-in rulesets whose traffic should use this outbound |
+| `enabled_list` | Catalog IDs whose traffic should use this outbound; LuCI automatically offers both [IP matching modes](../guides/rulesets.md#dns-resolution-for-ip-rulesets) for each IP ruleset |
 | `use_proxy_for_list_update` | Whether to download those rulesets through this outbound |
 | `list_update_interval`, `size_limit` | Ruleset update interval and download size limit |
 | `additional_domain_route`, `enabled_geosite_list` | Additional domain and Geosite matches |
+| `additional_udp_dst_port_route`, `additional_tcp_dst_port_route` | Lists of individual destination ports (`1–65535`); match the selected protocol and port independently of domain rules; do not add Partial Interception |
 | `additional_destip_route`, `enabled_geoip_list` | Destination-address and GeoIP matches |
 | `additional_srcip_route` | Source-address matches |
 
@@ -335,8 +337,12 @@ both lists together.
 | Filtering | `filter`, `exclude_filter`, `exclude_type` |
 | Rulesets | `enabled_list`, `use_proxy_group_for_list_update`, `list_update_interval`, `size_limit` |
 | Domain policy | `additional_domain_route`, `enabled_geosite_list` |
+| Destination ports | `additional_udp_dst_port_route`, `additional_tcp_dst_port_route`, with the same semantics as outbound port rules |
 | Destination policy | `additional_destip_route`, `enabled_geoip_list` |
 | Source policy | `additional_srcip_route` |
+
+LuCI offers the same [IP matching modes](../guides/rulesets.md#dns-resolution-for-ip-rulesets)
+for group rulesets as for outbound rulesets.
 
 ### Group Types
 
@@ -357,7 +363,7 @@ For working failover and balancing examples, see
 | Field | Purpose |
 | --- | --- |
 | `enabled` | Enable blocking |
-| `enabled_blocklist` | Selected domain/IP block rulesets |
+| `enabled_blocklist` | Selected domain/IP block rulesets; LuCI automatically offers both [IP matching modes](../guides/rulesets.md#dns-resolution-for-ip-rulesets) for each IP entry |
 | `enabled_geosite_blocklist` | Selected Geosite categories |
 | `enabled_geoip_blocklist` | Selected GeoIP categories |
 | `proxy` | Outbound used to download blocklist files; this is not the block action |

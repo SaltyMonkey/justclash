@@ -8,7 +8,7 @@ API, not the explicit Mixed Port listener.
 
 First configure [controller binding and credentials](security.md#controller-binding).
 You need a working JustClash setup, a hostname clients can reach, and a certificate
-trusted by those clients. OpenSSL is needed only for the certificate commands.
+trusted by those clients. The package includes `openssl-util` for the TLS commands.
 
 ## Recommended Topologies
 
@@ -31,110 +31,37 @@ The default LuCI/uhttpd certificate files are not a safe drop-in assumption:
 - a self-signed issuer may not be trusted by clients;
 - replacing them in place can break LuCI HTTPS.
 
-Do not point Mihomo at the LuCI files until their encoding has been verified. Prefer separate files under `/etc/justclash/tls/`.
-
-## Check the Existing LuCI Certificate
-
-```sh
-if grep -q '^-----BEGIN CERTIFICATE-----' /etc/uhttpd.crt; then
-	echo 'Certificate is PEM'
-else
-	echo 'Certificate is not PEM'
-fi
-
-if grep -q '^-----BEGIN .*PRIVATE KEY-----' /etc/uhttpd.key; then
-	echo 'Private key is PEM'
-else
-	echo 'Private key is not PEM'
-fi
-```
-
-PEM files begin with markers similar to:
-
-```text
------BEGIN CERTIFICATE-----
------BEGIN PRIVATE KEY-----
-```
-
-The private-key marker may also identify an RSA or EC private key. This check reports only the encoding and does not print certificate or private-key contents. A `not PEM` result means that conversion is required.
+Do not point Mihomo at the LuCI files until their encoding has been verified. Use the separate default files `/etc/justclash/api-cert.pem` and `/etc/justclash/api-key.pem`.
 
 ## Convert LuCI/uhttpd DER Files to Separate PEM Files
 
-Install the OpenSSL command-line utility when `openssl` is not already available. Use the package manager for the current OpenWrt release.
-
-Create a protected destination:
+Installation and upgrades run this command when either destination file is missing or empty:
 
 ```sh
-mkdir -p /etc/justclash/tls
-chmod 700 /etc/justclash/tls
+justclash.sh cert uhttpd
 ```
 
-Convert the certificate:
-
-```sh
-openssl x509 \
-  -inform DER \
-  -in /etc/uhttpd.crt \
-  -outform PEM \
-  -out /etc/justclash/tls/api.crt
-```
-
-Convert the private key:
-
-```sh
-openssl pkey \
-  -inform DER \
-  -in /etc/uhttpd.key \
-  -outform PEM \
-  -out /etc/justclash/tls/api.key
-```
-
-Protect the result:
-
-```sh
-chmod 644 /etc/justclash/tls/api.crt
-chmod 600 /etc/justclash/tls/api.key
-```
-
-> [!IMPORTANT]
-> Never overwrite `/etc/uhttpd.crt` or `/etc/uhttpd.key` during conversion. LuCI/uhttpd may still require the original files and format.
-
-If the original files are already PEM, copy them to the separate directory instead of running DER conversion:
-
-```sh
-cp /etc/uhttpd.crt /etc/justclash/tls/api.crt
-cp /etc/uhttpd.key /etc/justclash/tls/api.key
-chmod 644 /etc/justclash/tls/api.crt
-chmod 600 /etc/justclash/tls/api.key
-```
+Copies the configured uhttpd certificate and key, converting DER to PEM. Source
+files are preserved; repeat after renewing the uhttpd certificate.
 
 ## Generate a Dedicated PEM Certificate
 
-Conversion preserves the existing certificate name and trust properties. It does not make a mismatched or untrusted certificate valid.
-
-When the LuCI certificate is unsuitable, create a dedicated certificate whose subject alternative name matches the hostname used by clients:
-
 ```sh
-mkdir -p /etc/justclash/tls
-chmod 700 /etc/justclash/tls
-openssl req -x509 -newkey rsa:2048 -nodes \
-  -keyout /etc/justclash/tls/api.key \
-  -out /etc/justclash/tls/api.crt \
-  -days <VALIDITY_DAYS> \
-  -subj '/CN=<ROUTER_HOSTNAME>' \
-  -addext 'subjectAltName=DNS:<ROUTER_HOSTNAME>'
-
-chmod 644 /etc/justclash/tls/api.crt
-chmod 600 /etc/justclash/tls/api.key
+justclash.sh cert generate 'DNS:<ROUTER_HOSTNAME>' 'IP:<ROUTER_ADDRESS>'
 ```
 
-For managed environments, use a certificate issued by the local trusted CA and include the required subject alternative names. Modern browsers validate SANs; a CN alone may be insufficient.
+Replace the placeholders and omit unused SAN entries. Generates ECDSA P-256 valid
+for 3650 days. Include each hostname or address clients use.
+
+Both commands replace the configured `api_tls_cert` and `api_tls_key` files,
+using the default paths when unset (key mode `600`). Examples below use defaults.
+Enable TLS and restart the service separately.
 
 ## Validate the PEM Files
 
 ```sh
-openssl x509 -in /etc/justclash/tls/api.crt -noout -subject -dates
-openssl pkey -in /etc/justclash/tls/api.key -noout -check
+openssl x509 -in /etc/justclash/api-cert.pem -noout -subject -dates
+openssl pkey -in /etc/justclash/api-key.pem -noout -check
 ```
 
 Both commands must succeed. Do not print or copy private-key contents.
@@ -145,8 +72,8 @@ LuCI: **Services → JustClash → Setup: Proxy → Controller/API settings**.
 
 ```sh
 uci set justclash.proxy.api_tls='1'
-uci set justclash.proxy.api_tls_cert='/etc/justclash/tls/api.crt'
-uci set justclash.proxy.api_tls_key='/etc/justclash/tls/api.key'
+uci set justclash.proxy.api_tls_cert='/etc/justclash/api-cert.pem'
+uci set justclash.proxy.api_tls_key='/etc/justclash/api-key.pem'
 uci commit justclash
 service justclash restart
 ```
@@ -155,7 +82,7 @@ JustClash validates that the configured paths are absolute. Mihomo still require
 
 ## Browser Trust
 
-A self-signed certificate must be trusted for the API origin separately when the browser treats it as a different port/origin from LuCI.
+The browser must accept the controller certificate for the hostname used by LuCI. In Chrome/Chromium, a certificate-error exception is scoped to the hostname and certificate rather than the port, so using the same certificate for LuCI and the controller can share an exception. Other browsers may handle exceptions differently; a temporary exception is not permanent trust.
 
 Options:
 
@@ -165,6 +92,31 @@ Options:
 - terminate trusted TLS in a reverse proxy.
 
 The certificate hostname must match the browser hostname. Converting DER to PEM changes encoding only, not identity or trust.
+
+### Self-Signed Certificates and Log Noise
+
+Accepting a self-signed certificate through a browser exception can leave rejected
+TLS attempts in the server log even when the live pages work. Chromium can
+[continue a WebSocket request after allowing a certificate error](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/net/websockets/websocket_stream.cc)
+by [restarting the request](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/net/url_request/url_request_http_job.cc).
+The rejected attempt can therefore be logged before the successful retry. Browser
+and version differences affect this behavior; it is not evidence that every
+connection failed.
+
+Status opens two independent WebSocket streams for traffic and memory.
+Certificate handling during their initial connections can produce several
+messages when opening the page while the live metrics subsequently work normally.
+
+To keep this certificate-rejection noise from filling Service logs, JustClash
+suppresses HTTP TLS handshake messages ending in
+`remote error: tls: unknown certificate`. Other TLS errors remain logged, and
+certificate validation still runs.
+
+The filter also suppresses genuine rejections with that exact message; it cannot
+tell whether a retry succeeded. If live data is unavailable, inspect the browser's
+connection errors and check certificate trust and SANs even when Service logs are
+quiet. A trusted certificate with matching SANs avoids reliance on browser
+exceptions.
 
 ## Reverse Proxy
 

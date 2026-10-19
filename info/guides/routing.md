@@ -164,12 +164,23 @@ does not prove that every referenced name exists or is reachable.
 
 On the outbound or group that should handle the traffic:
 
-- Under **Lists → Use with rules**, select existing catalog entries.
-- Under **Manual rules**, add domain suffixes, destination addresses, or source
-  addresses as needed.
+- Under **Rulesets → Use with rules**, select existing catalog entries.
+- Under **Manual rules**, add domain suffixes, TCP/UDP destination
+  ports, destination addresses, or source addresses as needed.
 - In Geodata mode, select the relevant Geosite/GeoIP categories.
 
 Enter a domain suffix without a scheme or path; it also matches subdomains.
+
+**UDP destination ports** and **TCP destination ports** accept one port per item,
+from `1` to `65535`. Each entry is an independent match for the selected protocol
+and destination port; it does not restrict the domain rules in the same section.
+These fields only route traffic already received by Mihomo. They do not add
+firewall interception in Partial Interception mode.
+
+Within an outbound or group, source-address rules come first, followed by port
+rules, domain suffixes, Geosite/domain rulesets, and destination
+IP rules.
+
 Assign a rule to either the group or its individual outbound for the same task.
 Duplicating it in both places makes the result depend on rule order.
 

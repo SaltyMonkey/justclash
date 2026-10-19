@@ -95,6 +95,25 @@ The fields cannot contain a pipe or newline. Authorization data is a credential;
 
 The reference uses the catalog ID, not its display name.
 
+### DNS Resolution for IP Rulesets
+
+Under **Setup: Routing → Rulesets**, each IP CIDR ruleset has two choices:
+
+- **(no-resolve)** keeps the existing behavior: the rule checks a known destination
+  address without initiating a DNS lookup.
+- **(resolve)** allows Mihomo to resolve a destination hostname when needed to
+  check the IP ruleset. This can add a router-side DNS lookup even when a proxy
+  would otherwise resolve the destination remotely.
+
+LuCI automatically adds the **(resolve)** choice for every `ipcidr` catalog
+entry, including blocklists. Select it from the list; no manual suffix entry is
+needed. LuCI stores this choice as `ID:resolve` in the existing UCI list. Both
+choices use the same provider, downloaded file, and nftables set. Domain rulesets
+keep a single choice.
+
+Both choices still match an address resolved by an earlier rule. They affect
+matching inside Mihomo and do not expand Partial Interception coverage.
+
 ## Download Path
 
 Active remote rulesets are downloaded by Mihomo. The target outbound/group section controls:
@@ -161,7 +180,7 @@ service justclash reload
 ```sh
 service justclash restart
 justclash.sh logs service 100
-justclash.sh check nft
+justclash.sh check nft --unsafe
 ```
 
 | Symptom | Check |
