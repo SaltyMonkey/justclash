@@ -251,6 +251,18 @@ return view.extend({
         };
         o.modalonly = true;
 
+        o = s.taboption(tabname, form.DynamicList, "additional_udp_dst_port_route", _("UDP destination ports:"));
+        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
+        o.datatype = "and(port,min(1))";
+        o.optional = true;
+        o.modalonly = true;
+
+        o = s.taboption(tabname, form.DynamicList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
+        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
+        o.datatype = "and(port,min(1))";
+        o.optional = true;
+        o.modalonly = true;
+
         o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
         o.description = _("Traffic to this destination IP address or subnet will go through this proxy.");
         o.placeholder = "CIDR";
@@ -852,6 +864,18 @@ return view.extend({
         o.validate = function (section_id, value) {
             return (common.isValidDomainSuffix(value));
         };
+        o.modalonly = true;
+
+        o = s2.taboption(tabname, form.DynamicList, "additional_udp_dst_port_route", _("UDP destination ports:"));
+        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
+        o.datatype = "and(port,min(1))";
+        o.optional = true;
+        o.modalonly = true;
+
+        o = s2.taboption(tabname, form.DynamicList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
+        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
+        o.datatype = "and(port,min(1))";
+        o.optional = true;
         o.modalonly = true;
 
         o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
