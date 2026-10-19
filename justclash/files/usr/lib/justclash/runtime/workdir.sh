@@ -6,14 +6,16 @@
 workdir_cache_fingerprint() {
     local uci_hash="$1"
     local controller_bind_address="$2"
+    local mixed_selected_ipaddr="$3"
     local file_path file_hash
     local fingerprint
-    shift 2
+    shift 3
 
-    fingerprint=$(printf 'generator=%s|uci=%s|controller=%s' \
+    fingerprint=$(printf 'generator=%s|uci=%s|controller=%s|mixed=%s' \
         "$JUSTCLASH_VERSION" \
         "$uci_hash" \
-        "$controller_bind_address") || return 1
+        "$controller_bind_address" \
+        "$mixed_selected_ipaddr") || return 1
 
     for file_path in "$@"; do
         if [ -f "$file_path" ]; then

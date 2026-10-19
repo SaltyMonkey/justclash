@@ -26,12 +26,14 @@ yaml_document_write_access() {
     local keep_alive_interval="${22}"
     local profile_store_selected="${23}"
     local profile_store_fake_ip="${24}"
+    local mixed_selected_ipaddr="${25:-}"
 
     # Support for mixed port
     # Make sure call for this function handled after 'core_prepare_workdir' since file must be removed
     if [ "$use_mixed_port" -eq 1 ]; then
         echo "allow-lan: true"
         echo "mixed-port: $mixed_port"
+        echo "bind-address: $(str_yaml_quote "${mixed_selected_ipaddr:-*}")"
         printf '%s\n' "authentication: $proxy_authentication"
         echo "skip-auth-prefixes:"
         echo "  - 127.0.0.1/8"
