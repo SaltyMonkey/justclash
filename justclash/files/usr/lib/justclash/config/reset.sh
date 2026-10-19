@@ -7,13 +7,7 @@ _CONFIG_MIXED_PASSWORD_PLACEHOLDER="__JUSTCLASH_GENERATE_MIXED_PASSWORD__"
 _config_generate_password() {
     local password=""
 
-    [ -r /dev/urandom ] || return 1
-    password="$(
-        set -o pipefail || exit 1
-        head -c 24 /dev/urandom 2>/dev/null |
-            base64 2>/dev/null |
-            tr -d '\r\n'
-    )" || return 1
+    password=$(openssl rand -base64 24 2>/dev/null) || return 1
 
     [ "${#password}" -eq 32 ] || return 1
     case "$password" in
