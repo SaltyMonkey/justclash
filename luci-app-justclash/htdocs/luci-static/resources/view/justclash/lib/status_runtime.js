@@ -5,6 +5,7 @@
 "require view.justclash.lib.socket as socketRuntime";
 
 const POLL_INTERVAL = 3000;
+const RULES_REFRESH_INTERVAL = 60000;
 
 const parseSocketPayload = (event) => {
     try {
@@ -14,9 +15,11 @@ const parseSocketPayload = (event) => {
     }
 };
 
-const createPoller = ({ token, isMounted, onUpdate, onInactive, interval = POLL_INTERVAL }) => {
+const createPoller = ({ token, initialRunning = false, initialRuleCount = null, isMounted, onUpdate, onInactive, interval = POLL_INTERVAL }) => {
     let timer = null;
     let updating = false;
+    let ruleCount = initialRuleCount;
+    let lastRulesRefresh = initialRunning ? Date.now() : null;
 
     const stop = () => {
         if (timer !== null) {
@@ -25,7 +28,10 @@ const createPoller = ({ token, isMounted, onUpdate, onInactive, interval = POLL_
         }
     };
 
-    const refresh = async () => {
+    const refresh = async ({ forceRulesRefresh = false } = {}) => {
+        if (forceRulesRefresh)
+            lastRulesRefresh = null;
+
         if (updating)
             return true;
 
@@ -42,19 +48,19 @@ const createPoller = ({ token, isMounted, onUpdate, onInactive, interval = POLL_
             const isRunning = !!status.running;
             const isAutostarting = !!status.enabled;
 
-            let currentMode = "";
-            if (isRunning) {
-                try {
-                    const configs = await mihomoApi.fetchConfigs(token);
-                    currentMode = configs.mode || "";
-                } catch {
-                    // Service state remains useful even when the controller decides not to cooperate.
-                }
+            if (!isRunning) {
+                ruleCount = 0;
+                lastRulesRefresh = null;
+            } else if (lastRulesRefresh === null || Date.now() - lastRulesRefresh >= RULES_REFRESH_INTERVAL) {
+                lastRulesRefresh = Date.now();
+                ruleCount = await mihomoApi.fetchRules(token)
+                    .then(data => Array.isArray(data?.rules) ? data.rules.length : null)
+                    .catch(() => null);
             }
 
             requestAnimationFrame(() => {
                 if (isMounted())
-                    onUpdate({ isRunning, isAutostarting, currentMode });
+                    onUpdate({ isRunning, isAutostarting, ruleCount });
             });
 
             return true;
@@ -89,7 +95,7 @@ const createPoller = ({ token, isMounted, onUpdate, onInactive, interval = POLL_
     return { start, stop, refresh, schedule };
 };
 
-const createSockets = ({ token, containerCheck, onTraffic, onConnections, onMemory, onInactive }) =>
+const createSockets = ({ token, containerCheck, onTraffic, onMemory, onInactive }) =>
     socketRuntime.createConnector({
         isMounted: containerCheck,
         onInactive,
@@ -103,17 +109,6 @@ const createSockets = ({ token, containerCheck, onTraffic, onConnections, onMemo
                     const data = parseSocketPayload(event);
                     if (data)
                         onTraffic(data);
-                })
-            }));
-
-            cleanups.push(mihomoApi.createConnectionsWebSocket({
-                token,
-                interval: 1000,
-                containerCheck,
-                onMessage: guard((event) => {
-                    const data = parseSocketPayload(event);
-                    if (data && Array.isArray(data.connections))
-                        onConnections(data);
                 })
             }));
 

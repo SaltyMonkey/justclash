@@ -90,8 +90,7 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
         createSummaryRow(_("Mihomo version"), dynamicElements.coreValue)
     ]),
     createSummaryCard(_("Kernel"), [
-        createSummaryRow(_("Connections"), dynamicElements.connValue),
-        createSummaryRow(_("Mode"), dynamicElements.modeValue),
+        createSummaryRow(_("Rules"), dynamicElements.rulesValue),
         createSummaryRow(_("Speed"), createInlineTrafficNode(dynamicElements.upValue, dynamicElements.downValue)),
         createSummaryRow(_("Total"), createInlineTrafficNode(dynamicElements.upTotalValue, dynamicElements.downTotalValue))
     ]),
@@ -103,12 +102,15 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
     ])
 ]);
 
-const updateStatusUI = (elements, isAutostarting, isRunning, currentMode) => {
+const updateStatusUI = (elements, isAutostarting, isRunning, ruleCount) => {
     const runningChanged = elements.lastRunning !== isRunning;
     const autostartChanged = elements.lastAutostarting !== isAutostarting;
 
     elements.currentRunning = isRunning;
     elements.currentAutostarting = isAutostarting;
+
+    if (elements.rulesValue)
+        elements.rulesValue.textContent = ruleCount === null ? "—" : String(ruleCount);
 
     if (runningChanged && elements.serviceBadge) {
         elements.serviceBadge.textContent = boolToWordRunning(isRunning);
@@ -138,12 +140,6 @@ const updateStatusUI = (elements, isAutostarting, isRunning, currentMode) => {
         elements.btnToggle.setAttribute("aria-label", label);
     }
 
-    if (elements.modeValue) {
-        elements.modeValue.textContent = isRunning && currentMode
-            ? currentMode.charAt(0).toUpperCase() + currentMode.slice(1)
-            : _("Unknown");
-    }
-
     elements.lastRunning = isRunning;
     elements.lastAutostarting = isAutostarting;
 };
@@ -171,22 +167,26 @@ return view.extend({
 
         const statusPromise = ubusApi.getStatus()
             .catch(() => ({
-                package_version: _("Error"),
-                core_version: _("Error"),
                 running: false,
                 enabled: false
             }));
 
-        const serviceStatus = await statusPromise;
+        const versionsPromise = ubusApi.getVersions()
+            .catch(() => ({
+                package_version: _("Error"),
+                core_version: _("Error")
+            }));
+
+        const [serviceStatus, serviceVersions] = await Promise.all([statusPromise, versionsPromise]);
         let infoMihomoVersion = null;
-        let infoMode = "";
+        let infoRuleCount = 0;
 
         if (serviceStatus.running) {
-            [infoMihomoVersion, infoMode] = await Promise.all([
+            [infoMihomoVersion, infoRuleCount] = await Promise.all([
                 mihomoApi.fetchVersion(apiToken).catch(() => null),
-                mihomoApi.fetchConfigs(apiToken)
-                    .then(configs => configs.mode || "")
-                    .catch(() => "")
+                mihomoApi.fetchRules(apiToken)
+                    .then(data => Array.isArray(data?.rules) ? data.rules.length : null)
+                    .catch(() => null)
             ]);
         }
 
@@ -195,11 +195,11 @@ return view.extend({
         return {
             infoDevice,
             infoOpenWrt,
-            infoPackage: serviceStatus.package_version,
-            infoCore: infoMihomoVersion || serviceStatus.core_version,
+            infoPackage: serviceVersions.package_version,
+            infoCore: infoMihomoVersion || serviceVersions.core_version,
+            infoRuleCount,
             infoIsRunning: !!serviceStatus.running,
             infoIsAutostarting: !!serviceStatus.enabled,
-            infoMode,
             apiToken
         };
     },
@@ -234,10 +234,12 @@ return view.extend({
 
         poller = statusRuntime.createPoller({
             token: results.apiToken,
+            initialRunning: !!results.infoIsRunning,
+            initialRuleCount: results.infoRuleCount,
             isMounted: () => document.body.contains(dynamicElements.serviceBadge),
-            onUpdate: ({ isRunning, isAutostarting, currentMode }) => {
+            onUpdate: ({ isRunning, isAutostarting, ruleCount }) => {
                 const wasRunning = !!dynamicElements.currentRunning;
-                updateStatusUI(dynamicElements, isAutostarting, isRunning, currentMode);
+                updateStatusUI(dynamicElements, isAutostarting, isRunning, ruleCount);
 
                 if (isRunning && !wasRunning)
                     sockets?.connect();
@@ -256,16 +258,15 @@ return view.extend({
         const upTotalValue = E("span", {}, "0 B");
         const downTotalValue = E("span", {}, "0 B");
         const ramValue = E("span", {}, "0 B");
-        const connValue = E("span", {}, "0");
-        const modeValue = E("span", {}, _("Unknown"));
-        const actionHandler = (task, timeoutMs) => async () => {
+        const rulesValue = E("span", {}, results.infoIsRunning ? "—" : "0");
+        const actionHandler = (task, timeoutMs, forceRulesRefresh = false) => async () => {
             if (actionInProgress) return;
             actionInProgress = true;
             ui.showModal(_("Running command..."), [E("p", _("Please wait."))]);
             try {
                 await task();
                 if (timeoutMs) await asyncTimeout(timeoutMs);
-                await poller.refresh();
+                await poller.refresh({ forceRulesRefresh });
             } catch (e) {
                 ui.addTimeLimitedNotification(_("Error"), E("p", e.message), common.notificationTimeout, "danger");
                 console.error(e);
@@ -278,7 +279,7 @@ return view.extend({
         const toggleHandler = async () => {
             const running = !!dynamicElements.currentRunning;
             const task = running ? () => ubusApi.stop() : () => ubusApi.start();
-            return actionHandler(task, running ? 0 : ACTION_DELAY_TIMEOUT)();
+            return actionHandler(task, running ? 0 : ACTION_DELAY_TIMEOUT, !running)();
         };
 
         const autoToggleHandler = async () => {
@@ -288,7 +289,7 @@ return view.extend({
         };
 
         const btnToggle = createActionButton(buttonsIDs.START, buttons.POSITIVE, _("Start"), toggleHandler);
-        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler(() => ubusApi.restart(), ACTION_DELAY_TIMEOUT));
+        const btnRestart = createActionButton(buttonsIDs.RESTART, buttons.ACTION, _("Restart"), actionHandler(() => ubusApi.restart(), ACTION_DELAY_TIMEOUT, true));
         const btnAutoToggle = createActionButton(buttonsIDs.ENABLE, buttons.POSITIVE, _("Enable on boot"), autoToggleHandler);
         Object.assign(dynamicElements, {
             serviceBadge,
@@ -300,8 +301,7 @@ return view.extend({
             upTotalValue,
             downTotalValue,
             ramValue,
-            connValue,
-            modeValue,
+            rulesValue,
             btnToggle,
             btnAutoToggle
         });
@@ -329,9 +329,6 @@ return view.extend({
                 dynamicElements.upTotalValue.textContent = common.formatBytes(data.upTotal);
                 dynamicElements.downTotalValue.textContent = common.formatBytes(data.downTotal);
             },
-            onConnections: (data) => {
-                dynamicElements.connValue.textContent = String(data.connections.length);
-            },
             onMemory: (data) => {
                 dynamicElements.ramValue.textContent = common.formatBytes(data.inuse);
             }
@@ -347,9 +344,9 @@ return view.extend({
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showRpc(_("Diagnostic report"), false, () => ubusApi.check())),
                 createActionButton(buttonsIDs.UPDATE, buttons.ACTION, _("Update core"), actions.showConfirmRpc(_("Update Mihomo core"), _("The core archive is downloaded and checked with SHA-256 and gzip before replacing the installed core. Download or verification failures keep the current core. There is no rollback after removal."), () => ubusApi.updateCore(), async () => {
-                    const status = await ubusApi.getStatus();
-                    const infoPackage = status.package_version;
-                    let infoCore = status.core_version;
+                    const versions = await ubusApi.getVersions();
+                    const infoPackage = versions.package_version;
+                    let infoCore = versions.core_version;
 
                     try {
                         infoCore = await mihomoApi.fetchVersion(results.apiToken);
@@ -455,7 +452,7 @@ return view.extend({
         window.addEventListener("beforeunload", beforeUnloadHandler);
 
         requestAnimationFrame(() => {
-            updateStatusUI(dynamicElements, results.infoIsAutostarting, !!results.infoIsRunning, results.infoMode);
+            updateStatusUI(dynamicElements, results.infoIsAutostarting, !!results.infoIsRunning, results.infoRuleCount);
             if (results.infoIsRunning)
                 sockets.connect();
         });
