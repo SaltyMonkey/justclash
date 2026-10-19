@@ -22,7 +22,8 @@ The verbose form shows the accepted request fields and their types.
 
 | Method | Request | ACL class | Purpose |
 | --- | --- | --- | --- |
-| `status` | `{}` | Read | Return package and core versions plus service state |
+| `status` | `{}` | Read | Return service running state and boot enablement |
+| `versions` | `{}` | Read | Return the installed package and core versions |
 | `check` | `{}` | Read | Generate the safe, redacted diagnostic summary |
 | `config_show` | `{ "target": "mihomo" }` or `{ "target": "service" }` | Read | Return a configuration with credential fields redacted |
 | `logs` | `{ "lines": 40 }` | Read | Return recent JustClash entries from the OpenWrt system log |
@@ -43,6 +44,12 @@ Read service status:
 
 ```sh
 ubus call justclash-core status
+```
+
+Read package and core versions:
+
+```sh
+ubus call justclash-core versions
 ```
 
 Generate the safe diagnostic summary:
@@ -95,14 +102,33 @@ The `status` method returns:
 ```json
 {
   "code": 0,
-  "package_version": "VERSION",
-  "core_version": "VERSION",
   "running": true,
   "enabled": true
 }
 ```
 
-Other methods return the application result in this form:
+`running` and `enabled` are JSON booleans. This response contains only current
+service state, so polling it does not run version commands.
+
+The `versions` method returns:
+
+```json
+{
+  "code": 0,
+  "package_version": "PACKAGE_VERSION",
+  "core_version": "CORE_VERSION"
+}
+```
+
+The core version comes from the installed binary; Mihomo does not need to be
+running. LuCI queries versions on page load and after a core update, separately
+from periodic state polling.
+
+Version fields were moved out of `status`. Clients that previously read
+`package_version` or `core_version` from that response must call `versions`
+instead. Update the JustClash and LuCI packages together and refresh LuCI.
+
+All remaining methods return the application result in this form:
 
 ```json
 {
@@ -117,6 +143,7 @@ Clients must check the application-level `code` field. A successful ubus transpo
 
 LuCI access is defined in `/usr/share/rpcd/acl.d/luci-app-justclash.json`.
 The [method table](#methods) lists each method's ACL class.
+Both `status` and `versions` are available through the read ACL.
 
 `hardware_id` does not modify the system, but it is deliberately placed in the write ACL class because it exposes a stable device identifier.
 
