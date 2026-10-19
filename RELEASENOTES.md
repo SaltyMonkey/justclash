@@ -1,4 +1,4 @@
-## [0.113.0_r1] - 19102026
+## [0.113.0_rc1] - 19102026
 
 This release adds destination-port routing, independent Mixed Port binding,
 IPv6 listener support, and controller certificate management. Performance
