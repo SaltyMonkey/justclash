@@ -161,6 +161,8 @@ restore_legacy_dnsmasq_backup() {
 
 restore_legacy_dnsmasq_backup || exit 1
 
+add_missing_option "justclash.proxy.mixed_port_bind_interface" "lan" || exit 1
+
 # Keep blocking enabled when retiring the firewall REJECT mode.
 for option in nft_quic_mode nft_dot_mode nft_doh_mode nft_dot_quic_mode; do
     if [ "$(uci -q get "justclash.settings.$option")" = "REJECT" ]; then
