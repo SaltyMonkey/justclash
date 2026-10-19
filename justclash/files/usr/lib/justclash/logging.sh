@@ -80,6 +80,9 @@ log_piped() {
     while IFS= read -r line || [ -n "$line" ]; do
         [ -z "$line" ] && continue
         case "$line" in
+        *"http: TLS handshake error from "*": remote error: tls: unknown certificate")
+            continue
+            ;;
         *msg=*)
             level="${line#*level=}"
             level="${level%% *}"
