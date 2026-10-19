@@ -12,8 +12,10 @@ check_nft() {
         return 1
     fi
 
-    clog info "Displaying current NFTables configuration:"
-    nft list table inet "$table_name"
+    if [ "${2:-}" = "--unsafe" ]; then
+        clog info "Displaying current NFTables configuration:"
+        nft list table inet "$table_name" || return 1
+    fi
 
     clog info "NFTables check completed successfully."
 
