@@ -76,6 +76,20 @@ build_manual_rules_array() {
     printf '%s' "$rules_fragment"
 }
 
+build_dst_port_rules_array() {
+    local udp_ports="$1" tcp_ports="$2" target_name="$3"
+    local network ports port rules_fragment=""
+
+    for network in udp tcp; do
+        [ "$network" = "udp" ] && ports="$udp_ports" || ports="$tcp_ports"
+        for port in $ports; do
+            rules_fragment="${rules_fragment:+$rules_fragment,}\"AND,((NETWORK,$network),(DST-PORT,$port)),$target_name\""
+        done
+    done
+
+    printf '%s' "$rules_fragment"
+}
+
 build_builtin_rules_bundle() {
     local enabled_list="$1"
     local target_name="$2"

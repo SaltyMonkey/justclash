@@ -49,6 +49,7 @@ yaml_proxy_group_append() {
     local list_update_interval="${18}" size_limit="${19}" use_proxy_group_for_list_update="${20}"
     local additional_srcip_route="${21}" additional_domain_route="${22}"
     local enabled_geosite_list="${23}" additional_destip_route="${24}" enabled_geoip_list="${25}"
+    local additional_udp_dst_port_route="${26:-}" additional_tcp_dst_port_route="${27:-}"
     local route_entries route_entry ip_cidr rules_fragment escaped_proxies escaped_providers group_json
     local download_proxy generated_rule lazy_value=""
 
@@ -69,6 +70,9 @@ yaml_proxy_group_append() {
         [ -n "$ip_cidr" ] && _STATIC_SOURCE_IPS_BUFFER="${_STATIC_SOURCE_IPS_BUFFER:+$_STATIC_SOURCE_IPS_BUFFER$NL}$ip_cidr"
     done
     rules_fragment=$(build_manual_rules_array "$route_entries" "SRC-IP-CIDR" "$name")
+    [ -n "$rules_fragment" ] && OUT_RULES="${OUT_RULES:+$OUT_RULES,}$rules_fragment"
+
+    rules_fragment=$(build_dst_port_rules_array "$additional_udp_dst_port_route" "$additional_tcp_dst_port_route" "$name")
     [ -n "$rules_fragment" ] && OUT_RULES="${OUT_RULES:+$OUT_RULES,}$rules_fragment"
 
     # Compile ruleset bundle early so we have domain/IP rulesets separated
