@@ -28,6 +28,7 @@
                 ],
                 "justclash-core": [
                     "status",
+                    "versions",
                     "check",
                     "config_show",
                     "logs"
