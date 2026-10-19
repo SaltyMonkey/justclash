@@ -106,7 +106,7 @@ nftables bypass. Such entries need separately managed loop prevention.
 2. Inspect the generated configuration locally with `justclash.sh config show mihomo`.
    The entry should contain `type: direct` and `routing-mark: 16777216` for the
    example mark; hexadecimal UCI input is normalized to decimal.
-3. Use `justclash.sh check nft` and `justclash.sh check routes` to inspect the
+3. Use `justclash.sh check nft --unsafe` and `justclash.sh check routes` to inspect the
    JustClash bypass and policy routing. Check the receiving service's rule
    counters and connection view to confirm delivery beyond Mihomo.
 

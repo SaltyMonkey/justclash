@@ -106,7 +106,7 @@ Mixed-port fixed-outbound handling is also high priority. Use `BY RULES` when ex
 
 ```sh
 justclash.sh logs service 100
-justclash.sh check nft
+justclash.sh check nft --unsafe
 ```
 
 Verify:

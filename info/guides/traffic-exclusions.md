@@ -113,7 +113,7 @@ For a complete bypassed network, see [Guest Network Configuration](guest-network
 ## Verification
 
 ```sh
-justclash.sh check nft
+justclash.sh check nft --unsafe
 justclash.sh check routes
 ```
 

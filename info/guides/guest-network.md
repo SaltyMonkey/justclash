@@ -99,7 +99,7 @@ The dedicated resolver is outside JustClash policy:
 - IPv4 and IPv6 are both direct.
 
 ```sh
-justclash.sh check nft
+justclash.sh check nft --unsafe
 justclash.sh check routes
 ```
 

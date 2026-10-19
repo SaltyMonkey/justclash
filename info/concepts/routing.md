@@ -175,7 +175,7 @@ When IPv6 support is disabled or unavailable, IPv6 traffic is not governed by th
 7. Run:
 
 ```sh
-justclash.sh check nft
+justclash.sh check nft --unsafe
 justclash.sh check routes
 ```
 
