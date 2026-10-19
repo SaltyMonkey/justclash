@@ -100,20 +100,26 @@ core_prepare_safe_paths() {
     return 0
 }
 
-core_controller_address_read() {
-    local controller_bind_interface router_selected_ipaddr
+core_bind_address_read() {
+    local bind_interface bind_address
 
-    config_get controller_bind_interface proxy controller_bind_interface
-    network_flush_cache
-    if [ "$controller_bind_interface" = "$CONTROLLER_BIND_UNSPECIFIED" ]; then
-        router_selected_ipaddr="$CONTROLLER_BIND_ALL_IPV4"
-    elif ! network_get_ipaddr router_selected_ipaddr "$controller_bind_interface" ||
-        [ -z "$router_selected_ipaddr" ]; then
-        log error "Controller bind network has no IPv4 address. Aborting startup." >&2
-        return 1
+    config_get bind_interface proxy "$1" "lan"
+    if [ "$bind_interface" = "$BIND_UNSPECIFIED" ]; then
+        return 0
     fi
 
-    printf '%s' "$router_selected_ipaddr"
+    network_flush_cache
+    if ! network_get_ipaddr bind_address "$bind_interface" ||
+        [ -z "$bind_address" ]; then
+        if ! network_get_ipaddr6 bind_address "$bind_interface" ||
+            [ -z "$bind_address" ]; then
+            log error "$2 bind network has no IPv4 or IPv6 address. Aborting startup." >&2
+            return 1
+        fi
+        bind_address="[$bind_address]"
+    fi
+
+    printf '%s' "$bind_address"
 }
 
 start() {
@@ -121,7 +127,7 @@ start() {
     local api_tls api_tls_cert api_tls_key dns_listen_port ipv6_enabled mihomo_gogc mihomo_gomaxprocs
     local mihomo_mem_limit mihomo_persistent_cache mihomo_persistent_ext_rules mixed_port nft_apply_changes
     local ntpd_start routing_mode tproxy_port use_mixed_port
-    local router_selected_ipaddr
+    local router_selected_ipaddr mixed_selected_ipaddr=""
     local core_exit_code preflight_tproxy_port preflight_mixed_port
 
     if preflight_check_is_already_running "$PROGNAME start" "JustClash" "$CORE_PATH" "$$"; then
@@ -175,10 +181,17 @@ start() {
         sleep "$ENV_JUSTCLASH_BOOT_DELAY"
     fi
 
-    router_selected_ipaddr=$(core_controller_address_read) || {
+    router_selected_ipaddr=$(core_bind_address_read controller_bind_interface Controller) || {
         log error "Controller address resolution failed. Aborting startup."
         return 1
     }
+
+    if [ "$use_mixed_port" = "1" ]; then
+        mixed_selected_ipaddr=$(core_bind_address_read mixed_port_bind_interface "Mixed proxy") || {
+            log error "Mixed proxy address resolution failed. Aborting startup."
+            return 1
+        }
+    fi
 
     preflight_check_requirement "$CORE_PATH" "$CORE_BIN_NAME" "$REQUIRED_TOOLS" || {
         log error "System requirement checks failed. Aborting startup."
@@ -240,6 +253,7 @@ start() {
     current_config_hash=$(workdir_cache_fingerprint \
         "$current_config_hash" \
         "$router_selected_ipaddr" \
+        "$mixed_selected_ipaddr" \
         "$RULESETS_FILE" \
         "$RULESETS_BLOCKS_FILE" \
         "$USER_RULESETS_FILE" \
@@ -268,7 +282,7 @@ start() {
         ;;
     1)
         log info "Generating YAML configuration..."
-        core_generate_yaml "$router_selected_ipaddr" || {
+        core_generate_yaml "$router_selected_ipaddr" "$mixed_selected_ipaddr" || {
             log error "YAML configuration generation failed. Aborting startup."
             return 1
         }
@@ -574,6 +588,7 @@ config_proxy_read() {
     local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
     local list_update_interval size_limit mode proxy_link_object use_for_update ip_version
     local src_routes enabled_list domain_routes geosite_list destip_routes geoip_list
+    local udp_dst_ports tcp_dst_ports
     config_get name "$section" name
     [ -n "$name" ] || {
         log warn "Skip proxy without name: $section"
@@ -601,7 +616,9 @@ config_proxy_read() {
     config_get geosite_list "$section" enabled_geosite_list
     config_get destip_routes "$section" additional_destip_route
     config_get geoip_list "$section" enabled_geoip_list
-    "$callback" "$name" "$proxy_link_uri" "$dialer_proxy" "$interface_name" "$routing_mark" "$list_update_interval" "$size_limit" "$mode" "$proxy_link_object" "$use_for_update" "$ip_version" "$src_routes" "$enabled_list" "$domain_routes" "$geosite_list" "$destip_routes" "$geoip_list"
+    config_get udp_dst_ports "$section" additional_udp_dst_port_route
+    config_get tcp_dst_ports "$section" additional_tcp_dst_port_route
+    "$callback" "$name" "$proxy_link_uri" "$dialer_proxy" "$interface_name" "$routing_mark" "$list_update_interval" "$size_limit" "$mode" "$proxy_link_object" "$use_for_update" "$ip_version" "$src_routes" "$enabled_list" "$domain_routes" "$geosite_list" "$destip_routes" "$geoip_list" "$udp_dst_ports" "$tcp_dst_ports"
 }
 
 config_proxy_group_read() {
@@ -609,6 +626,7 @@ config_proxy_group_read() {
     local name enabled proxies providers group_type strategy check_url expected_status
     local interval timeout max_failed lazy tolerance selected filter exclude_filter exclude_type
     local enabled_list update_interval size_limit use_for_update src_routes domain_routes geosite_list destip_routes geoip_list
+    local udp_dst_ports tcp_dst_ports
     config_get name "$section" name
     [ -n "$name" ] || {
         log warn "Skip proxy group without a name: $section"
@@ -647,7 +665,9 @@ config_proxy_group_read() {
     config_get geosite_list "$section" enabled_geosite_list
     config_get destip_routes "$section" additional_destip_route
     config_get geoip_list "$section" enabled_geoip_list
-    "$callback" "$name" "$proxies" "$providers" "$group_type" "$strategy" "$check_url" "$expected_status" "$interval" "$timeout" "$max_failed" "$lazy" "$tolerance" "$selected" "$filter" "$exclude_filter" "$exclude_type" "$enabled_list" "$update_interval" "$size_limit" "$use_for_update" "$src_routes" "$domain_routes" "$geosite_list" "$destip_routes" "$geoip_list"
+    config_get udp_dst_ports "$section" additional_udp_dst_port_route
+    config_get tcp_dst_ports "$section" additional_tcp_dst_port_route
+    "$callback" "$name" "$proxies" "$providers" "$group_type" "$strategy" "$check_url" "$expected_status" "$interval" "$timeout" "$max_failed" "$lazy" "$tolerance" "$selected" "$filter" "$exclude_filter" "$exclude_type" "$enabled_list" "$update_interval" "$size_limit" "$use_for_update" "$src_routes" "$domain_routes" "$geosite_list" "$destip_routes" "$geoip_list" "$udp_dst_ports" "$tcp_dst_ports"
 }
 
 config_proxy_provider_read() {
@@ -701,6 +721,7 @@ config_proxy_provider_read() {
 # Reads and validates YAML settings, then atomically promotes the generated document.
 core_generate_yaml() {
     local router_selected_ipaddr="$1"
+    local mixed_selected_ipaddr="${2:-}"
 
     # ash locals are dynamically scoped. Synchronous YAML callbacks update this
     # build state without leaking it into the process-wide environment.
@@ -1066,7 +1087,8 @@ core_generate_yaml() {
             "$keep_alive_idle" \
             "$keep_alive_interval" \
             "$profile_store_selected" \
-            "$profile_store_fake_ip"
+            "$profile_store_fake_ip" \
+            "$mixed_selected_ipaddr"
         yaml_document_write_geodata \
             "$geodata_mode" \
             "$geodata_autoupdate" \
@@ -1418,7 +1440,7 @@ check_report_full() {
     print_dpi_status "B4" "$B4_FILEPATH"
     echo ""
     echo "  [ NFT Tables ]"
-    check_nft "$NF_TABLE_NAME" | sed 's/^/    /'
+    check_nft "$NF_TABLE_NAME" --unsafe | sed 's/^/    /'
     echo ""
     echo "  [ Routes ]"
     run_check_routes | sed 's/^/    /'
@@ -1516,6 +1538,11 @@ start | run | up)
         /usr/lib/justclash/runtime/policy_routing.sh \
         /usr/lib/justclash/runtime/scheduler.sh
     config_init "$PROGNAME" || exit 1
+
+    # Populate shared caches in this shell before startup callbacks use them.
+    sysinfo_hwid_generate >/dev/null || :
+    sysinfo_get_hw_model >/dev/null
+
     [ "$ENV_JUSTCLASH_RUN_CONTEXT" != "procd" ] && trap 'stop; exit 0' INT TERM HUP
     start
     ;;
@@ -1679,12 +1706,15 @@ check)
         check_report_full
         ;;
     nft)
-        [ "$#" -eq 2 ] || {
-            printf 'Usage: justclash.sh check nft\n' >&2
+        case "$#:$3" in
+        2: | 3:--unsafe) ;;
+        *)
+            printf 'Usage: justclash.sh check nft [--unsafe]\n' >&2
             exit 2
-        }
+            ;;
+        esac
         import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-        check_nft "$NF_TABLE_NAME"
+        check_nft "$NF_TABLE_NAME" "$3"
         ;;
     routes)
         [ "$#" -eq 2 ] || {
@@ -1742,10 +1772,42 @@ check)
         echo ""
         ;;
     *)
-        printf 'Usage: justclash.sh check [full --unsafe|nft|routes|ping TARGET [COUNT]|dns-proxy DOMAIN|dns-external DOMAIN RESOLVER|hwid]\n' >&2
+        printf 'Usage: justclash.sh check [full --unsafe|nft [--unsafe]|routes|ping TARGET [COUNT]|dns-proxy DOMAIN|dns-external DOMAIN RESOLVER|hwid]\n' >&2
         exit 2
         ;;
     esac
+    ;;
+cert)
+    case "$2" in
+    uhttpd)
+        [ "$#" -eq 2 ] || {
+            printf 'Usage: justclash.sh cert uhttpd\n' >&2
+            exit 2
+        }
+        ;;
+    generate)
+        [ "$#" -ge 3 ] || {
+            printf 'Usage: justclash.sh cert generate SAN [SAN ...] (DNS:name or IP:address)\n' >&2
+            exit 2
+        }
+        ;;
+    *)
+        printf 'Usage: justclash.sh cert {uhttpd|generate SAN [SAN ...]}\n' >&2
+        exit 2
+        ;;
+    esac
+    import \
+        /lib/functions.sh \
+        /lib/config/uci.sh \
+        /usr/lib/justclash/logging.sh \
+        /usr/lib/justclash/helpers.sh \
+        /usr/lib/justclash/config.sh \
+        /usr/lib/justclash/runtime/cert.sh
+    config_init "$PROGNAME" || exit 1
+    config_get api_tls_cert proxy api_tls_cert
+    config_get api_tls_key proxy api_tls_key
+    shift
+    cert_prepare "$api_tls_cert" "$api_tls_key" "$@"
     ;;
 config)
     case "$2" in
