@@ -36,6 +36,9 @@ Use **Setup: Routing** and **Setup: Rulesets** to edit saved routing configurati
 - **LuCI uses HTTPS:** the controller needs HTTPS/WSS and a trusted certificate.
   Follow [controller TLS setup](../guides/controller-tls.md#recommended-topologies)
   if the browser blocks mixed content or rejects the certificate.
+  Browser exceptions for self-signed certificates can produce rejected attempts
+  before a successful retry. JustClash suppresses the specific certificate-rejection
+  message to reduce log noise; see [self-signed certificates and log noise](../guides/controller-tls.md#self-signed-certificates-and-log-noise).
 - **The API reports an HTTP error or an invalid response:** check the installed Mihomo version and **Service logs**. Check LuCI error notifications when Nodes or Rules cannot load their data.
 - **JustClash settings cannot be loaded:** reload LuCI and check the account's configuration permissions. Changing the core state will not repair a LuCI configuration-access failure.
 
