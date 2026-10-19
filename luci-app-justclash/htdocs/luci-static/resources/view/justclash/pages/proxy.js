@@ -44,30 +44,6 @@ return view.extend({
         o.default = "7893";
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable Mihomo mixed port:"));
-        o.description = _("Use the Mihomo mixed port so one port handles both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy.");
-        o.default = primitives.FALSE;
-        o.rmempty = false;
-
-        o = s.taboption(tabname, form.Value, "mixed_port", _("Mihomo mixed port:"));
-        o.description = _("Port used by the Mihomo mixed port listener for both HTTP(S) and SOCKS5 connections from apps and devices on your network.");
-        o.depends("use_mixed_port", primitives.TRUE);
-        o.retain = true;
-        o.datatype = datatypes.PORT;
-        o.placeholder = "7892";
-        o.default = "7892";
-        o.rmempty = false;
-
-        o = s.taboption(tabname, form.DynamicList, "proxy_authentication", _("Mixed port authentication:"));
-        o.description = _("Require username and password for access to the Mihomo mixed port. Add one entry per line in the format user:pass.");
-        o.depends("use_mixed_port", primitives.TRUE);
-        o.placeholder = "user1:pass1";
-        o.optional = true;
-        o.editable = true;
-        o.validate = function (section_id, value) {
-            return common.validateProxyAuthenticationEntry(value);
-        };
-
         o = s.taboption(tabname, form.Flag, "unified_delay", _("Unified delay:"));
         o.description = _("Use the same delay value when checking response time, so test results stay more consistent.");
         o.default = primitives.TRUE;
@@ -164,7 +140,7 @@ return view.extend({
         s.tab(tabname, _("Controller/API settings"));
 
         // copypasted from Podkop devs
-        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Select which network will allow access to the API controller and dashboard. Choose unspecified to listen on every IPv4 interface."));
+        o = s.taboption(tabname, widgets.NetworkSelect, "controller_bind_interface", _("Controller bind:"), _("Bind the API controller and dashboard to the selected network's address, preferring IPv4 over IPv6. Choose unspecified to listen on all available addresses."));
         o.default = "lan";
         o.optional = false;
         o.rmempty = true;
@@ -221,6 +197,49 @@ return view.extend({
         o.rmempty = false;
         o.retain = true;
         o.depends("api_tls", primitives.TRUE);
+
+        tabname = "mixedproxysettings_tab";
+        s.tab(tabname, _("Mixed proxy settings"));
+
+        o = s.taboption(tabname, form.Flag, "use_mixed_port", _("Enable Mihomo mixed port:"));
+        o.description = _("Use the Mihomo mixed port so one port handles both HTTP(S) and SOCKS5 connections. This is useful when apps or devices connect to the router as a regular proxy.");
+        o.default = primitives.FALSE;
+        o.rmempty = false;
+
+        o = s.taboption(tabname, form.Value, "mixed_port", _("Mihomo mixed port:"));
+        o.description = _("Port used by the Mihomo mixed port listener for both HTTP(S) and SOCKS5 connections from apps and devices on your network.");
+        o.depends("use_mixed_port", primitives.TRUE);
+        o.retain = true;
+        o.datatype = datatypes.PORT;
+        o.placeholder = "7892";
+        o.default = "7892";
+        o.rmempty = false;
+
+        o = s.taboption(tabname, widgets.NetworkSelect, "mixed_port_bind_interface", _("Mixed proxy bind:"), _("Bind the mixed proxy to the selected network's address, preferring IPv4 over IPv6. Choose unspecified to listen on all available addresses."));
+        o.default = "lan";
+        o.optional = false;
+        o.rmempty = true;
+        o.nocreate = true;
+        o.multiple = false;
+        o.retain = true;
+        o.depends("use_mixed_port", primitives.TRUE);
+        o.cfgvalue = function (section_id) {
+            const value = uci.get(common.binName, section_id, this.option);
+            return value === "-" ? "" : value;
+        };
+        o.remove = function (section_id) {
+            return uci.set(common.binName, section_id, this.option, "-");
+        };
+
+        o = s.taboption(tabname, form.DynamicList, "proxy_authentication", _("Mixed port authentication:"));
+        o.description = _("Require username and password for access to the Mihomo mixed port. Add one entry per line in the format user:pass.");
+        o.depends("use_mixed_port", primitives.TRUE);
+        o.placeholder = "user1:pass1";
+        o.optional = true;
+        o.editable = true;
+        o.validate = function (section_id, value) {
+            return common.validateProxyAuthenticationEntry(value);
+        };
 
         tabname = "sniffersettings_tab";
         s.tab(tabname, _("Sniffer settings"));
@@ -316,6 +335,7 @@ return view.extend({
             .cbi-value[data-name="tproxy_port"] .cbi-value-title,
             .cbi-value[data-name="use_mixed_port"] .cbi-value-title,
             .cbi-value[data-name="mixed_port"] .cbi-value-title,
+            .cbi-value[data-name="mixed_port_bind_interface"] .cbi-value-title,
             .cbi-value[data-name="controller_bind_interface"] .cbi-value-title,
             .cbi-value[data-name="api_password"] .cbi-value-title,
             .cbi-value[data-name="sniffer_enable"] .cbi-value-title,
