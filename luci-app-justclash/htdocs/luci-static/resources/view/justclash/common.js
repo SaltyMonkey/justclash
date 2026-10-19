@@ -331,7 +331,7 @@ return baseclass.extend({
 
         try {
             const url = new URL(val);
-            const allowedProtocols = ["https:", "tls:", "udp:", "quic:"];
+            const allowedProtocols = ["https:", "tls:", "udp:", "quic:", "dhcp:"];
 
             if (!allowedProtocols.includes(url.protocol)
                 || !url.hostname
@@ -353,7 +353,7 @@ return baseclass.extend({
     validateDnsServer: function (value) {
         return this.isValidDnsServer(value)
             ? true
-            : _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, IPv4/IPv6 address or [IPv6]:port.");
+            : _("Invalid nameserver format. Allowed: quic://, https://, tls://, udp://, dhcp://, IPv4/IPv6 address or [IPv6]:port.");
     },
     isValidIpv4: function (value) {
         const val = String(value || "").trim();
