@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.100.16
+PKG_VERSION:=0.113.0_r1
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=$(PKG_NAME)
-	DEPENDS:=+ubox +rpcd +nftables +coreutils-base64 +jq-full +curl +kmod-nft-tproxy +kmod-nf-tproxy +kmod-nft-nat +kmod-nft-fib +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
+	DEPENDS:=+ubox +rpcd +nftables +coreutils-base64 +jq-full +curl +openssl-util +kmod-nft-tproxy +kmod-nf-tproxy +kmod-nft-nat +kmod-nft-fib +ca-bundle +zoneinfo-all +inotifywait +libinotifytools
 	CONFLICTS:=banip mihomo forkop luci-app-forkop podkop sing-box sing-box-tiny luci-app-passwall luci-app-passwall2 dns-failsafe-proxy netshift luci-app-netshift nikki luci-app-nikki luci-app-ssclash
 	PKGARCH:=all
 endef
@@ -110,6 +110,14 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	if ! config_credentials_ensure_file /etc/config/justclash; then
 		echo "Failed to initialize the active JustClash credentials." >&2
 		exit 1
+	fi
+	. /usr/lib/justclash/constants.sh
+	api_tls_cert=$$(uci -q get justclash.proxy.api_tls_cert)
+	api_tls_key=$$(uci -q get justclash.proxy.api_tls_key)
+	api_tls_cert=$${api_tls_cert:-$$DEFAULT_API_TLS_CERT_PATH}
+	api_tls_key=$${api_tls_key:-$$DEFAULT_API_TLS_KEY_PATH}
+	if [ ! -s "$$api_tls_cert" ] || [ ! -s "$$api_tls_key" ]; then
+		/usr/bin/justclash.sh cert uhttpd || echo "Could not prepare controller TLS files from uhttpd; run 'justclash.sh cert uhttpd' when its certificate is available." >&2
 	fi
 	[ -x "/etc/init.d/rpcd" ] && /etc/init.d/rpcd reload
 fi

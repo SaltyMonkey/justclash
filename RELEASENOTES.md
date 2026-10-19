@@ -1,3 +1,136 @@
+## [0.113.0_r1] - 19102026
+
+This release adds destination-port routing, independent Mixed Port binding,
+IPv6 listener support, and controller certificate management. Performance
+improvements reduce repeated API transfers and process launches in LuCI Status
+and repeated work during YAML generation.
+
+### Performance
+
+- Reduced recurring Status RPC work: package and core versions are read on page
+  load and after a core update, separately from service-state polling. Regular
+  refreshes no longer launch the version CLI commands or `mihomo -v`, and the
+  state-only response uses built-in shell `printf` instead of starting jq.
+- Full rule-list downloads use a separate one-minute interval while the core is
+  running. The **Rules** counter replaces **Mode** and caches only the count
+  between requests. It also refreshes on page load and after a start
+  or restart from Status. A stopped service shows `0`; an unavailable count
+  shows `—`.
+- Removed the **Connections** counter and its one-second connection-snapshot
+  stream from Status, eliminating full connection-list transfers used only to
+  count entries. Live traffic and memory metrics retain their separate streams.
+- Fake-IP filter deduplication now checks a `seen` index instead of repeatedly
+  scanning the growing result array. This reduces lookup work on large filters
+  while preserving the order of first occurrence.
+- HWID and device-model caches are initialized in the main startup shell, so
+  subscription providers reuse successfully detected values instead of repeating
+  hardware detection and hashing in separate subshells.
+- Four YAML JSON-composition helpers now pass large fragments to jq through stdin,
+  preventing generation failures caused by oversized command arguments. Rule
+  order, recursive provider merge precedence, DNS selector escaping, and failure
+  on empty or malformed JSON fragments are preserved.
+
+### Routing Rules
+
+- Added **UDP destination ports** and **TCP destination ports** to outbound and
+  group manual rules. Each item accepts one port from `1` to `65535` and generates
+  a protocol-and-destination-port match for that outbound or group. These are
+  independent matches, not extra conditions on domain rules. Within each section,
+  they follow source-address rules and precede domain and destination-address rules.
+- IP CIDR rulesets now offer **(no-resolve)** and **(resolve)** choices for
+  outbounds, groups, and blocklists. The default keeps `no-resolve`; selecting
+  **(resolve)** allows a DNS lookup when Mihomo needs a destination address for
+  matching. Both choices share the same provider, downloaded file, and nftables set.
+  See [IP ruleset resolution](info/guides/rulesets.md#dns-resolution-for-ip-rulesets).
+- Resolve selections are stored as `ID:resolve`. Catalog lookup and the DNS page's
+  active-ruleset choices recognize the underlying ID without creating another
+  provider or file.
+- Renamed the Routing **Lists** tabs to **Rulesets** and aligned the blocklist
+  action controls. Port rules and resolve selections affect traffic already
+  received by Mihomo; they do not expand Partial Interception coverage.
+
+### Mixed Port and Controller Binding
+
+- Moved Mixed Port controls into **Setup: Proxy → Mixed proxy settings** and added
+  **Mixed proxy bind**. Its `mixed_port_bind_interface` setting is independent of
+  controller binding and defaults to `lan` in templates, validation, and migration.
+  Existing explicit values are preserved.
+- Both listeners prefer the selected network's IPv4 address and fall back to IPv6.
+  A selected network without either address stops startup; the Mixed Port address
+  is resolved only when that listener is enabled. IPv6 controller endpoints use
+  bracketed address syntax.
+- The unspecified value `-` selects wildcard listening. Controller output now
+  uses an empty host instead of an IPv4-only wildcard; IPv6 listening depends on
+  the system. Mixed Port generates its own `bind-address` rather than inheriting
+  unrestricted listening.
+- Both resolved listener addresses participate in the YAML cache fingerprint, so
+  address changes invalidate cached configuration on the next startup.
+
+### Controller TLS and Credentials
+
+- Added `justclash.sh cert uhttpd` to copy the configured LuCI/uhttpd certificate
+  and key to the controller's separate PEM files. It converts DER input, preserves
+  existing PEM certificate chains, and leaves the source files unchanged.
+- Added `justclash.sh cert generate SAN [SAN ...]` for a self-signed ECDSA P-256
+  certificate valid for 3650 days. Supply the required identities explicitly as
+  `DNS:<HOSTNAME>` or `IP:<ADDRESS>` SAN entries.
+- Both commands check that the certificate and private key match before replacing
+  the configured destination files. Private keys are written with mode `600`.
+  See [Controller TLS](info/guides/controller-tls.md).
+- Package installation and upgrades try `cert uhttpd` when either controller TLS
+  file is missing or empty. Existing non-empty pairs are kept. An unavailable
+  uhttpd certificate produces a warning with the command to retry later.
+- Added the `openssl-util` runtime dependency, including the Docker Compose APK
+  and IPK dependency lists. API and Mixed Port credential generation now uses
+  separate `openssl rand -base64 24` calls, retaining the 32-character output and
+  failure checks. Existing credentials are not rotated by this generator change.
+
+### LuCI, DNS, and Diagnostics
+
+- LuCI DNS-server validation now accepts `dhcp://` upstreams.
+- Added IPv6 coverage to 16 bundled static DNS host mappings in the installation
+  and reset templates. Refreshed the random browser User-Agent snapshot.
+- `justclash.sh check nft` now checks table existence without printing rules or
+  set contents. Use `check nft --unsafe` for the full table, including counters;
+  `check full --unsafe` retains the full nftables output.
+- Suppressed Mihomo HTTP TLS handshake messages ending in
+  `remote error: tls: unknown certificate` in service logging to reduce noise from
+  browser certificate-error handling and retries with self-signed certificates,
+  which can occur while live pages work. Other TLS failures and core errors remain
+  visible; certificate validation is unchanged. See [certificate log noise](info/guides/controller-tls.md#self-signed-certificates-and-log-noise).
+- Updated English interface text, Russian and Simplified Chinese translations,
+  and documentation for port rules, IP ruleset resolution, listener bindings,
+  certificate commands, and explicit unsafe diagnostics.
+
+### Maintenance
+
+- Centralized the Mixed Port bind default and shared listener address resolution.
+  Moved procd resource limits, priority, and boot/stop defaults into named constants
+  without changing their values.
+- Updated repository contribution guidance and removed unused source artwork.
+
+### Upgrade Notes
+
+- Review **Mixed proxy bind** after upgrading. A configuration without this option
+  receives `lan`, which can narrow access compared with the previous wildcard
+  listener. Select the intended network or explicitly choose unspecified.
+- Review IPv4 and IPv6 firewall restrictions for wildcard listeners, especially
+  an existing unspecified controller binding. Binding to an address does not
+  restrict which clients can reach it.
+- Certificate conversion preserves the original SANs and trust properties. The
+  certificate must cover the hostname or address used by LuCI, and clients must
+  trust it. Copying or generating files does not establish browser trust.
+- Certificate commands replace both configured destination files. Repeat
+  `cert uhttpd` after renewing the source certificate; enable controller TLS and
+  restart JustClash separately. See [TLS setup](info/guides/controller-tls.md).
+- Template DNS additions do not rewrite existing saved configurations. Apply the
+  mappings manually if needed; resetting configuration replaces settings and
+  generates new credentials.
+- Version fields moved from the `justclash-core.status` RPC to
+  `justclash-core.versions`. Update the JustClash and LuCI packages together.
+- Refresh LuCI after upgrading and update diagnostic commands that relied on
+  `check nft` printing the table to include `--unsafe`.
+
 ## [0.100.16] - 13102026
 
 Stabilization release, focused on reliable startup, core updates,
