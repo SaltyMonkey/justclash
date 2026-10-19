@@ -22,6 +22,12 @@ const callStatus = rpc.declare({
     params: []
 });
 
+const callVersions = rpc.declare({
+    object: "justclash-core",
+    method: "versions",
+    params: []
+});
+
 const declareAction = (method, params = []) => rpc.declare({
     object: "justclash-core",
     method,
@@ -51,6 +57,10 @@ const assertSuccess = (result) => {
 return baseclass.extend({
     async getStatus() {
         return assertSuccess(await callStatus());
+    },
+
+    async getVersions() {
+        return assertSuccess(await callVersions());
     },
 
     async start() {
