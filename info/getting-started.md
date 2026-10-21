@@ -25,6 +25,13 @@ for the full model. The setup below uses one group and one outbound.
 Connect to the router over SSH and run:
 
 ```sh
+sh <(wget -qO- 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh')
+```
+
+This command requires your current shell to support process substitution
+(`<(...)`). If it reports a syntax error, download the script to a file instead:
+
+```sh
 wget -qO /tmp/justclash-install.sh 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh' && sh /tmp/justclash-install.sh
 ```
 

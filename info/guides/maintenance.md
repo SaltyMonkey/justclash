@@ -144,21 +144,20 @@ Repeat the check for the base package, LuCI application, and optional translatio
 
 ## Update with the Online Installer
 
-Download the installer once, then run it with the options for the required task:
-
-```sh
-wget -qO /tmp/justclash-install.sh 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh'
-```
+Run the command for the required task. These examples require a shell with
+process substitution support; see [Quick Start](../getting-started.md#online-installer)
+for the file-based alternative. With that alternative, append the same options
+to `sh /tmp/justclash-install.sh` after a successful download.
 
 ```sh
 # Install or update to the latest release without prompts
-sh /tmp/justclash-install.sh --automated
+sh <(wget -qO- 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh') --automated
 
 # Install a specific package release
-sh /tmp/justclash-install.sh --automated --custom_version 0.98.0_rc1
+sh <(wget -qO- 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh') --automated --custom_version 0.98.0_rc1
 
 # Download or update only the Mihomo core
-sh /tmp/justclash-install.sh --update-core
+sh <(wget -qO- 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh') --update-core
 ```
 
 For interactive use, run without arguments as shown in
