@@ -175,7 +175,8 @@ return view.extend({
         o.modalonly = true;
 
         o = s.taboption(tabname, form.Value, "routing_mark", _("Routing mark:"));
-        o.description = _("Optional Linux fwmark applied by Mihomo to outbound connections of this proxy. Leave empty to use the global mark.");
+        o.description = _("Optional Linux fwmark applied by Mihomo to outbound connections of this proxy. Leave empty to use the global mark.") + " " +
+            _("Example: 0x10000000 (268435456) for zapret2 with FILTER_MARK=0x10000000 enabled.");
         o.optional = true;
         o.rmempty = true;
         o.placeholder = "268435456";
@@ -344,7 +345,8 @@ return view.extend({
         o.modalonly = true;
 
         o = spp.taboption(proxyProviderOverrideTab, form.Value, "override_routing_mark", _("Routing mark:"));
-        o.description = _("Optional Linux fwmark applied to nodes loaded from this provider through Mihomo provider override. Leave empty to use node or global settings.");
+        o.description = _("Optional Linux fwmark applied to nodes loaded from this provider through Mihomo provider override. Leave empty to use node or global settings.") + " " +
+            _("Example: 0x10000000 (268435456) for zapret2 with FILTER_MARK=0x10000000 enabled.");
         o.optional = true;
         o.rmempty = true;
         o.placeholder = "268435456";
