@@ -192,7 +192,7 @@ nft_table_full_apply() {
     local nft_ips_exclude="${18}"
     local ipv6_enabled="${19}"
     local nft_dns_mode="${20}"
-    local iface skuid_list skuid_resolved
+    local iface skuid_list skuid_resolved routing_mark
 
     if [ "$nft_apply_changes" = "0" ]; then
         log warn "Firewall rules generation is disabled"
@@ -323,12 +323,12 @@ nft_table_full_apply() {
         fi
         echo "add rule inet $NF_TABLE_NAME output meta mark & $NF_TABLE_FWMARK_PROXY == $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
         echo "add rule inet $NF_TABLE_NAME output ct direction reply return comment \"Bypass conntrack reply traffic\""
-        if [ -n "$proxy_routing_marks" ]; then
-            echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | str_spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
-        fi
-        if [ -n "$provider_routing_marks" ]; then
-            echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | str_spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
-        fi
+        for routing_mark in $proxy_routing_marks; do
+            echo "add rule inet $NF_TABLE_NAME output meta mark & $routing_mark == $routing_mark return comment \"Proxy routing_mark bypass\""
+        done
+        for routing_mark in $provider_routing_marks; do
+            echo "add rule inet $NF_TABLE_NAME output meta mark & $routing_mark == $routing_mark return comment \"Provider override_routing_mark bypass\""
+        done
 
         echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
         echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
@@ -394,7 +394,7 @@ nft_table_partial_apply() {
     local active_static_source_ips_path="${22}"
     local workdir_rules_path="${23}"
     local nft_dns_mode="${24}"
-    local iface skuid_list skuid_resolved
+    local iface skuid_list skuid_resolved routing_mark
 
     if [ "$nft_apply_changes" = "0" ]; then
         log warn "Firewall rules generation is disabled"
@@ -566,12 +566,12 @@ nft_table_partial_apply() {
         fi
         echo "add rule inet $NF_TABLE_NAME output meta mark & $NF_TABLE_FWMARK_PROXY == $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
         echo "add rule inet $NF_TABLE_NAME output ct direction reply return comment \"Bypass conntrack reply traffic\""
-        if [ -n "$proxy_routing_marks" ]; then
-            echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | str_spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
-        fi
-        if [ -n "$provider_routing_marks" ]; then
-            echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$provider_routing_marks" | str_spaces_to_commas) } return comment \"Provider override_routing_mark bypass\""
-        fi
+        for routing_mark in $proxy_routing_marks; do
+            echo "add rule inet $NF_TABLE_NAME output meta mark & $routing_mark == $routing_mark return comment \"Proxy routing_mark bypass\""
+        done
+        for routing_mark in $provider_routing_marks; do
+            echo "add rule inet $NF_TABLE_NAME output meta mark & $routing_mark == $routing_mark return comment \"Provider override_routing_mark bypass\""
+        done
 
         echo "add rule inet $NF_TABLE_NAME output meta l4proto != { tcp, udp } return comment \"Bypass non-TCP/UDP traffic\""
         echo "add rule inet $NF_TABLE_NAME output ip daddr @private_ips return comment \"Bypass private/LAN IP ranges\""
