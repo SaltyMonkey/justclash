@@ -677,14 +677,16 @@ justclash_uninstall() {
 }
 
 justclash_release_json_get() {
-    local releases_url
+    local release_url="$JUSTCLASH_RELEASE_URL_API"
 
-    if [ -z "$JUSTCLASH_CUSTOM_VERSION" ]; then
-        wget -qO- "$JUSTCLASH_RELEASE_URL_API"
-    else
-        releases_url="${JUSTCLASH_RELEASE_URL_API%/latest}"
-        wget -qO- "${releases_url}/tags/v${JUSTCLASH_CUSTOM_VERSION}"
+    if [ -n "$JUSTCLASH_CUSTOM_VERSION" ]; then
+        release_url="${release_url%/latest}/tags/v${JUSTCLASH_CUSTOM_VERSION}"
     fi
+
+    curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+        --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+        --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
+        --proto '=https' --proto-redir '=https' -fsL -- "$release_url"
 }
 
 packages_download() {
@@ -742,7 +744,11 @@ packages_download() {
         esac
 
         echo " - Downloading $package_file"
-        wget "$file" -qO "$TMP_DOWNLOAD_PATH/$package_file" || {
+        curl --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+            --speed-limit "$CURL_MIN_SPEED_LIMIT_BYTES" \
+            --speed-time "$CURL_MIN_SPEED_TIMEOUT" \
+            --proto '=https' --proto-redir '=https' \
+            -fsL -o "$TMP_DOWNLOAD_PATH/$package_file" -- "$file" || {
             print_red "Failed to download $package_file"
             download_failed=1
             continue
