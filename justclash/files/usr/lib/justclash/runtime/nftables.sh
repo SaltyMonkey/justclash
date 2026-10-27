@@ -254,9 +254,9 @@ nft_table_full_apply() {
         if [ "$ipv6_enabled" -eq 0 ]; then
             echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
         fi
-        echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv4 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router IPv4 traffic\""
+        echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv4 meta mark & $NF_TABLE_FWMARK_FINAL == $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router IPv4 traffic\""
         if [ "$ipv6_enabled" -eq 1 ]; then
-            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv6 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip6 to [::1]:$tproxy_port accept comment \"Accept marked router IPv6 traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv6 meta mark & $NF_TABLE_FWMARK_FINAL == $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip6 to [::1]:$tproxy_port accept comment \"Accept marked router IPv6 traffic\""
         fi
         echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
         # Replies already have a return path; spare them the proxy detour.
@@ -321,7 +321,7 @@ nft_table_full_apply() {
         if [ "$ipv6_enabled" -eq 0 ]; then
             echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
         fi
-        echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
+        echo "add rule inet $NF_TABLE_NAME output meta mark & $NF_TABLE_FWMARK_PROXY == $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
         echo "add rule inet $NF_TABLE_NAME output ct direction reply return comment \"Bypass conntrack reply traffic\""
         if [ -n "$proxy_routing_marks" ]; then
             echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | str_spaces_to_commas) } return comment \"Proxy routing_mark bypass\""
@@ -484,9 +484,9 @@ nft_table_partial_apply() {
         if [ "$ipv6_enabled" -eq 0 ]; then
             echo "add rule inet $NF_TABLE_NAME prerouting meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
         fi
-        echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv4 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router IPv4 traffic\""
+        echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv4 meta mark & $NF_TABLE_FWMARK_FINAL == $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip to 127.0.0.1:$tproxy_port accept comment \"Accept marked router IPv4 traffic\""
         if [ "$ipv6_enabled" -eq 1 ]; then
-            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv6 meta mark $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip6 to [::1]:$tproxy_port accept comment \"Accept marked router IPv6 traffic\""
+            echo "add rule inet $NF_TABLE_NAME prerouting iifname \"lo\" meta nfproto ipv6 meta mark & $NF_TABLE_FWMARK_FINAL == $NF_TABLE_FWMARK_FINAL meta l4proto { tcp, udp } tproxy ip6 to [::1]:$tproxy_port accept comment \"Accept marked router IPv6 traffic\""
         fi
         echo "add rule inet $NF_TABLE_NAME prerouting iifname != @inbound_interfaces return comment \"Bypass non-intercepted interfaces\""
         # Replies already have a return path; spare them the proxy detour.
@@ -564,7 +564,7 @@ nft_table_partial_apply() {
         if [ "$ipv6_enabled" -eq 0 ]; then
             echo "add rule inet $NF_TABLE_NAME output meta nfproto ipv6 return comment \"Bypass IPv6 traffic\""
         fi
-        echo "add rule inet $NF_TABLE_NAME output mark $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
+        echo "add rule inet $NF_TABLE_NAME output meta mark & $NF_TABLE_FWMARK_PROXY == $NF_TABLE_FWMARK_PROXY return comment \"Bypass Core (Mihomo) traffic\""
         echo "add rule inet $NF_TABLE_NAME output ct direction reply return comment \"Bypass conntrack reply traffic\""
         if [ -n "$proxy_routing_marks" ]; then
             echo "add rule inet $NF_TABLE_NAME output meta mark { $(echo "$proxy_routing_marks" | str_spaces_to_commas) } return comment \"Proxy routing_mark bypass\""

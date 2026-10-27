@@ -4,6 +4,29 @@
 
 CONFIG_FLAG_TYPE='or("0","1")'
 
+# The native UCI schema checks the numeric range; JSON outbounds share this check.
+config_routing_mark_bits_validate() {
+    local value="$1" mark
+
+    [ -n "$value" ] || return 0
+    mark=$(printf '%d' "$value" 2>/dev/null) || return 1
+    if [ "$((mark & (NF_TABLE_FWMARK_FINAL | NF_TABLE_FWMARK_PROXY)))" -ne 0 ]; then
+        log error "Routing mark overlaps reserved JustClash flags 0x4/0x80."
+        return 1
+    fi
+    return 0
+}
+
+config_section_routing_mark_validate() {
+    local section="$1" option="$2" value
+
+    config_get value "$section" "$option"
+    config_routing_mark_bits_validate "$value" || {
+        validation_failed=1
+        return 1
+    }
+}
+
 # Validate through UCI and apply missing defaults to the loaded configuration.
 config_section_validate() {
     local config_schema_type="$1" config_schema_section="$2"
@@ -160,7 +183,7 @@ validate_proxy_provider_section() {
         "subscription:$http_url_type" \
         "override_dialer_proxy:$name_type" \
         'override_interface_name:network' \
-        'override_routing_mark:and(uinteger,range(1,2147483647),not(or(range(3,3),range(255,255))))' \
+        'override_routing_mark:and(uinteger,range(1,2147483647))' \
         'override_ip_version:or("dual","ipv4","ipv6","ipv4-prefer","ipv6-prefer"):dual' \
         'override_reality_mlkem768:bool:0' \
         "update_interval:uinteger(10):$DEFAULT_PROVIDERUPDATE_INTERVAL" \
@@ -183,11 +206,14 @@ validate_proxy_provider_section() {
         'health_check_lazy:bool:0' \
         'filter:string' \
         'exclude_filter:string' \
-        'exclude_type:string'
+        'exclude_type:string' || return 1
+
+    config_section_routing_mark_validate "${1:-}" override_routing_mark
 }
 
 validate_proxies_section() {
     local name_type='and(maxlength(64),regex("[-A-Za-z0-9_]+"))'
+    local mode object object_mark
 
     config_section_validate proxies "${1:-}" \
         'enabled:bool:1' \
@@ -197,7 +223,7 @@ validate_proxies_section() {
         'proxy_link_uri:string(1)' \
         "dialer_proxy:$name_type" \
         'interface_name:network' \
-        'routing_mark:and(uinteger,range(1,2147483647),not(or(range(3,3),range(255,255))))' \
+        'routing_mark:and(uinteger,range(1,2147483647))' \
         'ip_version:or("dual","ipv4","ipv6","ipv4-prefer","ipv6-prefer"):dual' \
         'enabled_list:list(string(1))' \
         'use_proxy_for_list_update:bool:0' \
@@ -209,7 +235,19 @@ validate_proxies_section() {
         'additional_tcp_dst_port_route:list(and(port,min(1)))' \
         'additional_domain_route:list(string(1))' \
         'additional_destip_route:list(cidr)' \
-        'additional_srcip_route:list(cidr)'
+        'additional_srcip_route:list(cidr)' || return 1
+
+    config_get mode "${1:-}" mode
+    if [ "$mode" != object ]; then
+        config_section_routing_mark_validate "${1:-}" routing_mark
+        return "$?"
+    fi
+    config_get object "${1:-}" proxy_link_object
+    object_mark=$(printf '%s' "$object" | jq -r 'if type == "object" then .["routing-mark"] // empty else empty end' 2>/dev/null) || return 0
+    config_routing_mark_bits_validate "$object_mark" || {
+        validation_failed=1
+        return 1
+    }
 }
 
 validate_proxy_group_section() {

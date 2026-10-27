@@ -26,13 +26,14 @@ check_routes() {
     local routing_mark="$1"
     local route_table="$2"
     local ipv6_enabled="$3"
-    local hex_mark
+    local hex_mark mark_spec
 
     hex_mark=$(printf "0x%x" "$routing_mark")
+    mark_spec="$hex_mark/$hex_mark"
 
     clog info "Verifying existence of IPv4 policy routing rules and table '$route_table'..."
-    if ! ip -4 rule list | grep -qF "fwmark ${hex_mark} lookup ${route_table}"; then
-        clog error "Required IPv4 policy route rule is missing (fwmark ${hex_mark} lookup ${route_table})"
+    if ! policy_routing_rule_present -4 "$mark_spec" "$route_table"; then
+        clog error "Required IPv4 policy route rule is missing (fwmark ${mark_spec} lookup ${route_table})"
         return 1
     fi
     if ! ip -4 route show table "$route_table" 2>/dev/null | grep -Eq "local (default|0\.0\.0\.0/0|any) dev lo"; then
@@ -42,8 +43,8 @@ check_routes() {
 
     if [ "$ipv6_enabled" -eq 1 ]; then
         clog info "Verifying existence of IPv6 policy routing rules and table '$route_table'..."
-        if ! ip -6 rule list 2>/dev/null | grep -qF "fwmark ${hex_mark} lookup ${route_table}"; then
-            clog error "Required IPv6 policy route rule is missing (fwmark ${hex_mark} lookup ${route_table})"
+        if ! policy_routing_rule_present -6 "$mark_spec" "$route_table"; then
+            clog error "Required IPv6 policy route rule is missing (fwmark ${mark_spec} lookup ${route_table})"
             return 1
         fi
         if ! ip -6 route show table "$route_table" 2>/dev/null | grep -Eq "local (default|::/0|any) dev lo"; then

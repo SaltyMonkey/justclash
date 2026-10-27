@@ -404,7 +404,7 @@ return baseclass.extend({
             return _("Routing mark must not contain whitespace or control characters");
 
         if (!/^(0[xX][0-9a-fA-F]+|\d+)$/.test(val))
-            return _("Use a decimal or hex number, for example 268435456 or 0xff");
+            return _("Use a decimal or hex number, for example 16777216 or 0x1000000");
 
         const mark = Number(val);
         if (!Number.isSafeInteger(mark))
@@ -413,8 +413,8 @@ return baseclass.extend({
         if (mark < 1 || mark > 2147483647)
             return _("Routing mark must be between 1 and 2147483647");
 
-        if (mark === 3 || mark === 255)
-            return _("Routing mark 0x3 and 0xff are reserved by JustClash");
+        if ((mark & (0x4 | 0x80)) !== 0)
+            return _("Routing mark bits 0x4 and 0x80 are reserved by JustClash");
 
         return true;
     },

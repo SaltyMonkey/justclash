@@ -1,7 +1,7 @@
 #!/bin/ash
 # shellcheck shell=dash
 
-# JUSTCLASH_VERSION is supplied by constants.sh before this module is loaded.
+# JUSTCLASH_VERSION and NF_TABLE_FWMARK_* are supplied by constants.sh.
 # shellcheck disable=SC2154
 workdir_cache_fingerprint() {
     local uci_hash="$1"
@@ -11,11 +11,13 @@ workdir_cache_fingerprint() {
     local fingerprint
     shift 3
 
-    fingerprint=$(printf 'generator=%s|uci=%s|controller=%s|mixed=%s' \
+    fingerprint=$(printf 'generator=%s|uci=%s|controller=%s|mixed=%s|tproxy-mark=%s|core-mark=%s' \
         "$JUSTCLASH_VERSION" \
         "$uci_hash" \
         "$controller_bind_address" \
-        "$mixed_selected_ipaddr") || return 1
+        "$mixed_selected_ipaddr" \
+        "$NF_TABLE_FWMARK_FINAL" \
+        "$NF_TABLE_FWMARK_PROXY") || return 1
 
     for file_path in "$@"; do
         if [ -f "$file_path" ]; then

@@ -64,8 +64,9 @@ REQUIRED_TOOLS="jq nft curl md5sum sha256sum ntpd base64 inotifywait ip netstat 
 BIND_UNSPECIFIED="-"
 
 NF_TABLE_NAME="${PROGNAME}_tproxy"
-NF_TABLE_FWMARK_FINAL=3
-NF_TABLE_FWMARK_PROXY=255
+# Single-bit flags; the other bits have other owners.
+NF_TABLE_FWMARK_FINAL=4
+NF_TABLE_FWMARK_PROXY=128
 NF_ROUTE_TABLE=100
 
 # List of NTP server IP addresses:

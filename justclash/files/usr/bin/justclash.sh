@@ -542,9 +542,9 @@ run_nftables_apply() {
         "$NF_TABLE_FWMARK_FINAL" \
         "$NF_ROUTE_TABLE" \
         "$pbr_priority" \
-        "$ipv6_enabled"
+        "$ipv6_enabled" || return 1
 
-    log warn "Tproxy: fwmark=$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority"
+    log warn "Tproxy: fwmark=$NF_TABLE_FWMARK_FINAL/$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority"
 }
 
 nf_table_remove() {
@@ -1685,6 +1685,7 @@ check)
             /usr/lib/justclash/helpers.sh \
             /usr/lib/justclash/config.sh \
             /usr/lib/justclash/runtime/core.sh \
+            /usr/lib/justclash/runtime/policy_routing.sh \
             /usr/lib/justclash/runtime/diagnostics.sh
         config_init "$PROGNAME"
         check_report_safe
@@ -1701,6 +1702,7 @@ check)
             /usr/lib/justclash/helpers.sh \
             /usr/lib/justclash/config.sh \
             /usr/lib/justclash/runtime/core.sh \
+            /usr/lib/justclash/runtime/policy_routing.sh \
             /usr/lib/justclash/runtime/diagnostics.sh
         config_init "$PROGNAME"
         check_report_full
@@ -1727,6 +1729,7 @@ check)
             /usr/lib/justclash/logging.sh \
             /usr/lib/justclash/helpers.sh \
             /usr/lib/justclash/config.sh \
+            /usr/lib/justclash/runtime/policy_routing.sh \
             /usr/lib/justclash/runtime/diagnostics.sh
         config_init "$PROGNAME"
         run_check_routes
