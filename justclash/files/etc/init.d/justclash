@@ -74,6 +74,6 @@ boot() {
 }
 
 service_triggers() {
-    PROCD_RELOAD_DELAY=$DELAY_TIMEOUT
+    # PROCD_RELOAD_DELAY=$DELAY_TIMEOUT
     procd_add_reload_trigger "$PROGNAME"
 }
