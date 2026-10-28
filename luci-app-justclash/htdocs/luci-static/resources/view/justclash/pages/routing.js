@@ -266,14 +266,14 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
         o.description = _("Traffic to this destination IP address or subnet will go through this proxy.");
-        o.placeholder = "CIDR";
+        o.placeholder = "203.0.113.0/24";
         o.optional = true;
         o.datatype = datatypes.CIDR;
         o.modalonly = true;
 
         o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IP CIDR:"));
         o.description = _("Traffic from this local IP address or subnet will go through this proxy.");
-        o.placeholder = "CIDR";
+        o.placeholder = "192.0.2.10/32";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR;
@@ -882,7 +882,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
         o.description = _("Traffic to this destination IP address or subnet will go through the selected proxy group.");
-        o.placeholder = "CIDR";
+        o.placeholder = "203.0.113.0/24";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR;
@@ -890,7 +890,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IP CIDR:"));
         o.description = _("Traffic from this local IP address or subnet will go through the selected proxy group.");
-        o.placeholder = "CIDR";
+        o.placeholder = "192.0.2.10/32";
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR;
