@@ -23,7 +23,6 @@ help() {
     echo "  check full --unsafe                Run the full local diagnostic report"
     echo "  check nft                          Inspect nftables state"
     echo "  check routes                       Inspect policy-routing state"
-    echo "  check ping TARGET [COUNT]          Test ICMP connectivity"
     echo "  check dns-proxy DOMAIN             Test Mihomo DNS resolution"
     echo "  check dns-external DOMAIN RESOLVER Test an explicitly selected resolver"
     echo "  check hwid                         Show Hardware ID (HWID)"

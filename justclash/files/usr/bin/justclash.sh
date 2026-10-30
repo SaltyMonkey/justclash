@@ -359,7 +359,6 @@ start_core() {
 
     log info "Starting core with up to $DEFAULT_CORE_RESTART_RETRIES retries"
 
-    # shellcheck disable=SC2154
     if [ "$ENV_JUSTCLASH_RUN_CONTEXT" = "procd" ]; then
         while [ "$attempt" -lt "$DEFAULT_CORE_RESTART_RETRIES" ]; do
             (
@@ -396,7 +395,7 @@ start_core() {
             sleep 2
         done
     else
-        # shellcheck disable=SC2030,SC2031
+        # shellcheck disable=SC2031
         (
             set -o pipefail
             if [ -n "$mihomo_mem_limit" ] && [ "$mihomo_mem_limit" != "0" ]; then
@@ -1381,13 +1380,15 @@ run_check_dns_proxy() {
 }
 
 check_report_full() {
-    local running_status autoload_status hw_model os_ver
+    local running_status autoload_status hw_model os_ver arch kernel
 
     service "$PROGNAME" running && running_status="active" || running_status="inactive"
     service "$PROGNAME" enabled && autoload_status="enabled" || autoload_status="disabled"
 
     os_ver=$(sysinfo_get_os_version)
     hw_model=$(sysinfo_get_hw_model)
+    arch=$(sysinfo_get_os_arch)
+    kernel=$(uname -r)
 
     print_dpi_status() {
         local name="$1"
@@ -1404,7 +1405,9 @@ check_report_full() {
     echo ""
     echo "  [ Device Info ]"
     printf "  %-15s :: %s\n" "Device" "${hw_model:-$NO_DATA_STRING}"
+    printf "  %-15s :: %s\n" "Architecture" "${arch:-$NO_DATA_STRING}"
     printf "  %-15s :: %s\n" "OpenWrt" "${os_ver:-$NO_DATA_STRING}"
+    printf "  %-15s :: %s\n" "Kernel" "${kernel:-$NO_DATA_STRING}"
     printf "  %-15s :: %s\n" "Service Ver" "$JUSTCLASH_VERSION"
     printf "  %-15s :: %s\n" "Mihomo Ver" "$(core_info_mihomo "$CORE_PATH" "$NO_DATA_STRING")"
     printf "  %-15s :: %s\n" "HWID" "$(sysinfo_hwid_generate)"
@@ -1413,25 +1416,9 @@ check_report_full() {
     printf "  %-15s :: %s\n" "Active" "$running_status"
     printf "  %-15s :: %s\n" "Autoload" "$autoload_status"
     echo ""
-    echo "  [ ICMP Pings ]"
-    echo "  Yandex ($DEFAULT_CHECK_IP_PING_YANDEX):"
-    check_ping "$DEFAULT_CHECK_IP_PING_YANDEX" 2 2 | sed 's/^/    /'
+    check_report_dnsmasq
     echo ""
-    echo "  Google ($DEFAULT_CHECK_IP_PING_GOOGLE):"
-    check_ping "$DEFAULT_CHECK_IP_PING_GOOGLE" 2 2 | sed 's/^/    /'
-    echo ""
-    echo "  GitHub ($DEFAULT_CHECK_DOMAIN_PING_GITHUB):"
-    check_ping "$DEFAULT_CHECK_DOMAIN_PING_GITHUB" 2 2 | sed 's/^/    /'
-    echo ""
-    echo "  [ DNS Resolves ]"
-    echo "  Proxy ($DEFAULT_CHECK_RESOLVE_URL_YANDEX):"
-    run_check_dns_proxy "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" | sed 's/^/    /'
-    echo ""
-    echo "  External ($DEFAULT_CHECK_RESOLVE_URL_YANDEX via $DEFAULT_CHECK_IP_PING_YANDEX):"
-    check_dns_external "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" "$DEFAULT_CHECK_IP_PING_YANDEX" "$NSLOOKUP_TIMEOUT" | sed 's/^/    /'
-    echo ""
-    echo "  External ($DEFAULT_CHECK_RESOLVE_URL_YANDEX via $DEFAULT_CHECK_IP_PING_GOOGLE):"
-    check_dns_external "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" "$DEFAULT_CHECK_IP_PING_GOOGLE" "$NSLOOKUP_TIMEOUT" | sed 's/^/    /'
+    check_report_connectivity
     echo ""
     echo "  [ DPI Applications ]"
     print_dpi_status "Zapret" "$ZAPRETINITD_FILEPATH"
@@ -1465,24 +1452,24 @@ check_report_full() {
 }
 
 check_report_safe() {
-    local running_status autoload_status
+    local running_status autoload_status hw_model os_ver arch kernel
 
     service "$PROGNAME" running && running_status="active" || running_status="inactive"
     service "$PROGNAME" enabled && autoload_status="enabled" || autoload_status="disabled"
 
-    check_safe_item() {
-        local label="$1"
-
-        shift
-        if "$@" >/dev/null 2>&1; then
-            printf "  %-24s :: OK\n" "$label"
-        else
-            printf "  %-24s :: Failed\n" "$label"
-        fi
-    }
+    hw_model=$(sysinfo_get_hw_model)
+    os_ver=$(sysinfo_get_os_version)
+    arch=$(sysinfo_get_os_arch)
+    kernel=$(uname -r)
 
     echo ""
     echo "-- JustClash Redacted Diagnostic Report ------------------------"
+    echo ""
+    echo "  [ Device Info ]"
+    printf "  %-24s :: %s\n" "Device" "${hw_model:-$NO_DATA_STRING}"
+    printf "  %-24s :: %s\n" "Architecture" "${arch:-$NO_DATA_STRING}"
+    printf "  %-24s :: %s\n" "OpenWrt" "${os_ver:-$NO_DATA_STRING}"
+    printf "  %-24s :: %s\n" "Kernel" "${kernel:-$NO_DATA_STRING}"
     echo ""
     echo "  [ Versions ]"
     printf "  %-24s :: %s\n" "Service" "$JUSTCLASH_VERSION"
@@ -1492,24 +1479,15 @@ check_report_safe() {
     printf "  %-24s :: %s\n" "Active" "$running_status"
     printf "  %-24s :: %s\n" "Autoload" "$autoload_status"
     echo ""
-    echo "  [ Connectivity ]"
-    check_safe_item "ICMP check 1" \
-        check_ping "$DEFAULT_CHECK_IP_PING_YANDEX" 2 2
-    check_safe_item "ICMP check 2" \
-        check_ping "$DEFAULT_CHECK_IP_PING_GOOGLE" 2 2
-    check_safe_item "Proxy DNS resolve" \
-        run_check_dns_proxy "$DEFAULT_CHECK_RESOLVE_URL_YANDEX"
-    check_safe_item "External DNS resolve" \
-        check_dns_external \
-        "$DEFAULT_CHECK_RESOLVE_URL_YANDEX" \
-        "$DEFAULT_CHECK_IP_PING_GOOGLE" \
-        "$NSLOOKUP_TIMEOUT"
-    echo ""
     echo "  [ Runtime ]"
     check_safe_item "NFT state" check_nft "$NF_TABLE_NAME"
     check_safe_item "Policy routes" run_check_routes
     echo ""
-    echo "  Configuration, addresses, domains, identifiers and raw network"
+    check_report_dnsmasq
+    echo ""
+    check_report_connectivity
+    echo ""
+    echo "  Configuration, private network details, identifiers and raw network"
     echo "  state are intentionally omitted from this report."
     echo ""
     echo "----------------------------------------------------------------"
@@ -1687,7 +1665,7 @@ check)
             /usr/lib/justclash/runtime/core.sh \
             /usr/lib/justclash/runtime/policy_routing.sh \
             /usr/lib/justclash/runtime/diagnostics.sh
-        config_init "$PROGNAME"
+        config_init "$PROGNAME" --quiet
         check_report_safe
         ;;
     full)
@@ -1704,7 +1682,7 @@ check)
             /usr/lib/justclash/runtime/core.sh \
             /usr/lib/justclash/runtime/policy_routing.sh \
             /usr/lib/justclash/runtime/diagnostics.sh
-        config_init "$PROGNAME"
+        config_init "$PROGNAME" --quiet
         check_report_full
         ;;
     nft)
@@ -1731,16 +1709,8 @@ check)
             /usr/lib/justclash/config.sh \
             /usr/lib/justclash/runtime/policy_routing.sh \
             /usr/lib/justclash/runtime/diagnostics.sh
-        config_init "$PROGNAME"
+        config_init "$PROGNAME" --quiet
         run_check_routes
-        ;;
-    ping)
-        [ "$#" -ge 3 ] && [ "$#" -le 4 ] || {
-            printf 'Usage: justclash.sh check ping TARGET [COUNT]\n' >&2
-            exit 2
-        }
-        import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-        check_ping "$3" "${4:-3}" 2
         ;;
     dns-proxy)
         [ "$#" -eq 3 ] || {
@@ -1754,7 +1724,7 @@ check)
             /usr/lib/justclash/helpers.sh \
             /usr/lib/justclash/config.sh \
             /usr/lib/justclash/runtime/diagnostics.sh
-        config_init "$PROGNAME"
+        config_init "$PROGNAME" --quiet
         run_check_dns_proxy "$3"
         ;;
     dns-external)

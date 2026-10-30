@@ -3,6 +3,64 @@
 
 # Runtime functions extracted from the main service CLI.
 
+check_safe_item() {
+    local label="$1"
+
+    shift
+    if "$@" >/dev/null 2>&1; then
+        printf "  %-24s :: OK\n" "$label"
+    else
+        printf "  %-24s :: Failed\n" "$label"
+    fi
+}
+
+check_https() {
+    curl --connect-timeout 3 --max-time 5 \
+        --proto '=https' --proto-redir '=https' \
+        -fsSL -o /dev/null -- "$1"
+}
+
+check_report_connectivity() {
+    local target
+
+    echo "  [ RU Connectivity ]"
+    for target in ya.ru mail.ru rutube.ru; do
+        check_safe_item "HTTPS $target" check_https "https://$target"
+    done
+    echo ""
+    echo "  [ Non-RU Connectivity ]"
+    for target in github.com www.cloudflare.com google.com; do
+        check_safe_item "HTTPS $target" check_https "https://$target/favicon.ico"
+    done
+}
+
+check_report_dnsmasq() {
+    local section='dhcp.@dnsmasq[0]' dns_listen_port servers noresolv
+    local upstream_status="Unavailable" noresolv_status="Unavailable"
+
+    config_get dns_listen_port proxy dns_listen_port
+    # Inspect the same instance JustClash configures, without dumping its neighbours.
+    if [ "$(uci -q get "$section" 2>/dev/null)" = dnsmasq ]; then
+        if [ -n "$dns_listen_port" ]; then
+            servers=$(uci -q get "${section}.server" 2>/dev/null) || servers=""
+            case " $servers " in
+            *" 127.0.0.1#${dns_listen_port} "*) upstream_status="Present" ;;
+            *) upstream_status="Absent" ;;
+            esac
+        fi
+        noresolv=$(uci -q get "${section}.noresolv" 2>/dev/null) || noresolv=""
+        case "$noresolv" in
+        1 | on | true | yes | enabled) noresolv_status="Enabled" ;;
+        '' | 0 | off | false | no | disabled) noresolv_status="Disabled" ;;
+        *) noresolv_status="Unknown" ;;
+        esac
+    fi
+
+    echo "  [ Dnsmasq ]"
+    printf "  %-24s :: %s\n" "Mihomo DNS upstream" "$upstream_status"
+    printf "  %-24s :: %s\n" "noresolv" "$noresolv_status"
+}
+
 check_nft() {
     local table_name="$1"
 
@@ -117,30 +175,6 @@ check_dns_external() {
         clog info "External DNS query successful"
         return 0
     fi
-}
-
-check_ping() {
-    local target="${1}"
-    local count="${2}"
-    local timeout="${3}"
-    local ping_output exit_code
-
-    if [ -z "$target" ] || [ -z "$count" ] || [ -z "$timeout" ]; then
-        clog warn "Usage: check_ping <target> <count>"
-        return 1
-    fi
-
-    ping_output=$(ping -c "$count" -W "$timeout" "$target" 2>&1)
-    exit_code=$?
-
-    if [ "$exit_code" -eq 0 ]; then
-        clog info "Ping to ${target} is successful"
-        clog info "$ping_output"
-    else
-        clog error "Ping to ${target} failed"
-        clog error "$ping_output"
-    fi
-    return "$exit_code"
 }
 
 config_show_mihomo() {
