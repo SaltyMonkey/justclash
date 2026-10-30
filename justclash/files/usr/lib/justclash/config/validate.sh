@@ -189,7 +189,7 @@ validate_proxy_provider_section() {
         "update_interval:uinteger(10):$DEFAULT_PROVIDERUPDATE_INTERVAL" \
         'size_limit:uinteger(10):10485760' \
         "proxy:$name_type:$DEFAULT_PROXY" \
-        'header_hwid:or("real","spoofed")' \
+        'header_hwid:or("-","real","spoofed")' \
         'header_hwid_custom:string' \
         'header_os_custom:string' \
         'header_os_version_custom:string' \
@@ -304,7 +304,7 @@ validate_proxy_group_section() {
 config_validate() {
     local validation_failed=0
 
-    log info "Starting configuration validation"
+    [ "${1:-}" = --quiet ] || log info "Starting configuration validation"
     validate_main_section settings
     validate_proxy_section proxy
     validate_block_rules_section block_rules

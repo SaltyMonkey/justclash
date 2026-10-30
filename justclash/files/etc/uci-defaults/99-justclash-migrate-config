@@ -163,6 +163,14 @@ restore_legacy_dnsmasq_backup || exit 1
 
 add_missing_option "justclash.proxy.mixed_port_bind_interface" "lan" || exit 1
 
+# A new UI default is no excuse to re-enable old identity headers.
+for section in $(uci -q show justclash | sed -n 's/^\(justclash\.[^.]*\)=proxy_provider$/\1/p'); do
+    if [ -z "$(uci -q get "${section}.header_hwid")" ]; then
+        uci set "${section}.header_hwid=-" || exit 1
+        migration_changed=1
+    fi
+done
+
 # Keep blocking enabled when retiring the firewall REJECT mode.
 for option in nft_quic_mode nft_dot_mode nft_doh_mode nft_dot_quic_mode; do
     if [ "$(uci -q get "justclash.settings.$option")" = "REJECT" ]; then

@@ -1,15 +1,14 @@
 #!/bin/ash
 # shellcheck shell=dash
-# shellcheck disable=SC2154
 
 config_init() {
-    local package="$1"
+    local package="$1" mode="${2:-}"
 
     config_load "$package" || {
         log error "Configuration loading failed."
         return 1
     }
-    config_validate || {
+    config_validate "$mode" || {
         log error "Configuration validation failed."
         return 1
     }
