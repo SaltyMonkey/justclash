@@ -4,6 +4,7 @@
 "require view";
 "require view.justclash.common as common";
 "require view.justclash.lib.form as formConstants";
+"require view.justclash.components.multiline_list as multilineList";
 
 return view.extend({
     async load() {
@@ -178,11 +179,11 @@ return view.extend({
         tabname = "dnspolicies_tab";
         s.tab(tabname, _("Policies"));
 
-        o = s.taboption(tabname, form.DynamicList, "nameserver_policy", _("Nameserver policy:"));
-        o.description = _("Domain-specific DNS policy in the format domain/nameserver. Domain matchers may include +., *. or *.");
+        o = s.taboption(tabname, multilineList.Value, "nameserver_policy", _("Nameserver policy:"));
+        o.description = _("Domain-specific DNS policy in the format domain/nameserver. Domain matchers may include +., *. or *.") + " " + _("Enter one entry per line.");
         o.rmempty = true;
         o.editable = true;
-        o.validate = function (section_id, value) {
+        o.validateEntry = function (value) {
             return common.validateNameserverPolicy(value);
         };
 
@@ -194,11 +195,11 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.DynamicList, "hosts", _("Hosts mapping:"));
-        o.description = _("Domain-specific IP mapping in the format domain/ip (example: cloudflare-dns.com/1.1.1.1).");
+        o = s.taboption(tabname, multilineList.Value, "hosts", _("Hosts mapping:"));
+        o.description = _("Domain-specific IP mapping in the format domain/ip (example: cloudflare-dns.com/1.1.1.1).") + " " + _("Enter one entry per line.");
         o.rmempty = true;
         o.editable = true;
-        o.validate = function (section_id, value) {
+        o.validateEntry = function (value) {
             return common.validateHostsEntry(value);
         };
 

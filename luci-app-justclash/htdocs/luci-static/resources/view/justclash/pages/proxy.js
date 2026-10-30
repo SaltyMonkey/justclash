@@ -4,6 +4,7 @@
 "require view";
 "require view.justclash.common as common";
 "require view.justclash.lib.form as formConstants";
+"require view.justclash.components.multiline_list as multilineList";
 "require tools.widgets as widgets";
 
 return view.extend({
@@ -259,12 +260,15 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.FALSE;
 
-        o = s.taboption(tabname, form.DynamicList, "sniffer_exclude_domain", _("Excluded from sniffer domains:"));
-        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o = s.taboption(tabname, multilineList.Value, "sniffer_exclude_domain", _("Excluded from sniffer domains:"));
+        o.description = _("Domains excluded from detailed analysis when possible. Sometimes this can help with errors in apps.") + " " + _("Enter one entry per line.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
-        o.validate = function (section_id, value) {
+        o.parseEntries = function (value) {
+            return String(value || "").toLowerCase().split(/[\r\n]+/).map(entry => entry.trim()).filter(Boolean);
+        };
+        o.validateEntry = function (value) {
             return common.isValidDomainMatcher(value);
         };
 

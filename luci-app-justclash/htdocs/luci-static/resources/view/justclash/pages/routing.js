@@ -4,12 +4,40 @@
 "require view.justclash.common as common";
 "require view.justclash.api.fs as fsApi";
 "require view.justclash.components.proxy_bulk_import as proxyBulkImport";
+"require view.justclash.components.multiline_list as multilineList";
 "require view.justclash.lib.form as formConstants";
 "require view.justclash.lib.routing as routingOptions";
 "require form";
+"require validation";
 "require tools.widgets as widgets";
 
 const JSON_OBJECT_ROWS = 10;
+
+// CIDR checks need a boolean result, not a DOM field to decorate.
+const cidrValidator = validation.create(null, "cidr", false);
+cidrValidator.assert = condition => !!condition;
+
+const RoutingList = multilineList.Value.extend({
+    rows: 4,
+    parseEntries(value) {
+        return multilineList.Value.prototype.parseEntries.call(this, value).map(entry => entry.toLowerCase());
+    },
+    renderWidget(sectionId, optionIndex, cfgvalue) {
+        return multilineList.Value.prototype.renderWidget.call(this, sectionId, optionIndex, cfgvalue);
+    }
+});
+
+const DomainSuffixList = RoutingList.extend({
+    validateEntry(value) {
+        return common.isValidDomainSuffix(value);
+    }
+});
+
+const CidrList = RoutingList.extend({
+    validateEntry(value) {
+        return cidrValidator.apply("cidr", value) ? true : _("Invalid IPv4 or IPv6 CIDR.");
+    }
+});
 
 const configureRulesetChoices = (option, rulesets) => {
     rulesets.forEach((item) => {
@@ -243,13 +271,23 @@ return view.extend({
         tabname = "proxiesmanualrules_tab";
         s.tab(tabname, _("Manual rules"));
 
-        o = s.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
-        o.description = _("Traffic to domains matching this suffix will go through this proxy (example: google.com).");
+        o = s.taboption(tabname, DomainSuffixList, "additional_domain_route", _("Domain suffix:"));
+        o.description = _("Traffic to domains matching this suffix will go through this proxy (example: google.com).") + " " + _("Enter one suffix per line.");
         o.optional = true;
         o.placeholder = "domain.tld";
-        o.validate = function (section_id, value) {
-            return (common.isValidDomainSuffix(value));
-        };
+        o.modalonly = true;
+
+        o = s.taboption(tabname, CidrList, "additional_destip_route", _("IP CIDR:"));
+        o.description = _("Traffic to this destination IP address or subnet will go through this proxy.") + " " + _("Enter one CIDR per line.");
+        o.placeholder = "203.0.113.0/24";
+        o.optional = true;
+        o.modalonly = true;
+
+        o = s.taboption(tabname, CidrList, "additional_srcip_route", _("Source IP CIDR:"));
+        o.description = _("Traffic from this local IP address or subnet will go through this proxy.") + " " + _("Enter one CIDR per line.");
+        o.placeholder = "192.0.2.10/32";
+        o.optional = true;
+        o.editable = true;
         o.modalonly = true;
 
         o = s.taboption(tabname, form.DynamicList, "additional_udp_dst_port_route", _("UDP destination ports:"));
@@ -262,21 +300,6 @@ return view.extend({
         o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
         o.datatype = "and(port,min(1))";
         o.optional = true;
-        o.modalonly = true;
-
-        o = s.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
-        o.description = _("Traffic to this destination IP address or subnet will go through this proxy.");
-        o.placeholder = "203.0.113.0/24";
-        o.optional = true;
-        o.datatype = datatypes.CIDR;
-        o.modalonly = true;
-
-        o = s.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IP CIDR:"));
-        o.description = _("Traffic from this local IP address or subnet will go through this proxy.");
-        o.placeholder = "192.0.2.10/32";
-        o.optional = true;
-        o.editable = true;
-        o.datatype = datatypes.CIDR;
         o.modalonly = true;
 
         spp = m.section(form.GridSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies."));
@@ -410,10 +433,12 @@ return view.extend({
         spp.tab(tabname, _("Security"));
 
         o = spp.taboption(tabname, form.ListValue, "header_hwid", _("HWID support:"));
-        o.value("", _("Disable"));
+        o.value("-", _("Disable"));
         o.value("real", _("Real HWID"));
         o.value("spoofed", _("Spoofed HWID"));
-        o.description = _("Send HWID data headers to server with proxy provider request. Leave it empty if you don't need it.");
+        o.default = "real";
+        o.rmempty = false;
+        o.description = _("Send HWID data headers to server with proxy provider request. Select Disable if you don't need it.");
         o.editable = true;
         o.modalonly = true;
 
@@ -466,7 +491,7 @@ return view.extend({
         o.rmempty = true;
         o.modalonly = true;
         common.defaultUaPresets.forEach(p => o.value(p.value, p.label));
-        o.default = "__mihomo__";
+        o.default = "__justclash__";
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") {
                 return true;
@@ -858,14 +883,25 @@ return view.extend({
         tabname = "proxiesgroupmanualrules_tab";
         s2.tab(tabname, _("Manual rules"));
 
-        o = s2.taboption(tabname, form.DynamicList, "additional_domain_route", _("Domain suffix:"));
-        o.description = _("Traffic to domains matching this suffix will go through the selected proxy group (example: google.com).");
+        o = s2.taboption(tabname, DomainSuffixList, "additional_domain_route", _("Domain suffix:"));
+        o.description = _("Traffic to domains matching this suffix will go through the selected proxy group (example: google.com).") + " " + _("Enter one suffix per line.");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.editable = true;
-        o.validate = function (section_id, value) {
-            return (common.isValidDomainSuffix(value));
-        };
+        o.modalonly = true;
+
+        o = s2.taboption(tabname, CidrList, "additional_destip_route", _("IP CIDR:"));
+        o.description = _("Traffic to this destination IP address or subnet will go through the selected proxy group.") + " " + _("Enter one CIDR per line.");
+        o.placeholder = "203.0.113.0/24";
+        o.optional = true;
+        o.editable = true;
+        o.modalonly = true;
+
+        o = s2.taboption(tabname, CidrList, "additional_srcip_route", _("Source IP CIDR:"));
+        o.description = _("Traffic from this local IP address or subnet will go through the selected proxy group.") + " " + _("Enter one CIDR per line.");
+        o.placeholder = "192.0.2.10/32";
+        o.optional = true;
+        o.editable = true;
         o.modalonly = true;
 
         o = s2.taboption(tabname, form.DynamicList, "additional_udp_dst_port_route", _("UDP destination ports:"));
@@ -878,22 +914,6 @@ return view.extend({
         o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
         o.datatype = "and(port,min(1))";
         o.optional = true;
-        o.modalonly = true;
-
-        o = s2.taboption(tabname, form.DynamicList, "additional_destip_route", _("IP CIDR:"));
-        o.description = _("Traffic to this destination IP address or subnet will go through the selected proxy group.");
-        o.placeholder = "203.0.113.0/24";
-        o.optional = true;
-        o.editable = true;
-        o.datatype = datatypes.CIDR;
-        o.modalonly = true;
-
-        o = s2.taboption(tabname, form.DynamicList, "additional_srcip_route", _("Source IP CIDR:"));
-        o.description = _("Traffic from this local IP address or subnet will go through the selected proxy group.");
-        o.placeholder = "192.0.2.10/32";
-        o.optional = true;
-        o.editable = true;
-        o.datatype = datatypes.CIDR;
         o.modalonly = true;
 
         s4 = m.section(form.GridSection, "block_rules", _("Block rules:"), _("Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."));
@@ -970,14 +990,11 @@ return view.extend({
         tabname = "rejectmanualrules_tab";
         s4.tab(tabname, _("Manual rules"));
 
-        o = s4.taboption(tabname, form.DynamicList, "additional_domain_blockroute", _("Domain suffix:"));
-        o.description = _("Traffic to domains matching this suffix will be blocked (example: google.com).");
+        o = s4.taboption(tabname, DomainSuffixList, "additional_domain_blockroute", _("Domain suffix:"));
+        o.description = _("Traffic to domains matching this suffix will be blocked (example: google.com).") + " " + _("Enter one suffix per line.");
         o.optional = true;
         o.placeholder = "domain.tld";
         o.editable = true;
-        o.validate = function (section_id, value) {
-            return (common.isValidDomainSuffix(value));
-        };
         o.modalonly = true;
 
         o = s4.taboption(tabname, form.DynamicList, "additional_destip_blockroute", _("IPv4 CIDR:"));
