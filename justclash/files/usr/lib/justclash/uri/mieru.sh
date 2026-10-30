@@ -1,6 +1,5 @@
 #!/bin/ash
 # shellcheck shell=dash
-# shellcheck disable=SC3060
 # Protocol-specific URI parser. Kept separate so one parser no longer
 # requires scrolling through the collected history of every other protocol.
 

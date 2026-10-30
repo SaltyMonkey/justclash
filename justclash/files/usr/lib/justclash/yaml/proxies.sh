@@ -7,7 +7,7 @@
 # The caller persists these buffers as ACTIVE_* sidecar files for nftables.
 # OUT_PROXIES, OUT_RULES, OUT_RULESETS and OUT_FAKE_IP_RULES accumulate JSON
 # fragments. NL is from constants.sh; mutating renderers must run in the caller shell.
-# shellcheck disable=SC2034,SC2154,SC2329
+# shellcheck disable=SC2154
 
 yaml_proxy_append() {
     local name="$1" proxy_link_uri="$2" dialer_proxy="$3" interface_name="$4" routing_mark="$5"

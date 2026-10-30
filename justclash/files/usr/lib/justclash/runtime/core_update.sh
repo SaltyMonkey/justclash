@@ -8,7 +8,6 @@ get_latest_version_url() {
 
     if [ "$channel" = "alpha" ]; then
         api_url="${check_url%/latest}"
-        # shellcheck disable=SC2016
         jq_filter='[.[] | select(.tag_name == "Prerelease-Alpha")][0].assets[] | select(.name == "version.txt") | .browser_download_url'
     else
         api_url="$check_url"

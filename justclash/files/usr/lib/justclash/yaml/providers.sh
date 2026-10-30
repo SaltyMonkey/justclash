@@ -4,7 +4,7 @@
 # OUT_TEMPLATE is a scratch result overwritten by template helpers and consumed
 # immediately by their callers (including rules.sh). OUT_PROXY_PROVIDERS accumulates
 # provider JSON fragments for core_generate_yaml(); neither variable is exported.
-# shellcheck disable=SC2034,SC2154
+# shellcheck disable=SC2154
 
 build_hwid_header_fragment() {
     local hwid device_os version_os device_model

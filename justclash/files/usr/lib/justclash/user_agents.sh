@@ -2,7 +2,6 @@
 # Ash isn't supported properly in spellcheck static analyzer
 # Using debian based version (kind of similar)
 # shellcheck shell=dash
-# shellcheck disable=SC3060
 
 # --------------------------------------------
 # External justclash random ua generator

@@ -2,7 +2,6 @@
 # shellcheck shell=dash
 # shellcheck disable=SC3060
 # NL, CR and TAB are supplied by constants.sh before helpers are loaded.
-# shellcheck disable=SC2154
 
 # Focused helper module loaded into the main ash process.
 
@@ -38,7 +37,7 @@ str_build_custom_slash_map() {
     local result=""
 
     # Invoked indirectly by config_list_foreach.
-    # shellcheck disable=SC2317,SC2329
+    # shellcheck disable=SC2329
     __append_slash_item() {
         local entry="$1"
         local key="${entry%%/*}"

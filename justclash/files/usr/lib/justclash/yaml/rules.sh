@@ -105,7 +105,6 @@ build_builtin_rules_bundle() {
     ruleset_lines=$(lookup_many_rulesets_full "$enabled_list")
 
     local old_ifs="$IFS"
-    # shellcheck disable=SC2154
     IFS="$NL"
     for ruleset_line in $ruleset_lines; do
         IFS="$old_ifs"

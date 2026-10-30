@@ -37,7 +37,6 @@ fmt_values_as_json_array() {
 }
 
 # NL is provided by constants.sh before helpers.sh is loaded.
-# shellcheck disable=SC2154
 fmt_uci_list_as_json_array() {
     local section_name="$1"
     local list_name="$2"
@@ -46,7 +45,7 @@ fmt_uci_list_as_json_array() {
     local result=""
 
     # Invoked indirectly by config_list_foreach.
-    # shellcheck disable=SC2317,SC2329
+    # shellcheck disable=SC2329
     __append_json_array_element() {
         local val="$1"
         [ -n "$val" ] || return 0

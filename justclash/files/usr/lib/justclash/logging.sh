@@ -15,7 +15,6 @@ clog() {
     local level="$1"
     local message="$2"
 
-    # shellcheck disable=SC2154
     [ "$ENV_JUSTCLASH_RUN_CONTEXT" = "procd" ] && return
 
     local color_start="" color_end="" level_label

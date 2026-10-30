@@ -8,7 +8,7 @@
 # OUT_PROXY_GROUPS, OUT_RULES, OUT_RULESETS and OUT_FAKE_IP_RULES accumulate JSON
 # fragments; OUT_TEMPLATE is overwritten by each template call. NL is from constants.sh.
 # Do not call these mutating renderers in subshells: their output is caller state.
-# shellcheck disable=SC2034,SC2154,SC2329
+# shellcheck disable=SC2154
 
 template_proxy_group() {
     local name="$1" type="$2" url="$3" status="$4" interval="$5" timeout="$6" max_failed="$7" lazy="$8"
