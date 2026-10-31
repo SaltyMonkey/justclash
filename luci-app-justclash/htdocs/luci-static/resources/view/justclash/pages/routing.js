@@ -116,11 +116,56 @@ return view.extend({
         s.tab(tabname, _("Basic"));
 
         o = s.taboption(tabname, form.Flag, "enabled", _("Enabled"));
-        o.width = "15%";
+        o.width = "10%";
         o.description = _("Enable or disable this proxy entry without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
         o.editable = true;
+
+        o = s.taboption(tabname, form.DummyValue, "_proxy_type", _("Type"));
+        o.width = "10%";
+        o.modalonly = false;
+        o.textvalue = function (section_id) {
+            let type;
+            if (uci.get(common.binName, section_id, "mode") === "object") {
+                try {
+                    const value = JSON.parse(uci.get(common.binName, section_id, "proxy_link_object") || "null");
+                    type = (Array.isArray(value) ? value[0] : value)?.type;
+                } catch { /* leave malformed objects without a type */ }
+            } else {
+                const uri = uci.get(common.binName, section_id, "proxy_link_uri") || "";
+                type = uri.trim().match(/^([a-z][a-z0-9+.-]*):\/\//i)?.[1]?.toLowerCase();
+            }
+            return typeof type === "string" && type
+                ? E("span", { class: "jc-type-badge" }, type.toUpperCase())
+                : E("em", {}, _("N/A"));
+        };
+
+        o = s.taboption(tabname, form.DummyValue, "_proxy_connection", _("Through:"));
+        o.width = "10%";
+        o.modalonly = false;
+        o.textvalue = function (section_id) {
+            let dialerProxy, interfaceName;
+            if (uci.get(common.binName, section_id, "mode") === "object") {
+                try {
+                    const value = JSON.parse(uci.get(common.binName, section_id, "proxy_link_object") || "null");
+                    const proxy = Array.isArray(value) ? value[0] : value;
+                    dialerProxy = proxy?.["dialer-proxy"];
+                    interfaceName = proxy?.["interface-name"];
+                } catch { /* leave malformed objects without connection details */ }
+            } else {
+                dialerProxy = uci.get(common.binName, section_id, "dialer_proxy");
+                interfaceName = uci.get(common.binName, section_id, "interface_name");
+            }
+            const badges = [];
+            for (const [label, value] of [[_("Connect through:"), dialerProxy], [_("Bind to interface:"), interfaceName]]) {
+                if (typeof value === "string" && value.trim())
+                    badges.push(E("span", { class: "jc-type-badge", title: label }, value.trim()));
+            }
+            return badges.length
+                ? E("div", { class: "jc-connection-badges" }, badges)
+                : E("em", {}, _("Direct"));
+        };
 
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy name.");
@@ -317,11 +362,37 @@ return view.extend({
         spp.tab(proxyProviderOverrideTab, _("Override"));
 
         o = spp.taboption(tabname, form.Flag, "enabled", _("Enabled"));
-        o.width = "15%";
+        o.width = "10%";
         o.description = _("Enable or disable this proxy provider without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
         o.editable = true;
+
+        o = spp.taboption(tabname, form.DummyValue, "_subscription_type", _("Type"));
+        o.width = "10%";
+        o.modalonly = false;
+        o.textvalue = function (section_id) {
+            const source = (uci.get(common.binName, section_id, "subscription") || "").trim();
+            const type = source.match(/^(https?):\/\//i)?.[1]?.toLowerCase() || (source ? "local" : "");
+            return type
+                ? E("span", { class: "jc-type-badge" }, type.toUpperCase())
+                : E("em", {}, _("N/A"));
+        };
+
+        o = spp.taboption(tabname, form.DummyValue, "_provider_connection", _("Through:"));
+        o.width = "10%";
+        o.modalonly = false;
+        o.textvalue = function (section_id) {
+            const badges = [];
+            for (const [option, label] of [["override_dialer_proxy", _("Connect through:")], ["override_interface_name", _("Bind to interface:")]]) {
+                const value = uci.get(common.binName, section_id, option);
+                if (typeof value === "string" && value.trim())
+                    badges.push(E("span", { class: "jc-type-badge", title: label }, value.trim()));
+            }
+            return badges.length
+                ? E("div", { class: "jc-connection-badges" }, badges)
+                : E("em", {}, "—");
+        };
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy provider name.");
@@ -343,6 +414,20 @@ return view.extend({
             return common.validateHttpUrl(value);
         };
         o.description = _("Your complete subscription URL with http:// or https://.");
+        o.modalonly = true;
+
+        o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
+        o.description = _("Use the selected proxy to get subscription data from the server.");
+        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
+        o.default = common.endRuleOptions[0].value;
+        o.rmempty = false;
+        o.validate = function (section_id, value) {
+            return common.validateSimpleName(value);
+        };
+        routingOptions.makeDynamic(o, common.binName, [
+            common.endRuleOptions[0],
+            common.endRuleOptions[2]
+        ]);
         o.modalonly = true;
 
         o = spp.taboption(proxyProviderOverrideTab, form.Value, "override_dialer_proxy", _("Connect through:"));
@@ -413,20 +498,6 @@ return view.extend({
         });
         o.default = common.defaultDownloadSizeLimits[5].value;
         o.rmempty = false;
-        o.modalonly = true;
-
-        o = spp.taboption(tabname, form.Value, "proxy", _("Get subscription with:"));
-        o.description = _("Use the selected proxy to get subscription data from the server.");
-        o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
-        o.default = common.endRuleOptions[0].value;
-        o.rmempty = false;
-        o.validate = function (section_id, value) {
-            return common.validateSimpleName(value);
-        };
-        routingOptions.makeDynamic(o, common.binName, [
-            common.endRuleOptions[0],
-            common.endRuleOptions[2]
-        ]);
         o.modalonly = true;
 
         tabname = "proxyproviderheaders_tab";
@@ -637,11 +708,25 @@ return view.extend({
         s2.tab(tabname, _("Basic"));
 
         o = s2.taboption(tabname, form.Flag, "enabled", _("Enabled"));
-        o.width = "15%";
+        o.width = "10%";
         o.description = _("Enable or disable this proxy group without removing it.");
         o.default = primitives.TRUE;
         o.rmempty = false;
         o.editable = true;
+
+        o = s2.taboption(tabname, form.ListValue, "group_type", _("Group type:"));
+        o.width = "10%";
+        common.defaultProxyGroupsTypes.forEach(item => {
+            o.value(item.value, item.text);
+        });
+        o.rmempty = false;
+        o.default = common.defaultProxyGroupsTypes[0].value;
+        o.description = _("Choose how this group selects a proxy, such as select, fallback, load balancing, or URL test.");
+        o.textvalue = function (section_id) {
+            const type = this.cfgvalue(section_id) || this.default;
+            const label = common.defaultProxyGroupsTypes.find(item => item.value === type)?.text || type;
+            return E("span", { class: "jc-type-badge" }, label.toUpperCase());
+        };
 
         o = s2.taboption(tabname, form.Value, "name", _("Name:"));
         o.description = _("Proxy group name.");
@@ -655,15 +740,6 @@ return view.extend({
         o.validate = function (section_id, value) {
             return common.validateSimpleName(value);
         };
-
-        o = s2.taboption(tabname, form.ListValue, "group_type", _("Group type:"));
-        common.defaultProxyGroupsTypes.forEach(item => {
-            o.value(item.value, item.text);
-        });
-        o.rmempty = false;
-        o.default = common.defaultProxyGroupsTypes[0].value;
-        o.description = _("Choose how this group selects a proxy, such as select, fallback, load balancing, or URL test.");
-        o.modalonly = true;
 
         o = s2.taboption(tabname, form.ListValue, "strategy", _("Group strategy:"));
         common.defaultProxyGroupsBalanceModeStrategies.forEach(item => {
@@ -928,7 +1004,7 @@ return view.extend({
         s4.tab(tabname, _("Rulesets"));
 
         o = s4.taboption(tabname, form.Flag, "enabled", _("Enabled"));
-        o.width = "15%";
+        o.width = "10%";
         o.description = _("Enable or disable block rules.");
         o.default = primitives.TRUE;
         o.rmempty = false;
@@ -939,13 +1015,20 @@ return view.extend({
         o.description = _("Ready-made blocklists for ads and harmful sites. Matching traffic will be blocked. Choose the ones you want to use, or leave this empty.");
         o.modalonly = true;
 
-        o = s4.taboption(tabname, form.ListValue, "proxy", _("Download lists through:"));
+        o = s4.taboption(tabname, form.ListValue, "proxy", _("Download through:"));
+        o.width = "10%";
         o.description = _("Choose which proxy or group should be used when downloading these lists from the internet.");
         o.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
         o.default = common.endRuleOptions[0].value;
         o.rmempty = false;
         routingOptions.makeDynamic(o, common.binName, [common.endRuleOptions[0]]);
-        o.modalonly = true;
+        o.textvalue = function (section_id) {
+            const proxy = this.cfgvalue(section_id) || this.default;
+            const label = common.endRuleOptions.find(item => item.value === proxy)?.text || proxy;
+            return E("div", { class: "jc-connection-badges" }, [
+                E("span", { class: "jc-type-badge" }, label)
+            ]);
+        };
 
         o = s4.taboption(tabname, form.Value, "list_update_interval", _("List update interval:"));
         o.description = _("How often remote lists should be checked for updates, in seconds. Presets show the equivalent duration in parentheses.");
@@ -1007,10 +1090,7 @@ return view.extend({
 
         smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mihomo mixed port rule:"), _("Extra settings for traffic that arrives through the Mihomo mixed port. Use this when that port should behave differently from the default route."));
 
-        tabname = "mixedportbasic_tab";
-        smp.tab(tabname, _("Basic"));
-
-        o = smp.taboption(tabname, form.Value, "exit_rule", _("Send traffic to:"));
+        o = smp.option(form.Value, "exit_rule", _("Send traffic to:"));
         common.endRuleOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
@@ -1024,10 +1104,7 @@ return view.extend({
 
         s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Default rule:"), _("Used when no other rule matches. This is the fallback action for the remaining traffic."));
 
-        tabname = "finalbasic_tab";
-        s5.tab(tabname, _("Basic"));
-
-        optionFinal = s5.taboption(tabname, form.Value, "exit_rule", _("Send traffic to:"));
+        optionFinal = s5.option(form.Value, "exit_rule", _("Send traffic to:"));
         optionFinal.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
         optionFinal.value(common.endRuleOptions[2].value, common.endRuleOptions[2].text);
         optionFinal.default = common.endRuleOptions[0].value;
@@ -1059,6 +1136,25 @@ return view.extend({
 
         const style = E("style", {}, `
             ul.dropdown { max-height:320px !important; }
+            .jc-routing-form .jc-type-badge {
+                display: inline-block;
+                padding: 0.1rem 0.55rem;
+                border-radius: 9999px;
+                line-height: 1.5;
+                white-space: nowrap;
+                color: var(--primary-color-medium, #4f8cff);
+                border: 1px solid color-mix(in srgb, var(--primary-color-medium, #4f8cff) 25%, transparent);
+                background: color-mix(in srgb, var(--primary-color-medium, #4f8cff) 10%, transparent);
+            }
+            .jc-routing-form .jc-connection-badges {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+            .jc-routing-form .jc-connection-badges .jc-type-badge {
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
             #cbi-justclash-block_rules > .cbi-section-actions > div {
                 display: inline-flex;
             }
