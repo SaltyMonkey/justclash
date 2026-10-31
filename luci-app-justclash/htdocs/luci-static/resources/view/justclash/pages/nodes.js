@@ -75,6 +75,7 @@ return view.extend({
             pendingKey: "",
             delayLoadingGroup: "",
             delayLoadingProvider: "",
+            delayTestUrl: common.defaultHealthCheckUrls[0],
             groupDelays: Object.create(null),
             providerDelays: Object.create(null),
             nodesState: result.nodesState,
@@ -135,7 +136,7 @@ return view.extend({
 
         const fetchNodeDelay = (proxyName, providerName = state.nodesState.proxyProviderMap[proxyName]) => {
             const searchParams = {
-                url: common.defaultHealthCheckUrls[0],
+                url: state.delayTestUrl,
                 timeout: String(mihomoApi.fetchTimeout)
             };
 
@@ -178,14 +179,14 @@ return view.extend({
 
             state.delayLoadingGroup = group.name;
             state.groupDelays[group.name] = Object.create(null);
-            syncModeSelect();
+            syncControls();
             rerenderGroupSection(group.name);
 
             try {
                 await runProxyDelayTests(group.options.filter(canTestProxyDelay), state.groupDelays[group.name]);
             } finally {
                 state.delayLoadingGroup = "";
-                syncModeSelect();
+                syncControls();
                 rerenderGroupSection(group.name);
             }
         };
@@ -196,7 +197,7 @@ return view.extend({
 
             state.delayLoadingProvider = provider.name;
             state.providerDelays[provider.name] = Object.create(null);
-            syncModeSelect();
+            syncControls();
             rerenderProviderSection(provider.name);
 
             try {
@@ -211,7 +212,7 @@ return view.extend({
                 );
             } finally {
                 state.delayLoadingProvider = "";
-                syncModeSelect();
+                syncControls();
                 rerenderProviderSection(provider.name);
             }
         };
@@ -221,7 +222,7 @@ return view.extend({
                 return;
 
             state.updatingProvider = provider.name;
-            syncModeSelect();
+            syncControls();
             rerenderProviderSection(provider.name);
 
             try {
@@ -231,7 +232,7 @@ return view.extend({
                 ui.addNotification(null, E("p", _("Failed to update provider %s: %s").format(provider.name, e.message)), "error");
             } finally {
                 state.updatingProvider = "";
-                syncModeSelect();
+                syncControls();
                 renderNodes();
             }
         };
@@ -512,14 +513,38 @@ return view.extend({
         const modeDropdownNode = modeDropdown.render();
         modeDropdownNode.classList.add("jc-mode-select");
 
-        const syncModeSelect = () => {
+        const delayUrlLabel = E("span", { id: "jc-delay-url-label", class: "jc-mode-label" }, _("Test URL"));
+        const delayUrlDropdown = new ui.Dropdown(state.delayTestUrl,
+            Object.fromEntries(common.defaultHealthCheckUrls.map(url => [url, url])), {
+                sort: false,
+                optional: false
+            });
+        const delayUrlDropdownNode = delayUrlDropdown.render();
+        delayUrlDropdownNode.classList.add("jc-delay-url-select");
+        delayUrlDropdownNode.setAttribute("aria-labelledby", "jc-delay-url-label");
+
+        const syncControls = () => {
             modeDropdown.setValue(nodesModel.lower(state.mode) || "rule");
-            if (!!state.loading || !!state.modeLoading || !!state.delayLoadingGroup || !!state.delayLoadingProvider) {
-                modeDropdownNode.setAttribute("disabled", "disabled");
-            } else {
-                modeDropdownNode.removeAttribute("disabled");
-            }
+            delayUrlDropdown.setValue(state.delayTestUrl);
+            const busy = !!state.loading || !!state.modeLoading || !!state.delayLoadingGroup || !!state.delayLoadingProvider;
+            modeDropdownNode.toggleAttribute("disabled", busy);
+            delayUrlDropdownNode.toggleAttribute("disabled", busy || !!state.updatingProvider);
         };
+
+        delayUrlDropdownNode.addEventListener("cbi-dropdown-change", () => {
+            if (state.loading || state.modeLoading || state.delayLoadingGroup || state.delayLoadingProvider || state.updatingProvider) {
+                delayUrlDropdown.setValue(state.delayTestUrl);
+                return;
+            }
+            const nextUrl = delayUrlDropdown.getValue();
+            if (!common.defaultHealthCheckUrls.includes(nextUrl) || nextUrl === state.delayTestUrl)
+                return;
+
+            state.delayTestUrl = nextUrl;
+            state.groupDelays = Object.create(null);
+            state.providerDelays = Object.create(null);
+            renderNodes();
+        });
 
         const handleModeChange = async () => {
             const nextMode = nodesModel.lower(modeDropdown.getValue());
@@ -529,7 +554,7 @@ return view.extend({
                 return;
 
             state.modeLoading = true;
-            syncModeSelect();
+            syncControls();
 
             try {
                 await mihomoApi.patchConfigs({ mode: nextMode }, state.token);
@@ -548,7 +573,7 @@ return view.extend({
                 console.error(`Failed to switch Mihomo mode to ${nextMode}`, e);
             } finally {
                 state.modeLoading = false;
-                syncModeSelect();
+                syncControls();
             }
         };
 
@@ -561,7 +586,7 @@ return view.extend({
 
             state.pendingKey = pendingKey;
             state.loading = true;
-            syncModeSelect();
+            syncControls();
             renderNodes();
 
             try {
@@ -577,7 +602,7 @@ return view.extend({
             } finally {
                 state.pendingKey = "";
                 state.loading = false;
-                syncModeSelect();
+                syncControls();
                 renderNodes();
             }
         };
@@ -586,10 +611,14 @@ return view.extend({
             E("span", { class: "jc-mode-wrap" }, [
                 modeLabel,
                 modeDropdownNode
+            ]),
+            E("span", { class: "jc-mode-wrap jc-delay-url-wrap" }, [
+                delayUrlLabel,
+                delayUrlDropdownNode
             ])
         ]));
 
-        syncModeSelect();
+        syncControls();
         renderNodes();
 
         const style = E("style", {}, `
@@ -601,6 +630,8 @@ return view.extend({
             .jc-mode-wrap{flex-wrap:wrap;gap:.55em;}
             .jc-mode-label,.jc-group-title,.jc-group-badge-current,.jc-option-name,.jc-option-meta-delay,.jc-option-meta-timeout{font-weight:600;}
             .jc-mode-select{min-width:8.125rem;margin:0;}
+            .jc-delay-url-wrap{flex:1;min-width:0;}
+            .jc-delay-url-select{width:24rem;max-width:100%;margin:0;}
             .jc-nodes-layout,.jc-group-section,.jc-card{display:flex;flex-direction:column;}
             .jc-nodes-layout{gap:1.125rem;}
             .jc-group-section{gap:0.625rem;}
