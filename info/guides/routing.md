@@ -18,6 +18,12 @@ In LuCI, manually configured outbounds are called **Proxies**. Groups have a
 **Proxies** list for individual outbounds or other groups and a **Providers** list
 for subscription sources. Both lists can be used together.
 
+Routing grids show the type before the name. The **Through** column shows an
+outbound's connection proxy or interface binding. For providers, it shows
+**Override** settings applied to loaded nodes; **Get subscription with** controls
+the separate connection used to download the subscription. Blocking exposes
+**Download through** directly in its grid.
+
 ```mermaid
 flowchart LR
     Rule[Website or ruleset rule] -->|Via group| Group[Outbound group]
@@ -46,6 +52,15 @@ selectors contain letters, digits, hyphens, or underscores, up to 64 characters.
 
 Leave **Connect through** and **Routing mark** empty for an ordinary setup. Save
 the row before using its name in a group or rule.
+
+### Import JSON Outbounds
+
+Use **Add proxies in bulk (JSON)** above the form to paste an array of up to 128
+Mihomo outbound objects. Each object must contain a unique `name` that also
+differs from existing outbound names. The import adds enabled JSON entries to
+the form without saving or applying them. Review the rows, then use **Save** or
+**Save & Apply**. Connection links and subscription URLs are added through their
+individual **Add** forms.
 
 ### Bind to an Interface
 
@@ -170,6 +185,17 @@ On the outbound or group that should handle the traffic:
 - In Geodata mode, select the relevant Geosite/GeoIP categories.
 
 Enter a domain suffix without a scheme or path; it also matches subdomains.
+The **Domain suffix** field is a multiline editor: paste or edit the whole list,
+one suffix per line. Other characters within a line are part of that entry,
+not separators.
+Each suffix is validated. Saved suffixes use lowercase, and duplicates are
+removed on save. Existing UCI lists remain lists; no configuration migration
+is needed.
+
+**IP CIDR** and **Source IP CIDR** appear directly after the domain field and use
+the same multiline input. Each entry must include an IPv4 or IPv6 prefix length;
+entries are validated individually and saved as UCI lists. Enter one CIDR per
+line; the same whitespace cleanup and duplicate removal apply.
 
 **UDP destination ports** and **TCP destination ports** accept one port per item,
 from `1` to `65535`. Each entry is an independent match for the selected protocol

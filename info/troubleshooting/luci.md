@@ -24,8 +24,16 @@ Use **Setup: Routing** and **Setup: Rulesets** to edit saved routing configurati
 
 ## What the Current UI Shows
 
+In **Nodes**, choose **Test URL** before using **Test delay** on a group or
+provider. The selection applies to manual delay tests on the current page.
+Changing it clears previous manual results. The selector is disabled while a
+test is running; configured automatic health-check URLs stay unchanged.
+
 - **Nodes and Rules:** an API request failure produces a load-error notification, but the page can still render an empty list. Check Status before assuming that there are no groups or rules.
 - **Connections and Realtime logs:** the page can open without an active stream. It may remain empty, or retain the last received entries after a disconnect.
+- **Closing connections:** successful closure does not show a notification.
+  Errors still do, and **Close all** asks for confirmation. Rows disappear when
+  the next live update no longer includes those connections.
 - **Status:** service controls remain available, while live metrics may stay at zero or their last received values. Runtime mode can appear as **Unknown** if its API request fails. These values alone do not establish whether the controller is reachable.
 
 ## When a Live Page Is Unavailable

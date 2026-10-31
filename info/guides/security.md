@@ -123,12 +123,16 @@ The fields accept a literal User-Agent or one of these special values:
 | --- | --- | --- |
 | `__random__` | One entry selected from the bundled browser User-Agent list | An endpoint accepts ordinary browser clients but rejects an unfamiliar downloader identity |
 | `__justclash__` | `JustClash/<installed-version>` | The server should identify requests from this package in its logs |
-| `__mihomo__` | `Mihomo/<core-version>` | The provider expects or records a Mihomo client identity; this is the per-provider default |
+| `__mihomo__` | `Mihomo/<core-version>` | The provider expects or records a Mihomo client identity |
 | Literal text | The exact configured value | The provider documents a required User-Agent |
 
+New providers in LuCI default to `__justclash__`. Random browser identities come
+from a bundled desktop User-Agent snapshot, updated with the package; choosing
+`__random__` does not download a list at runtime.
+
 `__random__` is resolved when JustClash generates the Mihomo configuration and
-written as a normal header value. It changes on regeneration, rather than on
-every request. A restart that reuses the [cached YAML](../concepts/configuration-lifecycle.md#generated-yaml-cache)
+written as a normal header value. It is selected again on regeneration, rather
+than on every request. A restart that reuses the [cached YAML](../concepts/configuration-lifecycle.md#generated-yaml-cache)
 keeps the selected value.
 
 ### Why User-Agent Selection Exists

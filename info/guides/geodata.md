@@ -4,7 +4,9 @@
 
 JustClash supports two classification models:
 
-- **Ruleset mode:** selected rule providers, usually `.mrs` or text IP-CIDR files;
+- **Ruleset mode:** selected rule providers; domain sources can use MRS, text, or
+  YAML, while LuCI accepts text IP-CIDR sources. See [Custom rulesets](rulesets.md)
+  for supported extensions and manually edited catalogs;
 - **Geodata mode:** combined Geosite and GeoIP databases.
 
 ## Comparison

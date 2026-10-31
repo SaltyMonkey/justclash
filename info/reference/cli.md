@@ -95,6 +95,28 @@ justclash.sh check
 
 This command reduces diagnostic results to statuses and redacts values that commonly identify network topology or credentials. It is the preferred command for support requests.
 
+Commands under `check` skip the routine configuration-validation start message.
+Configuration loading and validation errors are still logged normally.
+
+The report includes the device model, architecture, OpenWrt version, and Linux
+kernel version, along with versions, service status, and runtime checks.
+The **Dnsmasq** section reads the first dnsmasq instance in UCI, which is the
+instance JustClash manages. It reports whether its global upstream list contains
+Mihomo's local DNS endpoint with the configured DNS port, and whether `noresolv`
+is enabled. An unset `noresolv` is shown as disabled; an unavailable dnsmasq
+section is reported as unavailable. These are UCI configuration values, not
+confirmation that the running dnsmasq process has reloaded them. Upstream
+addresses and hardware identifiers are omitted from the default report.
+
+Two connectivity sections follow. **RU Connectivity** checks HTTPS access to
+`ya.ru`, `mail.ru`, and `rutube.ru`. **Non-RU Connectivity** checks HTTPS GET
+requests for the favicons at `github.com`, `www.cloudflare.com`, and `google.com`.
+Each HTTPS request verifies the certificate, follows HTTPS redirects only, and
+has a 3-second connection timeout and a 5-second total timeout. HTTP errors
+produce `Failed`. The checks run from the router using its current routing policy
+and print only `OK` or `Failed` for each public target. The full report uses the
+same connectivity checks.
+
 ### Local Diagnostics
 
 | Command | Purpose |
@@ -103,7 +125,6 @@ This command reduces diagnostic results to statuses and redacts values that comm
 | `check nft` | Check that the JustClash nftables table exists without printing its contents |
 | `check nft --unsafe` | Print the current JustClash nftables table, including rules, sets, and counters |
 | `check routes` | Inspect policy-routing rules and tables |
-| `check ping <TARGET> [COUNT]` | Test ICMP connectivity |
 | `check dns-proxy <DOMAIN>` | Test Mihomo DNS resolution |
 | `check dns-external <DOMAIN> <RESOLVER>` | Test an explicitly selected resolver |
 | `check hwid` | Print the generated hardware identifier |

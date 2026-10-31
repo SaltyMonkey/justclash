@@ -23,7 +23,7 @@ Open **Services → JustClash → Setup: Rulesets**.
 1. Select the routing or blocking catalog.
 2. Add a row.
 3. Set a display name and stable unique ID.
-4. Choose the content type and format.
+4. Choose the content type. The format is selected automatically from the source path extension.
 5. Enter a remote HTTPS URL or absolute local path.
 6. Add authorization only when the source requires it.
 7. Use **Save** to write the catalog files.
@@ -47,10 +47,18 @@ before the page can be saved.
 | Content | Format | Mihomo provider | Partial nftables synchronization |
 | --- | --- | --- | --- |
 | `domain` | `mrs` | Yes | No |
+| `domain` | `text` | Yes | No |
+| `domain` | `yaml` | Yes | No |
 | `ipcidr` | `mrs` | Yes | No |
 | `ipcidr` | `text` | Yes | Yes |
 
-Text domain lists are not accepted by this catalog. Partial Interception requires `ipcidr/text` when otherwise-unmatched raw-address traffic must be captured by nftables.
+For domain rulesets, LuCI selects `text` for `.txt` or `.list`, `yaml` for `.yaml`
+or `.yml`, and `mrs` otherwise. Local domain paths must use one of these five
+extensions. IP CIDR sources in LuCI must end with `.txt` or `.list` and use
+`text`. URL query parameters and fragments do not affect format selection;
+extensions are case-insensitive. Mihomo parses the source contents.
+
+Partial Interception requires `ipcidr/text` when otherwise-unmatched raw-address traffic must be captured by nftables.
 
 ## Manual Catalog Files
 
@@ -70,9 +78,14 @@ Name|ID|Type|Format|URL_or_Path[|Authorization]
 | `Name` | Human-readable label |
 | `ID` | Stable unique identifier |
 | `Type` | `domain` or `ipcidr` |
-| `Format` | `mrs`, or `text` for `ipcidr` |
+| `Format` | `mrs`, `text`, or `yaml` for `domain`; `mrs` or `text` for `ipcidr` |
 | `URL_or_Path` | Direct HTTP(S) source or absolute local path |
 | `Authorization` | Optional complete Authorization header value |
+
+When editing catalog files manually, set `Format` explicitly. The service passes
+that field to Mihomo without detecting the format from the file extension. The
+extension restrictions above apply only in LuCI; saving a catalog there selects
+the format from the source path again.
 
 Templates:
 

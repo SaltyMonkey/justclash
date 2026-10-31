@@ -39,9 +39,10 @@ on the receiving service; use its integration instructions. The
 explains the kernel requirements.
 
 JustClash accepts marks from `1` to `2147483647`, in decimal or hexadecimal.
-The values `3` (`0x3`) and `255` (`0xff`) are reserved by JustClash. Also check the
-other installed services for mark and mask conflicts. Keep their routing tables
-and priorities coordinated with JustClash's policy routing.
+The internal flags are `4` (`0x4`) for interception and `128` (`0x80`) for Mihomo's
+own outbound traffic. Custom marks must leave both bits clear; combinations such
+as `5` or `129` also conflict. Also check other installed services for mark and mask conflicts.
+Keep their routing tables and priorities coordinated with JustClash's policy routing.
 
 ## Configure the Outbound in LuCI
 
@@ -89,6 +90,17 @@ When JustClash creates nftables rules, it collects the UCI `routing_mark` values
 from outbounds and `override_routing_mark` values from providers. Matching packets
 return from JustClash's output chain in both routing modes. Other firewall chains
 and policy-routing rules can still process them.
+
+Each custom mark is matched by its set bits: `(packet_mark & configured_mark) ==
+configured_mark`. All bits of that configured mark must remain set; other bits
+can change. For example, `0x01000000` still matches `0x41000000` after another
+service adds `0x40000000`. Coordinate bit assignments with other services so
+unrelated traffic does not match the same flags. The internal flags also use bit
+comparisons, and interception assigns `0x4`, replacing the previous packet mark.
+JustClash's policy-routing rule uses `fwmark 0x4/0x4`. Another service must
+preserve the internal flags and avoid assigning those bits for its own purposes.
+Cleanup removes only the current masked rules from JustClash's routing table.
+The core configuration cache is invalidated when the internal mark values change.
 
 A `direct://` entry marks connections toward the actual destination. On a remote
 outbound, the mark instead applies to the connection toward that outbound's

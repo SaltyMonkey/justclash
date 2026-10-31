@@ -60,6 +60,11 @@ matching DNS name is resolved; it does not assign website traffic to an outbound
 The first slash separates the matcher from the upstream, so an upstream URL can
 contain its own slashes. Repeated matchers collect upstreams without duplicates.
 
+Both fields use multiline editors with 12 visible rows. Enter one complete
+mapping or policy per line. Empty lines and surrounding whitespace are removed,
+and exact duplicates are dropped on save. DNS URLs retain their case, commas,
+and query parameters. Existing UCI lists are preserved.
+
 Keep a specific subdomain entry only when it needs different behavior from its
 parent suffix. Review overlapping matchers before removing a rule. Never pin
 ordinary application/CDN addresses just to shorten the DNS configuration.
@@ -94,6 +99,10 @@ the router and its clients.
 inspection of an already intercepted connection. It neither forces a real DNS
 answer nor creates a firewall bypass. Copying DNS exceptions into the sniffer
 list is not automatically required.
+
+**Excluded from sniffer domains** uses a multiline editor with 12 visible rows.
+Enter one matcher per line. Each matcher is validated; saved entries use lowercase
+and duplicates are removed. Existing UCI lists remain compatible.
 
 ## Bypassed Clients and Guest Networks
 

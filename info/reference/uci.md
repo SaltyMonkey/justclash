@@ -217,6 +217,11 @@ describes restoration of the managed dnsmasq configuration.
 
 Mihomo internal NTP is separate from `settings.ntpd_start`.
 
+Under **Setup: Proxy → NTP settings**, LuCI offers IPv4 server presets including
+Cloudflare. Selecting a preset stores its IP address in `core_ntp_server`; the
+hostname and `(IPv4)` text are display labels. A custom hostname or address can
+still be entered.
+
 ## `proxies`
 
 A `proxies` section defines one named outbound.
@@ -240,7 +245,7 @@ provide a Mihomo outbound object in `proxy_link_object`.
 | `proxy_link_uri` | The connection link used in URI mode |
 | `proxy_link_object` | The outbound definition used in object mode |
 | `interface_name` | The outgoing network device for a URI-defined outbound; an empty value leaves it to the core's normal interface selection |
-| `routing_mark` | Optional socket mark, decimal or hexadecimal, from `1` to `2147483647` except reserved `3` and `255`; see [fwmark handoff](../guides/fwmark-handoff.md) for bypass behavior and receiver requirements |
+| `routing_mark` | Optional socket mark, decimal or hexadecimal, from `1` to `2147483647`; must leave internal bits `0x4` and `0x80` clear; see [fwmark handoff](../guides/fwmark-handoff.md) for bypass behavior and receiver requirements |
 | `ip_version` | Name-resolution strategy: `dual`, `ipv4`, `ipv6`, `ipv4-prefer`, or `ipv6-prefer` |
 | `dialer_proxy` | Another outbound or group through which the URI-defined outbound establishes its connection |
 | `enabled_list` | Catalog IDs whose traffic should use this outbound; LuCI automatically offers both [IP matching modes](../guides/rulesets.md#dns-resolution-for-ip-rulesets) for each IP ruleset |
@@ -312,6 +317,12 @@ not select the path used to fetch the subscription itself.
 It defaults to `0`. When enabled, the generated provider `override` contains an
 `override-expr` JSON array that sets `reality-opts.support-x25519mlkem768` to
 `true` only on nodes that already have `reality-opts`. Other nodes are unchanged.
+
+LuCI defaults to `header_hwid=real` and `header_user_agent=__justclash__`, which
+sends `JustClash/<installed-version>`. On upgrade, empty or unset `header_hwid`
+options in existing providers become `-`, preserving disabled identity headers.
+Select **Disable** to save `header_hwid=-`. Outside this migration, the UI
+defaults also apply when editing sections without the corresponding option.
 
 With `header_hwid=real`, all four identity headers are read from the router.
 `x-ver-os` contains only the OpenWrt version from `VERSION_ID`, without the OS name.

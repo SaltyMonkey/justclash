@@ -180,6 +180,12 @@ Combine the options below as needed.
 
 Place only the packages for the router's package manager in one directory and verify them first.
 
+The base package explicitly restarts JustClash when the package manager sets
+`PKG_UPGRADE=1` on a running router, so the service applies the installed code and
+recreates its runtime state. First installations use OpenWrt's standard start
+hook; offline image builds skip the explicit restart. The stop/start below also
+covers older packages without the restart hook.
+
 ```sh
 service justclash stop
 

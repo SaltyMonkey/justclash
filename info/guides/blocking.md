@@ -13,7 +13,7 @@ Open **Services → JustClash → Setup: Routing → Block rules**.
 
 1. Enable the section.
 2. Select the required blocklist IDs.
-3. Choose how lists should be downloaded under **Download lists through**.
+3. Choose how lists should be downloaded under **Download through**.
 4. Configure update interval and size limit.
 5. Add manual domain or IPv4 CIDR entries when needed.
 6. Save & Apply.
@@ -41,6 +41,9 @@ Use `DIRECT` or an existing outbound/group name.
 ## Manual Entries
 
 ### Domain Suffix
+
+In LuCI, **Domain suffix** accepts the whole list in a multiline field. Use one
+suffix per line.
 
 ```sh
 uci add_list justclash.block_rules.additional_domain_blockroute='<DOMAIN_SUFFIX>'

@@ -143,6 +143,12 @@ providers and do not configure a group. A manually selected `select` group does
 not require backend-generated health-check defaults; it still accepts explicit
 check settings. LuCI currently supplies check presets in its group editor.
 
+The shared URL presets include Google, Cloudflare, Microsoft, Apple, Mozilla,
+Huawei, Xiaomi, Samsung, OPPO, Vivo, and Honor. The Microsoft preset uses HTTP;
+the others use HTTPS. Choose a target and matching expected status for automatic
+checks. The [Nodes Test URL selector](../troubleshooting/luci.md#what-the-current-ui-shows)
+only changes manual tests on that page.
+
 ## Tunnel Outbounds
 
 The same idea works with remote-server connections: bind a URI-defined outbound
@@ -158,7 +164,9 @@ entries can apply different bindings to the same subscription.
 
 Start with interface binding. Add `routing_mark` only when you already have
 Linux policy rules and routing tables that use that mark. JustClash accepts
-decimal and hex marks, but reserves its own two marks for interception.
+decimal and hex marks, but reserves bits `0x4` and `0x80` for its own traffic
+handling. Custom marks must leave both bits clear.
+See [fwmark handoff](fwmark-handoff.md).
 
 A device binding and a mark-based policy must lead to a usable route for the
 same connection. If another PBR service uses conflicting marks or tables,
