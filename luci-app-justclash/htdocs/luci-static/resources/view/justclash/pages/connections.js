@@ -183,7 +183,6 @@ return view.extend({
 
                 try {
                     await mihomoApi.closeAllConnections(result.token);
-                    ui.addTimeLimitedNotification(null, E("p", _("All active connections were closed")), common.notificationTimeout, "success");
                 } catch (e) {
                     ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
                     console.error("Failed to close all connections", e);
@@ -284,7 +283,6 @@ return view.extend({
 
                         try {
                             await mihomoApi.closeConnection(key, result.token);
-                            ui.addTimeLimitedNotification(null, E("p", _("Connection closed")), common.notificationTimeout, "success");
                         } catch (e) {
                             setRowCloseButtonState(btn, false);
                             ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
