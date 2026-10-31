@@ -19,11 +19,13 @@ return baseclass.extend({
 
     // ntp.server
     defaultNtpServers: [
-        { value: "194.190.168.1", text: "ntp.msk-ix.ru" },
-        { value: "89.109.251.22", text: "ntp2.vniiftri.ru" },
-        { value: "89.109.251.23", text: "ntp3.vniiftri.ru" },
-        { value: "216.239.35.4", text: "time2.google.com" },
-        { value: "216.239.35.8", text: "time3.google.com" },
+        { value: "194.190.168.1", text: "ntp.msk-ix.ru (IPv4)" },
+        { value: "89.109.251.22", text: "ntp2.vniiftri.ru (IPv4)" },
+        { value: "89.109.251.23", text: "ntp3.vniiftri.ru (IPv4)" },
+        { value: "216.239.35.4", text: "time2.google.com (IPv4)" },
+        { value: "216.239.35.8", text: "time3.google.com (IPv4)" },
+        { value: "162.159.200.1", text: "time.cloudflare.com (IPv4)" },
+        { value: "162.159.200.123", text: "time.cloudflare.com (IPv4)" },
     ].map(item => makePresetValue(item.value, item.text)),
     // keep-alive-interval (Seconds)
     defaultKeepAliveSec: [15, 25, 35, 45, 60].map(v => makePresetValue(v, v === 60 ? _("1 minute") : _("%d seconds").format(v))),
@@ -109,8 +111,15 @@ return baseclass.extend({
         "https://www.gstatic.com/generate_204",
         "https://clients3.google.com/generate_204",
         "https://cp.cloudflare.com/generate_204",
-        "https://www.gstatic.cn/generate_204",
-        "https://g.cn/generate_204",
+        "http://www.msftconnecttest.com/connecttest.txt",
+        "https://captive.apple.com/hotspot-detect.html",
+        "https://detectportal.firefox.com/success.txt",
+        "https://connectivitycheck.platform.hicloud.com/generate_204",
+        "https://connect.rom.miui.com/generate_204",
+        "https://connectivity.samsung.com.cn/generate_204",
+        "https://conn1.oppomobile.com/generate_204",
+        "https://wifi.vivo.com.cn/generate_204",
+        "https://connectivitycheck.platform.hihonorcloud.com/generate_204",
     ],
     // proxy-groups.[*].type
     defaultProxyGroupsTypes: [
