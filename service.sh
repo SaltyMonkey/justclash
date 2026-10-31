@@ -17,8 +17,6 @@ SILENT=0
 UPDATE_CORE=0
 
 URL_GITHUB="github.com"
-URL_CHECK_PING="77.88.8.8"
-URL_CHECK_PING_BACKUP="8.8.8.8"
 MIN_SPACE=40960
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
@@ -68,18 +66,6 @@ check_dns() {
 
     if [ -n "$ip" ]; then
         echo "${ip}"
-        return 0
-    else
-        return 1
-    fi
-}
-
-check_icmp() {
-    local target="${1}"
-    local count="${2}"
-    local timeout=2
-
-    if ping -c "$count" -W "$timeout" "$target" >/dev/null 2>&1; then
         return 0
     else
         return 1
@@ -239,30 +225,6 @@ diagnostic_tools() {
 
 diagnostic_net() {
     echo "  "
-    print_bold_green "Checking network connectivity via ICMP..."
-    echo "Checking with ${URL_CHECK_PING}..."
-    check_icmp "${URL_CHECK_PING}" 4
-    ping_res=$?
-
-    printf " - Result: "
-    if [ "$ping_res" -eq 0 ]; then
-        print_green "OK"
-    else
-        print_red "FAIL"
-    fi
-
-    echo "Checking with ${URL_CHECK_PING_BACKUP}..."
-    check_icmp "${URL_CHECK_PING_BACKUP}" 4
-    ping_res_backup=$?
-
-    printf " - Result: "
-    if [ "$ping_res_backup" -eq 0 ]; then
-        print_green "OK"
-    else
-        print_red "FAIL"
-    fi
-
-    echo "  "
     print_bold_green "Checking domain resolution..."
 
     echo "Testing ${URL_GITHUB} using the default nameserver..."
@@ -280,13 +242,6 @@ diagnostic_net() {
         print_red "DNS resolution failed using the default nameserver."
         print_red "Possible causes: DNS misconfiguration in OpenWrt, ISP issues, or the domain ${URL_GITHUB} is blocked."
         print_red "Please check your DNS settings and restart this script, or install JustClash manually."
-        exit 1
-    fi
-
-    if [ "$ping_res" -ne 0 ] && [ "$ping_res_backup" -ne 0 ]; then
-        print_red "Network connectivity check failed (ICMP unreachable for both primary and backup targets)."
-        print_red "Possible causes: no internet access, ISP issues, or ICMP traffic is blocked."
-        print_red "Please check your network connection and try restarting this script, or install JustClash manually."
         exit 1
     fi
 }
@@ -398,7 +353,6 @@ get_latest_version_url() {
 
     if [ "$channel" = "alpha" ]; then
         api_url="${check_url%/latest}"
-        # shellcheck disable=SC2016
         jq_filter='[.[] | select(.tag_name == "Prerelease-Alpha")][0].assets[] | select(.name == "version.txt") | .browser_download_url'
     else
         api_url="$check_url"
