@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.113.0_rc1
+PKG_VERSION:=0.120.0_rc1
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -120,6 +120,9 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		/usr/bin/justclash.sh cert uhttpd || echo "Could not prepare controller TLS files from uhttpd; run 'justclash.sh cert uhttpd' when its certificate is available." >&2
 	fi
 	[ -x "/etc/init.d/rpcd" ] && /etc/init.d/rpcd reload
+	if [ "$${PKG_UPGRADE:-0}" = "1" ]; then
+		/etc/init.d/justclash restart || exit 1
+	fi
 fi
 exit 0
 endef

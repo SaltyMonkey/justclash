@@ -1,3 +1,119 @@
+## [0.120.0_rc1] - 31102026
+
+This release adds multiline editors for routing and DNS lists, support for text
+and YAML domain rulesets in LuCI, and selectable targets for manual delay tests.
+It also updates packet-mark matching and diagnostic reports. The installer now
+downloads release metadata and packages with curl, and package upgrades restart
+the service to apply the installed version.
+
+### Routing and Packet Marks
+
+- Replaced the internal marks `0x3` and `0xff` with `0x4` for interception and
+  `0x80` for Mihomo's own traffic. Firewall and policy-routing checks now match
+  the relevant bits, allowing other bits to coexist. Interception assigns
+  `0x4` directly.
+- Bypass rules collected from outbound `routing_mark` and provider
+  `override_routing_mark` now require all bits of the configured mark instead
+  of an exact packet-mark match. Custom marks must leave internal bits `0x4`
+  and `0x80` clear; LuCI and service validation enforce this, including the
+  `routing-mark` field in JSON outbounds.
+- Policy-route cleanup and diagnostics recognize masked marks for both IP
+  families. Cleanup failures propagate to the caller. Both internal marks are
+  included in the YAML cache fingerprint so changed marks regenerate the
+  configuration. See [fwmark handoff](info/guides/fwmark-handoff.md).
+
+### LuCI and Manual Rules
+
+- Routing grids show uppercase proxy/provider types, group types, and compact
+  connection badges before the name. Provider **Through** shows outbound
+  overrides; **Get subscription with** remains a separate setting. Blocking
+  exposes **Download through** directly in its grid. Removed the single Basic
+  tabs from Mixed Port and Default rule.
+- Renamed the existing JSON import button and modal to **Add proxies in bulk
+  (JSON)**.
+- **Nodes → Test URL** selects the target for manual group and provider delay
+  tests on the current page. Changing it clears previous manual results and
+  does not modify configured automatic health checks.
+- Expanded shared health-check presets with Microsoft, Apple, Mozilla, Huawei,
+  Xiaomi, Samsung, OPPO, Vivo, and Honor; removed the Google CN presets.
+  Added both Cloudflare IPv4 NTP presets and marked IPv4 NTP labels explicitly.
+- The Connections page no longer displays success notifications after closing
+  one or all connections. Error notifications and confirmation for **Close all**
+  remain.
+- Domain rulesets in LuCI now select `text` for `.txt`/`.list`, `yaml` for
+  `.yaml`/`.yml`, and `mrs` for other remote paths. Local domain paths accept
+  those five extensions. IP CIDR URLs and local paths accept only `.txt`/`.list`
+  and use `text`. URL query parameters do not affect format selection. Manually
+  edited catalogs still supply the format explicitly to the service.
+- **Domain suffix** uses multiline fields for outbounds, groups, and blocking.
+  **IP CIDR** and **Source IP CIDR** use the same widget for outbounds and groups,
+  directly after the domain field and before port rules. This changes the form
+  layout while preserving generated rule precedence.
+- Lists accept one entry per line. Entries are validated
+  individually, converted to lowercase, and deduplicated on save. Errors identify
+  the invalid entry. CIDR fields use LuCI's standard IPv4/IPv6 CIDR validator.
+  Existing UCI lists remain lists and need no migration; clearing a field removes
+  its option.
+- **Hosts mapping**, **Nameserver policy**, and **Excluded from sniffer domains**
+  use multiline editors with 12 visible rows and per-entry validation. Mappings
+  and policies preserve DNS URLs intact. All three fields accept one entry per
+  line and preserve existing UCI lists.
+- Provider headers in LuCI default to real HWID and the JustClash User-Agent
+  preset, which sends `JustClash/<installed-version>`. Disabled HWID is stored
+  explicitly as `-`. Upgrade migration converts empty or missing HWID settings
+  in existing providers to `-`, preserving their disabled state. Explicit real
+  and spoofed HWID settings are retained.
+- **GitHub repository** presets display their literal `owner/repo` values.
+  Routing-mark help includes a zapret2 `FILTER_MARK` example, and destination
+  and source CIDR placeholders show concrete examples. Updated Russian and
+  Simplified Chinese translations and the related configuration guides.
+
+### Diagnostics
+
+- The default report retains **Versions**, **Service Status**, and **Runtime**,
+  and adds device model, architecture, OpenWrt version, and Linux kernel version.
+  The full report also includes architecture and kernel information.
+- Both reports show whether the first dnsmasq instance has the configured
+  Mihomo DNS upstream and whether `noresolv` is enabled. These checks read UCI;
+  they do not confirm that dnsmasq has reloaded the settings. The default report
+  omits the upstream list and hardware identifiers.
+- Replaced the reports' previous connectivity and DNS checks with **RU
+  Connectivity** and **Non-RU Connectivity**. Each group runs three HTTPS checks:
+  Yandex, Mail.ru, and Rutube for RU; GitHub, Cloudflare, and
+  Google for Non-RU. HTTPS checks verify certificates, follow HTTPS redirects
+  only, and have bounded connection and total timeouts. Individual DNS commands
+  remain available.
+- Removed the `check ping` command and the installer's ICMP connectivity gate.
+- Commands under `check` skip the routine configuration-validation start
+  message. Configuration loading and validation errors are still logged normally.
+
+### Installer and Service
+
+- Package upgrades with `PKG_UPGRADE=1` explicitly restart JustClash in the
+  post-install hook, so the service applies the installed code and recreates its
+  runtime state. First installations and offline image builds skip this restart.
+- The online installer uses curl instead of wget for GitHub release metadata
+  and package files, with HTTPS-only requests and redirects, connection timeouts,
+  and low-speed limits. These downloads no longer depend on OpenWrt's
+  wget/uclient-fetch implementation.
+- Configuration reload triggers use procd's default delay instead of the custom
+  delay. Updated installation and maintenance examples with direct installer
+  execution and a documented file-based alternative.
+- Refreshed the bundled desktop browser User-Agent snapshot from top-user-agents
+  to 80 entries dated October 31, 2026. Random selection remains local.
+
+### Upgrade Notes
+
+- Update JustClash and its LuCI package together. If an earlier update left the
+  old service running, restart JustClash once to apply the installed version.
+- Review external firewall and policy-routing integrations that use JustClash's
+  marks. Custom marks containing `0x4` or `0x80` must be changed to leave both
+  reserved bits clear.
+- Existing providers with disabled HWID remain disabled through migration. New
+  providers default to real HWID in LuCI; choose **Disable** to keep identity
+  headers off. The new User-Agent default also applies when editing a provider
+  without an explicit User-Agent setting.
+
 ## [0.113.0_rc1] - 19102026
 
 This release adds destination-port routing, independent Mixed Port binding,
