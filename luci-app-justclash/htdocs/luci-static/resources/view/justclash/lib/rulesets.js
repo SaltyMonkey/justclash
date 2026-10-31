@@ -5,7 +5,7 @@ const MAX_LOCATION_LENGTH = 4096;
 const MAX_AUTH_LENGTH = 4096;
 const CONTROL_CHARACTERS = /[\x00-\x1F\x7F]/;
 const LOCAL_EXTENSIONS = {
-    domain: [".mrs"],
+    domain: [".mrs", ".txt", ".list", ".yaml", ".yml"],
     ipcidr: [".txt", ".list"]
 };
 
@@ -42,12 +42,23 @@ const parse = (content) => {
 
 const serialize = (rule) => {
     const type = rule.type === "ipcidr" ? "ipcidr" : "domain";
+    const location = String(rule.url || "").trim();
+    let path = location;
+    if (/^https?:\/\//i.test(location)) {
+        try {
+            path = new URL(location).pathname;
+        } catch {
+            path = "";
+        }
+    }
+    const format = type === "ipcidr" || /\.(txt|list)$/i.test(path)
+        ? "text" : /\.ya?ml$/i.test(path) ? "yaml" : "mrs";
     const fields = [
         String(rule.name || "").trim(),
         String(rule.id || "").trim(),
         type,
-        type === "ipcidr" ? "text" : "mrs",
-        String(rule.url || "").trim()
+        format,
+        location
     ];
     const auth = String(rule.auth || "").trim();
 
@@ -96,6 +107,10 @@ const validateRulesetLocation = (value, type) => {
                 || url.password)
                 return _("Use an HTTPS URL without embedded credentials.");
 
+            if (type === "ipcidr"
+                && !LOCAL_EXTENSIONS.ipcidr.some(extension => url.pathname.toLowerCase().endsWith(extension)))
+                return _("IP CIDR ruleset URL must end with .txt or .list.");
+
             return true;
         } catch {
             return _("Invalid HTTPS URL.");
@@ -115,7 +130,7 @@ const validateRulesetLocation = (value, type) => {
 
     if (!allowedExtensions.some(extension => lowerPath.endsWith(extension)))
         return type === "domain"
-            ? _("Domain ruleset local path must end with .mrs.")
+            ? _("Domain ruleset local path must end with .mrs, .txt, .list, .yaml or .yml.")
             : _("IP CIDR ruleset local path must end with .txt or .list.");
 
     return true;
