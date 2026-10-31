@@ -79,7 +79,7 @@ const create = ({ map, configName, replaceForm, notificationTimeout }) => {
             }
         }, [_("Add")]);
 
-        ui.showModal(_("Add in bulk"), [
+        ui.showModal(_("Add proxies in bulk (JSON)"), [
             E("p", _("Paste a JSON array of proxy objects. Each object must contain a unique name. Imported entries are added to the form and remain unsaved until you save or apply the configuration.")),
             editor,
             errorNode,
@@ -105,7 +105,7 @@ const create = ({ map, configName, replaceForm, notificationTimeout }) => {
                 type: "button",
                 class: "cbi-button cbi-button-action",
                 click: showBulkImportModal
-            }, [_("Add in bulk")])
+            }, [_("Add proxies in bulk (JSON)")])
         ])
     ]);
 };
