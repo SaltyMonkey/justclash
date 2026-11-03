@@ -1,3 +1,114 @@
+## [0.120.0_rc2] - 03112026
+
+This release moves manual group delay tests to Mihomo's batch API, increases
+provider testing concurrency, and fixes a recursive dropdown event on the Nodes
+page. It also restores a lightweight connection counter on Status, corrects
+load-balancer controls, makes Routing badges and dropdown choices easier to
+distinguish, and lowers the installer's free-space requirement to 33 MiB on all
+architectures.
+
+### Nodes and Manual Delay Tests
+
+- Manual group tests use one `GET /group/{name}/delay` request instead of a
+  browser-managed queue of requests for individual members. Mihomo runs the
+  member tests and returns their delays together. Group testing no longer has
+  the previous client-side limit of three concurrent probes; the core controls
+  how members are tested.
+- Group requests allow at least 30 seconds for the HTTP response while passing
+  the existing five-second test budget to Mihomo. The client deadline is
+  calculated as the greater of 30 seconds and twice the test budget plus
+  10 seconds, giving the core time to return the batch result.
+- Missing or invalid member results display **Timeout**. If the whole group
+  request fails, all its member cards display **Timeout**. The page refreshes
+  the core's state after the attempt and rerenders only the affected group.
+- Provider tests now run in batches of up to 10 nodes instead of three
+  continuously running workers. Each batch finishes before the next starts;
+  failed or timed-out nodes do not stop the remaining batches. Results continue
+  to appear in the provider section when the run completes.
+- Fixed repeated **Test URL** change events while the page is busy. Restoring
+  the selected value now first checks whether it differs, preventing
+  `setValue()` from repeatedly triggering its own change handler during delay
+  tests, provider updates, and other operations that lock the control.
+- Mihomo JSON API timeouts now remain active while the response body is read.
+  Receiving HTTP headers no longer removes the deadline before JSON loading
+  finishes, preventing an incomplete response from keeping a request pending
+  indefinitely.
+
+### Group Selection and Load Balancing
+
+- `load-balance` member cards are informational rather than selectable buttons.
+  Removed their **Auto** action and blocked unsupported selection/reset
+  requests. All member cards use active coloring with dashed borders, showing
+  participation in the group without presenting one member as a manual choice.
+- The current member comes from Mihomo's reported `now` or `current` value.
+  An absent value no longer selects the first member for display, fixing the
+  misleading current-member badge and highlight on load-balancing groups.
+- Manual selection remains available for `select`, `url-test`, and `fallback`.
+  **Auto** remains available for `url-test` and `fallback` to clear a manual
+  pin. Other group types are displayed without unsupported selection controls.
+  See [group selection](info/guides/routing.md#create-a-group).
+- Hover, focus, and pointer styling now apply selection effects to clickable
+  cards. Informational cards retain their normal appearance when hovered,
+  including in dark mode.
+
+### Status and Kernel Metrics
+
+- Restored **Connections** in **Status → Kernel**, using the slim core's
+  `GET /connections/count` endpoint. The response contains only the active
+  connection count; Status does not download full connection snapshots.
+- The count loads with the page and refreshes through the existing three-second
+  status poll. Polling pauses while the page is hidden and resumes when it
+  becomes visible. The separate one-minute rules refresh remains unchanged.
+- A stopped core shows `0`. An unavailable endpoint or invalid response shows
+  `—`, including on cores that do not provide the count endpoint. These failures
+  leave service controls and the other status fields usable.
+
+### Routing and Dropdown Choices
+
+- Empty **Through** cells for individual outbounds and providers now show a
+  **Default** badge. This replaces the previous **Direct** label for outbounds
+  and dash for providers, avoiding a claim that missing connection overrides
+  necessarily mean a direct connection.
+- **Default** badges use the theme's warning color; **Bind to interface** badges
+  use its success color. The text, border, and background share the badge's
+  color, while dialer-proxy badges retain the primary color.
+- Clarified **Connect through** and provider interface-override help. Empty
+  provider overrides preserve each node's own connection and interface settings.
+- Dynamic routing dropdowns prefix outbounds with `(P)`, groups with `(G)`, and
+  providers with `(SUB)`. Prefixes affect labels only: saved names and routing
+  references keep their existing values. Built-in routing actions retain their
+  existing labels.
+- Updated Russian and Simplified Chinese translations and the related routing
+  and installation guides.
+
+### Installer and Free Space
+
+- Reduced the online installer's minimum free space in `/overlay` from 40 MiB
+  to **33 MiB** (`33792` KiB), uniformly across supported architectures.
+- The storage check uses `df -Pk` so its numeric comparison explicitly uses
+  1 KiB blocks. Failure output shows the available and required space in KiB
+  and the minimum in MiB. Renamed the check's message from memory requirements
+  to free storage space.
+- The compressed core archive is still downloaded to RAM-backed `/tmp` and
+  extracted directly to the core path. Keep additional RAM for the archive and
+  storage for optional dashboards, geodata, and rulesets; the 33 MiB threshold
+  covers the installer's storage gate. See the [quick start](info/getting-started.md).
+
+### Upgrade Notes
+
+- Update JustClash and its LuCI package together, then reload LuCI so the page
+  and its shared modules use the same installed version. Existing UCI entries
+  and outbound names need no migration for these changes.
+- Manual group tests now require Mihomo's `/group/{name}/delay` endpoint.
+  Its [group-test handler](https://github.com/MetaCubeX/mihomo/blob/v1.19.33/hub/route/groups.go#L58)
+  clears manual pins on automatic groups such as `url-test` and `fallback`.
+  After testing, these groups resume automatic selection; pin a member again
+  if you need to keep a manual choice.
+- Native `url-test` group tests use the group's configured check URL, as defined
+  by [Mihomo's URLTest implementation](https://github.com/MetaCubeX/mihomo/blob/v1.19.33/adapter/outboundgroup/urltest.go#L179).
+  The page's **Test URL** selection does not override that group-specific URL.
+  Provider node tests continue to use the target selected on the page.
+
 ## [0.120.0_rc1] - 31102026
 
 This release adds multiline editors for routing and DNS lists, support for text
