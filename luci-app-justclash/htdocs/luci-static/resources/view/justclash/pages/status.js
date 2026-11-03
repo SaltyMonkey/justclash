@@ -91,6 +91,7 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
     ]),
     createSummaryCard(_("Kernel"), [
         createSummaryRow(_("Rules"), dynamicElements.rulesValue),
+        createSummaryRow(_("Connections"), dynamicElements.connectionsValue),
         createSummaryRow(_("Speed"), createInlineTrafficNode(dynamicElements.upValue, dynamicElements.downValue)),
         createSummaryRow(_("Total"), createInlineTrafficNode(dynamicElements.upTotalValue, dynamicElements.downTotalValue))
     ]),
@@ -102,7 +103,7 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
     ])
 ]);
 
-const updateStatusUI = (elements, isAutostarting, isRunning, ruleCount) => {
+const updateStatusUI = (elements, isAutostarting, isRunning, ruleCount, connectionCount) => {
     const runningChanged = elements.lastRunning !== isRunning;
     const autostartChanged = elements.lastAutostarting !== isAutostarting;
 
@@ -111,6 +112,8 @@ const updateStatusUI = (elements, isAutostarting, isRunning, ruleCount) => {
 
     if (elements.rulesValue)
         elements.rulesValue.textContent = ruleCount === null ? "—" : String(ruleCount);
+    if (elements.connectionsValue)
+        elements.connectionsValue.textContent = connectionCount === null ? "—" : String(connectionCount);
 
     if (runningChanged && elements.serviceBadge) {
         elements.serviceBadge.textContent = boolToWordRunning(isRunning);
@@ -180,13 +183,15 @@ return view.extend({
         const [serviceStatus, serviceVersions] = await Promise.all([statusPromise, versionsPromise]);
         let infoMihomoVersion = null;
         let infoRuleCount = 0;
+        let infoConnectionCount = 0;
 
         if (serviceStatus.running) {
-            [infoMihomoVersion, infoRuleCount] = await Promise.all([
+            [infoMihomoVersion, infoRuleCount, infoConnectionCount] = await Promise.all([
                 mihomoApi.fetchVersion(apiToken).catch(() => null),
                 mihomoApi.fetchRules(apiToken)
                     .then(data => Array.isArray(data?.rules) ? data.rules.length : null)
-                    .catch(() => null)
+                    .catch(() => null),
+                statusRuntime.fetchConnectionCount(apiToken)
             ]);
         }
 
@@ -198,6 +203,7 @@ return view.extend({
             infoPackage: serviceVersions.package_version,
             infoCore: infoMihomoVersion || serviceVersions.core_version,
             infoRuleCount,
+            infoConnectionCount,
             infoIsRunning: !!serviceStatus.running,
             infoIsAutostarting: !!serviceStatus.enabled,
             apiToken
@@ -237,9 +243,9 @@ return view.extend({
             initialRunning: !!results.infoIsRunning,
             initialRuleCount: results.infoRuleCount,
             isMounted: () => document.body.contains(dynamicElements.serviceBadge),
-            onUpdate: ({ isRunning, isAutostarting, ruleCount }) => {
+            onUpdate: ({ isRunning, isAutostarting, ruleCount, connectionCount }) => {
                 const wasRunning = !!dynamicElements.currentRunning;
-                updateStatusUI(dynamicElements, isAutostarting, isRunning, ruleCount);
+                updateStatusUI(dynamicElements, isAutostarting, isRunning, ruleCount, connectionCount);
 
                 if (isRunning && !wasRunning)
                     sockets?.connect();
@@ -259,6 +265,7 @@ return view.extend({
         const downTotalValue = E("span", {}, "0 B");
         const ramValue = E("span", {}, "0 B");
         const rulesValue = E("span", {}, results.infoIsRunning ? "—" : "0");
+        const connectionsValue = E("span", {}, results.infoIsRunning ? "—" : "0");
         const actionHandler = (task, timeoutMs, forceRulesRefresh = false) => async () => {
             if (actionInProgress) return;
             actionInProgress = true;
@@ -302,6 +309,7 @@ return view.extend({
             downTotalValue,
             ramValue,
             rulesValue,
+            connectionsValue,
             btnToggle,
             btnAutoToggle
         });
@@ -452,7 +460,7 @@ return view.extend({
         window.addEventListener("beforeunload", beforeUnloadHandler);
 
         requestAnimationFrame(() => {
-            updateStatusUI(dynamicElements, results.infoIsAutostarting, !!results.infoIsRunning, results.infoRuleCount);
+            updateStatusUI(dynamicElements, results.infoIsAutostarting, !!results.infoIsRunning, results.infoRuleCount, results.infoConnectionCount);
             if (results.infoIsRunning)
                 sockets.connect();
         });

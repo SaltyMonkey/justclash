@@ -27,6 +27,7 @@ return baseclass.extend({
         proxyProviderProxyHealthcheck: (providerName, proxyName) =>
             `/providers/proxies/${encodeURIComponent(providerName)}/${encodeURIComponent(proxyName)}/healthcheck`,
         connections: "/connections",
+        connectionCount: "/connections/count",
         connection: (id) => `/connections/${encodeURIComponent(id)}`,
         ruleProviders: "/providers/rules",
         rulesetProvider: (providerName) => `/providers/rules/${encodeURIComponent(providerName)}`,
@@ -302,6 +303,9 @@ return baseclass.extend({
     },
     fetchRules(token, timeout = this.fetchTimeout) {
         return this.fetchJson(this.paths.rules, token, timeout);
+    },
+    fetchConnectionCount(token, timeout = this.fetchTimeout) {
+        return this.fetchJson(this.paths.connectionCount, token, timeout);
     },
     async disableRule(payload, token, timeout = this.fetchTimeout) {
         const res = await this.fetch(this.paths.disableRules, token, {

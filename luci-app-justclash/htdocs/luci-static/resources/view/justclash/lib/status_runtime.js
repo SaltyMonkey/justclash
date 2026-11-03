@@ -7,6 +7,11 @@
 const POLL_INTERVAL = 3000;
 const RULES_REFRESH_INTERVAL = 60000;
 
+const fetchConnectionCount = (token) =>
+    mihomoApi.fetchConnectionCount(token)
+        .then(data => Number.isSafeInteger(data?.count) && data.count >= 0 ? data.count : null)
+        .catch(() => null);
+
 const parseSocketPayload = (event) => {
     try {
         return JSON.parse(event.data);
@@ -47,20 +52,26 @@ const createPoller = ({ token, initialRunning = false, initialRuleCount = null, 
                 .catch(() => ({ running: false, enabled: false }));
             const isRunning = !!status.running;
             const isAutostarting = !!status.enabled;
+            let connectionCount = 0;
 
             if (!isRunning) {
                 ruleCount = 0;
                 lastRulesRefresh = null;
-            } else if (lastRulesRefresh === null || Date.now() - lastRulesRefresh >= RULES_REFRESH_INTERVAL) {
-                lastRulesRefresh = Date.now();
-                ruleCount = await mihomoApi.fetchRules(token)
-                    .then(data => Array.isArray(data?.rules) ? data.rules.length : null)
-                    .catch(() => null);
+            } else {
+                // Count only; the full connection list has its own page for a reason.
+                const countRequest = fetchConnectionCount(token);
+                if (lastRulesRefresh === null || Date.now() - lastRulesRefresh >= RULES_REFRESH_INTERVAL) {
+                    lastRulesRefresh = Date.now();
+                    ruleCount = await mihomoApi.fetchRules(token)
+                        .then(data => Array.isArray(data?.rules) ? data.rules.length : null)
+                        .catch(() => null);
+                }
+                connectionCount = await countRequest;
             }
 
             requestAnimationFrame(() => {
                 if (isMounted())
-                    onUpdate({ isRunning, isAutostarting, ruleCount });
+                    onUpdate({ isRunning, isAutostarting, ruleCount, connectionCount });
             });
 
             return true;
@@ -127,6 +138,7 @@ const createSockets = ({ token, containerCheck, onTraffic, onMemory, onInactive 
     });
 
 return baseclass.extend({
+    fetchConnectionCount,
     createPoller,
     createSockets
 });
