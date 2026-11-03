@@ -161,6 +161,10 @@ and add members under **Proxies**, **Providers**, or both.
 | `url-test` | Measured delay, with the configured tolerance | Automatic delay-based selection |
 | `load-balance` | Configured distribution strategy | Spreading separate connections across paths |
 
+Under **Nodes**, `url-test` and `fallback` also support manually pinning a member;
+choose **Auto** to clear the pin. `load-balance` members are shown for inspection
+and delay testing; individual members cannot be selected manually.
+
 For `select`, **Default selected** is on the **Health check** tab. Leave it empty
 when you do not yet know a subscription node's exact name, then choose a node
 under **Nodes** after startup. The backend allows omitted check fields for

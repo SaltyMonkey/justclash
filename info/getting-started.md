@@ -12,6 +12,11 @@ path to use directly. If you are upgrading an existing installation, use
 [Update and Backup](guides/maintenance.md)
 instead of resetting its settings.
 
+The online installer requires at least 33 MiB free in `/overlay` on all
+architectures. It installs the stable slim core by default.
+The compressed core archive is downloaded to `/tmp`, so it also needs free RAM.
+Leave additional storage for optional dashboards, geodata, and rulesets.
+
 You can route through an individual outbound, or through a group that selects
 one. Groups are recommended for convenient switching; they are optional. A
 subscription provider supplies nodes to a group. See
