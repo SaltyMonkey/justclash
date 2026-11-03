@@ -144,7 +144,7 @@ msgstr ""
 msgid "Warning"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:105 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:9 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:39 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:97 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:168 htdocs/luci-static/resources/view/justclash/pages/connections.js:53 htdocs/luci-static/resources/view/justclash/pages/connections.js:97 htdocs/luci-static/resources/view/justclash/pages/connections.js:187 htdocs/luci-static/resources/view/justclash/pages/connections.js:214 htdocs/luci-static/resources/view/justclash/pages/connections.js:288 htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:127 htdocs/luci-static/resources/view/justclash/pages/rules.js:38 htdocs/luci-static/resources/view/justclash/pages/rules.js:92 htdocs/luci-static/resources/view/justclash/pages/rules.js:160 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:46 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:68 htdocs/luci-static/resources/view/justclash/pages/status.js:163 htdocs/luci-static/resources/view/justclash/pages/status.js:164 htdocs/luci-static/resources/view/justclash/pages/status.js:166 htdocs/luci-static/resources/view/justclash/pages/status.js:176 htdocs/luci-static/resources/view/justclash/pages/status.js:177 htdocs/luci-static/resources/view/justclash/pages/status.js:271 htdocs/luci-static/resources/view/justclash/pages/status.js:356 htdocs/luci-static/resources/view/justclash/pages/status.js:359 htdocs/luci-static/resources/view/justclash/pages/nodes.js:46 htdocs/luci-static/resources/view/justclash/pages/nodes.js:574
+#: htdocs/luci-static/resources/view/justclash/common.js:105 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:9 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:39 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:97 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:168 htdocs/luci-static/resources/view/justclash/pages/connections.js:53 htdocs/luci-static/resources/view/justclash/pages/connections.js:97 htdocs/luci-static/resources/view/justclash/pages/connections.js:187 htdocs/luci-static/resources/view/justclash/pages/connections.js:214 htdocs/luci-static/resources/view/justclash/pages/connections.js:288 htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:127 htdocs/luci-static/resources/view/justclash/pages/rules.js:38 htdocs/luci-static/resources/view/justclash/pages/rules.js:92 htdocs/luci-static/resources/view/justclash/pages/rules.js:160 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:46 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:68 htdocs/luci-static/resources/view/justclash/pages/nodes.js:46 htdocs/luci-static/resources/view/justclash/pages/nodes.js:574 htdocs/luci-static/resources/view/justclash/pages/status.js:166 htdocs/luci-static/resources/view/justclash/pages/status.js:167 htdocs/luci-static/resources/view/justclash/pages/status.js:169 htdocs/luci-static/resources/view/justclash/pages/status.js:179 htdocs/luci-static/resources/view/justclash/pages/status.js:180 htdocs/luci-static/resources/view/justclash/pages/status.js:278 htdocs/luci-static/resources/view/justclash/pages/status.js:364 htdocs/luci-static/resources/view/justclash/pages/status.js:367
 msgid "Error"
 msgstr ""
 
@@ -534,7 +534,7 @@ msgstr ""
 msgid "Nodes"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:842
+#: htdocs/luci-static/resources/view/justclash/common.js:842 htdocs/luci-static/resources/view/justclash/pages/status.js:94
 msgid "Connections"
 msgstr ""
 
@@ -2695,134 +2695,134 @@ msgstr ""
 msgid "Kernel"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:94
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:95
 msgid "Speed"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:95
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:96
 msgid "Total"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:97
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:98
 msgid "System"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:98
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:99
 msgid "Router model"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:99
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:100
 msgid "OpenWrt version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:100
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:101
 msgid "App LuCI version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:101
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:102
 msgid "App version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:126
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:129
 msgid "Disable on boot"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:126 htdocs/luci-static/resources/view/justclash/pages/status.js:293
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:129 htdocs/luci-static/resources/view/justclash/pages/status.js:300
 msgid "Enable on boot"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:135
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:138
 msgid "Stop"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:135 htdocs/luci-static/resources/view/justclash/pages/status.js:291
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:138 htdocs/luci-static/resources/view/justclash/pages/status.js:298
 msgid "Start"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:252 htdocs/luci-static/resources/view/justclash/pages/status.js:253
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:258 htdocs/luci-static/resources/view/justclash/pages/status.js:259
 msgid "Loading..."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:265
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:272
 msgid "Running command..."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:265
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:272
 msgid "Please wait."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:292
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:299
 msgid "Restart"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:338
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:346
 msgid "Service actions"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:339
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:347
 msgid "Control the Mihomo daemon. You can start, stop, or restart the service, and enable or disable it on boot."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:345
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:353
 msgid "Run diagnostics"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:345
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:353
 msgid "Diagnostic report"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:346
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:354
 msgid "Update core"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:346
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:354
 msgid "Update Mihomo core"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:346
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:354
 msgid "The core archive is downloaded and checked with SHA-256 and gzip before replacing the installed core. Download or verification failures keep the current core. There is no rollback after removal."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:361
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:369
 msgid "Update active rulesets"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:362
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:370
 msgid "Update built-in data"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:362
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:370
 msgid "This action downloads and replaces built-in service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:367
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:375
 msgid "Maintenance"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:368
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:376
 msgid "Perform diagnostic tests, update the core binary, and update downloaded rulesets or service data files."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:374
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:382
 msgid "Show Mihomo config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:374
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:382
 msgid "Mihomo config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:375
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:383
 msgid "Show service config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:375
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:383
 msgid "Service config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:380
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:388
 msgid "Configuration"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/pages/status.js:381
+#: htdocs/luci-static/resources/view/justclash/pages/status.js:389
 msgid "Inspect the generated Mihomo configuration or the JustClash service configuration."
 msgstr ""
