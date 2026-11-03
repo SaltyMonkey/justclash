@@ -60,7 +60,7 @@ return view.extend({
     },
 
     render: function (result) {
-        const DELAY_TEST_CONCURRENCY = 3;
+        const PROVIDER_DELAY_BATCH_SIZE = 10;
         const container = E("div", { class: "cbi-section fade-in" });
         const modeWrap = E("div", { class: "jc-actions-wrap" });
         const content = E("div", { class: "jc-nodes-layout" });
@@ -85,10 +85,6 @@ return view.extend({
         const getProxyType = (proxyName) => {
             const proxy = state.nodesState.proxyMap[proxyName];
             return String(proxy?.type || _("Unknown")).toUpperCase();
-        };
-        const getProxyEntry = (proxyName) => state.nodesState.proxyMap[proxyName] || null;
-        const canTestProxyDelay = (proxyName) => {
-            return nodesModel.canTestProxy(getProxyEntry(proxyName));
         };
 
         const getDelayText = (delayMap, optionName) => {
@@ -149,12 +145,9 @@ return view.extend({
         };
 
         const runProxyDelayTests = async (candidates, delayMap, fetchDelay = fetchNodeDelay) => {
-            let nextIndex = 0;
-
-            const runWorker = async () => {
-                while (nextIndex < candidates.length) {
-                    const optionName = candidates[nextIndex++];
-
+            for (let i = 0; i < candidates.length; i += PROVIDER_DELAY_BATCH_SIZE) {
+                const batch = candidates.slice(i, i + PROVIDER_DELAY_BATCH_SIZE);
+                await Promise.all(batch.map(async (optionName) => {
                     try {
                         const result = await fetchDelay(optionName);
 
@@ -165,12 +158,8 @@ return view.extend({
                     } catch {
                         delayMap[optionName] = "timeout";
                     }
-                }
-            };
-
-            await Promise.all(Array.from({
-                length: Math.min(DELAY_TEST_CONCURRENCY, candidates.length || 1)
-            }, () => runWorker()));
+                }));
+            }
         };
 
         const handleGroupDelay = async (group) => {
@@ -178,13 +167,28 @@ return view.extend({
                 return;
 
             state.delayLoadingGroup = group.name;
-            state.groupDelays[group.name] = Object.create(null);
             syncControls();
             rerenderGroupSection(group.name);
 
             try {
-                await runProxyDelayTests(group.options.filter(canTestProxyDelay), state.groupDelays[group.name]);
+                const timeout = mihomoApi.fetchTimeout;
+                const delays = await mihomoApi.fetchProxyGroupDelay(
+                    group.name, state.token, Math.max(30000, timeout * 2 + 10000), {
+                        url: state.delayTestUrl,
+                        timeout: String(timeout)
+                    }
+                );
+                state.groupDelays[group.name] = Object.fromEntries(group.options.map((name) => {
+                    const delay = delays?.[name];
+                    return [name, typeof delay === "number" && Number.isFinite(delay) && delay >= 0 ? delay : "timeout"];
+                }));
+            } catch {
+                state.groupDelays[group.name] = Object.fromEntries(group.options.map(name => [name, "timeout"]));
             } finally {
+                try {
+                    // Group tests can clear a manual pin; refresh before pretending it still exists.
+                    await fetchNodesState();
+                } catch { /* keep the last snapshot if the refresh fails */ }
                 state.delayLoadingGroup = "";
                 syncControls();
                 rerenderGroupSection(group.name);

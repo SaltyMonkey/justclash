@@ -21,6 +21,7 @@ return baseclass.extend({
         proxies: "/proxies",
         proxy: (name) => `/proxies/${encodeURIComponent(name)}`,
         proxyDelay: (name) => `/proxies/${encodeURIComponent(name)}/delay`,
+        proxyGroupDelay: (name) => `/group/${encodeURIComponent(name)}/delay`,
         proxyProviders: "/providers/proxies",
         proxyProvider: (name) => `/providers/proxies/${encodeURIComponent(name)}`,
         proxyProviderProxyHealthcheck: (providerName, proxyName) =>
@@ -75,26 +76,29 @@ return baseclass.extend({
     },
 
     // Generic HTTP helpers
-    async fetch(path, token, options = {}, timeout = this.fetchTimeout, searchParams = null) {
+    async fetch(path, token, options = {}, timeout = this.fetchTimeout, searchParams = null, readResponse = null) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
         const headers = Object.assign({}, options.headers || {}, token ? { "Authorization": `Bearer ${token}` } : {});
 
         try {
-            return await fetch(this.getHttpUrl(path, searchParams), {
+            const res = await fetch(this.getHttpUrl(path, searchParams), {
                 ...options,
                 headers,
                 signal: controller.signal
             });
+            return readResponse ? await readResponse(res) : res;
         } finally {
             clearTimeout(timeoutId);
         }
     },
     async fetchJson(path, token, timeout = this.fetchTimeout, searchParams = null) {
-        const res = await this.fetch(path, token, {}, timeout, searchParams);
-        if (!res.ok)
-            throw new Error(`${res.status} ${res.statusText}`);
-        return await res.json();
+        return this.fetch(path, token, {}, timeout, searchParams, async (res) => {
+            if (!res.ok)
+                throw new Error(`${res.status} ${res.statusText}`);
+            // Keep the deadline alive until the body arrives too, not just the pleasantries.
+            return await res.json();
+        });
     },
     createWebSocket({ path, token, searchParams, onMessage, onOpen, onClose, containerCheck }) {
         let ws = null;
@@ -178,6 +182,9 @@ return baseclass.extend({
     },
     fetchProxyDelay(proxyName, token, timeout = this.fetchTimeout, searchParams = null) {
         return this.fetchJson(this.paths.proxyDelay(proxyName), token, timeout, searchParams);
+    },
+    fetchProxyGroupDelay(groupName, token, timeout = this.fetchTimeout, searchParams = null) {
+        return this.fetchJson(this.paths.proxyGroupDelay(groupName), token, timeout, searchParams);
     },
     fetchProxyProviderProxyDelay(providerName, proxyName, token, timeout = this.fetchTimeout, searchParams = null) {
         return this.fetchJson(
