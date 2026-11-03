@@ -17,7 +17,7 @@ SILENT=0
 UPDATE_CORE=0
 
 URL_GITHUB="github.com"
-MIN_SPACE=40960
+MIN_SPACE=33792 # KiB: 33 MiB of free storage for all architectures.
 NO_DATA_STRING="N/A"
 CORE_BIN_NAME="mihomo"
 CORE_PATH="/usr/bin/${CORE_BIN_NAME}"
@@ -251,12 +251,12 @@ diagnostic_mem() {
     local is_just_check=0
     [ -n "${1}" ] && is_just_check=1
     echo "  "
-    print_bold_green "Checking memory requirements..."
-    overlay_space=$(df /overlay | awk 'NR==2 {print $4}')
+    print_bold_green "Checking free storage space..."
+    overlay_space=$(df -Pk /overlay | awk 'NR==2 {print $4}')
     if [ "$overlay_space" -lt "$MIN_SPACE" ]; then
         printf " - Result: "
         print_red "FAIL"
-        print_red "Available disk space is below the required minimum of ${MIN_SPACE}."
+        print_red "Available space: ${overlay_space} KiB; required: ${MIN_SPACE} KiB ($((MIN_SPACE / 1024)) MiB)."
         print_red "Installation cannot proceed due to insufficient space."
         [ "$is_just_check" -eq 0 ] && exit 1
     else
