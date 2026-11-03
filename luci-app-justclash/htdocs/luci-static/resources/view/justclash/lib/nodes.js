@@ -1,11 +1,12 @@
 "use strict";
 "require baseclass";
 
-const GROUP_TYPES_WITH_RESET = new Set(["urltest", "fallback", "loadbalance", "load-balance"]);
+const GROUP_TYPES_WITH_RESET = new Set(["urltest", "url-test", "fallback"]);
 const NON_TESTABLE_PROXY_TYPES = new Set(["reject", "rejectdrop", "pass", "compatible"]);
 
 const lower = (value) => String(value || "").toLowerCase();
 const isAutoGroup = (type) => GROUP_TYPES_WITH_RESET.has(lower(type));
+const canSelectGroup = (type) => ["selector", "select"].includes(lower(type)) || isAutoGroup(type);
 
 const unique = (items) => {
     const seen = new Set();
@@ -44,7 +45,7 @@ const normalizeNodesState = (response, rawProvidersResponse) => {
             continue;
 
         const options = unique(item.all);
-        const current = item.now || item.current || options[0] || "";
+        const current = item.now || item.current || "";
         if (current && !options.includes(current))
             options.unshift(current);
 
@@ -103,6 +104,7 @@ const canTestProxy = (proxy) => {
 return baseclass.extend({
     lower,
     isAutoGroup,
+    canSelectGroup,
     normalizeNodesState,
     normalizeProvidersState,
     canTestProxy

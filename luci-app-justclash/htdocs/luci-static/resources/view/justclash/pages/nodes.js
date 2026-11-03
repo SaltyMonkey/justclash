@@ -106,16 +106,17 @@ return view.extend({
         };
 
         const createOptionCard = (group, optionName, proxyType, isActive, onClick, extraMeta, pendingKey) => {
+            const selectable = nodesModel.canSelectGroup(group.type);
+            const isBalancer = ["loadbalance", "load-balance"].includes(nodesModel.lower(group.type));
             const isPending = state.pendingKey === pendingKey;
             const delayInfo = getDelayText(state.groupDelays[group.name], optionName);
             const metaText = extraMeta || delayInfo?.text;
             const metaClass = extraMeta ? "jc-option-meta jc-option-meta-current" : `jc-option-meta${delayInfo?.className ? ` ${delayInfo.className}` : ""}`;
 
-            const card = E("button", {
-                type: "button",
-                class: `jc-card jc-option-card${isActive ? " jc-option-card-active" : ""}`,
-                title: optionName,
-                click: onClick
+            const card = E(selectable ? "button" : "div", {
+                ...(selectable ? { type: "button", click: onClick } : {}),
+                class: `jc-card jc-option-card${isActive || isBalancer ? " jc-option-card-active" : ""}${isBalancer ? " jc-option-card-balancer" : ""}`,
+                title: optionName
             }, [
                 E("div", { class: "jc-option-card-top" }, [
                     E("span", { class: "jc-option-name" }, optionName)
@@ -126,7 +127,8 @@ return view.extend({
                 ])
             ]);
 
-            card.disabled = !!state.loading || state.delayLoadingGroup === group.name || !!state.delayLoadingProvider;
+            if (selectable)
+                card.disabled = !!state.loading || state.delayLoadingGroup === group.name || !!state.delayLoadingProvider;
             return card;
         };
 
@@ -587,7 +589,7 @@ return view.extend({
 
         const handleSelection = async (group, optionName, useAutoReset) => {
             const pendingKey = `${group.name}::${useAutoReset ? "auto" : optionName}`;
-            if (state.loading)
+            if (state.loading || !nodesModel.canSelectGroup(group.type) || (useAutoReset && !nodesModel.isAutoGroup(group.type)))
                 return;
 
             state.pendingKey = pendingKey;
@@ -652,14 +654,15 @@ return view.extend({
             button.cbi-button.jc-group-delay-button{display:inline-flex;align-items:center;font:inherit;font-family:inherit;font-size:0.88em;font-weight:500;line-height:1.2;margin:0;min-width:0;min-height:0;height:auto;padding:0.18rem 0.5rem;border-radius:0.25rem;box-sizing:border-box;color:var(--success-color-medium, #2f9e44);border:1px solid color-mix(in srgb, var(--success-color-medium, #2f9e44) 30%, transparent);background:color-mix(in srgb, var(--success-color-medium, #2f9e44) 6%, transparent);appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
             button.cbi-button.jc-group-delay-button:hover:not(:disabled),button.cbi-button.jc-group-delay-button:focus-visible:not(:disabled){border-color:var(--success-color-medium, #2f9e44);background:color-mix(in srgb, var(--success-color-medium, #2f9e44) 12%, transparent);transform:translateY(-0.0625rem);}
             button.cbi-button.jc-group-delay-button:disabled,.jc-option-card:disabled{opacity:.7;transform:none;}
-            .jc-option-card:hover:not(:disabled),.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 6%, transparent);transform:translateY(-0.0625rem);}
+            button.jc-option-card:hover:not(:disabled),button.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 6%, transparent);transform:translateY(-0.0625rem);}
             .jc-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(10.3125rem, 1fr));gap:0.75rem;}
             .jc-card{padding:.75em;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.25rem;box-sizing:border-box;}
             .jc-card-header{align-self:flex-start;margin-bottom:.7em;padding:.2em .45em;border-radius:0.375rem;}
             .jc-provider-card{cursor:default;background:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 8%, transparent);transform:none;border:1px solid color-mix(in srgb, var(--warn-color-medium, #fd7e14) 35%, transparent);transition:none;}
             .jc-option-card{width:100%;align-items:flex-start;gap:.35em;text-align:left;cursor:pointer;background:transparent;color:inherit;font:inherit;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
-            .jc-option-card:disabled{cursor:default;}
+            .jc-option-card:disabled,div.jc-option-card{cursor:default;}
             .jc-option-card-active{border-color:var(--primary-color-medium, #4f8cff);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 8%, transparent);}
+            .jc-option-card-balancer{border-style:dashed;}
             .jc-option-card-top,.jc-option-card-bottom{width:100%;display:flex;align-items:flex-start;justify-content:space-between;}
             .jc-option-card-top{gap:0.5rem;}
             .jc-option-card-bottom{gap:0.75rem;}
@@ -672,7 +675,7 @@ return view.extend({
             .jc-empty-card{min-height:11.25rem;}
             .jc-empty-text{margin:0;color:var(--text-color-medium, #888);white-space:normal;}
             :root[data-darkmode="true"] .jc-card-header,:root[data-darkmode="true"] .jc-actions-wrap{border-color:var(--border-color-medium, rgba(255,255,255,.08));background:var(--background-color-high, rgba(255,255,255,.04));}
-            :root[data-darkmode="true"] .jc-option-card:hover:not(:disabled),:root[data-darkmode="true"] .jc-option-card:focus-visible:not(:disabled){background:color-mix(in srgb, var(--primary-color-medium, #66a1ff) 12%, transparent);}
+            :root[data-darkmode="true"] button.jc-option-card:hover:not(:disabled),:root[data-darkmode="true"] button.jc-option-card:focus-visible:not(:disabled){background:color-mix(in srgb, var(--primary-color-medium, #66a1ff) 12%, transparent);}
             :root[data-darkmode="true"] .jc-option-card-active{background:color-mix(in srgb, var(--primary-color-medium, #66a1ff) 14%, transparent);}
             @media (max-width:43.75rem){.jc-group-header{align-items:flex-start;}.jc-option-grid{grid-template-columns:1fr 1fr;}}
             @media (max-width:32.5rem){.jc-option-grid{grid-template-columns:1fr;}}
