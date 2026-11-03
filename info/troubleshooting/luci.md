@@ -8,7 +8,7 @@ JustClash has two kinds of LuCI pages: saved configuration and service managemen
 
 | Page | Usable with the core stopped | Data and actions |
 | --- | --- | --- |
-| Status | Service controls remain usable | Service state, start/stop, diagnostics, and core/data updates. Traffic, memory, runtime mode, and updating active rulesets need the core API. |
+| Status | Service controls remain usable | Service state, start/stop, diagnostics, and core/data updates. Traffic, memory, rules, connection count, and updating active rulesets need the core API. |
 | Setup: Service | Yes | Saved startup, firewall, and service settings. |
 | Setup: Proxy | Yes | Saved core, listener, and controller settings. |
 | Setup: DNS | Yes | Saved DNS settings. |
@@ -34,7 +34,12 @@ test is running; configured automatic health-check URLs stay unchanged.
 - **Closing connections:** successful closure does not show a notification.
   Errors still do, and **Close all** asks for confirmation. Rows disappear when
   the next live update no longer includes those connections.
-- **Status:** service controls remain available, while live metrics may stay at zero or their last received values. Runtime mode can appear as **Unknown** if its API request fails. These values alone do not establish whether the controller is reachable.
+- **Status:** **Kernel → Connections** reads the slim core's `/connections/count`
+  endpoint with the three-second status poll. A stopped core shows `0`; an
+  unavailable endpoint or invalid count shows `—`. Status does not download the
+  full connection list for this field. Rules refresh separately once a minute
+  while the core is running. Traffic and memory can retain their last received
+  values after a disconnect; service controls remain available.
 
 ## When a Live Page Is Unavailable
 
