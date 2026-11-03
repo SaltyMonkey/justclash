@@ -65,12 +65,13 @@ const collectNamedOptions = (configName, baseOptions, sectionTypes, excludedSect
     const seen = new Set(result.map(item => item.value));
 
     sectionTypes.forEach((type) => {
+        const prefix = { proxies: "(P)", proxy_group: "(G)", proxy_provider: "(SUB)" }[type];
         uci.sections(configName, type).forEach((section) => {
             const name = String(section.name || "").trim();
 
             if (section[".name"] !== excludedSectionId && section.enabled !== "0" && name && !seen.has(name)) {
                 seen.add(name);
-                result.push({ value: name, text: name });
+                result.push({ value: name, text: prefix ? `${prefix} ${name}` : name });
             }
         });
     });

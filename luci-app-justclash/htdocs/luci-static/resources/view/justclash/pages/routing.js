@@ -158,13 +158,13 @@ return view.extend({
                 interfaceName = uci.get(common.binName, section_id, "interface_name");
             }
             const badges = [];
-            for (const [label, value] of [[_("Connect through:"), dialerProxy], [_("Bind to interface:"), interfaceName]]) {
+            for (const [label, value, badgeClass] of [[_("Connect through:"), dialerProxy, "jc-type-badge"], [_("Bind to interface:"), interfaceName, "jc-type-badge jc-interface-badge"]]) {
                 if (typeof value === "string" && value.trim())
-                    badges.push(E("span", { class: "jc-type-badge", title: label }, value.trim()));
+                    badges.push(E("span", { class: badgeClass, title: label }, value.trim()));
             }
             return badges.length
                 ? E("div", { class: "jc-connection-badges" }, badges)
-                : E("em", {}, _("Direct"));
+                : E("span", { class: "jc-type-badge jc-default-badge" }, _("Default"));
         };
 
         o = s.taboption(tabname, form.Value, "name", _("Name:"));
@@ -214,7 +214,7 @@ return view.extend({
         o.modalonly = true;
 
         o = s.taboption(tabname, form.Value, "dialer_proxy", _("Connect through:"));
-        o.description = _("Route this proxy through the specified proxy server, or connect directly if left empty.");
+        o.description = _("Route this proxy through the specified proxy server. Leave empty to use default connection settings.");
         o.optional = true;
         o.placeholder = "proxyname_";
         o.validate = function (section_id, value) {
@@ -387,11 +387,11 @@ return view.extend({
             for (const [option, label] of [["override_dialer_proxy", _("Connect through:")], ["override_interface_name", _("Bind to interface:")]]) {
                 const value = uci.get(common.binName, section_id, option);
                 if (typeof value === "string" && value.trim())
-                    badges.push(E("span", { class: "jc-type-badge", title: label }, value.trim()));
+                    badges.push(E("span", { class: option === "override_interface_name" ? "jc-type-badge jc-interface-badge" : "jc-type-badge", title: label }, value.trim()));
             }
             return badges.length
                 ? E("div", { class: "jc-connection-badges" }, badges)
-                : E("em", {}, "—");
+                : E("span", { class: "jc-type-badge jc-default-badge" }, _("Default"));
         };
 
         o = spp.taboption(tabname, form.Value, "name", _("Name:"));
@@ -431,7 +431,7 @@ return view.extend({
         o.modalonly = true;
 
         o = spp.taboption(proxyProviderOverrideTab, form.Value, "override_dialer_proxy", _("Connect through:"));
-        o.description = _("Apply this dialer-proxy to nodes loaded from this provider. Leave empty to connect directly.");
+        o.description = _("Apply this dialer-proxy to nodes loaded from this provider. Leave empty to preserve each node's connection settings.");
         o.optional = true;
         o.placeholder = "proxyname_";
         o.validate = function (section_id, value) {
@@ -443,7 +443,7 @@ return view.extend({
         o.modalonly = true;
 
         o = spp.taboption(proxyProviderOverrideTab, widgets.DeviceSelect, "override_interface_name", _("Bind to interface:"));
-        o.description = _("Apply this interface binding to nodes loaded from this provider. Leave empty to use the system-selected interface.");
+        o.description = _("Apply this interface binding to nodes loaded from this provider. Leave empty to preserve each node's interface setting.");
         o.optional = true;
         o.noaliases = true;
         o.nobridges = true;
@@ -1142,9 +1142,15 @@ return view.extend({
                 border-radius: 9999px;
                 line-height: 1.5;
                 white-space: nowrap;
-                color: var(--primary-color-medium, #4f8cff);
-                border: 1px solid color-mix(in srgb, var(--primary-color-medium, #4f8cff) 25%, transparent);
-                background: color-mix(in srgb, var(--primary-color-medium, #4f8cff) 10%, transparent);
+                color: var(--jc-badge-color, var(--primary-color-medium, #4f8cff));
+                border: 1px solid color-mix(in srgb, var(--jc-badge-color, var(--primary-color-medium, #4f8cff)) 25%, transparent);
+                background: color-mix(in srgb, var(--jc-badge-color, var(--primary-color-medium, #4f8cff)) 10%, transparent);
+            }
+            .jc-routing-form .jc-default-badge {
+                --jc-badge-color: var(--warn-color-medium, #fd7e14);
+            }
+            .jc-routing-form .jc-interface-badge {
+                --jc-badge-color: var(--success-color-medium, #2f9e44);
             }
             .jc-routing-form .jc-connection-badges {
                 display: flex;
