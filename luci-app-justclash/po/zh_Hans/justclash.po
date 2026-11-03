@@ -196,7 +196,11 @@ msgstr "丢弃 (Drop)"
 msgid "Hijack"
 msgstr "劫持"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:160 htdocs/luci-static/resources/view/justclash/common.js:193 htdocs/luci-static/resources/view/justclash/pages/nodes.js:508 htdocs/luci-static/resources/view/justclash/pages/routing.js:167
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:167 htdocs/luci-static/resources/view/justclash/pages/routing.js:394
+msgid "Default"
+msgstr "默认"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:160 htdocs/luci-static/resources/view/justclash/common.js:193 htdocs/luci-static/resources/view/justclash/pages/nodes.js:508
 msgid "Direct"
 msgstr "直连 (Direct)"
 
@@ -1514,8 +1518,8 @@ msgid "URI link with connection parameters."
 msgstr "包含连接参数的 URI 链接。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:217
-msgid "Route this proxy through the specified proxy server, or connect directly if left empty."
-msgstr "通过指定的代理服务器路由此代理，如果留空则直接连接。"
+msgid "Route this proxy through the specified proxy server. Leave empty to use default connection settings."
+msgstr "通过指定的代理服务器路由此代理。留空以使用默认连接设置。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:230
 msgid "Bind this proxy to a specific network device. Leave empty to let the system choose the outgoing interface."
@@ -1682,12 +1686,12 @@ msgid "Use the selected proxy to get subscription data from the server."
 msgstr "使用选择的代理从服务器获取订阅数据。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:434
-msgid "Apply this dialer-proxy to nodes loaded from this provider. Leave empty to connect directly."
-msgstr "将此拨号代理应用于从此提供商加载的节点。留空直接连接。"
+msgid "Apply this dialer-proxy to nodes loaded from this provider. Leave empty to preserve each node's connection settings."
+msgstr "将此拨号代理应用于从此提供商加载的节点。留空以保留各节点的连接设置。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:446
-msgid "Apply this interface binding to nodes loaded from this provider. Leave empty to use the system-selected interface."
-msgstr "将此接口绑定应用于从此提供商加载的节点。留空使用系统选择的接口。"
+msgid "Apply this interface binding to nodes loaded from this provider. Leave empty to preserve each node's interface setting."
+msgstr "将此接口绑定应用于从此提供商加载的节点。留空以保留各节点的接口设置。"
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:456
 msgid "Optional Linux fwmark applied to nodes loaded from this provider through Mihomo provider override. Leave empty to use node or global settings."

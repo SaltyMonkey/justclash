@@ -196,7 +196,11 @@ msgstr "Отбрасывать"
 msgid "Hijack"
 msgstr "Перехватывать"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:160 htdocs/luci-static/resources/view/justclash/common.js:193 htdocs/luci-static/resources/view/justclash/pages/nodes.js:508 htdocs/luci-static/resources/view/justclash/pages/routing.js:167
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:167 htdocs/luci-static/resources/view/justclash/pages/routing.js:394
+msgid "Default"
+msgstr "По умолчанию"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:160 htdocs/luci-static/resources/view/justclash/common.js:193 htdocs/luci-static/resources/view/justclash/pages/nodes.js:508
 msgid "Direct"
 msgstr "Напрямую"
 
@@ -1514,8 +1518,8 @@ msgid "URI link with connection parameters."
 msgstr "URI-ссылка с параметрами подключения."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:217
-msgid "Route this proxy through the specified proxy server, or connect directly if left empty."
-msgstr "Направлять этот прокси через указанный прокси-сервер или подключаться напрямую, если поле оставлено пустым."
+msgid "Route this proxy through the specified proxy server. Leave empty to use default connection settings."
+msgstr "Направлять этот прокси через указанный прокси-сервер. Оставьте пустым, чтобы использовать настройки подключения по умолчанию."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:230
 msgid "Bind this proxy to a specific network device. Leave empty to let the system choose the outgoing interface."
@@ -1682,12 +1686,12 @@ msgid "Use the selected proxy to get subscription data from the server."
 msgstr "Использовать выбранный прокси для получения данных подписки с сервера."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:434
-msgid "Apply this dialer-proxy to nodes loaded from this provider. Leave empty to connect directly."
-msgstr "Применять этот dialer-proxy к узлам, загруженным из данного провайдера. Оставьте пустым для прямого подключения."
+msgid "Apply this dialer-proxy to nodes loaded from this provider. Leave empty to preserve each node's connection settings."
+msgstr "Применять этот dialer-proxy к узлам, загруженным из данного провайдера. Оставьте пустым, чтобы сохранить настройки подключения каждого узла."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:446
-msgid "Apply this interface binding to nodes loaded from this provider. Leave empty to use the system-selected interface."
-msgstr "Применять эту привязку интерфейса к узлам, загруженным из данного провайдера. Оставьте пустым, чтобы использовать интерфейс, выбранный системой."
+msgid "Apply this interface binding to nodes loaded from this provider. Leave empty to preserve each node's interface setting."
+msgstr "Применять эту привязку интерфейса к узлам, загруженным из данного провайдера. Оставьте пустым, чтобы сохранить настройку интерфейса каждого узла."
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:456
 msgid "Optional Linux fwmark applied to nodes loaded from this provider through Mihomo provider override. Leave empty to use node or global settings."

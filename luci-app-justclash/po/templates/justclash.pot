@@ -197,7 +197,11 @@ msgstr ""
 msgid "Hijack"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/justclash/common.js:160 htdocs/luci-static/resources/view/justclash/common.js:193 htdocs/luci-static/resources/view/justclash/pages/nodes.js:508 htdocs/luci-static/resources/view/justclash/pages/routing.js:167
+#: htdocs/luci-static/resources/view/justclash/pages/routing.js:167 htdocs/luci-static/resources/view/justclash/pages/routing.js:394
+msgid "Default"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/justclash/common.js:160 htdocs/luci-static/resources/view/justclash/common.js:193 htdocs/luci-static/resources/view/justclash/pages/nodes.js:508
 msgid "Direct"
 msgstr ""
 
@@ -1515,7 +1519,7 @@ msgid "URI link with connection parameters."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:217
-msgid "Route this proxy through the specified proxy server, or connect directly if left empty."
+msgid "Route this proxy through the specified proxy server. Leave empty to use default connection settings."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:230
@@ -1683,11 +1687,11 @@ msgid "Use the selected proxy to get subscription data from the server."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:434
-msgid "Apply this dialer-proxy to nodes loaded from this provider. Leave empty to connect directly."
+msgid "Apply this dialer-proxy to nodes loaded from this provider. Leave empty to preserve each node's connection settings."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:446
-msgid "Apply this interface binding to nodes loaded from this provider. Leave empty to use the system-selected interface."
+msgid "Apply this interface binding to nodes loaded from this provider. Leave empty to preserve each node's interface setting."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:456
