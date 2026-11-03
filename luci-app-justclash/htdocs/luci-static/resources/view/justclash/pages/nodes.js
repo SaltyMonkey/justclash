@@ -533,7 +533,9 @@ return view.extend({
 
         delayUrlDropdownNode.addEventListener("cbi-dropdown-change", () => {
             if (state.loading || state.modeLoading || state.delayLoadingGroup || state.delayLoadingProvider || state.updatingProvider) {
-                delayUrlDropdown.setValue(state.delayTestUrl);
+                // setValue emits change even for the same value; one round trip is plenty.
+                if (delayUrlDropdown.getValue() !== state.delayTestUrl)
+                    delayUrlDropdown.setValue(state.delayTestUrl);
                 return;
             }
             const nextUrl = delayUrlDropdown.getValue();
