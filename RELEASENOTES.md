@@ -1,3 +1,69 @@
+## [0.120.0_rc3] - 04112026
+
+This release separates health-check history and manual latency results on Nodes,
+prevents overlapping page actions, and fixes mode display after a failed state
+refresh. LuCI also accepts `.lst` text rulesets.
+
+### Nodes and Latency Display
+
+- Node cards show the manual test result in the upper-right corner and the
+  configured health-check history in the lower-right corner. Missing readings
+  are hidden. Failed tests and zero-delay history entries display **X** instead
+  of **Timeout**.
+- Both readings use the same color scale: green up to 200 ms, orange from
+  201 to 500 ms, and red above 500 ms. **X** is also red.
+- Provider history is read for the provider's configured `testUrl`. Group
+  cards use the applicable configured check URL and can resolve nested
+  selections. History is selected by recency, not by the highest delay;
+  unrelated manual-test URLs are not used as a fallback.
+- **GLOBAL** member cards show only manual results. The **Auto** action card
+  inside `url-test` and `fallback` groups shows the current member without
+  latency readings; the member cards retain their own readings.
+- History loads when the page opens and is refreshed after page actions,
+  including manual tests and provider updates. Nodes does not periodically
+  poll the API or start background probes; Mihomo's configured health checks
+  continue independently.
+- Individual node test requests allow at least 20 seconds for the HTTP
+  response while retaining the existing five-second probe budget. This gives
+  Mihomo time to return the result before the browser aborts the request.
+- Group and provider tests refresh the displayed node state after completion.
+  Zero, missing, or invalid manual results are treated as failed tests.
+
+### Page Actions and Mode Changes
+
+- Mode changes, member selection, group tests, provider tests, and provider
+  updates now share one busy state. Other action buttons and dropdowns are
+  disabled until the operation and its state refresh finish. Handler checks
+  also reject queued actions, preventing overlapping requests from replacing
+  newer page state with an older response.
+- A confirmed mode change remains selected if subsequent state loading fails.
+  LuCI reports the refresh error instead of reverting the dropdown while
+  Mihomo continues using the new mode. Failure to close existing connections
+  likewise does not revert a confirmed mode change.
+
+### Rulesets
+
+- Added `.lst` alongside `.txt` and `.list` for local domain and IP CIDR text
+  rulesets and remote IP CIDR source validation. Domain source paths ending in
+  `.lst` are saved with the `text` format. Extension checks are case-insensitive;
+  URL query parameters and fragments do not affect format detection.
+- Updated the [rulesets guide](info/guides/rulesets.md), validation messages,
+  and Russian and Simplified Chinese translations.
+
+### Upgrade Notes and Known Limitations
+
+- Update JustClash and its LuCI package together, then reload LuCI. Existing
+  UCI settings and ruleset IDs require no migration.
+- Manual group results are not invalidated when a nested selector changes its
+  selected node. Run the manual test again after changing the route.
+- A nested selector's cached history can still represent an earlier selected
+  route and take precedence over its current member's older history. A recent
+  timestamp alone does not establish that the measurement used the current
+  route.
+- Mihomo history identifies the test URL, not whether a background or manual
+  action initiated the probe. A manual test using the configured health-check
+  URL can therefore update the reading shown as automatic history.
+
 ## [0.120.0_rc2] - 03112026
 
 This release moves manual group delay tests to Mihomo's batch API, increases
