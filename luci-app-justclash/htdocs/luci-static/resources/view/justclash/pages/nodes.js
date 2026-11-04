@@ -82,36 +82,49 @@ return view.extend({
             providersState: result.providersState || []
         };
 
+        const isBusy = () => !!(state.loading || state.modeLoading || state.delayLoadingGroup ||
+            state.delayLoadingProvider || state.updatingProvider);
+
         const getProxyType = (proxyName) => {
             const proxy = state.nodesState.proxyMap[proxyName];
             return String(proxy?.type || _("Unknown")).toUpperCase();
         };
 
-        const getDelayText = (delayMap, optionName) => {
-            const delay = delayMap ? delayMap[optionName] : null;
-
+        const getDelayText = (delay) => {
             if (typeof delay === "number" && Number.isFinite(delay) && delay >= 0)
                 return {
                     text: `${delay} ms`,
-                    className: "jc-option-meta-delay"
+                    className: delay > 500 ? "jc-option-meta-delay-high" : delay > 200 ? "jc-option-meta-delay-medium" : "jc-option-meta-delay"
                 };
 
             if (delay === "timeout")
                 return {
-                    text: _("Timeout"),
+                    text: "X",
                     className: "jc-option-meta-timeout"
                 };
 
             return null;
         };
 
-        const createOptionCard = (group, optionName, proxyType, isActive, onClick, extraMeta, pendingKey) => {
+        const createDelayMeta = (delay, automatic = false) => {
+            const info = getDelayText(delay);
+            if (!info)
+                return "";
+
+            return E("span", {
+                class: `jc-option-meta jc-option-latency ${automatic ? "jc-option-meta-automatic" : "jc-option-meta-manual"} ${info.className}`,
+                title: automatic ? _("Automatic check") : _("Manual check")
+            }, info.text);
+        };
+
+        const createOptionCard = (group, optionName, proxyType, isActive, onClick, extraMeta, pendingKey, showDelays = true) => {
             const selectable = nodesModel.canSelectGroup(group.type);
             const isBalancer = ["loadbalance", "load-balance"].includes(nodesModel.lower(group.type));
             const isPending = state.pendingKey === pendingKey;
-            const delayInfo = getDelayText(state.groupDelays[group.name], optionName);
-            const metaText = extraMeta || delayInfo?.text;
-            const metaClass = extraMeta ? "jc-option-meta jc-option-meta-current" : `jc-option-meta${delayInfo?.className ? ` ${delayInfo.className}` : ""}`;
+            const showAutomatic = group.name !== "GLOBAL";
+            const automatic = showDelays && showAutomatic
+                ? nodesModel.getNodeAutomaticDelay(state.nodesState, optionName, group.testUrl) : null;
+            const manual = showDelays ? state.groupDelays[group.name]?.[optionName] : null;
 
             const card = E(selectable ? "button" : "div", {
                 ...(selectable ? { type: "button", click: onClick } : {}),
@@ -119,20 +132,23 @@ return view.extend({
                 title: optionName
             }, [
                 E("div", { class: "jc-option-card-top" }, [
-                    E("span", { class: "jc-option-name" }, optionName)
+                    E("span", { class: "jc-option-name" }, optionName),
+                    extraMeta ? E("span", { class: "jc-option-meta jc-option-meta-current", title: extraMeta }, extraMeta) : "",
+                    createDelayMeta(manual)
                 ]),
                 E("div", { class: "jc-option-card-bottom" }, [
                     E("div", { class: "jc-option-type" }, isPending ? _("Applying...") : proxyType),
-                    metaText ? E("div", { class: metaClass }, metaText) : ""
+                    createDelayMeta(automatic, true)
                 ])
             ]);
 
             if (selectable)
-                card.disabled = !!state.loading || state.delayLoadingGroup === group.name || !!state.delayLoadingProvider;
+                card.disabled = isBusy();
             return card;
         };
 
         const fetchNodeDelay = (proxyName, providerName = state.nodesState.proxyProviderMap[proxyName]) => {
+            const requestTimeout = Math.max(20000, mihomoApi.fetchTimeout + 10000);
             const searchParams = {
                 url: state.delayTestUrl,
                 timeout: String(mihomoApi.fetchTimeout)
@@ -140,10 +156,10 @@ return view.extend({
 
             if (providerName)
                 return mihomoApi.fetchProxyProviderProxyDelay(
-                    providerName, proxyName, state.token, mihomoApi.fetchTimeout, searchParams
+                    providerName, proxyName, state.token, requestTimeout, searchParams
                 );
 
-            return mihomoApi.fetchProxyDelay(proxyName, state.token, mihomoApi.fetchTimeout, searchParams);
+            return mihomoApi.fetchProxyDelay(proxyName, state.token, requestTimeout, searchParams);
         };
 
         const runProxyDelayTests = async (candidates, delayMap, fetchDelay = fetchNodeDelay) => {
@@ -153,7 +169,7 @@ return view.extend({
                     try {
                         const result = await fetchDelay(optionName);
 
-                        if (typeof result?.delay === "number" && Number.isFinite(result.delay) && result.delay >= 0)
+                        if (typeof result?.delay === "number" && Number.isFinite(result.delay) && result.delay > 0)
                             delayMap[optionName] = result.delay;
                         else
                             delayMap[optionName] = "timeout";
@@ -165,7 +181,7 @@ return view.extend({
         };
 
         const handleGroupDelay = async (group) => {
-            if (state.loading || state.delayLoadingGroup || state.delayLoadingProvider)
+            if (isBusy())
                 return;
 
             state.delayLoadingGroup = group.name;
@@ -182,7 +198,7 @@ return view.extend({
                 );
                 state.groupDelays[group.name] = Object.fromEntries(group.options.map((name) => {
                     const delay = delays?.[name];
-                    return [name, typeof delay === "number" && Number.isFinite(delay) && delay >= 0 ? delay : "timeout"];
+                    return [name, typeof delay === "number" && Number.isFinite(delay) && delay > 0 ? delay : "timeout"];
                 }));
             } catch {
                 state.groupDelays[group.name] = Object.fromEntries(group.options.map(name => [name, "timeout"]));
@@ -193,12 +209,12 @@ return view.extend({
                 } catch { /* keep the last snapshot if the refresh fails */ }
                 state.delayLoadingGroup = "";
                 syncControls();
-                rerenderGroupSection(group.name);
+                renderNodes();
             }
         };
 
         const handleProviderDelay = async (provider) => {
-            if (state.loading || state.delayLoadingGroup || state.delayLoadingProvider || state.updatingProvider)
+            if (isBusy())
                 return;
 
             state.delayLoadingProvider = provider.name;
@@ -217,14 +233,17 @@ return view.extend({
                     (proxyName) => fetchNodeDelay(proxyName, provider.name)
                 );
             } finally {
+                try {
+                    await fetchNodesState();
+                } catch { /* keep the last snapshot if the refresh fails */ }
                 state.delayLoadingProvider = "";
                 syncControls();
-                rerenderProviderSection(provider.name);
+                renderNodes();
             }
         };
 
         const handleProviderUpdate = async (provider) => {
-            if (state.loading || state.delayLoadingGroup || state.delayLoadingProvider || state.updatingProvider)
+            if (isBusy())
                 return;
 
             state.updatingProvider = provider.name;
@@ -258,7 +277,7 @@ return view.extend({
                 }
             }, isDelayLoading ? _("Testing...") : _("Test delay"));
 
-            delayButton.disabled = !!state.loading || !!state.delayLoadingGroup;
+            delayButton.disabled = isBusy();
 
             if (nodesModel.isAutoGroup(group.type)) {
                 cards.push(createOptionCard(
@@ -270,7 +289,8 @@ return view.extend({
                         await handleSelection(group, "", true);
                     },
                     group.current || null,
-                    `${group.name}::auto`
+                    `${group.name}::auto`,
+                    false
                 ));
             }
 
@@ -315,25 +335,17 @@ return view.extend({
         };
 
         const createProviderCard = (provider, proxy) => {
-            const delayInfo = getDelayText(state.providerDelays[provider.name], proxy.name);
-            let metaText = "";
-            let metaClass = "jc-option-meta";
-
-            if (delayInfo?.text) {
-                metaText = delayInfo.text;
-                metaClass = `jc-option-meta ${delayInfo.className}`;
-            } else if (proxy.alive === false) {
-                metaText = _("Timeout");
-                metaClass = "jc-option-meta jc-option-meta-timeout";
-            }
+            const automatic = nodesModel.getAutomaticDelay(proxy, provider.testUrl);
+            const manual = state.providerDelays[provider.name]?.[proxy.name];
 
             return E("div", { class: "jc-card jc-option-card jc-provider-card" }, [
                 E("div", { class: "jc-option-card-top" }, [
-                    E("span", { class: "jc-option-name" }, proxy.name || _("Unknown"))
+                    E("span", { class: "jc-option-name" }, proxy.name || _("Unknown")),
+                    createDelayMeta(manual)
                 ]),
                 E("div", { class: "jc-option-card-bottom" }, [
                     E("div", { class: "jc-option-type" }, String(proxy.type || _("Unknown")).toUpperCase()),
-                    metaText ? E("div", { class: metaClass }, metaText) : ""
+                    createDelayMeta(automatic, true)
                 ])
             ]);
         };
@@ -389,7 +401,7 @@ return view.extend({
                 }
             }, isUpdating ? _("Updating...") : _("Update"));
 
-            const isDisabled = !!state.loading || !!state.delayLoadingGroup || !!state.delayLoadingProvider || !!state.updatingProvider;
+            const isDisabled = isBusy();
             delayButton.disabled = isDisabled;
             updateButton.disabled = isDisabled;
 
@@ -532,13 +544,16 @@ return view.extend({
         const syncControls = () => {
             modeDropdown.setValue(nodesModel.lower(state.mode) || "rule");
             delayUrlDropdown.setValue(state.delayTestUrl);
-            const busy = !!state.loading || !!state.modeLoading || !!state.delayLoadingGroup || !!state.delayLoadingProvider;
+            const busy = isBusy();
             modeDropdownNode.toggleAttribute("disabled", busy);
-            delayUrlDropdownNode.toggleAttribute("disabled", busy || !!state.updatingProvider);
+            delayUrlDropdownNode.toggleAttribute("disabled", busy);
+            content.querySelectorAll("button.jc-option-card, button.jc-group-delay-button").forEach(button => {
+                button.disabled = busy;
+            });
         };
 
         delayUrlDropdownNode.addEventListener("cbi-dropdown-change", () => {
-            if (state.loading || state.modeLoading || state.delayLoadingGroup || state.delayLoadingProvider || state.updatingProvider) {
+            if (isBusy()) {
                 // setValue emits change even for the same value; one round trip is plenty.
                 if (delayUrlDropdown.getValue() !== state.delayTestUrl)
                     delayUrlDropdown.setValue(state.delayTestUrl);
@@ -558,14 +573,23 @@ return view.extend({
             const nextMode = nodesModel.lower(modeDropdown.getValue());
             const previousMode = nodesModel.lower(state.mode);
 
-            if (state.modeLoading || !nextMode || nextMode === previousMode)
+            if (isBusy() || !nextMode || nextMode === previousMode) {
+                if (nextMode !== previousMode)
+                    modeDropdown.setValue(previousMode);
                 return;
+            }
 
             state.modeLoading = true;
             syncControls();
 
             try {
-                await mihomoApi.patchConfigs({ mode: nextMode }, state.token);
+                try {
+                    await mihomoApi.patchConfigs({ mode: nextMode }, state.token);
+                } catch (e) {
+                    state.mode = previousMode;
+                    console.error(`Failed to switch Mihomo mode to ${nextMode}`, e);
+                    return;
+                }
                 state.mode = nextMode;
 
                 try {
@@ -575,10 +599,16 @@ return view.extend({
                     console.error("Failed to close all connections after switching Mihomo mode", e);
                 }
 
-                await fetchNodesState();
-            } catch (e) {
-                state.mode = previousMode;
-                console.error(`Failed to switch Mihomo mode to ${nextMode}`, e);
+                try {
+                    await fetchNodesState();
+                    renderNodes();
+                } catch (e) {
+                    // A missed snapshot does not unswitch the kernel. The dropdown should know that too.
+                    ui.addTimeLimitedNotification(_("Error"),
+                        E("p", _("Failed to load Mihomo proxy groups") + ": " + (e.message || String(e))),
+                        common.notificationTimeout, "danger");
+                    console.error("Failed to refresh nodes after switching Mihomo mode", e);
+                }
             } finally {
                 state.modeLoading = false;
                 syncControls();
@@ -589,7 +619,7 @@ return view.extend({
 
         const handleSelection = async (group, optionName, useAutoReset) => {
             const pendingKey = `${group.name}::${useAutoReset ? "auto" : optionName}`;
-            if (state.loading || !nodesModel.canSelectGroup(group.type) || (useAutoReset && !nodesModel.isAutoGroup(group.type)))
+            if (isBusy() || !nodesModel.canSelectGroup(group.type) || (useAutoReset && !nodesModel.isAutoGroup(group.type)))
                 return;
 
             state.pendingKey = pendingKey;
@@ -665,13 +695,15 @@ return view.extend({
             .jc-option-card-balancer{border-style:dashed;}
             .jc-option-card-top,.jc-option-card-bottom{width:100%;display:flex;align-items:flex-start;justify-content:space-between;}
             .jc-option-card-top{gap:0.5rem;}
-            .jc-option-card-bottom{gap:0.75rem;}
-            .jc-option-name{white-space:normal;overflow-wrap:anywhere;}
+            .jc-option-card-bottom{gap:0.5rem;flex-wrap:nowrap;margin-top:auto;}
+            .jc-option-name{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere;}
             .jc-option-type,.jc-option-meta{min-width:0;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
             .jc-option-type{flex:1 1 auto;font-size:.9em;color:var(--text-color-medium, #888);}
             .jc-option-meta{flex:0 1 auto;text-align:right;font-size:.82em;color:var(--text-color-medium, #888);}
+            .jc-option-latency{flex:0 0 auto;margin-left:auto;overflow:visible;font-weight:600;}
             .jc-option-meta-delay{color:var(--success-color-medium, #2f9e44);}
-            .jc-option-meta-timeout{color:var(--error-color-medium, #f44336);}
+            .jc-option-meta-delay-medium{color:var(--warn-color-medium, #fd7e14);}
+            .jc-option-meta-delay-high,.jc-option-meta-timeout{color:var(--error-color-medium, #f44336);}
             .jc-empty-card{min-height:11.25rem;}
             .jc-empty-text{margin:0;color:var(--text-color-medium, #888);white-space:normal;}
             :root[data-darkmode="true"] .jc-card-header,:root[data-darkmode="true"] .jc-actions-wrap{border-color:var(--border-color-medium, rgba(255,255,255,.08));background:var(--background-color-high, rgba(255,255,255,.04));}
