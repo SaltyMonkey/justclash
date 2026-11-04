@@ -131,18 +131,37 @@ return baseclass.extend({
         container.replaceChildren(fragment);
     },
 
-    appendEntry(container, entry, reversed = false, limit = 0) {
+    appendEntries(container, entries, reversed = false, limit = 0) {
+        if (!entries.length)
+            return;
+
+        const batch = limit > 0 && entries.length > limit ? entries.slice(-limit) : entries;
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < batch.length; i++)
+            fragment.appendChild(createLogRow(batch[reversed ? batch.length - i - 1 : i]));
+
+        if (limit > 0 && batch.length === limit) {
+            container.replaceChildren(fragment);
+            return;
+        }
+
         if (container.childNodes.length === 1 && container.firstChild?.nodeType === Node.TEXT_NODE)
             container.replaceChildren();
 
-        const row = createLogRow(entry);
-        if (reversed)
-            container.insertBefore(row, container.firstChild);
-        else
-            container.appendChild(row);
+        const count = container.childNodes.length;
+        const overflow = limit > 0 ? count + batch.length - limit : 0;
+        if (overflow > 0) {
+            // Drop one contiguous range instead of walking retired rows in JavaScript.
+            const range = document.createRange();
+            range.setStart(container, reversed ? count - overflow : 0);
+            range.setEnd(container, reversed ? count : overflow);
+            range.deleteContents();
+        }
 
-        while (limit > 0 && container.childNodes.length > limit)
-            container.removeChild(reversed ? container.lastChild : container.firstChild);
+        if (reversed)
+            container.insertBefore(fragment, container.firstChild);
+        else
+            container.appendChild(fragment);
     },
 
     formatText(entries) {

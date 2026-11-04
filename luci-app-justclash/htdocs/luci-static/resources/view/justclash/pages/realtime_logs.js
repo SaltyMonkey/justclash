@@ -42,13 +42,35 @@ return view.extend({
         let visibilityChangeHandler = null;
         let beforeUnloadHandler = null;
         let isReversed = false;
+        let renderFrame = null;
+        let pendingEntries = 0;
+
+        const cancelRenderFrame = () => {
+            if (renderFrame !== null) {
+                window.cancelAnimationFrame(renderFrame);
+                renderFrame = null;
+            }
+        };
+
+        const flushEntries = () => {
+            cancelRenderFrame();
+            const count = pendingEntries;
+            pendingEntries = 0;
+            if (!count || !document.body.contains(logContainer))
+                return;
+            logs.appendEntries(logContainer, logEntries.slice(-count), isReversed, MAX_LOG_ENTRIES);
+        };
 
         const resetLogEntries = (container) => {
+            cancelRenderFrame();
+            pendingEntries = 0;
             logEntries.length = 0;
             logs.renderEntries(container, logEntries);
         };
 
         const cleanup = () => {
+            cancelRenderFrame();
+            pendingEntries = 0;
             if (visibilityChangeHandler) {
                 document.removeEventListener("visibilitychange", visibilityChangeHandler);
                 visibilityChangeHandler = null;
@@ -85,7 +107,9 @@ return view.extend({
                         return;
 
                     logs.appendToBuffer(logEntries, entry, MAX_LOG_ENTRIES);
-                    logs.appendEntry(logContainer, entry, isReversed, MAX_LOG_ENTRIES);
+                    pendingEntries = Math.min(pendingEntries + 1, MAX_LOG_ENTRIES);
+                    if (renderFrame === null)
+                        renderFrame = requestAnimationFrame(flushEntries);
                 })
             })
         });
@@ -141,6 +165,8 @@ return view.extend({
             class: "jc-ml",
             checked: false,
             change: () => {
+                cancelRenderFrame();
+                pendingEntries = 0;
                 isReversed = reverseCheckbox.checked;
                 logs.renderEntries(logContainer, logEntries, isReversed);
             }
@@ -173,6 +199,7 @@ return view.extend({
         visibilityChangeHandler = () => {
             if (document.hidden) {
                 stream.stop();
+                flushEntries();
             } else {
                 connectLogsStream(levelDropdown.getValue(), false);
             }
