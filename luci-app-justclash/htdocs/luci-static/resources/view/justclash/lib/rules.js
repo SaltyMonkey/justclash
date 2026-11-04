@@ -1,8 +1,6 @@
 "use strict";
 "require baseclass";
 
-const normalizeList = (response) => Array.isArray(response?.rules) ? response.rules : [];
-
 const getTypeClass = (type) => {
     const normalized = String(type || "").toLowerCase();
 
@@ -21,7 +19,6 @@ const createSearchText = (rule) => [rule?.type, rule?.payload, rule?.proxy]
 const matchesSearch = (searchText, query) => !query || searchText.includes(query.toLowerCase().trim());
 
 return baseclass.extend({
-    normalizeList,
     getTypeClass,
     createSearchText,
     matchesSearch
