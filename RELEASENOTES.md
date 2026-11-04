@@ -1,3 +1,91 @@
+## [0.121.0_rc1] - 04112026
+
+This release adds a Rule Providers page and kernel cache maintenance controls,
+improves the Rules interface, and reduces repeated work in Connections and
+Realtime logs. Nodes gains latency sorting and P50 history readings.
+
+### Rule Providers
+
+- Added **Rule Providers** immediately after **Rules** in the LuCI menu. The
+  page lists the name, source type, behavior, format, rule count, and last
+  provider update reported by Mihomo.
+- Search filters the list by name, source type, behavior, or format. **Refresh**
+  reloads the list and updates the **Last updated** timestamp. The query stays
+  in place after refreshing the list or updating a provider.
+- Each row starts with a compact **Update** button. Updating a provider reloads
+  the list afterward; overlapping updates and refreshes are blocked. A failed
+  update preserves the displayed list. A successful update followed by a failed
+  list refresh is reported separately.
+
+### Status and Maintenance
+
+- **Maintenance** now has two action blocks. Diagnostics, core updates, and
+  built-in data updates remain in the first block. **Update active rulesets**,
+  **Clear Fake-IP cache**, and **Clear DNS cache** are in the second block.
+- The three kernel actions are disabled while Mihomo is stopped and share a
+  busy state while a request is running. Built-in data updates remain available
+  independently of the kernel state.
+- Cache clearing uses Mihomo's POST endpoints and accepts their empty HTTP 204
+  responses. Both clear buttons use the theme's negative button style and show
+  progress, completion, or errors in the existing Status popup.
+- Status polling starts after the view is mounted, fixing the initial schedule
+  being skipped by the mounted-page check. Kernel action availability follows
+  subsequent service status updates.
+
+### Rules and Mobile Layout
+
+- Rules columns now appear as **Active**, **Payload**, **Type**, and
+  **Proxy / Group**. Active controls use LuCI's checkbox widget and the current
+  theme's styling.
+- Rules search responds to input changes, including pasted text, and remains
+  applied after **Refresh**. Refreshes and rule toggles cannot overlap, keeping
+  toggle requests tied to the displayed rule indices. A failed toggle restores
+  the checkbox state; an initial list-loading failure can be retried with
+  **Refresh**.
+- Rules and Rule Providers use mobile card padding, field spacing, and base
+  text sizing consistent with Connections. Provider dates retain the normal
+  mobile text size, and the desktop update-date column has a fixed width.
+- Updated Russian and Simplified Chinese translations for the new controls.
+
+### Connections and Realtime Logs
+
+- Connections skips cell and badge replacement when displayed fields have not
+  changed. Search data is normalized again only when its source fields change.
+  Host and sniffed-host fields are compared separately, preserving search
+  behavior even when the combined cell text looks identical. Raw data continues
+  to update for connection details and copying.
+- Realtime logs inserts incoming messages in batches once per animation frame.
+  The display and copy buffer retain up to 4000 entries, and oversized bursts
+  create rows only for the entries that will remain visible. Reversing display
+  order includes pending messages once; hiding the page flushes pending rows
+  before rendering stops.
+
+### Nodes and Latency
+
+- Core history readings include the median, for example `80 ms (P50: 95 ms)`.
+  P50 is calculated from successful core measurements for the same node and
+  test URL. Failed, zero, and invalid readings are excluded. An even number of
+  successful readings uses the mean of the two middle values. The latest failed
+  check remains **X**, with P50 shown when successful history is available.
+  Manual test results remain a single reading.
+- Group and provider headings have a blue **Sort** button that cycles through
+  the original order, ascending latest core latency, and descending latest core
+  latency. Sorting uses the latest reading, independently of P50 and manual
+  results. Failed and unmeasured nodes stay last, equal readings retain their
+  original order, and the **Auto** action stays first. **GLOBAL** retains its
+  original order.
+- Sorting affects only the displayed cards, resets when the page is reloaded,
+  and does not change configuration or Mihomo's selection order. Long group and
+  provider names wrap within the header.
+
+### Upgrade Notes
+
+- Update JustClash and its LuCI package together, then reload LuCI. No UCI
+  migration is required.
+- The node-history and manual-result limitations documented for rc3 remain.
+  This release does not add background latency polling or change Mihomo's
+  configured health-check schedule.
+
 ## [0.120.0_rc3] - 04112026
 
 This release separates health-check history and manual latency results on Nodes,
