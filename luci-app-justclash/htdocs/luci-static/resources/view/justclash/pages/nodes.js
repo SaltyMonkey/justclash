@@ -78,12 +78,32 @@ return view.extend({
             delayTestUrl: common.defaultHealthCheckUrls[0],
             groupDelays: Object.create(null),
             providerDelays: Object.create(null),
+            sortOrders: new Map(),
             nodesState: result.nodesState,
             providersState: result.providersState || []
         };
 
         const isBusy = () => !!(state.loading || state.modeLoading || state.delayLoadingGroup ||
             state.delayLoadingProvider || state.updatingProvider);
+
+        const createSortButton = (key, rerender) => {
+            const order = state.sortOrders.get(key) || 0;
+            const label = order === 1 ? _("Sort by core latency (ascending)")
+                : order === -1 ? _("Sort by core latency (descending)") : _("Sort by core latency (original order)");
+            const button = E("button", {
+                type: "button", class: "cbi-button cbi-button-neutral jc-group-delay-button jc-sort-button", title: label, "aria-label": label,
+                "aria-pressed": String(order !== 0),
+                click: ev => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    if (isBusy()) return;
+                    state.sortOrders.set(key, order === 0 ? 1 : order === 1 ? -1 : 0);
+                    rerender()?.querySelector("button.jc-sort-button")?.focus({ preventScroll: true });
+                }
+            }, `${_("Sort")} ${order === 1 ? "↑" : order === -1 ? "↓" : "↕"}`);
+            button.disabled = isBusy();
+            return button;
+        };
 
         const getProxyType = (proxyName) => {
             const proxy = state.nodesState.proxyMap[proxyName];
@@ -107,14 +127,15 @@ return view.extend({
         };
 
         const createDelayMeta = (delay, automatic = false) => {
-            const info = getDelayText(delay);
+            const info = getDelayText(automatic ? delay?.delay : delay);
             if (!info)
                 return "";
 
+            const text = automatic && Number.isFinite(delay.p50) ? `${info.text} (P50: ${delay.p50} ms)` : info.text;
             return E("span", {
                 class: `jc-option-meta jc-option-latency ${automatic ? "jc-option-meta-automatic" : "jc-option-meta-manual"} ${info.className}`,
-                title: automatic ? _("Automatic check") : _("Manual check")
-            }, info.text);
+                title: `${automatic ? _("Automatic check") : _("Manual check")}: ${text}`
+            }, text);
         };
 
         const createOptionCard = (group, optionName, proxyType, isActive, onClick, extraMeta, pendingKey, showDelays = true) => {
@@ -123,7 +144,7 @@ return view.extend({
             const isPending = state.pendingKey === pendingKey;
             const showAutomatic = group.name !== "GLOBAL";
             const automatic = showDelays && showAutomatic
-                ? nodesModel.getNodeAutomaticDelay(state.nodesState, optionName, group.testUrl) : null;
+                ? nodesModel.getNodeAutomaticDelayStats(state.nodesState, optionName, group.testUrl) : null;
             const manual = showDelays ? state.groupDelays[group.name]?.[optionName] : null;
 
             const card = E(selectable ? "button" : "div", {
@@ -294,7 +315,10 @@ return view.extend({
                 ));
             }
 
-            group.options.forEach((optionName) => {
+            const sortKey = `group:${group.name}`;
+            const options = nodesModel.sortNodesByDelay(group.options, state.sortOrders.get(sortKey) || 0,
+                name => nodesModel.getNodeAutomaticDelayStats(state.nodesState, name, group.testUrl)?.delay);
+            options.forEach((optionName) => {
                 cards.push(createOptionCard(
                     group,
                     optionName,
@@ -310,7 +334,10 @@ return view.extend({
 
             return E("section", { class: "jc-group-section" }, [
                 E("div", { class: "jc-group-header" }, [
-                    E("h4", { class: "jc-group-title" }, group.name === "GLOBAL" ? _("Global") : group.name),
+                    E("div", { class: "jc-group-heading" }, [
+                        E("h4", { class: "jc-group-title" }, group.name === "GLOBAL" ? _("Global") : group.name),
+                        group.name !== "GLOBAL" ? createSortButton(sortKey, () => rerenderGroupSection(group.name)) : ""
+                    ]),
                     E("div", { class: "jc-group-header-actions" }, [
                         E("div", { class: "jc-group-badges" }, [
                             E("span", { class: "jc-group-badge" }, group.type || _("Unknown")),
@@ -335,7 +362,7 @@ return view.extend({
         };
 
         const createProviderCard = (provider, proxy) => {
-            const automatic = nodesModel.getAutomaticDelay(proxy, provider.testUrl);
+            const automatic = nodesModel.getAutomaticDelayStats(proxy, provider.testUrl);
             const manual = state.providerDelays[provider.name]?.[proxy.name];
 
             return E("div", { class: "jc-card jc-option-card jc-provider-card" }, [
@@ -374,6 +401,9 @@ return view.extend({
         };
 
         const createProviderSection = (provider) => {
+            const sortKey = `provider:${provider.name}`;
+            const proxies = nodesModel.sortNodesByDelay(provider.proxies || [], state.sortOrders.get(sortKey) || 0,
+                proxy => nodesModel.getAutomaticDelayStats(proxy, provider.testUrl)?.delay);
             const updatedText = formatProviderUpdatedAt(provider.updatedAt);
             const isDelayLoading = state.delayLoadingProvider === provider.name;
             const isUpdating = state.updatingProvider === provider.name;
@@ -410,8 +440,11 @@ return view.extend({
 
             return E("section", { class: "jc-group-section jc-provider-section" }, [
                 E("div", { class: "jc-group-header" }, [
-                    E("div", { style: "display:flex;flex-direction:column;gap:0.15rem;" }, [
-                        E("h4", { class: "jc-group-title" }, provider.name),
+                    E("div", { style: "display:flex;flex-direction:column;gap:0.15rem;min-width:0;max-width:100%;" }, [
+                        E("div", { class: "jc-group-heading" }, [
+                            E("h4", { class: "jc-group-title" }, provider.name),
+                            createSortButton(sortKey, () => rerenderProviderSection(provider.name))
+                        ]),
                         subInfoNode
                     ]),
                     E("div", { class: "jc-group-header-actions" }, [
@@ -424,7 +457,7 @@ return view.extend({
                         delayButton
                     ])
                 ]),
-                E("div", { class: "jc-option-grid" }, (provider.proxies || []).map((proxy) => createProviderCard(provider, proxy)))
+                E("div", { class: "jc-option-grid" }, proxies.map((proxy) => createProviderCard(provider, proxy)))
             ]);
         };
 
@@ -446,12 +479,13 @@ return view.extend({
 
             if (!oldNode || !oldNode.parentNode || !group) {
                 renderNodes();
-                return;
+                return groupSections.get(groupName);
             }
 
             const nextNode = createGroupSection(group);
             oldNode.replaceWith(nextNode);
             groupSections.set(groupName, nextNode);
+            return nextNode;
         };
 
         const rerenderProviderSection = (providerName) => {
@@ -460,12 +494,13 @@ return view.extend({
 
             if (!oldNode || !oldNode.parentNode || !provider) {
                 renderNodes();
-                return;
+                return providerSections.get(providerName);
             }
 
             const nextNode = createProviderSection(provider);
             oldNode.replaceWith(nextNode);
             providerSections.set(providerName, nextNode);
+            return nextNode;
         };
 
         const renderNodes = () => {
@@ -547,7 +582,7 @@ return view.extend({
             const busy = isBusy();
             modeDropdownNode.toggleAttribute("disabled", busy);
             delayUrlDropdownNode.toggleAttribute("disabled", busy);
-            content.querySelectorAll("button.jc-option-card, button.jc-group-delay-button").forEach(button => {
+            content.querySelectorAll("button.jc-option-card, button.jc-group-delay-button, button.jc-sort-button").forEach(button => {
                 button.disabled = busy;
             });
         };
@@ -674,18 +709,20 @@ return view.extend({
             .jc-nodes-layout{gap:1.125rem;}
             .jc-group-section{gap:0.625rem;}
             .jc-group-header{justify-content:space-between;gap:0.625rem;}
-            .jc-group-title{margin:0;font-size:1.05rem;}
+            .jc-group-title{margin:0;min-width:0;font-size:1.05rem;overflow-wrap:anywhere;}
+            .jc-group-heading{display:flex;align-items:center;gap:.4rem;min-width:0;max-width:100%;}
+            .jc-sort-button{flex-shrink:0;--jc-action-color:var(--primary-color-medium, #4f8cff);}
             .jc-provider-section .jc-group-title{font-weight:500;}
             .jc-group-header-actions{justify-content:flex-end;gap:0.5rem;}
             .jc-group-badges{gap:0.25rem;}
             .jc-group-badge{display:inline-flex;align-items:center;padding:0.1rem 0.55rem;border-radius:9999px;font-size:0.8em;line-height:1.25;font-family:inherit;box-sizing:border-box;color:var(--primary-color-medium, #4f8cff);border:1px solid color-mix(in srgb, var(--primary-color-medium, #4f8cff) 25%, transparent);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 10%, transparent);font-weight:600;}
             .jc-group-badge-current{color:var(--warn-color-medium, #fd7e14);border-color:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 25%, transparent);background:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 10%, transparent);font-weight:600;}
             .jc-option-meta-current{color:var(--warn-color-medium, #fd7e14);font-weight:600;}
-            button.cbi-button.jc-group-delay-button{display:inline-flex;align-items:center;font:inherit;font-family:inherit;font-size:0.88em;font-weight:500;line-height:1.2;margin:0;min-width:0;min-height:0;height:auto;padding:0.18rem 0.5rem;border-radius:0.25rem;box-sizing:border-box;color:var(--success-color-medium, #2f9e44);border:1px solid color-mix(in srgb, var(--success-color-medium, #2f9e44) 30%, transparent);background:color-mix(in srgb, var(--success-color-medium, #2f9e44) 6%, transparent);appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
-            button.cbi-button.jc-group-delay-button:hover:not(:disabled),button.cbi-button.jc-group-delay-button:focus-visible:not(:disabled){border-color:var(--success-color-medium, #2f9e44);background:color-mix(in srgb, var(--success-color-medium, #2f9e44) 12%, transparent);transform:translateY(-0.0625rem);}
+            button.cbi-button.jc-group-delay-button{display:inline-flex;align-items:center;font:inherit;font-family:inherit;font-size:0.88em;font-weight:500;line-height:1.2;margin:0;min-width:0;min-height:0;height:auto;padding:0.18rem 0.5rem;border-radius:0.25rem;box-sizing:border-box;color:var(--jc-action-color, var(--success-color-medium, #2f9e44));border:1px solid color-mix(in srgb, var(--jc-action-color, var(--success-color-medium, #2f9e44)) 30%, transparent);background:color-mix(in srgb, var(--jc-action-color, var(--success-color-medium, #2f9e44)) 6%, transparent);appearance:none;-webkit-appearance:none;transition:border-color .18s ease, background-color .18s ease, transform .18s ease;}
+            button.cbi-button.jc-group-delay-button:hover:not(:disabled),button.cbi-button.jc-group-delay-button:focus-visible:not(:disabled){border-color:var(--jc-action-color, var(--success-color-medium, #2f9e44));background:color-mix(in srgb, var(--jc-action-color, var(--success-color-medium, #2f9e44)) 12%, transparent);transform:translateY(-0.0625rem);}
             button.cbi-button.jc-group-delay-button:disabled,.jc-option-card:disabled{opacity:.7;transform:none;}
             button.jc-option-card:hover:not(:disabled),button.jc-option-card:focus-visible:not(:disabled){border-color:var(--primary-color-medium, #4f8cff);background:color-mix(in srgb, var(--primary-color-medium, #4f8cff) 6%, transparent);transform:translateY(-0.0625rem);}
-            .jc-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(10.3125rem, 1fr));gap:0.75rem;}
+            .jc-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(13rem, 1fr));gap:0.75rem;}
             .jc-card{padding:.75em;border:1px solid var(--border-color-medium, #d9d9d9);border-radius:0.25rem;box-sizing:border-box;}
             .jc-card-header{align-self:flex-start;margin-bottom:.7em;padding:.2em .45em;border-radius:0.375rem;}
             .jc-provider-card{cursor:default;background:color-mix(in srgb, var(--warn-color-medium, #fd7e14) 8%, transparent);transform:none;border:1px solid color-mix(in srgb, var(--warn-color-medium, #fd7e14) 35%, transparent);transition:none;}
@@ -700,7 +737,7 @@ return view.extend({
             .jc-option-type,.jc-option-meta{min-width:0;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
             .jc-option-type{flex:1 1 auto;font-size:.9em;color:var(--text-color-medium, #888);}
             .jc-option-meta{flex:0 1 auto;text-align:right;font-size:.82em;color:var(--text-color-medium, #888);}
-            .jc-option-latency{flex:0 0 auto;margin-left:auto;overflow:visible;font-weight:600;}
+            .jc-option-latency{flex:0 0 auto;max-width:calc(100% - .5rem);margin-left:auto;font-weight:600;}
             .jc-option-meta-delay{color:var(--success-color-medium, #2f9e44);}
             .jc-option-meta-delay-medium{color:var(--warn-color-medium, #fd7e14);}
             .jc-option-meta-delay-high,.jc-option-meta-timeout{color:var(--error-color-medium, #f44336);}

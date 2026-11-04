@@ -110,17 +110,29 @@ const normalizeProvidersState = (response) => {
         .sort((a, b) => a.name.localeCompare(b.name));
 };
 
-const getAutomaticDelay = (proxy, testUrl) => {
+const getAutomaticDelayStats = (proxy, testUrl) => {
     // The last check of some other URL is not suddenly this URL's check. Tempting, though.
-    const history = testUrl ? proxy?.extra?.[testUrl]?.history : null;
+    const rawHistory = testUrl ? proxy?.extra?.[testUrl]?.history : null;
+    const history = Array.isArray(rawHistory) ? rawHistory.slice(-10) : [];
     const last = Array.isArray(history) && history.length ? history[history.length - 1] : null;
     if (typeof last?.delay !== "number" || !Number.isFinite(last.delay) || last.delay < 0)
         return null;
 
-    return last.delay === 0 || proxy.extra[testUrl].alive === false ? "timeout" : last.delay;
+    const samples = history.map(entry => entry?.delay)
+        .filter(delay => typeof delay === "number" && Number.isFinite(delay) && delay > 0)
+        .sort((a, b) => a - b);
+    const middle = Math.floor(samples.length / 2);
+    const p50 = samples.length === 0 ? null : samples.length % 2
+        ? samples[middle] : (samples[middle - 1] + samples[middle]) / 2;
+
+    return {
+        delay: last.delay === 0 || proxy.extra[testUrl].alive === false ? "timeout" : last.delay,
+        p50,
+        time: Date.parse(last.time) || 0
+    };
 };
 
-const getNodeAutomaticDelay = (nodesState, name, testUrl = "") => {
+const getNodeAutomaticDelayStats = (nodesState, name, testUrl = "") => {
     const visited = new Set();
     const chain = [];
     let proxy = nodesState.proxyMap[name];
@@ -147,17 +159,15 @@ const getNodeAutomaticDelay = (nodesState, name, testUrl = "") => {
     // A selector can own a check result too; following `now` must not erase that little detail.
     for (const entry of chain) {
         for (const url of testUrls) {
-            const delay = getAutomaticDelay(entry.proxy, url);
-            if (delay === null)
+            const stats = getAutomaticDelayStats(entry.proxy, url);
+            if (stats === null)
                 continue;
-            const history = entry.proxy.extra[url].history;
-            const time = Date.parse(history[history.length - 1].time) || 0;
-            if (!latest || time > latest.time)
-                latest = { delay, time };
+            if (!latest || stats.time > latest.time)
+                latest = stats;
         }
     }
 
-    return latest ? latest.delay : null;
+    return latest;
 };
 
 const canTestProxy = (proxy) => {
@@ -167,13 +177,29 @@ const canTestProxy = (proxy) => {
     return !NON_TESTABLE_PROXY_TYPES.has(lower(proxy.type));
 };
 
+const sortNodesByDelay = (items, order, getDelay) => {
+    if (!order)
+        return items.slice();
+
+    return items.map((item, index) => {
+        const delay = getDelay(item);
+        return { item, index, delay: typeof delay === "number" && Number.isFinite(delay) && delay > 0 ? delay : null };
+    }).sort((a, b) => {
+        // Reversing the order does not magically make an unavailable node faster.
+        if (a.delay === null) return b.delay === null ? a.index - b.index : 1;
+        if (b.delay === null) return -1;
+        return order * (a.delay - b.delay) || a.index - b.index;
+    }).map(entry => entry.item);
+};
+
 return baseclass.extend({
     lower,
     isAutoGroup,
     canSelectGroup,
     normalizeNodesState,
     normalizeProvidersState,
-    getAutomaticDelay,
-    getNodeAutomaticDelay,
+    getAutomaticDelayStats,
+    getNodeAutomaticDelayStats,
+    sortNodesByDelay,
     canTestProxy
 });
