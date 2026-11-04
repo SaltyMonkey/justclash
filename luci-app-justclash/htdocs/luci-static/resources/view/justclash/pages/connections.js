@@ -296,11 +296,46 @@ return view.extend({
 
         function updateRow(conn, appendTarget = table) {
             const key = conn.id;
+            const metadata = conn.metadata || {};
+            const connObj = connectionsModel.formatEndpoints(conn);
+            const display = {
+                network: String(metadata.network || ""),
+                src: connObj.src,
+                dest: connObj.dest,
+                host: [metadata.host, metadata.sniffHost].filter(Boolean).join(", "),
+                chains: conn.chains || [],
+                rule: conn.rulePayload || conn.rule || ""
+            };
+            const previousData = connectionsData.get(key);
+            const previousDisplay = previousData?.display;
+            const previousMetadata = previousData?.raw.metadata || {};
+            const sameChains = previousDisplay &&
+                previousDisplay.chains.length === display.chains.length &&
+                previousDisplay.chains.every((chain, index) => chain === display.chains[index]);
+            // Equal cell text can hide different host/sniffHost search boundaries.
+            const sameSearchData = previousData && sameChains &&
+                previousMetadata.host === metadata.host &&
+                previousMetadata.sniffHost === metadata.sniffHost &&
+                previousMetadata.sourceIP === metadata.sourceIP &&
+                (previousMetadata.destinationIP || previousMetadata.remoteDestination) ===
+                    (metadata.destinationIP || metadata.remoteDestination) &&
+                previousDisplay.rule === display.rule;
             connectionsData.set(key, {
                 raw: conn,
-                normalized: connectionsModel.normalizeConnection(conn)
+                normalized: sameSearchData ? previousData.normalized : connectionsModel.normalizeConnection(conn),
+                display
             });
             let row = rowMap.get(key);
+
+            // Traffic counters can tick without giving the badges another paint job.
+            if (row && previousDisplay &&
+                previousDisplay.network === display.network &&
+                previousDisplay.src === display.src &&
+                previousDisplay.dest === display.dest &&
+                previousDisplay.host === display.host &&
+                previousDisplay.rule === display.rule &&
+                sameChains)
+                return;
 
             if (!row) {
                 row = createRow(conn);
@@ -308,29 +343,24 @@ return view.extend({
                 rowMap.set(key, row);
             }
 
-            const metadata = conn.metadata || {};
-            const connObj = connectionsModel.formatEndpoints(conn);
-            const hostStr = [metadata.host, metadata.sniffHost].filter(Boolean).join(", ");
-            const desktopConnStr = connObj.src + (connObj.dest ? " -> " + connObj.dest : "");
-
             const cells = row.childNodes;
 
             const protoSpan = E("span", {
-                class: "jc-badge-proto " + String(metadata.network || "").toLowerCase()
-            }, (metadata.network || "").toUpperCase());
+                class: "jc-badge-proto " + display.network.toLowerCase()
+            }, display.network.toUpperCase());
             cells[0].replaceChildren(protoSpan);
 
-            cells[1].textContent = desktopConnStr;
-            cells[2].textContent = connObj.src;
-            cells[3].textContent = connObj.dest;
-            cells[4].textContent = hostStr;
+            cells[1].textContent = display.src + (display.dest ? " -> " + display.dest : "");
+            cells[2].textContent = display.src;
+            cells[3].textContent = display.dest;
+            cells[4].textContent = display.host;
 
             const chainNodes = [];
-            (conn.chains || []).forEach((chainItem, index) => {
+            display.chains.forEach((chainItem, index) => {
                 if (index > 0) {
                     chainNodes.push(E("span", { class: "jc-chain-arrow" }, " → "));
                 }
-                const isLast = index === conn.chains.length - 1;
+                const isLast = index === display.chains.length - 1;
                 chainNodes.push(E("span", {
                     class: isLast ? "jc-badge-builtin jc-badge-chain-last" : "jc-badge-builtin jc-badge-chain"
                 }, chainItem));
@@ -338,17 +368,13 @@ return view.extend({
             cells[5].replaceChildren(...chainNodes);
 
             const ruleNodes = [];
-            const ruleText = conn.rulePayload || conn.rule;
+            const ruleText = display.rule;
             if (ruleText) {
                 ruleNodes.push(E("span", {
                     class: "jc-badge-rule"
                 }, ruleText));
             }
             cells[6].replaceChildren(...ruleNodes);
-
-            const actionButton = cells[7]?.querySelector("button");
-            if (actionButton && !actionButton.disabled)
-                setRowCloseButtonState(actionButton, false);
         }
 
         const updateEmptyState = () => {
