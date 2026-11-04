@@ -32,7 +32,9 @@ return baseclass.extend({
         ruleProviders: "/providers/rules",
         rulesetProvider: (providerName) => `/providers/rules/${encodeURIComponent(providerName)}`,
         rules: "/rules",
-        disableRules: "/rules/disable"
+        disableRules: "/rules/disable",
+        fakeIPCacheFlush: "/cache/fakeip/flush",
+        dnsCacheFlush: "/cache/dns/flush"
     },
 
     // URL builders
@@ -339,6 +341,18 @@ return baseclass.extend({
         if (!res.ok)
             throw new Error(`${res.status} ${res.statusText}`);
 
+        return res;
+    },
+    async flushFakeIPCache(token, timeout = this.fetchTimeout) {
+        const res = await this.fetch(this.paths.fakeIPCacheFlush, token, { method: "POST" }, timeout);
+        if (!res.ok)
+            throw new Error(`${res.status} ${res.statusText}`);
+        return res;
+    },
+    async flushDNSCache(token, timeout = this.fetchTimeout) {
+        const res = await this.fetch(this.paths.dnsCacheFlush, token, { method: "POST" }, timeout);
+        if (!res.ok)
+            throw new Error(`${res.status} ${res.statusText}`);
         return res;
     },
     createTrafficWebSocket({ token, onMessage, containerCheck }) {
