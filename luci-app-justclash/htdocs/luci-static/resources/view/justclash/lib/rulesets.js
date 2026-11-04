@@ -5,8 +5,8 @@ const MAX_LOCATION_LENGTH = 4096;
 const MAX_AUTH_LENGTH = 4096;
 const CONTROL_CHARACTERS = /[\x00-\x1F\x7F]/;
 const LOCAL_EXTENSIONS = {
-    domain: [".mrs", ".txt", ".list", ".yaml", ".yml"],
-    ipcidr: [".txt", ".list"]
+    domain: [".mrs", ".txt", ".list", ".lst", ".yaml", ".yml"],
+    ipcidr: [".txt", ".list", ".lst"]
 };
 
 const createEmptyRule = () => ({
@@ -51,7 +51,7 @@ const serialize = (rule) => {
             path = "";
         }
     }
-    const format = type === "ipcidr" || /\.(txt|list)$/i.test(path)
+    const format = type === "ipcidr" || /\.(txt|list|lst)$/i.test(path)
         ? "text" : /\.ya?ml$/i.test(path) ? "yaml" : "mrs";
     const fields = [
         String(rule.name || "").trim(),
@@ -109,7 +109,7 @@ const validateRulesetLocation = (value, type) => {
 
             if (type === "ipcidr"
                 && !LOCAL_EXTENSIONS.ipcidr.some(extension => url.pathname.toLowerCase().endsWith(extension)))
-                return _("IP CIDR ruleset URL must end with .txt or .list.");
+                return _("IP CIDR ruleset URL must end with .txt, .list or .lst.");
 
             return true;
         } catch {
@@ -130,8 +130,8 @@ const validateRulesetLocation = (value, type) => {
 
     if (!allowedExtensions.some(extension => lowerPath.endsWith(extension)))
         return type === "domain"
-            ? _("Domain ruleset local path must end with .mrs, .txt, .list, .yaml or .yml.")
-            : _("IP CIDR ruleset local path must end with .txt or .list.");
+            ? _("Domain ruleset local path must end with .mrs, .txt, .list, .lst, .yaml or .yml.")
+            : _("IP CIDR ruleset local path must end with .txt, .list or .lst.");
 
     return true;
 };

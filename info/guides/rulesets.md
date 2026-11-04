@@ -52,9 +52,9 @@ before the page can be saved.
 | `ipcidr` | `mrs` | Yes | No |
 | `ipcidr` | `text` | Yes | Yes |
 
-For domain rulesets, LuCI selects `text` for `.txt` or `.list`, `yaml` for `.yaml`
-or `.yml`, and `mrs` otherwise. Local domain paths must use one of these five
-extensions. IP CIDR sources in LuCI must end with `.txt` or `.list` and use
+For domain rulesets, LuCI selects `text` for `.txt`, `.list` or `.lst`, `yaml` for `.yaml`
+or `.yml`, and `mrs` otherwise. Local domain paths must use one of these six
+extensions. IP CIDR sources in LuCI must end with `.txt`, `.list` or `.lst` and use
 `text`. URL query parameters and fragments do not affect format selection;
 extensions are case-insensitive. Mihomo parses the source contents.
 
