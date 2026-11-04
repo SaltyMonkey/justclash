@@ -182,11 +182,19 @@ const showUpdateRulesets = (notificationTimeout, token) =>
         loadingText: _("Getting rulesets...")
     });
 
+const showCacheFlush = (notificationTimeout, title, task, successMessage) =>
+    showText(notificationTimeout, title, false, async () => {
+        await task();
+        return successMessage;
+    }, { allowCopy: false });
+
 const create = ({ notificationTimeout = 3000 } = {}) => ({
     showRpc: (...args) => showRpc(notificationTimeout, ...args),
     showConfirmRpc: (...args) => showConfirmRpc(notificationTimeout, ...args),
     showConfigRpc: (...args) => showConfigRpc(notificationTimeout, ...args),
-    showUpdateRulesets: (...args) => showUpdateRulesets(notificationTimeout, ...args)
+    showUpdateRulesets: (...args) => showUpdateRulesets(notificationTimeout, ...args),
+    showFlushFakeIPCache: (token) => showCacheFlush(notificationTimeout, _("Clear Fake-IP cache"), () => mihomoApi.flushFakeIPCache(token), _("Fake-IP cache cleared")),
+    showFlushDNSCache: (token) => showCacheFlush(notificationTimeout, _("Clear DNS cache"), () => mihomoApi.flushDNSCache(token), _("DNS cache cleared"))
 });
 
 return baseclass.extend({ create });

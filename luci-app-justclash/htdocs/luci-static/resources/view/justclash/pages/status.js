@@ -20,6 +20,8 @@ const buttonsIDs = {
     DIAGNOSTIC: "button-diagnostic",
     UPDATE: "button-core-update",
     UPDATE_RULESETS: "button-rulesets-update",
+    FLUSH_FAKEIP: "button-fakeip-flush",
+    FLUSH_DNS: "button-dns-flush",
     SERVICE_DATA_UPDATE: "button-service-data",
     MIHOMO_CONFIG: "button-mihomo-config",
     SERVICE_CONFIG: "button-service-config"
@@ -103,12 +105,19 @@ const createStatusGrid = (results, dynamicElements) => E("div", { class: "jc-sum
     ])
 ]);
 
+const syncKernelActions = (elements) => {
+    for (const button of elements.kernelActionButtons)
+        button.disabled = !elements.currentRunning || elements.kernelActionInProgress;
+};
+
 const updateStatusUI = (elements, isAutostarting, isRunning, ruleCount, connectionCount) => {
     const runningChanged = elements.lastRunning !== isRunning;
     const autostartChanged = elements.lastAutostarting !== isAutostarting;
 
     elements.currentRunning = isRunning;
     elements.currentAutostarting = isAutostarting;
+
+    syncKernelActions(elements);
 
     if (elements.rulesValue)
         elements.rulesValue.textContent = ruleCount === null ? "—" : String(ruleCount);
@@ -221,7 +230,9 @@ return view.extend({
             currentRunning: !!results.infoIsRunning,
             currentAutostarting: !!results.infoIsAutostarting,
             lastRunning: null,
-            lastAutostarting: null
+            lastAutostarting: null,
+            kernelActionButtons: [],
+            kernelActionInProgress: false
         };
 
         const cleanup = () => {
@@ -348,6 +359,28 @@ return view.extend({
             serviceActionContainer
         ]);
 
+        const createKernelActionButton = (id, cssClass, label, handler) => {
+            const button = createActionButton(id, cssClass, label, async () => {
+                if (!dynamicElements.currentRunning || dynamicElements.kernelActionInProgress)
+                    return;
+
+                dynamicElements.kernelActionInProgress = true;
+                syncKernelActions(dynamicElements);
+                try {
+                    await handler();
+                } finally {
+                    dynamicElements.kernelActionInProgress = false;
+                    syncKernelActions(dynamicElements);
+                }
+            });
+            dynamicElements.kernelActionButtons.push(button);
+            return button;
+        };
+        const btnUpdateRulesets = createKernelActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update active rulesets"), actions.showUpdateRulesets(results.apiToken));
+        const btnFlushFakeIP = createKernelActionButton(buttonsIDs.FLUSH_FAKEIP, buttons.NEGATIVE, _("Clear Fake-IP cache"), actions.showFlushFakeIPCache(results.apiToken));
+        const btnFlushDNS = createKernelActionButton(buttonsIDs.FLUSH_DNS, buttons.NEGATIVE, _("Clear DNS cache"), actions.showFlushDNSCache(results.apiToken));
+        syncKernelActions(dynamicElements);
+
         const maintenanceActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
                 createActionButton(buttonsIDs.DIAGNOSTIC, buttons.POSITIVE, _("Run diagnostics"), actions.showRpc(_("Diagnostic report"), false, () => ubusApi.check())),
@@ -366,15 +399,21 @@ return view.extend({
                     if (dynamicElements.coreValue)
                         dynamicElements.coreValue.textContent = infoCore || _("Error");
                 })),
-                createActionButton(buttonsIDs.UPDATE_RULESETS, buttons.ACTION, _("Update active rulesets"), actions.showUpdateRulesets(results.apiToken)),
                 createActionButton(buttonsIDs.SERVICE_DATA_UPDATE, buttons.ACTION, _("Update built-in data"), actions.showConfirmRpc(_("Update built-in data"), _("This action downloads and replaces built-in service data files. If the download fails or the remote source returns bad data, service behavior may change until the next successful update."), () => ubusApi.updateData()))
+            ])
+        ]);
+
+        const kernelActionContainer = E("div", { class: "jc-actions-wrap" }, [
+            E("div", { class: "cbi-section-actions jc-primary-actions" }, [
+                btnUpdateRulesets, btnFlushFakeIP, btnFlushDNS
             ])
         ]);
 
         const maintenanceActionSection = E("div", { class: "cbi-section fade-in" }, [
             E("h3", { class: "cbi-section-title" }, _("Maintenance")),
             E("div", { class: "cbi-section-descr" }, _("Perform diagnostic tests, update the core binary, and update downloaded rulesets or service data files.")),
-            maintenanceActionContainer
+            maintenanceActionContainer,
+            kernelActionContainer
         ]);
 
         const configActionContainer = E("div", { class: "jc-actions-wrap" }, [
@@ -436,8 +475,6 @@ return view.extend({
             @media (max-width:37.5rem) { .jc-summary-grid { grid-template-columns:1fr; grid-auto-rows:auto; } }
         `);
 
-        poller.start();
-
         visibilityChangeHandler = () => {
             if (document.hidden) {
                 poller.stop();
@@ -460,7 +497,12 @@ return view.extend({
         window.addEventListener("beforeunload", beforeUnloadHandler);
 
         requestAnimationFrame(() => {
+            if (!document.body.contains(statusContainer)) {
+                cleanup();
+                return;
+            }
             updateStatusUI(dynamicElements, results.infoIsAutostarting, !!results.infoIsRunning, results.infoRuleCount, results.infoConnectionCount);
+            poller.start();
             if (results.infoIsRunning)
                 sockets.connect();
         });
