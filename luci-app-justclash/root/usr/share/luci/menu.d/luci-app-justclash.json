@@ -63,6 +63,22 @@
             }
         }
     },
+    "admin/services/justclash/rule_providers": {
+        "title": "Rule Providers",
+        "order": 26,
+        "action": {
+            "type": "view",
+            "path": "justclash/pages/rule_providers"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
+    },
     "admin/services/justclash/service_logs": {
         "title": "Service logs",
         "order": 30,
