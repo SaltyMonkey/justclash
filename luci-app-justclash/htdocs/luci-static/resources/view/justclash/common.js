@@ -841,6 +841,7 @@ return baseclass.extend({
     stub_nodes_tab: _("Nodes"),
     stub_connections_tab: _("Connections"),
     stub_rules_tab: _("Rules"),
+    stub_rule_providers_tab: _("Rule Providers"),
     stub_rulesets_tab: _("Setup: Rulesets"),
     stub_routing_tab: _("Setup: Routing"),
     stub_service_tab: _("Setup: Service"),
