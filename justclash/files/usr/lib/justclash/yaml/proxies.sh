@@ -44,13 +44,11 @@ yaml_proxy_append() {
         case "$proxy_link_uri" in
         direct://*) proxy_obj=$(parse_direct_url "$name" "$dialer_proxy" "$interface_name" "$routing_mark" "$ip_version") ;;
         ss://*) proxy_obj=$(parse_ss_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(user_agent_rand)") ;;
-        socks5://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-        socks://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+        socks5://* | socks5+resolve://*) proxy_obj=$(parse_simple_proxy_url "$proxy_link_uri" "$DEFAULT_SOCKS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         ssh://*) proxy_obj=$(parse_ssh_url "$proxy_link_uri" "$DEFAULT_SSH_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         trojan://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(user_agent_rand)") ;;
         trojan-go://*) proxy_obj=$(parse_trojan_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version" "$(user_agent_rand)") ;;
-        hy2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
-        hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
+        hy2://* | hysteria2://*) proxy_obj=$(parse_hysteria2_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         vless://*) proxy_obj=$(parse_vless_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         vmess://*) proxy_obj=$(parse_vmess_url "$proxy_link_uri" "$DEFAULT_TLS_PORT" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;
         mierus://*) proxy_obj=$(parse_mieru_url "$proxy_link_uri" "$dialer_proxy" "$name" "$interface_name" "$routing_mark" "$ip_version") ;;

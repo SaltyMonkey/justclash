@@ -6,9 +6,17 @@
 
 parse_simple_proxy_url() {
     local link="$1" default_socks_port="$2" dialer_proxy="$3" name="$4" interface_name="$5" routing_mark="$6" ip_version="$7"
-    local raw="$link"
-    raw="${raw#socks://}"
-    raw="${raw#socks5://}"
+    local raw="$link" resolve_destination=false
+    case "$raw" in
+    socks5+resolve://*)
+        raw="${raw#socks5+resolve://}"
+        resolve_destination=true
+        ;;
+    socks5://*)
+        raw="${raw#socks5://}"
+        ;;
+    *) return 1 ;;
+    esac
 
     local server="" port="" username="" password=""
     local userinfo="" hostport="" proxy_obj
@@ -44,6 +52,7 @@ parse_simple_proxy_url() {
             --arg interface_name "$interface_name" \
             --arg routing_mark "$routing_mark" \
             --arg ip_version "$ip_version" \
+            --argjson resolve_destination "$resolve_destination" \
             --argjson port "$port" '
             {
                 name: $name,
@@ -52,6 +61,7 @@ parse_simple_proxy_url() {
                 server: $server,
                 port: $port
             }
+            + (if $resolve_destination then {"resolve-destination": true} else {} end)
             + (if $username != "" then {username: $username} else {} end)
             + (if $password != "" then {password: $password} else {} end)
             + (if $dialer_proxy != "" then {"dialer-proxy": $dialer_proxy} else {} end)
