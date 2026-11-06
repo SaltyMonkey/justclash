@@ -121,6 +121,11 @@ parse_vless_url() {
         [ -n "$xhttp_extra_json" ] || xhttp_extra_json='{}'
     fi
 
+    # Let extra.path speak before the default slash wins by technical knockout.
+    if [ "$net" != "xhttp" ] && [ -z "$path" ]; then
+        path="/"
+    fi
+
     proxy_obj=$(
         jq -nc \
             --arg name "$name" \
@@ -139,7 +144,7 @@ parse_vless_url() {
             --arg pbk "$pbk" \
             --arg sid "$sid" \
             --arg spx "${spx:-/}" \
-            --arg path "${path:-/}" \
+            --arg path "$path" \
             --arg ech "$ech" \
             --arg flow "$flow" \
             --arg pin_sha256 "$pin_sha256" \
@@ -291,17 +296,17 @@ parse_vless_url() {
                                 {mode: $xe.mode}
                            else {} end)
                         + (if ($xe.headers // null) != null then {headers: $xe.headers} else {} end)
-                        + (if ($xe.noGRPCHeader // null) != null then {"no-grpc-header": $xe.noGRPCHeader}
-                           elif ($xe["no-grpc-header"] // null) != null then {"no-grpc-header": $xe["no-grpc-header"]}
+                        + (if $xe.noGRPCHeader != null then {"no-grpc-header": $xe.noGRPCHeader}
+                           elif $xe["no-grpc-header"] != null then {"no-grpc-header": $xe["no-grpc-header"]}
                            else {} end)
-                        + (if (($xe.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": $xe.xPaddingBytes}
-                           elif (($xe["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": $xe["x-padding-bytes"]}
+                        + (if (($xe.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": ($xe.xPaddingBytes | tostring)}
+                           elif (($xe["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": ($xe["x-padding-bytes"] | tostring)}
                            else {} end)
-                        + (if (($xe.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $xe.scMaxEachPostBytes}
-                           elif (($xe["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $xe["sc-max-each-post-bytes"]}
+                        + (if (($xe.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": ($xe.scMaxEachPostBytes | tostring)}
+                           elif (($xe["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": ($xe["sc-max-each-post-bytes"] | tostring)}
                            else {} end)
-                        + (if (($xe.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $xe.scMinPostsIntervalMs}
-                           elif (($xe["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $xe["sc-min-posts-interval-ms"]}
+                        + (if (($xe.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": ($xe.scMinPostsIntervalMs | tostring)}
+                           elif (($xe["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": ($xe["sc-min-posts-interval-ms"] | tostring)}
                            else {} end)
                         + (if (($xe.sessionIDPlacement // "") | tostring) != "" then {"session-placement": $xe.sessionIDPlacement}
                            elif (($xe.sessionPlacement // "") | tostring) != "" then {"session-placement": $xe.sessionPlacement}
@@ -317,11 +322,11 @@ parse_vless_url() {
                         + (if (($xe.sessionIDLength // "") | tostring) != "" then {"session-length": ($xe.sessionIDLength | tostring)}
                            elif (($xe["session-length"] // "") | tostring) != "" then {"session-length": ($xe["session-length"] | tostring)}
                            else {} end)
-                         + (if ($xe.noSseHeader // null) != null then {"no-sse-header": $xe.noSseHeader}
-                            elif ($xe["no-sse-header"] // null) != null then {"no-sse-header": $xe["no-sse-header"]}
+                         + (if $xe.noSseHeader != null then {"no-sse-header": $xe.noSseHeader}
+                            elif $xe["no-sse-header"] != null then {"no-sse-header": $xe["no-sse-header"]}
                             else {} end)
-                         + (if ($xe.xPaddingObfsMode // null) != null then {"x-padding-obfs-mode": $xe.xPaddingObfsMode}
-                            elif ($xe["x-padding-obfs-mode"] // null) != null then {"x-padding-obfs-mode": $xe["x-padding-obfs-mode"]}
+                         + (if $xe.xPaddingObfsMode != null then {"x-padding-obfs-mode": $xe.xPaddingObfsMode}
+                            elif $xe["x-padding-obfs-mode"] != null then {"x-padding-obfs-mode": $xe["x-padding-obfs-mode"]}
                             else {} end)
                          + (if (($xe.xPaddingKey // "") | tostring) != "" then {"x-padding-key": $xe.xPaddingKey}
                             elif (($xe["x-padding-key"] // "") | tostring) != "" then {"x-padding-key": $xe["x-padding-key"]}
@@ -353,23 +358,23 @@ parse_vless_url() {
                          + (if (($xe.uplinkDataKey // "") | tostring) != "" then {"uplink-data-key": $xe.uplinkDataKey}
                             elif (($xe["uplink-data-key"] // "") | tostring) != "" then {"uplink-data-key": $xe["uplink-data-key"]}
                             else {} end)
-                         + (if (($xe.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($xe.uplinkChunkSize | tonumber)}
-                            elif (($xe["uplink-chunk-size"] // "") | tostring) != "" then {"uplink-chunk-size": ($xe["uplink-chunk-size"] | tonumber)}
+                         + (if (($xe.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($xe.uplinkChunkSize | tostring)}
+                            elif (($xe["uplink-chunk-size"] // "") | tostring) != "" then {"uplink-chunk-size": ($xe["uplink-chunk-size"] | tostring)}
                             else {} end)
-                         + (if (($xe.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($xe.scMaxBufferedPosts | tonumber)}
-                            elif (($xe["sc-max-buffered-posts"] // "") | tostring) != "" then {"sc-max-buffered-posts": ($xe["sc-max-buffered-posts"] | tonumber)}
+                         + (if (($xe.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($xe.scMaxBufferedPosts | tostring)}
+                            elif (($xe["sc-max-buffered-posts"] // "") | tostring) != "" then {"sc-max-buffered-posts": ($xe["sc-max-buffered-posts"] | tostring)}
                             else {} end)
-                         + (if (($xe.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": $xe.scStreamUpServerSecs}
-                            elif (($xe["sc-stream-up-server-secs"] // "") | tostring) != "" then {"sc-stream-up-server-secs": $xe["sc-stream-up-server-secs"]}
+                         + (if (($xe.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": ($xe.scStreamUpServerSecs | tostring)}
+                            elif (($xe["sc-stream-up-server-secs"] // "") | tostring) != "" then {"sc-stream-up-server-secs": ($xe["sc-stream-up-server-secs"] | tostring)}
                             else {} end)
                         + (if ($xmux | type) == "object" and ($xmux | length) > 0 then
                                 {"reuse-settings": (
                                     {}
-                                    + (if (($xmux.maxConnections // "") | tostring) != "" then {"max-connections": $xmux.maxConnections} else {} end)
-                                    + (if (($xmux.maxConcurrency // "") | tostring) != "" then {"max-concurrency": $xmux.maxConcurrency} else {} end)
-                                    + (if (($xmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": $xmux.cMaxReuseTimes} else {} end)
-                                    + (if (($xmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": $xmux.hMaxRequestTimes} else {} end)
-                                    + (if (($xmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": $xmux.hMaxReusableSecs} else {} end)
+                                    + (if (($xmux.maxConnections // "") | tostring) != "" then {"max-connections": ($xmux.maxConnections | tostring)} else {} end)
+                                    + (if (($xmux.maxConcurrency // "") | tostring) != "" then {"max-concurrency": ($xmux.maxConcurrency | tostring)} else {} end)
+                                    + (if (($xmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": ($xmux.cMaxReuseTimes | tostring)} else {} end)
+                                    + (if (($xmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": ($xmux.hMaxRequestTimes | tostring)} else {} end)
+                                    + (if (($xmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": ($xmux.hMaxReusableSecs | tostring)} else {} end)
                                     + (if (($xmux.hKeepAlivePeriod // "") | tostring) != "" then {"h-keep-alive-period": ($xmux.hKeepAlivePeriod | tonumber)}
                                        elif (($xmux["h-keep-alive-period"] // "") | tostring) != "" then {"h-keep-alive-period": ($xmux["h-keep-alive-period"] | tonumber)}
                                        else {} end)
@@ -379,7 +384,15 @@ parse_vless_url() {
                                 ($xe.downloadSettings) as $ds
                                 | ($ds.xhttpSettings // {}) as $dx
                                 | ($dx.extra // {}) as $dxe
-                                | ($ds.xmux // $ds["reuse-settings"] // $ds.reuseSettings // $dx.xmux // $dx["reuse-settings"] // $dx.reuseSettings // $dxe.xmux // $dxe["reuse-settings"] // $dxe.reuseSettings // {}) as $dsmux
+                                | ([$dxe.xmux, $dxe["reuse-settings"], $dxe.reuseSettings,
+                                    $dx.xmux, $dx["reuse-settings"], $dx.reuseSettings,
+                                    $ds.xmux, $ds["reuse-settings"], $ds.reuseSettings]
+                                   | map(select(type == "object")
+                                         | select([.maxConnections, .maxConcurrency, .cMaxReuseTimes,
+                                                   .hMaxRequestTimes, .hMaxReusableSecs,
+                                                   .hKeepAlivePeriod, .["h-keep-alive-period"]]
+                                                  | any(type == "number" or (type == "string" and length > 0))))
+                                   | .[0] // {}) as $dsmux
                                 | {"download-settings": (
                                     {}
                                     + (if (($ds.path // "") | tostring) != "" then {path: $ds.path}
@@ -394,11 +407,11 @@ parse_vless_url() {
                                     + (if ($dsmux | type) == "object" and ($dsmux | length) > 0 then
                                             {"reuse-settings": (
                                                 {}
-                                                + (if (($dsmux.maxConnections // "") | tostring) != "" then {"max-connections": $dsmux.maxConnections} else {} end)
-                                                + (if (($dsmux.maxConcurrency // "") | tostring) != "" then {"max-concurrency": $dsmux.maxConcurrency} else {} end)
-                                                + (if (($dsmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": $dsmux.cMaxReuseTimes} else {} end)
-                                                + (if (($dsmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": $dsmux.hMaxRequestTimes} else {} end)
-                                                + (if (($dsmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": $dsmux.hMaxReusableSecs} else {} end)
+                                                + (if (($dsmux.maxConnections // "") | tostring) != "" then {"max-connections": ($dsmux.maxConnections | tostring)} else {} end)
+                                                + (if (($dsmux.maxConcurrency // "") | tostring) != "" then {"max-concurrency": ($dsmux.maxConcurrency | tostring)} else {} end)
+                                                + (if (($dsmux.cMaxReuseTimes // "") | tostring) != "" then {"c-max-reuse-times": ($dsmux.cMaxReuseTimes | tostring)} else {} end)
+                                                + (if (($dsmux.hMaxRequestTimes // "") | tostring) != "" then {"h-max-request-times": ($dsmux.hMaxRequestTimes | tostring)} else {} end)
+                                                + (if (($dsmux.hMaxReusableSecs // "") | tostring) != "" then {"h-max-reusable-secs": ($dsmux.hMaxReusableSecs | tostring)} else {} end)
                                                 + (if (($dsmux.hKeepAlivePeriod // "") | tostring) != "" then {"h-keep-alive-period": ($dsmux.hKeepAlivePeriod | tonumber)}
                                                    elif (($dsmux["h-keep-alive-period"] // "") | tostring) != "" then {"h-keep-alive-period": ($dsmux["h-keep-alive-period"] | tonumber)}
                                                    else {} end)
@@ -406,7 +419,7 @@ parse_vless_url() {
                                        else {} end)
                                     + (if (($ds.server // "") | tostring) != "" then {server: $ds.server} else {} end)
                                     + (if (($ds.port // "") | tostring) != "" then {port: ($ds.port | tonumber)} else {} end)
-                                    + (if ($ds.tls // null) != null then {tls: $ds.tls} else {} end)
+                                    + (if $ds.tls != null then {tls: $ds.tls} else {} end)
                                     + (if ($ds.alpn // null) != null and (($ds.alpn | type) == "array") and (($ds.alpn | length) > 0) then {alpn: $ds.alpn} else {} end)
                                     + (if ($ds["ech-opts"] // null) != null then {"ech-opts": $ds["ech-opts"]}
                                        elif ($ds.echOpts // null) != null then {"ech-opts": $ds.echOpts}
@@ -425,8 +438,8 @@ parse_vless_url() {
                                                    else {} end)
                                             )}
                                        else {} end)
-                                    + (if ($ds.skipCertVerify // null) != null then {"skip-cert-verify": $ds.skipCertVerify}
-                                       elif ($ds["skip-cert-verify"] // null) != null then {"skip-cert-verify": $ds["skip-cert-verify"]}
+                                    + (if $ds.skipCertVerify != null then {"skip-cert-verify": $ds.skipCertVerify}
+                                       elif $ds["skip-cert-verify"] != null then {"skip-cert-verify": $ds["skip-cert-verify"]}
                                        else {} end)
                                     + (if (($ds.fingerprint // "") | tostring) != "" then {fingerprint: $ds.fingerprint} else {} end)
                                     + (if (($ds.certificate // "") | tostring) != "" then {certificate: $ds.certificate} else {} end)
@@ -457,13 +470,27 @@ parse_vless_url() {
                                        elif (($ds.sessionIDLength // "") | tostring) != "" then {"session-length": ($ds.sessionIDLength | tostring)}
                                        elif (($ds["session-length"] // "") | tostring) != "" then {"session-length": ($ds["session-length"] | tostring)}
                                        else {} end)
-                                    + (if ($dxe.noSseHeader // null) != null then {"no-sse-header": $dxe.noSseHeader}
-                                       elif ($ds.noSseHeader // null) != null then {"no-sse-header": $ds.noSseHeader}
-                                       elif ($ds["no-sse-header"] // null) != null then {"no-sse-header": $ds["no-sse-header"]}
+                                    + (if $dxe.noGRPCHeader != null then {"no-grpc-header": $dxe.noGRPCHeader}
+                                       elif $dxe["no-grpc-header"] != null then {"no-grpc-header": $dxe["no-grpc-header"]}
+                                       elif $dx.noGRPCHeader != null then {"no-grpc-header": $dx.noGRPCHeader}
+                                       elif $dx["no-grpc-header"] != null then {"no-grpc-header": $dx["no-grpc-header"]}
+                                       elif $ds.noGRPCHeader != null then {"no-grpc-header": $ds.noGRPCHeader}
+                                       elif $ds["no-grpc-header"] != null then {"no-grpc-header": $ds["no-grpc-header"]}
                                        else {} end)
-                                    + (if ($dxe.xPaddingObfsMode // null) != null then {"x-padding-obfs-mode": $dxe.xPaddingObfsMode}
-                                       elif ($ds.xPaddingObfsMode // null) != null then {"x-padding-obfs-mode": $ds.xPaddingObfsMode}
-                                       elif ($ds["x-padding-obfs-mode"] // null) != null then {"x-padding-obfs-mode": $ds["x-padding-obfs-mode"]}
+                                    + (if (($dxe.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": ($dxe.xPaddingBytes | tostring)}
+                                       elif (($dxe["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": ($dxe["x-padding-bytes"] | tostring)}
+                                       elif (($dx.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": ($dx.xPaddingBytes | tostring)}
+                                       elif (($dx["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": ($dx["x-padding-bytes"] | tostring)}
+                                       elif (($ds.xPaddingBytes // "") | tostring) != "" then {"x-padding-bytes": ($ds.xPaddingBytes | tostring)}
+                                       elif (($ds["x-padding-bytes"] // "") | tostring) != "" then {"x-padding-bytes": ($ds["x-padding-bytes"] | tostring)}
+                                       else {} end)
+                                    + (if $dxe.noSseHeader != null then {"no-sse-header": $dxe.noSseHeader}
+                                       elif $ds.noSseHeader != null then {"no-sse-header": $ds.noSseHeader}
+                                       elif $ds["no-sse-header"] != null then {"no-sse-header": $ds["no-sse-header"]}
+                                       else {} end)
+                                    + (if $dxe.xPaddingObfsMode != null then {"x-padding-obfs-mode": $dxe.xPaddingObfsMode}
+                                       elif $ds.xPaddingObfsMode != null then {"x-padding-obfs-mode": $ds.xPaddingObfsMode}
+                                       elif $ds["x-padding-obfs-mode"] != null then {"x-padding-obfs-mode": $ds["x-padding-obfs-mode"]}
                                        else {} end)
                                     + (if (($dxe.xPaddingKey // "") | tostring) != "" then {"x-padding-key": $dxe.xPaddingKey}
                                        elif (($ds.xPaddingKey // "") | tostring) != "" then {"x-padding-key": $ds.xPaddingKey}
@@ -507,25 +534,25 @@ parse_vless_url() {
                                        elif (($ds.uplinkDataKey // "") | tostring) != "" then {"uplink-data-key": $ds.uplinkDataKey}
                                        elif (($ds["uplink-data-key"] // "") | tostring) != "" then {"uplink-data-key": $ds["uplink-data-key"]}
                                        else {} end)
-                                    + (if (($dxe.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($dxe.uplinkChunkSize | tonumber)}
-                                       elif (($ds.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($ds.uplinkChunkSize | tonumber)}
-                                       elif (($ds["uplink-chunk-size"] // "") | tostring) != "" then {"uplink-chunk-size": ($ds["uplink-chunk-size"] | tonumber)}
+                                    + (if (($dxe.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($dxe.uplinkChunkSize | tostring)}
+                                       elif (($ds.uplinkChunkSize // "") | tostring) != "" then {"uplink-chunk-size": ($ds.uplinkChunkSize | tostring)}
+                                       elif (($ds["uplink-chunk-size"] // "") | tostring) != "" then {"uplink-chunk-size": ($ds["uplink-chunk-size"] | tostring)}
                                        else {} end)
-                                    + (if (($dxe.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($dxe.scMaxBufferedPosts | tonumber)}
-                                       elif (($ds.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($ds.scMaxBufferedPosts | tonumber)}
-                                       elif (($ds["sc-max-buffered-posts"] // "") | tostring) != "" then {"sc-max-buffered-posts": ($ds["sc-max-buffered-posts"] | tonumber)}
+                                    + (if (($dxe.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($dxe.scMaxBufferedPosts | tostring)}
+                                       elif (($ds.scMaxBufferedPosts // "") | tostring) != "" then {"sc-max-buffered-posts": ($ds.scMaxBufferedPosts | tostring)}
+                                       elif (($ds["sc-max-buffered-posts"] // "") | tostring) != "" then {"sc-max-buffered-posts": ($ds["sc-max-buffered-posts"] | tostring)}
                                        else {} end)
-                                    + (if (($dxe.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": $dxe.scStreamUpServerSecs}
-                                       elif (($ds.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": $ds.scStreamUpServerSecs}
-                                       elif (($ds["sc-stream-up-server-secs"] // "") | tostring) != "" then {"sc-stream-up-server-secs": $ds["sc-stream-up-server-secs"]}
+                                    + (if (($dxe.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": ($dxe.scStreamUpServerSecs | tostring)}
+                                       elif (($ds.scStreamUpServerSecs // "") | tostring) != "" then {"sc-stream-up-server-secs": ($ds.scStreamUpServerSecs | tostring)}
+                                       elif (($ds["sc-stream-up-server-secs"] // "") | tostring) != "" then {"sc-stream-up-server-secs": ($ds["sc-stream-up-server-secs"] | tostring)}
                                        else {} end)
-                                    + (if (($dxe.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $dxe.scMaxEachPostBytes}
-                                       elif (($ds.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds.scMaxEachPostBytes}
-                                       elif (($ds["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": $ds["sc-max-each-post-bytes"]}
+                                    + (if (($dxe.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": ($dxe.scMaxEachPostBytes | tostring)}
+                                       elif (($ds.scMaxEachPostBytes // "") | tostring) != "" then {"sc-max-each-post-bytes": ($ds.scMaxEachPostBytes | tostring)}
+                                       elif (($ds["sc-max-each-post-bytes"] // "") | tostring) != "" then {"sc-max-each-post-bytes": ($ds["sc-max-each-post-bytes"] | tostring)}
                                        else {} end)
-                                    + (if (($dxe.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $dxe.scMinPostsIntervalMs}
-                                       elif (($ds.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds.scMinPostsIntervalMs}
-                                       elif (($ds["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": $ds["sc-min-posts-interval-ms"]}
+                                    + (if (($dxe.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": ($dxe.scMinPostsIntervalMs | tostring)}
+                                       elif (($ds.scMinPostsIntervalMs // "") | tostring) != "" then {"sc-min-posts-interval-ms": ($ds.scMinPostsIntervalMs | tostring)}
+                                       elif (($ds["sc-min-posts-interval-ms"] // "") | tostring) != "" then {"sc-min-posts-interval-ms": ($ds["sc-min-posts-interval-ms"] | tostring)}
                                        else {} end)
                                 )}
                            else {} end)
