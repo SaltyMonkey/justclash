@@ -202,6 +202,10 @@ msgstr "Циклический перебор"
 msgid "Sticky sessions"
 msgstr "Липкие сессии"
 
+#: htdocs/luci-static/resources/view/justclash/common.js:136
+msgid "Least connections"
+msgstr "Наименьшее число соединений"
+
 #: htdocs/luci-static/resources/view/justclash/common.js:147 htdocs/luci-static/resources/view/justclash/common.js:152 htdocs/luci-static/resources/view/justclash/common.js:158 htdocs/luci-static/resources/view/justclash/common.js:194
 msgid "By rules"
 msgstr "По правилам"

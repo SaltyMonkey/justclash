@@ -202,6 +202,10 @@ msgstr "轮询"
 msgid "Sticky sessions"
 msgstr "粘性会话"
 
+#: htdocs/luci-static/resources/view/justclash/common.js:136
+msgid "Least connections"
+msgstr "最少连接"
+
 #: htdocs/luci-static/resources/view/justclash/common.js:147 htdocs/luci-static/resources/view/justclash/common.js:152 htdocs/luci-static/resources/view/justclash/common.js:158 htdocs/luci-static/resources/view/justclash/common.js:194
 msgid "By rules"
 msgstr "按规则"

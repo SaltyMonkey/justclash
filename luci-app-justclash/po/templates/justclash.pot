@@ -203,6 +203,10 @@ msgstr ""
 msgid "Sticky sessions"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/justclash/common.js:136
+msgid "Least connections"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/justclash/common.js:147 htdocs/luci-static/resources/view/justclash/common.js:152 htdocs/luci-static/resources/view/justclash/common.js:158 htdocs/luci-static/resources/view/justclash/common.js:194
 msgid "By rules"
 msgstr ""

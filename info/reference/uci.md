@@ -275,6 +275,17 @@ using the fields above. [Quick Start](../getting-started.md#3-add-an-outbound) s
 the LuCI fields for one path; [Multi-WAN](../guides/multiwan.md#direct-wan-outbounds)
 adds multiple paths and switching between them.
 
+### SOCKS5 with Local Destination Resolution
+
+In URI mode, use `socks5+resolve://<SOCKS_HOST>:<PORT>` to generate a SOCKS5
+outbound with `resolve-destination: true`. Mihomo resolves the TCP destination
+using its resolver and sends the resulting address in the SOCKS5 handshake.
+This requires a Mihomo build that supports `resolve-destination` for SOCKS5;
+the JustClash core patch `0013-add-socks5-resolve-destination` provides it.
+
+Authentication uses the same URI format as `socks5://`. The interface, mark,
+address-family, and chaining controls above also apply to this URI scheme.
+
 Connection links and JSON objects can contain credentials; keep their values
 out of shared configuration dumps.
 
@@ -366,6 +377,18 @@ for group rulesets as for outbound rulesets.
 
 For working failover and balancing examples, see
 [Multi-WAN and Failover](../guides/multiwan.md#build-a-group).
+
+### Load-Balance Strategies
+
+The `strategy` field accepts `consistent-hashing`, `round-robin`,
+`sticky-sessions`, and `least-connections`. LuCI defaults to `consistent-hashing`.
+
+With `least-connections`, each new TCP or UDP connection is assigned using the
+members' active and pending connection counts within that group. Repeated members
+receive proportionally larger shares, and selection rotates between equally
+loaded candidates. This strategy does not preserve session affinity or measure
+bandwidth or latency. It requires a core with the
+`0025-add-least-connections-load-balance` patch.
 
 ## Singleton Rule Sections
 
