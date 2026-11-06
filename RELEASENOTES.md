@@ -1,3 +1,43 @@
+## [0.121.0_rc2] - 06112026
+
+This release fixes XHTTP URI conversion and adds custom-core controls for local
+SOCKS5 destination resolution and least-connections load balancing.
+
+### XHTTP URI Parsing
+
+- Numeric values and string ranges are converted consistently for upload,
+  download, and XMUX reuse settings. Ranges such as `2048-4096` no longer abort
+  parsing of the outbound.
+- An explicit URI path takes precedence over `extra.path`, followed by `/`.
+  Query parameters within the path remain intact.
+- Download `xhttpSettings.extra.xmux` takes precedence over ordinary download
+  XMUX settings. Empty objects or settings without recognized values allow
+  fallback to the next available configuration.
+- Explicit `false` flags and zero reuse values are preserved. Download padding
+  and GRPC-header settings are now imported. Padding and `sc-*` defaults remain
+  the core's responsibility.
+
+### SOCKS5 and Load Balancing
+
+- Added `socks5+resolve://` in URI mode and LuCI validation. It generates a
+  SOCKS5 outbound with `resolve-destination: true`, allowing the custom core to
+  resolve TCP destinations before sending their addresses to the SOCKS5 server.
+  Authentication, interface binding, marks, address-family settings, and
+  connection chaining use the existing SOCKS5 controls.
+- Added **Least connections** (`least-connections`) to load-balance groups in
+  LuCI and UCI validation. The custom core distributes new TCP and UDP
+  connections using each member's active and pending connection counts.
+  Updated Russian and Simplified Chinese translations for the strategy.
+- Documented both features in the [UCI reference](info/reference/uci.md).
+
+### Upgrade Notes
+
+- Update JustClash and its LuCI package together, then reload LuCI. The new
+  SOCKS5 option and balancing strategy require a compatible custom core.
+- The `socks://` alias is no longer accepted. Replace that prefix with
+  `socks5://` in existing URI entries. Both official Hysteria 2 schemes,
+  `hy2://` and `hysteria2://`, remain supported.
+
 ## [0.121.0_rc1] - 04112026
 
 This release adds a Rule Providers page and kernel cache maintenance controls,
