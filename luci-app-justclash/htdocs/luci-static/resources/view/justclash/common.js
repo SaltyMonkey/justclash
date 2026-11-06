@@ -132,7 +132,8 @@ return baseclass.extend({
     defaultProxyGroupsBalanceModeStrategies: [
         { value: "consistent-hashing", text: _("Consistent hashing") },
         { value: "round-robin", text: _("Round robin") },
-        { value: "sticky-sessions", text: _("Sticky sessions") }
+        { value: "sticky-sessions", text: _("Sticky sessions") },
+        { value: "least-connections", text: _("Least connections") }
     ],
     // proxies.[*].ip-version
     defaultIPVersionValues: [
@@ -475,7 +476,7 @@ return baseclass.extend({
             "hysteria2://",
             "ss://",
             "socks5://",
-            "socks://",
+            "socks5+resolve://",
             "ssh://",
             "mierus://",
             "sudoku://"

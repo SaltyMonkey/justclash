@@ -278,7 +278,7 @@ validate_proxy_group_section() {
         'enabled:bool:1' \
         "name:$name_type" \
         'group_type:or("select","fallback","load-balance","url-test")' \
-        'strategy:or("consistent-hashing","round-robin","sticky-sessions")' \
+        'strategy:or("consistent-hashing","round-robin","sticky-sessions","least-connections")' \
         "proxies:list($name_type)" \
         "providers:list($name_type)" \
         "$@" \
