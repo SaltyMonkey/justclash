@@ -195,7 +195,7 @@ validate_proxy_provider_section() {
         'header_os_version_custom:string' \
         'header_device_model_custom:string' \
         'header_authorization:string' \
-        'header_user_agent:string' \
+        'header_user_agent:string:__mihomo__' \
         'age_private_key:regex("AGE-SECRET-KEY.*")' \
         'header_age_public_key:regex("age1.*")' \
         'health_check:bool:0' \
