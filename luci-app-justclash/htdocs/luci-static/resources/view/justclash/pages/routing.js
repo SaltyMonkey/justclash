@@ -557,7 +557,7 @@ return view.extend({
         };
 
         o = spp.taboption(tabname, form.Value, "header_user_agent", _("User agent header:"));
-        o.description = _("User-Agent header sent to the server with each proxy provider request. Select a preset or type your own. Choose \"Random\" to pick a different browser UA on every service start. Leave empty to use the global UA.");
+        o.description = _("User-Agent header sent to the server with each proxy provider request. Select a preset or type your own. Choose \"Random\" to pick a different browser UA on every service start. Empty values use the Mihomo preset.");
         o.editable = true;
         o.rmempty = true;
         o.modalonly = true;
