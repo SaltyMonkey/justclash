@@ -55,9 +55,74 @@ _dnsmasq_merge_servers() (
     printf '%s' "$merged"
 )
 
+_dnsmasq_default_servers() (
+    local servers="$1" server selectors selector scoped filtered=""
+    case "$servers" in
+    *\'*)
+        log error "Unsupported Dnsmasq list format; settings left unchanged." >&2
+        return 1
+        ;;
+    esac
+    set -f
+    for server in $servers; do
+        scoped=0
+        case "$server" in
+        /*/*)
+            scoped=1
+            selectors="${server%/*}"
+            selectors="${selectors#/}"
+            while :; do
+                selector="${selectors%%/*}"
+                case "$selector" in
+                '#' | '*' | '*.') scoped=0 ;;
+                .*)
+                    while [ "${selector#.}" != "$selector" ]; do selector="${selector#.}"; done
+                    [ -n "$selector" ] || scoped=0
+                    ;;
+                esac
+                [ "$scoped" = "1" ] || break
+                case "$selectors" in
+                */*) selectors="${selectors#*/}" ;;
+                *) break ;;
+                esac
+            done
+            ;;
+        esac
+        if [ "$scoped" = "0" ]; then
+            case " $filtered " in *" $server "*) continue ;; esac
+            filtered="${filtered:+${filtered} }${server}"
+        fi
+    done
+    printf '%s' "$filtered"
+)
+
+_dnsmasq_edit_servers() (
+    local key="$1" remove="$2" add="$3" current server
+    set -f
+    current=$(uci -q get "$key") || current=""
+    for server in $remove; do
+        case " $current " in
+        *" $server "*)
+            if [ "$current" = "$server" ]; then
+                _dnsmasq_delete_option "$key" || return 1
+            else
+                uci del_list "${key}=${server}" || return 1
+            fi
+            ;;
+        esac
+    done
+    current=$(uci -q get "$key") || current=""
+    for server in $add; do
+        case " $current " in *" $server "*) continue ;; esac
+        uci add_list "${key}=${server}" || return 1
+        current="${current:+${current} }${server}"
+    done
+    return 0
+)
+
 dnsmasq_update() {
     local apply_changes="$1" dns_listen_port="$2" prefix="$3"
-    local section="$DNSMASQ_UCI_SECTION" option value
+    local section="$DNSMASQ_UCI_SECTION" option value default_servers
     local upstream="127.0.0.1#${dns_listen_port}"
 
     dnsmasq_restore "$prefix" || return 1
@@ -71,6 +136,7 @@ dnsmasq_update() {
         return 1
         ;;
     esac
+    default_servers=$(_dnsmasq_default_servers "$value") || return 1
 
     for option in server noresolv cachesize; do
         if value=$(uci -q get "${section}.${option}"); then
@@ -86,7 +152,7 @@ dnsmasq_update() {
     uci set "${section}.${prefix}_applied=1" || return 1
     uci commit "$DNSMASQ_UCI_PACKAGE" || return 1
 
-    _dnsmasq_write_option "${section}.server" "$upstream" server || return 1
+    _dnsmasq_edit_servers "${section}.server" "$default_servers" "$upstream" || return 1
     uci set "${section}.cachesize=0" || return 1
     uci set "${section}.noresolv=1" || return 1
     uci commit "$DNSMASQ_UCI_PACKAGE" || return 1
@@ -96,8 +162,8 @@ dnsmasq_update() {
 
 # Restore what was applied, not what the next configuration happens to request.
 dnsmasq_restore() {
-    local prefix="$1" sections section applied upstream field
-    local option present original current current_present expected
+    local prefix="$1" sections section applied upstream
+    local option present original current current_present expected default_servers
     local merged_servers=""
     sections=$(uci -q -X show "$DNSMASQ_UCI_PACKAGE") || return 1
     sections=$(printf '%s\n' "$sections" | sed -n 's/^\(dhcp\.[A-Za-z0-9_]*\)=dnsmasq$/\1/p')
@@ -105,18 +171,9 @@ dnsmasq_restore() {
     for section in $sections; do
         applied=$(uci -q get "${section}.${prefix}_applied") || applied=""
         case "$applied" in
-        0) continue ;;
+        '' | 0) continue ;;
         1) ;;
-        *)
-            for field in state applied_server server noresolv cachesize server_present noresolv_present cachesize_present; do
-                if uci -q get "${section}.${prefix}_${field}" >/dev/null 2>&1; then
-                    log error "Legacy or incomplete Dnsmasq backup needs manual recovery; backup preserved."
-                    return 1
-                fi
-            done
-            [ -z "$applied" ] || return 1
-            continue
-            ;;
+        *) return 1 ;;
         esac
 
         upstream=$(uci -q get "${section}.${prefix}_applied_server") || return 1
@@ -134,7 +191,9 @@ dnsmasq_restore() {
             current_present=1
             current=$(uci -q get "${section}.${option}") || current_present=0
             if [ "$option" = "server" ]; then
-                # An added DNS server is not a reason to hold cleanup hostage.
+                # Deleted zone rules get no surprise resurrection from the snapshot.
+                original=$(_dnsmasq_default_servers "$original") || return 1
+                default_servers="$original"
                 merged_servers=$(_dnsmasq_merge_servers "$original" "$current" "$upstream") || return 1
                 continue
             fi
@@ -154,7 +213,10 @@ dnsmasq_restore() {
         for option in server noresolv cachesize; do
             present=$(uci -q get "${section}.${prefix}_${option}_present") || return 1
             if [ "$option" = "server" ]; then
-                if [ -n "$merged_servers" ] || [ "$present" = "1" ]; then
+                if [ -n "$merged_servers" ]; then
+                    # Zone rules stay put, even if an interrupted restore needs a retry.
+                    _dnsmasq_edit_servers "${section}.server" "$upstream" "$default_servers" || return 1
+                elif [ "$present" = "1" ]; then
                     _dnsmasq_write_option "${section}.server" "$merged_servers" server || return 1
                 else
                     _dnsmasq_delete_option "${section}.server" || return 1

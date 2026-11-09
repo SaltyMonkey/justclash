@@ -78,7 +78,7 @@ worth the storage use and flash writes.
 ## DNS Recovery
 
 JustClash keeps its DNS backup in the affected `dnsmasq` section of the `dhcp`
-UCI package, separately from the current JustClash settings. Existing
+UCI package, separately from the current JustClash settings. The
 `justclash_server`, `justclash_noresolv`, and `justclash_cachesize` backup fields
 are accompanied by `justclash_<option>_present` flags, `justclash_applied_server`,
 and `justclash_applied`. The last flag is set before modifying DNS, so a failed
@@ -86,20 +86,23 @@ apply can also be cleaned up. These are internal recovery fields, not settings
 to edit in LuCI.
 
 Cleanup uses this saved state even after DNS management is disabled or the
-listener port is changed. It restores an old configuration before applying a
-new one. After a successful commit and dnsmasq restart, it sets
+listener port is changed. It restores the previous active settings before
+applying new ones. After a successful commit and dnsmasq restart, it sets
 `justclash_applied=0`. The inactive snapshot remains until the next apply
-overwrites it. For `server`, cleanup removes the saved JustClash upstream,
-restores the original servers, and keeps manually added servers without
-duplicates. Original servers come first, followed by additional current entries.
-The package's one-time UCI migration restores complete backups from the previous
-format directly and then removes their legacy fields. It also removes stale legacy
-snapshots left after a clean stop. The next DNS apply creates a snapshot in the
-current format. Conflicting manual edits, incomplete backups, and unrecognized older
-formats remain untouched. Runtime recovery still rejects those ambiguous states and
-prevents a new DNS configuration from being applied. Quoted server lists (including
-UCI-quoted entries containing whitespace) are rejected rather than parsed as shell
-expressions.
+overwrites it.
+
+Startup changes only general and catch-all servers; rules for specific zones,
+local-only zones, and unqualified names remain in place. Cleanup removes the
+saved JustClash upstream and adds missing original general servers to the current list. Changes,
+additions, and deletions of zone rules made while JustClash is running are kept.
+Both operations edit list entries individually, so retrying an interrupted
+operation does not discard the untouched zone rules.
+
+Only snapshots created by a new service start are supported. Before upgrading
+from an older version, stop that version so it restores its DNS settings first.
+Conflicting manual edits and incomplete active snapshots remain untouched.
+Quoted server lists (including UCI-quoted entries containing whitespace) are
+rejected rather than parsed as shell expressions.
 
 The backup is persistent because the DNS changes themselves are committed to
 UCI. Do not delete recovery fields to silence an error: doing so loses the

@@ -19,6 +19,12 @@ It must be unused and must agree with dnsmasq forwarding. When JustClash manages
 dnsmasq, its saved state is restored on a clean stop; see
 [Configuration lifecycle](../concepts/configuration-lifecycle.md#dns-recovery).
 
+Existing dnsmasq `server` rules for specific zones, local-only zones, and
+unqualified names stay active. General DNS servers and catch-all forwarding
+rules are replaced by the Mihomo upstream. This keeps local or VPN DNS zones
+working without taking over the entire DNS setup manually. Those zone rules
+are handled by dnsmasq before Mihomo DNS and its Fake-IP rules.
+
 Client **DNS mode** is a firewall policy. `BY RULES` leaves ordinary client DNS
 under the routing policy, `DROP` blocks it, and `HIJACK` redirects eligible client
 TCP/UDP DNS requests to the router. This does not intercept HTTPS-based DNS in a
