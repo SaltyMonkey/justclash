@@ -39,6 +39,15 @@ const CidrList = RoutingList.extend({
     }
 });
 
+const destinationPortValidator = validation.create(null, "portrange", false);
+destinationPortValidator.assert = condition => !!condition;
+
+const DestinationPortList = RoutingList.extend({
+    validateEntry(value) {
+        return destinationPortValidator.apply("portrange", value) ? true : _("Invalid port or port range (0-65535).");
+    }
+});
+
 const configureRulesetChoices = (option, rulesets) => {
     rulesets.forEach((item) => {
         option.value(item.yamlName, item.type === "ipcidr" ? _("%s (no-resolve)").format(item.name) : item.name);
@@ -335,15 +344,15 @@ return view.extend({
         o.editable = true;
         o.modalonly = true;
 
-        o = s.taboption(tabname, form.DynamicList, "additional_udp_dst_port_route", _("UDP destination ports:"));
-        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
-        o.datatype = "and(port,min(1))";
+        o = s.taboption(tabname, DestinationPortList, "additional_udp_dst_port_route", _("UDP destination ports:"));
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.placeholder = "443\n10000-20000";
         o.optional = true;
         o.modalonly = true;
 
-        o = s.taboption(tabname, form.DynamicList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
-        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
-        o.datatype = "and(port,min(1))";
+        o = s.taboption(tabname, DestinationPortList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.placeholder = "443\n10000-20000";
         o.optional = true;
         o.modalonly = true;
 
@@ -980,15 +989,15 @@ return view.extend({
         o.editable = true;
         o.modalonly = true;
 
-        o = s2.taboption(tabname, form.DynamicList, "additional_udp_dst_port_route", _("UDP destination ports:"));
-        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
-        o.datatype = "and(port,min(1))";
+        o = s2.taboption(tabname, DestinationPortList, "additional_udp_dst_port_route", _("UDP destination ports:"));
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.placeholder = "443\n10000-20000";
         o.optional = true;
         o.modalonly = true;
 
-        o = s2.taboption(tabname, form.DynamicList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
-        o.description = _("Enter one destination port per item (1-65535). In Partial Interception, these entries do not capture additional traffic.");
-        o.datatype = "and(port,min(1))";
+        o = s2.taboption(tabname, DestinationPortList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.placeholder = "443\n10000-20000";
         o.optional = true;
         o.modalonly = true;
 

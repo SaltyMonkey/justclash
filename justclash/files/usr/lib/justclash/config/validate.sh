@@ -232,8 +232,8 @@ validate_proxies_section() {
         'size_limit:uinteger(10):10485760' \
         'enabled_geosite_list:list(string(1))' \
         'enabled_geoip_list:list(string(1))' \
-        'additional_udp_dst_port_route:list(and(port,min(1)))' \
-        'additional_tcp_dst_port_route:list(and(port,min(1)))' \
+        'additional_udp_dst_port_route:list(portrange)' \
+        'additional_tcp_dst_port_route:list(portrange)' \
         'additional_domain_route:list(string(1))' \
         'additional_destip_route:list(cidr)' \
         'additional_srcip_route:list(cidr)' || return 1
@@ -294,8 +294,8 @@ validate_proxy_group_section() {
         'size_limit:uinteger(10):10485760' \
         'enabled_geosite_list:list(string(1))' \
         'enabled_geoip_list:list(string(1))' \
-        'additional_udp_dst_port_route:list(and(port,min(1)))' \
-        'additional_tcp_dst_port_route:list(and(port,min(1)))' \
+        'additional_udp_dst_port_route:list(portrange)' \
+        'additional_tcp_dst_port_route:list(portrange)' \
         'additional_domain_route:list(string(1))' \
         'additional_destip_route:list(cidr)' \
         'additional_srcip_route:list(cidr)'
