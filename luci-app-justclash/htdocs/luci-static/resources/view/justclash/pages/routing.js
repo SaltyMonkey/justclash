@@ -562,7 +562,7 @@ return view.extend({
         o.rmempty = true;
         o.modalonly = true;
         common.defaultUaPresets.forEach(p => o.value(p.value, p.label));
-        o.default = "__justclash__";
+        o.default = "__mihomo__";
         o.validate = function (section_id, value) {
             if (!value || value.trim() === "") {
                 return true;

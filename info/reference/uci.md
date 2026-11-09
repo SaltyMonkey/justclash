@@ -329,8 +329,8 @@ It defaults to `0`. When enabled, the generated provider `override` contains an
 `override-expr` JSON array that sets `reality-opts.support-x25519mlkem768` to
 `true` only on nodes that already have `reality-opts`. Other nodes are unchanged.
 
-LuCI defaults to `header_hwid=real` and `header_user_agent=__justclash__`, which
-sends `JustClash/<installed-version>`. On upgrade, empty or unset `header_hwid`
+LuCI defaults to `header_hwid=real` and `header_user_agent=__mihomo__`, which
+sends `Mihomo/<core-version>`. On upgrade, empty or unset `header_hwid`
 options in existing providers become `-`, preserving disabled identity headers.
 Select **Disable** to save `header_hwid=-`. Outside this migration, the UI
 defaults also apply when editing sections without the corresponding option.
