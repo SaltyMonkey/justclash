@@ -164,7 +164,7 @@ LuCI offers repositories for the slim kernel version and upstream Mihomo as edit
 | --- | --- | --- |
 | `unified_delay` | Boolean | Use unified delay calculation |
 | `tcp_concurrent` | Boolean | Enable concurrent TCP connection attempts |
-| `global_ua` | String | Global HTTP user agent |
+| `global_ua` | String | Global HTTP user agent; missing or empty values default to `__random__` |
 | `etag_support` | Boolean | Enable provider ETag handling |
 | `keep_alive_idle` | Unsigned integer | TCP keep-alive idle interval |
 | `keep_alive_interval` | Unsigned integer | TCP keep-alive probe interval |
@@ -252,7 +252,7 @@ provide a Mihomo outbound object in `proxy_link_object`.
 | `use_proxy_for_list_update` | Whether to download those rulesets through this outbound |
 | `list_update_interval`, `size_limit` | Ruleset update interval and download size limit |
 | `additional_domain_route`, `enabled_geosite_list` | Additional domain and Geosite matches |
-| `additional_udp_dst_port_route`, `additional_tcp_dst_port_route` | Lists of individual destination ports (`1–65535`); match the selected protocol and port independently of domain rules; do not add Partial Interception |
+| `additional_udp_dst_port_route`, `additional_tcp_dst_port_route` | Lists of destination ports or inclusive ranges (`0–65535`, e.g. `443` or `10000-20000`), one entry per line in LuCI; match the selected protocol and port independently of domain rules; do not add Partial Interception |
 | `additional_destip_route`, `enabled_geoip_list` | Destination-address and GeoIP matches |
 | `additional_srcip_route` | Source-address matches |
 
@@ -329,8 +329,10 @@ It defaults to `0`. When enabled, the generated provider `override` contains an
 `override-expr` JSON array that sets `reality-opts.support-x25519mlkem768` to
 `true` only on nodes that already have `reality-opts`. Other nodes are unchanged.
 
-LuCI defaults to `header_hwid=real` and `header_user_agent=__mihomo__`, which
-sends `Mihomo/<core-version>`. On upgrade, empty or unset `header_hwid`
+LuCI defaults to `header_hwid=real`. Both LuCI and UCI validation default
+`header_user_agent` to `__mihomo__`, which sends `Mihomo/<core-version>`.
+Missing or empty provider User-Agent values use this preset; explicitly set
+values are preserved. On upgrade, empty or unset `header_hwid`
 options in existing providers become `-`, preserving disabled identity headers.
 Select **Disable** to save `header_hwid=-`. Outside this migration, the UI
 defaults also apply when editing sections without the corresponding option.

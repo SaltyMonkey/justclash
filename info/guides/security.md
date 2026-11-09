@@ -114,8 +114,8 @@ client setup, and listener security.
 
 JustClash can set a global User-Agent for downloads and a separate override for each proxy provider:
 
-- **Setup: Proxy → Basic settings → User-Agent for downloads** controls `global_ua` for external downloads such as subscriptions and rule lists.
-- **Setup: Routing → Proxy providers → Security → User agent header** controls `header_user_agent` for one provider. An empty provider value inherits the global behavior.
+- **Setup: Proxy → Basic settings → User-Agent for downloads** controls `global_ua` for external downloads such as subscriptions and rule lists. Missing or empty values default to `__random__`.
+- **Setup: Routing → Proxy providers → Security → User agent header** controls `header_user_agent` for one provider. Missing or empty values use the Mihomo preset (`Mihomo/<core-version>`).
 
 The fields accept a literal User-Agent or one of these special values:
 
@@ -126,7 +126,7 @@ The fields accept a literal User-Agent or one of these special values:
 | `__mihomo__` | `Mihomo/<core-version>` | The provider expects or records a Mihomo client identity |
 | Literal text | The exact configured value | The provider documents a required User-Agent |
 
-New providers in LuCI default to `__justclash__`. Random browser identities come
+New providers in LuCI default to `__mihomo__`. Random browser identities come
 from a bundled desktop User-Agent snapshot, updated with the package; choosing
 `__random__` does not download a list at runtime.
 
