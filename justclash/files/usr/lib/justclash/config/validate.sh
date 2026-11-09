@@ -135,6 +135,7 @@ validate_proxy_section() {
         "sniffer_enable:$CONFIG_FLAG_TYPE:0" \
         "sniffer_parse_pure_ip:$CONFIG_FLAG_TYPE:0" \
         "sniffer_override_destination:$CONFIG_FLAG_TYPE:0" \
+        'global_ua:string:__random__' \
         "keep_alive_idle:uinteger(10):$DEFAULT_KEEP_ALIVE_IDLE" \
         "keep_alive_interval:uinteger(10):$DEFAULT_KEEP_ALIVE_INTERVAL" \
         "core_ntp_interval:uinteger(10):$DEFAULT_CORE_NTP_INTERVAL" \
