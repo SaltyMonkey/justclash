@@ -222,6 +222,7 @@ start() {
     preflight_check_conflicts_warn \
         "$RESOLVCONF_FILEPATH" \
         "$ZAPRETINITD_FILEPATH" \
+        "$ZAPRET2INITD_FILEPATH" \
         "$BYEDPI_FILEPATH" \
         "$YOUTUBEUNBLOCK_FILEPATH" \
         "$B4_FILEPATH"
@@ -1379,6 +1380,27 @@ run_check_dns_proxy() {
     check_dns_proxy "$target" "$dns_listen_port" "$NSLOOKUP_TIMEOUT"
 }
 
+check_report_dpi() {
+    local status
+    set -- \
+        Zapret "$ZAPRETINITD_FILEPATH" \
+        Zapret2 "$ZAPRET2INITD_FILEPATH" \
+        ByeDPI "$BYEDPI_FILEPATH" \
+        YoutubeUnblock "$YOUTUBEUNBLOCK_FILEPATH" \
+        B4 "$B4_FILEPATH"
+
+    echo "  [ DPI Applications ]"
+    while [ "$#" -gt 0 ]; do
+        if [ -f "$2" ]; then
+            status="Installed"
+        else
+            status="Not installed"
+        fi
+        printf "  %-15s :: %s\n" "$1" "$status"
+        shift 2
+    done
+}
+
 check_report_full() {
     local running_status autoload_status hw_model os_ver arch kernel
 
@@ -1389,16 +1411,6 @@ check_report_full() {
     hw_model=$(sysinfo_get_hw_model)
     arch=$(sysinfo_get_os_arch)
     kernel=$(uname -r)
-
-    print_dpi_status() {
-        local name="$1"
-        local filepath="$2"
-        if [ -f "$filepath" ]; then
-            printf "  %-15s :: Installed\n" "$name"
-        else
-            printf "  %-15s :: Not installed\n" "$name"
-        fi
-    }
 
     echo ""
     echo "-- JustClash Diagnostic Report ---------------------------------"
@@ -1420,11 +1432,7 @@ check_report_full() {
     echo ""
     check_report_connectivity
     echo ""
-    echo "  [ DPI Applications ]"
-    print_dpi_status "Zapret" "$ZAPRETINITD_FILEPATH"
-    print_dpi_status "ByeDPI" "$BYEDPI_FILEPATH"
-    print_dpi_status "YoutubeUnblock" "$YOUTUBEUNBLOCK_FILEPATH"
-    print_dpi_status "B4" "$B4_FILEPATH"
+    check_report_dpi
     echo ""
     echo "  [ NFT Tables ]"
     check_nft "$NF_TABLE_NAME" --unsafe | sed 's/^/    /'
@@ -1486,6 +1494,8 @@ check_report_safe() {
     check_report_dnsmasq
     echo ""
     check_report_connectivity
+    echo ""
+    check_report_dpi
     echo ""
     echo "  Configuration, private network details, identifiers and raw network"
     echo "  state are intentionally omitted from this report."

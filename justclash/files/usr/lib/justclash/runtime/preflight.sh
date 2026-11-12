@@ -110,9 +110,10 @@ preflight_check_requirement() {
 preflight_check_conflicts_warn() {
     local resolvconf_path="$1"
     local zapret_path="$2"
-    local byedpi_path="$3"
-    local youtube_unblock_path="$4"
-    local b4_path="$5"
+    local zapret2_path="$3"
+    local byedpi_path="$4"
+    local youtube_unblock_path="$5"
+    local b4_path="$6"
     local resolvconf_res
     local service_path detected_services service_name
 
@@ -126,7 +127,7 @@ preflight_check_conflicts_warn() {
 
     # Check for potentially conflicting services
     detected_services=""
-    for service_path in "$zapret_path" "$byedpi_path" "$youtube_unblock_path" "$b4_path"; do
+    for service_path in "$zapret_path" "$zapret2_path" "$byedpi_path" "$youtube_unblock_path" "$b4_path"; do
         if [ -f "$service_path" ]; then
             service_name="${service_path##*/}"
             detected_services="${detected_services:+$detected_services, }$service_name"
