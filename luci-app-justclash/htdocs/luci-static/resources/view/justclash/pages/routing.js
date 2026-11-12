@@ -215,7 +215,7 @@ return view.extend({
         o.description = _("URI link with connection parameters.");
         //o.password = true;
         o.optional = true;
-        o.placeholder = "vless://uuid@server:port?type=grpc&security=reality";
+        o.placeholder = _("Example: %s").format("vless://uuid@server:port?type=grpc&security=reality");
         o.validate = function (section_id, value) {
             return (common.isValidProxyLink(value));
         };
@@ -225,7 +225,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "dialer_proxy", _("Connect through:"));
         o.description = _("Route this proxy through the specified proxy server. Leave empty to use default connection settings.");
         o.optional = true;
-        o.placeholder = "proxyname_";
+        o.placeholder = _("Example: %s").format("proxyname_");
         o.validate = function (section_id, value) {
             if (value === "" || value === undefined || value === null) {
                 return true;
@@ -261,7 +261,7 @@ return view.extend({
             _("Example: 0x10000000 (268435456) for zapret2 with FILTER_MARK=0x10000000 enabled.");
         o.optional = true;
         o.rmempty = true;
-        o.placeholder = "268435456";
+        o.placeholder = _("Example: %s").format("268435456");
         o.depends("mode", "uri");
         o.validate = function (section_id, value) {
             return common.validateRoutingMark(value);
@@ -328,31 +328,31 @@ return view.extend({
         o = s.taboption(tabname, DomainSuffixList, "additional_domain_route", _("Domain suffix:"));
         o.description = _("Traffic to domains matching this suffix will go through this proxy (example: google.com).") + " " + _("Enter one suffix per line.");
         o.optional = true;
-        o.placeholder = "domain.tld";
+        o.placeholder = _("Example: %s").format("domain.tld");
         o.modalonly = true;
 
         o = s.taboption(tabname, CidrList, "additional_destip_route", _("IP CIDR:"));
         o.description = _("Traffic to this destination IP address or subnet will go through this proxy.") + " " + _("Enter one CIDR per line.");
-        o.placeholder = "203.0.113.0/24";
+        o.placeholder = _("Example: %s").format("203.0.113.0/24");
         o.optional = true;
         o.modalonly = true;
 
         o = s.taboption(tabname, CidrList, "additional_srcip_route", _("Source IP CIDR:"));
         o.description = _("Traffic from this local IP address or subnet will go through this proxy.") + " " + _("Enter one CIDR per line.");
-        o.placeholder = "192.0.2.10/32";
+        o.placeholder = _("Example: %s").format("192.0.2.10/32");
         o.optional = true;
         o.editable = true;
         o.modalonly = true;
 
         o = s.taboption(tabname, DestinationPortList, "additional_udp_dst_port_route", _("UDP destination ports:"));
         o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
-        o.placeholder = "443\n10000-20000";
+        o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
 
         o = s.taboption(tabname, DestinationPortList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
         o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
-        o.placeholder = "443\n10000-20000";
+        o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
 
@@ -417,7 +417,7 @@ return view.extend({
         };
 
         o = spp.taboption(tabname, form.Value, "subscription", _("Subscription URL:"));
-        o.placeholder = "https://yourSubscriptionUrl";
+        o.placeholder = _("Example: %s").format("https://yourSubscriptionUrl");
         o.rmempty = false;
         o.validate = function (section_id, value) {
             return common.validateHttpUrl(value);
@@ -442,7 +442,7 @@ return view.extend({
         o = spp.taboption(proxyProviderOverrideTab, form.Value, "override_dialer_proxy", _("Connect through:"));
         o.description = _("Apply this dialer-proxy to nodes loaded from this provider. Leave empty to preserve each node's connection settings.");
         o.optional = true;
-        o.placeholder = "proxyname_";
+        o.placeholder = _("Example: %s").format("proxyname_");
         o.validate = function (section_id, value) {
             if (value === "" || value === undefined || value === null) {
                 return true;
@@ -466,7 +466,7 @@ return view.extend({
             _("Example: 0x10000000 (268435456) for zapret2 with FILTER_MARK=0x10000000 enabled.");
         o.optional = true;
         o.rmempty = true;
-        o.placeholder = "268435456";
+        o.placeholder = _("Example: %s").format("268435456");
         o.validate = function (section_id, value) {
             return common.validateRoutingMark(value);
         };
@@ -679,7 +679,7 @@ return view.extend({
         o.description = _("Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe).");
         o.optional = true;
         o.rmempty = true;
-        o.placeholder = "HK|US|(?i)Netflix";
+        o.placeholder = _("Example: %s").format("HK|US|(?i)Netflix");
         o.validate = function (section_id, value) {
             return common.isValidKeywordOrRegexList(value);
         };
@@ -689,7 +689,7 @@ return view.extend({
         o.description = _("Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe).");
         o.optional = true;
         o.rmempty = true;
-        o.placeholder = "CN|(?i)douyin";
+        o.placeholder = _("Example: %s").format("CN|(?i)douyin");
         o.validate = function (section_id, value) {
             return common.isValidKeywordOrRegexList(value);
         };
@@ -697,7 +697,7 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
         o.description = _("Exclude nodes by proxy type.");
-        o.placeholder = "vless|vmess|ss|mieru";
+        o.placeholder = _("Example: %s").format("vless|vmess|ss|mieru");
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
@@ -762,7 +762,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.DynamicList, "proxies", _("Proxies:"));
         o.description = _("List proxy entries that belong to this group.");
-        o.placeholder = "proxy-name";
+        o.placeholder = _("Example: %s").format("proxy-name");
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -774,7 +774,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.DynamicList, "providers", _("Providers:"));
         o.description = _("List proxy providers whose nodes should be included in this group.");
-        o.placeholder = "provider-name";
+        o.placeholder = _("Example: %s").format("provider-name");
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
@@ -865,7 +865,7 @@ return view.extend({
             o.value(item.value, item.text);
         });
         o.default = common.defaultMaxFailedTimes[4].value;
-        o.placeholder = common.defaultMaxFailedTimes[4].value;
+        o.placeholder = _("Example: %s").format(common.defaultMaxFailedTimes[4].value);
         o.description = _("How many failed health checks are allowed before the node is treated as unavailable.");
         o.validate = function (section_id, value) {
             return common.validateIntegerRange(value, 1, 100);
@@ -885,7 +885,7 @@ return view.extend({
         o.description = _("Filter nodes that contain keywords or match regular expressions. Multiple patterns can be separated with | (pipe).");
         o.optional = true;
         o.rmempty = true;
-        o.placeholder = "HK|US|(?i)Netflix";
+        o.placeholder = _("Example: %s").format("HK|US|(?i)Netflix");
         o.validate = function (section_id, value) {
             return common.isValidKeywordOrRegexList(value);
         };
@@ -895,7 +895,7 @@ return view.extend({
         o.description = _("Exclude nodes that match keywords or regular expressions. Multiple patterns can be separated with | (pipe).");
         o.optional = true;
         o.rmempty = true;
-        o.placeholder = "CN|(?i)douyin";
+        o.placeholder = _("Example: %s").format("CN|(?i)douyin");
         o.validate = function (section_id, value) {
             return common.isValidKeywordOrRegexList(value);
         };
@@ -903,7 +903,7 @@ return view.extend({
 
         o = s2.taboption(tabname, form.Value, "exclude_type", _("Exclude type:"));
         o.description = _("Exclude nodes by proxy type.");
-        o.placeholder = "vless|vmess|ss|mieru";
+        o.placeholder = _("Example: %s").format("vless|vmess|ss|mieru");
         o.optional = true;
         o.rmempty = true;
         o.validate = function (section_id, value) {
@@ -971,33 +971,33 @@ return view.extend({
         o = s2.taboption(tabname, DomainSuffixList, "additional_domain_route", _("Domain suffix:"));
         o.description = _("Traffic to domains matching this suffix will go through the selected proxy group (example: google.com).") + " " + _("Enter one suffix per line.");
         o.optional = true;
-        o.placeholder = "domain.tld";
+        o.placeholder = _("Example: %s").format("domain.tld");
         o.editable = true;
         o.modalonly = true;
 
         o = s2.taboption(tabname, CidrList, "additional_destip_route", _("IP CIDR:"));
         o.description = _("Traffic to this destination IP address or subnet will go through the selected proxy group.") + " " + _("Enter one CIDR per line.");
-        o.placeholder = "203.0.113.0/24";
+        o.placeholder = _("Example: %s").format("203.0.113.0/24");
         o.optional = true;
         o.editable = true;
         o.modalonly = true;
 
         o = s2.taboption(tabname, CidrList, "additional_srcip_route", _("Source IP CIDR:"));
         o.description = _("Traffic from this local IP address or subnet will go through the selected proxy group.") + " " + _("Enter one CIDR per line.");
-        o.placeholder = "192.0.2.10/32";
+        o.placeholder = _("Example: %s").format("192.0.2.10/32");
         o.optional = true;
         o.editable = true;
         o.modalonly = true;
 
         o = s2.taboption(tabname, DestinationPortList, "additional_udp_dst_port_route", _("UDP destination ports:"));
         o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
-        o.placeholder = "443\n10000-20000";
+        o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
 
         o = s2.taboption(tabname, DestinationPortList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
         o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
-        o.placeholder = "443\n10000-20000";
+        o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
 
@@ -1085,13 +1085,13 @@ return view.extend({
         o = s4.taboption(tabname, DomainSuffixList, "additional_domain_blockroute", _("Domain suffix:"));
         o.description = _("Traffic to domains matching this suffix will be blocked (example: google.com).") + " " + _("Enter one suffix per line.");
         o.optional = true;
-        o.placeholder = "domain.tld";
+        o.placeholder = _("Example: %s").format("domain.tld");
         o.editable = true;
         o.modalonly = true;
 
         o = s4.taboption(tabname, form.DynamicList, "additional_destip_blockroute", _("IPv4 CIDR:"));
         o.description = _("Traffic to this IPv4 address or subnet will be blocked (example: 1.1.1.1/32).");
-        o.placeholder = "8.8.8.8/32";
+        o.placeholder = _("Example: %s").format("8.8.8.8/32");
         o.optional = true;
         o.editable = true;
         o.datatype = datatypes.CIDR4;

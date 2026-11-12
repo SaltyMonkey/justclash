@@ -62,7 +62,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "dns_listen_port", _("DNS listen port:"));
         o.description = _("Port where Mihomo built-in DNS server listens.");
         o.datatype = datatypes.PORT;
-        o.placeholder = "7894";
+        o.placeholder = _("Example: %s").format("7894");
         o.default = "7894";
         o.rmempty = false;
 

@@ -111,7 +111,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "nft_skuid_exclude_router", _("Router socket owner exclusions:"));
         o.description = _("User names or numeric UIDs for router-originated sockets that should bypass proxy redirection rules. Useful for services like byedpi or https-dns-proxy that must reach the internet directly.");
-        o.placeholder = "byedpi";
+        o.placeholder = _("Example: %s").format("byedpi");
         o.rmempty = true;
         o.retain = true;
         o.depends("nft_apply_changes", primitives.TRUE);
@@ -121,7 +121,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "nft_ports_exclude_router", _("Router bypassed ports:"));
         o.description = _("Ports (destination or source, e.g., 22 or 80) for router traffic to bypass the proxy.");
-        o.placeholder = "22";
+        o.placeholder = _("Example: %s").format("22");
         o.rmempty = true;
         o.retain = true;
         o.datatype = datatypes.PORT;
@@ -141,7 +141,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "nft_ports_exclude", _("Client bypassed ports:"));
         o.description = _("Ports (destination or source, e.g., 22 or 80) for client traffic to bypass the proxy.");
-        o.placeholder = "22";
+        o.placeholder = _("Example: %s").format("22");
         o.rmempty = true;
         o.retain = true;
         o.datatype = datatypes.PORT;
@@ -149,7 +149,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "nft_mac_exclude", _("Client bypassed MAC addresses:"));
         o.description = _("MAC addresses of clients that should bypass the proxy.");
-        o.placeholder = "00:11:22:33:44:55";
+        o.placeholder = _("Example: %s").format("00:11:22:33:44:55");
         o.rmempty = true;
         o.retain = true;
         o.datatype = datatypes.MACADDR;
@@ -157,7 +157,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.DynamicList, "nft_ips_exclude", _("Client bypassed IP addresses:"));
         o.description = _("IP addresses or subnets (CIDR) of clients that should bypass the proxy.");
-        o.placeholder = "192.168.1.100";
+        o.placeholder = _("Example: %s").format("192.168.1.100");
         o.rmempty = true;
         o.retain = true;
         o.datatype = datatypes.IP4ADDR_OR_CIDR4;
@@ -242,7 +242,7 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_autorestart_string", _("Restart schedule:"));
-        o.placeholder = "0 5 * * 0";
+        o.placeholder = _("Example: %s").format("0 5 * * 0");
         o.default = "0 5 * * 0";
         o.rmempty = false;
         o.retain = true;
@@ -258,7 +258,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_service_data_update_string", _("Update schedule:"));
-        o.placeholder = "0 4 * * 0";
+        o.placeholder = _("Example: %s").format("0 4 * * 0");
         o.default = "0 4 * * 0";
         o.rmempty = false;
         o.retain = true;
@@ -274,7 +274,7 @@ return view.extend({
         o.default = primitives.FALSE;
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_scheduled_work_start_string", _("Start schedule:"));
-        o.placeholder = "0 5 * * *";
+        o.placeholder = _("Example: %s").format("0 5 * * *");
         o.default = "0 5 * * *";
         o.rmempty = false;
         o.retain = true;
@@ -285,7 +285,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.Value, "mihomo_cron_scheduled_work_stop_string", _("Stop schedule:"));
-        o.placeholder = "0 23 * * *";
+        o.placeholder = _("Example: %s").format("0 23 * * *");
         o.default = "0 23 * * *";
         o.rmempty = false;
         o.retain = true;
@@ -310,7 +310,7 @@ return view.extend({
         o.value("SaltyMonkey/justclash-core-slim");
         o.value("MetaCubeX/mihomo");
         o.description = _("GitHub repository for Mihomo core updates. Must be in the format 'username/repo'. Example: 'MetaCubeX/mihomo'.");
-        o.placeholder = "MetaCubeX/mihomo";
+        o.placeholder = _("Example: %s").format("MetaCubeX/mihomo");
         o.default = "SaltyMonkey/justclash-core-slim";
         o.depends("mihomo_core_source_type", "github");
         o.rmempty = false;
@@ -328,7 +328,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_custom_core_url", _("Custom core base URL:"));
         o.description = _("Base HTTPS URL of the server hosting the core files. The server MUST contain 'version.txt', the corresponding 'mihomo-linux-arch-version.gz' archives, and 'checksums.txt' with SHA-256 hashes and archive filenames in sha256sum format.");
-        o.placeholder = "https://example.com/mihomo";
+        o.placeholder = _("Example: %s").format("https://example.com/mihomo");
         o.depends("mihomo_core_source_type", "custom");
         o.rmempty = true;
         o.retain = true;
@@ -338,7 +338,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_rulesets_files_download_url", _("Rulesets download URL:"));
         o.description = _("HTTPS URL to download built-in rulesets from. Leave empty to use the default.");
-        o.placeholder = "https://...";
+        o.placeholder = _("Example: %s").format("https://...");
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpsUrl(value);
@@ -346,7 +346,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_geosite_url", _("Geosite download URL:"));
         o.description = _("HTTPS URL to download geosite.dat from. Leave empty to use the default.");
-        o.placeholder = "https://...";
+        o.placeholder = _("Example: %s").format("https://...");
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpsUrl(value);
@@ -354,7 +354,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_geoip_url", _("GeoIP download URL:"));
         o.description = _("HTTPS URL to download geoip.dat from. Leave empty to use the default.");
-        o.placeholder = "https://...";
+        o.placeholder = _("Example: %s").format("https://...");
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpsUrl(value);
@@ -362,7 +362,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_zashboard_url", _("Zashboard download URL:"));
         o.description = _("HTTPS URL to download Zashboard dashboard from. Leave empty to use the default.");
-        o.placeholder = "https://...";
+        o.placeholder = _("Example: %s").format("https://...");
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpsZipUrl(value);
@@ -370,7 +370,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_metacubexd_url", _("MetaCubeXD download URL:"));
         o.description = _("HTTPS URL to download the MetaCubeXD dashboard from. Leave empty to use the default.");
-        o.placeholder = "https://...";
+        o.placeholder = _("Example: %s").format("https://...");
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpsZipUrl(value);
@@ -378,7 +378,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "mihomo_dashboard_yacd_meta_url", _("YACD-meta download URL:"));
         o.description = _("HTTPS URL to download YACD-meta dashboard from. Leave empty to use the default.");
-        o.placeholder = "https://...";
+        o.placeholder = _("Example: %s").format("https://...");
         o.rmempty = true;
         o.validate = function (section_id, value) {
             return common.validateHttpsZipUrl(value);
@@ -402,7 +402,7 @@ return view.extend({
         });
         o.description = _("Set the Go garbage collector target percentage. Lower values (e.g., 25 or 50) reduce RAM usage but increase CPU load. Select 0 for default (100).");
         o.datatype = datatypes.UINTEGER;
-        o.placeholder = "100";
+        o.placeholder = _("Example: %s").format("100");
         o.rmempty = false;
         o.default = "50";
 

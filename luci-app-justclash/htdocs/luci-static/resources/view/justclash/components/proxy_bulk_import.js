@@ -12,7 +12,7 @@ const create = ({ map, configName, replaceForm, notificationTimeout }) => {
             rows: BULK_IMPORT_ROWS,
             spellcheck: "false",
             style: "box-sizing:border-box;width:100%;min-height:18rem;font-family:ui-monospace,monospace;",
-            placeholder: "[\n  { ... }\n]"
+            placeholder: _("Example: %s").format("[\n  { ... }\n]")
         });
         const errorNode = E("div", {
             class: "alert-message error",

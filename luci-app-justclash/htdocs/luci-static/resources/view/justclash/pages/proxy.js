@@ -41,7 +41,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "tproxy_port", _("Transparent proxy port:"));
         o.description = _("Port used for redirected TCP/UDP traffic. Change it only if this port is already used by another service.");
         o.datatype = datatypes.PORT;
-        o.placeholder = "7893";
+        o.placeholder = _("Example: %s").format("7893");
         o.default = "7893";
         o.rmempty = false;
 
@@ -56,7 +56,7 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "global_ua", _("User-Agent for downloads:"));
-        o.placeholder = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...";
+        o.placeholder = _("Example: %s").format("Mozilla/5.0 (Windows NT 10.0; Win64; x64)...");
         o.description = _("User-Agent sent when downloading external files such as subscriptions or rule lists. Select a preset or type your own. Choose \"Random\" to pick a different browser UA on every service start.");
         o.default = common.defaultUaPresets[0].value;
         o.rmempty = false;
@@ -76,7 +76,7 @@ return view.extend({
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "keep_alive_idle", _("Idle time before connection check:"));
-        o.placeholder = "15";
+        o.placeholder = _("Example: %s").format("15");
         o.description = _("How long to wait with no activity before checking whether the connection is still alive, in seconds. Presets show the equivalent duration in parentheses. Shorter values detect dead connections sooner.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
@@ -89,7 +89,7 @@ return view.extend({
         };
 
         o = s.taboption(tabname, form.Value, "keep_alive_interval", _("Connection check interval:"));
-        o.placeholder = "15";
+        o.placeholder = _("Example: %s").format("15");
         o.description = _("How often to repeat that check after the connection becomes idle, in seconds. Presets show the equivalent duration in parentheses.");
         o.datatype = datatypes.UINTEGER;
         o.rmempty = false;
@@ -185,7 +185,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "api_tls_cert", _("API TLS certificate path"));
         o.description = _("Path to the PEM-encoded SSL/TLS certificate file.");
-        o.placeholder = "/etc/justclash/api-cert.pem";
+        o.placeholder = _("Example: %s").format("/etc/justclash/api-cert.pem");
         o.default = "/etc/justclash/api-cert.pem";
         o.rmempty = false;
         o.retain = true;
@@ -193,7 +193,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "api_tls_key", _("API TLS key path"));
         o.description = _("Path to the PEM-encoded SSL/TLS private key file.");
-        o.placeholder = "/etc/justclash/api-key.pem";
+        o.placeholder = _("Example: %s").format("/etc/justclash/api-key.pem");
         o.default = "/etc/justclash/api-key.pem";
         o.rmempty = false;
         o.retain = true;
@@ -212,7 +212,7 @@ return view.extend({
         o.depends("use_mixed_port", primitives.TRUE);
         o.retain = true;
         o.datatype = datatypes.PORT;
-        o.placeholder = "7892";
+        o.placeholder = _("Example: %s").format("7892");
         o.default = "7892";
         o.rmempty = false;
 
@@ -235,7 +235,7 @@ return view.extend({
         o = s.taboption(tabname, form.DynamicList, "proxy_authentication", _("Mixed port authentication:"));
         o.description = _("Require username and password for access to the Mihomo mixed port. Add one entry per line in the format user:pass.");
         o.depends("use_mixed_port", primitives.TRUE);
-        o.placeholder = "user1:pass1";
+        o.placeholder = _("Example: %s").format("user1:pass1");
         o.optional = true;
         o.editable = true;
         o.validate = function (section_id, value) {
