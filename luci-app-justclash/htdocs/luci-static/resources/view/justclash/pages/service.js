@@ -164,14 +164,14 @@ return view.extend({
         o.depends("nft_apply_changes", primitives.TRUE);
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
-        o.description = _("Choose how to handle QUIC traffic from devices on the selected client traffic interfaces. The selected mode decides whether this traffic is redirected or blocked.");
-        o.depends("nft_apply_changes", primitives.TRUE);
+        o.description = _("By rules follows Mihomo routing. Drop blocks client UDP ports 443 and 8443 in nftables when Create nftables is enabled. Block in core rejects these ports before other Mihomo rules for all traffic reaching the core, including Mixed Port, and works independently of Create nftables.");
         o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
+        o.value("BLOCK IN CORE", _("Block in core"));
 
         o = s.taboption(tabname, form.ListValue, "nft_dns_mode", _("Client DNS traffic:"));
         o.description = _("Choose how to handle external DNS requests from clients. Hijack redirects TCP and UDP port 53 to the router DNS service. Drop blocks these requests; local destinations and bypassed clients remain unchanged.");

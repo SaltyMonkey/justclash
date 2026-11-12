@@ -759,7 +759,7 @@ core_generate_yaml() {
         OUT_BUNDLE_NAMES="" OUT_BUNDLE_FAKEIPRULES="" \
         GLOBAL_FAKE_IP_EXCLUDE_RULES="" GLOBAL_FAKE_IP_EXCLUDE_GEOSITES="" \
         GLOBAL_FAKE_IP_EXCLUDE_DOMAINS=""
-    local ipv6_enabled
+    local ipv6_enabled nft_quic_mode
     local use_dashboard dashboard_repo dashboard_url
     local api_password log_level api_tls api_tls_cert api_tls_key interface_name
     local tproxy_port use_mixed_port mixed_port unified_delay tcp_concurrent
@@ -784,7 +784,7 @@ core_generate_yaml() {
     local fake_ip_filter_data
 
     local nameserver_policy_custom hosts_content
-    local rules_proxies rules_proxygroups rules_block rule_final rule_mixed
+    local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_core
     local proxies proxy_groups rule_providers proxy_providers
     local names_rulesets_block_policy names_suffixes_block_policy
     local fake_ip_rules_proxy_groups fake_ip_rules_proxies
@@ -795,6 +795,7 @@ core_generate_yaml() {
 
     # Read settings used by this scenario.
     config_get ipv6_enabled settings ipv6_enabled
+    config_get nft_quic_mode settings nft_quic_mode "$DEFAULT_NFT_MODE"
     config_get use_dashboard proxy use_dashboard
     config_get dashboard_repo proxy dashboard_repo
     dashboard_url=""
@@ -896,6 +897,12 @@ core_generate_yaml() {
     sniffer_skip_src_address=$(fmt_values_as_json_array "$sniffer_skip_src_address" "" "    ")
     sniffer_skip_dst_address=$(fmt_values_as_json_array "$sniffer_skip_dst_address" "" "    ")
     proxy_authentication=$(fmt_values_as_json_array "$proxy_authentication" "" "    ")
+
+    # Core rejects must precede mixed-port and catch-all routes.
+    rules_core="[]"
+    if [ "$nft_quic_mode" = "BLOCK IN CORE" ]; then
+        rules_core="[$(build_dst_port_rules_array "$DEFAULT_TLS_PORT $DEFAULT_SECONDARY_TLS_PORT" "" "REJECT")]"
+    fi
 
     # MIXED PORT RULES section
     handle_mixed_port_rules_section "$mixed_exit_rule"
@@ -1031,6 +1038,7 @@ core_generate_yaml() {
         "$rulesets_proxies") || return 1
 
     rules=$(yaml_rules_merge \
+        "$rules_core" \
         "$rule_mixed" \
         "$rules_block" \
         "$rules_proxygroups" \

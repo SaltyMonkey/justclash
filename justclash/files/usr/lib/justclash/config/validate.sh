@@ -95,7 +95,7 @@ validate_main_section() {
         "tproxy_input_interfaces:list(network):$DEFAULT_INPUT_INTERFACE" \
         'nft_ports_exclude:list(and(port,min(1)))' \
         'nft_ports_exclude_router:list(and(port,min(1)))' \
-        "nft_quic_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
+        "nft_quic_mode:or(\"BY RULES\",\"DROP\",\"BLOCK IN CORE\"):$DEFAULT_NFT_MODE" \
         "nft_dot_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
         "nft_dot_quic_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
         "nft_doh_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
