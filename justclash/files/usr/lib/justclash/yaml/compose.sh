@@ -26,25 +26,8 @@ yaml_slash_multimap_build() {
 }
 
 yaml_nameserver_policy_build() {
-    # NUL separates JSON and raw selectors without losing embedded newlines.
-    printf '%s\0' "$1" "$2" "$3" "$4" |
-        jq --indent 4 -Rs \
-        '
-        split("\u0000") |
-        .[1] as $rulesets |
-        .[2] as $suffixes |
-        .[3] as $geosite |
-        (.[0] | fromjson) |
-        if $rulesets != "" then
-            . + {($rulesets): "rcode://success"}
-        else . end |
-        if $geosite != "" then
-            . + {($geosite): "rcode://success"}
-        else . end |
-        if $suffixes != "" then
-            . + {($suffixes): "rcode://success"}
-        else . end
-        '
+    printf '[%s,%s,%s,%s]\n' "$1" "$2" "$3" "$4" |
+        jq --indent 4 'add'
 }
 
 yaml_fake_ip_filter_build() {

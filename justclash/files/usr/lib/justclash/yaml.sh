@@ -11,4 +11,5 @@
 . "/usr/lib/justclash/yaml/rules.sh" || return 1
 . "/usr/lib/justclash/yaml/groups.sh" || return 1
 . "/usr/lib/justclash/yaml/proxies.sh" || return 1
+. "/usr/lib/justclash/yaml/inbounds.sh" || return 1
 . "/usr/lib/justclash/yaml/document.sh" || return 1

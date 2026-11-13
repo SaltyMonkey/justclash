@@ -2,44 +2,35 @@
 # shellcheck shell=dash
 
 yaml_document_write_access() {
-    local use_mixed_port="$1"
-    local mixed_port="$2"
-    local proxy_authentication="$3"
-    local use_dashboard="$4"
-    local dashboard_path="$5"
-    local dashboard_url="$6"
-    local interface_name="$7"
-    local ipv6_enabled="$8"
-    local api_tls="$9"
-    local router_selected_ipaddr="${10}"
-    local controller_port="${11}"
-    local api_password="${12}"
-    local api_tls_cert="${13}"
-    local api_tls_key="${14}"
-    local log_level="${15}"
-    local unified_delay="${16}"
-    local tcp_concurrent="${17}"
-    local routing_mark="${18}"
-    local global_ua="${19}"
-    local etag_support="${20}"
-    local keep_alive_idle="${21}"
-    local keep_alive_interval="${22}"
-    local profile_store_selected="${23}"
-    local profile_store_fake_ip="${24}"
-    local mixed_selected_ipaddr="${25:-}"
+    local use_dashboard="${1}"
+    local dashboard_path="${2}"
+    local dashboard_url="${3}"
+    local interface_name="${4}"
+    local ipv6_enabled="${5}"
+    local api_tls="${6}"
+    local router_selected_ipaddr="${7}"
+    local controller_port="${8}"
+    local api_password="${9}"
+    local api_tls_cert="${10}"
+    local api_tls_key="${11}"
+    local log_level="${12}"
+    local unified_delay="${13}"
+    local tcp_concurrent="${14}"
+    local routing_mark="${15}"
+    local global_ua="${16}"
+    local etag_support="${17}"
+    local keep_alive_idle="${18}"
+    local keep_alive_interval="${19}"
+    local profile_store_selected="${20}"
+    local profile_store_fake_ip="${21}"
 
-    # Support for mixed port
-    # Make sure call for this function handled after 'core_prepare_workdir' since file must be removed
-    if [ "$use_mixed_port" -eq 1 ]; then
-        echo "allow-lan: true"
-        echo "mixed-port: $mixed_port"
-        echo "bind-address: $(str_yaml_quote "${mixed_selected_ipaddr:-*}")"
-        printf '%s\n' "authentication: $proxy_authentication"
-        echo "skip-auth-prefixes:"
-        echo "  - 127.0.0.1/8"
-        echo "  - ::1/128"
-        echo ""
-    fi
+    local controller_endpoint
+    case "$router_selected_ipaddr" in
+    *:*) controller_endpoint="[$router_selected_ipaddr]:$controller_port" ;;
+    *) controller_endpoint="$router_selected_ipaddr:$controller_port" ;;
+    esac
+
+    echo "allow-lan: true"
 
     if [ "$use_dashboard" -eq 1 ]; then
         echo "external-ui: $(str_yaml_quote "$dashboard_path")"
@@ -55,10 +46,10 @@ yaml_document_write_access() {
 
     if [ "$api_tls" -eq 1 ]; then
         echo ""
-        echo "external-controller-tls: $(str_yaml_quote "$router_selected_ipaddr:$controller_port")"
+        echo "external-controller-tls: $(str_yaml_quote "$controller_endpoint")"
     else
         echo ""
-        echo "external-controller: $(str_yaml_quote "$router_selected_ipaddr:$controller_port")"
+        echo "external-controller: $(str_yaml_quote "$controller_endpoint")"
     fi
 
     echo "secret: $(str_yaml_quote "$api_password")"
@@ -87,6 +78,7 @@ yaml_document_write_access() {
     echo "  store-fake-ip: $(fmt_uci_bool_as_yaml "$profile_store_fake_ip")"
     echo ""
 }
+
 yaml_document_write_geodata() {
     local geodata_mode="$1"
     local geodata_autoupdate="$2"
@@ -107,23 +99,12 @@ yaml_document_write_geodata() {
     fi
     echo ""
 }
-yaml_document_write_listeners() {
-    local tproxy_port="$1"
-    local ipv6_enabled="$2"
 
-    echo "listeners:"
-    echo "  - name: tproxy-v4"
-    echo "    type: tproxy"
-    echo "    port: $tproxy_port"
-    echo "    listen: 127.0.0.1"
-    if [ "$ipv6_enabled" -eq 1 ]; then
-        echo "  - name: tproxy-v6"
-        echo "    type: tproxy"
-        echo "    port: $tproxy_port"
-        echo "    listen: \"::1\""
-    fi
-    echo ""
+yaml_document_write_listeners() {
+    local listeners="$1"
+    printf 'listeners: %s\n' "$listeners"
 }
+
 yaml_document_write_services() {
     local hosts_content="$1"
     local core_ntp_enabled="$2"
@@ -145,6 +126,7 @@ yaml_document_write_services() {
     printf '%s\n' "rule-providers: $rule_providers"
     echo ""
 }
+
 yaml_document_write_dns() {
     local dns_cache_max_size="$1"
     local dns_listen_port="$2"
@@ -186,6 +168,7 @@ yaml_document_write_dns() {
     printf '%s\n' "  fake-ip-filter: $fake_ip_filter_data"
     echo ""
 }
+
 yaml_document_write_sniffer() {
     local sniffer_enable="$1"
     local sniffer_parse_pure_ip="$2"
@@ -217,6 +200,7 @@ yaml_document_write_sniffer() {
     printf '%s\n' "  skip-dst-address: $sniffer_skip_dst_address"
     echo ""
 }
+
 yaml_document_write_payloads() {
     local proxies="$1"
     local proxy_groups="$2"
