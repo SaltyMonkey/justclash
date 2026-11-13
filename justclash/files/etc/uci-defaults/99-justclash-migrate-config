@@ -21,8 +21,6 @@ add_missing_option() {
     fi
 }
 
-add_missing_option "justclash.proxy.mixed_port_bind_interface" "lan" || exit 1
-
 # A new UI default is no excuse to re-enable old identity headers.
 for section in $(uci -q show justclash | sed -n 's/^\(justclash\.[^.]*\)=proxy_provider$/\1/p'); do
     if [ -z "$(uci -q get "${section}.header_hwid")" ]; then
@@ -30,6 +28,18 @@ for section in $(uci -q show justclash | sed -n 's/^\(justclash\.[^.]*\)=proxy_p
         migration_changed=1
     fi
 done
+
+for option in use_mixed_port mixed_port mixed_port_bind_interface proxy_authentication; do
+    if uci -q get "justclash.proxy.$option" >/dev/null 2>&1; then
+        uci -q delete "justclash.proxy.$option" || exit 1
+        migration_changed=1
+    fi
+done
+
+if uci -q get justclash.mixed_port_rules >/dev/null 2>&1; then
+    uci -q delete justclash.mixed_port_rules || exit 1
+    migration_changed=1
+fi
 
 # Keep blocking enabled when retiring the firewall REJECT mode.
 for option in nft_quic_mode nft_dot_mode nft_doh_mode nft_dot_quic_mode; do
