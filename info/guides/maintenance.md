@@ -21,7 +21,7 @@ The package core updater compares version strings. Changing repositories alone d
 
 Core updates require HTTPS for version metadata, archives, checksums, and redirects. For GitHub sources, both the standalone installer and package updater verify the archive's SHA-256 against the digest supplied by the release API. An unavailable or invalid digest prevents installation.
 
-Ruleset catalog, dashboard archive, and GeoIP/Geosite source URLs must also use HTTPS. Empty fields use the HTTPS defaults. Existing HTTP overrides must be replaced before startup or resource updates can pass configuration validation. Catalog downloads reject redirects to HTTP. Dashboard and geodata downloads are performed by Mihomo; JustClash validates their configured URLs but does not control the core's redirect handling.
+Ruleset catalog, dashboard archive, and GeoIP/Geosite source URLs must also use HTTPS. Empty fields use the HTTPS defaults; HTTP values fail configuration validation. Catalog downloads reject redirects to HTTP. Dashboard and geodata downloads are performed by Mihomo; JustClash validates their configured URLs but does not control the core's redirect handling.
 
 For a custom core source, **Service → External resources → Custom core base URL** must use HTTPS. The server must provide `version.txt`, the `mihomo-linux-arch-version.gz` archives, and a shared `checksums.txt` file in `sha256sum` format: a 64-character hexadecimal SHA-256 hash followed by the archive filename. The updater selects exactly one entry matching the archive's full filename; an optional `./` prefix and the binary-mode `*` marker are supported. Missing, duplicate, or malformed entries prevent the update. Hash mismatches are rejected before extracting the archive.
 
@@ -36,8 +36,6 @@ The package updater and standalone installer use the same replacement order:
 A download, checksum, or gzip failure keeps the installed core. The archive requires space in `/tmp` while the installed binary still occupies its core path. With the core on flash, this means RAM for the compressed archive and flash space for one uncompressed binary; no second uncompressed binary is kept.
 
 There is no fallback to early removal when temporary space is insufficient. There is no rollback after removal: an extraction or write failure can still leave no usable core. Fresh installations skip removal, and an already current version is left unchanged. The package updater also stops if configuration validation fails.
-
-The replacement order is fixed. The LuCI mode selector and support for the UCI option `mihomo_core_update_mode` have been removed. An existing value is ignored.
 
 ## Switching the Web Dashboard
 
@@ -253,7 +251,7 @@ Restoring a backup also restores its credentials. Rotate the API password and an
 
 ## Reset Is Not Restore
 
-`config reset` backs up the active UCI configuration and replaces it with package defaults. It also generates new API and Mixed Port passwords.
+`config reset` backs up the active UCI configuration and replaces it with package defaults. It also generates a new API password; no inbounds are created.
 
 Use reset to recover from a broken configuration, not as an update or downgrade procedure. Follow the canonical command sequence in [Command-Line Reference → Reset Configuration](../reference/cli.md#reset-configuration). The generated backup can contain secrets and should remain local.
 

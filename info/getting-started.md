@@ -2,46 +2,36 @@
 
 [Documentation](README.md)
 
-This guide gets one website working through one outbound. Other traffic stays
-on the normal internet connection. Once this works, you can add more sites,
-subscriptions, or automatic failover without guessing which part failed.
+Let's start with one website. You'll add a connection, tell JustClash to use it
+for that website, and check that it works. The rest of your traffic will keep
+using the normal internet route. You can add more sites once this first setup
+works.
 
-You need a working OpenWrt internet connection, SSH access, enough free storage,
-and a connection link, Mihomo JSON outbound, subscription, or an existing WAN/VPN
-path to use directly. If you are upgrading an existing installation, use
-[Update and Backup](guides/maintenance.md)
-instead of resetting its settings.
+Have these ready:
 
-The online installer requires at least 33 MiB free in `/overlay` on all
-architectures. It installs the stable slim core by default.
-The compressed core archive is downloaded to `/tmp`, so it also needs free RAM.
-Leave additional storage for optional dashboards, geodata, and rulesets.
+- an OpenWrt router with working internet and SSH access;
+- a connection link or a Mihomo-compatible subscription;
+- at least 33 MiB free in `/overlay`, plus free RAM for the core download in `/tmp`.
 
-You can route through an individual outbound, or through a group that selects
-one. Groups are recommended for convenient switching; they are optional. A
-subscription provider supplies nodes to a group. See
-[Outbounds, providers, and groups](guides/routing.md#how-the-components-fit-together)
-for the full model. The setup below uses one group and one outbound.
+Already using JustClash? Follow [Update and Backup](guides/maintenance.md) to
+keep your settings. For a first installation, review
+[Security and access](guides/security.md) before running the installer.
 
 ## 1. Install JustClash
 
 ### Online Installer
 
-Connect to the router over SSH and run:
-
-```sh
-sh <(wget -qO- 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh')
-```
-
-This command requires your current shell to support process substitution
-(`<(...)`). If it reports a syntax error, download the script to a file instead:
+Connect to your router over SSH, then download and run the installer:
 
 ```sh
 wget -qO /tmp/justclash-install.sh 'https://raw.githubusercontent.com/saltymonkey/justclash/refs/heads/main/service.sh' && sh /tmp/justclash-install.sh
 ```
 
-Follow the installer prompts. It detects the package manager, installs the
-service and LuCI packages, and downloads the Mihomo core for your router.
+Choose **Install JustClash package** and follow the prompts. The installer
+detects your package manager, installs JustClash and its LuCI pages, and downloads
+the stable slim Mihomo core for your router. When it finishes, refresh LuCI and
+open **Services → JustClash**.
+
 For unattended installation, a specific release, or a core-only update, see
 [Installer Options](guides/maintenance.md#update-with-the-online-installer).
 
@@ -58,10 +48,8 @@ or run `justclash.sh resources core update` over SSH.
 
 ## 2. Set Up Traffic and DNS
 
-Open **Services → JustClash**. Use the **Setup: Service**, **Setup: DNS**, and
-**Setup: Routing** pages to edit saved settings; **Status** controls the service.
-
-Under **Setup: Service → Traffic rules**, set:
+First, tell JustClash where to find the device you'll test from. Open
+**Setup: Service → Traffic rules** and use these settings:
 
 | Setting | Value for this first test |
 | --- | --- |
@@ -70,102 +58,102 @@ Under **Setup: Service → Traffic rules**, set:
 | Client traffic interfaces | The bridge used by your test device, usually `br-lan` |
 | Change DNS settings at startup | Enabled |
 
-With this setup, selected traffic enters Mihomo and the rest keeps using normal
-routing. The nftables switch covers both selected clients and router traffic.
-If you want the default rule to handle all selected connections, read
-[Choosing a Routing Mode](concepts/routing.md) before choosing
-Full Interception.
+**Partial Interception** is enough for this first website rule. **Create nftables**
+sets up traffic interception for the selected client interfaces and the router.
+You can choose a different [routing mode](concepts/routing.md) later.
 
-Open **Setup: DNS** and keep the shipped nameservers, Fake-IP ranges, and
-real-IP exceptions for now. You do not need to build a new resolver list for
-the first test. Make sure the test device uses the router for DNS; temporarily
-turn off browser secure DNS or system private DNS while checking this path.
+Under **Setup: DNS**, keep the supplied defaults for now. Your test device needs
+to use the router for DNS so JustClash can recognize the website you choose.
+Temporarily turn off browser secure DNS or system private DNS while testing.
 
-Choose **Save** on each page. Apply everything together after adding the outbound
-and rule below.
+Choose **Save** before leaving a page. We'll apply the settings together after
+adding your connection and website rule.
 
 ## 3. Add an Outbound
 
-For a single connection or a direct WAN/VPN path, open
-**Setup: Routing → Proxies** and add an entry:
+An **outbound** is the connection JustClash sends your chosen traffic through.
+You'll find these connections under **Setup: Routing → Proxies**.
 
-1. Enable it and name it `First_Outbound`.
-2. Choose the source using the table below.
-3. Leave **Connect through** empty. Set **Bind to interface** if this connection
-   must use a particular outgoing device; otherwise leave it empty.
-4. Save the row.
+If you have a single connection link, add a row:
 
-| Connection source | Mode | What to enter |
-| --- | --- | --- |
-| Remote server | `uri` | Paste its connection link into **Link** |
-| Direct through a WAN or existing system VPN | `uri` | Set **Link** to exactly `direct://` and select the outgoing device in **Bind to interface** |
-| Mihomo JSON definition | `object` | Paste it into **JSON object**; put `interface-name` inside the object if binding is needed |
+1. Enable it and give it a name, such as `First_Outbound`.
+2. Set **Mode** to `uri` and paste your connection link into **Link**.
+3. Leave **Connect through** and **Bind to interface** empty for this setup.
+4. Save the row, then save the page.
 
-**Bind to interface** selects a network device, not an OpenWrt logical network
-or firewall zone. A system VPN must already be working; `direct://` does not
-create it. The binding also works with remote-server URI entries. For multiple
-paths and automatic switching, see [Multi-WAN and Failover](guides/multiwan.md).
+If you have a Mihomo JSON definition, choose `object` and paste it into
+**JSON object**. To use an existing WAN or system VPN directly, enter `direct://`
+as the link and choose its outgoing network device under **Bind to interface**.
+The VPN must already work in OpenWrt. See [interface binding](guides/routing.md#bind-to-an-interface)
+or [Multi-WAN](guides/multiwan.md) for those setups.
 
 ### Use a Subscription Instead
 
-If you have a Mihomo-compatible subscription, create an enabled entry named
-`First_Provider` under **Setup: Routing → Proxy providers**, paste its link into
-**Subscription URL**, and leave **Get subscription with** set to `DIRECT` for the first download when the
-subscription is directly reachable. Keep the other presets and save the row.
-You do not need to create `First_Outbound` or copy each imported node manually.
-Use this provider in the group below.
+If your provider gave you a subscription, use this path for step 3:
+
+1. Under **Setup: Routing → Proxy providers**, add an enabled row named
+   `First_Provider`.
+2. Paste the subscription link into **Subscription URL**.
+3. Keep **Get subscription with** set to `DIRECT` if you can download the
+   subscription without a proxy. Keep the other presets.
+4. Save the row and page.
+
+The provider will supply its nodes to the group you'll create next. You can
+skip creating `First_Outbound`; there's no need to copy the subscription's nodes
+one by one.
 
 ## 4. Choose What Goes Through It
 
-Under **Proxy groups**, add an enabled group named `First_Group`:
+A **group** gives your website rule a stable destination: you can change the
+connection later while keeping the rule. Under **Proxy groups**, add an enabled
+row named `First_Group` and set **Group type** to `select`.
 
-1. Set **Group type** to `select`.
-2. For a single outbound, add `First_Outbound` under **Proxies** and enter its
-   name as **Default selected** on the **Health check** tab. For a subscription,
-   add `First_Provider` under **Providers**, leave **Default selected** empty,
-   and choose an imported node under **Nodes** after startup.
-3. Keep the other presets for now. A `select` group lets you choose its member
-   manually; it does not provide automatic failover.
-4. On the group's **Manual rules** tab, add one website under **Domain suffix**.
-   Enter just its domain, without a scheme or path; subdomains match too.
-5. Save the row.
+Add the connection you just saved:
 
-Keep **Default rule → Send traffic to** set to `DIRECT`. The website rule
-belongs on `First_Group`; do not add a duplicate on `First_Outbound`.
+- **Single connection:** add `First_Outbound` under **Proxies**. On the
+  **Health check** tab, also enter that name under **Default selected**.
+- **Subscription:** add `First_Provider` under **Providers**. Leave
+  **Default selected** empty; you'll choose a node after starting the service.
 
-For a ready-made category instead of one website, use the group's
-**Lists → Use with rules** field. This selects existing rulesets; adding your
-own source is covered in [User-Defined Rulesets](guides/rulesets.md).
+Keep the other presets. This group lets you choose a connection manually.
 
-With a manually configured outbound, you can also skip the group and add the
-**Domain suffix** or ruleset directly on `First_Outbound` instead.
+Now open the group's **Manual rules** tab and add a website under **Domain suffix**.
+Enter only the domain, without a scheme or path. Its subdomains will match too.
+Save the row and leave **Default rule → Send traffic to** set to `DIRECT` so
+other traffic keeps its normal route.
+
+For a ready-made category, choose a list under the group's
+**Rulesets → Use with rules**. You can add your own lists later using
+[Custom rulesets](guides/rulesets.md).
+
+Groups are optional for a single outbound. If you prefer, put the website rule
+directly on `First_Outbound` and skip creating the group. Keep each rule in one
+place so its route is easy to follow.
 
 ## 5. Apply and Start
 
-Save the edited rows, then choose **Save & Apply** to commit the configuration
-and reload the service. See [Configuration lifecycle](concepts/configuration-lifecycle.md)
-for the difference between editing, saving, and applying changes.
+Choose **Save & Apply**, then open **Status**. If the service is stopped, choose
+**Start**. Wait until both JustClash and Mihomo show as running.
 
-Choose **Save & Apply**, then open **Status**. If the service is stopped,
-choose **Start**. Confirm that both JustClash and Mihomo are running before
-opening live pages.
-
-If startup fails, open **Service logs** first. Those logs and the saved Setup
-pages work while Mihomo is stopped. **Nodes**, **Rules**, **Connections**, and
-**Realtime logs** need the running core and a reachable controller API.
+If they don't start, open **Service logs** and read the first error. You can use
+these logs and edit Setup pages while the core is stopped. The live pages,
+including **Nodes** and **Connections**, need a running core and working controller
+access.
 
 ## 6. Check the Result
 
-If you used a group, open **Nodes** and confirm that `First_Group` contains
-`First_Outbound` or the subscription's imported nodes. Select the intended member.
-Make a new connection to the website or category you added and look for it under
-**Connections**. Its chain should include the group and selected outbound.
-If you configured the rule directly on the outbound, expect that outbound
-without an intermediate group.
+If you created a group, open **Nodes** and find `First_Group`. It should contain
+your outbound or the nodes from your subscription. Choose the connection you
+want to use.
 
-If the client cached an earlier DNS answer, clear its DNS cache and retry.
-Restarting the browser or closing the old connection may also be needed to
-avoid testing a connection established before the change.
+On your test device, open the website you added. Then look for its new connection
+under **Connections**: the chain should show `First_Group` and your selected
+outbound. If you put the rule directly on an outbound, you'll see that outbound
+without a group.
+
+If the result hasn't changed, close the website's existing connections and clear
+the device's DNS cache before trying again. Restarting the browser may also help;
+an already open connection keeps the route it started with.
 
 | What you see | What to check next |
 | --- | --- |

@@ -94,7 +94,7 @@ To use one outbound or group for traffic without a more specific rule:
 3. Save & Apply, then verify the selected path under **Connections**.
 
 Earlier routing rules and firewall exclusions still take precedence. Explicit
-Mixed Port clients have their own [routing policy](../guides/mixed-port.md#routing-policy).
+Inbound clients have their own [routing policy](../guides/inbounds.md#routing-policy).
 
 The trade-off is additional userspace processing. Use the supported exclusion
 settings for traffic that must stay in the native path.

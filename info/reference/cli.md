@@ -65,7 +65,7 @@ See [Controller TLS](../guides/controller-tls.md) for setup.
 
 ## Logs
 
-JustClash sends service and Mihomo messages to the OpenWrt system log. It no longer writes a separate runtime log file.
+JustClash sends service and Mihomo messages to the OpenWrt system log.
 
 To read recent JustClash entries:
 
@@ -116,6 +116,11 @@ has a 3-second connection timeout and a 5-second total timeout. HTTP errors
 produce `Failed`. The checks run from the router using its current routing policy
 and print only `OK` or `Failed` for each public target. The full report uses the
 same connectivity checks.
+
+The **DPI Applications** section shows `Installed` or `Not installed` for Zapret,
+Zapret2, ByeDPI, YoutubeUnblock, and B4 based on the presence of their init scripts.
+Both reports include this section. These statuses do not indicate whether the
+services are running or whether DPI bypass works.
 
 ### Local Diagnostics
 

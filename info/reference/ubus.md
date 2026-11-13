@@ -124,9 +124,8 @@ The core version comes from the installed binary; Mihomo does not need to be
 running. LuCI queries versions on page load and after a core update, separately
 from periodic state polling.
 
-Version fields were moved out of `status`. Clients that previously read
-`package_version` or `core_version` from that response must call `versions`
-instead. Update the JustClash and LuCI packages together and refresh LuCI.
+Use `versions` to read `package_version` and `core_version`; `status` reports
+service state only.
 
 All remaining methods return the application result in this form:
 

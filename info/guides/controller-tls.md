@@ -4,7 +4,7 @@
 
 Use this guide when HTTPS LuCI cannot connect to Mihomo, or when you need an
 encrypted controller connection for trusted clients. It covers the controller
-API, not the explicit Mixed Port listener.
+API. For HTTP/SOCKS listener authentication, see [Inbounds](inbounds.md#authentication-format).
 
 First configure [controller binding and credentials](security.md#controller-binding).
 You need a working JustClash setup, a hostname clients can reach, and a certificate

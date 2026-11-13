@@ -5,19 +5,58 @@
 JustClash crosses four separate security boundaries:
 
 - the local Mihomo controller accepts commands and exposes connection metadata;
-- an enabled Mixed Port lets clients send traffic through the router and its configured outbounds;
+- an enabled inbound lets clients send traffic through the router and its configured outbounds;
 - remote providers receive download requests, headers, identifiers, and authorization data;
 - downloaded software, dashboards, and routing data run on or influence the router and its administration clients.
 
-Controller and Mixed Port credentials, TLS, firewall policy, and provider request headers solve different problems. A realistic-looking User-Agent is not authentication, TLS does not restrict who may connect, and strong credentials do not make an exposed listener a good idea.
+Controller and inbound credentials, TLS, firewall policy, and provider request headers solve different problems. A realistic-looking User-Agent is not authentication, TLS does not restrict who may connect, and strong credentials do not make an exposed listener a good idea.
 
-Protect both the controller and an enabled Mixed Port with:
+Protect both the controller and enabled inbounds with:
 
-1. separate bindings to trusted network addresses: `controller_bind_interface` and `mixed_port_bind_interface`;
-2. separate strong generated credentials: `api_password` and `proxy_authentication`;
+1. a trusted controller binding through `controller_bind_interface`; inbounds use wildcard listening on all interfaces;
+2. separate credentials: `api_password` and each inbound's `authentication` list;
 3. OpenWrt firewall restrictions for each listener, covering IPv4 and IPv6 where supported.
 
-A bind address selects where the listener accepts connections; firewall rules restrict which clients may reach it. Configure controller TLS whenever the browser reaches LuCI over HTTPS. Mixed Port transport protection is covered under [Mixed Port Authentication](#mixed-port-authentication).
+A bind address selects where the listener accepts connections; firewall rules restrict which clients may reach it. Configure controller TLS whenever the browser reaches LuCI over HTTPS. HTTP/SOCKS transport protection is covered under [Inbound Authentication](#inbound-authentication).
+
+## Controller and Proxy Access
+
+The controller is Mihomo's management API. Its password authorizes reading
+connection metadata and logs, selecting group members, changing runtime settings,
+and closing connections. LuCI's live pages connect directly from the browser to
+this API. An external dashboard or API client can use it without a LuCI session,
+so the controller needs its own authentication even when LuCI requires a login.
+
+Inbounds also have authentication: each listener requires its own `user:pass`
+accounts. These accounts authorize proxy use; they do not grant controller API
+access. Conversely, the API password is not an inbound account. Use distinct
+credentials so granting someone proxy access does not give them management
+access. Binding a listener and choosing an outbound are separate from checking
+who may connect.
+
+### Defaults on a Fresh Installation
+
+These are package defaults, not a description of an existing router's firewall
+or saved configuration. Network services are available only while running and
+where firewall policy permits access.
+
+| Component | Default configuration | Authentication |
+| --- | --- | --- |
+| JustClash LuCI pages | Available through the router's installed LuCI service | OpenWrt/LuCI login and application permissions |
+| Mihomo controller | Active while Mihomo runs; TCP port `9090` on the selected `lan` address, preferring IPv4 and falling back to IPv6 | An independently generated `api_password` |
+| Additional web dashboard | Disabled (`use_dashboard=0`); disabling it does not disable the controller API or LuCI's live pages | Uses the controller's API password for API access |
+| HTTP/SOCKS inbounds | None configured; create and enable rows explicitly | Configure at least one account per inbound; no proxy accounts are generated automatically |
+
+Controller TLS is disabled by default (`api_tls=0`), so its API uses HTTP rather
+than an encrypted connection. Keep access within a trusted network or protected
+tunnel, and configure [controller TLS](controller-tls.md) for HTTPS/WSS access.
+Binding to the `lan` address selects a destination address; it does not enforce a
+source-network allowlist. Restrict allowed clients through the firewall.
+
+Built-in TProxy listeners serve transparent interception and bind to loopback.
+They use the interception rules to select client traffic and do not use
+HTTP/SOCKS inbound accounts. They are separate from the explicit proxy listeners
+created under **Setup: Inbounds**.
 
 ## External Resources and HTTPS
 
@@ -62,14 +101,13 @@ Revoking a LuCI session does not revoke a controller password already obtained b
 
 ## API Password After Installation
 
-A fresh installation replaces packaged placeholders or known legacy defaults
-with independent credentials generated by `openssl rand -base64 24`. Each value
-contains 24 random bytes encoded as 32 Base64 characters. The command result,
+A fresh installation generates an API password with `openssl rand -base64 24`.
+It contains 24 random bytes encoded as 32 Base64 characters. The command result,
 output length, and character set are checked before accepting it.
 
 An existing non-default password is preserved during a normal package upgrade.
-Running `config reset` creates new, independently generated API and Mixed Port
-passwords together with the restored default configuration.
+Running `config reset` generates a new API password and restores the default
+configuration, which has no inbounds.
 
 The generated password is not printed during installation. To use an external dashboard or another API client, set a password that the client can store securely under **Services → JustClash → Setup: Proxy → Controller/API settings**.
 
@@ -96,19 +134,57 @@ Do not print the variable, paste the resulting secret into diagnostics, or inclu
 
 Rotate the password after suspected disclosure, before exposing the controller to another trusted network, and after restoring a configuration whose handling history is uncertain. Every dashboard or API client using the old value must then be updated.
 
-## Mixed Port Authentication
+## Inbound Authentication
 
-Select a trusted network under **Setup: Proxy → Mixed proxy settings → Mixed proxy bind**.
-The default is `lan`; unspecified listens on all available addresses.
+### Inbound Listening and Firewall
 
-> [!WARNING]
-> The special value `-` uses wildcard listening. Apply firewall restrictions for both IPv4 and IPv6 where supported. While Mixed Port is enabled, invalid network names and networks without a usable IPv4 or IPv6 address abort startup.
+Wildcard listening is deliberate. Inbounds are explicit HTTP/SOCKS proxy entry
+points for applications on the router and on trusted LAN or VPN networks. A
+client connects to a router address reachable from its network; the same inbound
+port, credentials, and route apply across those addresses. This avoids tying the
+listener to one network address or requiring a separate inbound for each network.
 
-Mixed Port uses `proxy_authentication`, independently of the controller's
-`api_password`. It requires its own credentials and firewall restrictions;
-authentication does not encrypt HTTP/SOCKS traffic. Follow
-[Mixed Port](mixed-port.md#authentication-format) for credential handling,
-client setup, and listener security.
+Each inbound uses `listen: 0.0.0.0`, covering all router IPv4 addresses, including
+loopback, LAN, VPN, and WAN addresses where present. Newly added addresses are
+covered too. On systems supporting dual stack, Mihomo's Go listener can also
+accept IPv6; disabling JustClash IPv6 interception does not guarantee an
+IPv4-only inbound. Wildcard binding makes firewall policy the access boundary.
+
+- Allow the inbound port only from intended source zones or clients. Connections
+  terminate on the router, so use its firewall **input** policy; rules controlling
+  forwarding between networks do not by themselves restrict this listener.
+- Review both IPv4 and IPv6 access, including WAN and guest networks. Do not rely
+  on NAT or an IPv4-only check to protect IPv6. Include UDP when using the UDP
+  functionality of Mixed Port or SOCKS.
+- **Client traffic interfaces**, interception exclusions, and **Create nftables**
+  do not control inbound access. JustClash does not create inbound access rules;
+  existing OpenWrt zone policies can already allow connections.
+
+Before enabling an inbound, review these rules. Test access from an allowed
+network and rejection from an excluded network, for each available address
+family. Review access again when adding an interface or changing firewall zones.
+
+### Credentials and Proxy Access
+
+Configure each listener and its own **Authentication** entries under **Setup: Inbounds**.
+An empty authentication list or invalid entry causes the entire inbound to be
+skipped with a warning in the service log. Local applications also need
+credentials. The controller's API password is independent of these users.
+
+Authentication does not encrypt the client-to-proxy connection or its credential
+exchange. Requesting an HTTPS website does not encrypt the initial HTTP CONNECT
+or SOCKS authentication exchange. Controller TLS settings apply to the API only.
+Use inbounds on trusted networks or through a protected tunnel such as a VPN;
+credentials alone are insufficient protection for public exposure.
+
+Give proxy access only to trusted users. An authenticated client can request
+destinations reachable through the selected route, potentially including router
+services and private networks. Proxy authentication does not isolate those
+destinations, and forwarding restrictions on the client's network are not a
+substitute for controlling connections made by the proxy.
+
+Follow [Inbounds](inbounds.md#authentication-format) for the credential format,
+routing choices, and client configuration.
 
 ## Download User-Agents
 

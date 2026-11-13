@@ -41,15 +41,16 @@ so correct or remove an invalid section rather than only disabling it.
 | Section type | Cardinality | Purpose |
 | --- | --- | --- |
 | `main settings` | One named section | Service startup, traffic interception, scheduling, storage, and downloads |
-| `proxy proxy` | One named section | Mihomo runtime, controller, DNS, sniffer, mixed port, and Geodata |
+| `proxy proxy` | One named section | Mihomo runtime, controller, DNS, sniffer, and Geodata |
+| `inbound` | Anonymous sections | Independent listeners and their routes |
 | `proxies` | Zero or more named or anonymous sections | Individual outbound definitions |
 | `proxy_provider` | Zero or more named or anonymous sections | Remote provider definitions |
 | `proxy_group` | Zero or more named or anonymous sections | Selection, failover, latency, and balancing groups |
 | `block_rules block_rules` | One named section | Domain/address blocking and blocklist providers |
-| `mixed_port_rules mixed_port_rules` | One named section | First rule for explicit mixed-port traffic |
 | `final_rules final_rules` | One named section | Final action after all other rules |
 
-LuCI creates dynamic sections with generated UCI IDs. Rules refer to the user-visible `name`, not necessarily to the UCI section ID.
+LuCI creates dynamic sections with generated UCI IDs. Outbound and group references
+use the user-visible `name`. Inbound listener names use their UCI section IDs.
 
 For the relationship and setup sequence, see
 [Outbounds, providers, and groups](../guides/routing.md).
@@ -79,26 +80,20 @@ and router interception rules together with policy routing; `0` skips both.
 The `full` / `partial` mode and the separate client/router exclusions still apply.
 DNS forwarding remains controlled independently by `dnsmasq_apply_changes`.
 
-On upgrade, `nft_apply_changes_router` is removed and the existing
-`nft_apply_changes` value is preserved. Since that remaining switch now controls
-both paths, a previously enabled client path becomes combined interception. A
-router-only legacy setting is not carried forward. When restoring an older backup,
-remove the retired router flag; it is no longer read at runtime.
-
 | Field | Type | Purpose |
 | --- | --- | --- |
 | `routing_mode` | Choice: `partial`, `full` | Select interception architecture |
 | `ipv6_enabled` | Boolean | Enable IPv6 interception and Fake-IP support when WAN IPv6 is usable |
 | `dnsmasq_apply_changes` | Boolean | Manage dnsmasq forwarding for Mihomo DNS |
 | `nft_apply_changes` | Boolean | Create nftables rules and policy routing for both client and router traffic |
-| `tproxy_input_interfaces` | List of device names | Client interfaces subject to interception |
+| `tproxy_input_interfaces` | List of device names | Client interfaces used for transparent interception; does not restrict inbound access |
 | `nft_skuid_exclude_router` | List of users or UIDs | Bypass router sockets owned by selected users |
 | `nft_ports_exclude_router` | List of ports/ranges | Bypass router TCP/UDP source or destination ports |
 | `nft_ports_exclude` | List of ports/ranges | Bypass forwarded TCP/UDP source or destination ports |
 | `nft_mac_exclude` | List of MAC addresses | Bypass matching local clients |
 | `nft_ips_exclude` | List of IPv4 addresses/CIDRs | Bypass matching IPv4 clients |
 | `pbr_priority` | Unsigned integer | Priority used by JustClash policy-routing rules |
-| `nft_quic_mode` | `BY RULES` / `DROP` | QUIC handling policy |
+| `nft_quic_mode` | `BY RULES` / `DROP` / `DROP IN CORE` | QUIC handling policy |
 | `nft_dns_mode` | Choice | Plain client TCP/UDP port 53 DNS policy (`BY RULES`, `DROP`, or `HIJACK` to the router DNS service) |
 | `nft_dot_mode` | `BY RULES` / `DROP` | DNS-over-TLS handling policy |
 | `nft_doh_mode` | `BY RULES` / `DROP` | DNS-over-HTTPS handling policy |
@@ -106,7 +101,20 @@ remove the retired router flag; it is no longer read at runtime.
 | `nft_ntp_mode` | Choice | Client NTP handling policy |
 | `nft_ntp_mode_router` | Choice | Router NTP handling policy |
 
-The `REJECT` choice has been removed only from the four `nft_*_mode` settings above. Package migration converts existing QUIC/DoT/DoH/DoQ `REJECT` settings to `DROP`, preserving blocking without sending a rejection response. The default QUIC policy is now `DROP`. This does not disable blocklists: their blocking rules run inside Mihomo, separately from these OpenWrt firewall settings. When restoring an older configuration after migration, replace these four firewall settings with `DROP` before starting the service.
+The default QUIC policy is `DROP`. Blocklists run inside Mihomo independently of
+these OpenWrt firewall settings.
+
+For **Client QUIC traffic**, `BY RULES` follows the normal Mihomo rules. `DROP`
+blocks client UDP destination ports 443 and 8443 in nftables, subject to client
+interface selection and traffic exclusions, when **Create nftables** is enabled.
+`DROP IN CORE` (**Drop in core**) prepends UDP destination-port `REJECT-DROP` rules for
+the same ports to the generated Mihomo rules, before inbound routing and other
+rules. It works independently of **Create nftables** and applies to all traffic
+reaching Mihomo, including inbounds and router traffic. In partial interception,
+traffic that bypasses Mihomo stays unaffected; in full interception, the drop rules
+also precede later `DIRECT` rules. Both blocking modes match UDP ports rather than
+detecting the QUIC protocol. Changing the mode invalidates the existing YAML cache;
+the blocking rules are added or removed on the next service start.
 
 ### Scheduling, Core, and Downloads
 
@@ -146,10 +154,6 @@ LuCI offers repositories for the slim kernel version and upstream Mihomo as edit
 | `log_level` | Choice | Mihomo log verbosity |
 | `interface_name` | Device name | Default outbound interface binding |
 | `tproxy_port` | Port | Transparent TProxy listener |
-| `use_mixed_port` | Boolean | Enable explicit HTTP/SOCKS listener |
-| `mixed_port` | Port | Explicit mixed listener |
-| `mixed_port_bind_interface` | OpenWrt network name or `-` | Mixed listener bind, independent of the controller; IPv4 first, then IPv6; default `lan`; `-` listens on all available addresses |
-| `proxy_authentication` | List of `user:pass` credentials | Access control for non-loopback Mixed Port clients; installation and reset generate a `user:` credential with a random 32-character password |
 | `controller_bind_interface` | OpenWrt network name or `-` | Network address used for API binding, trying IPv4 first and then IPv6; `-` emits `:<port>` with an empty host for wildcard listening |
 | `use_dashboard` | Boolean | Enable local dashboard hosting |
 | `dashboard_repo` | Choice | Selected dashboard; changing an already downloaded panel requires [manual cleanup](../guides/maintenance.md#switching-the-web-dashboard). |
@@ -228,7 +232,7 @@ A `proxies` section defines one named outbound.
 
 Deleting an outbound in LuCI removes its name from every group's `proxies` list
 and clears any matching `default_selected`. The same cleanup applies when a group
-is deleted. References in the default rule reset to `DIRECT`; Mixed Port resets
+is deleted. References in the default rule reset to `DIRECT`; inbound routes reset
 to `BY RULES`, and subscription/blocklist download paths reset to `DIRECT`.
 Matching connection-chaining fields are cleared, including `dialer-proxy` in
 JSON outbounds. Empty groups are retained. Apply the pending changes with
@@ -332,10 +336,7 @@ It defaults to `0`. When enabled, the generated provider `override` contains an
 LuCI defaults to `header_hwid=real`. Both LuCI and UCI validation default
 `header_user_agent` to `__mihomo__`, which sends `Mihomo/<core-version>`.
 Missing or empty provider User-Agent values use this preset; explicitly set
-values are preserved. On upgrade, empty or unset `header_hwid`
-options in existing providers become `-`, preserving disabled identity headers.
-Select **Disable** to save `header_hwid=-`. Outside this migration, the UI
-defaults also apply when editing sections without the corresponding option.
+values are preserved. Select **Disable** to save `header_hwid=-`.
 
 With `header_hwid=real`, all four identity headers are read from the router.
 `x-ver-os` contains only the OpenWrt version from `VERSION_ID`, without the OS name.
@@ -410,19 +411,33 @@ bandwidth or latency. It requires a core with the
 
 Generated block actions are `REJECT`.
 
-### `mixed_port_rules` and `final_rules`
+### Inbounds and the Final Rule
 
-| Section.field | Purpose |
-| --- | --- |
-| `mixed_port_rules.exit_rule` | `BY RULES`, `DIRECT`, or a fixed outbound for explicit mixed-port traffic |
-| `final_rules.exit_rule` | Final action after earlier rules |
+Each anonymous `inbound` section defines a row under **Setup: Inbounds**. It creates
+one wildcard listener with `listen: 0.0.0.0`, independent of
+`settings.tproxy_input_interfaces`. On dual-stack systems this may also accept
+IPv6, including when the JustClash IPv6 setting is disabled. Use firewall rules
+to restrict access; no inbound access rules are created automatically.
+
+| Field | Type/default | Purpose |
+| --- | --- | --- |
+| `enabled` | Boolean, `1` | Include this listener; disabled sections are skipped with a log warning |
+| `type` | `mixed` by default, `socks`, or `http` | Listener protocol; UDP is enabled for Mixed Port and SOCKS |
+| `name` | String, maximum 64 characters | Required in LuCI, with a generated initial value; sections without a name are skipped; the internal listener name uses the UCI section ID |
+| `port` | Port 1–65535, default `7890` | Listener port; LuCI rejects enabled-row conflicts with JustClash DNS, TProxy, the API controller, and other enabled inbounds |
+| `authentication` | List of `user:pass` entries | LuCI requires at least one entry with nonempty user and password; the first colon separates the fields; an empty list or invalid entry in UCI causes the entire inbound to be skipped |
+| `exit_rule` | `BY RULES` by default, `DIRECT`, `REJECT`, or an outbound/group name | `BY RULES` adds no inbound-specific rule; fixed routes follow core traffic blocking and precede address blocking |
+
+See [Inbounds](../guides/inbounds.md) for setup, authentication, and routing order.
+
+`final_rules.exit_rule` is the final action after earlier routing rules.
 
 ## Secret Handling
 
 Treat these as sensitive:
 
 - `api_password`;
-- `proxy_authentication`;
+- each inbound's `authentication`;
 - `proxy_link_uri` and credential-bearing JSON;
 - `subscription`;
 - `header_authorization`;

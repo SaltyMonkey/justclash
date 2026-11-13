@@ -2,7 +2,7 @@
 
 [Documentation](../README.md)
 
-JustClash blocks domains through Mihomo DNS policy and blocks addresses through high-priority routing rules. The generated action is `REJECT`.
+JustClash blocks domains through Mihomo DNS policy and blocks addresses through high-priority `REJECT` routing rules.
 
 > [!IMPORTANT]
 > `block_rules.proxy` selects the outbound used to download blocklist files. It is not the block action and should not be set to `REJECT`.
@@ -96,7 +96,9 @@ Block rules are emitted before:
 - individual outbound rules;
 - the final rule.
 
-Mixed-port fixed-outbound handling is also high priority. Use `BY RULES` when explicit proxy clients must receive normal block policy.
+Fixed inbound routes precede address blocking. Select `BY RULES` for the inbound
+when explicit proxy clients must follow normal blocklist routing. See
+[Inbound routing](inbounds.md#routing-policy).
 
 ## Limitations
 

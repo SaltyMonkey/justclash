@@ -108,7 +108,7 @@ list is not automatically required.
 
 **Excluded from sniffer domains** uses a multiline editor with 12 visible rows.
 Enter one matcher per line. Each matcher is validated; saved entries use lowercase
-and duplicates are removed. Existing UCI lists remain compatible.
+and duplicates are removed. Entries are stored as a UCI list.
 
 ## Bypassed Clients and Guest Networks
 

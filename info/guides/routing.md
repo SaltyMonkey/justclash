@@ -168,7 +168,7 @@ and delay testing; individual members cannot be selected manually.
 For `select`, **Default selected** is on the **Health check** tab. Leave it empty
 when you do not yet know a subscription node's exact name, then choose a node
 under **Nodes** after startup. The backend allows omitted check fields for
-`select`; the current LuCI editor still supplies and requires its check presets.
+`select`; the LuCI editor supplies and requires its check presets.
 Keep those presets when editing through LuCI.
 
 For automatic selection, configure a check target reachable through every member.
@@ -193,8 +193,7 @@ The **Domain suffix** field is a multiline editor: paste or edit the whole list,
 one suffix per line. Other characters within a line are part of that entry,
 not separators.
 Each suffix is validated. Saved suffixes use lowercase, and duplicates are
-removed on save. Existing UCI lists remain lists; no configuration migration
-is needed.
+removed on save. Entries are stored as a UCI list.
 
 **IP CIDR** and **Source IP CIDR** appear directly after the domain field and use
 the same multiline input. Each entry must include an IPv4 or IPv6 prefix length;
@@ -218,35 +217,40 @@ Adding a custom list source is a separate task under **Setup: Rulesets**; see
 [Custom rulesets](rulesets.md). Creating an outbound or group without assigning
 rules or selecting it as a default does not send traffic through it.
 
-### Default and Mixed Port Rules
+### Default and Inbound Rules
 
 **Default rule → Send traffic to** handles connections that reach Mihomo and match
 no earlier rule. In Partial Interception it cannot capture an otherwise unmatched
 real-address connection. Use [Full Interception](../concepts/routing.md#full-interception)
 when the default path must handle all eligible traffic.
 
-**Mixed Port rules** controls explicit HTTP/SOCKS clients separately. `BY RULES`
+Each row under **Setup: Inbounds** controls its explicit HTTP/SOCKS clients separately. `BY RULES`
 continues through normal routing; a fixed outbound takes precedence over those
-rules. See [Mixed Port routing](mixed-port.md#routing-policy).
+rules. See [Inbound routing](inbounds.md#routing-policy).
 
-Routing rules are generated in this order: fixed Mixed Port handling, address
-blocking, groups, individual outbounds, and the final rule. Domain blocking is
+Routing rules are generated in this order: core traffic blocking, fixed inbound
+routes, address blocking, groups, individual outbounds, and the final rule. Domain blocking is
 implemented through DNS. Within groups and outbounds, section order matters when
 matches overlap; put the intended earlier match first within its section type.
 
 ## Change or Remove Entries
 
+Renaming an outbound or group in LuCI updates matching group members and defaults,
+connection-chain references (including `dialer-proxy` in JSON outbounds), inbound
+and final routes, and subscription/blocklist download targets. Renaming a provider
+updates groups' **Providers** lists.
+
 When deleting an outbound or group in LuCI, JustClash removes matching group
 members and selected defaults, clears matching connection-chain references, and
-resets affected final, Mixed Port, and subscription/blocklist download targets.
-The fallback is `DIRECT`, except Mixed Port returns to `BY RULES`.
+resets affected final, inbound, and subscription/blocklist download targets.
+The fallback is `DIRECT`, except inbound routes return to `BY RULES`.
 
 Deleting a provider removes it from groups' **Providers** lists. Groups are kept
 even when empty; review them and provide a usable member before applying. The
 cleanup updates pending LuCI changes and takes effect after **Save & Apply**.
 
-This automatic cleanup applies to deletion in LuCI. It does not rewrite all
-references after a manual UCI deletion or rename. Review those references yourself.
+These automatic reference updates apply to changes made in LuCI. After a manual
+UCI deletion or rename, review and update references yourself.
 
 ## Verify Routing
 

@@ -35,7 +35,7 @@ configuration checks; a well-formed name alone does not prove its target exists.
 The packaged configuration, LuCI presets, schema fallbacks, and Mihomo defaults
 are different layers and can differ. For example, the schema fills absent group
 health-check settings for automatic group types, while `select` allows them to
-remain absent. The current LuCI group editor still supplies check presets.
+remain absent. The LuCI group editor supplies check presets.
 
 Use the [UCI reference](../reference/uci.md) for field details and
 [startup troubleshooting](../troubleshooting/startup.md) for failures. Recovery
@@ -98,8 +98,7 @@ additions, and deletions of zone rules made while JustClash is running are kept.
 Both operations edit list entries individually, so retrying an interrupted
 operation does not discard the untouched zone rules.
 
-Only snapshots created by a new service start are supported. Before upgrading
-from an older version, stop that version so it restores its DNS settings first.
+DNS recovery requires a complete snapshot saved by the service.
 Conflicting manual edits and incomplete active snapshots remain untouched.
 Quoted server lists (including UCI-quoted entries containing whitespace) are
 rejected rather than parsed as shell expressions.

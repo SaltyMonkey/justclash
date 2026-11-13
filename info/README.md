@@ -25,7 +25,7 @@ appear in the interface.
 | Block domains or destination addresses | [Blocking](guides/blocking.md) |
 | Use Geosite or GeoIP categories | [Geodata](guides/geodata.md) |
 | Keep a client or router service outside interception | [Traffic exclusions](guides/traffic-exclusions.md) |
-| Configure an explicit HTTP/SOCKS listener | [Mixed Port](guides/mixed-port.md) |
+| Configure independent HTTP/SOCKS listeners | [Inbounds](guides/inbounds.md) |
 | Give a guest network routed or direct internet access | [Guest networks](guides/guest-network.md) |
 | Select, balance, or fail over between WAN/VPN paths | [Multi-WAN and failover](guides/multiwan.md) |
 

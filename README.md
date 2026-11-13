@@ -36,7 +36,7 @@
 > This non-commercial educational and technical research project is provided “AS IS”. Read the full bilingual [Disclaimer / Отказ от ответственности](DISCLAIMER.md), including compliance, liability, and trademark terms, before use.
 
 > [!WARNING]
-> Before installing or using JustClash, read [Security and access](info/guides/security.md). It covers administrator access, controller and Mixed Port protection, credential handling, download privacy, and external resource risks.
+> Before installing or using JustClash, read [Security and access](info/guides/security.md). It covers administrator access, controller and inbound protection, credential handling, download privacy, and external resource risks.
 >
 > Installation and operation download external software and data, including the Mihomo core, dashboards, rulesets, geodata, and configured subscriptions. HTTPS and core archive checks reduce transport and integrity risks, but do not guarantee safe third-party content.
 
