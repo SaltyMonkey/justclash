@@ -1,3 +1,95 @@
+## [0.130.0_rc1] - 13112026
+
+This release replaces the global Mixed Port configuration with independent
+inbounds, adds QUIC blocking inside Mihomo, and updates routing references when
+entries are renamed in LuCI. It also preserves custom dnsmasq forwarding zones
+and improves provider request defaults and manual port rules.
+
+### Inbounds and Routing
+
+- Added **Setup: Inbounds** after **Setup: Routing**. Its grid supports adding,
+  editing, cloning, reordering, and removing anonymous `inbound` sections.
+  Each entry has its own port, users, and outbound route. Supported protocols are
+  Mixed Port (`mixed`), SOCKS (`socks`), and HTTP (`http`); UDP is enabled for
+  Mixed Port and SOCKS. LuCI requires a name and prefills it with a generated value.
+  Disabled entries and entries without a name are skipped with a log warning.
+  Generated listeners use line breaks and indentation for readable configuration blocks.
+- The inbound table follows Routing's layout: a compact **Enabled** column,
+  badges for type, port, and route, and the name immediately before row actions.
+- LuCI rejects enabled inbound ports that match JustClash DNS, TProxy, the API
+  controller, or another enabled inbound, including when enabling an existing row.
+- Authentication uses one `user:pass` entry per account. The first colon
+  separates the fields; additional colons remain part of the password. LuCI
+  requires at least one entry with a nonempty user and password. Entries and
+  draft input are masked by default, with a reveal/hide button. Saving retains
+  a valid entry still in the input field without requiring **Add** first. Empty
+  authentication or any invalid entry in UCI skips the entire inbound with a log warning.
+- Each inbound uses one wildcard listener with `listen: 0.0.0.0`. Access is
+  controlled by the OpenWrt firewall. **Client traffic interfaces** controls
+  transparent interception and does not restrict inbound access. Dual-stack
+  systems may also accept IPv6 regardless of JustClash's IPv6 setting.
+- **Send traffic to** supports an outbound, group, `DIRECT`, `REJECT`, or
+  `BY RULES`. Fixed inbound routes precede ordinary routing rules; core traffic
+  blocking rules are applied first. `BY RULES` follows normal routing without
+  adding an inbound-specific rule.
+- Renaming outbounds or groups in LuCI updates group membership and defaults,
+  connection chains, JSON `dialer-proxy` references, inbound and final routes,
+  and subscription/blocklist download targets. Provider renames update group
+  provider lists. Reference updates run after form parsing to preserve other
+  edits made during the same save.
+- Inbound port conflicts are left to Mihomo's listener handling rather than
+  blocking service startup in preflight. Existing checks for DNS, TProxy, and
+  controller ports remain.
+
+### QUIC Blocking
+
+- Added **Drop in core** under **Client QUIC traffic**. It generates UDP
+  destination-port `REJECT-DROP` rules for ports 443 and 8443 before other Mihomo
+  rules, including fixed inbound routes.
+- The option applies to all traffic reaching Mihomo and works with
+  **Create nftables** disabled. **Drop** continues to block client traffic
+  through nftables when nftables generation is enabled.
+
+### DNS, Providers, and LuCI
+
+- Generated DNS blocking policies use a separate key for each ruleset,
+  Geosite category, and domain suffix instead of combining selectors into long keys.
+- dnsmasq management preserves domain-specific forwarding rules while replacing
+  default upstreams. Stop and restore retain zone edits made while JustClash
+  was active, including deletion of a zone rule.
+- Provider User-Agent headers default to the Mihomo preset, including empty
+  values. The global User-Agent defaults to **Random**. Browser presets and
+  related LuCI descriptions have been updated.
+- Manual TCP/UDP destination rules for outbounds and groups now accept port
+  ranges. Example placeholders are marked with **Example:**, and Russian and
+  Simplified Chinese translations have been updated.
+- Added zapret2 to the non-blocking service conflict warnings.
+- **Setup: Rulesets** uses LuCI's themed dropdown for custom ruleset types,
+  with location validation refreshed when the selected type changes.
+
+### Documentation
+
+- Renamed the listener guide to [Inbounds](info/guides/inbounds.md) and updated
+  incoming links, protocol descriptions, authentication, and UCI examples.
+- Reworked the [Quick Start](info/getting-started.md) around the first website
+  rule, with clearer connection and subscription steps and a portable installer command.
+- Expanded [Security and access](info/guides/security.md) with separate LuCI,
+  controller, and inbound credentials; fresh-install defaults; and the reasons
+  for wildcard inbound listening. It also explains IPv4/IPv6 firewall input
+  restrictions, unencrypted proxy authentication, and access to private destinations.
+
+### Upgrade Notes
+
+- Update JustClash and its LuCI package together, then reload LuCI.
+- The old global Mixed Port options and `mixed_port_rules` section are no
+  longer read or generated and are removed during upgrade without conversion
+  to inbounds. Recreate required listeners
+  under **Setup: Inbounds**, configure their authentication and routes, and use
+  **Save & Apply**. See the [Inbounds guide](info/guides/inbounds.md).
+- Review firewall access to every inbound port for IPv4 and IPv6. JustClash
+  does not create inbound access rules automatically. Default configuration
+  and configuration reset create no inbounds; API credential generation remains.
+
 ## [0.121.0_rc2] - 06112026
 
 This release fixes XHTTP URI conversion and adds custom-core controls for local
