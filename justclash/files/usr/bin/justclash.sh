@@ -101,10 +101,11 @@ core_prepare_safe_paths() {
 }
 
 core_bind_address_read() {
-    local bind_interface bind_address
+    local bind_interface="$1" fallback_address="${2:-}"
+    local bind_address
 
-    config_get bind_interface proxy "$1" "lan"
-    if [ "$bind_interface" = "$BIND_UNSPECIFIED" ]; then
+    if [ -z "$bind_interface" ] || [ "$bind_interface" = "$BIND_UNSPECIFIED" ]; then
+        printf '%s' "$fallback_address"
         return 0
     fi
 
@@ -113,10 +114,8 @@ core_bind_address_read() {
         [ -z "$bind_address" ]; then
         if ! network_get_ipaddr6 bind_address "$bind_interface" ||
             [ -z "$bind_address" ]; then
-            log error "$2 bind network has no IPv4 or IPv6 address. Aborting startup." >&2
             return 1
         fi
-        bind_address="[$bind_address]"
     fi
 
     printf '%s' "$bind_address"
@@ -125,10 +124,10 @@ core_bind_address_read() {
 start() {
     local current_config_hash workdir_status
     local api_tls api_tls_cert api_tls_key dns_listen_port ipv6_enabled mihomo_gogc mihomo_gomaxprocs
-    local mihomo_mem_limit mihomo_persistent_cache mihomo_persistent_ext_rules mixed_port nft_apply_changes
-    local ntpd_start routing_mode tproxy_port use_mixed_port
-    local router_selected_ipaddr mixed_selected_ipaddr=""
-    local core_exit_code preflight_tproxy_port preflight_mixed_port
+    local mihomo_mem_limit mihomo_persistent_cache mihomo_persistent_ext_rules nft_apply_changes
+    local ntpd_start routing_mode tproxy_port
+    local router_selected_ipaddr controller_bind_interface
+    local core_exit_code preflight_tproxy_port
 
     if preflight_check_is_already_running "$PROGNAME start" "JustClash" "$CORE_PATH" "$$"; then
         return 0
@@ -141,8 +140,6 @@ start() {
     config_get dns_listen_port proxy dns_listen_port
     config_get tproxy_port proxy tproxy_port
     config_get nft_apply_changes settings nft_apply_changes
-    config_get mixed_port proxy mixed_port
-    config_get use_mixed_port proxy use_mixed_port
     config_get api_tls proxy api_tls
     config_get api_tls_cert proxy api_tls_cert
     config_get api_tls_key proxy api_tls_key
@@ -153,15 +150,13 @@ start() {
     config_get mihomo_gomaxprocs settings mihomo_gomaxprocs
     config_get routing_mode settings routing_mode
     config_get ipv6_enabled settings ipv6_enabled
+    config_get controller_bind_interface proxy controller_bind_interface "lan"
 
     if [ "$nft_apply_changes" = "1" ]; then
         preflight_tproxy_port="$tproxy_port"
     else
         preflight_tproxy_port=""
     fi
-
-    preflight_mixed_port=""
-    [ "$use_mixed_port" = "1" ] && preflight_mixed_port="$mixed_port"
 
     if [ -n "$ENV_JUSTCLASH_WAIT_WAN_MAX" ] && [ "$ENV_JUSTCLASH_WAIT_WAN_MAX" -gt 0 ]; then
         log info "Waiting for WAN (max ${ENV_JUSTCLASH_WAIT_WAN_MAX}s)..."
@@ -181,28 +176,22 @@ start() {
         sleep "$ENV_JUSTCLASH_BOOT_DELAY"
     fi
 
-    router_selected_ipaddr=$(core_bind_address_read controller_bind_interface Controller) || {
+    router_selected_ipaddr=$(core_bind_address_read "$controller_bind_interface") || {
         log error "Controller address resolution failed. Aborting startup."
         return 1
     }
-
-    if [ "$use_mixed_port" = "1" ]; then
-        mixed_selected_ipaddr=$(core_bind_address_read mixed_port_bind_interface "Mixed proxy") || {
-            log error "Mixed proxy address resolution failed. Aborting startup."
-            return 1
-        }
-    fi
 
     preflight_check_requirement "$CORE_PATH" "$CORE_BIN_NAME" "$REQUIRED_TOOLS" || {
         log error "System requirement checks failed. Aborting startup."
         return 1
     }
 
+    # Keep optional inbounds out of both port checks: Mihomo logs their bind
+    # failures and continues. One busy inbound need not veto the whole service.
     log info "Checking port configuration collisions"
     preflight_check_port_collisions \
         "$dns_listen_port" \
         "$preflight_tproxy_port" \
-        "$preflight_mixed_port" \
         "$DEFAULT_EXTERNAL_CONTROLLER_PORT" || {
         log error "Port configuration validation failed. Aborting startup."
         return 1
@@ -212,7 +201,6 @@ start() {
     preflight_check_ports_occupancy \
         "$dns_listen_port" \
         "$preflight_tproxy_port" \
-        "$preflight_mixed_port" \
         "$DEFAULT_EXTERNAL_CONTROLLER_PORT" || {
         log error "Active ports check failed. Aborting startup."
         return 1
@@ -254,7 +242,6 @@ start() {
     current_config_hash=$(workdir_cache_fingerprint \
         "$current_config_hash" \
         "$router_selected_ipaddr" \
-        "$mixed_selected_ipaddr" \
         "$RULESETS_FILE" \
         "$RULESETS_BLOCKS_FILE" \
         "$USER_RULESETS_FILE" \
@@ -283,7 +270,7 @@ start() {
         ;;
     1)
         log info "Generating YAML configuration..."
-        core_generate_yaml "$router_selected_ipaddr" "$mixed_selected_ipaddr" || {
+        core_generate_yaml "$router_selected_ipaddr" || {
             log error "YAML configuration generation failed. Aborting startup."
             return 1
         }
@@ -583,6 +570,26 @@ config_load_list() {
     config_list_foreach "$1" "$2" config_list_append
 }
 
+config_inbound_read() {
+    local section="$1" callback="$2"
+    local name enabled inbound_type port exit_rule JC_CONFIG_LIST_VALUE=""
+    config_get name "$section" name
+    [ -n "$name" ] || {
+        log warn "Skip inbound without name: $section"
+        return
+    }
+    config_get_bool enabled "$section" enabled 1
+    [ "$enabled" -eq 1 ] || {
+        log warn "Skip disabled inbound: $section"
+        return
+    }
+    config_get inbound_type "$section" type "mixed"
+    config_get port "$section" port "$DEFAULT_INBOUND_PORT"
+    config_get exit_rule "$section" exit_rule "BY RULES"
+    config_load_list "$section" authentication
+    "$callback" "inbound_$section" "$port" "$JC_CONFIG_LIST_VALUE" "$exit_rule" "$inbound_type"
+}
+
 config_proxy_read() {
     local section="$1" callback="$2"
     local name enabled proxy_link_uri dialer_proxy interface_name routing_mark
@@ -721,7 +728,7 @@ config_proxy_provider_read() {
 # Reads and validates YAML settings, then atomically promotes the generated document.
 core_generate_yaml() {
     local router_selected_ipaddr="$1"
-    local mixed_selected_ipaddr="${2:-}"
+    local listeners inbound_rules
 
     # ash locals are dynamically scoped. Synchronous YAML callbacks update this
     # build state without leaking it into the process-wide environment.
@@ -729,12 +736,14 @@ core_generate_yaml() {
     # rules.sh, groups.sh and proxies.sh, then wrapped and merged below.
     # OUT_PROXY_GROUPS / OUT_PROXIES / OUT_PROXY_PROVIDERS: rendered entities from
     # groups.sh / proxies.sh / providers.sh, copied into the final document here.
-    # OUT_NAMES_RULESETS / OUT_NAMES_SUFFIXES / OUT_NAMES_GEOSITE: block DNS selectors
-    # returned by rules.sh. OUT_MIXED_RULES / OUT_FINAL_RULES: its final rule arrays.
+    # OUT_NAMES_RULESETS / OUT_NAMES_SUFFIXES / OUT_NAMES_GEOSITE: block DNS
+    # policy JSON objects from rules.sh.
+    # OUT_FINAL_RULES: the final rule array.
     local OUT_RULES="[]" OUT_RULESETS="{}" OUT_FAKE_IP_RULES="[]"
     local OUT_PROXY_GROUPS="[]" OUT_PROXIES="[]" OUT_PROXY_PROVIDERS=""
-    local OUT_NAMES_RULESETS="" OUT_NAMES_SUFFIXES="" OUT_NAMES_GEOSITE=""
-    local OUT_MIXED_RULES="" OUT_FINAL_RULES=""
+    local OUT_NAMES_RULESETS="{}" OUT_NAMES_SUFFIXES="{}" OUT_NAMES_GEOSITE="{}"
+    local OUT_FINAL_RULES=""
+    local OUT_INBOUNDS="" OUT_INBOUND_RULES=""
     # Per-build newline-delimited sidecars, not process-global configuration:
     # NL is the readonly newline from constants.sh, not a literal backslash-n.
     # rules.sh writes name|source to _IPCIDR_RULESETS_BUFFER (all and block modes);
@@ -762,7 +771,7 @@ core_generate_yaml() {
     local ipv6_enabled nft_quic_mode
     local use_dashboard dashboard_repo dashboard_url
     local api_password log_level api_tls api_tls_cert api_tls_key interface_name
-    local tproxy_port use_mixed_port mixed_port unified_delay tcp_concurrent
+    local tproxy_port unified_delay tcp_concurrent
     local keep_alive_idle keep_alive_interval global_ua etag_support
     local profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_server core_ntp_port core_ntp_interval core_ntp_write_system
@@ -772,11 +781,11 @@ core_generate_yaml() {
     local fake_ip_exclude_domains fake_ip_exclude_rulesets fake_ip_exclude_geosites
     local geodata_mode geodata_autoupdate geodata_autoupdate_interval geosite_url geoip_url
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver
-    local hosts nameserver_policy proxy_authentication
+    local hosts nameserver_policy
     local sniffer_force_domain sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address
     local block_enabled block_enabled_list block_proxy block_update_interval block_size_limit
     local block_geosite_list block_domain_routes block_destip_routes block_geoip_list
-    local mixed_exit_rule final_exit_rule
+    local final_exit_rule
     local effective_interface_name
     local output_yaml_tmp_path active_static_ips_tmp_path active_source_ips_tmp_path active_ipcidr_rulesets_tmp_path
     local render_status
@@ -784,7 +793,7 @@ core_generate_yaml() {
     local fake_ip_filter_data
 
     local nameserver_policy_custom hosts_content
-    local rules_proxies rules_proxygroups rules_block rule_final rule_mixed rules_core
+    local rules_proxies rules_proxygroups rules_block rule_final rules_core
     local proxies proxy_groups rule_providers proxy_providers
     local names_rulesets_block_policy names_suffixes_block_policy
     local fake_ip_rules_proxy_groups fake_ip_rules_proxies
@@ -813,8 +822,6 @@ core_generate_yaml() {
     config_get api_tls_key proxy api_tls_key
     config_get interface_name proxy interface_name
     config_get tproxy_port proxy tproxy_port
-    config_get use_mixed_port proxy use_mixed_port
-    config_get mixed_port proxy mixed_port
     config_get unified_delay proxy unified_delay
     config_get tcp_concurrent proxy tcp_concurrent
     config_get keep_alive_idle proxy keep_alive_idle
@@ -866,8 +873,6 @@ core_generate_yaml() {
     sniffer_skip_src_address="$JC_CONFIG_LIST_VALUE"
     config_load_list proxy sniffer_skip_dst_address
     sniffer_skip_dst_address="$JC_CONFIG_LIST_VALUE"
-    config_load_list proxy proxy_authentication
-    proxy_authentication="$JC_CONFIG_LIST_VALUE"
 
     config_get block_enabled block_rules enabled
     config_get block_enabled_list block_rules enabled_blocklist
@@ -878,7 +883,6 @@ core_generate_yaml() {
     config_get block_domain_routes block_rules additional_domain_blockroute
     config_get block_destip_routes block_rules additional_destip_blockroute
     config_get block_geoip_list block_rules enabled_geoip_blocklist
-    config_get mixed_exit_rule mixed_port_rules exit_rule
     config_get final_exit_rule final_rules exit_rule
     effective_interface_name="$interface_name"
 
@@ -896,17 +900,20 @@ core_generate_yaml() {
     sniffer_exclude_domain=$(fmt_values_as_json_array "$sniffer_exclude_domain" "" "    ")
     sniffer_skip_src_address=$(fmt_values_as_json_array "$sniffer_skip_src_address" "" "    ")
     sniffer_skip_dst_address=$(fmt_values_as_json_array "$sniffer_skip_dst_address" "" "    ")
-    proxy_authentication=$(fmt_values_as_json_array "$proxy_authentication" "" "    ")
 
-    # Core rejects must precede mixed-port and catch-all routes.
+    # Core drops must precede inbound and catch-all routes.
     rules_core="[]"
-    if [ "$nft_quic_mode" = "BLOCK IN CORE" ]; then
-        rules_core="[$(build_dst_port_rules_array "$DEFAULT_TLS_PORT $DEFAULT_SECONDARY_TLS_PORT" "" "REJECT")]"
+    if [ "$nft_quic_mode" = "DROP IN CORE" ]; then
+        rules_core="[$(build_dst_port_rules_array "$DEFAULT_TLS_PORT $DEFAULT_SECONDARY_TLS_PORT" "" "REJECT-DROP")]"
     fi
 
-    # MIXED PORT RULES section
-    handle_mixed_port_rules_section "$mixed_exit_rule"
-    rule_mixed="$OUT_MIXED_RULES"
+    # INBOUNDS section
+    config_foreach config_inbound_read inbound yaml_inbound_append
+    listeners=$(
+        yaml_listeners_build "$tproxy_port" "$ipv6_enabled" "$OUT_INBOUNDS" |
+            yaml_json_format 2
+    ) || return 1
+    inbound_rules="[$OUT_INBOUND_RULES]"
 
     # FINAL RULE section
     handle_final_rule_section "$final_exit_rule"
@@ -1007,8 +1014,8 @@ core_generate_yaml() {
     nameserver_policy=$(yaml_nameserver_policy_build \
         "$nameserver_policy_custom" \
         "$names_rulesets_block_policy" \
-        "$names_suffixes_block_policy" \
-        "$names_geosite_block_policy") || return 1
+        "$names_geosite_block_policy" \
+        "$names_suffixes_block_policy") || return 1
 
     custom_real_ip_rules=$(build_fake_ip_rule_array "$fake_ip_exclude_domains" "DOMAIN-SUFFIX" "real-ip")
 
@@ -1039,7 +1046,7 @@ core_generate_yaml() {
 
     rules=$(yaml_rules_merge \
         "$rules_core" \
-        "$rule_mixed" \
+        "$inbound_rules" \
         "$rules_block" \
         "$rules_proxygroups" \
         "$rules_proxies" \
@@ -1072,9 +1079,6 @@ core_generate_yaml() {
 
     {
         yaml_document_write_access \
-            "$use_mixed_port" \
-            "$mixed_port" \
-            "$proxy_authentication" \
             "$use_dashboard" \
             "$DASHBOARD_PATH" \
             "$dashboard_url" \
@@ -1095,17 +1099,14 @@ core_generate_yaml() {
             "$keep_alive_idle" \
             "$keep_alive_interval" \
             "$profile_store_selected" \
-            "$profile_store_fake_ip" \
-            "$mixed_selected_ipaddr"
+            "$profile_store_fake_ip"
         yaml_document_write_geodata \
             "$geodata_mode" \
             "$geodata_autoupdate" \
             "$geodata_autoupdate_interval" \
             "$geoip_url" \
             "$geosite_url"
-        yaml_document_write_listeners \
-            "$tproxy_port" \
-            "$ipv6_enabled"
+        yaml_document_write_listeners "$listeners"
         yaml_document_write_services \
             "$hosts_content" \
             "$core_ntp_enabled" \
