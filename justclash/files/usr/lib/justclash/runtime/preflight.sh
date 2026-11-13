@@ -3,17 +3,12 @@
 
 # Generic startup checks. Configuration loading and orchestration belong to the caller.
 
-# Returns 0 when ports are unique, 4 when configured ports conflict.
-# Returns 0 when ports are unique, 4 when configured ports conflict.
+# Returns 0 when reserved service ports are unique, 4 on conflict.
 preflight_check_port_collisions() {
-    local dns_port="$1"
-    local tproxy_port="$2"
-    local mixed_port="$3"
-    local api_port="$4"
     local ports=""
     local p
 
-    for p in "$dns_port" "$tproxy_port" "$mixed_port" "$api_port"; do
+    for p in "$@"; do
         [ -z "$p" ] && continue
         if echo "$ports" | grep -qw "$p"; then
             log error "Port collision detected. Port $p is configured multiple times"
@@ -27,17 +22,8 @@ preflight_check_port_collisions() {
 
 # Returns 0 when ports become available, 4 when another service keeps a port busy.
 preflight_check_ports_occupancy() {
-    local dns_port="$1"
-    local tproxy_port="$2"
-    local mixed_port="$3"
-    local api_port="$4"
-    local ports=""
+    local ports="$*"
     local p
-
-    for p in "$dns_port" "$tproxy_port" "$mixed_port" "$api_port"; do
-        [ -z "$p" ] && continue
-        ports="${ports:+$ports }$p"
-    done
 
     local attempt=1
     local busy_port=""
