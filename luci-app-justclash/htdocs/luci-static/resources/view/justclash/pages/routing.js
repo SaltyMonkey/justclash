@@ -96,10 +96,32 @@ return view.extend({
         };
     },
     render(result) {
-        let m, s, s2, spp, s4, s5, smp, o, optionFinal, tabname;
+        let m, s, s2, spp, s4, s5, o, optionFinal, tabname;
 
         const primitives = formConstants.boolean;
         const datatypes = formConstants.datatypes;
+        const handleRoutingSave = function (callback, silent) {
+            const configName = this.config;
+            const entries = this.routingNames || ["proxies", "proxy_group", "proxy_provider"].flatMap(type =>
+                uci.sections(configName, type).map(section => ({
+                    type, sectionId: section[".name"], name: section.name
+                })));
+            // Retain original names if validation stops this save halfway through.
+            this.routingNames = entries;
+
+            return form.Map.prototype.save.call(this, () => {
+                // Let the form finish writing before old field values get a vote.
+                entries.forEach(({ type, sectionId, name }) => {
+                    const value = uci.get(configName, sectionId, "name");
+                    routingOptions.renameRoutingReferences(configName, type, name, value);
+                });
+                delete this.routingNames;
+                return callback ? callback() : undefined;
+            }, silent);
+        };
+        const handleRoutingModalOptions = function (section) {
+            section.map.save = handleRoutingSave;
+        };
         const handleRoutingRemove = function (sectionId) {
             const configName = this.map.config;
             const name = uci.get(configName, sectionId, "name");
@@ -112,6 +134,7 @@ return view.extend({
         };
 
         m = new form.Map(common.binName);
+        m.save = handleRoutingSave;
         s = m.section(form.GridSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
         s.anonymous = true;
         s.addremove = true;
@@ -120,6 +143,7 @@ return view.extend({
         s.sortable = true;
 
         s.handleRemove = handleRoutingRemove;
+        s.addModalOptions = handleRoutingModalOptions;
 
         tabname = "proxiesbasic_tab";
         s.tab(tabname, _("Basic"));
@@ -363,6 +387,7 @@ return view.extend({
         spp.cloneable = true;
         spp.sortable = true;
         spp.handleRemove = handleRoutingRemove;
+        spp.addModalOptions = handleRoutingModalOptions;
 
         tabname = "proxyprovidersbasic_tab";
         spp.tab(tabname, _("Basic"));
@@ -712,6 +737,7 @@ return view.extend({
         s2.cloneable = true;
         s2.sortable = true;
         s2.handleRemove = handleRoutingRemove;
+        s2.addModalOptions = handleRoutingModalOptions;
 
         tabname = "proxygroupsbasic_tab";
         s2.tab(tabname, _("Basic"));
@@ -1096,20 +1122,6 @@ return view.extend({
         o.editable = true;
         o.datatype = datatypes.CIDR4;
         o.modalonly = true;
-
-        smp = m.section(form.NamedSection, "mixed_port_rules", "mixed_port_rules", _("Mihomo mixed port rule:"), _("Extra settings for traffic that arrives through the Mihomo mixed port. Use this when that port should behave differently from the default route."));
-
-        o = smp.option(form.Value, "exit_rule", _("Send traffic to:"));
-        common.endRuleOptions.forEach(item => {
-            o.value(item.value, `${item.text}`);
-        });
-        o.default = common.endRuleOptions[1].value;
-        o.rmempty = false;
-        o.description = _("Choose which proxy, group, or action handles traffic that comes in through the Mihomo mixed port.");
-        o.validate = function (section_id, value) {
-            return common.validateExitRule(value);
-        };
-        routingOptions.makeDynamic(o, common.binName, common.endRuleOptions);
 
         s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Default rule:"), _("Used when no other rule matches. This is the fallback action for the remaining traffic."));
 

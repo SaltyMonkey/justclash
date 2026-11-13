@@ -130,13 +130,13 @@ return view.extend({
         o = s.taboption(tabname, widgets.DeviceSelect, "tproxy_input_interfaces", _("Client traffic interfaces:"));
         o.default = "br-lan";
         o.rmempty = false;
-        o.depends("nft_apply_changes", primitives.TRUE);
         o.retain = true;
         o.noaliases = true;
         o.nobridges = false;
         o.noinactive = false;
         o.multiple = true;
-        o.description = _("Select which interfaces receive client traffic that should be processed by JustClash. This is usually your LAN bridge; do not select WAN unless you know exactly why.");
+        o.depends("nft_apply_changes", primitives.TRUE);
+        o.description = _("Select client traffic interfaces for transparent interception. This selection does not restrict access to inbounds.");
         o.filter = common.filterInboundDeviceSelect;
 
         o = s.taboption(tabname, form.DynamicList, "nft_ports_exclude", _("Client bypassed ports:"));
@@ -164,14 +164,14 @@ return view.extend({
         o.depends("nft_apply_changes", primitives.TRUE);
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
-        o.description = _("By rules follows Mihomo routing. Drop blocks client UDP ports 443 and 8443 in nftables when Create nftables is enabled. Block in core rejects these ports before other Mihomo rules for all traffic reaching the core, including Mixed Port, and works independently of Create nftables.");
+        o.description = _("By rules follows Mihomo routing. Drop blocks client UDP ports 443 and 8443 in nftables when Create nftables is enabled. Drop in core silently drops these ports before other Mihomo rules for all traffic reaching the core, including inbounds, and works independently of Create nftables.");
         o.retain = true;
         o.rmempty = false;
         o.default = common.defaultNftOptions[0].value;
         common.defaultNftOptions.forEach(item => {
             o.value(item.value, `${item.text}`);
         });
-        o.value("BLOCK IN CORE", _("Block in core"));
+        o.value("DROP IN CORE", _("Drop in core"));
 
         o = s.taboption(tabname, form.ListValue, "nft_dns_mode", _("Client DNS traffic:"));
         o.description = _("Choose how to handle external DNS requests from clients. Hijack redirects TCP and UDP port 53 to the router DNS service. Drop blocks these requests; local destinations and bypassed clients remain unchanged.");

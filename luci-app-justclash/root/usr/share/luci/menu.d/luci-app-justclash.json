@@ -206,5 +206,21 @@
                 "justclash": true
             }
         }
+    },
+    "admin/services/justclash/inbounds": {
+        "title": "Setup: Inbounds",
+        "order": 95,
+        "action": {
+            "type": "view",
+            "path": "justclash/pages/inbounds"
+        },
+        "depends": {
+            "acl": [
+                "luci-app-justclash"
+            ],
+            "uci": {
+                "justclash": true
+            }
+        }
     }
 }

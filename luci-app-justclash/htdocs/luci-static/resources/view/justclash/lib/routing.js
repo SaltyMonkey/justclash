@@ -142,8 +142,8 @@ const removeGroupMemberReferences = (configName, sectionType, name) => {
 };
 
 const resetExitRuleReferences = (configName, name) => {
-    ["final_rules", "mixed_port_rules"].forEach((type) => {
-        const fallback = common.endRuleOptions[type === "mixed_port_rules" ? 1 : 0].value;
+    ["final_rules", "inbound"].forEach((type) => {
+        const fallback = common.endRuleOptions[type === "inbound" ? 1 : 0].value;
         uci.sections(configName, type).forEach((section) => {
             if (section.exit_rule === name)
                 uci.set(configName, section[".name"], "exit_rule", fallback);
@@ -160,7 +160,7 @@ const resetDownloadReferences = (configName, name) => {
     });
 };
 
-const clearObjectDialerReference = (configName, section, name) => {
+const updateObjectDialerReference = (configName, section, name, replacement) => {
     if (section.mode !== "object" || !section.proxy_link_object)
         return;
 
@@ -173,7 +173,10 @@ const clearObjectDialerReference = (configName, section, name) => {
 
     const outbound = Array.isArray(object) && object.length === 1 ? object[0] : object;
     if (isJsonObject(outbound) && outbound["dialer-proxy"] === name) {
-        delete outbound["dialer-proxy"];
+        if (replacement === undefined)
+            delete outbound["dialer-proxy"];
+        else
+            outbound["dialer-proxy"] = replacement;
         uci.set(configName, section[".name"], "proxy_link_object", JSON.stringify(object));
     }
 };
@@ -183,7 +186,7 @@ const clearDialerReferences = (configName, name) => {
         if (section.dialer_proxy === name)
             uci.unset(configName, section[".name"], "dialer_proxy");
 
-        clearObjectDialerReference(configName, section, name);
+        updateObjectDialerReference(configName, section, name);
     });
 
     uci.sections(configName, "proxy_provider").forEach((section) => {
@@ -203,6 +206,45 @@ const removeRoutingReferences = (configName, sectionType, name) => {
     resetExitRuleReferences(configName, name);
     resetDownloadReferences(configName, name);
     clearDialerReferences(configName, name);
+};
+
+const renameRoutingReferences = (configName, sectionType, name, replacement) => {
+    if (!name || !replacement || name === replacement)
+        return;
+
+    const isProvider = sectionType === "proxy_provider";
+    const memberOption = isProvider ? "providers" : "proxies";
+    uci.sections(configName, "proxy_group").forEach((group) => {
+        const members = group[memberOption];
+        if (Array.isArray(members) && members.includes(name))
+            uci.set(configName, group[".name"], memberOption,
+                members.map(member => member === name ? replacement : member));
+        else if (members === name)
+            uci.set(configName, group[".name"], memberOption, replacement);
+    });
+
+    if (isProvider)
+        return;
+
+    const references = {
+        proxy_group: ["default_selected"],
+        proxies: ["dialer_proxy"],
+        proxy_provider: ["proxy", "override_dialer_proxy"],
+        block_rules: ["proxy"],
+        final_rules: ["exit_rule"],
+        inbound: ["exit_rule"]
+    };
+    Object.entries(references).forEach(([type, options]) => {
+        uci.sections(configName, type).forEach((section) => {
+            options.forEach((option) => {
+                if (section[option] === name)
+                    uci.set(configName, section[".name"], option, replacement);
+            });
+        });
+    });
+    uci.sections(configName, "proxies").forEach((section) => {
+        updateObjectDialerReference(configName, section, name, replacement);
+    });
 };
 
 const removeProxySections = (configName, sectionIds) => {
@@ -239,6 +281,7 @@ return baseclass.extend({
     parseBulkProxyObjects,
     validateBulkProxyNames,
     removeRoutingReferences,
+    renameRoutingReferences,
     addBulkProxySections,
     removeProxySections
 });

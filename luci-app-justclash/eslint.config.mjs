@@ -61,6 +61,7 @@ export default defineConfig([
         routingOptions: "readonly",
         proxyBulkImport: "readonly",
         multilineList: "readonly",
+        passwordList: "readonly",
         logs: "readonly",
         ubusApi: "readonly",
         fsApi: "readonly",

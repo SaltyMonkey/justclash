@@ -430,23 +430,13 @@ return baseclass.extend({
     },
     validateProxyAuthenticationEntry: function (value) {
         const val = value ? value.trim() : "";
-
-        if (!val) {
+        if (!val)
             return true;
-        }
-
         if (/\s/.test(val) || this.hasControlChars(val))
             return _("Value must not contain whitespace or control characters");
-
-        const parts = val.split(":");
-        if (parts.length > 2) {
-            return _("Only one : separator is allowed");
-        }
-
-        if (parts.length !== 2 || parts[0].length === 0 || parts[1].length === 0) {
+        const separatorIndex = val.indexOf(":");
+        if (separatorIndex <= 0 || separatorIndex === val.length - 1)
             return _("Value must use the user:pass format");
-        }
-
         return true;
     },
     validateApiSecret: function (value) {

@@ -78,7 +78,7 @@ return view.extend({
             :root[data-darkmode="true"] .jc-actions-wrap { border-color: var(--border-color-medium, rgba(255, 255, 255, .08)); background: var(--background-color-high, rgba(255, 255, 255, .04)); }
             .jc-hidden-row { display: none !important; }
             .jc-grid-container:not(:has(.jc-grid-row:not(.jc-hidden-row))) .jc-grid-header { display: none; }
-            .jc-grid-container { display: flex; flex-direction: column; border: 1px solid var(--border-color-medium, #d9d9d9); border-radius: 0.5rem; overflow: hidden; background-color: var(--background-color-low, #fff); margin-bottom: 1rem; }
+            .jc-grid-container { display: flex; flex-direction: column; border: 1px solid var(--border-color-medium, #d9d9d9); border-radius: 0.5rem; overflow: visible; background-color: var(--background-color-low, #fff); margin-bottom: 1rem; }
             :root[data-darkmode="true"] .jc-grid-container { background-color: var(--background-color-low, rgba(0, 0, 0, 0.1)); }
             .jc-grid-header { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 1.8fr) minmax(4.8rem, auto); gap: 0.75rem; padding: 0.625rem 0.9375rem; background-color: var(--background-color-medium, #f6f6f6); border-bottom: 1px solid var(--border-color-medium, #d9d9d9); font-weight: bold; }
             .jc-grid-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 1.8fr) minmax(4.8rem, auto); gap: 0.75rem; padding: 0.625rem 0.9375rem; align-items: center; border-bottom: 1px solid var(--border-color-low, #f0f0f0); transition: background-color 0.15s ease; }
@@ -87,7 +87,8 @@ return view.extend({
             :root[data-darkmode="true"] .jc-grid-row:hover { background-color: var(--background-color-high, rgba(255, 255, 255, 0.03)); }
             .jc-grid-col { min-width: 0; display: flex; align-items: center; }
             .jc-url-cell { word-break: break-all; overflow: hidden; text-overflow: ellipsis; }
-            .jc-grid-col input, .jc-grid-col select { width: 100% !important; box-sizing: border-box !important; height: 1.875rem !important; padding: 0.25rem 0.375rem !important; margin: 0 !important; }
+            .jc-grid-col input { width: 100% !important; box-sizing: border-box !important; height: 1.875rem !important; padding: 0.25rem 0.375rem !important; margin: 0 !important; }
+            .jc-col-type > .cbi-dropdown { width: 100%; min-width: 0; }
             @media (max-width: 48rem) {
                 .jc-grid-header { display: none; }
                 .jc-grid-row { grid-template-columns: 1fr; gap: 0.625rem; padding: 1rem; border-bottom: 1px solid var(--border-color-medium, #d9d9d9); }
@@ -193,11 +194,11 @@ return view.extend({
                 placeholder: _("e.g. my_custom_rules")
             });
 
-            const typeSelect = E("select", { class: "cbi-input-select" }, [
-                E("option", { value: "domain" }, _("Domain")),
-                E("option", { value: "ipcidr" }, _("IP CIDR"))
-            ]);
-            typeSelect.value = (rule.type === "ipcidr") ? "ipcidr" : "domain";
+            const typeDropdown = new ui.Dropdown(rule.type === "ipcidr" ? "ipcidr" : "domain", {
+                domain: _("Domain"),
+                ipcidr: _("IP CIDR")
+            }, { sort: false, optional: false });
+            const typeDropdownNode = typeDropdown.render();
 
             const urlInput = E("input", {
                 type: "text",
@@ -223,14 +224,14 @@ return view.extend({
 
             row.appendChild(E("div", { class: "jc-grid-col jc-col-name", "data-label": _("Readable name") }, nameInput));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-id", "data-label": _("Name") }, idInput));
-            row.appendChild(E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, typeSelect));
+            row.appendChild(E("div", { class: "jc-grid-col jc-col-type", "data-label": _("Type") }, typeDropdownNode));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-url jc-url-cell", "data-label": _("URL / Local Path") }, urlInput));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-auth", "data-label": _("Authorization") }, authInput));
             row.appendChild(E("div", { class: "jc-grid-col jc-col-action" }, deleteBtn));
 
             row.nameInput = nameInput;
             row.idInput = idInput;
-            row.typeSelect = typeSelect;
+            row.typeDropdown = typeDropdown;
             row.urlInput = urlInput;
             row.authInput = authInput;
 
@@ -270,10 +271,10 @@ return view.extend({
             }.bind(this), "blur", "keyup");
 
             ui.addValidator(urlInput, "string", false, function(value) {
-                return rulesetsCodec.validateRulesetLocation(value, typeSelect.value);
+                return rulesetsCodec.validateRulesetLocation(value, typeDropdown.getValue());
             }, "blur", "keyup");
 
-            typeSelect.addEventListener("change", function() {
+            typeDropdownNode.addEventListener("cbi-dropdown-change", function() {
                 urlInput.dispatchEvent(new window.Event("blur"));
             });
 
@@ -314,7 +315,7 @@ return view.extend({
                 data.push({
                     name: row.nameInput.value,
                     id: row.idInput.value,
-                    type: row.typeSelect.value,
+                    type: row.typeDropdown.getValue(),
                     url: row.urlInput.value,
                     auth: row.authInput.value
                 });
