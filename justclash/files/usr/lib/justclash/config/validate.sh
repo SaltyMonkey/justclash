@@ -95,7 +95,7 @@ validate_main_section() {
         "tproxy_input_interfaces:list(network):$DEFAULT_INPUT_INTERFACE" \
         'nft_ports_exclude:list(and(port,min(1)))' \
         'nft_ports_exclude_router:list(and(port,min(1)))' \
-        "nft_quic_mode:or(\"BY RULES\",\"DROP\",\"BLOCK IN CORE\"):$DEFAULT_NFT_MODE" \
+        "nft_quic_mode:or(\"BY RULES\",\"DROP\",\"DROP IN CORE\"):$DEFAULT_NFT_MODE" \
         "nft_dot_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
         "nft_dot_quic_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
         "nft_doh_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
@@ -121,7 +121,6 @@ validate_proxy_section() {
     config_section_validate proxy "${1:-}" \
         "use_dashboard:$CONFIG_FLAG_TYPE:0" \
         "api_tls:$CONFIG_FLAG_TYPE:$DEFAULT_API_TLS" \
-        "use_mixed_port:$CONFIG_FLAG_TYPE:0" \
         "core_ntp_enabled:$CONFIG_FLAG_TYPE:0" \
         "geodata_autoupdate:$CONFIG_FLAG_TYPE:0" \
         "geodata_mode:$CONFIG_FLAG_TYPE:0" \
@@ -144,8 +143,6 @@ validate_proxy_section() {
         "geodata_autoupdate_interval:uinteger(10):$DEFAULT_GEODATA_UPDATE_INTERVAL" \
         "tproxy_port:and(port,min(1)):$DEFAULT_TPROXY_PORT" \
         "dns_listen_port:and(port,min(1)):$DEFAULT_DNS_LISTEN_PORT" \
-        "mixed_port:and(port,min(1)):$DEFAULT_MIXED_PORT" \
-        "mixed_port_bind_interface:or(\"-\",network):$DEFAULT_MIXED_PORT_BIND_INTERFACE" \
         "core_ntp_port:and(port,min(1)):$DEFAULT_NTP_PORT" \
         "controller_bind_interface:or(\"-\",network):$DEFAULT_CONTROLLER_BIND_INTERFACE" \
         'interface_name:network' \
@@ -164,9 +161,14 @@ validate_block_rules_section() {
         "proxy:and(maxlength(64),regex(\"[-A-Za-z0-9_]+\")):$DEFAULT_PROXY"
 }
 
-validate_mixed_port_rules_section() {
-    config_section_validate mixed_port_rules "${1:-}" \
-        "exit_rule:or(\"BY RULES\",and(maxlength(64),regex(\"[-A-Za-z0-9_]+\"))):$DEFAULT_PROXY"
+validate_inbound_section() {
+    config_section_validate inbound "$1" \
+        'type:or("mixed","socks","http"):mixed' \
+        "enabled:$CONFIG_FLAG_TYPE:1" \
+        'name:maxlength(64)' \
+        "port:and(port,min(1)):$DEFAULT_INBOUND_PORT" \
+        'authentication:list(string)' \
+        'exit_rule:or("BY RULES",and(maxlength(64),regex("[-A-Za-z0-9_]+"))):BY RULES'
 }
 
 validate_final_rules_section() {
@@ -309,10 +311,10 @@ config_validate() {
     validate_main_section settings
     validate_proxy_section proxy
     validate_block_rules_section block_rules
-    validate_mixed_port_rules_section mixed_port_rules
     validate_final_rules_section final_rules
 
     config_foreach validate_proxy_provider_section proxy_provider
+    config_foreach validate_inbound_section inbound
     config_foreach validate_proxies_section proxies
     config_foreach validate_proxy_group_section proxy_group
     [ "$validation_failed" -eq 0 ]

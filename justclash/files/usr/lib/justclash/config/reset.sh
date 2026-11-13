@@ -2,7 +2,6 @@
 # shellcheck shell=dash
 
 _CONFIG_API_PASSWORD_PLACEHOLDER="__JUSTCLASH_GENERATE_API_PASSWORD__"
-_CONFIG_MIXED_PASSWORD_PLACEHOLDER="__JUSTCLASH_GENERATE_MIXED_PASSWORD__"
 
 _config_generate_password() {
     local password=""
@@ -11,7 +10,7 @@ _config_generate_password() {
 
     [ "${#password}" -eq 32 ] || return 1
     case "$password" in
-        *[!A-Za-z0-9+/]*) return 1 ;;
+    *[!A-Za-z0-9+/]*) return 1 ;;
     esac
     printf '%s' "$password"
 }
@@ -20,7 +19,6 @@ _config_write_credentials() {
     local source_path="$1"
     local output_path="$2"
     local api_password="$3"
-    local mixed_password="$4"
     local option_count
 
     option_count="$(
@@ -33,27 +31,25 @@ _config_write_credentials() {
 
     sed -E \
         -e "s|^([[:space:]]*option[[:space:]]+api_password[[:space:]]+)'${_CONFIG_API_PASSWORD_PLACEHOLDER}'[[:space:]]*$|\1'${api_password}'|" \
-        -e "s|^([[:space:]]*list[[:space:]]+proxy_authentication[[:space:]]+)'user:${_CONFIG_MIXED_PASSWORD_PLACEHOLDER}'[[:space:]]*$|\1'user:${mixed_password}'|" \
         "$source_path" >"$output_path" || return 1
 
-    ! grep -Eq "${_CONFIG_API_PASSWORD_PLACEHOLDER}|${_CONFIG_MIXED_PASSWORD_PLACEHOLDER}" "$output_path"
+    ! grep -Eq "${_CONFIG_API_PASSWORD_PLACEHOLDER}" "$output_path"
 }
 
 config_credentials_ensure_file() {
     local config_path="$1"
-    local api_password mixed_password tmp_config
+    local api_password tmp_config
 
     [ -f "$config_path" ] || return 1
 
-    if ! grep -Eq "${_CONFIG_API_PASSWORD_PLACEHOLDER}|${_CONFIG_MIXED_PASSWORD_PLACEHOLDER}" "$config_path"; then
+    if ! grep -Eq "${_CONFIG_API_PASSWORD_PLACEHOLDER}" "$config_path"; then
         return 0
     fi
 
     api_password="$(_config_generate_password)" || return 1
-    mixed_password="$(_config_generate_password)" || return 1
     tmp_config="$(mktemp "${config_path}.password.XXXXXX")" || return 1
 
-    if ! _config_write_credentials "$config_path" "$tmp_config" "$api_password" "$mixed_password" ||
+    if ! _config_write_credentials "$config_path" "$tmp_config" "$api_password" ||
         ! chmod 600 "$tmp_config" ||
         ! mv -f "$tmp_config" "$config_path"; then
         rm -f "$tmp_config"
@@ -65,7 +61,7 @@ config_reset() {
     local default_config_path="$1"
     local config_path="$2"
     local backup_config_path="$3"
-    local api_password mixed_password tmp_config backup_tmp=""
+    local api_password tmp_config backup_tmp=""
 
     if [ ! -f "$default_config_path" ]; then
         clog error "Default configuration file is missing. Reset is unavailable."
@@ -76,17 +72,13 @@ config_reset() {
         clog error "Failed to generate a new API password."
         return 1
     }
-    mixed_password="$(_config_generate_password)" || {
-        clog error "Failed to generate a new Mixed Port password."
-        return 1
-    }
 
     tmp_config="$(mktemp "${config_path}.reset.XXXXXX")" || {
         clog error "Failed to create a temporary configuration file."
         return 1
     }
 
-    if ! _config_write_credentials "$default_config_path" "$tmp_config" "$api_password" "$mixed_password" ||
+    if ! _config_write_credentials "$default_config_path" "$tmp_config" "$api_password" ||
         ! chmod 600 "$tmp_config"; then
         rm -f "$tmp_config"
         clog error "Failed to prepare the default configuration."
