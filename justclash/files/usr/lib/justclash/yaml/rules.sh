@@ -76,6 +76,19 @@ build_manual_rules_array() {
     printf '%s' "$rules_fragment"
 }
 
+build_nameserver_policy_object() {
+    local entries="$1" prefix="$2" nameserver="$3"
+    local entry key policy=""
+
+    nameserver=$(str_json_escape "$nameserver")
+    for entry in $entries; do
+        key=$(str_json_escape "$prefix$entry")
+        policy="${policy:+$policy,}\"$key\":\"$nameserver\""
+    done
+
+    printf '{%s}' "$policy"
+}
+
 build_dst_port_rules_array() {
     local udp_ports="$1" tcp_ports="$2" target_name="$3"
     local network ports port rules_fragment=""
@@ -183,7 +196,7 @@ build_builtin_rules_bundle() {
         esac
 
         if [ "$ruleset_behavior" = "domain" ]; then
-            names_fragment="${names_fragment:+$names_fragment,}\"rule-set:$ruleset_name\""
+            names_fragment="${names_fragment:+$names_fragment }$ruleset_name"
             case "$GLOBAL_FAKE_IP_EXCLUDE_RULES" in
             *" $ruleset_name "*) ;;
             *) fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\"" ;;
@@ -227,40 +240,28 @@ handle_block_rule_section() {
     local enabled="$1" enabled_blocklist="$2" download_proxy="$3" list_update_interval="$4"
     local size_limit="$5" route_entries="$6" additional_domain_blockroute="$7"
     local additional_destip_blockroute="$8" enabled_geoip_blocklist="$9"
-    local rules_array="" selected_rulesets="" list_rulesets_names="" list_suffix_names="" list_geosite_names=""
-    local generated_rule route_entry rules_fragment
+    local rules_array="" selected_rulesets="" list_rulesets_names="{}" list_suffix_names list_geosite_names
+    local rules_fragment
 
     if [ "$enabled" -ne 1 ]; then
         log warn "Skip disabled proxy group: block_rules"
         OUT_RULES="[]"
         OUT_RULESETS="{}"
-        OUT_NAMES_RULESETS=""
-        OUT_NAMES_SUFFIXES=""
-        OUT_NAMES_GEOSITE=""
+        OUT_NAMES_RULESETS="{}"
+        OUT_NAMES_SUFFIXES="{}"
+        OUT_NAMES_GEOSITE="{}"
         return
     fi
 
     # --- 1. Domain-based Block Rules ---
-    for route_entry in $route_entries; do
-        [ -n "$route_entry" ] && {
-            list_geosite_names="${list_geosite_names:+$list_geosite_names,}$route_entry"
-        }
-    done
-    if [ -n "$list_geosite_names" ]; then
-        list_geosite_names="geosite:$list_geosite_names"
-    fi
+    list_geosite_names=$(build_nameserver_policy_object "$route_entries" "geosite:" "rcode://success")
+    list_suffix_names=$(build_nameserver_policy_object "$additional_domain_blockroute" "+." "rcode://success")
 
     if [ -n "$enabled_blocklist" ]; then
         build_builtin_rules_bundle "$enabled_blocklist" "REJECT" "$download_proxy" "$list_update_interval" "$size_limit" "block"
         [ -n "$OUT_BUNDLE_RULESETS" ] && selected_rulesets="${selected_rulesets:+$selected_rulesets,}$OUT_BUNDLE_RULESETS"
-        [ -n "$OUT_BUNDLE_NAMES" ] && list_rulesets_names=$(printf '%s' "$OUT_BUNDLE_NAMES" | sed 's/"//g; s/,rule-set:/,/g')
+        list_rulesets_names=$(build_nameserver_policy_object "$OUT_BUNDLE_NAMES" "rule-set:" "rcode://success")
     fi
-
-    for route_entry in $additional_domain_blockroute; do
-        [ -n "$route_entry" ] && {
-            list_suffix_names="${list_suffix_names:+$list_suffix_names,}+.$route_entry"
-        }
-    done
 
     # --- 2. IP-based Block Rules (at the bottom) ---
     for ip_cidr in $additional_destip_blockroute; do
@@ -282,19 +283,6 @@ handle_block_rule_section() {
     OUT_NAMES_RULESETS="$list_rulesets_names"
     OUT_NAMES_GEOSITE="$list_geosite_names"
     OUT_NAMES_SUFFIXES="$list_suffix_names"
-}
-
-handle_mixed_port_rules_section() {
-    local exit_rule="$1"
-    local rules rule_str
-    if [ "$exit_rule" = "BY RULES" ]; then
-        rules="[]"
-    else
-        rule_str=$(printf 'IN-TYPE,SOCKS/HTTP,%s' "$exit_rule")
-        rules="[\"${rule_str:-}\"]"
-    fi
-
-    OUT_MIXED_RULES="$rules"
 }
 
 handle_final_rule_section() {
