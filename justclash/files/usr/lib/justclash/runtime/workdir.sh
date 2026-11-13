@@ -6,16 +6,14 @@
 workdir_cache_fingerprint() {
     local uci_hash="$1"
     local controller_bind_address="$2"
-    local mixed_selected_ipaddr="$3"
     local file_path file_hash
     local fingerprint
-    shift 3
+    shift 2
 
-    fingerprint=$(printf 'generator=%s|uci=%s|controller=%s|mixed=%s|tproxy-mark=%s|core-mark=%s' \
+    fingerprint=$(printf 'generator=%s|uci=%s|controller=%s|tproxy-mark=%s|core-mark=%s' \
         "$JUSTCLASH_VERSION" \
         "$uci_hash" \
         "$controller_bind_address" \
-        "$mixed_selected_ipaddr" \
         "$NF_TABLE_FWMARK_FINAL" \
         "$NF_TABLE_FWMARK_PROXY") || return 1
 
