@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-13 17:10+0300\n"
+"POT-Creation-Date: 2026-11-13 18:42+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -527,13 +527,13 @@ msgstr "Получено: %s"
 msgid "Start Time: %s"
 msgstr "Время начала: %s"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:832 htdocs/luci-static/resources/view/justclash/pages/nodes.js:513 htdocs/luci-static/resources/view/justclash/pages/nodes.js:521 htdocs/luci-static/resources/view/justclash/pages/nodes.js:753
+#: htdocs/luci-static/resources/view/justclash/common.js:832 htdocs/luci-static/resources/view/justclash/lib/status_actions.js:179
+msgid "Status"
+msgstr "Статус"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:833 htdocs/luci-static/resources/view/justclash/pages/nodes.js:513 htdocs/luci-static/resources/view/justclash/pages/nodes.js:521 htdocs/luci-static/resources/view/justclash/pages/nodes.js:753
 msgid "Nodes"
 msgstr "Узлы"
-
-#: htdocs/luci-static/resources/view/justclash/common.js:833 htdocs/luci-static/resources/view/justclash/pages/status.js:96
-msgid "Connections"
-msgstr "Соединения"
 
 #: htdocs/luci-static/resources/view/justclash/common.js:834 htdocs/luci-static/resources/view/justclash/pages/rules.js:184 htdocs/luci-static/resources/view/justclash/pages/rule_providers.js:144 htdocs/luci-static/resources/view/justclash/pages/rule_providers.js:158 htdocs/luci-static/resources/view/justclash/pages/status.js:95
 msgid "Rules"
@@ -543,21 +543,41 @@ msgstr "Правила"
 msgid "Rule Providers"
 msgstr "Наборы правил"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:836
-msgid "Setup: Rulesets"
-msgstr "Настройка: Правила"
+#: htdocs/luci-static/resources/view/justclash/common.js:836 htdocs/luci-static/resources/view/justclash/pages/service_logs.js:117
+msgid "Service logs"
+msgstr "Логи сервиса"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:837
-msgid "Setup: Routing"
-msgstr "Настройка: Маршруты"
+#: htdocs/luci-static/resources/view/justclash/common.js:837 htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:246
+msgid "Realtime logs"
+msgstr "Логи в реальном времени"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:838
+#: htdocs/luci-static/resources/view/justclash/common.js:838 htdocs/luci-static/resources/view/justclash/pages/status.js:96
+msgid "Connections"
+msgstr "Соединения"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:839
 msgid "Setup: Service"
 msgstr "Настройка: Сервис"
 
-#: htdocs/luci-static/resources/view/justclash/common.js:839
+#: htdocs/luci-static/resources/view/justclash/common.js:840
 msgid "Setup: Proxy"
 msgstr "Настройка: Прокси"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:841
+msgid "Setup: DNS"
+msgstr "Настройка: DNS"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:842
+msgid "Setup: Rulesets"
+msgstr "Настройка: Правила"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:843
+msgid "Setup: Routing"
+msgstr "Настройка: Маршруты"
+
+#: htdocs/luci-static/resources/view/justclash/common.js:844
+msgid "Setup: Inbounds"
+msgstr "Настройка: Входящие подключения"
 
 #: htdocs/luci-static/resources/view/justclash/components/multiline_list.js:20 htdocs/luci-static/resources/view/justclash/lib/routing.js:40 htdocs/luci-static/resources/view/justclash/lib/routing.js:54
 #, javascript-format
@@ -568,7 +588,7 @@ msgstr "Элемент %d: %s"
 msgid "Reveal/hide password"
 msgstr "Показать/скрыть пароль"
 
-#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:15 htdocs/luci-static/resources/view/justclash/pages/dns.js:65 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:105 htdocs/luci-static/resources/view/justclash/pages/proxy.js:44 htdocs/luci-static/resources/view/justclash/pages/proxy.js:59 htdocs/luci-static/resources/view/justclash/pages/proxy.js:79 htdocs/luci-static/resources/view/justclash/pages/proxy.js:92 htdocs/luci-static/resources/view/justclash/pages/proxy.js:188 htdocs/luci-static/resources/view/justclash/pages/proxy.js:196 htdocs/luci-static/resources/view/justclash/pages/routing.js:242 htdocs/luci-static/resources/view/justclash/pages/routing.js:252 htdocs/luci-static/resources/view/justclash/pages/routing.js:288 htdocs/luci-static/resources/view/justclash/pages/routing.js:355
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:15 htdocs/luci-static/resources/view/justclash/pages/dns.js:65 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:106 htdocs/luci-static/resources/view/justclash/pages/proxy.js:44 htdocs/luci-static/resources/view/justclash/pages/proxy.js:59 htdocs/luci-static/resources/view/justclash/pages/proxy.js:79 htdocs/luci-static/resources/view/justclash/pages/proxy.js:92 htdocs/luci-static/resources/view/justclash/pages/proxy.js:188 htdocs/luci-static/resources/view/justclash/pages/proxy.js:196 htdocs/luci-static/resources/view/justclash/pages/routing.js:242 htdocs/luci-static/resources/view/justclash/pages/routing.js:252 htdocs/luci-static/resources/view/justclash/pages/routing.js:288 htdocs/luci-static/resources/view/justclash/pages/routing.js:355
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:360 htdocs/luci-static/resources/view/justclash/pages/routing.js:366 htdocs/luci-static/resources/view/justclash/pages/routing.js:373 htdocs/luci-static/resources/view/justclash/pages/routing.js:379 htdocs/luci-static/resources/view/justclash/pages/routing.js:445 htdocs/luci-static/resources/view/justclash/pages/routing.js:470 htdocs/luci-static/resources/view/justclash/pages/routing.js:494 htdocs/luci-static/resources/view/justclash/pages/routing.js:707 htdocs/luci-static/resources/view/justclash/pages/routing.js:717 htdocs/luci-static/resources/view/justclash/pages/routing.js:725 htdocs/luci-static/resources/view/justclash/pages/routing.js:791 htdocs/luci-static/resources/view/justclash/pages/routing.js:803 htdocs/luci-static/resources/view/justclash/pages/routing.js:894
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:914 htdocs/luci-static/resources/view/justclash/pages/routing.js:924 htdocs/luci-static/resources/view/justclash/pages/routing.js:932 htdocs/luci-static/resources/view/justclash/pages/routing.js:1000 htdocs/luci-static/resources/view/justclash/pages/routing.js:1006 htdocs/luci-static/resources/view/justclash/pages/routing.js:1013 htdocs/luci-static/resources/view/justclash/pages/routing.js:1020 htdocs/luci-static/resources/view/justclash/pages/routing.js:1026 htdocs/luci-static/resources/view/justclash/pages/routing.js:1114 htdocs/luci-static/resources/view/justclash/pages/routing.js:1120 htdocs/luci-static/resources/view/justclash/pages/service.js:114 htdocs/luci-static/resources/view/justclash/pages/service.js:124 htdocs/luci-static/resources/view/justclash/pages/service.js:144
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:152 htdocs/luci-static/resources/view/justclash/pages/service.js:160 htdocs/luci-static/resources/view/justclash/pages/service.js:245 htdocs/luci-static/resources/view/justclash/pages/service.js:261 htdocs/luci-static/resources/view/justclash/pages/service.js:277 htdocs/luci-static/resources/view/justclash/pages/service.js:288 htdocs/luci-static/resources/view/justclash/pages/service.js:313 htdocs/luci-static/resources/view/justclash/pages/service.js:331 htdocs/luci-static/resources/view/justclash/pages/service.js:341 htdocs/luci-static/resources/view/justclash/pages/service.js:349 htdocs/luci-static/resources/view/justclash/pages/service.js:357 htdocs/luci-static/resources/view/justclash/pages/service.js:365 htdocs/luci-static/resources/view/justclash/pages/service.js:373
@@ -763,10 +783,6 @@ msgstr "Завершено"
 #: htdocs/luci-static/resources/view/justclash/lib/status_actions.js:179
 msgid "Received rulesets:"
 msgstr "Полученные rulesets:"
-
-#: htdocs/luci-static/resources/view/justclash/lib/status_actions.js:179
-msgid "Status"
-msgstr "Статус"
 
 #: htdocs/luci-static/resources/view/justclash/lib/status_actions.js:182
 msgid "Getting rulesets..."
@@ -1036,10 +1052,6 @@ msgstr "Сопоставление хостов (Hosts):"
 msgid "Domain-specific IP mapping in the format domain/ip (example: cloudflare-dns.com/1.1.1.1)."
 msgstr "Сопоставление домена и IP-адреса в формате домен/ip (пример: cloudflare-dns.com/1.1.1.1)."
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:15
-msgid "Setup: Inbounds"
-msgstr "Настройка: Входящие подключения"
-
 #: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:16
 msgid "Inbounds:"
 msgstr "Входящие подключения:"
@@ -1048,60 +1060,60 @@ msgstr "Входящие подключения:"
 msgid "Create listeners on all interfaces, each with its own port, authentication, and outbound route. Use firewall rules to restrict access."
 msgstr "Создавайте слушатели на всех интерфейсах, каждый со своим портом, авторизацией и исходящим маршрутом. Ограничивайте доступ правилами межсетевого экрана."
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:40
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:43
 msgid "This port is reserved for JustClash DNS, TProxy, or the API controller."
 msgstr "Этот порт зарезервирован для DNS, TProxy или API-контроллера JustClash."
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:47
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:48
 msgid "This port is already assigned to another enabled inbound."
 msgstr "Этот порт уже назначен другому включённому входящему подключению."
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:50 htdocs/luci-static/resources/view/justclash/pages/routing.js:151 htdocs/luci-static/resources/view/justclash/pages/routing.js:398 htdocs/luci-static/resources/view/justclash/pages/routing.js:745 htdocs/luci-static/resources/view/justclash/pages/routing.js:1041 htdocs/luci-static/resources/view/justclash/pages/status.js:39
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:51 htdocs/luci-static/resources/view/justclash/pages/routing.js:151 htdocs/luci-static/resources/view/justclash/pages/routing.js:398 htdocs/luci-static/resources/view/justclash/pages/routing.js:745 htdocs/luci-static/resources/view/justclash/pages/routing.js:1041 htdocs/luci-static/resources/view/justclash/pages/status.js:39
 msgid "Enabled"
 msgstr "Включен"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:57 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:95 htdocs/luci-static/resources/view/justclash/pages/routing.js:158 htdocs/luci-static/resources/view/justclash/pages/routing.js:405 htdocs/luci-static/resources/view/justclash/pages/rules.js:120 htdocs/luci-static/resources/view/justclash/pages/rules.js:139 htdocs/luci-static/resources/view/justclash/pages/rulesets.js:118 htdocs/luci-static/resources/view/justclash/pages/rulesets.js:172 htdocs/luci-static/resources/view/justclash/pages/rulesets.js:227 htdocs/luci-static/resources/view/justclash/pages/rule_providers.js:135 htdocs/luci-static/resources/view/justclash/pages/rule_providers.js:157
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:58 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:96 htdocs/luci-static/resources/view/justclash/pages/routing.js:158 htdocs/luci-static/resources/view/justclash/pages/routing.js:405 htdocs/luci-static/resources/view/justclash/pages/rules.js:120 htdocs/luci-static/resources/view/justclash/pages/rules.js:139 htdocs/luci-static/resources/view/justclash/pages/rulesets.js:118 htdocs/luci-static/resources/view/justclash/pages/rulesets.js:172 htdocs/luci-static/resources/view/justclash/pages/rulesets.js:227 htdocs/luci-static/resources/view/justclash/pages/rule_providers.js:135 htdocs/luci-static/resources/view/justclash/pages/rule_providers.js:157
 msgid "Type"
 msgstr "Тип"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:65 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:103
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:66 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:104
 #, fuzzy
 msgid "Port:"
 msgstr "Порт NTP:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:73 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:119 htdocs/luci-static/resources/view/justclash/pages/routing.js:1128
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:74 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:120 htdocs/luci-static/resources/view/justclash/pages/routing.js:1128
 msgid "Send traffic to:"
 msgstr "Куда направлять:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:84 htdocs/luci-static/resources/view/justclash/pages/routing.js:203 htdocs/luci-static/resources/view/justclash/pages/routing.js:431 htdocs/luci-static/resources/view/justclash/pages/routing.js:766
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:85 htdocs/luci-static/resources/view/justclash/pages/routing.js:203 htdocs/luci-static/resources/view/justclash/pages/routing.js:431 htdocs/luci-static/resources/view/justclash/pages/routing.js:766
 msgid "Name:"
 msgstr "Имя:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:85
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:86
 msgid "Inbound name."
 msgstr "Имя входящего подключения."
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:96
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:97
 msgid "Mixed Port"
 msgstr "Mixed Port"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:97
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:98
 msgid "SOCKS"
 msgstr "SOCKS"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:98
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:99
 msgid "HTTP"
 msgstr "HTTP"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:111
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:112
 msgid "Authentication:"
 msgstr "Авторизация:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:112
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:113
 msgid "Add at least one user:pass entry. The first colon separates the fields; later colons belong to the password."
 msgstr "Добавьте хотя бы одну запись имя:пароль. Первое двоеточие разделяет поля; остальные входят в пароль."
 
-#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:120
+#: htdocs/luci-static/resources/view/justclash/pages/inbounds.js:121
 msgid "Choose an outbound, group, DIRECT, or By rules. Core traffic blocking rules are applied first."
 msgstr "Выберите исходящее подключение, группу, DIRECT или «По правилам». Сначала применяются правила блокировки трафика в ядре."
 
@@ -1513,10 +1525,6 @@ msgstr "Новые сверху"
 #: htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:178
 msgid "Level:"
 msgstr "Уровень:"
-
-#: htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:246
-msgid "Realtime logs"
-msgstr "Логи в реальном времени"
 
 #: htdocs/luci-static/resources/view/justclash/pages/realtime_logs.js:247
 msgid "View realtime traffic logs and debug information from the Mihomo core."
@@ -2757,10 +2765,6 @@ msgstr "Ограничьте количество потоков CPU, досту
 #: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:72
 msgid "Copy log"
 msgstr "Скопировать журнал"
-
-#: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:117
-msgid "Service logs"
-msgstr "Логи сервиса"
 
 #: htdocs/luci-static/resources/view/justclash/pages/service_logs.js:118
 msgid "View JustClash service and Mihomo entries from the system log."
