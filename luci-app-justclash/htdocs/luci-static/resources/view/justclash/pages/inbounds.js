@@ -12,14 +12,13 @@ return view.extend({
         return uci.load(common.binName);
     },
     render() {
-        const m = new form.Map(common.binName, _("Setup: Inbounds"));
+        const m = new form.Map(common.binName);
         const s = m.section(form.GridSection, "inbound", _("Inbounds:"),
             _("Create listeners on all interfaces, each with its own port, authentication, and outbound route. Use firewall rules to restrict access."));
         s.anonymous = true;
         s.addremove = true;
         s.nodescriptions = true;
         s.cloneable = true;
-        s.sortable = true;
 
         const servicePorts = [
             Number(uci.get(common.binName, "proxy", "dns_listen_port") || "1053"),
