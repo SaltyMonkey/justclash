@@ -18,7 +18,7 @@ before enabling it.
 ## Configure in LuCI
 
 Open **Services → JustClash → Setup: Inbounds**, immediately after **Setup: Routing**.
-The **Inbounds** table uses the same add, edit, clone, reorder, and remove
+The **Inbounds** table uses the same add, edit, clone, and remove
 controls as the outbound/group tables.
 
 1. Configure OpenWrt firewall access to the inbound port for trusted clients,
