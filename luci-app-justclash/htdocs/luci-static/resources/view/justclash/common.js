@@ -828,13 +828,18 @@ return baseclass.extend({
 
         return lines.join("\n");
     },
-    // Keep menu-only titles translatable for luci-app-justclash.json.
+    // Tab titles.
+    stub_status_tab: _("Status"),
     stub_nodes_tab: _("Nodes"),
-    stub_connections_tab: _("Connections"),
     stub_rules_tab: _("Rules"),
     stub_rule_providers_tab: _("Rule Providers"),
+    stub_service_logs_tab: _("Service logs"),
+    stub_realtime_logs_tab: _("Realtime logs"),
+    stub_connections_tab: _("Connections"),
+    stub_service_tab: _("Setup: Service"),
+    stub_proxy_tab: _("Setup: Proxy"),
+    stub_dns_tab: _("Setup: DNS"),
     stub_rulesets_tab: _("Setup: Rulesets"),
     stub_routing_tab: _("Setup: Routing"),
-    stub_service_tab: _("Setup: Service"),
-    stub_proxy_tab: _("Setup: Proxy")
+    stub_inbounds_tab: _("Setup: Inbounds")
 });
