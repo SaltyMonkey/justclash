@@ -587,7 +587,7 @@ config_inbound_read() {
     config_get port "$section" port "$DEFAULT_INBOUND_PORT"
     config_get exit_rule "$section" exit_rule "BY RULES"
     config_load_list "$section" authentication
-    "$callback" "inbound_$section" "$port" "$JC_CONFIG_LIST_VALUE" "$exit_rule" "$inbound_type"
+    "$callback" "inbound_$name" "$port" "$JC_CONFIG_LIST_VALUE" "$exit_rule" "$inbound_type"
 }
 
 config_proxy_read() {

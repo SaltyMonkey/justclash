@@ -76,8 +76,9 @@ Do not publish credentials or raw generated configurations.
 | `REJECT` | Reject traffic after core traffic blocking |
 | Outbound or group name | Use the selected outbound or group after core traffic blocking |
 
-Each listener receives an internal name derived from its UCI section. Fixed routes
-use `IN-NAME` rules, so two listeners can select different exits independently.
+The listener name is `inbound_` followed by the **Name** you enter. Fixed routes
+match that listener name using `IN-NAME` rules. Use a distinct name for each
+enabled inbound.
 **Drop in core** QUIC rules run before these inbound rules. Fixed inbound routes
 precede blocklist IP rules, groups, individual outbounds, and the final rule; use
 `BY RULES` when clients should follow the normal blocklists and routing policy.
