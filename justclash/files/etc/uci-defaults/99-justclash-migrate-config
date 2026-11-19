@@ -54,6 +54,16 @@ if uci -q get justclash.settings.nft_apply_changes_router >/dev/null 2>&1; then
     migration_changed=1
 fi
 
+if uci -q get justclash.settings.routing_mode >/dev/null 2>&1; then
+    uci -q delete justclash.settings.routing_mode || exit 1
+    migration_changed=1
+fi
+
+if [ "$(uci -q get justclash.final_rules)" = "final_rules" ]; then
+    uci -q delete justclash.final_rules || exit 1
+    migration_changed=1
+fi
+
 # Keep an explicit new setting; upgrade should not win an argument with the user.
 if legacy_dns_mode=$(uci -q get justclash.settings.nft_dns_udp_mode); then
     add_missing_option "justclash.settings.nft_dns_mode" "$legacy_dns_mode" || exit 1
