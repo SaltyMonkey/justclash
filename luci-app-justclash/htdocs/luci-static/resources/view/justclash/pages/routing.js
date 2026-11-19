@@ -96,7 +96,7 @@ return view.extend({
         };
     },
     render(result) {
-        let m, s, s2, spp, s4, s5, o, optionFinal, tabname;
+        let m, s, s2, spp, s4, o, tabname;
 
         const primitives = formConstants.boolean;
         const datatypes = formConstants.datatypes;
@@ -369,13 +369,13 @@ return view.extend({
         o.modalonly = true;
 
         o = s.taboption(tabname, DestinationPortList, "additional_udp_dst_port_route", _("UDP destination ports:"));
-        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. This matches traffic already received by Mihomo.");
         o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
 
         o = s.taboption(tabname, DestinationPortList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
-        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. This matches traffic already received by Mihomo.");
         o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
@@ -1016,13 +1016,13 @@ return view.extend({
         o.modalonly = true;
 
         o = s2.taboption(tabname, DestinationPortList, "additional_udp_dst_port_route", _("UDP destination ports:"));
-        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. This matches traffic already received by Mihomo.");
         o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
 
         o = s2.taboption(tabname, DestinationPortList, "additional_tcp_dst_port_route", _("TCP destination ports:"));
-        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. In Partial Interception, these entries do not capture additional traffic.");
+        o.description = _("Enter one destination port or range per line (0-65535), e.g. 443 or 10000-20000. This matches traffic already received by Mihomo.");
         o.placeholder = _("Example: %s").format("443\n10000-20000");
         o.optional = true;
         o.modalonly = true;
@@ -1122,22 +1122,6 @@ return view.extend({
         o.editable = true;
         o.datatype = datatypes.CIDR4;
         o.modalonly = true;
-
-        s5 = m.section(form.NamedSection, "final_rules", "final_rules", _("Default rule:"), _("Used when no other rule matches. This is the fallback action for the remaining traffic."));
-
-        optionFinal = s5.option(form.Value, "exit_rule", _("Send traffic to:"));
-        optionFinal.value(common.endRuleOptions[0].value, common.endRuleOptions[0].text);
-        optionFinal.value(common.endRuleOptions[2].value, common.endRuleOptions[2].text);
-        optionFinal.default = common.endRuleOptions[0].value;
-        optionFinal.rmempty = false;
-        optionFinal.description = _("Choose the fallback action for traffic that does not match any earlier rule.");
-        optionFinal.validate = function (section_id, value) {
-            return common.validateExitRule(value);
-        };
-        routingOptions.makeDynamic(optionFinal, common.binName, [
-            common.endRuleOptions[0],
-            common.endRuleOptions[2]
-        ]);
 
         //            .cbi-section:not(:nth-last-of-type(-n+2)) > .cbi-section-node { max-height:395px; min-height:395px; overflow-y:auto; }
         //
