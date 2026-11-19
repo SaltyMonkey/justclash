@@ -1,3 +1,60 @@
+## [0.140.0_rc1] - 19112026
+
+This release removes legacy routing options and simplifies setup for networks
+with a mix of proxied and direct traffic. JustClash now uses selective
+interception, can redirect DNS from bypassed clients and entire networks such
+as guest VLANs to a separate resolver, and makes inbound authentication optional.
+
+### Routing and Upgrade
+
+- Removed **Full Interception** and the routing mode selector. JustClash now
+  uses the existing **Partial Interception** behavior for transparent routing.
+  Upgrading removes the obsolete `routing_mode` setting. See
+  [Traffic Interception](info/concepts/routing.md).
+- Removed **Default rule**. Mihomo uses `MATCH,DIRECT` for connections that miss
+  every earlier rule, including traffic from inbounds set to **By rules**.
+  Upgrade removes the old `final_rules` section. Connections that previously
+  fell back to a custom outbound, group, or `REJECT` now go directly.
+- Client IP exclusions now accept IPv6 addresses and CIDRs when IPv6 support is
+  enabled. Text IP-CIDR rulesets correctly classify IPv6 addresses with an
+  embedded IPv4 suffix.
+
+### DNS Redirects
+
+- **Bypassed DNS redirect port** sends TCP and UDP queries on port 53 from
+  IP/MAC-excluded clients on **Client traffic interfaces** to a separate
+  resolver on the router, including queries addressed to the router itself.
+  **Additional DNS redirect interfaces** applies the same redirect to every
+  client on selected interfaces outside transparent interception. This covers
+  IPv4 and, with IPv6 support enabled in JustClash, IPv6. See
+  [Traffic Exclusions](info/guides/traffic-exclusions.md#fake-ip-and-bypassed-clients).
+- JustClash logs a warning when DNS redirect targets are configured and the
+  redirect port is empty. The other nftables rules still apply.
+- **Client DNS traffic → Hijack** matches TCP/UDP destination port 53
+  independently of **Client bypassed ports**. Port exclusions still apply
+  before **Client DNS traffic → Drop**.
+
+### Inbounds
+
+- An enabled inbound with an empty **Authentication** list now accepts
+  connections without credentials and logs a warning during YAML generation.
+  This also applies to existing enabled rows with an empty list after upgrade.
+  Any malformed account entry still causes JustClash to skip that inbound.
+  See [Inbound Authentication](info/guides/inbounds.md#authentication-format).
+- Generated listener names use `inbound_<NAME>` from the configured inbound
+  name. The LuCI grid no longer offers reordering.
+
+### Core and LuCI
+
+- VLESS, VMess, and Trojan Reality URIs enable X25519-MLKEM768 by default.
+  Set `support-x25519mlkem768=false` in the URI to disable it for that
+  connection. See [Reality in URI Mode](info/reference/uci.md#reality-in-uri-mode).
+- **Update core** explains that the running process uses the previous binary
+  until JustClash restarts. Reload **Status** after restarting to see the new
+  version.
+- Added missing LuCI tab labels to the translation catalogs and updated Russian
+  and Simplified Chinese translations.
+
 ## [0.130.0_rc1] - 13112026
 
 This release replaces the global Mixed Port configuration with independent
