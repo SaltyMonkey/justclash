@@ -109,8 +109,8 @@ return view.extend({
         o.validate = validateInboundPort;
 
         o = s.option(passwordList.Value, "authentication", _("Authentication:"));
-        o.description = _("Add at least one user:pass entry. The first colon separates the fields; later colons belong to the password.");
-        o.rmempty = false;
+        o.description = _("Leave empty to allow connections without authentication. Use one user:pass entry per account. The first colon separates the fields; later colons belong to the password.");
+        o.rmempty = true;
         o.modalonly = true;
         o.validate = function (sectionId, value) {
             return common.validateProxyAuthenticationEntry(value);
