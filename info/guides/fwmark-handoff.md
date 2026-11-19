@@ -59,11 +59,10 @@ In **Setup: Routing → Proxies**, add an enabled entry:
 
 Assign rules to this outbound, or include it in a group and assign rules to that
 group. Then choose **Save & Apply**. See [Assign traffic](routing.md#assign-traffic)
-for lists, manual rules, and default routing.
+for lists and manual rules.
 
-In Partial Interception, those rules must also cause the connection to enter
-Mihomo. Selecting this outbound as the final rule alone does not capture every
-client connection; see [Routing modes](../concepts/routing.md).
+Use a matching address, source, or Fake-IP rule to intercept the connections
+that should use this outbound. See [Traffic Interception](../concepts/routing.md).
 
 ### Equivalent UCI Entry
 
@@ -88,7 +87,7 @@ separately, just as in LuCI.
 
 When JustClash creates nftables rules, it collects the UCI `routing_mark` values
 from outbounds and `override_routing_mark` values from providers. Matching packets
-return from JustClash's output chain in both routing modes. Other firewall chains
+return from JustClash's output chain. Other firewall chains
 and policy-routing rules can still process them.
 
 Each custom mark is matched by its set bits: `(packet_mark & configured_mark) ==

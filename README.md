@@ -54,7 +54,7 @@ requires a reachable core API. See [LuCI Page Availability](info/troubleshooting
 | Capability | Description |
 | --- | --- |
 | Native OpenWrt integration | UCI configuration, procd supervision, fw4/nftables hooks, and LuCI CSR views |
-| Full and partial routing | Choose complete traffic interception or selective lower-overhead routing |
+| Selective traffic interception | Send Fake-IP traffic and configured address or source matches to Mihomo |
 | Runtime control | Switch nodes, inspect rules and connections, terminate sockets, and view live logs |
 | Mihomo-native providers | Proxy providers and rule providers are downloaded and updated by the core |
 | APK and IPK packages | OpenWrt 25.x is the primary APK target; OpenWrt 24.x remains supported through IPK |
@@ -63,7 +63,7 @@ requires a reachable core API. See [LuCI Page Availability](info/troubleshooting
 ## Getting Started
 
 1. Follow the [Quick Start](info/getting-started.md) to install the packages and create the first outbound.
-2. Read [Choosing a Routing Mode](info/concepts/routing.md) before selecting full or partial routing.
+2. Read [Traffic Interception](info/concepts/routing.md) to see which connections enter Mihomo.
 3. Use the [UCI structure reference](info/reference/uci.md) for manual configuration.
 
 The online installer detects the router package manager automatically. Interactive installation asks only which translation package should be installed; automated installation uses the English LuCI package without an additional translation.

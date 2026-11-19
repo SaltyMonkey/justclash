@@ -82,8 +82,8 @@ This requires the client to use the JustClash-managed DNS path. Applications usi
 
 Address blocklists, GeoIP block categories, and manual IPv4 entries produce high-priority `REJECT` rules.
 
-In Partial Interception, manual blocked destination addresses are also added
-to interception sets. For an address blocklist provider, use an active
+JustClash adds manually blocked destination addresses to the interception sets.
+For an address blocklist provider, use an active
 `ipcidr/text` source when its raw-address traffic must be captured; binary
 GeoIP/MRS data does not create kernel interception sets. See
 [ruleset synchronization](rulesets.md#partial-interception).
@@ -94,7 +94,7 @@ Block rules are emitted before:
 
 - outbound-group routing rules;
 - individual outbound rules;
-- the final rule.
+- `MATCH,DIRECT`.
 
 Fixed inbound routes precede address blocking. Select `BY RULES` for the inbound
 when explicit proxy clients must follow normal blocklist routing. See

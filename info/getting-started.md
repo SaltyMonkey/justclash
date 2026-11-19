@@ -53,14 +53,13 @@ First, tell JustClash where to find the device you'll test from. Open
 
 | Setting | Value for this first test |
 | --- | --- |
-| Routing mode | Partial Interception |
 | Create nftables | Enabled |
 | Client traffic interfaces | The bridge used by your test device, usually `br-lan` |
 | Change DNS settings at startup | Enabled |
 
-**Partial Interception** is enough for this first website rule. **Create nftables**
-sets up traffic interception for the selected client interfaces and the router.
-You can choose a different [routing mode](concepts/routing.md) later.
+**Create nftables** sets up traffic interception for the selected client
+interfaces and the router. See [Traffic Interception](concepts/routing.md) for
+what gets sent to Mihomo.
 
 Under **Setup: DNS**, keep the supplied defaults for now. Your test device needs
 to use the router for DNS so JustClash can recognize the website you choose.
@@ -119,8 +118,7 @@ Keep the other presets. This group lets you choose a connection manually.
 
 Now open the group's **Manual rules** tab and add a website under **Domain suffix**.
 Enter only the domain, without a scheme or path. Its subdomains will match too.
-Save the row and leave **Default rule → Send traffic to** set to `DIRECT` so
-other traffic keeps its normal route.
+Save the row. Connections that miss the routing rules use direct routing.
 
 For a ready-made category, choose a list under the group's
 **Rulesets → Use with rules**. You can add your own lists later using

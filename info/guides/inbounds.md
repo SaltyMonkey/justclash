@@ -26,7 +26,8 @@ controls as the outbound/group tables.
 2. Under **Setup: Inbounds**, add a row and select **Mixed Port**, **SOCKS**, or
    **HTTP**. Keep the generated **Name** or enter your own using 1–64 ASCII letters,
    digits, hyphens, or underscores.
-3. Set **Port**, add at least one **Authentication** entry, and choose **Send traffic to**.
+3. Set **Port** and choose **Send traffic to**. Add **Authentication** entries
+   if clients should sign in.
 4. Enable the row and use **Save & Apply**.
 
 For enabled rows, LuCI rejects a port already assigned to JustClash DNS, TProxy,
@@ -54,11 +55,12 @@ separates the fields; additional colons are part of the password. Each inbound h
 its own list. Entries are edited in the modal form and are not shown in the table.
 The list and new-entry field are masked by default; use the reveal button to
 show or hide them.
-Empty authentication or an invalid entry causes the entire inbound to be skipped
-with a warning in the service log. Each emitted inbound requires at least one
-account. LuCI requires a nonempty authentication list and validates each entry
-before saving. Usernames and passwords must be nonempty; LuCI rejects whitespace
-and control characters within an entry. Local applications also need credentials.
+Leave **Authentication** empty to allow clients to connect without credentials.
+JustClash logs a warning when it generates the configuration. If you add accounts,
+each entry needs a nonempty username and password. LuCI validates each entry
+before saving and rejects whitespace and control characters. An invalid UCI
+entry causes JustClash to skip the inbound and log a warning. Local applications
+must also supply credentials when accounts are configured.
 Inbound accounts permit proxy use and do not grant access to Mihomo's controller.
 The controller's API password is separate; see
 [Controller and proxy access](security.md#controller-and-proxy-access).
@@ -71,7 +73,7 @@ Do not publish credentials or raw generated configurations.
 
 | Send traffic to | Result |
 | --- | --- |
-| `BY RULES` | Continue through normal Mihomo routing; no inbound-specific rule is added |
+| `BY RULES` | Follow normal Mihomo rules and send unmatched connections directly |
 | `DIRECT` | Send traffic directly after core traffic blocking |
 | `REJECT` | Reject traffic after core traffic blocking |
 | Outbound or group name | Use the selected outbound or group after core traffic blocking |
@@ -80,8 +82,8 @@ The listener name is `inbound_` followed by the **Name** you enter. Fixed routes
 match that listener name using `IN-NAME` rules. Use a distinct name for each
 enabled inbound.
 **Drop in core** QUIC rules run before these inbound rules. Fixed inbound routes
-precede blocklist IP rules, groups, individual outbounds, and the final rule; use
-`BY RULES` when clients should follow the normal blocklists and routing policy.
+precede blocklist IP rules, groups, individual outbounds, and `MATCH,DIRECT`.
+Use `BY RULES` when clients should follow the normal blocklists and routing policy.
 
 Deleting a referenced outbound or group in LuCI resets the inbound to `BY RULES`.
 Renaming that outbound or group updates the inbound's route reference.
@@ -89,7 +91,8 @@ Renaming that outbound or group updates the inbound's route reference.
 ## UCI Example
 
 First configure firewall access as described above. Replace the
-placeholders locally; do not paste credentials into support messages.
+placeholders locally. For a listener without authentication, omit the
+`authentication` entry.
 
 ```sh
 inbound_section="$(uci add justclash inbound)"
@@ -105,9 +108,11 @@ service justclash reload
 
 ## Verify and Remove
 
-Configure an application with a reachable router address, port, and credentials. Verify
-that it connects and uses the selected route under **Connections**. Test separate
-listeners independently, including the rejection of incorrect credentials.
+Configure an application with the router address and port. Supply credentials
+if the listener has accounts. Verify the route under **Connections**. For a
+listener with accounts, check that incorrect credentials are rejected. For a
+listener without accounts, check the warning in **Service logs** after applying
+the configuration.
 
 Disable a row to stop its listener while retaining its settings. Remove the row to
 delete it. Apply the changes to update the running core.

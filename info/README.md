@@ -11,7 +11,7 @@ appear in the interface.
 
 1. [Getting started](getting-started.md): install JustClash and route a test website.
 2. [Outbounds, providers, and groups](guides/routing.md): add connections and choose which traffic uses them.
-3. [Choosing a routing mode](concepts/routing.md): decide what should enter Mihomo.
+3. [Traffic Interception](concepts/routing.md) explains which connections enter Mihomo.
 
 ## Configuration Guides
 

@@ -10,9 +10,10 @@ through Mihomo.
 ## Set Up the DNS Path
 
 Under **Setup: Service → Traffic rules**, **Change DNS settings at startup** lets
-JustClash manage dnsmasq forwarding to the configured Mihomo DNS listener. This
-switch is separate from **Create nftables**. Keep both enabled for the normal
-transparent setup, and configure client DHCP to advertise the router as DNS.
+JustClash set the local Mihomo DNS listener as the first dnsmasq instance's
+default upstream. This switch is separate from **Create nftables**. Keep both
+enabled for the normal transparent setup, and configure client DHCP to advertise
+the router as DNS.
 
 The **DNS listen port** is the local Mihomo listener, not a remote upstream port.
 It must be unused and must agree with dnsmasq forwarding. When JustClash manages
@@ -25,11 +26,16 @@ rules are replaced by the Mihomo upstream. This keeps local or VPN DNS zones
 working without taking over the entire DNS setup manually. Those zone rules
 are handled by dnsmasq before Mihomo DNS and its Fake-IP rules.
 
-Client **DNS mode** is a firewall policy. `BY RULES` leaves ordinary client DNS
-under the routing policy, `DROP` blocks it, and `HIJACK` redirects eligible client
-TCP/UDP DNS requests to the router. This does not intercept HTTPS-based DNS in a
-browser. DoH blocking uses a known-endpoint address list, not detection of every
-possible encrypted resolver.
+With **Create nftables** enabled, **Client DNS traffic** controls TCP and UDP
+queries to port 53 on **Client traffic interfaces**. **By rules** follows normal
+routing. **Drop** blocks eligible external DNS queries. **Hijack** redirects those
+queries to the router's DNS service on port 53. Router-local and private/LAN
+destinations and clients bypassed by IP or MAC skip these two actions. Port
+exclusions can exempt a query from **Drop**. The DNS redirects use separate rules.
+
+Use [the separate DNS redirect](traffic-exclusions.md#fake-ip-and-bypassed-clients)
+for IP/MAC exclusions or for networks outside **Client traffic interfaces**.
+DoH blocking uses a list of known endpoint addresses.
 
 ## Choose Upstreams by Their Role
 
@@ -88,11 +94,9 @@ Enter plain domain suffixes in **Force real IP rules**; entries containing `*`
 become wildcard matches. Ruleset and Geosite selectors refer to active routing
 entries, not arbitrary sources that have never been enabled.
 
-A real-IP exception changes the DNS answer, not the outbound rule itself. In
-Partial Interception, the resulting connection may bypass Mihomo unless a manual
-address/source rule or active text IP-CIDR list captures it. In Full Interception,
-eligible real-address connections still enter the core. See
-[routing mode behavior](../concepts/routing.md#behavior-comparison).
+A real-IP exception changes the DNS answer. The resulting connection goes
+through Mihomo if a manual address or source rule or an active text IP-CIDR
+list captures it. See [Partial Interception](../concepts/routing.md#partial-interception).
 
 Change these exceptions only to solve a specific compatibility issue, and test
 the resulting traffic path. Removing necessary local, router, or discovery
@@ -112,11 +116,11 @@ and duplicates are removed. Entries are stored as a UCI list.
 
 ## Bypassed Clients and Guest Networks
 
-Clients excluded from interception must receive real addresses. Advertising the
-managed Fake-IP DNS path to a completely bypassed client can make domain access
-fail even while raw-address connectivity works. Configure that client's DHCP/DNS
-scope separately; see [Traffic exclusions](traffic-exclusions.md) and
-[Guest networks](guest-network.md).
+Give clients outside interception a resolver that returns real addresses. Use the
+[Bypassed DNS redirect port](traffic-exclusions.md#fake-ip-and-bypassed-clients)
+to send their queries to a separate resolver on the router. You can also
+advertise the resolver through DHCP or IPv6 Router Advertisements. See the
+[guest network recipes](guest-network.md#choose-a-design).
 
 ## Verify DNS and Routing Together
 

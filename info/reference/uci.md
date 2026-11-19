@@ -47,10 +47,9 @@ so correct or remove an invalid section rather than only disabling it.
 | `proxy_provider` | Zero or more named or anonymous sections | Remote provider definitions |
 | `proxy_group` | Zero or more named or anonymous sections | Selection, failover, latency, and balancing groups |
 | `block_rules block_rules` | One named section | Domain/address blocking and blocklist providers |
-| `final_rules final_rules` | One named section | Final action after all other rules |
 
 LuCI creates dynamic sections with generated UCI IDs. Outbound and group references
-use the user-visible `name`. Inbound listener names use their UCI section IDs.
+use the user-visible `name`. Inbound listener names use `inbound_<NAME>`.
 
 For the relationship and setup sequence, see
 [Outbounds, providers, and groups](../guides/routing.md).
@@ -77,24 +76,24 @@ additional singleton `proxy` sections.
 
 `nft_apply_changes` is the single **Create nftables** switch: `1` creates client
 and router interception rules together with policy routing; `0` skips both.
-The `full` / `partial` mode and the separate client/router exclusions still apply.
-DNS forwarding remains controlled independently by `dnsmasq_apply_changes`.
+DNS forwarding is controlled independently by `dnsmasq_apply_changes`.
 
 | Field | Type | Purpose |
 | --- | --- | --- |
-| `routing_mode` | Choice: `partial`, `full` | Select interception architecture |
 | `ipv6_enabled` | Boolean | Enable IPv6 interception and Fake-IP support when WAN IPv6 is usable |
 | `dnsmasq_apply_changes` | Boolean | Manage dnsmasq forwarding for Mihomo DNS |
 | `nft_apply_changes` | Boolean | Create nftables rules and policy routing for both client and router traffic |
 | `tproxy_input_interfaces` | List of device names | Client interfaces used for transparent interception; does not restrict inbound access |
 | `nft_skuid_exclude_router` | List of users or UIDs | Bypass router sockets owned by selected users |
 | `nft_ports_exclude_router` | List of ports/ranges | Bypass router TCP/UDP source or destination ports |
-| `nft_ports_exclude` | List of ports/ranges | Bypass forwarded TCP/UDP source or destination ports |
+| `nft_ports_exclude` | List of ports/ranges | Bypass the general client firewall rules by TCP/UDP source or destination port |
 | `nft_mac_exclude` | List of MAC addresses | Bypass matching local clients |
-| `nft_ips_exclude` | List of IPv4 addresses/CIDRs | Bypass matching IPv4 clients |
+| `nft_ips_exclude` | List of IPv4/IPv6 addresses and CIDRs | Bypass matching clients. IPv6 entries apply when IPv6 support is enabled. |
+| `nft_excluded_hijack_dns_port` | Optional port | Router port for TCP/UDP DNS redirects from clients in `nft_ips_exclude` or `nft_mac_exclude` on `tproxy_input_interfaces`, and from additional DNS redirect interfaces. Requires `nft_apply_changes`. |
+| `nft_excluded_hijack_dns_interfaces` | Optional list of device names | Redirect TCP/UDP port 53 for all clients on these interfaces outside `tproxy_input_interfaces`. Requires `nft_apply_changes` and `nft_excluded_hijack_dns_port`. |
 | `pbr_priority` | Unsigned integer | Priority used by JustClash policy-routing rules |
 | `nft_quic_mode` | `BY RULES` / `DROP` / `DROP IN CORE` | QUIC handling policy |
-| `nft_dns_mode` | Choice | Plain client TCP/UDP port 53 DNS policy (`BY RULES`, `DROP`, or `HIJACK` to the router DNS service) |
+| `nft_dns_mode` | `BY RULES` / `DROP` / `HIJACK` | Policy for external TCP/UDP port 53 queries from eligible clients on `tproxy_input_interfaces`. `HIJACK` redirects to the router's DNS service on port 53. |
 | `nft_dot_mode` | `BY RULES` / `DROP` | DNS-over-TLS handling policy |
 | `nft_doh_mode` | `BY RULES` / `DROP` | DNS-over-HTTPS handling policy |
 | `nft_dot_quic_mode` | `BY RULES` / `DROP` | DNS-over-QUIC handling policy |
@@ -104,16 +103,17 @@ DNS forwarding remains controlled independently by `dnsmasq_apply_changes`.
 The default QUIC policy is `DROP`. Blocklists run inside Mihomo independently of
 these OpenWrt firewall settings.
 
+See [DNS for bypassed clients](../guides/traffic-exclusions.md#fake-ip-and-bypassed-clients)
+for redirect precedence, the empty-port warning, and resolver setup.
+
 For **Client QUIC traffic**, `BY RULES` follows the normal Mihomo rules. `DROP`
 blocks client UDP destination ports 443 and 8443 in nftables, subject to client
 interface selection and traffic exclusions, when **Create nftables** is enabled.
 `DROP IN CORE` (**Drop in core**) prepends UDP destination-port `REJECT-DROP` rules for
 the same ports to the generated Mihomo rules, before inbound routing and other
 rules. It works independently of **Create nftables** and applies to all traffic
-reaching Mihomo, including inbounds and router traffic. In partial interception,
-traffic that bypasses Mihomo stays unaffected; in full interception, the drop rules
-also precede later `DIRECT` rules. Both blocking modes match UDP ports rather than
-detecting the QUIC protocol. Changing the mode invalidates the existing YAML cache;
+reaching Mihomo, including inbounds and router traffic. Both blocking modes
+match UDP ports. Changing the mode invalidates the existing YAML cache;
 the blocking rules are added or removed on the next service start.
 
 ### Scheduling, Core, and Downloads
@@ -232,8 +232,8 @@ A `proxies` section defines one named outbound.
 
 Deleting an outbound in LuCI removes its name from every group's `proxies` list
 and clears any matching `default_selected`. The same cleanup applies when a group
-is deleted. References in the default rule reset to `DIRECT`; inbound routes reset
-to `BY RULES`, and subscription/blocklist download paths reset to `DIRECT`.
+is deleted. Inbound routes reset to `BY RULES`, and subscription/blocklist download
+paths reset to `DIRECT`.
 Matching connection-chaining fields are cleared, including `dialer-proxy` in
 JSON outbounds. Empty groups are retained. Apply the pending changes with
 Save & Apply.
@@ -256,7 +256,7 @@ provide a Mihomo outbound object in `proxy_link_object`.
 | `use_proxy_for_list_update` | Whether to download those rulesets through this outbound |
 | `list_update_interval`, `size_limit` | Ruleset update interval and download size limit |
 | `additional_domain_route`, `enabled_geosite_list` | Additional domain and Geosite matches |
-| `additional_udp_dst_port_route`, `additional_tcp_dst_port_route` | Lists of destination ports or inclusive ranges (`0–65535`, e.g. `443` or `10000-20000`), one entry per line in LuCI; match the selected protocol and port independently of domain rules; do not add Partial Interception |
+| `additional_udp_dst_port_route`, `additional_tcp_dst_port_route` | Lists of destination ports or inclusive ranges (`0–65535`, e.g. `443` or `10000-20000`), one entry per line in LuCI. Match traffic in Mihomo by protocol and destination port independently of domain rules. |
 | `additional_destip_route`, `enabled_geoip_list` | Destination-address and GeoIP matches |
 | `additional_srcip_route` | Source-address matches |
 
@@ -278,6 +278,12 @@ with `type: direct`. Configure its interface, mark, and address-family settings
 using the fields above. [Quick Start](../getting-started.md#3-add-an-outbound) shows
 the LuCI fields for one path; [Multi-WAN](../guides/multiwan.md#direct-wan-outbounds)
 adds multiple paths and switching between them.
+
+### Reality in URI Mode
+
+VLESS, VMess, and Trojan links with `security=reality` enable
+X25519-MLKEM768 by default. Set `support-x25519mlkem768=false` in the URI query
+to disable it for that connection.
 
 ### SOCKS5 with Local Destination Resolution
 
@@ -411,7 +417,7 @@ bandwidth or latency. It requires a core with the
 
 Generated block actions are `REJECT`.
 
-### Inbounds and the Final Rule
+### Inbounds
 
 Each anonymous `inbound` section defines a row under **Setup: Inbounds**. It creates
 one wildcard listener with `listen: 0.0.0.0`, independent of
@@ -423,14 +429,14 @@ to restrict access; no inbound access rules are created automatically.
 | --- | --- | --- |
 | `enabled` | Boolean, `1` | Include this listener; disabled sections are skipped with a log warning |
 | `type` | `mixed` by default, `socks`, or `http` | Listener protocol; UDP is enabled for Mixed Port and SOCKS |
-| `name` | String, maximum 64 characters | Required in LuCI, with a generated initial value; sections without a name are skipped; the internal listener name uses the UCI section ID |
+| `name` | String, maximum 64 characters | Required in LuCI, with a generated initial value. The listener name is `inbound_<NAME>`. Sections without a name are skipped. |
 | `port` | Port 1–65535, default `7890` | Listener port; LuCI rejects enabled-row conflicts with JustClash DNS, TProxy, the API controller, and other enabled inbounds |
-| `authentication` | List of `user:pass` entries | LuCI requires at least one entry with nonempty user and password; the first colon separates the fields; an empty list or invalid entry in UCI causes the entire inbound to be skipped |
+| `authentication` | Optional list of `user:pass` entries | An empty list enables unauthenticated access and logs a warning during configuration generation. Each configured entry needs a nonempty username and password, separated by the first colon. An invalid entry causes JustClash to skip that inbound. |
 | `exit_rule` | `BY RULES` by default, `DIRECT`, `REJECT`, or an outbound/group name | `BY RULES` adds no inbound-specific rule; fixed routes follow core traffic blocking and precede address blocking |
 
 See [Inbounds](../guides/inbounds.md) for setup, authentication, and routing order.
 
-`final_rules.exit_rule` is the final action after earlier routing rules.
+Mihomo uses `MATCH,DIRECT` for connections that miss the preceding rules.
 
 ## Secret Handling
 

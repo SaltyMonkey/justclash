@@ -59,22 +59,19 @@ Do not replace the router-wide dnsmasq upstream merely to change one guest netwo
 
 Use this when guest traffic remains direct but DNS needs a separate filtering or encrypted upstream.
 
-Recommended design:
+1. Run a separate DNS resolver on the router and allow TCP and UDP to its port
+   from the guest firewall zone.
+2. Under **Setup: Service → Traffic rules**, enable **Create nftables** and set
+   **Bypassed DNS redirect port** to the resolver's port.
+3. Select the guest bridge under **Additional DNS redirect interfaces**. Keep it
+   outside **Client traffic interfaces** so guest connections use direct routing.
+4. Save & Apply. Check that guest DNS returns real addresses, then test a new
+   connection.
 
-1. Run a dedicated local resolver instance on its own port.
-2. Disable its automatic global dnsmasq/firewall integration.
-3. Run it under a dedicated system user.
-4. Exclude that user from router interception.
-5. Redirect only guest DNS to the dedicated listener.
-6. Keep the guest bridge outside `tproxy_input_interfaces`.
-
-```sh
-uci add_list justclash.settings.nft_skuid_exclude_router='<RESOLVER_USER>'
-uci commit justclash
-service justclash restart
-```
-
-Create the guest-only DNS redirect with the standard OpenWrt firewall configuration for the actual guest zone and resolver listener. Do not copy interface names or addresses from another router.
+If the resolver runs under its own user and its upstream connections need to
+bypass Mihomo, add that user under **Router socket owner exclusions**. For an
+IPv6-enabled setup or a second dnsmasq instance, see
+[DNS for bypassed clients](traffic-exclusions.md#fake-ip-and-bypassed-clients).
 
 The dedicated resolver is outside JustClash policy:
 

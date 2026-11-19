@@ -27,12 +27,10 @@ and closing connections. LuCI's live pages connect directly from the browser to
 this API. An external dashboard or API client can use it without a LuCI session,
 so the controller needs its own authentication even when LuCI requires a login.
 
-Inbounds also have authentication: each listener requires its own `user:pass`
-accounts. These accounts authorize proxy use; they do not grant controller API
-access. Conversely, the API password is not an inbound account. Use distinct
-credentials so granting someone proxy access does not give them management
-access. Binding a listener and choosing an outbound are separate from checking
-who may connect.
+Each inbound can have its own `user:pass` accounts. These accounts authorize
+proxy use, and the API password authorizes controller access. Use distinct
+credentials so proxy users receive only proxy access. A listener with an empty
+account list accepts any client that can reach it through the firewall.
 
 ### Defaults on a Fresh Installation
 
@@ -45,7 +43,7 @@ where firewall policy permits access.
 | JustClash LuCI pages | Available through the router's installed LuCI service | OpenWrt/LuCI login and application permissions |
 | Mihomo controller | Active while Mihomo runs; TCP port `9090` on the selected `lan` address, preferring IPv4 and falling back to IPv6 | An independently generated `api_password` |
 | Additional web dashboard | Disabled (`use_dashboard=0`); disabling it does not disable the controller API or LuCI's live pages | Uses the controller's API password for API access |
-| HTTP/SOCKS inbounds | None configured; create and enable rows explicitly | Configure at least one account per inbound; no proxy accounts are generated automatically |
+| HTTP/SOCKS inbounds | None configured; create and enable rows explicitly | Optional per-inbound accounts. An empty list allows connections without credentials. |
 
 Controller TLS is disabled by default (`api_tls=0`), so its API uses HTTP rather
 than an encrypted connection. Keep access within a trusted network or protected
@@ -166,10 +164,11 @@ family. Review access again when adding an interface or changing firewall zones.
 
 ### Credentials and Proxy Access
 
-Configure each listener and its own **Authentication** entries under **Setup: Inbounds**.
-An empty authentication list or invalid entry causes the entire inbound to be
-skipped with a warning in the service log. Local applications also need
-credentials. The controller's API password is independent of these users.
+Configure each listener and its optional **Authentication** entries under
+**Setup: Inbounds**. An empty list allows connections without credentials and
+produces a warning when JustClash generates the configuration. An invalid UCI
+entry causes JustClash to skip that listener and log a warning. Local applications
+also need credentials when accounts are configured for the listener.
 
 Authentication does not encrypt the client-to-proxy connection or its credential
 exchange. Requesting an HTTPS website does not encrypt the initial HTTP CONNECT

@@ -174,13 +174,10 @@ setting both fields will not resolve that conflict automatically.
 
 ## Apply the Group
 
-Creating the group only makes it available for selection. To use it, assign
-rulesets or manual rules to it, or select it under **Default rule → Send traffic
-to**. For the failover example, the group name is `WAN_Failover`.
-
-The group affects only traffic that reaches Mihomo. Check
-[Choosing a Routing Mode](../concepts/routing.md) before using
-it as the default path, especially with partial routing.
+Assign rulesets or manual rules to the group, or select it as an inbound's
+**Send traffic to** target. For the failover example, the group name is
+`WAN_Failover`. See [Traffic Interception](../concepts/routing.md) for how
+transparent client connections enter Mihomo.
 
 Choose **Save & Apply** in LuCI. After SSH edits, commit the configuration and
 restart the service:
@@ -205,7 +202,7 @@ use the backup. Restore the primary WAN and check recovery as well.
 | Both members use one WAN | The two device selections and usable routes through each device |
 | Failover never switches | Check target, expected status, timing, and whether probes can reach it through each WAN |
 | Group exists but receives no traffic | Whether a rule actually selects it |
-| Some traffic bypasses the group | Whether partial routing captured that connection |
+| Some traffic bypasses the group | Whether the firewall intercepted that connection |
 | Connections loop or disappear | Conflicting marks or external policy routing |
 | Only one address family works | WAN capability and the outbound's `ip_version` |
 

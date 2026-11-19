@@ -201,10 +201,9 @@ entries are validated individually and saved as UCI lists. Enter one CIDR per
 line; the same whitespace cleanup and duplicate removal apply.
 
 **UDP destination ports** and **TCP destination ports** accept one port per item,
-from `1` to `65535`. Each entry is an independent match for the selected protocol
-and destination port; it does not restrict the domain rules in the same section.
-These fields only route traffic already received by Mihomo. They do not add
-firewall interception in Partial Interception mode.
+from `0` to `65535`. Each entry independently matches the selected protocol and
+destination port for traffic that has already reached Mihomo. Domain rules in
+the same section are evaluated separately.
 
 Within an outbound or group, source-address rules come first, followed by port
 rules, domain suffixes, Geosite/domain rulesets, and destination
@@ -214,22 +213,21 @@ Assign a rule to either the group or its individual outbound for the same task.
 Duplicating it in both places makes the result depend on rule order.
 
 Adding a custom list source is a separate task under **Setup: Rulesets**; see
-[Custom rulesets](rulesets.md). Creating an outbound or group without assigning
-rules or selecting it as a default does not send traffic through it.
+[Custom rulesets](rulesets.md). Assign matching rules or select an outbound or
+group as an inbound route to send traffic through it.
 
-### Default and Inbound Rules
+### Inbound Rules and Direct Fallback
 
-**Default rule → Send traffic to** handles connections that reach Mihomo and match
-no earlier rule. In Partial Interception it cannot capture an otherwise unmatched
-real-address connection. Use [Full Interception](../concepts/routing.md#full-interception)
-when the default path must handle all eligible traffic.
+`MATCH,DIRECT` sends connections that reach Mihomo and miss all preceding rules
+directly. To bring additional real-address connections into Mihomo, configure a
+source or destination match or an active text IP-CIDR list.
 
 Each row under **Setup: Inbounds** controls its explicit HTTP/SOCKS clients separately. `BY RULES`
 continues through normal routing; a fixed outbound takes precedence over those
 rules. See [Inbound routing](inbounds.md#routing-policy).
 
 Routing rules are generated in this order: core traffic blocking, fixed inbound
-routes, address blocking, groups, individual outbounds, and the final rule. Domain blocking is
+routes, address blocking, groups, individual outbounds, and `MATCH,DIRECT`. Domain blocking is
 implemented through DNS. Within groups and outbounds, section order matters when
 matches overlap; put the intended earlier match first within its section type.
 
@@ -237,13 +235,13 @@ matches overlap; put the intended earlier match first within its section type.
 
 Renaming an outbound or group in LuCI updates matching group members and defaults,
 connection-chain references (including `dialer-proxy` in JSON outbounds), inbound
-and final routes, and subscription/blocklist download targets. Renaming a provider
+routes, and subscription/blocklist download targets. Renaming a provider
 updates groups' **Providers** lists.
 
 When deleting an outbound or group in LuCI, JustClash removes matching group
 members and selected defaults, clears matching connection-chain references, and
-resets affected final, inbound, and subscription/blocklist download targets.
-The fallback is `DIRECT`, except inbound routes return to `BY RULES`.
+resets affected inbound routes to `BY RULES` and subscription/blocklist download
+targets to `DIRECT`.
 
 Deleting a provider removes it from groups' **Providers** lists. Groups are kept
 even when empty; review them and provide a usable member before applying. The

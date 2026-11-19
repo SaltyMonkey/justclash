@@ -33,6 +33,10 @@ The package updater and standalone installer use the same replacement order:
 2. Verify the archive's SHA-256 and gzip integrity while keeping the installed core.
 3. Remove the installed core, extract the verified archive directly to the core path, and delete the temporary archive.
 
+After **Status → Update core**, a running service continues to use its previous
+core. Click **Restart** to run the updated core, then reload **Status** to see
+its version.
+
 A download, checksum, or gzip failure keeps the installed core. The archive requires space in `/tmp` while the installed binary still occupies its core path. With the core on flash, this means RAM for the compressed archive and flash space for one uncompressed binary; no second uncompressed binary is kept.
 
 There is no fallback to early removal when temporary space is insufficient. There is no rollback after removal: an extraction or write failure can still leave no usable core. Fresh installations skip removal, and an already current version is left unchanged. The package updater also stops if configuration validation fails.

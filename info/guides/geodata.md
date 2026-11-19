@@ -77,11 +77,10 @@ Use exact category identifiers from the selected database source.
 
 ## Partial Interception Limitation
 
-Geosite can classify intercepted Fake-IP domain traffic. GeoIP cannot capture
-a raw-address connection that never enters Mihomo. Use Full Interception when
-GeoIP must apply to all selected traffic, or an active `ipcidr/text` ruleset to
-capture specific ranges in Partial Interception. See
-[routing-mode behavior](../concepts/routing.md#behavior-comparison).
+Geosite can classify intercepted Fake-IP domain traffic. For raw-address
+connections, use an active `ipcidr/text` ruleset to capture the relevant ranges
+before Mihomo evaluates GeoIP. See
+[Partial Interception](../concepts/routing.md#partial-interception).
 
 ## Fake-IP Filters
 
@@ -131,4 +130,4 @@ These outputs can include private sources, categories, domains, or topology. Use
 3. Save & Apply.
 4. Verify the equivalent ruleset policy before removing database files.
 
-See [Choosing a Routing Mode](../concepts/routing.md) and [User-Defined Rulesets](rulesets.md).
+See [Traffic Interception](../concepts/routing.md) and [User-Defined Rulesets](rulesets.md).

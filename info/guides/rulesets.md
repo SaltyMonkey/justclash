@@ -11,7 +11,7 @@ flowchart LR
     Catalog[Catalog entry] --> Reference[UCI reference by ID]
     Reference --> Provider[Mihomo rule provider]
     Provider --> Policy[Route, reject, or real-IP policy]
-    Provider -->|ipcidr/text in partial mode| Nft[nftables set]
+    Provider -->|active ipcidr/text| Nft[nftables set]
 ```
 
 Creating the catalog entry alone does not download or apply it.
@@ -201,7 +201,7 @@ justclash.sh check nft --unsafe
 | ID is absent from Routing | Catalog syntax and duplicate IDs |
 | Provider is not downloaded | The ID is not referenced by an enabled section |
 | Remote fetch fails | WAN, system time, authorization, and selected download outbound |
-| Partial mode ignores raw addresses | Source must be active `ipcidr/text` |
+| Raw-address traffic bypasses a ruleset | Check that the address is in an active `ipcidr/text` source |
 | Update is not visible | Reload after editing or refreshing a catalog; the new file fingerprint is checked during startup |
 
 Use `check` for shared diagnostics. Catalog URLs and authorization fields may be sensitive.
