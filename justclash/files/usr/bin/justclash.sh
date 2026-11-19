@@ -125,7 +125,7 @@ start() {
     local current_config_hash workdir_status
     local api_tls api_tls_cert api_tls_key dns_listen_port ipv6_enabled mihomo_gogc mihomo_gomaxprocs
     local mihomo_mem_limit mihomo_persistent_cache mihomo_persistent_ext_rules nft_apply_changes
-    local ntpd_start routing_mode tproxy_port
+    local ntpd_start tproxy_port
     local router_selected_ipaddr controller_bind_interface
     local core_exit_code preflight_tproxy_port
 
@@ -148,7 +148,6 @@ start() {
     config_get mihomo_mem_limit settings mihomo_mem_limit
     config_get mihomo_gogc settings mihomo_gogc
     config_get mihomo_gomaxprocs settings mihomo_gomaxprocs
-    config_get routing_mode settings routing_mode
     config_get ipv6_enabled settings ipv6_enabled
     config_get controller_bind_interface proxy controller_bind_interface "lan"
 
@@ -300,7 +299,6 @@ start() {
     }
 
     nft_sets_watch_start \
-        "$routing_mode" \
         "$nft_apply_changes" \
         "$ipv6_enabled" \
         "$ACTIVE_IPCIDR_RULESETS_PATH" \
@@ -337,7 +335,7 @@ stop() {
     return "$stop_status"
 }
 
-# WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
+# Use the service lifecycle to clean up routing and managed DNS settings.
 start_core() {
     local mihomo_mem_limit="$1"
     local mihomo_gogc="$2"
@@ -410,7 +408,7 @@ start_core() {
     return 0
 }
 
-# WARNING: TRY TO NOT USE FUNC MANUALLY - MUST CLEAR ROUTES AND DNSMASQ
+# Use the service lifecycle to clean up routing and managed DNS settings.
 stop_core() {
     pids=$(pgrep -f "$(basename "$CORE_PATH")")
     if [ -n "$pids" ]; then
@@ -423,16 +421,16 @@ stop_core() {
     fi
 }
 
-# Reads nftables settings, then applies the selected routing mode.
+# Reads nftables settings and applies interception rules.
 run_nftables_apply() {
     local fake_ip_range fake_ip_range6 ipv6_enabled nft_apply_changes nft_doh_mode nft_dns_mode
+    local nft_excluded_hijack_dns_port nft_excluded_hijack_dns_interfaces
     local nft_dot_mode nft_dot_quic_mode nft_ips_exclude nft_mac_exclude nft_ntp_mode nft_ntp_mode_router
     local nft_ports_exclude nft_ports_exclude_router nft_quic_mode nft_skuid_exclude_router pbr_priority
-    local provider_routing_marks proxy_routing_marks routing_mode tproxy_input_interfaces tproxy_port
+    local provider_routing_marks proxy_routing_marks tproxy_input_interfaces tproxy_port
     local nft_res=0
 
     # Read settings used by this scenario.
-    config_get routing_mode settings routing_mode
     config_get nft_apply_changes settings nft_apply_changes
     config_get tproxy_port proxy tproxy_port
     config_get pbr_priority settings pbr_priority
@@ -441,6 +439,8 @@ run_nftables_apply() {
     config_get tproxy_input_interfaces settings tproxy_input_interfaces
     config_get nft_quic_mode settings nft_quic_mode
     config_get nft_dns_mode settings nft_dns_mode
+    config_get nft_excluded_hijack_dns_port settings nft_excluded_hijack_dns_port
+    config_get nft_excluded_hijack_dns_interfaces settings nft_excluded_hijack_dns_interfaces
     config_get nft_dot_mode settings nft_dot_mode
     config_get nft_dot_quic_mode settings nft_dot_quic_mode
     config_get nft_doh_mode settings nft_doh_mode
@@ -469,57 +469,34 @@ run_nftables_apply() {
         return 1
     fi
 
-    if [ "$routing_mode" = "partial" ]; then
-        nft_table_partial_apply \
-            "$nft_apply_changes" \
-            "$tproxy_port" \
-            "$fake_ip_range" \
-            "$fake_ip_range6" \
-            "$tproxy_input_interfaces" \
-            "$nft_quic_mode" \
-            "$nft_dot_mode" \
-            "$nft_dot_quic_mode" \
-            "$nft_ntp_mode" \
-            "$nft_ntp_mode_router" \
-            "$nft_doh_mode" \
-            "$nft_skuid_exclude_router" \
-            "$proxy_routing_marks" \
-            "$provider_routing_marks" \
-            "$nft_ports_exclude" \
-            "$nft_ports_exclude_router" \
-            "$nft_mac_exclude" \
-            "$nft_ips_exclude" \
-            "$ipv6_enabled" \
-            "$ACTIVE_IPCIDR_RULESETS_PATH" \
-            "$ACTIVE_STATIC_IPS_PATH" \
-            "$ACTIVE_STATIC_SOURCE_IPS_PATH" \
-            "$CORE_WORKDIR_RULES_PATH" \
-            "$nft_dns_mode"
-        nft_res=$?
-    else
-        nft_table_full_apply \
-            "$nft_apply_changes" \
-            "$tproxy_port" \
-            "$fake_ip_range" \
-            "$fake_ip_range6" \
-            "$tproxy_input_interfaces" \
-            "$nft_quic_mode" \
-            "$nft_dot_mode" \
-            "$nft_dot_quic_mode" \
-            "$nft_ntp_mode" \
-            "$nft_ntp_mode_router" \
-            "$nft_doh_mode" \
-            "$nft_skuid_exclude_router" \
-            "$proxy_routing_marks" \
-            "$provider_routing_marks" \
-            "$nft_ports_exclude" \
-            "$nft_ports_exclude_router" \
-            "$nft_mac_exclude" \
-            "$nft_ips_exclude" \
-            "$ipv6_enabled" \
-            "$nft_dns_mode"
-        nft_res=$?
-    fi
+    nft_table_partial_apply \
+        "$nft_apply_changes" \
+        "$tproxy_port" \
+        "$fake_ip_range" \
+        "$fake_ip_range6" \
+        "$tproxy_input_interfaces" \
+        "$nft_quic_mode" \
+        "$nft_dot_mode" \
+        "$nft_dot_quic_mode" \
+        "$nft_ntp_mode" \
+        "$nft_ntp_mode_router" \
+        "$nft_doh_mode" \
+        "$nft_skuid_exclude_router" \
+        "$proxy_routing_marks" \
+        "$provider_routing_marks" \
+        "$nft_ports_exclude" \
+        "$nft_ports_exclude_router" \
+        "$nft_mac_exclude" \
+        "$nft_ips_exclude" \
+        "$ipv6_enabled" \
+        "$ACTIVE_IPCIDR_RULESETS_PATH" \
+        "$ACTIVE_STATIC_IPS_PATH" \
+        "$ACTIVE_STATIC_SOURCE_IPS_PATH" \
+        "$CORE_WORKDIR_RULES_PATH" \
+        "$nft_dns_mode" \
+        "$nft_excluded_hijack_dns_port" \
+        "$nft_excluded_hijack_dns_interfaces"
+    nft_res=$?
 
     if [ "$nft_res" -ne 0 ]; then
         return "$nft_res"
@@ -529,7 +506,10 @@ run_nftables_apply() {
         "$NF_TABLE_FWMARK_FINAL" \
         "$NF_ROUTE_TABLE" \
         "$pbr_priority" \
-        "$ipv6_enabled" || return 1
+        "$ipv6_enabled" || {
+        nf_table_remove
+        return 1
+    }
 
     log warn "Tproxy: fwmark=$NF_TABLE_FWMARK_FINAL/$NF_TABLE_FWMARK_FINAL fwmark_proxy=$NF_TABLE_FWMARK_PROXY table=$NF_ROUTE_TABLE priority=$pbr_priority"
 }
@@ -738,11 +718,9 @@ core_generate_yaml() {
     # groups.sh / proxies.sh / providers.sh, copied into the final document here.
     # OUT_NAMES_RULESETS / OUT_NAMES_SUFFIXES / OUT_NAMES_GEOSITE: block DNS
     # policy JSON objects from rules.sh.
-    # OUT_FINAL_RULES: the final rule array.
     local OUT_RULES="[]" OUT_RULESETS="{}" OUT_FAKE_IP_RULES="[]"
     local OUT_PROXY_GROUPS="[]" OUT_PROXIES="[]" OUT_PROXY_PROVIDERS=""
     local OUT_NAMES_RULESETS="{}" OUT_NAMES_SUFFIXES="{}" OUT_NAMES_GEOSITE="{}"
-    local OUT_FINAL_RULES=""
     local OUT_INBOUNDS="" OUT_INBOUND_RULES=""
     # Per-build newline-delimited sidecars, not process-global configuration:
     # NL is the readonly newline from constants.sh, not a literal backslash-n.
@@ -785,7 +763,6 @@ core_generate_yaml() {
     local sniffer_force_domain sniffer_exclude_domain sniffer_skip_src_address sniffer_skip_dst_address
     local block_enabled block_enabled_list block_proxy block_update_interval block_size_limit
     local block_geosite_list block_domain_routes block_destip_routes block_geoip_list
-    local final_exit_rule
     local effective_interface_name
     local output_yaml_tmp_path active_static_ips_tmp_path active_source_ips_tmp_path active_ipcidr_rulesets_tmp_path
     local render_status
@@ -793,7 +770,7 @@ core_generate_yaml() {
     local fake_ip_filter_data
 
     local nameserver_policy_custom hosts_content
-    local rules_proxies rules_proxygroups rules_block rule_final rules_core
+    local rules_proxies rules_proxygroups rules_block rules_core
     local proxies proxy_groups rule_providers proxy_providers
     local names_rulesets_block_policy names_suffixes_block_policy
     local fake_ip_rules_proxy_groups fake_ip_rules_proxies
@@ -883,7 +860,6 @@ core_generate_yaml() {
     config_get block_domain_routes block_rules additional_domain_blockroute
     config_get block_destip_routes block_rules additional_destip_blockroute
     config_get block_geoip_list block_rules enabled_geoip_blocklist
-    config_get final_exit_rule final_rules exit_rule
     effective_interface_name="$interface_name"
 
     global_ua=$(resolve_user_agent "$global_ua")
@@ -914,10 +890,6 @@ core_generate_yaml() {
             yaml_json_format 2
     ) || return 1
     inbound_rules="[$OUT_INBOUND_RULES]"
-
-    # FINAL RULE section
-    handle_final_rule_section "$final_exit_rule"
-    rule_final="$OUT_FINAL_RULES"
 
     # PROXY PROVIDERS section
     OUT_PROXY_PROVIDERS=""
@@ -1049,8 +1021,7 @@ core_generate_yaml() {
         "$inbound_rules" \
         "$rules_block" \
         "$rules_proxygroups" \
-        "$rules_proxies" \
-        "$rule_final") || return 1
+        "$rules_proxies") || return 1
 
     output_yaml_tmp_path=$(mktemp "${OUTPUT_YAML_CONFIG_PATH}.XXXXXX") || {
         log error "Failed to create a temporary YAML configuration."
