@@ -50,11 +50,14 @@ Bootstrap resolvers must be usable before hostname-based upstreams are resolved;
 use a supported address-based configuration. Avoid a circular dependency between
 resolving an outbound server and reaching DNS through that same outbound.
 
-JustClash enables Mihomo's `respect-rules`. When Direct nameservers is populated,
-it also enables `direct-nameserver-follow-policy`. Resolver choice and the path
-used to contact that resolver are related but distinct settings. See
-[Mihomo DNS documentation](https://wiki.metacubex.one/en/config/dns/) for the
-upstream syntax supported by the installed core.
+**Respect routing rules** is on by default under **Setup: DNS → Basic**. With
+it enabled, Mihomo uses your routing rules to reach upstream DNS servers.
+Set **Proxy nameservers** so Mihomo can resolve proxy server hostnames before
+connecting to them.
+
+If you configure **Direct nameservers**, DNS lookups for direct connections
+also follow **Nameserver policy**. For supported upstream formats, see the
+[Mihomo DNS documentation](https://wiki.metacubex.one/en/config/dns/).
 
 ## Static Hosts and Nameserver Policies
 

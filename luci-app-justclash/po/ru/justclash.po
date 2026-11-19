@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-19 18:55+0300\n"
+"POT-Creation-Date: 2026-11-19 23:34+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -928,127 +928,135 @@ msgstr "Кэш DNS:"
 msgid "Maximum number of DNS cache entries kept by Mihomo."
 msgstr "Максимальное количество DNS-записей, которое Mihomo хранит в кэше."
 
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:81
+msgid "Respect routing rules:"
+msgstr "Учитывать правила маршрутизации:"
+
 #: htdocs/luci-static/resources/view/justclash/pages/dns.js:82
+msgid "Apply Mihomo routing rules to connections to DNS upstreams."
+msgstr "Применять правила маршрутизации Mihomo при подключении к вышестоящим DNS-серверам."
+
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:87
 msgid "Nameservers"
 msgstr "DNS-серверы"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:84
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:89
 msgid "Default nameservers:"
 msgstr "DNS по умолчанию:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:85
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:90
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "DNS сервера по умолчанию при запуске. Рекомендуется использовать UDP-серверы."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:93
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:98
 msgid "Proxy nameservers:"
 msgstr "DNS-серверы прокси:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:94
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:99
 msgid "Nameservers used to resolve proxy server hostnames."
 msgstr "DNS-серверы, используемые для разрешения доменных имен серверов прокси."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:102
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:107
 msgid "Direct nameservers:"
 msgstr "DNS-серверы для DIRECT:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:103
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:108
 msgid "Direct nameservers used for DIRECT rules."
 msgstr "DNS-серверы, используемые для правил DIRECT."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:111
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:116
 msgid "Nameservers:"
 msgstr "DNS-серверы:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:112
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:117
 msgid "Main nameservers used for regular DNS queries."
 msgstr "Основные DNS-серверы, используемые для обычных DNS-запросов."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:121
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:126
 msgid "Fake IP"
 msgstr "Fake IP"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:123
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:128
 msgid "Fake IP range:"
 msgstr "Диапазон Fake IP:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:124
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:129
 msgid "IPv4 CIDR range used for fake-IP responses."
 msgstr "Диапазон IPv4 CIDR, который используется для fake-IP ответов."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:130
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:135
 msgid "Fake IP range (IPv6):"
 msgstr "Диапазон Fake IP (IPv6):"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:131
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:136
 msgid "IPv6 CIDR range used for fake-IP responses."
 msgstr "Диапазон IPv6 CIDR, используемый для ответов fake-IP."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:137
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:142
 msgid "Fake IP TTL:"
 msgstr "Fake IP TTL:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:138
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:143
 msgid "TTL for fake-IP DNS responses (in seconds)."
 msgstr "TTL для DNS-ответов с fake-IP (в секундах)."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:149
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:154
 msgid "Force real IP rulesets:"
 msgstr "Принудительные ruleset'ы для real IP:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:153
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:158
 msgid "Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo."
 msgstr "Выберите активные RULE-SET, которые должны разрешаться через реальный IP до применения сопоставлений Fake-IP. В режиме Partial routing менять эти настройки не рекомендуется: исключения Real IP могут привести к обходу Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:159
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:164
 msgid "Force real IP geosites:"
 msgstr "Принудительные geosite для реального IP:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:163
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:168
 msgid "Select active GEOSITEs that should resolve through real IP before fake-IP matches are applied. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo."
 msgstr "Выберите активные GEOSITE, которые должны разрешаться через реальный IP до применения сопоставлений Fake-IP. В режиме Partial routing менять эти настройки не рекомендуется: исключения Real IP могут привести к обходу Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:169
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:174
 msgid "Force real IP rules:"
 msgstr "Принудительные правила real IP:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:170
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:175
 msgid "Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo."
 msgstr "Записи, которые должны резолвиться через real IP до применения fake-IP совпадений; используйте обычные суффиксы вроде example.com. В режиме Partial routing менять эти настройки не рекомендуется: исключения Real IP могут привести к обходу Mihomo."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:180
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:185
 msgid "Policies"
 msgstr "Политики"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:182
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:187
 msgid "Nameserver policy:"
 msgstr "DNS-политика:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:183
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:188
 msgid "Domain-specific DNS policy in the format domain/nameserver. Domain matchers may include +., *. or *."
 msgstr "Политика DNS для отдельных доменов в формате домен/DNS-сервер. Сопоставители доменов могут включать +., *. или *."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:183 htdocs/luci-static/resources/view/justclash/pages/dns.js:199 htdocs/luci-static/resources/view/justclash/pages/proxy.js:221
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:188 htdocs/luci-static/resources/view/justclash/pages/dns.js:204 htdocs/luci-static/resources/view/justclash/pages/proxy.js:221
 msgid "Enter one entry per line."
 msgstr "Введите по одной записи на строку."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:191
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:196
 msgid "Hosts"
 msgstr "Хосты"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:193
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:198
 msgid "Use system hosts:"
 msgstr "Hosts из системы:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:194
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:199
 msgid "Load DNS entries from the system hosts file when possible."
 msgstr "Загружать DNS-записи из системного файла hosts, когда это возможно."
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:198
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:203
 msgid "Hosts mapping:"
 msgstr "Сопоставление хостов (Hosts):"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:199
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:204
 msgid "Domain-specific IP mapping in the format domain/ip (example: cloudflare-dns.com/1.1.1.1)."
 msgstr "Сопоставление домена и IP-адреса в формате домен/ip (пример: cloudflare-dns.com/1.1.1.1)."
 

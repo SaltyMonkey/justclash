@@ -141,6 +141,7 @@ yaml_document_write_dns() {
     local fake_ip_range6="${11}"
     local fake_ip_ttl="${12}"
     local fake_ip_filter_data="${13}"
+    local respect_rules="${14:-1}"
 
     echo "dns:"
     echo "  enable: true"
@@ -159,7 +160,7 @@ yaml_document_write_dns() {
         printf '%s\n' "  direct-nameserver: $direct_nameserver"
         echo "  direct-nameserver-follow-policy: true"
     fi
-    echo "  respect-rules: true"
+    echo "  respect-rules: $(fmt_uci_bool_as_yaml "$respect_rules")"
     echo "  enhanced-mode: fake-ip"
     echo "  fake-ip-range: $fake_ip_range"
     [ "$ipv6_enabled" -eq 1 ] && echo "  fake-ip-range6: $fake_ip_range6"

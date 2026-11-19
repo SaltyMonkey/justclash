@@ -144,6 +144,7 @@ validate_proxy_section() {
         "geodata_autoupdate_interval:uinteger(10):$DEFAULT_GEODATA_UPDATE_INTERVAL" \
         "tproxy_port:and(port,min(1)):$DEFAULT_TPROXY_PORT" \
         "dns_listen_port:and(port,min(1)):$DEFAULT_DNS_LISTEN_PORT" \
+        "respect_rules:$CONFIG_FLAG_TYPE:1" \
         "core_ntp_port:and(port,min(1)):$DEFAULT_NTP_PORT" \
         "controller_bind_interface:or(\"-\",network):$DEFAULT_CONTROLLER_BIND_INTERFACE" \
         'interface_name:network' \

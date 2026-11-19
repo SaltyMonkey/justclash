@@ -753,7 +753,7 @@ core_generate_yaml() {
     local keep_alive_idle keep_alive_interval global_ua etag_support
     local profile_store_selected profile_store_fake_ip
     local core_ntp_enabled core_ntp_server core_ntp_port core_ntp_interval core_ntp_write_system
-    local dns_listen_port dns_cache_max_size use_system_hosts
+    local dns_listen_port dns_cache_max_size use_system_hosts respect_rules
     local fake_ip_range fake_ip_range6 fake_ip_ttl
     local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination
     local fake_ip_exclude_domains fake_ip_exclude_rulesets fake_ip_exclude_geosites
@@ -815,6 +815,7 @@ core_generate_yaml() {
     config_get dns_listen_port proxy dns_listen_port
     config_get dns_cache_max_size proxy dns_cache_max_size
     config_get use_system_hosts proxy use_system_hosts
+    config_get respect_rules proxy respect_rules
     config_get fake_ip_range proxy fake_ip_range
     config_get fake_ip_range6 proxy fake_ip_range6
     config_get fake_ip_ttl proxy fake_ip_ttl
@@ -1099,7 +1100,8 @@ core_generate_yaml() {
             "$fake_ip_range" \
             "$fake_ip_range6" \
             "$fake_ip_ttl" \
-            "$fake_ip_filter_data"
+            "$fake_ip_filter_data" \
+            "$respect_rules"
         yaml_document_write_sniffer \
             "$sniffer_enable" \
             "$sniffer_parse_pure_ip" \

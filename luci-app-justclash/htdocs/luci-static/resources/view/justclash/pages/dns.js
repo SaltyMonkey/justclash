@@ -78,6 +78,11 @@ return view.extend({
             return common.validateIntegerRange(value, 1, 1048576);
         };
 
+        o = s.taboption(tabname, form.Flag, "respect_rules", _("Respect routing rules:"));
+        o.description = _("Apply Mihomo routing rules to connections to DNS upstreams.");
+        o.rmempty = false;
+        o.default = primitives.TRUE;
+
         tabname = "dnsnameservers_tab";
         s.tab(tabname, _("Nameservers"));
 

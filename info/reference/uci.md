@@ -185,6 +185,7 @@ describes restoration of the managed dnsmasq configuration.
 | --- | --- | --- |
 | `dns_listen_port` | Port | Mihomo DNS listener; schema fallback is 1053, while the shipped configuration and current LuCI preset use 7894 |
 | `dns_cache_max_size` | Unsigned integer | DNS cache entry limit |
+| `respect_rules` | Boolean, `1` | Apply Mihomo routing rules to DNS upstream connections (`dns.respect-rules`) |
 | `use_system_hosts` | Boolean | Import system hosts |
 | `hosts` | List | Static host mappings |
 | `default_nameserver` | List | Bootstrap resolvers |
