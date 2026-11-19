@@ -39,8 +39,7 @@ yaml_inbound_append() {
         users="${users:+$users,}$entry"
     done
     if [ -z "$users" ]; then
-        log warn "Skip inbound '$listener_name': authentication is empty." >&2
-        return
+        log warn "Inbound '$listener_name' allows connections without authentication." >&2
     fi
     users="[$users]"
     inbound_type=$(str_json_escape "$inbound_type")
