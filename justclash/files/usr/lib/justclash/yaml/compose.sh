@@ -52,6 +52,6 @@ yaml_rule_providers_merge() {
 }
 
 yaml_rules_merge() {
-    printf '[%s,%s,%s,%s,%s,%s]\n' "$1" "$2" "$3" "$4" "$5" "$6" |
-        jq 'add | map(select(length > 0))'
+    printf '[%s,%s,%s,%s,%s]\n' "$1" "$2" "$3" "$4" "$5" |
+        jq 'add | map(select(length > 0)) + ["MATCH,DIRECT"]'
 }

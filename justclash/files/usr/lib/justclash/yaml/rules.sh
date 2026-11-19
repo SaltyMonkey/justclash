@@ -284,13 +284,3 @@ handle_block_rule_section() {
     OUT_NAMES_GEOSITE="$list_geosite_names"
     OUT_NAMES_SUFFIXES="$list_suffix_names"
 }
-
-handle_final_rule_section() {
-    local exit_rule="$1"
-    local rule_str rules
-    rule_str=$(printf 'MATCH,%s' "$exit_rule")
-
-    rules="[\"${rule_str:-}\"]"
-
-    OUT_FINAL_RULES="$rules"
-}
