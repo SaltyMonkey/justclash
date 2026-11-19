@@ -77,13 +77,6 @@ return view.extend({
         o.rmempty = false;
         o.default = primitives.TRUE;
 
-        o = s.taboption(tabname, form.ListValue, "routing_mode", _("Routing mode:"));
-        o.description = _("Select the traffic interception mode. 'Full Interception' intercepts all WAN traffic. 'Partial Interception' only intercepts Fake-IP domains and enabled IP CIDR rulesets, allowing direct traffic to bypass the proxy at kernel speed.");
-        o.value("full", _("Full Interception"));
-        o.value("partial", _("Partial Interception"));
-        o.default = "partial";
-        o.rmempty = false;
-
         o = s.taboption(tabname, form.Flag, "ipv6_enabled", _("Enable IPv6 support:"));
         o.description = _(
             "Allow Mihomo to process IPv6 traffic and resolve AAAA records via Fake-IP. " +
@@ -160,8 +153,26 @@ return view.extend({
         o.placeholder = _("Example: %s").format("192.168.1.100");
         o.rmempty = true;
         o.retain = true;
-        o.datatype = datatypes.IP4ADDR_OR_CIDR4;
+        o.datatype = "or(ipaddr,cidr4,cidr6)";
         o.depends("nft_apply_changes", primitives.TRUE);
+
+        o = s.taboption(tabname, form.Value, "nft_excluded_hijack_dns_port", _("Bypassed DNS redirect port:"));
+        o.description = _("Send DNS queries from clients bypassed by IP or MAC and from additional DNS redirect interfaces to this port on the router.");
+        o.depends("nft_apply_changes", primitives.TRUE);
+        o.datatype = "and(port,min(1))";
+        o.rmempty = true;
+        o.retain = true;
+
+        o = s.taboption(tabname, widgets.DeviceSelect, "nft_excluded_hijack_dns_interfaces", _("Additional DNS redirect interfaces:"));
+        o.description = _("Redirect TCP and UDP port 53 from all clients on these interfaces. Select interfaces outside Client traffic interfaces and set the Bypassed DNS redirect port.");
+        o.depends("nft_apply_changes", primitives.TRUE);
+        o.rmempty = true;
+        o.retain = true;
+        o.noaliases = true;
+        o.nobridges = false;
+        o.noinactive = false;
+        o.multiple = true;
+        o.filter = common.filterInboundDeviceSelect;
 
         o = s.taboption(tabname, form.ListValue, "nft_quic_mode", _("Client QUIC traffic:"));
         o.description = _("By rules follows Mihomo routing. Drop blocks client UDP ports 443 and 8443 in nftables when Create nftables is enabled. Drop in core silently drops these ports before other Mihomo rules for all traffic reaching the core, including inbounds, and works independently of Create nftables.");
@@ -416,7 +427,6 @@ return view.extend({
         o.default = common.defaultGoMaxProcsValues[0].value;
 
         const style = E("style", {}, `
-            .cbi-value[data-name="routing_mode"] .cbi-value-title,
             .cbi-value[data-name="dnsmasq_apply_changes"] .cbi-value-title,
             .cbi-value[data-name="nft_apply_changes"] .cbi-value-title,
             .cbi-value[data-name="tproxy_input_interfaces"] .cbi-value-title,
