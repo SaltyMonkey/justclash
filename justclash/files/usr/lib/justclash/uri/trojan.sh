@@ -34,6 +34,7 @@ parse_trojan_url() {
     local shadow_tls_password="" shadow_tls_version=""
     local restls_password="" restls_version_hint="" restls_script=""
     local jls_username="" jls_password=""
+    local support_x25519mlkem768=true
     local alpn_json proxy_obj
 
     local temp_query="$query_part"
@@ -59,6 +60,7 @@ parse_trojan_url() {
             ;;
         security) security="$v" ;;
         pbk | public-key) pbk="$v" ;;
+        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) uri_is_truthy "$v" && support_x25519mlkem768=true || support_x25519mlkem768=false ;;
         sid | short-id) sid="$v" ;;
         spx) spx="$(str_url_decode "$v")" ;;
         flow) flow="$v" ;;
@@ -110,6 +112,7 @@ parse_trojan_url() {
             --arg grpc_ping_interval "$grpc_ping_interval" \
             --arg security "$security" \
             --arg pbk "$pbk" \
+            --argjson support_x25519mlkem768 "$support_x25519mlkem768" \
             --arg sid "$sid" \
             --arg spx "$spx" \
             --arg ech "$ech" \
@@ -198,7 +201,8 @@ parse_trojan_url() {
                 end)
             + (if $security == "reality" then
                     {"reality-opts": (
-                        (if $pbk != "" then {"public-key": $pbk} else {} end)
+                        {"support-x25519mlkem768": $support_x25519mlkem768}
+                        + (if $pbk != "" then {"public-key": $pbk} else {} end)
                         + (if $sid != "" then {"short-id": $sid} else {} end)
                         + (if $spx != "" then {"spider-x": $spx} else {} end)
                     )}

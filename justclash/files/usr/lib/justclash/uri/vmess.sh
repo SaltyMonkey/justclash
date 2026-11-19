@@ -34,7 +34,7 @@ parse_vmess_url() {
     local shadow_tls_password="" shadow_tls_version=""
     local restls_password="" restls_version_hint="" restls_script=""
     local jls_username="" jls_password=""
-    local support_x25519mlkem768=""
+    local support_x25519mlkem768=true
 
     local temp_query="$query_part"
     while [ -n "$temp_query" ]; do
@@ -79,7 +79,7 @@ parse_vmess_url() {
         restls-script | restlsScript) restls_script="$(str_url_decode "$v")" ;;
         jls-username | jlsUsername | jlsUser) jls_username="$(str_url_decode "$v")" ;;
         jls-password | jlsPassword) jls_password="$(str_url_decode "$v")" ;;
-        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) uri_is_truthy "$v" && support_x25519mlkem768=1 ;;
+        support-x25519mlkem768 | x25519mlkem768 | support-x25519-mlkem768) uri_is_truthy "$v" && support_x25519mlkem768=true || support_x25519mlkem768=false ;;
         sid | short-id) sid="$v" ;;
         spx) spx="$(str_url_decode "${v:-/}")" ;;
         path) path="$(str_url_decode "${v:-/}")" ;;
@@ -146,7 +146,7 @@ parse_vmess_url() {
             --arg restls_script "$restls_script" \
             --arg jls_username "$jls_username" \
             --arg jls_password "$jls_password" \
-            --arg support_x25519mlkem768 "$support_x25519mlkem768" \
+            --argjson support_x25519mlkem768 "$support_x25519mlkem768" \
             --arg sn "$sn" \
             --arg grpc_ua "$grpc_ua" \
             --arg grpc_ping_interval "$grpc_ping_interval" \
@@ -208,10 +208,10 @@ parse_vmess_url() {
                 else {} end)
             + (if $sec == "reality" then
                     {"reality-opts": (
-                        (if $pbk != "" then {"public-key": $pbk} else {} end)
+                        {"support-x25519mlkem768": $support_x25519mlkem768}
+                        + (if $pbk != "" then {"public-key": $pbk} else {} end)
                         + (if $sid != "" then {"short-id": $sid} else {} end)
                         + (if $spx != "" then {"spider-x": $spx} else {} end)
-                        + (if $pbk != "" and $support_x25519mlkem768 == "1" then {"support-x25519mlkem768": true} else {} end)
                     )}
                 else {} end)
             + (if $ech != "" then {"ech-opts": {enable: true, config: $ech}} else {} end)
