@@ -141,13 +141,10 @@ const removeGroupMemberReferences = (configName, sectionType, name) => {
 
 };
 
-const resetExitRuleReferences = (configName, name) => {
-    ["final_rules", "inbound"].forEach((type) => {
-        const fallback = common.endRuleOptions[type === "inbound" ? 1 : 0].value;
-        uci.sections(configName, type).forEach((section) => {
-            if (section.exit_rule === name)
-                uci.set(configName, section[".name"], "exit_rule", fallback);
-        });
+const resetInboundReferences = (configName, name) => {
+    uci.sections(configName, "inbound").forEach((section) => {
+        if (section.exit_rule === name)
+            uci.set(configName, section[".name"], "exit_rule", common.endRuleOptions[1].value);
     });
 };
 
@@ -203,7 +200,7 @@ const removeRoutingReferences = (configName, sectionType, name) => {
     if (sectionType === "proxy_provider")
         return;
 
-    resetExitRuleReferences(configName, name);
+    resetInboundReferences(configName, name);
     resetDownloadReferences(configName, name);
     clearDialerReferences(configName, name);
 };
@@ -231,7 +228,6 @@ const renameRoutingReferences = (configName, sectionType, name, replacement) => 
         proxies: ["dialer_proxy"],
         proxy_provider: ["proxy", "override_dialer_proxy"],
         block_rules: ["proxy"],
-        final_rules: ["exit_rule"],
         inbound: ["exit_rule"]
     };
     Object.entries(references).forEach(([type, options]) => {
