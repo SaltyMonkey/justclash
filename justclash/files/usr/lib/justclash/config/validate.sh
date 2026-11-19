@@ -90,7 +90,6 @@ validate_main_section() {
         "mihomo_mem_limit:uinteger(10):$DEFAULT_MIHOMO_MEM_LIMIT" \
         "mihomo_gogc:uinteger(10):$DEFAULT_MIHOMO_GOGC" \
         "mihomo_gomaxprocs:uinteger(10):$DEFAULT_MIHOMO_GOMAXPROCS" \
-        "routing_mode:or(\"full\",\"partial\"):$DEFAULT_ROUTING_MODE" \
         "pbr_priority:and(uinteger(10),range(1,32766)):$DEFAULT_PBR_PRIORITY" \
         "tproxy_input_interfaces:list(network):$DEFAULT_INPUT_INTERFACE" \
         'nft_ports_exclude:list(and(port,min(1)))' \
@@ -100,6 +99,8 @@ validate_main_section() {
         "nft_dot_quic_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
         "nft_doh_mode:or(\"BY RULES\",\"DROP\"):$DEFAULT_NFT_MODE" \
         "nft_dns_mode:or(\"BY RULES\",\"DROP\",\"HIJACK\"):$DEFAULT_NFT_MODE" \
+        'nft_excluded_hijack_dns_port:and(port,min(1))' \
+        'nft_excluded_hijack_dns_interfaces:list(network)' \
         "nft_ntp_mode:or(\"BY RULES\",\"DROP\",\"DIRECT\"):$DEFAULT_NFT_MODE" \
         "nft_ntp_mode_router:or(\"BY RULES\",\"DROP\",\"DIRECT\"):$DEFAULT_NFT_MODE" \
         "mihomo_core_source_type:or(\"github\",\"custom\"):$DEFAULT_MIHOMO_SOURCE_CORE" \
@@ -169,11 +170,6 @@ validate_inbound_section() {
         "port:and(port,min(1)):$DEFAULT_INBOUND_PORT" \
         'authentication:list(string)' \
         'exit_rule:or("BY RULES",and(maxlength(64),regex("[-A-Za-z0-9_]+"))):BY RULES'
-}
-
-validate_final_rules_section() {
-    config_section_validate final_rules "${1:-}" \
-        "exit_rule:and(maxlength(64),regex(\"[-A-Za-z0-9_]+\")):$DEFAULT_PROXY"
 }
 
 validate_proxy_provider_section() {
@@ -311,7 +307,6 @@ config_validate() {
     validate_main_section settings
     validate_proxy_section proxy
     validate_block_rules_section block_rules
-    validate_final_rules_section final_rules
 
     config_foreach validate_proxy_provider_section proxy_provider
     config_foreach validate_inbound_section inbound
