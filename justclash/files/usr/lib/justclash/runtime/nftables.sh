@@ -168,7 +168,7 @@ nft_sets_watch_start() {
     echo "$!" >"$pid_path"
 }
 
-nft_format_excluded_ips() (
+nft_format_ips() (
     local address separator=""
     set -f
     for address in $1; do
@@ -218,9 +218,9 @@ nft_table_partial_apply() {
     fi
 
     if [ -n "$nft_ips_exclude" ]; then
-        excluded_ips4=$(nft_format_excluded_ips "$nft_ips_exclude" 4)
+        excluded_ips4=$(nft_format_ips "$nft_ips_exclude" 4)
         if [ "$ipv6_enabled" = 1 ]; then
-            excluded_ips6=$(nft_format_excluded_ips "$nft_ips_exclude" 6)
+            excluded_ips6=$(nft_format_ips "$nft_ips_exclude" 6)
         fi
     fi
 
@@ -278,11 +278,7 @@ nft_table_partial_apply() {
         done
 
         echo "add chain inet $NF_TABLE_NAME prerouting { type filter hook prerouting priority mangle; policy accept; }"
-        echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
-        echo "add element inet $NF_TABLE_NAME doh_ips { $DEFAULT_DOH_IPS4 }"
         if [ "$ipv6_enabled" -eq 1 ]; then
-            echo "add set inet $NF_TABLE_NAME doh_ip6s { type ipv6_addr; flags interval; }"
-            echo "add element inet $NF_TABLE_NAME doh_ip6s { $DEFAULT_DOH_IPS6 }"
             echo "add set inet $NF_TABLE_NAME private_ip6s { type ipv6_addr; flags interval; }"
             echo "add element inet $NF_TABLE_NAME private_ip6s { ::1/128, fc00::/7, fe80::/10, ff00::/8 }"
         fi
@@ -375,8 +371,12 @@ nft_table_partial_apply() {
         fi
 
         if [ "$nft_doh_mode" = "DROP" ]; then
+            echo "add set inet $NF_TABLE_NAME doh_ips { type ipv4_addr; flags interval; }"
+            echo "add element inet $NF_TABLE_NAME doh_ips { $(nft_format_ips "$DEFAULT_DOH_IPS4" 4) }"
             echo "add rule inet $NF_TABLE_NAME prerouting ip daddr @doh_ips meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS traffic\""
             if [ "$ipv6_enabled" -eq 1 ]; then
+                echo "add set inet $NF_TABLE_NAME doh_ip6s { type ipv6_addr; flags interval; }"
+                echo "add element inet $NF_TABLE_NAME doh_ip6s { $(nft_format_ips "$DEFAULT_DOH_IPS6" 6) }"
                 echo "add rule inet $NF_TABLE_NAME prerouting ip6 daddr @doh_ip6s meta l4proto { tcp, udp } th dport $DEFAULT_TLS_PORT drop comment \"Drop DNS-over-HTTPS IPv6 traffic\""
             fi
         fi
