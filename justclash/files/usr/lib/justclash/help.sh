@@ -32,7 +32,7 @@ help() {
     echo "  cert generate SAN [SAN ...]            Generate a self-signed EC certificate (DNS:name or IP:address)"
     echo ""
     echo "Configuration:"
-    echo "  config show mihomo [--unsafe]            Show generated Mihomo configuration"
+    echo "  config show mihomo --unsafe             Show raw generated Mihomo configuration"
     echo "  config show service [--unsafe]           Show service configuration"
     echo "  config reset [-y|-Y|--yes]               Reset service configuration to default"
     echo ""

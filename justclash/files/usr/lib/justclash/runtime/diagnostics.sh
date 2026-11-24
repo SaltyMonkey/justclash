@@ -62,18 +62,23 @@ check_report_dnsmasq() {
 }
 
 check_nft() {
-    local table_name="$1"
+    local table_name="$1" mode="${2:-}"
 
     clog info "Verifying existence of NFTables table '$table_name'..."
-    if ! nft list table inet "$table_name" >/dev/null 2>&1; then
+    if ! nft --terse list table inet "$table_name" >/dev/null 2>&1; then
         clog error "Table '$table_name' not found. Please create the required NFTables table."
         return 1
     fi
 
-    if [ "${2:-}" = "--unsafe" ]; then
+    case "$mode" in
+    --unsafe)
         clog info "Displaying current NFTables configuration:"
         nft list table inet "$table_name" || return 1
-    fi
+        ;;
+    --terse)
+        nft --terse list table inet "$table_name" || return 1
+        ;;
+    esac
 
     clog info "NFTables check completed successfully."
 
@@ -177,16 +182,6 @@ check_dns_external() {
     fi
 }
 
-config_show_mihomo() {
-    local config_path="$1"
-
-    if [ -f "$config_path" ]; then
-        sed -E -e '/nameserver/!s/^([[:space:]]*"?[a-zA-Z0-9_-]*(password|secret|key|uuid|short-id|certificate|token|username|server|auth|url|header|age)[a-zA-Z0-9_-]*"?:).*/\1 "***REDACTED***"/' -e 's/AGE-SECRET-KEY-1[A-Z0-9]*/***REDACTED***/g' "$config_path"
-    else
-        clog error "Config file not found."
-    fi
-}
-
 config_show_mihomo_unsafe() {
     local config_path="$1"
 
@@ -201,7 +196,10 @@ config_show_service() {
     local config_path="$1"
 
     if [ -f "$config_path" ]; then
-        sed -E -e "/nameserver/!s/^([[:space:]]*(option|list)[[:space:]]+[a-zA-Z0-9_]*(password|secret|key|uuid|short_id|certificate|token|username|server|auth|subscription|proxy_link|url|header|age)[a-zA-Z0-9_]*[[:space:]]+).*/\1'***REDACTED***'/" "$config_path"
+        sed -E \
+            -e '/^[[:space:]]*(option|list)[[:space:]]+(core_ntp_server|api_tls_key|check_url|health_check_url|header_user_agent)[[:space:]]/b' \
+            -e "/nameserver/!s/^([[:space:]]*(option|list)[[:space:]]+[a-zA-Z0-9_]*(password|secret|key|uuid|short_id|certificate|token|username|server|auth|subscription|proxy_link|url|header|age)[a-zA-Z0-9_]*[[:space:]]+).*/\1'***REDACTED***'/" \
+            "$config_path"
     else
         clog error "Service config file not found."
     fi
