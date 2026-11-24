@@ -6,7 +6,7 @@ CONFIG_FLAG_TYPE='or("0","1")'
 
 # Mihomo accepts up to 28 codes or ranges per expected-status value.
 CONFIG_HTTP_STATUS_TERM='[ ]*0*[1-5][0-9]{2}[ ]*(-[ ]*0*[1-5][0-9]{2}[ ]*)?'
-CONFIG_HTTP_STATUS_TYPE="regex(\"$CONFIG_HTTP_STATUS_TERM(/$CONFIG_HTTP_STATUS_TERM){0,27}\")"
+CONFIG_HTTP_STATUS_TYPE="regex(\"($CONFIG_HTTP_STATUS_TERM(/$CONFIG_HTTP_STATUS_TERM){0,27})\")"
 
 # The native UCI schema checks the numeric range; JSON outbounds share this check.
 config_routing_mark_bits_validate() {
@@ -189,7 +189,7 @@ validate_proxy_provider_section() {
         'override_interface_name:network' \
         'override_routing_mark:and(uinteger,range(1,2147483647))' \
         'override_ip_version:or("dual","ipv4","ipv6","ipv4-prefer","ipv6-prefer"):dual' \
-        'override_reality_mlkem768:bool:0' \
+        'override_reality_mlkem768:bool:1' \
         "update_interval:uinteger(10):$DEFAULT_PROVIDERUPDATE_INTERVAL" \
         'size_limit:uinteger(10):10485760' \
         "proxy:$name_type:$DEFAULT_PROXY" \
