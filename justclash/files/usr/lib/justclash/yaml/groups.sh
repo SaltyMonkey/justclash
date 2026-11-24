@@ -6,7 +6,7 @@
 # build_builtin_rules_bundle() also appends to _IPCIDR_RULESETS_BUFFER.
 # The caller persists these buffers as ACTIVE_* sidecar files for nftables.
 # OUT_PROXY_GROUPS, OUT_RULES, OUT_RULESETS and OUT_FAKE_IP_RULES accumulate JSON
-# fragments; OUT_TEMPLATE is overwritten by each template call. NL is from constants.sh.
+# fragments; OUT_TEMPLATE is overwritten by each template call. NL is from chr.sh.
 # Do not call these mutating renderers in subshells: their output is caller state.
 # shellcheck disable=SC2154
 
@@ -18,7 +18,7 @@ template_proxy_group() {
     out="\"name\":\"$(str_json_escape "$name")\""
     out="$out,\"type\":\"$(str_json_escape "$type")\""
     [ -n "$url" ] && out="$out,\"url\":\"$(str_json_escape "$url")\""
-    [ -n "$status" ] && out="$out,\"expected-status\":$status"
+    [ -n "$status" ] && out="$out,\"expected-status\":\"$(str_json_escape "$status")\""
     [ -n "$interval" ] && out="$out,\"interval\":$interval"
     [ -n "$timeout" ] && out="$out,\"timeout\":$timeout"
     [ -n "$max_failed" ] && out="$out,\"max-failed-times\":$max_failed"
