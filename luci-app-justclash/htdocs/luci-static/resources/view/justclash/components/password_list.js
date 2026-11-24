@@ -7,10 +7,20 @@
 const PasswordList = ui.DynamicList.extend({
     render() {
         this.revealed = false;
+        this.validState = true;
+        this.validationError = "";
         const node = this.super("render", []);
         const input = node.querySelector(".add-item > input");
         input.type = "password";
         input.autocomplete = "new-password";
+        input.addEventListener("validation-success", () => {
+            this.validState = true;
+            this.validationError = "";
+        });
+        input.addEventListener("validation-failure", (event) => {
+            this.validState = false;
+            this.validationError = event.detail.message;
+        });
         node.querySelector(".add-item").appendChild(E("button", {
             type: "button",
             class: "cbi-button cbi-button-neutral",
