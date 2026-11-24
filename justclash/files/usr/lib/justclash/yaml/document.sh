@@ -45,10 +45,8 @@ yaml_document_write_access() {
     printf 'ipv6: %s\n' "$(fmt_uci_bool_as_yaml "$ipv6_enabled")"
 
     if [ "$api_tls" -eq 1 ]; then
-        echo ""
         echo "external-controller-tls: $(str_yaml_quote "$controller_endpoint")"
     else
-        echo ""
         echo "external-controller: $(str_yaml_quote "$controller_endpoint")"
     fi
 
@@ -114,6 +112,7 @@ yaml_document_write_services() {
     local core_ntp_interval="$6"
     local rule_providers="$7"
 
+    echo ""
     printf '%s\n' "hosts: $hosts_content"
     echo ""
     echo "ntp:"
