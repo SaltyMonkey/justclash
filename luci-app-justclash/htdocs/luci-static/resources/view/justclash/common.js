@@ -5,6 +5,7 @@ const makePresetValue = (value, readable) => ({
     value: String(value),
     text: String(value) + " (" + readable + ")",
 });
+const defaultHealthCheckStatus = "200/204";
 
 return baseclass.extend({
     // Project constants
@@ -72,9 +73,11 @@ return baseclass.extend({
     // proxy-groups.[*].tolerance (Milliseconds)
     defaultUrlTestToleranceMs: [10, 20, 30, 40, 50, 100].map(v => ({ value: String(v), text: _("%d milliseconds").format(v) })),
     // proxy-groups.[*].expected-status & proxy-providers.[*].health-check.expected-status
+    defaultHealthCheckStatus,
     defaultHealthCheckResultCode: [
         { value: "200", text: _("Response code 200") },
         { value: "204", text: _("Response code 204") },
+        { value: defaultHealthCheckStatus, text: _("Response code 200 or 204") },
     ],
     // proxy-groups.[*].timeout & proxy-providers.[*].health-check.timeout (Milliseconds)
     defaultHealthCheckTimeoutMs: [1000, 2000, 3000, 5000, 10000].map(v => makePresetValue(v, v === 1000 ? _("1 second") : _("%d seconds").format(v / 1000))),
@@ -219,7 +222,11 @@ return baseclass.extend({
         return true;
     },
     validateHttpStatus: function (value) {
-        return this.validateIntegerRange(value, 100, 599);
+        const entries = String(value ?? "").split("/");
+        const status = /^ *0*[1-5][0-9]{2} *(?:- *0*[1-5][0-9]{2} *)?$/;
+        if (entries.length > 28 || this.hasControlChars(value) || !entries.every(entry => status.test(entry)))
+            return _("Use up to 28 HTTP status codes or ranges from 100 to 599, separated by /.");
+        return true;
     },
     validateSecondsInterval: function (value) {
         return this.validateIntegerRange(value, 1, 31536000);
