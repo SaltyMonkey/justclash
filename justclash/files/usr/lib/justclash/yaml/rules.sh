@@ -1,8 +1,8 @@
 #!/bin/ash
 # shellcheck shell=dash
 # Dynamically scoped YAML build state is provided by core_generate_yaml().
-# Reads _RULESETS_CONTENT (the caller swaps in _BLOCK_RULESETS_CONTENT for block)
-# and GLOBAL_FAKE_IP_EXCLUDE_RULES. NL comes from chr.sh.
+# Reads _RULESETS_CONTENT (the caller swaps in _BLOCK_RULESETS_CONTENT for block).
+# NL comes from chr.sh.
 # Appends name|source lines to _IPCIDR_RULESETS_BUFFER and destination CIDR lines
 # to _STATIC_IPS_BUFFER; the caller writes these to ACTIVE_* sidecar files for
 # runtime/nftables.sh. These are per-build locals, not exported shell globals.
@@ -197,10 +197,7 @@ build_builtin_rules_bundle() {
 
         if [ "$ruleset_behavior" = "domain" ]; then
             names_fragment="${names_fragment:+$names_fragment }$ruleset_name"
-            case "$GLOBAL_FAKE_IP_EXCLUDE_RULES" in
-            *" $ruleset_name "*) ;;
-            *) fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\"" ;;
-            esac
+            fake_ip_rules_fragment="${fake_ip_rules_fragment:+$fake_ip_rules_fragment,}\"RULE-SET,$ruleset_name,fake-ip\""
         fi
         IFS="$NL"
     done
