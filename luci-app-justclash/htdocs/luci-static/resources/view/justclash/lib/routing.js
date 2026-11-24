@@ -4,7 +4,7 @@
 "require view.justclash.common as common";
 
 const defaultExitSectionTypes = ["proxies", "proxy_group"];
-const BULK_IMPORT_MAX_ITEMS = 128;
+const BULK_IMPORT_MAX_ITEMS = 32;
 
 const isJsonObject = (value) =>
     Object.prototype.toString.call(value) === "[object Object]" && !Array.isArray(value);
@@ -57,6 +57,25 @@ const parseBulkProxyObjects = (value) => {
             name,
             objectJson: common.normalizeProxyJsonObject(objectJson)
         };
+    });
+};
+
+const parseBulkLinks = (value, validateLink) => {
+    const links = value.split(/\r\n?|\n/)
+        .map((line, index) => ({ link: line.trim(), line: index + 1 }))
+        .filter(entry => entry.link);
+
+    if (!links.length)
+        throw new Error(_("Enter at least one link."));
+
+    if (links.length > BULK_IMPORT_MAX_ITEMS)
+        throw new Error(_("You can import at most %d links at once.").format(BULK_IMPORT_MAX_ITEMS));
+
+    return links.map(({ link, line }) => {
+        const validation = validateLink(link);
+        if (validation !== true)
+            throw new Error(_("Line %d: %s").format(line, validation));
+        return link;
     });
 };
 
@@ -243,28 +262,37 @@ const renameRoutingReferences = (configName, sectionType, name, replacement) => 
     });
 };
 
-const removeProxySections = (configName, sectionIds) => {
+const removeBulkSections = (configName, sectionIds) => {
     sectionIds.slice().reverse().forEach(sectionId => uci.remove(configName, sectionId));
 };
 
-const addBulkProxySections = (configName, entries) => {
+const addBulkSections = (configName, sectionType, entries) => {
     const sectionIds = [];
-
+    const usedNames = new Set(["proxies", "proxy_group", "proxy_provider"].flatMap(type =>
+        uci.sections(configName, type).map(section => String(section.name || "").trim())
+    ));
     try {
-        entries.forEach((entry) => {
-            const sectionId = uci.add(configName, "proxies");
+        for (const entry of entries) {
+            let name = entry.name;
+            if (!name) {
+                const baseName = common.generateRandomName();
+                name = baseName;
+                for (let suffix = 2; usedNames.has(name); suffix++)
+                    name = `${baseName}-${suffix}`;
+            }
+            usedNames.add(name);
+
+            const sectionId = uci.add(configName, sectionType);
 
             if (!sectionId)
-                throw new Error(_("Unable to add proxy entry."));
+                throw new Error(_("Unable to add imported entries."));
 
             sectionIds.push(sectionId);
-            uci.set(configName, sectionId, "enabled", "1");
-            uci.set(configName, sectionId, "name", entry.name);
-            uci.set(configName, sectionId, "mode", "object");
-            uci.set(configName, sectionId, "proxy_link_object", entry.objectJson);
-        });
+            for (const [option, value] of Object.entries({ enabled: "1", ...entry, name }))
+                uci.set(configName, sectionId, option, value);
+        }
     } catch (error) {
-        removeProxySections(configName, sectionIds);
+        removeBulkSections(configName, sectionIds);
         throw error;
     }
 
@@ -275,9 +303,10 @@ return baseclass.extend({
     collectExitOptions,
     makeDynamic,
     parseBulkProxyObjects,
+    parseBulkLinks,
     validateBulkProxyNames,
     removeRoutingReferences,
     renameRoutingReferences,
-    addBulkProxySections,
-    removeProxySections
+    addBulkSections,
+    removeBulkSections
 });
