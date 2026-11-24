@@ -14,7 +14,7 @@ return view.extend({
     render() {
         const m = new form.Map(common.binName);
         const s = m.section(form.GridSection, "inbound", _("Inbounds:"),
-            _("Create listeners on all interfaces, each with its own port, authentication, and outbound route. Use firewall rules to restrict access."));
+            _("Create HTTP/SOCKS listeners for apps that use the router as a proxy. Each listener has its own port and optional authentication. Choose BY RULES to follow normal routing or set a fixed destination. Listeners bind to all interfaces, so use firewall rules to restrict access."));
         s.anonymous = true;
         s.addremove = true;
         s.nodescriptions = true;
