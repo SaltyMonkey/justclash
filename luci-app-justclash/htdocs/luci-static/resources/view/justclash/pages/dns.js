@@ -1,5 +1,4 @@
 "use strict";
-"require uci";
 "require form";
 "require view";
 "require view.justclash.common as common";
@@ -7,37 +6,7 @@
 "require view.justclash.components.multiline_list as multilineList";
 
 return view.extend({
-    async load() {
-        const activeRulesets = new Set();
-        const addRulesets = values => (Array.isArray(values) ? values : [values]).forEach((value) => {
-            if (value)
-                activeRulesets.add(value.replace(/:resolve$/, ""));
-        });
-
-        try {
-            await uci.load(common.binName);
-
-            uci.sections(common.binName).forEach((section) => {
-                const sectionId = section[".name"];
-
-                if (["proxies", "proxy_group"].includes(section[".type"])
-                    && uci.get(common.binName, sectionId, "enabled") !== "0") {
-                    addRulesets(uci.get(common.binName, sectionId, "enabled_list"));
-                }
-
-                if (section[".type"] === "block_rules"
-                    && uci.get(common.binName, sectionId, "enabled") !== "0") {
-                    addRulesets(uci.get(common.binName, sectionId, "enabled_blocklist"));
-                }
-            });
-        } catch { /* ignore */ }
-
-        return {
-            rulesetsItems: Array.from(activeRulesets).map(name => ({ rawName: name, readableName: `(Set) ${name}` }))
-        };
-    },
-
-    render(result) {
+    render() {
         let m, s, o, tabname;
 
         const primitives = formConstants.boolean;
@@ -140,16 +109,6 @@ return view.extend({
         o.validate = function (section_id, value) {
             return common.validateIntegerRange(value, 1, 86400);
         };
-
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_rulesets", _("Force real IP rulesets:"));
-        result.rulesetsItems.forEach(item => {
-            o.value(item.rawName, item.readableName);
-        });
-        o.description = _("Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo.");
-        o.rmempty = true;
-        o.retain = true;
-        o.editable = true;
-        o.optional = true;
 
         o = s.taboption(tabname, multilineList.Value, "fake_ip_exclude_geosites", _("Force real IP geosites:"));
         o.description = _("Enter Geosite categories that should return real IP addresses before fake-IP rules are applied. Real-IP exceptions can cause traffic to bypass Mihomo.") + " " + _("Enter one entry per line.");
