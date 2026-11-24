@@ -13,6 +13,9 @@ const MultilineList = form.TextValue.extend({
         return form.TextValue.prototype.renderWidget.call(this, sectionId, optionIndex, value);
     },
     validate(sectionId, value) {
+        if (!this.validateEntry)
+            return true;
+
         const entries = this.parseEntries(value);
         for (let i = 0; i < entries.length; i++) {
             const result = this.validateEntry(entries[i]);
