@@ -512,7 +512,7 @@ return view.extend({
 
         o = spp.taboption(proxyProviderOverrideTab, form.Flag, "override_reality_mlkem768", _("Enable X25519-MLKEM768 for Reality:"));
         o.description = _("Enable X25519-MLKEM768 on provider nodes that already have Reality options.");
-        o.default = primitives.FALSE;
+        o.default = primitives.TRUE;
         o.rmempty = false;
         o.modalonly = true;
 
