@@ -42,6 +42,7 @@ return view.extend({
         const hideBuiltInCheckbox = E("input", {
             type: "checkbox",
             id: "jc-hide-builtin",
+            class: "jc-ml",
             checked: true,
             change: function (ev) {
                 const checked = ev.target.checked;
@@ -57,9 +58,9 @@ return view.extend({
         });
 
         const actionWrap = E("div", { class: "jc-actions-wrap" }, [
-            E("label", { for: "jc-hide-builtin", class: "jc-action-label" }, [
-                hideBuiltInCheckbox,
-                _("Hide built-in rulesets")
+            E("div", { class: "cbi-section-actions jc-primary-actions jc-settings-actions" }, [
+                E("label", { for: "jc-hide-builtin", class: "cbi-checkbox-label" }, _("Hide built-in rulesets")),
+                hideBuiltInCheckbox
             ])
         ]);
 
@@ -73,7 +74,9 @@ return view.extend({
             .jc-badge-type.jc-type-classical { background-color: rgba(253, 126, 20, 0.1); color: var(--warn-color-medium, #fd7e14); border: 1px solid rgba(253, 126, 20, 0.2); }
             .jc-badge-builtin { display: inline-block; min-width: 4.8rem; padding: 0.18rem 0.6rem; border-radius: 0.25rem; font-size: 0.8em; background-color: var(--background-color-medium, #f6f6f6); color: var(--text-color-medium, #888); border: 1px solid var(--border-color-medium, #d9d9d9); font-weight: 500; text-align: center; white-space: nowrap; box-sizing: border-box; line-height: 1.2; }
             .jc-actions-wrap { display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; padding: 0.625rem 0.9375rem; border: 1px solid var(--border-color-medium, #d9d9d9); border-radius: 0.375rem; background: var(--background-color-medium, #f6f6f6); margin-bottom: 1rem; }
-            .jc-action-label { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; margin: 0; }
+            .jc-primary-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .65em; margin: 0; }
+            .jc-settings-actions .cbi-checkbox-label { display: inline-flex; align-items: center; margin: 0; }
+            .jc-ml { margin-left: .5em; }
             .jc-error-list { margin: 0; padding-left: 1.25rem; text-align: left; }
             :root[data-darkmode="true"] .jc-actions-wrap { border-color: var(--border-color-medium, rgba(255, 255, 255, .08)); background: var(--background-color-high, rgba(255, 255, 255, .04)); }
             .jc-hidden-row { display: none !important; }
