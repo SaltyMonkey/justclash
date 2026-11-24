@@ -4,6 +4,10 @@
 
 CONFIG_FLAG_TYPE='or("0","1")'
 
+# Mihomo accepts up to 28 codes or ranges per expected-status value.
+CONFIG_HTTP_STATUS_TERM='[ ]*0*[1-5][0-9]{2}[ ]*(-[ ]*0*[1-5][0-9]{2}[ ]*)?'
+CONFIG_HTTP_STATUS_TYPE="regex(\"$CONFIG_HTTP_STATUS_TERM(/$CONFIG_HTTP_STATUS_TERM){0,27}\")"
+
 # The native UCI schema checks the numeric range; JSON outbounds share this check.
 config_routing_mark_bits_validate() {
     local value="$1" mark
@@ -135,7 +139,7 @@ validate_proxy_section() {
         "sniffer_enable:$CONFIG_FLAG_TYPE:0" \
         "sniffer_parse_pure_ip:$CONFIG_FLAG_TYPE:0" \
         "sniffer_override_destination:$CONFIG_FLAG_TYPE:0" \
-        'global_ua:string:__random__' \
+        'global_ua:string:__mihomo__' \
         "keep_alive_idle:uinteger(10):$DEFAULT_KEEP_ALIVE_IDLE" \
         "keep_alive_interval:uinteger(10):$DEFAULT_KEEP_ALIVE_INTERVAL" \
         "core_ntp_interval:uinteger(10):$DEFAULT_CORE_NTP_INTERVAL" \
@@ -144,7 +148,7 @@ validate_proxy_section() {
         "geodata_autoupdate_interval:uinteger(10):$DEFAULT_GEODATA_UPDATE_INTERVAL" \
         "tproxy_port:and(port,min(1)):$DEFAULT_TPROXY_PORT" \
         "dns_listen_port:and(port,min(1)):$DEFAULT_DNS_LISTEN_PORT" \
-        "respect_rules:$CONFIG_FLAG_TYPE:1" \
+        "respect_rules:$CONFIG_FLAG_TYPE:0" \
         "core_ntp_port:and(port,min(1)):$DEFAULT_NTP_PORT" \
         "controller_bind_interface:or(\"-\",network):$DEFAULT_CONTROLLER_BIND_INTERFACE" \
         'interface_name:network' \
@@ -200,7 +204,7 @@ validate_proxy_provider_section() {
         'header_age_public_key:regex("age1.*")' \
         'health_check:bool:0' \
         "health_check_url:$http_url_type:$DEFAULT_HEALTHCHECK_URL" \
-        "health_check_expected_status:and(uinteger(10),range(100,599)):$DEFAULT_HEALTHCHECK_RESULT" \
+        "health_check_expected_status:$CONFIG_HTTP_STATUS_TYPE:$DEFAULT_HEALTHCHECK_RESULT" \
         "health_check_interval:and(uinteger(10),range(1,31536000)):$DEFAULT_HEALTHCHECK_INTERVAL" \
         "health_check_timeout:and(uinteger(10),range(100,60000)):$DEFAULT_HEALTHCHECK_TIMEOUT" \
         'health_check_lazy:bool:0' \
@@ -259,7 +263,7 @@ validate_proxy_group_section() {
     if [ "$group_type" = "select" ]; then
         set -- \
             "check_url:$http_url_type" \
-            'expected_status:and(uinteger(10),range(100,599))' \
+            "expected_status:$CONFIG_HTTP_STATUS_TYPE" \
             'check_interval:and(uinteger(10),range(1,31536000))' \
             'check_timeout:and(uinteger(10),range(100,60000))' \
             'max_failed_times:and(uinteger(10),range(1,100))' \
@@ -267,7 +271,7 @@ validate_proxy_group_section() {
     else
         set -- \
             "check_url:$http_url_type:$DEFAULT_HEALTHCHECK_URL" \
-            "expected_status:and(uinteger(10),range(100,599)):$DEFAULT_HEALTHCHECK_RESULT" \
+            "expected_status:$CONFIG_HTTP_STATUS_TYPE:$DEFAULT_HEALTHCHECK_RESULT" \
             "check_interval:and(uinteger(10),range(1,31536000)):$DEFAULT_GROUP_HEALTHCHECK_INTERVAL" \
             "check_timeout:and(uinteger(10),range(100,60000)):$DEFAULT_HEALTHCHECK_TIMEOUT" \
             "max_failed_times:and(uinteger(10),range(1,100)):$DEFAULT_HEALTHCHECK_MAX_FAILED_TIMES" \
