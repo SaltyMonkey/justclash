@@ -108,10 +108,11 @@ before excluding a category that should still follow outbound rules.
 
 ```sh
 justclash.sh logs service 100
-justclash.sh config show mihomo
+justclash.sh config show mihomo --unsafe
 ```
 
-These outputs can include private sources, categories, domains, or topology. Use `check` when sharing results.
+These outputs can include credentials, private sources, domains, or topology.
+Use `check` when sharing results.
 
 ## Troubleshooting
 

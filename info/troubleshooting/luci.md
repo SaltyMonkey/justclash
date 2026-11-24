@@ -40,6 +40,11 @@ test is running; configured automatic health-check URLs stay unchanged.
   full connection list for this field. Rules refresh separately once a minute
   while the core is running. Traffic and memory can retain their last received
   values after a disconnect; service controls remain available.
+- **Status → Configuration → Mihomo config raw** opens the generated config
+  without masking and requires write permission. The window warns that the
+  output can contain credentials and private connection details. **Show service
+  config** opens the JustClash UCI configuration with known credential fields
+  masked.
 
 ## When a Live Page Is Unavailable
 

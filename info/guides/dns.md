@@ -50,8 +50,8 @@ Bootstrap resolvers must be usable before hostname-based upstreams are resolved;
 use a supported address-based configuration. Avoid a circular dependency between
 resolving an outbound server and reaching DNS through that same outbound.
 
-**Respect routing rules** is on by default under **Setup: DNS → Basic**. With
-it enabled, Mihomo uses your routing rules to reach upstream DNS servers.
+**Respect routing rules** is off by default under **Setup: DNS → Basic**.
+Turn it on to make Mihomo use your routing rules to reach upstream DNS servers.
 Set **Proxy nameservers** so Mihomo can resolve proxy server hostnames before
 connecting to them.
 
@@ -93,9 +93,9 @@ JustClash generates rule-based Fake-IP filtering in this order:
 3. A final real-IP fallback for unmatched names.
 
 Consequently, real-IP exceptions take precedence over generated Fake-IP matches.
-Enter plain domain suffixes in **Force real IP rules**; entries containing `*`
-become wildcard matches. Ruleset and Geosite selectors refer to active routing
-entries, not arbitrary sources that have never been enabled.
+Enter one domain suffix or wildcard per line in **Force real IP rules** and one
+category per line in **Force real IP geosites**. The **Force real IP rulesets**
+selector lists active routing rulesets.
 
 A real-IP exception changes the DNS answer. The resulting connection goes
 through Mihomo if a manual address or source rule or an active text IP-CIDR

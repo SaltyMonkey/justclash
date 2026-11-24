@@ -189,7 +189,7 @@ routing choices, and client configuration.
 
 JustClash can set a global User-Agent for downloads and a separate override for each proxy provider:
 
-- **Setup: Proxy → Basic settings → User-Agent for downloads** controls `global_ua` for external downloads such as subscriptions and rule lists. Missing or empty values default to `__random__`.
+- **Setup: Proxy → Basic settings → User-Agent for downloads** controls `global_ua` for external downloads such as subscriptions and rule lists. Missing or empty values default to `__mihomo__`.
 - **Setup: Routing → Proxy providers → Security → User agent header** controls `header_user_agent` for one provider. Missing or empty values use the Mihomo preset (`Mihomo/<core-version>`).
 
 The fields accept a literal User-Agent or one of these special values:

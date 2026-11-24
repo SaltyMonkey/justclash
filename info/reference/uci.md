@@ -167,8 +167,8 @@ LuCI offers repositories for the slim kernel version and upstream Mihomo as edit
 | Field | Type | Purpose |
 | --- | --- | --- |
 | `unified_delay` | Boolean | Use unified delay calculation |
-| `tcp_concurrent` | Boolean | Enable concurrent TCP connection attempts |
-| `global_ua` | String | Global HTTP user agent; missing or empty values default to `__random__` |
+| `tcp_concurrent` | Boolean | Try DNS-resolved addresses in parallel when opening one outbound connection. Mihomo uses the first successful attempt, subject to the configured IP version preference. |
+| `global_ua` | String | Global HTTP user agent. Defaults to `__mihomo__` when missing or empty. |
 | `etag_support` | Boolean | Enable provider ETag handling |
 | `keep_alive_idle` | Unsigned integer | TCP keep-alive idle interval |
 | `keep_alive_interval` | Unsigned integer | TCP keep-alive probe interval |
@@ -184,8 +184,8 @@ describes restoration of the managed dnsmasq configuration.
 | Field | Type | Purpose |
 | --- | --- | --- |
 | `dns_listen_port` | Port | Mihomo DNS listener; schema fallback is 1053, while the shipped configuration and current LuCI preset use 7894 |
-| `dns_cache_max_size` | Unsigned integer | DNS cache entry limit |
-| `respect_rules` | Boolean, `1` | Apply Mihomo routing rules to DNS upstream connections (`dns.respect-rules`) |
+| `dns_cache_max_size` | Unsigned integer | DNS cache entry limit. Defaults to `8192`. |
+| `respect_rules` | Boolean, `0` | Apply Mihomo routing rules to DNS upstream connections (`dns.respect-rules`) |
 | `use_system_hosts` | Boolean | Import system hosts |
 | `hosts` | List | Static host mappings |
 | `default_nameserver` | List | Bootstrap resolvers |
@@ -334,6 +334,12 @@ not select the path used to fetch the subscription itself.
 | Headers and encryption | `header_hwid`, `header_hwid_custom`, `header_os_custom`, `header_os_version_custom`, `header_device_model_custom`, `header_authorization`, `header_user_agent`, `age_private_key`, `header_age_public_key` |
 | Health check | `health_check`, `health_check_url`, `health_check_expected_status`, `health_check_interval`, `health_check_timeout`, `health_check_lazy` |
 | Filtering | `filter`, `exclude_filter`, `exclude_type` |
+
+`health_check_expected_status` and the group's `expected_status` accept a single code
+(`204`), a range (`200-299`), or a list of codes and ranges separated by `/`
+(`204/300-399`). Each code must be between `100` and `599`. A list can contain up to 28 entries.
+LuCI defaults to `200/204`. UCI uses the same default for providers and for
+`fallback`, `load-balance`, and `url-test` groups.
 
 `override_reality_mlkem768` is a LuCI toggle under Routing → Proxy providers → Override.
 It defaults to `0`. When enabled, the generated provider `override` contains an

@@ -126,7 +126,7 @@ services are running or whether DPI bypass works.
 
 | Command | Purpose |
 | --- | --- |
-| `check full --unsafe` | Print the full local diagnostic report |
+| `check full --unsafe` | Print the local diagnostic report with nftables set elements omitted |
 | `check nft` | Check that the JustClash nftables table exists without printing its contents |
 | `check nft --unsafe` | Print the current JustClash nftables table, including rules, sets, and counters |
 | `check routes` | Inspect policy-routing rules and tables |
@@ -136,17 +136,19 @@ services are running or whether DPI bypass works.
 
 These commands may print local addresses, routes, domains, resolver information, or hardware identifiers. Do not paste their raw output into public issues.
 
+The full report includes the redacted JustClash UCI configuration. Inspect the
+generated Mihomo configuration separately with `config show mihomo --unsafe`.
+
 ### Configuration Diagnostics
 
 | Command | Purpose |
 | --- | --- |
-| `config show mihomo` | Show generated Mihomo configuration with credential fields redacted |
 | `config show service` | Show UCI configuration with credential fields redacted |
 | `config show mihomo --unsafe` | Show raw generated Mihomo configuration |
 | `config show service --unsafe` | Show raw UCI configuration |
 
 > [!CAUTION]
-> “Redacted” configuration commands hide known credential fields but can still reveal domains, endpoints, addresses, routing policy, and local topology. The unsafe commands additionally expose credentials and authorization data.
+> `config show service` masks known credential fields. Its output can still include domains, endpoints, addresses, routing policy, and local topology. Commands with `--unsafe` additionally expose credentials and authorization data.
 
 ## Reset Configuration
 

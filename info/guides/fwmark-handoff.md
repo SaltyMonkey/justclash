@@ -114,7 +114,8 @@ nftables bypass. Such entries need separately managed loop prevention.
 
 1. Establish a new connection matching the assigned rule. Under **Connections**,
    confirm that Mihomo selected `Next_Service` or a group containing it.
-2. Inspect the generated configuration locally with `justclash.sh config show mihomo`.
+2. Inspect the generated configuration locally with
+   `justclash.sh config show mihomo --unsafe`.
    The entry should contain `type: direct` and `routing-mark: 16777216` for the
    example mark; hexadecimal UCI input is normalized to decimal.
 3. Use `justclash.sh check nft --unsafe` and `justclash.sh check routes` to inspect the

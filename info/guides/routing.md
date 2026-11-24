@@ -55,12 +55,17 @@ the row before using its name in a group or rule.
 
 ### Import JSON Outbounds
 
-Use **Add proxies in bulk (JSON)** above the form to paste an array of up to 128
+Use **Add proxies in bulk (JSON)** above the form to paste an array of up to 32
 Mihomo outbound objects. Each object must contain a unique `name` that also
 differs from existing outbound names. The import adds enabled JSON entries to
 the form without saving or applying them. Review the rows, then use **Save** or
-**Save & Apply**. Connection links and subscription URLs are added through their
-individual **Add** forms.
+**Save & Apply**.
+
+### Import URI Outbounds
+
+Use **Add proxies in bulk (URI)** to paste one connection link per line, up to
+32 links. Each enabled outbound gets a generated name that you can edit before
+saving.
 
 ### Bind to an Interface
 
@@ -139,6 +144,10 @@ Under **Proxy providers**:
 4. Keep the download interval and size limit appropriate for the source.
 5. Use **Security** only for headers or encryption required by that source.
 6. Save the row, then include its name in a group's **Providers** list.
+
+Use **Add providers in bulk (URL)** above the form to paste up to 32 HTTP(S)
+subscription URLs, one per line. Each provider gets a generated name and the
+same defaults as a provider added individually. Review the rows before saving.
 
 The downloaded nodes do not need separate UCI `proxies` entries. A provider is a
 source, not a selectable website route on its own.

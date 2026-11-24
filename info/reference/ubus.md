@@ -25,7 +25,7 @@ The verbose form shows the accepted request fields and their types.
 | `status` | `{}` | Read | Return service running state and boot enablement |
 | `versions` | `{}` | Read | Return the installed package and core versions |
 | `check` | `{}` | Read | Generate the safe, redacted diagnostic summary |
-| `config_show` | `{ "target": "mihomo" }` or `{ "target": "service" }` | Read | Return a configuration with credential fields redacted |
+| `config_show` | `{ "target": "service" }` | Read | Return the JustClash UCI configuration with credential fields redacted |
 | `logs` | `{ "lines": 40 }` | Read | Return recent JustClash entries from the OpenWrt system log |
 | `start` | `{}` | Write | Start the service |
 | `stop` | `{}` | Write | Stop the service |
@@ -58,10 +58,9 @@ Generate the safe diagnostic summary:
 ubus call justclash-core check
 ```
 
-Display a redacted configuration:
+Display the redacted JustClash UCI configuration:
 
 ```sh
-ubus call justclash-core config_show '{ "target": "mihomo" }'
 ubus call justclash-core config_show '{ "target": "service" }'
 ```
 

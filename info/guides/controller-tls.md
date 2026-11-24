@@ -150,7 +150,7 @@ Do not enter the API password into an untrusted hosted dashboard. Keep firewall 
 ```sh
 service justclash status
 justclash.sh logs service 100
-justclash.sh config show mihomo
+justclash.sh config show mihomo --unsafe
 ```
 
 Check:
@@ -161,7 +161,8 @@ Check:
 - WebSocket forwarding succeeds;
 - WAN and guest zones cannot reach the controller.
 
-The configuration diagnostic can still reveal endpoints and topology. Use `check` for shared output.
+The raw configuration includes credentials, endpoints, and topology. Use `check`
+for shared output.
 
 ## Rollback
 
