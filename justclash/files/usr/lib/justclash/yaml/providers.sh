@@ -41,7 +41,7 @@ template_proxy_provider() {
 
     # Health check object
     if [ "$hc_enabled" -eq 1 ]; then
-        hc_json="\"enable\":true,\"lazy\":$hc_lazy,\"url\":\"$(str_json_escape "$hc_url")\",\"expected-status\":$hc_status,\"interval\":$hc_interval,\"timeout\":$hc_timeout"
+        hc_json="\"enable\":true,\"lazy\":$hc_lazy,\"url\":\"$(str_json_escape "$hc_url")\",\"expected-status\":\"$(str_json_escape "$hc_status")\",\"interval\":$hc_interval,\"timeout\":$hc_timeout"
         out="$out,\"health-check\":{$hc_json}"
     fi
 
