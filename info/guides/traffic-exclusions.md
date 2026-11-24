@@ -130,8 +130,8 @@ Clients can keep receiving their DNS server address from DHCPv6 or Router
 Advertisements. With IPv6 support disabled in JustClash, IPv6 queries still go
 to the resolver configured on the client.
 
-For a domain-only exception, use `fake_ip_exclude_domains`,
-`fake_ip_exclude_rulesets`, or `fake_ip_exclude_geosites`.
+For a domain-only exception, use `fake_ip_exclude_domains` or
+`fake_ip_exclude_geosites`.
 
 ```sh
 uci add_list justclash.proxy.fake_ip_exclude_domains='<DOMAIN_SUFFIX>'

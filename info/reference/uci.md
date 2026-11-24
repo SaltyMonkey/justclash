@@ -197,7 +197,6 @@ describes restoration of the managed dnsmasq configuration.
 | `fake_ip_range6` | IPv6 CIDR | IPv6 Fake-IP pool |
 | `fake_ip_ttl` | Unsigned integer | Fake-IP DNS TTL |
 | `fake_ip_exclude_domains` | List | Domain matches receiving real addresses |
-| `fake_ip_exclude_rulesets` | List | Ruleset matches receiving real addresses |
 | `fake_ip_exclude_geosites` | List | Geosite matches receiving real addresses |
 
 ### Geodata, Sniffer, and Core NTP
@@ -342,7 +341,7 @@ LuCI defaults to `200/204`. UCI uses the same default for providers and for
 `fallback`, `load-balance`, and `url-test` groups.
 
 `override_reality_mlkem768` is a LuCI toggle under Routing → Proxy providers → Override.
-It defaults to `0`. When enabled, the generated provider `override` contains an
+It defaults to `1`. When enabled, the generated provider `override` contains an
 `override-expr` JSON array that sets `reality-opts.support-x25519mlkem768` to
 `true` only on nodes that already have `reality-opts`. Other nodes are unchanged.
 

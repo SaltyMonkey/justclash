@@ -88,14 +88,13 @@ ordinary application/CDN addresses just to shorten the DNS configuration.
 
 JustClash generates rule-based Fake-IP filtering in this order:
 
-1. **Force real IP rules**, **Force real IP rulesets**, and **Force real IP geosites**.
+1. **Force real IP rules** and **Force real IP geosites**.
 2. Domain matches from enabled routing groups and individual outbounds.
 3. A final real-IP fallback for unmatched names.
 
 Consequently, real-IP exceptions take precedence over generated Fake-IP matches.
 Enter one domain suffix or wildcard per line in **Force real IP rules** and one
-category per line in **Force real IP geosites**. The **Force real IP rulesets**
-selector lists active routing rulesets.
+category per line in **Force real IP geosites**.
 
 A real-IP exception changes the DNS answer. The resulting connection goes
 through Mihomo if a manual address or source rule or an active text IP-CIDR

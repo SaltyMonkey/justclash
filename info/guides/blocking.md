@@ -74,7 +74,10 @@ flowchart LR
 
 ### Domain Matches
 
-Domain blocklists, Geosite block categories, and manual suffixes are added to DNS policy. Matching queries receive a successful empty response instead of a routable address.
+Domain blocklists, Geosite block categories, and manual suffixes are written
+before custom entries in **Nameserver policy**. If both use the same matcher,
+the block entry takes precedence. Matching queries receive a successful empty
+response.
 
 This requires the client to use the JustClash-managed DNS path. Applications using their own external or encrypted resolver can bypass domain-level DNS blocking.
 

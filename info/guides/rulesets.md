@@ -104,7 +104,6 @@ The fields cannot contain a pipe or newline. Authorization data is a credential;
 | Route through an individual outbound | `proxies.enabled_list` |
 | Route through an outbound group | `proxy_group.enabled_list` |
 | Block | `block_rules.enabled_blocklist` |
-| Return real addresses for matching domains | `proxy.fake_ip_exclude_rulesets` |
 
 The reference uses the catalog ID, not its display name.
 
