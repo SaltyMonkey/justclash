@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: justclash\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 15:00+0300\n"
+"POT-Creation-Date: 2026-11-24 20:34+0300\n"
 "PO-Revision-Date: 2026-05-13 20:54+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -609,7 +609,7 @@ msgstr "批量添加代理 (JSON)"
 msgid "Paste a JSON array of proxy objects. Each object must contain a unique name. Imported entries are added to the form and remain unsaved until you save or apply the configuration."
 msgstr "粘贴代理对象的 JSON 数组。每个对象必须包含唯一名称。导入的条目将添加到表单中，在保存或应用配置前不会保存。"
 
-#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:15 htdocs/luci-static/resources/view/justclash/pages/dns.js:55 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:105 htdocs/luci-static/resources/view/justclash/pages/proxy.js:44 htdocs/luci-static/resources/view/justclash/pages/proxy.js:78 htdocs/luci-static/resources/view/justclash/pages/proxy.js:91 htdocs/luci-static/resources/view/justclash/pages/proxy.js:187 htdocs/luci-static/resources/view/justclash/pages/proxy.js:195 htdocs/luci-static/resources/view/justclash/pages/routing.js:243 htdocs/luci-static/resources/view/justclash/pages/routing.js:289 htdocs/luci-static/resources/view/justclash/pages/routing.js:356 htdocs/luci-static/resources/view/justclash/pages/routing.js:361 htdocs/luci-static/resources/view/justclash/pages/routing.js:367
+#: htdocs/luci-static/resources/view/justclash/components/proxy_bulk_import.js:15 htdocs/luci-static/resources/view/justclash/pages/dns.js:24 htdocs/luci-static/resources/view/justclash/pages/inbounds.js:105 htdocs/luci-static/resources/view/justclash/pages/proxy.js:44 htdocs/luci-static/resources/view/justclash/pages/proxy.js:78 htdocs/luci-static/resources/view/justclash/pages/proxy.js:91 htdocs/luci-static/resources/view/justclash/pages/proxy.js:187 htdocs/luci-static/resources/view/justclash/pages/proxy.js:195 htdocs/luci-static/resources/view/justclash/pages/routing.js:243 htdocs/luci-static/resources/view/justclash/pages/routing.js:289 htdocs/luci-static/resources/view/justclash/pages/routing.js:356 htdocs/luci-static/resources/view/justclash/pages/routing.js:361 htdocs/luci-static/resources/view/justclash/pages/routing.js:367
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:374 htdocs/luci-static/resources/view/justclash/pages/routing.js:380 htdocs/luci-static/resources/view/justclash/pages/routing.js:447 htdocs/luci-static/resources/view/justclash/pages/routing.js:496 htdocs/luci-static/resources/view/justclash/pages/routing.js:708 htdocs/luci-static/resources/view/justclash/pages/routing.js:718 htdocs/luci-static/resources/view/justclash/pages/routing.js:726 htdocs/luci-static/resources/view/justclash/pages/routing.js:793 htdocs/luci-static/resources/view/justclash/pages/routing.js:805 htdocs/luci-static/resources/view/justclash/pages/routing.js:895 htdocs/luci-static/resources/view/justclash/pages/routing.js:915 htdocs/luci-static/resources/view/justclash/pages/routing.js:925 htdocs/luci-static/resources/view/justclash/pages/routing.js:933
 #: htdocs/luci-static/resources/view/justclash/pages/routing.js:1001 htdocs/luci-static/resources/view/justclash/pages/routing.js:1007 htdocs/luci-static/resources/view/justclash/pages/routing.js:1014 htdocs/luci-static/resources/view/justclash/pages/routing.js:1021 htdocs/luci-static/resources/view/justclash/pages/routing.js:1027 htdocs/luci-static/resources/view/justclash/pages/routing.js:1116 htdocs/luci-static/resources/view/justclash/pages/routing.js:1122 htdocs/luci-static/resources/view/justclash/pages/service.js:107 htdocs/luci-static/resources/view/justclash/pages/service.js:117 htdocs/luci-static/resources/view/justclash/pages/service.js:137 htdocs/luci-static/resources/view/justclash/pages/service.js:145 htdocs/luci-static/resources/view/justclash/pages/service.js:153 htdocs/luci-static/resources/view/justclash/pages/service.js:256
 #: htdocs/luci-static/resources/view/justclash/pages/service.js:272 htdocs/luci-static/resources/view/justclash/pages/service.js:288 htdocs/luci-static/resources/view/justclash/pages/service.js:299 htdocs/luci-static/resources/view/justclash/pages/service.js:324 htdocs/luci-static/resources/view/justclash/pages/service.js:342 htdocs/luci-static/resources/view/justclash/pages/service.js:352 htdocs/luci-static/resources/view/justclash/pages/service.js:360 htdocs/luci-static/resources/view/justclash/pages/service.js:368 htdocs/luci-static/resources/view/justclash/pages/service.js:376 htdocs/luci-static/resources/view/justclash/pages/service.js:384 htdocs/luci-static/resources/view/justclash/pages/service.js:392 htdocs/luci-static/resources/view/justclash/pages/service.js:416
@@ -942,163 +942,155 @@ msgstr "关闭连接"
 msgid "Reset"
 msgstr "重置"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:47
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:16
 msgid "DNS settings"
 msgstr "DNS 设置"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:47
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:16
 msgid "DNS resolver, fake-IP, policy, and hosts settings used by Mihomo."
 msgstr "Mihomo 使用的 DNS 解析器、fake-IP、策略和 hosts 设置。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:50 htdocs/luci-static/resources/view/justclash/pages/routing.js:150 htdocs/luci-static/resources/view/justclash/pages/routing.js:395 htdocs/luci-static/resources/view/justclash/pages/routing.js:745
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:19 htdocs/luci-static/resources/view/justclash/pages/routing.js:150 htdocs/luci-static/resources/view/justclash/pages/routing.js:395 htdocs/luci-static/resources/view/justclash/pages/routing.js:745
 msgid "Basic"
 msgstr "基本"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:52
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:21
 msgid "DNS listen port:"
 msgstr "DNS 监听端口:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:53
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:22
 msgid "Port where Mihomo built-in DNS server listens."
 msgstr "Mihomo 内置 DNS 服务器的监听端口。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:59
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:28
 msgid "DNS cache size:"
 msgstr "DNS 缓存大小:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:60
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:29
 msgid "Maximum number of DNS cache entries kept by Mihomo."
 msgstr "Mihomo 保留的 DNS 缓存条目的最大数量。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:71
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:40
 msgid "Respect routing rules:"
 msgstr "遵循路由规则："
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:72
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:41
 msgid "Apply Mihomo routing rules to connections to DNS upstreams."
 msgstr "连接上游 DNS 服务器时应用 Mihomo 的路由规则。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:77
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:46
 msgid "Nameservers"
 msgstr "名称服务器"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:79
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:48
 msgid "Default nameservers:"
 msgstr "默认名称服务器:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:80
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:49
 msgid "Default nameservers used at startup. Recommended to use UDP ones."
 msgstr "启动时使用的默认名称服务器。推荐使用 UDP 类型。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:88
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:57
 msgid "Proxy nameservers:"
 msgstr "代理名称服务器:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:89
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:58
 msgid "Nameservers used to resolve proxy server hostnames."
 msgstr "用于解析代理服务器主机名的名称服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:97
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:66
 msgid "Direct nameservers:"
 msgstr "直连名称服务器:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:98
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:67
 msgid "Direct nameservers used for DIRECT rules."
 msgstr "用于 DIRECT 规则的名称服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:106
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:75
 msgid "Nameservers:"
 msgstr "名称服务器 (Nameservers):"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:107
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:76
 msgid "Main nameservers used for regular DNS queries."
 msgstr "用于常规 DNS 查询的主要名称服务器。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:116
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:85
 msgid "Fake IP"
 msgstr "Fake IP"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:118
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:87
 msgid "Fake IP range:"
 msgstr "Fake IP 范围:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:119
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:88
 msgid "IPv4 CIDR range used for fake-IP responses."
 msgstr "用于 fake-IP 响应的 IPv4 CIDR 范围。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:125
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:94
 msgid "Fake IP range (IPv6):"
 msgstr "Fake IP 范围（IPv6）："
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:126
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:95
 msgid "IPv6 CIDR range used for fake-IP responses."
 msgstr "用于 fake-IP 响应的 IPv6 CIDR 范围。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:132
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:101
 msgid "Fake IP TTL:"
 msgstr "Fake IP TTL:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:133
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:102
 msgid "TTL for fake-IP DNS responses (in seconds)."
 msgstr "fake-IP DNS 响应的 TTL（单位：秒）。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:144
-msgid "Force real IP rulesets:"
-msgstr "强制真实 IP 规则集:"
-
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:148
-msgid "Select active RULE-SETs that should resolve through real IP before fake-IP matches are applied. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo."
-msgstr "选择应在应用 fake-IP 匹配前通过真实 IP 解析的活跃 RULE-SET。不建议在 Partial routing 模式下更改这些设置：真实 IP 例外可能导致流量绕过 Mihomo。"
-
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:154
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:113
 msgid "Force real IP geosites:"
 msgstr "强制真实 IP Geosite:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:155
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:114
 msgid "Enter Geosite categories that should return real IP addresses before fake-IP rules are applied. Real-IP exceptions can cause traffic to bypass Mihomo."
 msgstr "输入应在应用 fake-IP 规则前返回真实 IP 地址的 Geosite 类别。真实 IP 例外可能会让流量绕过 Mihomo。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:155 htdocs/luci-static/resources/view/justclash/pages/dns.js:167 htdocs/luci-static/resources/view/justclash/pages/dns.js:176 htdocs/luci-static/resources/view/justclash/pages/dns.js:192 htdocs/luci-static/resources/view/justclash/pages/proxy.js:220 htdocs/luci-static/resources/view/justclash/pages/proxy.js:232
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:114 htdocs/luci-static/resources/view/justclash/pages/dns.js:126 htdocs/luci-static/resources/view/justclash/pages/dns.js:135 htdocs/luci-static/resources/view/justclash/pages/dns.js:151 htdocs/luci-static/resources/view/justclash/pages/proxy.js:220 htdocs/luci-static/resources/view/justclash/pages/proxy.js:232
 msgid "Enter one entry per line."
 msgstr "每行输入一条记录。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:161
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:120
 msgid "Force real IP rules:"
 msgstr "强制真实 IP 规则:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:162
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:121
 msgid "Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo."
 msgstr "应在应用 fake-IP 匹配前通过真实 IP 解析的条目；请使用简单的后缀，例如 example.com。不建议在 Partial routing 模式下更改这些设置：真实 IP 例外可能导致流量绕过 Mihomo。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:173
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:132
 msgid "Policies"
 msgstr "策略"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:175
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:134
 msgid "Nameserver policy:"
 msgstr "名称服务器策略:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:176
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:135
 msgid "Domain-specific DNS policy in the format domain/nameserver. Domain matchers may include +., *. or *."
 msgstr "特定域名的 DNS 策略，格式为 域名/名称服务器。域名匹配器可包含 +.、*. 或 *。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:184
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:143
 msgid "Hosts"
 msgstr "主机"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:186
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:145
 msgid "Use system hosts:"
 msgstr "使用系统 hosts:"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:187
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:146
 msgid "Load DNS entries from the system hosts file when possible."
 msgstr "尽可能从系统 hosts 文件中加载 DNS 条目。"
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:191
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:150
 msgid "Hosts mapping:"
 msgstr "主机映射："
 
-#: htdocs/luci-static/resources/view/justclash/pages/dns.js:192
+#: htdocs/luci-static/resources/view/justclash/pages/dns.js:151
 msgid "Domain-specific IP mapping in the format domain/ip (example: cloudflare-dns.com/1.1.1.1)."
 msgstr "特定域名的 IP 映射，格式为 域名/IP（示例：cloudflare-dns.com/1.1.1.1）。"
 
