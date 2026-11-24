@@ -9,7 +9,6 @@
 return view.extend({
     async load() {
         const activeRulesets = new Set();
-        const activeGeosites = new Set();
         const addRulesets = values => (Array.isArray(values) ? values : [values]).forEach((value) => {
             if (value)
                 activeRulesets.add(value.replace(/:resolve$/, ""));
@@ -23,27 +22,18 @@ return view.extend({
 
                 if (["proxies", "proxy_group"].includes(section[".type"])
                     && uci.get(common.binName, sectionId, "enabled") !== "0") {
-                    const rulesets = uci.get(common.binName, sectionId, "enabled_list");
-                    const geosites = uci.get(common.binName, sectionId, "enabled_geosite_list");
-
-                    addRulesets(rulesets);
-                    (Array.isArray(geosites) ? geosites : [geosites]).forEach(name => name && activeGeosites.add(name));
+                    addRulesets(uci.get(common.binName, sectionId, "enabled_list"));
                 }
 
                 if (section[".type"] === "block_rules"
                     && uci.get(common.binName, sectionId, "enabled") !== "0") {
-                    const rulesets = uci.get(common.binName, sectionId, "enabled_blocklist");
-                    const geosites = uci.get(common.binName, sectionId, "enabled_geosite_blocklist");
-
-                    addRulesets(rulesets);
-                    (Array.isArray(geosites) ? geosites : [geosites]).forEach(name => name && activeGeosites.add(name));
+                    addRulesets(uci.get(common.binName, sectionId, "enabled_blocklist"));
                 }
             });
         } catch { /* ignore */ }
 
         return {
-            rulesetsItems: Array.from(activeRulesets).map(name => ({ rawName: name, readableName: `(Set) ${name}` })),
-            geositeItems: Array.from(activeGeosites).map(name => ({ rawName: name, readableName: `(Geo) ${name}` }))
+            rulesetsItems: Array.from(activeRulesets).map(name => ({ rawName: name, readableName: `(Set) ${name}` }))
         };
     },
 
@@ -68,7 +58,7 @@ return view.extend({
 
         o = s.taboption(tabname, form.Value, "dns_cache_max_size", _("DNS cache size:"));
         o.description = _("Maximum number of DNS cache entries kept by Mihomo.");
-        o.default = common.defaultIPDnsCache[2].value;
+        o.default = common.defaultIPDnsCache[3].value;
         common.defaultIPDnsCache.forEach(item => {
             o.value(item.value, item.text);
         });
@@ -81,7 +71,7 @@ return view.extend({
         o = s.taboption(tabname, form.Flag, "respect_rules", _("Respect routing rules:"));
         o.description = _("Apply Mihomo routing rules to connections to DNS upstreams.");
         o.rmempty = false;
-        o.default = primitives.TRUE;
+        o.default = primitives.FALSE;
 
         tabname = "dnsnameservers_tab";
         s.tab(tabname, _("Nameservers"));
@@ -161,23 +151,21 @@ return view.extend({
         o.editable = true;
         o.optional = true;
 
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_geosites", _("Force real IP geosites:"));
-        result.geositeItems.forEach(item => {
-            o.value(item.rawName, item.readableName);
-        });
-        o.description = _("Select active GEOSITEs that should resolve through real IP before fake-IP matches are applied. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo.");
+        o = s.taboption(tabname, multilineList.Value, "fake_ip_exclude_geosites", _("Force real IP geosites:"));
+        o.description = _("Enter Geosite categories that should return real IP addresses before fake-IP rules are applied. Real-IP exceptions can cause traffic to bypass Mihomo.") + " " + _("Enter one entry per line.");
         o.rmempty = true;
         o.retain = true;
         o.editable = true;
         o.optional = true;
 
-        o = s.taboption(tabname, form.DynamicList, "fake_ip_exclude_domains", _("Force real IP rules:"));
+        o = s.taboption(tabname, multilineList.Value, "fake_ip_exclude_domains", _("Force real IP rules:"));
         o.description = _("Entries that should resolve through real IP before fake-IP matches are applied; use plain suffixes like example.com. Changing these settings in Partial routing mode is not recommended: real-IP exceptions may cause traffic to bypass Mihomo.");
         o.rmempty = true;
         o.retain = true;
         o.editable = true;
         o.optional = true;
-        o.validate = function (section_id, value) {
+        o.description += " " + _("Enter one entry per line.");
+        o.validateEntry = function (value) {
             return common.isValidDomainSuffix(value);
         };
 
