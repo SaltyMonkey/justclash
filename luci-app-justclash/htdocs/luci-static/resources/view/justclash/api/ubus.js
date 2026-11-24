@@ -91,10 +91,6 @@ return baseclass.extend({
         return assertSuccess(await callHardwareId());
     },
 
-    async getMihomoConfig() {
-        return assertSuccess(await callConfigShow("mihomo"));
-    },
-
     async getMihomoConfigUnsafe() {
         return assertSuccess(await callConfigShowUnsafe("mihomo"));
     },
