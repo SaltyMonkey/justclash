@@ -14,7 +14,6 @@ return baseclass.extend({
     // API paths
     paths: {
         version: "/version",
-        configs: "/configs",
         logs: "/logs",
         traffic: "/traffic",
         memory: "/memory",
@@ -174,9 +173,6 @@ return baseclass.extend({
     fetchRuleProviders(token, timeout = this.fetchTimeout) {
         return this.fetchJson(this.paths.ruleProviders, token, timeout);
     },
-    fetchConfigs(token, timeout = this.fetchTimeout) {
-        return this.fetchJson(this.paths.configs, token, timeout);
-    },
     fetchProxies(token, timeout = this.fetchTimeout) {
         return this.fetchJson(this.paths.proxies, token, timeout);
     },
@@ -196,27 +192,6 @@ return baseclass.extend({
             timeout,
             searchParams
         );
-    },
-    async patchConfigs(payload, token, timeout = this.fetchTimeout) {
-        const res = await this.fetch(this.paths.configs, token, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        }, timeout);
-
-        if (!res.ok) {
-            let detail = "";
-
-            try {
-                detail = (await res.text()).trim();
-            } catch { /* ignore */ }
-
-            throw new Error(detail ? `${res.status} ${res.statusText}: ${detail}` : `${res.status} ${res.statusText}`);
-        }
-
-        return res;
     },
     async updateProxySelection(groupName, proxyName, token, timeout = this.fetchTimeout) {
         const res = await this.fetch(this.paths.proxy(groupName), token, {
