@@ -746,7 +746,7 @@ core_generate_yaml() {
     # shellcheck disable=SC2034
     local OUT_TEMPLATE="" OUT_BUNDLE_IP_RULES="" OUT_BUNDLE_RULES="" OUT_BUNDLE_RULESETS="" \
         OUT_BUNDLE_NAMES="" OUT_BUNDLE_FAKEIPRULES="" \
-        GLOBAL_FAKE_IP_EXCLUDE_RULES="" GLOBAL_FAKE_IP_EXCLUDE_GEOSITES="" \
+        GLOBAL_FAKE_IP_EXCLUDE_GEOSITES="" \
         GLOBAL_FAKE_IP_EXCLUDE_DOMAINS=""
     local ipv6_enabled nft_quic_mode
     local use_dashboard dashboard_repo dashboard_url
@@ -758,7 +758,7 @@ core_generate_yaml() {
     local dns_listen_port dns_cache_max_size use_system_hosts respect_rules
     local fake_ip_range fake_ip_range6 fake_ip_ttl
     local sniffer_enable sniffer_parse_pure_ip sniffer_override_destination
-    local fake_ip_exclude_domains fake_ip_exclude_rulesets fake_ip_exclude_geosites
+    local fake_ip_exclude_domains fake_ip_exclude_geosites
     local geodata_mode geodata_autoupdate geodata_autoupdate_interval geosite_url geoip_url
     local default_nameserver direct_nameserver proxy_server_nameserver nameserver
     local hosts nameserver_policy
@@ -776,7 +776,7 @@ core_generate_yaml() {
     local proxies proxy_groups rule_providers proxy_providers
     local names_rulesets_block_policy names_suffixes_block_policy
     local fake_ip_rules_proxy_groups fake_ip_rules_proxies
-    local custom_real_ip_rules custom_real_ip_rulesets custom_real_ip_geosites
+    local custom_real_ip_rules custom_real_ip_geosites
     local rulesets_block rulesets_proxygroup rulesets_proxies
 
     mkdir -p "$CORE_WORKDIR_PATH"
@@ -825,7 +825,6 @@ core_generate_yaml() {
     config_get sniffer_parse_pure_ip proxy sniffer_parse_pure_ip
     config_get sniffer_override_destination proxy sniffer_override_destination
     config_get fake_ip_exclude_domains proxy fake_ip_exclude_domains
-    config_get fake_ip_exclude_rulesets proxy fake_ip_exclude_rulesets
     config_get fake_ip_exclude_geosites proxy fake_ip_exclude_geosites
     config_get geodata_mode proxy geodata_mode
     config_get geodata_autoupdate proxy geodata_autoupdate
@@ -924,7 +923,6 @@ core_generate_yaml() {
     # without regex. Using case *" $entry "* avoids partial match bugs
     # (e.g. matching "youtube" inside "youtube_ads").
     # shellcheck disable=SC2034
-    GLOBAL_FAKE_IP_EXCLUDE_RULES=" $fake_ip_exclude_rulesets "
     GLOBAL_FAKE_IP_EXCLUDE_GEOSITES=" $fake_ip_exclude_geosites "
     GLOBAL_FAKE_IP_EXCLUDE_DOMAINS=" $fake_ip_exclude_domains "
 
@@ -987,19 +985,17 @@ core_generate_yaml() {
     fake_ip_rules_proxies="$OUT_FAKE_IP_RULES"
 
     nameserver_policy=$(yaml_nameserver_policy_build \
-        "$nameserver_policy_custom" \
         "$names_rulesets_block_policy" \
         "$names_geosite_block_policy" \
-        "$names_suffixes_block_policy") || return 1
+        "$names_suffixes_block_policy" \
+        "$nameserver_policy_custom") || return 1
 
     custom_real_ip_rules=$(build_fake_ip_rule_array "$fake_ip_exclude_domains" "DOMAIN-SUFFIX" "real-ip")
 
-    custom_real_ip_rulesets=$(build_fake_ip_rule_array "$fake_ip_exclude_rulesets" "RULE-SET" "real-ip")
     custom_real_ip_geosites=$(build_fake_ip_rule_array "$fake_ip_exclude_geosites" "GEOSITE" "real-ip")
 
     fake_ip_filter_data=$(yaml_fake_ip_filter_build \
         "$custom_real_ip_rules" \
-        "$custom_real_ip_rulesets" \
         "$custom_real_ip_geosites" \
         "$fake_ip_rules_proxy_groups" \
         "$fake_ip_rules_proxies") || return 1
