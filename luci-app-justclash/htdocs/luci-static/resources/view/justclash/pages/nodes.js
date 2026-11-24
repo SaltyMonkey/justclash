@@ -25,16 +25,14 @@ return view.extend({
         }
 
         try {
-            const [proxies, configs, proxyProviders] = await Promise.all([
+            const [proxies, proxyProviders] = await Promise.all([
                 mihomoApi.fetchProxies(token),
-                mihomoApi.fetchConfigs(token),
                 mihomoApi.fetchProxyProviders(token)
             ]);
             const nodesState = nodesModel.normalizeNodesState(proxies, proxyProviders);
 
             return {
                 token,
-                mode: configs?.mode || "rule",
                 nodesState,
                 providersState: nodesModel.normalizeProvidersState(proxyProviders),
                 configLoadFailed,
@@ -49,7 +47,6 @@ return view.extend({
             );
             return {
                 token,
-                mode: "rule",
                 nodesState: nodesModel.normalizeNodesState(null, null),
                 providersState: nodesModel.normalizeProvidersState(null),
                 configLoadFailed,
@@ -62,16 +59,14 @@ return view.extend({
     render: function (result) {
         const PROVIDER_DELAY_BATCH_SIZE = 10;
         const container = E("div", { class: "cbi-section fade-in" });
-        const modeWrap = E("div", { class: "jc-actions-wrap" });
+        const actionsWrap = E("div", { class: "jc-actions-wrap" });
         const content = E("div", { class: "jc-nodes-layout" });
         const groupSections = new Map();
         const providerSections = new Map();
 
         const state = {
             token: result.token || "",
-            mode: result.mode || "rule",
             loading: false,
-            modeLoading: false,
             pendingKey: "",
             delayLoadingGroup: "",
             delayLoadingProvider: "",
@@ -83,7 +78,7 @@ return view.extend({
             providersState: result.providersState || []
         };
 
-        const isBusy = () => !!(state.loading || state.modeLoading || state.delayLoadingGroup ||
+        const isBusy = () => !!(state.loading || state.delayLoadingGroup ||
             state.delayLoadingProvider || state.updatingProvider);
 
         const createSortButton = (key, rerender) => {
@@ -540,33 +535,19 @@ return view.extend({
         };
 
         const fetchNodesState = async () => {
-            const [proxies, configs, proxyProviders] = await Promise.all([
+            const [proxies, proxyProviders] = await Promise.all([
                 mihomoApi.fetchProxies(state.token),
-                mihomoApi.fetchConfigs(state.token),
                 mihomoApi.fetchProxyProviders(state.token)
             ]);
             const nodesState = nodesModel.normalizeNodesState(proxies, proxyProviders);
 
             state.nodesState = nodesState;
             state.providersState = nodesModel.normalizeProvidersState(proxyProviders);
-            state.mode = configs?.mode || state.mode || "rule";
             result.fetchFailed = false;
             result.fetchError = "";
         };
 
-        const modeLabel = E("span", { class: "jc-mode-label" }, _("Mode"));
-        const modeDropdown = new ui.Dropdown(nodesModel.lower(state.mode) || "rule", {
-            "rule": _("Rule"),
-            "global": _("Global"),
-            "direct": _("Direct")
-        }, {
-            sort: false,
-            optional: false
-        });
-        const modeDropdownNode = modeDropdown.render();
-        modeDropdownNode.classList.add("jc-mode-select");
-
-        const delayUrlLabel = E("span", { id: "jc-delay-url-label", class: "jc-mode-label" }, _("Test URL"));
+        const delayUrlLabel = E("label", { id: "jc-delay-url-label", class: "cbi-checkbox-label" }, _("Test URL:"));
         const delayUrlDropdown = new ui.Dropdown(state.delayTestUrl,
             Object.fromEntries(common.defaultHealthCheckUrls.map(url => [url, url])), {
                 sort: false,
@@ -577,10 +558,8 @@ return view.extend({
         delayUrlDropdownNode.setAttribute("aria-labelledby", "jc-delay-url-label");
 
         const syncControls = () => {
-            modeDropdown.setValue(nodesModel.lower(state.mode) || "rule");
             delayUrlDropdown.setValue(state.delayTestUrl);
             const busy = isBusy();
-            modeDropdownNode.toggleAttribute("disabled", busy);
             delayUrlDropdownNode.toggleAttribute("disabled", busy);
             content.querySelectorAll("button.jc-option-card, button.jc-group-delay-button, button.jc-sort-button").forEach(button => {
                 button.disabled = busy;
@@ -603,54 +582,6 @@ return view.extend({
             state.providerDelays = Object.create(null);
             renderNodes();
         });
-
-        const handleModeChange = async () => {
-            const nextMode = nodesModel.lower(modeDropdown.getValue());
-            const previousMode = nodesModel.lower(state.mode);
-
-            if (isBusy() || !nextMode || nextMode === previousMode) {
-                if (nextMode !== previousMode)
-                    modeDropdown.setValue(previousMode);
-                return;
-            }
-
-            state.modeLoading = true;
-            syncControls();
-
-            try {
-                try {
-                    await mihomoApi.patchConfigs({ mode: nextMode }, state.token);
-                } catch (e) {
-                    state.mode = previousMode;
-                    console.error(`Failed to switch Mihomo mode to ${nextMode}`, e);
-                    return;
-                }
-                state.mode = nextMode;
-
-                try {
-                    await mihomoApi.closeAllConnections(state.token);
-                } catch (e) {
-                    ui.addTimeLimitedNotification(_("Error"), E("p", `${e.message || e}`), common.notificationTimeout, "danger");
-                    console.error("Failed to close all connections after switching Mihomo mode", e);
-                }
-
-                try {
-                    await fetchNodesState();
-                    renderNodes();
-                } catch (e) {
-                    // A missed snapshot does not unswitch the kernel. The dropdown should know that too.
-                    ui.addTimeLimitedNotification(_("Error"),
-                        E("p", _("Failed to load Mihomo proxy groups") + ": " + (e.message || String(e))),
-                        common.notificationTimeout, "danger");
-                    console.error("Failed to refresh nodes after switching Mihomo mode", e);
-                }
-            } finally {
-                state.modeLoading = false;
-                syncControls();
-            }
-        };
-
-        modeDropdownNode.addEventListener("cbi-dropdown-change", handleModeChange);
 
         const handleSelection = async (group, optionName, useAutoReset) => {
             const pendingKey = `${group.name}::${useAutoReset ? "auto" : optionName}`;
@@ -680,12 +611,8 @@ return view.extend({
             }
         };
 
-        modeWrap.appendChild(E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-            E("span", { class: "jc-mode-wrap" }, [
-                modeLabel,
-                modeDropdownNode
-            ]),
-            E("span", { class: "jc-mode-wrap jc-delay-url-wrap" }, [
+        actionsWrap.appendChild(E("div", { class: "cbi-section-actions jc-primary-actions" }, [
+            E("span", { class: "jc-delay-url-wrap" }, [
                 delayUrlLabel,
                 delayUrlDropdownNode
             ])
@@ -699,11 +626,9 @@ return view.extend({
             .jc-actions-wrap{margin-bottom:1rem;padding:.7em .8em;border-radius:0.375rem;}
             .jc-primary-actions,.jc-group-header,.jc-group-header-actions,.jc-group-badges{display:flex;flex-wrap:wrap;align-items:center;}
             .jc-primary-actions{gap:.65em;margin:0;}
-            .jc-mode-wrap,.jc-card-header{display:inline-flex;align-items:center;}
-            .jc-mode-wrap{flex-wrap:wrap;gap:.55em;}
-            .jc-mode-label,.jc-group-title,.jc-group-badge-current,.jc-option-name,.jc-option-meta-delay,.jc-option-meta-timeout{font-weight:600;}
-            .jc-mode-select{min-width:8.125rem;margin:0;}
-            .jc-delay-url-wrap{flex:1;min-width:0;}
+            .jc-delay-url-wrap,.jc-card-header{display:inline-flex;align-items:center;}
+            .jc-delay-url-wrap{flex:1;min-width:0;flex-wrap:wrap;gap:.55em;}
+            .jc-group-title,.jc-group-badge-current,.jc-option-name,.jc-option-meta-delay,.jc-option-meta-timeout{font-weight:600;}
             .jc-delay-url-select{width:24rem;max-width:100%;margin:0;}
             .jc-nodes-layout,.jc-group-section,.jc-card{display:flex;flex-direction:column;}
             .jc-nodes-layout{gap:1.125rem;}
@@ -752,7 +677,7 @@ return view.extend({
 
         container.appendChild(E("h3", { class: "cbi-section-title" }, _("Nodes")));
         container.appendChild(E("div", { class: "cbi-section-descr" }, _("View and select proxy nodes. You can also test latency for individual nodes or groups.")));
-        container.appendChild(modeWrap);
+        container.appendChild(actionsWrap);
         container.appendChild(content);
         container.appendChild(style);
 
