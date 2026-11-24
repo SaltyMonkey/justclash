@@ -418,7 +418,14 @@ return view.extend({
 
         const configActionContainer = E("div", { class: "jc-actions-wrap" }, [
             E("div", { class: "cbi-section-actions jc-primary-actions" }, [
-                createActionButton(buttonsIDs.MIHOMO_CONFIG, buttons.ACTION, _("Show Mihomo config"), actions.showConfigRpc(_("Mihomo config"), () => ubusApi.getMihomoConfig(), () => ubusApi.getMihomoConfigUnsafe())),
+                createActionButton(
+                    buttonsIDs.MIHOMO_CONFIG, buttons.ACTION, _("Mihomo config raw"),
+                    actions.showRpc(
+                        _("Mihomo config raw"),
+                        _("This configuration may contain passwords, tokens, and private connection details. Keep this output private."),
+                        () => ubusApi.getMihomoConfigUnsafe()
+                    )
+                ),
                 createActionButton(buttonsIDs.SERVICE_CONFIG, buttons.ACTION, _("Show service config"), actions.showConfigRpc(_("Service config"), () => ubusApi.getServiceConfig(), () => ubusApi.getServiceConfigUnsafe()))
             ])
         ]);
