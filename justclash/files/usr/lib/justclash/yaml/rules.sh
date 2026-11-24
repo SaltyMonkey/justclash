@@ -2,7 +2,7 @@
 # shellcheck shell=dash
 # Dynamically scoped YAML build state is provided by core_generate_yaml().
 # Reads _RULESETS_CONTENT (the caller swaps in _BLOCK_RULESETS_CONTENT for block)
-# and GLOBAL_FAKE_IP_EXCLUDE_RULES. NL comes from constants.sh.
+# and GLOBAL_FAKE_IP_EXCLUDE_RULES. NL comes from chr.sh.
 # Appends name|source lines to _IPCIDR_RULESETS_BUFFER and destination CIDR lines
 # to _STATIC_IPS_BUFFER; the caller writes these to ACTIVE_* sidecar files for
 # runtime/nftables.sh. These are per-build locals, not exported shell globals.

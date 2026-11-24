@@ -6,7 +6,7 @@
 # build_builtin_rules_bundle() also appends to _IPCIDR_RULESETS_BUFFER.
 # The caller persists these buffers as ACTIVE_* sidecar files for nftables.
 # OUT_PROXIES, OUT_RULES, OUT_RULESETS and OUT_FAKE_IP_RULES accumulate JSON
-# fragments. NL is from constants.sh; mutating renderers must run in the caller shell.
+# fragments. NL is from chr.sh; mutating renderers must run in the caller shell.
 # shellcheck disable=SC2154
 
 yaml_proxy_append() {

@@ -10,7 +10,7 @@ fmt_uci_bool_as_yaml() {
     esac
 }
 
-# NL is provided by constants.sh before helpers.sh is loaded.
+# NL is provided by chr.sh before helpers.sh is loaded.
 # shellcheck disable=SC2154
 fmt_values_as_json_array() {
     local values="$1"
@@ -36,7 +36,7 @@ fmt_values_as_json_array() {
     [ -z "$result" ] && echo "[]" || printf '[\n%s\n]' "$result"
 }
 
-# NL is provided by constants.sh before helpers.sh is loaded.
+# NL is provided by chr.sh before helpers.sh is loaded.
 fmt_uci_list_as_json_array() {
     local section_name="$1"
     local list_name="$2"

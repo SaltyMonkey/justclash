@@ -8,8 +8,8 @@ set -f # Disable path expansion (globbing) globally to safely iterate over user-
 # --------------------------------------------
 # Main application orchestration
 # UCI option types and defaults are applied once when the configuration loads.
-# constants.sh supplies service constants, DEFAULT_* fallbacks and readonly
-# NL (newline), CR and TAB before helpers and configuration modules load.
+# constants.sh supplies service constants and DEFAULT_* fallbacks.
+# chr.sh supplies readonly NL (newline), CR and TAB before the helpers load.
 # NL separates collected UCI list values and the per-build nftables sidecar records.
 # --------------------------------------------
 
@@ -28,7 +28,9 @@ import() {
     done
 }
 
-import /usr/lib/justclash/constants.sh
+import \
+    /usr/lib/justclash/constants/chr.sh \
+    /usr/lib/justclash/constants/constants.sh
 
 cli_confirm_destructive() {
     local prompt="$1"
@@ -723,7 +725,7 @@ core_generate_yaml() {
     local OUT_NAMES_RULESETS="{}" OUT_NAMES_SUFFIXES="{}" OUT_NAMES_GEOSITE="{}"
     local OUT_INBOUNDS="" OUT_INBOUND_RULES=""
     # Per-build newline-delimited sidecars, not process-global configuration:
-    # NL is the readonly newline from constants.sh, not a literal backslash-n.
+    # NL is the readonly newline from chr.sh, not a literal backslash-n.
     # rules.sh writes name|source to _IPCIDR_RULESETS_BUFFER (all and block modes);
     # rules.sh/groups.sh/proxies.sh append destination CIDRs to _STATIC_IPS_BUFFER;
     # groups.sh/proxies.sh append source CIDRs to _STATIC_SOURCE_IPS_BUFFER.
@@ -1416,8 +1418,8 @@ check_report_full() {
     echo ""
     check_report_dpi
     echo ""
-    echo "  [ NFT Tables ]"
-    check_nft "$NF_TABLE_NAME" --unsafe | sed 's/^/    /'
+    echo "  [ NFT Tables (set elements omitted) ]"
+    check_nft "$NF_TABLE_NAME" --terse | sed 's/^/    /'
     echo ""
     echo "  [ Routes ]"
     run_check_routes | sed 's/^/    /'
@@ -1433,9 +1435,6 @@ check_report_full() {
     echo ""
     echo "  [ Service Config ]"
     config_show_service "$CONFIG_PATH" | sed 's/^/    /'
-    echo ""
-    echo "  [ Mihomo Config ]"
-    config_show_mihomo "$OUTPUT_YAML_CONFIG_PATH" | sed 's/^/    /'
     echo ""
     echo "----------------------------------------------------------------"
     echo ""
@@ -1504,6 +1503,7 @@ start | run | up)
         /usr/lib/justclash/runtime/ntpd.sh \
         /usr/lib/justclash/runtime/dnsmasq.sh \
         /usr/lib/justclash/runtime/workdir.sh \
+        /usr/lib/justclash/constants/doh.sh \
         /usr/lib/justclash/runtime/nftables.sh \
         /usr/lib/justclash/runtime/policy_routing.sh \
         /usr/lib/justclash/runtime/scheduler.sh
@@ -1779,19 +1779,12 @@ config)
     show)
         case "$3" in
         mihomo)
-            [ "$#" -le 4 ] || {
-                printf 'Usage: justclash.sh config show mihomo [--unsafe]\n' >&2
+            [ "$#" -eq 4 ] && [ "$4" = "--unsafe" ] || {
+                printf 'Usage: justclash.sh config show mihomo --unsafe\n' >&2
                 exit 2
             }
             import /usr/lib/justclash/logging.sh /usr/lib/justclash/runtime/diagnostics.sh
-            case "$4" in
-            '') config_show_mihomo "$OUTPUT_YAML_CONFIG_PATH" ;;
-            --unsafe) config_show_mihomo_unsafe "$OUTPUT_YAML_CONFIG_PATH" ;;
-            *)
-                printf 'Usage: justclash.sh config show mihomo [--unsafe]\n' >&2
-                exit 2
-                ;;
-            esac
+            config_show_mihomo_unsafe "$OUTPUT_YAML_CONFIG_PATH"
             ;;
         service)
             [ "$#" -le 4 ] || {
@@ -1809,7 +1802,9 @@ config)
             esac
             ;;
         *)
-            printf 'Usage: justclash.sh config show {mihomo|service} [--unsafe]\n' >&2
+            printf '%s\n' \
+                'Usage: justclash.sh config show mihomo --unsafe' \
+                '       justclash.sh config show service [--unsafe]' >&2
             exit 2
             ;;
         esac

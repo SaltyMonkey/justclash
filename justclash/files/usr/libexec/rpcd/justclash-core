@@ -91,10 +91,6 @@ run_config_request() {
     fi
 
     case "${config_target}:${config_unsafe}" in
-    mihomo:0)
-        run_output "Failed to fetch the redacted Mihomo config." \
-            config show mihomo
-        ;;
     mihomo:1)
         run_output "Failed to fetch the unredacted Mihomo config." \
             config show mihomo --unsafe

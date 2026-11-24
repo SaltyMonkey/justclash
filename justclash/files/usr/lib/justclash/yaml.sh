@@ -1,7 +1,7 @@
 #!/bin/ash
 # shellcheck shell=dash
 # YAML builders use the dynamically scoped state declared by core_generate_yaml().
-# NL is a readonly newline from constants.sh; it separates records in build buffers.
+# NL is a readonly newline from chr.sh; it separates records in build buffers.
 # Keep their calls synchronous: subshells, pipelines, and background jobs cannot
 # propagate assignments back to that state. Shell needed one architectural trapdoor.
 

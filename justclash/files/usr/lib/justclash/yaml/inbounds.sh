@@ -19,7 +19,7 @@ yaml_inbound_append() {
     local listener_name="$1" port="$2" authentication="$3"
     local exit_rule="$4" inbound_type="$5"
     local entry username password users="" listener rule udp=""
-    # NL is supplied by constants.sh, as in the other shell builders.
+    # NL is supplied by chr.sh, as in the other shell builders.
     # shellcheck disable=SC2154
     local IFS="$NL"
 

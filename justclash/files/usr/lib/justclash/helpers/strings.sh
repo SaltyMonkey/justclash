@@ -1,7 +1,7 @@
 #!/bin/ash
 # shellcheck shell=dash
 # shellcheck disable=SC3060
-# NL, CR and TAB are supplied by constants.sh before helpers are loaded.
+# NL, CR and TAB are supplied by chr.sh before helpers are loaded.
 
 # Focused helper module loaded into the main ash process.
 
