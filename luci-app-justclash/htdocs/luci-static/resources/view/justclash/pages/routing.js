@@ -135,7 +135,8 @@ return view.extend({
 
         m = new form.Map(common.binName);
         m.save = handleRoutingSave;
-        s = m.section(form.GridSection, "proxies", _("Proxies list:"), _("Proxies defined as outbound connections."));
+        s = m.section(form.GridSection, "proxies", _("Proxies list:"),
+            _("Add individual proxy or direct connections using a URI or a Mihomo outbound JSON object. Assign routing rules to an outbound or add it to a proxy group. Group rules are checked before rules on individual outbounds."));
         s.anonymous = true;
         s.addremove = true;
         s.nodescriptions = true;
@@ -249,7 +250,7 @@ return view.extend({
         o = s.taboption(tabname, form.Value, "dialer_proxy", _("Connect through:"));
         o.description = _("Route this proxy through the specified proxy server. Leave empty to use default connection settings.");
         o.optional = true;
-        o.placeholder = _("Example: %s").format("proxyname_");
+        routingOptions.makeDynamic(o, common.binName, [], ["proxies", "proxy_group"], true);
         o.validate = function (section_id, value) {
             if (value === "" || value === undefined || value === null) {
                 return true;
@@ -380,7 +381,8 @@ return view.extend({
         o.optional = true;
         o.modalonly = true;
 
-        spp = m.section(form.GridSection, "proxy_provider", _("Proxy provider:"), _("Proxy providers are external subscription URLs that dynamically load a list of proxies."));
+        spp = m.section(form.GridSection, "proxy_provider", _("Proxy provider:"),
+            _("Download and refresh proxy nodes from subscription URLs. Add a provider to a group's Providers list to use its nodes for routing. 'Get subscription with' sets the download path. 'Override' changes the connection settings of the imported nodes."));
         spp.anonymous = true;
         spp.addremove = true;
         spp.nodescriptions = true;
@@ -467,7 +469,7 @@ return view.extend({
         o = spp.taboption(proxyProviderOverrideTab, form.Value, "override_dialer_proxy", _("Connect through:"));
         o.description = _("Apply this dialer-proxy to nodes loaded from this provider. Leave empty to preserve each node's connection settings.");
         o.optional = true;
-        o.placeholder = _("Example: %s").format("proxyname_");
+        routingOptions.makeDynamic(o, common.binName, []);
         o.validate = function (section_id, value) {
             if (value === "" || value === undefined || value === null) {
                 return true;
@@ -650,14 +652,13 @@ return view.extend({
 
         o = spp.taboption(tabname, form.Value, "health_check_expected_status", _("Check status:"));
         o.rmempty = false;
-        o.datatype = datatypes.UINTEGER;
         common.defaultHealthCheckResultCode.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultHealthCheckResultCode[1].value;
+        o.default = common.defaultHealthCheckStatus;
         o.retain = true;
         o.depends("health_check", primitives.TRUE);
-        o.description = _("Required response status for node availability check (required for proxy provider functionality).");
+        o.description = _("HTTP status codes that pass the health check. Enter a code such as 204, a range such as 200-299, or a list such as 204/300-399.");
         o.validate = function (section_id, value) {
             return common.validateHttpStatus(value);
         };
@@ -730,7 +731,8 @@ return view.extend({
         };
         o.modalonly = true;
 
-        s2 = m.section(form.GridSection, "proxy_group", _("Proxy groups:"), _("Group proxies for special routing (fallback, load balancing, URL test)."));
+        s2 = m.section(form.GridSection, "proxy_group", _("Proxy groups:"),
+            _("Use a group to route through individual proxies, subscription nodes, or both. Choose Select to pick a node manually, Fallback to use the first healthy node, Load balancer to distribute connections, or URL Test to select by measured latency. Subscription nodes use their provider's check interval when its health check is enabled."));
         s2.anonymous = true;
         s2.addremove = true;
         s2.nodescriptions = true;
@@ -829,10 +831,9 @@ return view.extend({
         common.defaultHealthCheckResultCode.forEach(item => {
             o.value(item.value, item.text);
         });
-        o.default = common.defaultHealthCheckResultCode[1].value;
-        o.datatype = datatypes.UINTEGER;
+        o.default = common.defaultHealthCheckStatus;
         o.rmempty = false;
-        o.description = _("Required response status for node availability check (required for proxy group functionality).");
+        o.description = _("HTTP status codes that pass the health check. Enter a code such as 204, a range such as 200-299, or a list such as 204/300-399.");
         o.validate = function (section_id, value) {
             return common.validateHttpStatus(value);
         };
@@ -1027,7 +1028,8 @@ return view.extend({
         o.optional = true;
         o.modalonly = true;
 
-        s4 = m.section(form.GridSection, "block_rules", _("Block rules:"), _("Extra block rules. These are applied before proxy rules and groups, so matching traffic is stopped first."));
+        s4 = m.section(form.GridSection, "block_rules", _("Block rules:"),
+            _("Block domains and destination IP ranges using rulesets or manual entries. Mihomo DNS handles domain blocking. IP blocks are checked after fixed inbound routes and before group and proxy rules."));
         s4.anonymous = true;
         s4.addremove = false;
         s4.nodescriptions = true;
@@ -1135,6 +1137,9 @@ return view.extend({
         const toolbar = proxyBulkImport.create({
             map: m,
             configName: common.binName,
+            providerDefaults: Object.fromEntries(spp.children
+                .filter(option => typeof option.default === "string")
+                .map(option => [option.option, option.default])),
             notificationTimeout: common.notificationTimeout,
             replaceForm: (nextForm) => formContainer.replaceChildren(nextForm)
         });
