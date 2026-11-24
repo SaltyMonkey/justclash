@@ -141,7 +141,7 @@ yaml_document_write_dns() {
     local fake_ip_range6="${11}"
     local fake_ip_ttl="${12}"
     local fake_ip_filter_data="${13}"
-    local respect_rules="${14:-1}"
+    local respect_rules="${14:-0}"
 
     echo "dns:"
     echo "  enable: true"
