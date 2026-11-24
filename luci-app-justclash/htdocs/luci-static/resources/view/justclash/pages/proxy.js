@@ -50,15 +50,14 @@ return view.extend({
         o.default = primitives.TRUE;
         o.rmempty = false;
 
-        o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("Try TCP connections in parallel:"));
-        o.description = _("Try several TCP connections at the same time. This can help on unstable networks, but it may create extra connection attempts.");
+        o = s.taboption(tabname, form.Flag, "tcp_concurrent", _("Try resolved IP addresses in parallel:"));
+        o.description = _("When a destination resolves to multiple IP addresses, Mihomo tries them in parallel to open one outbound connection. It uses the first successful attempt, taking any configured IP version preference into account.");
         o.rmempty = false;
         o.default = primitives.TRUE;
 
         o = s.taboption(tabname, form.Value, "global_ua", _("User-Agent for downloads:"));
-        o.placeholder = _("Example: %s").format("Mozilla/5.0 (Windows NT 10.0; Win64; x64)...");
         o.description = _("User-Agent sent when downloading external files such as subscriptions or rule lists. Select a preset or type your own. Choose \"Random\" to pick a different browser UA on every service start.");
-        o.default = common.defaultUaPresets[0].value;
+        o.default = common.defaultUaPresets[2].value;
         o.rmempty = false;
         common.defaultUaPresets.forEach(p => o.value(p.value, p.label));
         o.validate = function (section_id, value) {
@@ -229,12 +228,12 @@ return view.extend({
             return common.isValidDomainMatcher(value);
         };
 
-        o = s.taboption(tabname, form.DynamicList, "sniffer_force_domain", _("Forcefully sniff domains:"));
-        o.description = _("Domains included for detailed analysis when possible. Sometimes this can help with errors in apps.");
+        o = s.taboption(tabname, multilineList.Value, "sniffer_force_domain", _("Forcefully sniff domains:"));
+        o.description = _("Domains included for detailed analysis when possible. Sometimes this can help with errors in apps.") + " " + _("Enter one entry per line.");
         o.rmempty = false;
         o.editable = true;
         o.optional = true;
-        o.validate = function (section_id, value) {
+        o.validateEntry = function (value) {
             return common.isValidDomainMatcher(value);
         };
 
