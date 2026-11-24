@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=justclash
-PKG_VERSION:=0.140.0_rc1
+PKG_VERSION:=0.157.0_rc1
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
@@ -36,7 +36,8 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/justclash
-	$(INSTALL_DATA) ./files/usr/lib/justclash/constants.sh $(1)/usr/lib/justclash/
+	$(INSTALL_DIR) $(1)/usr/lib/justclash/constants
+	$(INSTALL_DATA) ./files/usr/lib/justclash/constants/*.sh $(1)/usr/lib/justclash/constants/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/helpers.sh $(1)/usr/lib/justclash/
 	$(INSTALL_BIN) ./files/usr/lib/justclash/config.sh $(1)/usr/lib/justclash/
 	$(INSTALL_DIR) $(1)/usr/lib/justclash/config
@@ -78,7 +79,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/99-justclash-migrate-config $(1)/etc/uci-defaults/
 
-	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/lib/justclash/constants.sh
+	sed -i -e 's|__COMPILED_VERSION_VARIABLE__|$(PKG_VERSION)|g' $(1)/usr/lib/justclash/constants/constants.sh
 
 endef
 
@@ -111,7 +112,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 		echo "Failed to initialize the active JustClash credentials." >&2
 		exit 1
 	fi
-	. /usr/lib/justclash/constants.sh
+	. /usr/lib/justclash/constants/constants.sh
 	api_tls_cert=$$(uci -q get justclash.proxy.api_tls_cert)
 	api_tls_key=$$(uci -q get justclash.proxy.api_tls_key)
 	api_tls_cert=$${api_tls_cert:-$$DEFAULT_API_TLS_CERT_PATH}

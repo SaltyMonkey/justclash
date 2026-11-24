@@ -1,3 +1,94 @@
+## [0.157.0_rc1] - 24112026
+
+This release includes general fixes and improvements, removes obsolete features,
+and makes LuCI easier to use.
+
+### DNS and Download Defaults
+
+- **Respect routing rules** under **Setup → DNS → Basic** lets you apply routing
+  rules to upstream DNS connections. It defaults to off, including on upgrade
+  when no value was saved. See
+  [Choose Upstreams by Their Role](info/guides/dns.md#choose-upstreams-by-their-role).
+- The default **DNS cache size** increased from 4096 to 8192 entries.
+- Removed **Force real IP rulesets**. Upgrading clears the setting, so
+  previously excluded domain rulesets can trigger Fake-IP when assigned to an
+  outbound or group.
+- Extended the built-in IPv4 and IPv6 DoH resolver lists. JustClash creates and
+  fills the nftables sets only when **Client DoH traffic** is set to **Drop**.
+  [DoH-IP-blocklists](https://github.com/dibdot/DoH-IP-blocklists)
+- **User-Agent for downloads** now defaults to **Mihomo** (`Mihomo/<core-version>`).
+  Removed the example text that appeared as a choice in the preset list. See
+  [Download User-Agents](info/guides/security.md#download-user-agents).
+
+### Generated Configuration
+
+- Entries from **Nameserver policy** and **Hosts mapping** use a one-line array
+  for a single resolver or address. Entries with multiple values use one value
+  per line.
+- DNS block entries appear before custom **Nameserver policy** entries. The
+  block entry takes precedence when both use the same matcher.
+- The IPv6 flag and controller address appear on consecutive lines. A blank
+  line separates host mappings from NTP settings.
+
+### Routing and Health Checks
+
+- Added **Add proxies in bulk (URI)** and **Add providers in bulk (URL)**.
+  Paste one connection link or HTTP(S) subscription URL per line. LuCI generates
+  editable names and uses the standard defaults for new providers. Review the
+  imported rows and save to keep them. All three bulk import formats accept up
+  to 32 entries per batch. The previous JSON limit was 128. See the
+  [Routing Guide](info/guides/routing.md#import-json-outbounds).
+- **Connect through** now suggests configured outbounds and groups when editing
+  an outbound or setting a provider's connection override.
+- **Enable X25519-MLKEM768 for Reality** now defaults to on for proxy providers
+  with no saved override. It applies to nodes that already use Reality.
+- LuCI and UCI validate **Check status** for providers and groups. The field
+  accepts a single HTTP status code, a range such as `200-299`, or a
+  slash-separated list such as `204/300-399`. Lists can contain up to 28 codes
+  or ranges, with codes from 100 to 599. With no saved value, provider and
+  automatic group checks accept either HTTP 200 or 204. See the
+  [UCI Reference](info/reference/uci.md#proxy_provider).
+
+### LuCI
+
+- Removed the **Mode** selector (Rule, Global, Direct) from **Nodes**. Loading
+  and refreshing the page now skips the Mihomo configuration request.
+- **Force real IP rules**, **Force real IP geosites**, and **Forcefully sniff
+  domains** now use the same multiline input as **Nameserver policy**, with one
+  entry per line.
+- Restored LuCI's validation feedback for invalid entries in inbound
+  **Authentication** and aligned the widths of **Active** on **Rules** and
+  **Action** on **Rule Providers**.
+- The **Test URL:** label in **Nodes** now matches **Interval:** in
+  **Connections**. On **Rulesets**, **Hide built-in rulesets** uses the same
+  checkbox layout as **Newest first** on the log pages.
+- Clarified that **Try resolved IP addresses in parallel** tries addresses for
+  one outbound connection. Updated **Routing** and **Inbounds** descriptions to
+  explain subscription download paths, provider overrides and check intervals,
+  rule order, and listener access. Updated the Russian and Simplified Chinese
+  translations.
+
+### Configuration and Diagnostics
+
+- **Mihomo config raw** on **Status** opens the generated configuration with a
+  warning about unmasked credentials and private connection details. CLI access
+  requires `config show mihomo --unsafe`. In ubus, use `config_show_unsafe` with
+  write permission. The `config_show` method now accepts only the `service`
+  target. [CLI Reference](info/reference/cli.md#configuration-diagnostics) ·
+  [ubus Methods](info/reference/ubus.md#methods)
+- **Show service config** and `config show service` now display the NTP server,
+  API TLS key path, health-check URLs, and provider User-Agent without masking.
+- The JustClash configuration section of `check full --unsafe` contains only
+  the redacted UCI configuration. Its nftables section lists rules and set
+  definitions and omits set elements. Use
+  `check nft --unsafe` to inspect the elements.
+  [Local Diagnostics](info/reference/cli.md#local-diagnostics)
+
+### Packaging
+
+- Shared shell defaults, character constants, and DoH lists now ship in
+  `/usr/lib/justclash/constants/` as `constants.sh`, `chr.sh`, and `doh.sh`.
+
 ## [0.140.0_rc1] - 19112026
 
 This release removes legacy routing options and simplifies setup for networks
